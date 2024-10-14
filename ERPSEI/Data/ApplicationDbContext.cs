@@ -50,12 +50,12 @@ namespace ERPSEI.Data
 		public DbSet<AutorizacionesPrefactura> AutorizacionesPrefacturas { get; set; }
 		public DbSet<Prefactura> Prefacturas { get; set; }
 		public DbSet<Concepto> Conceptos { get; set; }
-		//public DbSet<ComprobanteAddenda> ComprobantesAddendas { get; set; }
+		public DbSet<ComprobanteAddenda> ComprobantesAddendas { get; set; }
 		public DbSet<ComprobanteCfdiRelacionados> ComprobantesCfdisRelacionados { get; set; }
-		//public DbSet<ComprobanteComplemento> ComprobantesComplementos { get; set; }
+		public DbSet<ComprobanteComplemento> ComprobantesComplementos { get; set; }
 		public DbSet<ComprobanteConcepto> ComprobantesConceptos { get; set; }
 		public DbSet<ComprobanteConceptoACuentaTerceros> ComprobantesConceptosACuentaTerceros { get; set; }
-		//public DbSet<ComprobanteConceptoComplementoConcepto> ComprobantesConceptosComplementosConceptos { get; set; }
+		public DbSet<ComprobanteConceptoComplementoConcepto> ComprobantesConceptosComplementosConceptos { get; set; }
 		public DbSet<ComprobanteConceptoCuentaPredial> ComprobantesConceptosCuentasPrediales { get; set; }
 		public DbSet<ComprobanteConceptoImpuestos> ComprobantesConceptosImpuestos { get; set; }
 		public DbSet<ComprobanteConceptoImpuestosRetencion> ComprobantesConceptosImpuestosRetenciones { get; set; }
