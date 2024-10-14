@@ -9,6 +9,8 @@ using ERPSEI.Data.Entities.SAT.cfdiv40;
 using ERPSEI.Data.Entities.Usuarios;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using ERPSEI.Data.Entities.SAT.Nomina12;
+using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
 
 namespace ERPSEI.Data
 {
@@ -53,6 +55,13 @@ namespace ERPSEI.Data
 		public DbSet<ComprobanteAddenda> ComprobantesAddendas { get; set; }
 		public DbSet<ComprobanteCfdiRelacionados> ComprobantesCfdisRelacionados { get; set; }
 		public DbSet<ComprobanteComplemento> ComprobantesComplementos { get; set; }
+		public DbSet<Nomina> Nominas { get; set; }
+		public DbSet<NominaDeducciones> NominasDeducciones { get; set; }
+		public DbSet<NominaDeduccionesDeduccion> NominasDeduccionesDeducciones { get; set; }
+		public DbSet<NominaPercepciones> NominasPercepciones { get; set; }
+		public DbSet<NominaPercepcionesPercepcion> NominasPercepcionePercepciones { get; set; }
+		public DbSet<NominaReceptor> NominasReceptores { get; set; }
+		public DbSet<TimbreFiscalDigital> TimbresFiscalesDigitales { get; set; }
 		public DbSet<ComprobanteConcepto> ComprobantesConceptos { get; set; }
 		public DbSet<ComprobanteConceptoACuentaTerceros> ComprobantesConceptosACuentaTerceros { get; set; }
 		public DbSet<ComprobanteConceptoComplementoConcepto> ComprobantesConceptosComplementosConceptos { get; set; }
@@ -439,6 +448,26 @@ namespace ERPSEI.Data
 			b.Entity<ComprobanteImpuestosTraslado>().Property(c => c.Base).HasPrecision(18, 6);
 			b.Entity<ComprobanteImpuestosTraslado>().Property(c => c.TasaOCuota).HasPrecision(18, 6);
 			b.Entity<ComprobanteImpuestosTraslado>().Property(c => c.Importe).HasPrecision(18, 6);
+
+			b.Entity<Nomina>().Property(n => n.NumDiasPagados).HasPrecision(18, 6);
+			b.Entity<Nomina>().Property(n => n.TotalDeducciones).HasPrecision(18, 6);
+			b.Entity<Nomina>().Property(n => n.TotalPercepciones).HasPrecision(18, 6);
+			b.Entity<Nomina>().Property(n => n.Version).HasPrecision(18, 6);
+
+			b.Entity<NominaDeducciones>().Property(n => n.TotalImpuestosRetenidos).HasPrecision(18, 6);
+			b.Entity<NominaDeducciones>().Property(n => n.TotalOtrasDeducciones).HasPrecision(18, 6);
+
+			b.Entity<NominaDeduccionesDeduccion>().Property(n => n.Importe).HasPrecision(18, 6);
+
+			b.Entity<NominaPercepciones>().Property(n => n.TotalExento).HasPrecision(18, 6);
+			b.Entity<NominaPercepciones>().Property(n => n.TotalGravado).HasPrecision(18, 6);
+			b.Entity<NominaPercepciones>().Property(n => n.TotalSueldos).HasPrecision(18, 6);
+
+			b.Entity<NominaPercepcionesPercepcion>().Property(n => n.ImporteExento).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesPercepcion>().Property(n => n.ImporteGravado).HasPrecision(18, 6);
+
+			b.Entity<TimbreFiscalDigital>().Property(n => n.Version).HasPrecision(18, 6);
+
 		}
 
 		private static void BuildAccesos(ModelBuilder b)
