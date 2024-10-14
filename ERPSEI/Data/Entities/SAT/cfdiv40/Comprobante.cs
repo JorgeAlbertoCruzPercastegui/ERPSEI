@@ -15,13 +15,10 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 		[XmlIgnore]
 		public int Id { get; set; }
 
-		[XmlIgnore]
-		public string? UUID { get; set; }
-
 		public ComprobanteInformacionGlobal? InformacionGlobal{ get; set; }
 
-		
-		[XmlElement("CfdiRelacionados")]
+		[XmlArray("CfdiRelacionados")]
+		[XmlArrayItem(typeof(ComprobanteCfdiRelacionados), ElementName = "CfdiRelacionados", IsNullable = false)]
 		public ComprobanteCfdiRelacionados[]? CfdiRelacionados { get; set; }
 
 		
@@ -30,14 +27,17 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 		
 		public ComprobanteReceptor? Receptor { get; set; }
 
-		
-		[XmlArrayItem("Concepto", IsNullable = false)]
+
+		[XmlArray("Conceptos")]
+		[XmlArrayItem(typeof(ComprobanteConcepto), ElementName = "Concepto", IsNullable = false)]
 		public ComprobanteConcepto[]? Conceptos { get; set; }
 
 		
 		public ComprobanteImpuestos? Impuestos { get; set; }
 
-		
+
+		public ComprobanteComplemento? Complemento { get; set; }
+
 		[XmlAttribute()]
 		public string Version { get; set; } = "4.0";
 
@@ -132,7 +132,7 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 		[XmlAttribute()]
 		public string? Confirmacion { get; set; }
 
-		[System.Xml.Serialization.XmlIgnoreAttribute()]
+		[XmlIgnore()]
 		public ConciliacionDetalleComprobante? ConciliacionDetalleComprobante { get; set; }
     
 		[XmlIgnore]
