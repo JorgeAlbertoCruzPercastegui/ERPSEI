@@ -12,6 +12,9 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 	[XmlType(AnonymousType = true, Namespace = "http://www.sat.gob.mx/cfd/4")]
 	public partial class ComprobanteComplemento
 	{
+		[XmlIgnore]
+		public int Id { get; set; }
+
 		[NotMapped]
 		[XmlAnyElement]
 		public virtual XmlElement[]? Elements { get; set; }
