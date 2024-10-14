@@ -8,6 +8,8 @@ namespace ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11
 	[XmlRoot(Namespace = "http://www.sat.gob.mx/TimbreFiscalDigital", IsNullable = false)]
 	public partial class TimbreFiscalDigital
 	{
+		[XmlIgnore]
+		public int Id { get; set; }
 
 		[XmlAttribute()]
 		public DateTime FechaTimbrado { get; set; }

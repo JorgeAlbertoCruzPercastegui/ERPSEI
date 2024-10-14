@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Xml.Serialization;
 namespace ERPSEI.Data.Entities.SAT.Nomina12
 {
 	[Serializable]
@@ -7,6 +8,9 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 	[XmlRoot(Namespace = "http://www.sat.gob.mx/nomina12", IsNullable = false)]
 	public partial class Nomina
 	{
+		[XmlIgnore]
+		public int Id { get; set; }
+
 		public NominaReceptor? Receptor { get; set; }
 
 		public NominaPercepciones? Percepciones { get; set; }

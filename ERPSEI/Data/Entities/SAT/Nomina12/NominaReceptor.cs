@@ -8,6 +8,9 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 	[XmlRoot(Namespace = "http://www.sat.gob.mx/nomina12", IsNullable = false)]
 	public partial class NominaReceptor
 	{
+		[XmlIgnore]
+		public int Id { get; set; }
+
 		[XmlAttribute]
 		public string? ClaveEntFed { get; set; }
 
