@@ -81,16 +81,6 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			return await _db.Comprobantes.ToListAsync();
 		}
 
-		private static string Parser(string? fecha)
-		{
-			if(DateTime.TryParseExact(fecha, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime f))
-			{
-				return f.ToString("yyyy-MM");
-			}
-
-			return DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss");
-		}
-
 		public async Task<List<Comprobante>> GetAllAsync(
 			string? periodo = null,
 			int? estatusId = null,
@@ -110,9 +100,19 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				.Where(e => usoCFDIId == null || 1 == usoCFDIId)
 				.Where(e => emisorId == null || (1 == emisorId || 1 == emisorId))
 				.Where(e => receptorId == null || (1 == receptorId || 1 == receptorId))
+				.Include(e => e.Emisor)
+				.Include(e => e.Receptor)
 				.ToListAsync();
 
-			if (periodo != null) { lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("yyyy-MM") == periodo); }
+            foreach (Comprobante c in lc)
+            {
+				c.Moneda = (await _db.Monedas.Where(m => m.Clave == c.Moneda).FirstOrDefaultAsync())?.Descripcion;
+				c.MetodoPago = (await _db.MetodosPago.Where(m => m.Clave == c.MetodoPago).FirstOrDefaultAsync())?.Descripcion;
+				c.FormaPago = (await _db.FormasPago.Where(f => f.Clave == c.FormaPago).FirstOrDefaultAsync())?.Descripcion;
+				if (c.Receptor != null) { c.Receptor.UsoCFDI = (await _db.UsosCFDI.Where(u => u.Clave == c.Receptor.UsoCFDI).FirstOrDefaultAsync())?.Descripcion; }
+            }
+
+            if (periodo != null) { lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("yyyy-MM") == periodo); }
 
 			return lc;
 		}

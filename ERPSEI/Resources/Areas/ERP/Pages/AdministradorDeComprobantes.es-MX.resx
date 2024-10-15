@@ -204,8 +204,8 @@
   <data name="EstatusPlaceholder" xml:space="preserve">
     <value>Estatus</value>
   </data>
-  <data name="ExportButtonTitle" xml:space="preserve">
-    <value>Exportar a Excel</value>
+  <data name="ExcelButtonTitle" xml:space="preserve">
+    <value>Excel</value>
   </data>
   <data name="ExportCFDIDialogTitle" xml:space="preserve">
     <value>Exportar</value>
@@ -223,7 +223,10 @@
     <value>Método Pago</value>
   </data>
   <data name="PDFButtonTitle" xml:space="preserve">
-    <value>Ver PDF</value>
+    <value>PDF</value>
+  </data>
+  <data name="PolizaButtonTitle" xml:space="preserve">
+    <value>Generar Póliza</value>
   </data>
   <data name="RazonSocial" xml:space="preserve">
     <value>Razón Social</value>
@@ -263,5 +266,8 @@
   </data>
   <data name="Validar" xml:space="preserve">
     <value>Validar</value>
+  </data>
+  <data name="XMLButtonTitle" xml:space="preserve">
+    <value>XML</value>
   </data>
 </root>

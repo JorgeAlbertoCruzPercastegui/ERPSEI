@@ -141,9 +141,9 @@ namespace ERPSEI.Areas.ERP.Pages
 						$"\"serie\": \"{c.Serie}\", " +
 						$"\"folio\": \"{c.Folio}\", " +
 						$"\"emisor\": \"{c.Emisor?.Nombre}\", " +
-						$"\"emisorId\": {c.Emisor?.Id}, " +
+						$"\"emisorId\": \"{c.Emisor?.Id}\", " +
 						$"\"receptor\": \"{c.Receptor?.Nombre}\", " +
-						$"\"receptorId\": {c.Receptor?.Id}, " +
+						$"\"receptorId\": \"{c.Receptor?.Id}\", " +
 						$"\"tipoComprobante\": \"{c.TipoDeComprobante}\", " +
 						$"\"fecha\": \"{fecha:dd/MM/yyyy HH:mm:ss}\", " +
 						$"\"fechaJS\": \"{fecha:yyyy-MM-dd HH:mm:ss}\", " +

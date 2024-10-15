@@ -1,4 +1,5 @@
 ﻿var table;
+var buttonAcciones;
 var buttonExport;
 var buttonCancel;
 var tableProdServ;
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
     numFormatter = new Intl.NumberFormat(cultureName);
 
     table = $("#table");
+    buttonAcciones = $("#btnAcciones");
     buttonExport = $("#btnExportar");
     buttonCancel = $("#btnCancelar");
 
@@ -68,28 +70,16 @@ function responseHandler(res) {
 function operateFormatter(value, row, index) {
     let icons = [];
     
-    //Icono Ver
-    if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) { icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`); }
-    //Icono PDF
-    if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) { icons.push(`<li><a class="dropdown-item pdf" href="#" title="${btnPDFTitle}"><i class="bi bi-file-pdf"></i> ${btnPDFTitle}</a></li>`); }
-    //Icono Autorizar
-    if ((puedeTodo || puedeAutorizar) && row.estatusId == ESTATUS_SOLICITADA && row.requiereAutorizacion == "True") {
-        //Si el usuario tiene permisos para autorizar y además la prefactura está en estatus solicitada y además requiere autorización... 
-        //Busca al usuario por Id en la lista de autorizaciones del elemento.
-        let foundUserAuth = row.autorizaciones.find(a => a.userId == window.userId);
-
-        if (foundUserAuth == undefined) {
-            //Si no se encontró la autorización del usuario en la lista, entonces todavía no ha autorizado el elemento, por lo tanto, busca si el usuario puede autorizar prefacturas.
-            foundUserAuth = window.authUsers.find(u => u == window.userId);
-
-            //Si se encontró al usuario en la lista, entonces agrega icono para autorizar.
-            if (foundUserAuth != undefined) { icons.push(`<li><a class="dropdown-item auth" href="#" title="${btnAutorizarTitle}"><i class="bi bi-patch-check"></i> ${btnAutorizarTitle}</a></li>`); }
-        }
+    //Icono Exportar
+    if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) {
+        icons.push(`<li><a class="dropdown-item pdf" href="#" title="${dlgExportTitle} ${btnPDFTitle}"><i class="bi bi-file-pdf"></i> ${dlgExportTitle} ${btnPDFTitle}</a></li>`);
+        icons.push(`<li><a class="dropdown-item xml" href="#" title="${dlgExportTitle} ${btnXMLTitle}"><i class="bi bi-file-code"></i> ${dlgExportTitle} ${btnXMLTitle}</a></li>`);
+        icons.push(`<li><a class="dropdown-item excel" href="#" title="${dlgExportTitle} ${btnExcelTitle}"><i class="bi bi-file-earmark-spreadsheet"></i> ${dlgExportTitle} ${btnExcelTitle}</a></li>`);
+        icons.push(`<li><hr class="dropdown-divider"></li>`);
+        icons.push(`<li><a class="dropdown-item poliza" href="#" title="${btnPolizaTitle}"><i class="bi bi-file-earmark-spreadsheet"></i> ${btnPolizaTitle}</a></li>`);
     }
-    //Icono Timbrar
-    if ((puedeTodo || puedeEditar) && (row.estatusId == ESTATUS_AUTORIZADA || row.estatusId == ESTATUS_SOLICITADA)) {
-        icons.push(`<li><a class="dropdown-item stamp" href="#" title="${btnTimbrarTitle}"><i class="bi bi-postage"></i> ${btnTimbrarTitle}</a></li>`);
-    }
+    //Icono Cancelar
+    if (puedeTodo || puedeEliminar) { icons.push(`<li><a class="dropdown-item cancel" href="#" title="${btnCancelarTitle}"><i class="bi bi-x-lg"></i> ${btnCancelarTitle}</a></li>`); }
 
     if (icons.length >= 1) {
 
@@ -107,15 +97,17 @@ function operateFormatter(value, row, index) {
 
 //Eventos de los iconos de operación
 window.operateEvents = {
-    'click .see': function (e, value, row, index) {
-        initCFDIDialog(VER, row);
-        dlgCFDIModal.toggle();
-    },
     'click .pdf': function (e, value, row, index) {
         onShowPDF(row.safeL);
     },
+    'click .xml': function (e, value, row, index) {
+        onShowXML(row.safeL);
+    },
+    'click .excel': function (e, value, row, index) {
+        onShowExcel(row.safeL);
+    },
     'click .cancel': function (e, value, row, index) {
-        onCancelarPrefactura(row.id);
+        onCancelarComprobante(row.id);
     }
 }
 
@@ -131,7 +123,7 @@ function onCancelarCFDIClick(ids = null) {
         oParams,
         function (resp) {
             if (resp.tieneError) {
-                showError(dlgExportTitle, resp.mensaje);
+                showError(btnCancelarTitle, resp.mensaje);
                 return;
             }
 
@@ -145,9 +137,9 @@ function onCancelarCFDIClick(ids = null) {
             let fileLink = document.getElementById("downloadFileLink");
             fileLink.click();
 
-            showSuccess(dlgExportTitle, resp.mensaje);
+            showSuccess(btnCancelarTitle, resp.mensaje);
         }, function (error) {
-            showError(dlgExportTitle, error);
+            showError(btnCancelarTitle, error);
         },
         postOptions
     );
@@ -198,14 +190,6 @@ function initTable() {
                 checkbox: true,
                 align: "center",
                 valign: "middle"
-            },
-            {
-                title: "Id",
-                field: "id",
-                align: "center",
-                valign: "middle",
-                sortable: true,
-                width: "80px"
             },
             {
                 title: colSerieHeader,
@@ -275,42 +259,16 @@ function initTable() {
         ]
     })
     table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
-        if (buttonExport) { buttonExport.prop('disabled', !table.bootstrapTable('getSelections').length) }
-        if (buttonCancel) { buttonCancel.prop('disabled', !table.bootstrapTable('getSelections').length) }
+        if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
+        //if (buttonExport) { buttonExport.prop('disabled', !table.bootstrapTable('getSelections').length) }
+        //if (buttonCancel) { buttonCancel.prop('disabled', !table.bootstrapTable('getSelections').length) }
 
         // save your data, here just save the current page
         selections = getIdSelections()
         // push or splice the selections if you want to save all data selections
     });
-    if (buttonExport) { buttonExport.click(function () { onExportarCFDIClick(selections); }); }
-    if (buttonCancel) { buttonCancel.click(function () { onTimbrarCFDIClick(selections); }); }
-}
-
-//Función para cancelar una prefactura
-function onCancelarComprobante(idComprobante) {
-    let oParams = { idComprobante: idComprobante }
-
-    doAjax(
-        "/ERP/AdministradorDeComprobantes/Cancelar",
-        oParams,
-        function (resp) {
-            if (resp.tieneError) {
-                let summary = ``;
-                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
-                    resp.errores.forEach(function (error) {
-                        summary += `<li>${error}</li>`;
-                    });
-                }
-                showError(dlgTitle.innerHTML, `<ul>${summary}</ul>`);
-                return;
-            }
-
-            showSuccess(dlgTitle.innerHTML, resp.mensaje);
-        }, function (error) {
-            showError("Error", error);
-        },
-        postOptions
-    );
+    //if (buttonExport) { buttonExport.click(function () { onExportarCFDIClick(selections); }); }
+    //if (buttonCancel) { buttonCancel.click(function () { onTimbrarCFDIClick(selections); }); }
 }
 
 //Función para mostrar una prefactura como PDF
@@ -333,6 +291,7 @@ function onTipoChanged() {
         $("#inpFiltroEmisor").parent().parent().show();
     }
 }
+
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
     let oParams = {

@@ -188,7 +188,32 @@
 <!-- --------------------------- -->
 <!-- Sección tabla de resultados -->
 <div id="toolbar" class="col-xl-12">
-	@if (puedeTodo || puedeEditar)
+	@{
+		if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar)
+		{
+			<div class="dropdown">
+				<button id="btnAcciones" class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+					<span class="d-none d-sm-inline">@Localizer["ColActionsHeader"]</span>
+				</button>
+				<ul class="dropdown-menu">
+					@if (puedeTodo || puedeConsultar)
+					{
+						<li><a class="dropdown-item pdf" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]"><i class="bi bi-file-pdf"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]</a></li>
+						<li><a class="dropdown-item xml" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]"><i class="bi bi-file-code"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]</a></li>
+						<li><a class="dropdown-item excel" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]"><i class="bi bi-file-earmark-spreadsheet"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]</a></li>
+						<li><hr class="dropdown-divider"></li>
+						<li><a class="dropdown-item poliza" href="#" title="@Localizer["PolizaButtonTitle"]"><i class="bi bi-file-earmark-spreadsheet"></i> @Localizer["PolizaButtonTitle"]</a></li>
+					}
+
+					@if (puedeTodo || puedeEditar || puedeEliminar)
+					{
+						<li><a class="dropdown-item cancel" href="#" title="@Localizer["CancelButtonTitle"]"><i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]</a></li>
+					}
+				</ul>
+			</div>
+		}
+	}
+	@* @if (puedeTodo || puedeEditar)
 	{
 		<button id="btnCancelar" class="btn btn-primary" disabled>
 			<i class="bi bi-x-lg"></i> <span class="d-none d-sm-inline">@Localizer["CancelButtonTitle"]</span>
@@ -197,10 +222,10 @@
 	@if (puedeTodo || puedeConsultar)
 	{
 		<button id="btnExportar" class="btn btn-primary" disabled>
-			<i class="bi bi-file-earmark-spreadsheet"></i> <span class="d-none d-sm-inline">@Localizer["ExportButtonTitle"]</span>
+			<i class="bi bi-download"></i> <span class="d-none d-sm-inline">@Localizer["ExportCFDIDialogTitle"]</span>
 		</button>
 		<a hidden id="downloadFileLink" href="@Url.Page("AdministradorDeComprobantes", "DownloadExcel")" class="btn btn-primary"></a>
-	}
+	} *@
 </div>
 <table id="table" class="table-sm"
 	   data-unique-id="id"
@@ -253,10 +278,11 @@
 		var emptyInfo = '@Localizer["EmptyInfo"]';
 		var title = '@Localizer["Title"]';
 
-		var btnVerTitle = '@Localizer["SeeButtonTitle"]';
+		var btnCancelarTitle = '@Localizer["CancelButtonTitle"]';
+		var btnPolizaTitle = '@Localizer["PolizaButtonTitle"]';
 		var btnPDFTitle = '@Localizer["PDFButtonTitle"]';
-
-		var dlgVerTitle = '@Localizer["SeeDialogTitle"]';
+		var btnExcelTitle = '@Localizer["ExcelButtonTitle"]';
+		var btnXMLTitle = '@Localizer["XMLButtonTitle"]';
 		var dlgExportTitle = '@Localizer["ExportCFDIDialogTitle"]';
 
 		var colSerieHeader = '@Localizer["ColSerieHeader"]';
