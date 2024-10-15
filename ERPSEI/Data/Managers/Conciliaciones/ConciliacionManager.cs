@@ -88,7 +88,15 @@ namespace ERPSEI.Data.Managers.Conciliaciones
 
         public async Task<List<Conciliacion>> GetAllAsync()
         {
-            return await db.Conciliaciones.ToListAsync();
+            return await db.Conciliaciones.Include(e => e.Cliente).Include(e => e.AppUserC).Include(e => e.AppUserM).ToListAsync();
+        }
+
+        public async Task<List<Conciliacion>> GetAllAsync(int? id = null, string? cliente = null, string? usuarioCreador = null, string? usuarioModificador = null, DateTime? fechaElaboracionInicio = null, DateTime? fechaElaboracionFin = null, bool deshabilitado = false) 
+        {
+            return await db.Conciliaciones
+                    .Where(e => deshabilitado || e.Deshabilitado == false)
+                    .Include(e => e.Cliente)
+                    .ToListAsync();
         }
 
         public async Task<Conciliacion?> GetByIdAsync(int id)
