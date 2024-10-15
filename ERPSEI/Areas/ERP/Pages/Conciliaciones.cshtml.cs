@@ -195,9 +195,9 @@ namespace ERPSEI.Areas.ERP.Pages
                     $"\"Cliente\": \"{cons.Cliente?.Id}\", " +
                     $"\"EmpresaId\": \"{cons.EmpresaId}\", " +
                     $"\"UsuarioCreadorId\": \"{cons.UsuarioCreadorId}\", " +
-                    $"\"AppUserCId\": \"{cons.AppUserC}\", " +
-                    $"\"UsuarioModificadorId\": \"{cons.AppUserM?.Id}\", " +
-                    $"\"AppUserMId\": \"{cons.AppUserM}\", " +
+                    $"\"UsuarioCreador\": \"{cons.UsuarioCreador?.UserName}\", " +
+                    $"\"UsuarioModificadorId\": \"{cons.UsuarioModificadorId}\", " +
+                    $"\"UsuarioModificador\": \"{cons.UsuarioModificador?.UserName}\", " +
                     $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
                     "}");
             }
@@ -302,8 +302,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
             foreach (Conciliacion e in conciliaciones)
             {
-                usuarioCreador = e.AppUserC != null ? e.AppUserC.UserName : "";
-                usuarioModificador = e.AppUserM != null ? e.AppUserM.UserName : "";
+                usuarioCreador = e.UsuarioCreador != null ? e.UsuarioCreador.UserName : "";
+                usuarioModificador = e.UsuarioModificador != null ? e.UsuarioModificador.UserName : "";
                 fechaElaboracionInicio = e.Fecha == DateTime.MinValue ? null : e.Fecha;
                 fechaElaboracionFin = e.Fecha == DateTime.MinValue ? null : e.Fecha;
 
