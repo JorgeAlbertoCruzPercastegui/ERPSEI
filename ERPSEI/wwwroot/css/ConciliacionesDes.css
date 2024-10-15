@@ -1,0 +1,74 @@
+﻿/* Reducir el tamaño de todos los botones en la barra de herramientas */
+.bootstrap-table .toolbar .btn,
+.bootstrap-table .fixed-table-toolbar .btn-group .btn,
+.bootstrap-table .pagination .page-item .page-link,
+.bootstrap-table .dropdown-menu .dropdown-item,
+.bootstrap-table .search input.form-control,
+.bootstrap-table .search .btn {
+    height: 30px; /* Ajusta la altura de todos los botones */
+    font-size: 12px; /* Ajusta el tamaño de la fuente */
+    padding: 5px 10px; /* Ajusta el relleno de los botones */
+}
+
+/* Ajusta el tamaño de los menús desplegables de la barra de herramientas */
+.bootstrap-table .fixed-table-toolbar .btn-group .dropdown-menu {
+    font-size: 12px; /* Ajusta el tamaño de la fuente del menú desplegable */
+}
+
+/* Ajusta el tamaño de los campos de búsqueda */
+.bootstrap-table .search input.form-control {
+    height: 30px; /* Ajusta la altura del campo de búsqueda */
+    font-size: 12px; /* Ajusta el tamaño de la fuente en el campo de búsqueda */
+}
+
+/* Ajusta el tamaño del listado de opciones de la paginación */
+.bootstrap-table .pagination .page-item .page-link {
+    height: 30px; /* Ajusta la altura de los elementos de paginación */
+    font-size: 12px; /* Ajusta el tamaño de la fuente en los elementos de paginación */
+    padding: 5px 10px; /* Ajusta el relleno de los elementos de paginación */
+}
+
+/* Ajusta el tamaño del botón de búsqueda */
+.bootstrap-table .search .btn {
+    height: 30px; /* Ajusta la altura del botón de búsqueda */
+    font-size: 12px; /* Ajusta el tamaño de la fuente en el botón de búsqueda */
+    padding: 5px 10px; /* Ajusta el relleno del botón de búsqueda */
+}
+
+.rotate-clip {
+    transform: rotate(90deg);
+    display: inline-block;
+}
+
+.custom-select {
+    position: relative;
+    display: inline-block;
+    width: 100%; /* Asegúrate de que ocupe todo el ancho disponible */
+}
+
+    .custom-select select {
+        display: inline-block;
+        padding: 0.5em;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        appearance: none;
+        width: 130%; /* Ocupa todo el ancho del contenedor */
+        background: white;
+        height: 30px; /* Asegúrate de que la altura sea la misma que la del buscador */
+        font-size: 12px; /* Igualar el tamaño de la fuente con otros elementos */
+    }
+
+    .custom-select::after {
+        content: "\25BC"; /* Unicode para la flecha hacia abajo */
+        position: absolute;
+        top: 50%;
+        right: -30px;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .custom-select select:focus {
+        border-color: #007bff;
+        outline: none;
+    }

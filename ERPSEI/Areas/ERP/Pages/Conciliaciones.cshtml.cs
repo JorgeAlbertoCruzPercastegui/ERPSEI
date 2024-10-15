@@ -29,6 +29,11 @@ using Microsoft.AspNetCore.Identity;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Areas.Catalogos.Pages;
+using ERPSEI.Data.Entities.Reportes;
+using ERPSEI.Data.Managers.Reportes;
+using NPOI.SS.Formula.Functions;
+using Microsoft.DotNet.MSIdentity.Shared;
+using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -45,12 +50,13 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly IClienteManager clienteManager;
         private readonly IMovimientoBancarioManager movimientoBancarioManager;
         private readonly IEmpresaManager empresaManager;
+        private readonly IEmpleadoManager _empleadoManager;
         private readonly IStringLocalizer<ConciliacionesModel> localizer;
 
         private readonly Data.ApplicationDbContext db;
 
         [BindProperty]
-        public InputFiltroModel? InputFiltro { get; set; }
+        public InputFiltroModel InputFiltro { get; set; }
 
         public class InputFiltroModel
         {
@@ -69,13 +75,13 @@ namespace ERPSEI.Areas.ERP.Pages
             [Display(Name = "UsuarioCreadorField")]
             [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
             [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
-            public string? UsuarioCreador { get; set; } = string.Empty;
+            public string? UsuarioCreador { get; set; }
 
             [DataType(DataType.Text)]
             [Display(Name = "UsuarioModificadorField")]
             [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
             [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
-            public string? UsuarioModificador { get; set; } = string.Empty;
+            public string? UsuarioModificador { get; set; }
 
             [Display(Name = "FechaElaboracionInicioField")]
             [Required(ErrorMessage = "Required")]
@@ -147,6 +153,7 @@ namespace ERPSEI.Areas.ERP.Pages
             IClienteManager _clienteManager,
             IMovimientoBancarioManager _movimientoBancarioManager,
             IEmpresaManager _empresaManager,
+            IEmpleadoManager empleadoManager,
             IStringLocalizer<ConciliacionesModel> _localizer,
             Data.ApplicationDbContext _db
         )
@@ -161,14 +168,164 @@ namespace ERPSEI.Areas.ERP.Pages
             clienteManager = _clienteManager;
             movimientoBancarioManager = _movimientoBancarioManager;
             empresaManager = _empresaManager;
+            _empleadoManager = empleadoManager;
             localizer = _localizer;
             db = _db;
+
             BancoList = new Banco();
             InputFiltro = new InputFiltroModel();
+            InputFiltroModalDComprobantes = new InputFiltroModelDComprobantes();
+            InputFiltroModalAgregar = new InputFiltroModelAgregar();
             ConciliacionesList = new Conciliacion();
         }
 
         public async Task<JsonResult> OnGetConciliacionesList()
+        {
+            List<string> jsonConciliaciones = new List<string>();
+            List<Conciliacion> conciliaciones = await conciliacionManager.GetAllAsync();
+
+            foreach (Conciliacion cons in conciliaciones)
+            {
+                jsonConciliaciones.Add("{" +
+                    $"\"Id\": \"{cons.Id}\", " +
+                    $"\"Fecha\": \"{cons.Fecha}\", " +
+                    $"\"Descripcion\": \"{cons.Descripcion}\", " +
+                    $"\"Total\": \"{cons.Total}\", " +
+                    $"\"BancoId\": \"{cons.BancoId}\", " +
+                    $"\"Cliente\": \"{cons.Cliente?.Id}\", " +
+                    $"\"EmpresaId\": \"{cons.EmpresaId}\", " +
+                    $"\"UsuarioCreadorId\": \"{cons.UsuarioCreadorId}\", " +
+                    $"\"AppUserCId\": \"{cons.AppUserC}\", " +
+                    $"\"UsuarioModificadorId\": \"{cons.AppUserM?.Id}\", " +
+                    $"\"AppUserMId\": \"{cons.AppUserM}\", " +
+                    $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
+                    "}");
+            }
+
+            string jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
+            return new JsonResult(jsonResponse);
+        }
+
+        public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
+        {
+            ServerResponse resp = new(true, stringLocalizer["ConciliacionesDeletedUnsuccessfully"]);
+            try
+            {
+                await db.Database.BeginTransactionAsync();
+
+                List<Conciliacion> conciliaciones = await conciliacionManager.GetAllAsync();
+                foreach (string id in ids)
+                {
+                    if (!int.TryParse(id, out int sid)) { sid = 0; }
+                    Conciliacion? conciliacion = conciliaciones.Where(p => p.Id == sid).FirstOrDefault();
+                    List<Empleado> empleados = await _empleadoManager.GetAllAsync(null, null, null, null, null, sid, null, null, true);
+                    List<Empleado> empleadosActivosRelacionados = empleados.Where(e => e.Deshabilitado == 0).ToList();
+                    //Si existen empleados que tengan el registro asignado, se le notifica al usuario.
+                    if (empleadosActivosRelacionados.Count > 0)
+                    {
+                        List<string> names = [];
+                        foreach (Empleado e in empleadosActivosRelacionados) { names.Add($"<i>{e.Id} - {e.NombreCompleto}</i>"); }
+                        resp.TieneError = true;
+                        resp.Mensaje = $"{stringLocalizer["ConciliacionIsRelated"]}<br/><br/><i>{conciliacion?.Cliente}</i><br/><br/>{string.Join("<br/>", names)}";
+                        break;
+                    }
+                    else
+                    {
+                        //En caso de no haber empleados con el registro asignado, procede a eliminar referencias y registro.
+                        foreach (Empleado e in empleados)
+                        {
+                            e.AreaId = null;
+                            await _empleadoManager.UpdateAsync(e);
+                        }
+                        await conciliacionManager.DeleteByIdAsync(sid);
+
+                        resp.TieneError = false;
+                        resp.Mensaje = stringLocalizer["ConciliacionesDeletedSuccessfully"];
+                    }
+                }
+
+                if (resp.TieneError) { throw new Exception(resp.Mensaje); }
+
+                await db.Database.CommitTransactionAsync();
+            }
+            catch (Exception ex)
+            {
+                await db.Database.RollbackTransactionAsync();
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> OnPostFiltrarConciliaciones()
+        {
+            ServerResponse resp = new(true, stringLocalizer["ConciliacionesFiltradosUnsuccessfully"]);
+            try
+            {
+                resp.Datos = await GetConciliacionList(InputFiltro);
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["ConciliacionesFiltradosSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+        private async Task<string> GetConciliacionList(InputFiltroModel? filtro = null)
+        {
+            string usuarioCreador;
+            string usuarioModificador;
+            DateTime? fechaElaboracionInicio;
+            DateTime? fechaElaboracionFin;
+            string jsonResponse;
+
+            List<string> jsonConciliaciones = [];
+            List<Conciliacion> conciliaciones;
+
+            if (filtro != null)
+            {
+                conciliaciones = await conciliacionManager.GetAllAsync(
+                    filtro.Id,
+                    filtro.Cliente,
+                    filtro.UsuarioCreador,
+                    filtro.UsuarioModificador,
+                    filtro.FechaElaboracionInicio,
+                    filtro.FechaElaboracionFin
+                );
+            }
+            else
+            {
+                conciliaciones = await conciliacionManager.GetAllAsync();
+            }
+
+            foreach (Conciliacion e in conciliaciones)
+            {
+                usuarioCreador = e.AppUserC != null ? e.AppUserC.UserName : "";
+                usuarioModificador = e.AppUserM != null ? e.AppUserM.UserName : "";
+                fechaElaboracionInicio = e.Fecha == DateTime.MinValue ? null : e.Fecha;
+                fechaElaboracionFin = e.Fecha == DateTime.MinValue ? null : e.Fecha;
+
+                jsonConciliaciones.Add(
+                    "{" +
+                        $"\"id\": {e.Id}," +
+                        $"\"nombre\": \"{e.Cliente}\", " +
+                        $"\"nombrePreferido\": \"{usuarioCreador}\", " +
+                        $"\"apellidoPaterno\": \"{usuarioModificador}\", " +
+                        $"\"apellidoMaterno\": \"{fechaElaboracionInicio:dd/MM/yyyy}\", " +
+                        $"\"nombreCompleto\": \"{fechaElaboracionFin:dd/MM/yyyy}\" " +
+                "}"
+                );
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
+
+            return jsonResponse;
+
+            }
+
+        public async Task<JsonResult> OnGetMovimientosList()
         {
             ServerResponse resp = new(true, stringLocalizer["AsistenciaSavedUnsuccessfully"]);
 

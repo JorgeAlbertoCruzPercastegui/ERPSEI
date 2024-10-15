@@ -279,8 +279,14 @@
   <data name="TitleModalIzComprobantes" xml:space="preserve">
     <value>Comprobantes</value>
   </data>
+  <data name="TotalConciliados" xml:space="preserve">
+    <value>Conciliados:</value>
+  </data>
   <data name="TotalPlaceholder" xml:space="preserve">
     <value>Total</value>
+  </data>
+  <data name="TotalSinConciliar" xml:space="preserve">
+    <value>Sin conciliar:</value>
   </data>
   <data name="UsuarioCreadorField" xml:space="preserve">
     <value>Usuario que creó</value>

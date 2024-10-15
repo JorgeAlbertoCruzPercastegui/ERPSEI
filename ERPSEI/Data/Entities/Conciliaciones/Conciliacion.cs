@@ -19,9 +19,9 @@ namespace ERPSEI.Data.Entities.Conciliaciones
         public Cliente? Cliente { get; set; }
         public int EmpresaId { get; set; }
         public Empresa? Empresa { get; set; }
-        public int UsuarioCreadorId { get; set; }
+        public string? UsuarioCreadorId { get; set; } = string.Empty;
         public AppUser? AppUserC { get; set; }
-        public int UsuarioModificadorId { get; set; }
+        public string? UsuarioModificadorId { get; set; } = string.Empty;
         public AppUser? AppUserM { get; set; }
         public ICollection<ConciliacionDetalle>? DetallesConciliacion { get; set; } = [];
         public bool Deshabilitado { get; set; }

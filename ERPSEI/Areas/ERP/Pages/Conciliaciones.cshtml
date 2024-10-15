@@ -123,7 +123,7 @@
        data-side-pagination="client"
        data-response-handler="responseHandler"
        data-buttons-class="primary"
-       data-url="https://examples.wenzhixin.net.cn/examples/bootstrap_table/data">
+       data-url="/ERP/Conciliaciones/ConciliacionesList">
     <thead>
         <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
         </tr>
@@ -156,7 +156,7 @@
                         <div class="row">
                             <div class="col-sm-6 col-md-4 col-lg-4">
                                 <div class="form-floating mb-2">
-                                    <input id="inpConciliacionFecha" asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" type="date" class="form-control" placeholder="@Localizer["FechaElaboracionPlaceholder"]" />
+                                    <input id="inpConciliacionFecha" asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" type="datetime" class="form-control" placeholder="@Localizer["FechaElaboracionPlaceholder"]" />
                                     <label asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" class="form-label required"></label>
                                 </div>
                             </div>
@@ -209,7 +209,7 @@
                                            data-side-pagination="server"
                                            data-buttons-class="primary"
                                            data-show-search-button="true"
-                                           data-url="https://examples.wenzhixin.net.cn/examples/bootstrap_table/data">
+                                           data-url="">
                                         <thead>
                                             <tr>
                                                 <th data-field="id">Folio</th>
@@ -222,16 +222,27 @@
                                     </table>
 
                                     <br />
-                                    Sin conciliar:
+                                    @Localizer["TotalSinConciliar"]
                                     <br />
-                                    Conciliados:
+                                    @Localizer["TotalConciliados"]
                                 </div>
                                 
-
-                                <!-- Card del lado derecho -->
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalDerMovimientos"]</h4>
-                                    <table id="table"
+                                    <!-- Agregar combobox a la izquierda del buscador -->
+                                    <div class="toolbar">
+                                        <div class="form-group">
+                                            <div class="custom-select">
+                                                <select id="filterOptions" class="form-control">
+                                                    <option value="opcion1">Mostrar Todo</option>
+                                                    <option value="opcion2">Mostrar Conciliados</option>
+                                                    <option value="opcion3">Mostrar Pendientes</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <!-- Card del lado derecho -->
+                                    <table id="tableCardMovimientos"
                                            data-toggle="table"
                                            data-toolbar=".toolbar"
                                            data-search="true"
@@ -241,25 +252,25 @@
                                            data-pagination-v-align="top"
                                            data-show-fullscreen="true"
                                            data-show-search-clear-button="false"
-                                           data-side-pagination="server"
+                                           data-side-pagination="client"
                                            data-buttons-class="primary"
-                                           data-show-search-button="true"
-                                           data-url="https://examples.wenzhixin.net.cn/examples/bootstrap_table/data">
+                                           data-show-search-button="true">
                                         <thead>
                                             <tr>
-                                                <th data-field="id">Folio</th>
-                                                <th data-field="name">Fecha</th>
-                                                <th data-field="price">Desc.</th>
-                                                <th data-field="">Total</th>
+                                                <th data-field="Fecha">Fecha</th>
+                                                <th data-field="Descripción">Descripción</th>
+                                                <th data-field="Cargos">Cargos</th>
+                                                <th data-field="Abonos">Abonos</th>
                                                 <th data-field="actions" data-formatter="actionFormatter"></th>
                                             </tr>
                                         </thead>
                                     </table>
 
+
                                     <br />
-                                    Sin conciliar:
+                                    @Localizer["TotalSinConciliar"]
                                     <br />
-                                    Conciliados:
+                                    @Localizer["TotalConciliados"]
                                 </div>
                             </div>
                         </div>
@@ -275,11 +286,12 @@
                             <!-- Fila que contendrá dos columnas, una para cada tabla -->
                             <div class="row">
                                 <!-- Columna de la izquierda -->
+                                <br />
                                 <div class="col-md-6">
                                     <h4 class="text-center">Comprobantes</h4>
                                     <table id="tableRight"
                                            data-toggle="table"
-                                           data-search="true"
+                                           data-search="false"
                                            data-height="460"
                                            data-show-search-button="true"
                                            data-card-view="false"
@@ -289,6 +301,7 @@
                                             <tr>
                                                 <th data-field="id">Folio</th>
                                                 <th data-field="name">Fecha</th>
+                                                <th data-field="name">Banco</th>
                                                 <th data-field="price">Desc.</th>
                                                 <th data-field="price">Total</th>
                                             </tr>
@@ -453,53 +466,6 @@
     </div>
 </div>
 
-<!-- Estilos personalizados para ajustar todos los elementos al mismo tamaño -->
-<style>
-    /* Reducir el tamaño de todos los botones en la barra de herramientas */
-    .bootstrap-table .toolbar .btn,
-    .bootstrap-table .fixed-table-toolbar .btn-group .btn,
-    .bootstrap-table .pagination .page-item .page-link,
-    .bootstrap-table .dropdown-menu .dropdown-item,
-    .bootstrap-table .search input.form-control,
-    .bootstrap-table .search .btn {
-        height: 30px; /* Ajusta la altura de todos los botones */
-        font-size: 12px; /* Ajusta el tamaño de la fuente */
-        padding: 5px 10px; /* Ajusta el relleno de los botones */
-    }
-
-    /* Ajusta el tamaño de los menús desplegables de la barra de herramientas */
-    .bootstrap-table .fixed-table-toolbar .btn-group .dropdown-menu {
-        font-size: 12px; /* Ajusta el tamaño de la fuente del menú desplegable */
-    }
-
-    /* Ajusta el tamaño de los campos de búsqueda */
-    .bootstrap-table .search input.form-control {
-        height: 30px; /* Ajusta la altura del campo de búsqueda */
-        font-size: 12px; /* Ajusta el tamaño de la fuente en el campo de búsqueda */
-    }
-
-    /* Ajusta el tamaño del listado de opciones de la paginación */
-    .bootstrap-table .pagination .page-item .page-link {
-        height: 30px; /* Ajusta la altura de los elementos de paginación */
-        font-size: 12px; /* Ajusta el tamaño de la fuente en los elementos de paginación */
-        padding: 5px 10px; /* Ajusta el relleno de los elementos de paginación */
-    }
-
-    /* Ajusta el tamaño del botón de búsqueda */
-    .bootstrap-table .search .btn {
-        height: 30px; /* Ajusta la altura del botón de búsqueda */
-        font-size: 12px; /* Ajusta el tamaño de la fuente en el botón de búsqueda */
-        padding: 5px 10px; /* Ajusta el relleno del botón de búsqueda */
-    }
-
-    .rotate-clip {
-        transform: rotate(90deg);
-        display: inline-block;
-    }
-
-</style>
-
-
 @section Scripts {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
     <link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
@@ -516,11 +482,14 @@
     <script src="~/lib/bootstrap-table/extensions/export/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
 
 
 
 
     <link rel="stylesheet" href="~/css/Conciliaciones.css" />
+    <link rel="stylesheet" href="~/css/ConciliacionesDes.css" />
     <script src="~/../Areas/ERP/Pages/Conciliaciones.cshtml.js"></script>
 
     <script type="text/javascript">
