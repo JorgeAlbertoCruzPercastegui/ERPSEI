@@ -186,18 +186,39 @@ namespace ERPSEI.Areas.ERP.Pages
 
             foreach (Conciliacion cons in conciliaciones)
             {
+                string UsuarioCreador = "";
+                string UsuarioModificador = "";
+
+                if (cons.UsuarioCreador?.Empleado != null)
+                {
+                    UsuarioCreador = cons.UsuarioCreador.Empleado.NombreCompleto ?? string.Empty;
+                }
+                else 
+                {
+                    UsuarioCreador = cons.UsuarioCreador?.UserName ?? "-";
+                }
+
+                if (cons.UsuarioModificador?.Empleado != null)
+                {
+                    UsuarioModificador = cons.UsuarioModificador.Empleado.NombreCompleto ?? string.Empty;
+                }
+                else
+                {
+                    UsuarioModificador = cons.UsuarioModificador?.UserName ?? "-";
+                }
+
                 jsonConciliaciones.Add("{" +
                     $"\"Id\": \"{cons.Id}\", " +
                     $"\"Fecha\": \"{cons.Fecha}\", " +
                     $"\"Descripcion\": \"{cons.Descripcion}\", " +
                     $"\"Total\": \"{cons.Total}\", " +
                     $"\"BancoId\": \"{cons.BancoId}\", " +
-                    $"\"Cliente\": \"{cons.Cliente?.Id}\", " +
+                    $"\"Cliente\": \"{cons.Cliente?.RazonSocial}\", " +
                     $"\"EmpresaId\": \"{cons.EmpresaId}\", " +
                     $"\"UsuarioCreadorId\": \"{cons.UsuarioCreadorId}\", " +
-                    $"\"UsuarioCreador\": \"{cons.UsuarioCreador?.UserName}\", " +
+                    $"\"UsuarioCreador\": \"{UsuarioCreador}\", " +
                     $"\"UsuarioModificadorId\": \"{cons.UsuarioModificadorId}\", " +
-                    $"\"UsuarioModificador\": \"{cons.UsuarioModificador?.UserName}\", " +
+                    $"\"UsuarioModificador\": \"{UsuarioModificador}\", " +
                     $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
                     "}");
             }
