@@ -34,6 +34,7 @@ using ERPSEI.Data.Managers.Reportes;
 using NPOI.SS.Formula.Functions;
 using Microsoft.DotNet.MSIdentity.Shared;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
+using ERPSEI.Data.Managers.Clientes;
 
 namespace ERPSEI.Areas.ERP.Pages
 {

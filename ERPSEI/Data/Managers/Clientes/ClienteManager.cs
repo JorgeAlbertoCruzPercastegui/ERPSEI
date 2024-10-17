@@ -1,7 +1,7 @@
 ﻿using ERPSEI.Data.Entities.Clientes;
 using Microsoft.EntityFrameworkCore;
 
-namespace ERPSEI.Data.Managers.Conciliaciones
+namespace ERPSEI.Data.Managers.Clientes
 {
     public class ClienteManager(ApplicationDbContext db) : IClienteManager
     {

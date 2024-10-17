@@ -2,7 +2,7 @@
 using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Data.Entities.Empresas;
 
-namespace ERPSEI.Data.Managers.Conciliaciones
+namespace ERPSEI.Data.Managers.Clientes
 {
     public interface IClienteManager : IRCatalogoManager<Cliente>
     {

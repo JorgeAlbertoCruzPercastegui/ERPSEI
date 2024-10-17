@@ -24,6 +24,7 @@ using Microsoft.Extensions.Localization;
 using System.Globalization;
 using System.Reflection;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
+using ERPSEI.Data.Managers.Clientes;
 
 namespace ERPSEI
 {
