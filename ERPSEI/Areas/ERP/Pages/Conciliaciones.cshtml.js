@@ -24,12 +24,10 @@ document.addEventListener("DOMContentLoaded", function (event) {
         onCerrarClick();
     });
     initTable();
-    // Asignar el evento de clic al botón de importación
-    //document.getElementById('fileUpload').addEventListener('change', onImportarMovimientosBancariosClick);
 
     autoCompletar("#inpConciliacionClienteId");
 
-    jQuery.validator.setDefaults({
+    /*jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
             $(element).addClass("is-invalid").removeClass("is-valid");
         },
@@ -38,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
                 $(element).addClass("is-valid").removeClass("is-invalid");
             }
         }
-    });
+    });*/
 });
 
 async function onImportarMovimientosBancariosClick(event) {
@@ -68,23 +66,49 @@ function getIdSelections() {
     })
 }
 
-//Función para procesar la respuesta del servidor al consultar datos
-function responseHandler(res) {
+/*function responseHandler(res) {
     if (typeof res == "string" && res.length >= 1) {
         res = JSON.parse(res);
     }
     $.each(res, function (i, row) {
-        row.state = $.inArray(row.id, selections) !== -1
+        row.state = $.inArray(row.id, selections) !== -1;
     });
 
     return res
+}*/
+
+function responseHandler(res) {
+    if (typeof res == "string" && res.length >= 1) {
+        res = JSON.parse(res);
+    }
+
+    // Verifica si res es un array o si es un objeto con un array dentro
+    if (!Array.isArray(res) && res.length === undefined && res[0] !== undefined) {
+        res = res[0]; // O el nombre de la propiedad si el array está anidado
+    }
+
+    $.each(res, function (i, row) {
+        // Verifica que 'row' y 'row.Id' no sean null o undefined
+        if (row && row.id != null) {
+            row.state = $.inArray(row.id, selections) !== -1;
+        } else {
+            console.warn("Elemento sin Id encontrado:", row);
+        }
+    });
+
+    return res;
 }
 
-//Función para añadir botones a la cinta de botones de la tabla
-function additionalButtons() {
-    return {
-        // Aquí puedes agregar otros botones si los tienes, pero sin el botón de importar
-    };
+
+
+//Función para dar formato a los campos booleanos
+function booleanFormatter(value, row, index) {
+    if ((row.puedeFacturar || "False") == "True") {
+        return `<i class="bi bi-check-circle-fill text-success"></i>`;
+    }
+    else {
+        return `<i class="bi bi-x-circle-fill text-danger"></i>`;
+    }
 }
 
 //Función para dar formato a los iconos de operación de los registros
@@ -122,7 +146,6 @@ function initTable() {
         exportDataType: 'all',
         exportTypes: ['excel'],
         toolbar: '#toolbar',
-        buttons: additionalButtons,
         columns: [
             {
                 field: "state",
@@ -132,7 +155,7 @@ function initTable() {
             },
             {
                 title: colIdHeader,
-                field: "Id",
+                field: "id",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -227,11 +250,10 @@ function initTable() {
 
                     showSuccess(dlgDeleteTitle, resp.mensaje);
                 }, function (error) {
-                    showError(dlgDeleteTitle, error);
+                    //showError(dlgDeleteTitle, error);
                 },
                 postOptions
             );
-
         });
     })
 }
@@ -305,13 +327,13 @@ function initConciliacionDialog(action, row) {
     }
 
     // Asignar valores a los campos del diálogo usando los valores de la entidad Conciliacion
-    idField.value = row.Id || "";
+    idField.value = row.id || "";
     fechaField.value = fechaFormateada || "";
     clienteIdField.value = row.Cliente || "";
     descripcionField.value = row.Descripcion || "";
 
     // Mostrar el modal
-    dlgConciliacionModal.show(); 
+    dlgConciliacionModal.show();
 }
 function onGuardarConciliacionClick() {
     // Ejecuta la validación del formulario con el id "theForm"
@@ -377,13 +399,13 @@ function onGuardarConciliacionClick() {
 //Funciones para el cardview del lado izquierdo del principal modal
 function actionFormatter(value, row, index) {
     return `
-        <button class="btn btn-primary btn-sm" onclick="eliminarRegistro(${row.id})">
+        <button class="btn btn-primary btn-sm" onclick="eliminarRegistro(${row.Id})">
             <i class="bi bi-paperclip rotate-clip"></i> Conciliar/Reconciliar
         </button>
     `;
 }
-function eliminarRegistro(id) {
-    if (confirm('¿Estás seguro de eliminar el registro con ID: ' + id + '?')) {
+function eliminarRegistro(Id) {
+    if (confirm('¿Estás seguro de eliminar el registro con ID: ' + Id + '?')) {
         alert('Registro eliminado con éxito.');
         // Lógica para eliminar el registro
     }
@@ -401,41 +423,41 @@ function onBuscarClick() {
     let inpFechaElaboracionFin = document.getElementById("inpFiltroFechaElaboracionFin");
 
     let oParams = {
-        Id : inpId.value,
-        Cliente: inpCliente.value,
-        UsuarioCreador: inpUsuarioCreador.value,
-        UsuarioModificador: inpUsuarioModificador.value,
-        FechaElaboracionInicio: inpFechaElaboracionInicio.value,
-        FechaElaboracionFin: inpFechaElaboracionFin.value
+        id: inpId.value ? parseInt(inpId.value) || null : null,
+        cliente: inpCliente.value || null,
+        usuarioCreador: inpUsuarioCreador.value || null,
+        usuarioModificador: inpUsuarioModificador.value || null,
+        fechaElaboracionInicio: inpFechaElaboracionInicio.value || null,
+        fechaElaboracionFin: inpFechaElaboracionFin.value || null
     };
-
-    //Resetea el valor de los filtros.
-    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
-    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
 
     doAjax(
         "/ERP/Conciliaciones/FiltrarConciliaciones",
         oParams,
         function (resp) {
             if (resp.tieneError) {
-                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
-                    let summary = ``;
-                    resp.errores.forEach(function (error) {
-                        summary += `<li>${error}</li>`;
-                    });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    summaryContainer.innerHTML = `<ul>${summary}</ul>`;
                 }
                 showError(btnBuscar.innerHTML, resp.mensaje);
                 return;
             }
 
             table.bootstrapTable('load', responseHandler(resp.datos));
-        }, function (error) {
+        },
+        function (error) {
             showError("Error", error);
         },
         postOptions
     );
+
+    // Resetea el valor de los filtros después de la solicitud.
+    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
+    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
 }
+
+
 
 //Método para importar la información del excel y pdf
 function onImportarMovimientosBancariosClick() {
@@ -569,9 +591,9 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                 else {
                     alert(`Banco detectado: ${bancoDetectado}, pero seleccionaste: ${selectedBank}. \nFavor de seleccionar el correcto.`);
                 }
-               
+
                 // Aquí puedes continuar con el procesamiento del PDF si se detecta el banco.
-                console.log('Log: '+extractedText); // Mostrar el texto extraído para depuración
+                console.log('Log: ' + extractedText); // Mostrar el texto extraído para depuración
             });
         });
     };
@@ -616,7 +638,6 @@ function dividirConceptoPorPalabrasClave(concepto) {
 
     return concepto;
 }
-
 // Función para exportar texto extraído a un archivo .txt
 function exportToTxt(extractedText) {
     if (!extractedText || extractedText.trim() === '') {
@@ -729,7 +750,9 @@ function exportToTxt(extractedText) {
     });
 
     // Unir todas las líneas procesadas en una sola cadena con doble salto de línea
-    const outputText = processedData.join('\n');
+    const outputText = processedData
+        .map((line, idx) => `${idx + 1}.- ${line}`) // Añadir número secuencial
+        .join('\n');
 
     // Crear un Blob para el archivo de texto
     const blob = new Blob([outputText], { type: 'text/plain' });
@@ -835,8 +858,7 @@ function exportarToExcel(extractedText) {
                 lines[i + 1].includes("DIA CONCEPTO CARGOS ABONOS SALDO") ||
                 /del\s*\d{2}\s*al\s*\d{2}\s*de\s*\w+\s*\d{4}/.test(lines[i + 1]) ||
                 /Corte\s*al\s*Día\s*\d{2}\s*-\s*\d{2}\s*Días/.test(lines[i + 1])
-            )
-            {
+            ) {
                 i++; // Saltar la línea no válida
                 continue;
             }

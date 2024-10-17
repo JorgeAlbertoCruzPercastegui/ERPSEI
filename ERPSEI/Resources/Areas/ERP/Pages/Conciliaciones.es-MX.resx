@@ -162,6 +162,12 @@
   <data name="ColTotalHeader" xml:space="preserve">
     <value>Total</value>
   </data>
+  <data name="ConciliacionesDeletedSuccessfully" xml:space="preserve">
+    <value>Conciliación eliminada exitosamente</value>
+  </data>
+  <data name="ConciliacionesDeletedUnsuccessfully" xml:space="preserve">
+    <value>Error al eliminar la conciliación</value>
+  </data>
   <data name="ConsultaDeComprobantesPlaceholder" xml:space="preserve">
     <value>Consulta de Comprobantes</value>
   </data>

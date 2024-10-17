@@ -34,6 +34,8 @@ using ERPSEI.Data.Managers.Reportes;
 using NPOI.SS.Formula.Functions;
 using Microsoft.DotNet.MSIdentity.Shared;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
+using ERPSEI.Data.Entities.SAT;
+using ERPSEI.Data.Managers.SAT;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -61,9 +63,9 @@ namespace ERPSEI.Areas.ERP.Pages
         public class InputFiltroModel
         {
             [Display(Name = "IdField")]
-            [StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
-            [RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
-            public int Id { get; set; }
+            //[StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            //[RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
+            public int? Id { get; set; }
 
             [DataType(DataType.Text)]
             [Display(Name = "ClienteField")]
@@ -99,9 +101,9 @@ namespace ERPSEI.Areas.ERP.Pages
         public class InputFiltroModelAgregar
         {
             [Display(Name = "IdField")]
-            [StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
-            [RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
-            public int Id { get; set; }
+            //[StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            //[RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
+            public int? Id { get; set; }
 
             [Display(Name = "FechaElaboracionInicioField")]
             [Required(ErrorMessage = "Required")]
@@ -139,7 +141,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
         [BindProperty]
         public Conciliacion? ConciliacionesList { get; set; }
-        public Banco? BancoList { get; set; }
+        public Banco BancoList { get; set; }
 
         public ConciliacionesModel(
             IStringLocalizer<ConciliacionesModel> _stringLocalizer,
@@ -208,7 +210,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 }
 
                 jsonConciliaciones.Add("{" +
-                    $"\"Id\": \"{cons.Id}\", " +
+                    $"\"id\": \"{cons.Id}\", " +
                     $"\"Fecha\": \"{cons.Fecha}\", " +
                     $"\"Descripcion\": \"{cons.Descripcion}\", " +
                     $"\"Total\": \"{cons.Total}\", " +
@@ -234,117 +236,125 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 await db.Database.BeginTransactionAsync();
 
-                List<Conciliacion> conciliaciones = await conciliacionManager.GetAllAsync();
+                // Obtener las conciliaciones que coinciden con los ids proporcionados
                 foreach (string id in ids)
                 {
                     if (!int.TryParse(id, out int sid)) { sid = 0; }
-                    Conciliacion? conciliacion = conciliaciones.Where(p => p.Id == sid).FirstOrDefault();
-                    List<Empleado> empleados = await _empleadoManager.GetAllAsync(null, null, null, null, null, sid, null, null, true);
-                    List<Empleado> empleadosActivosRelacionados = empleados.Where(e => e.Deshabilitado == 0).ToList();
-                    //Si existen empleados que tengan el registro asignado, se le notifica al usuario.
-                    if (empleadosActivosRelacionados.Count > 0)
+                    Conciliacion? conciliacion = await conciliacionManager.GetByIdAsync(sid);
+
+                    // Verificar si la conciliación es nula
+                    if (conciliacion == null)
                     {
-                        List<string> names = [];
-                        foreach (Empleado e in empleadosActivosRelacionados) { names.Add($"<i>{e.Id} - {e.NombreCompleto}</i>"); }
                         resp.TieneError = true;
-                        resp.Mensaje = $"{stringLocalizer["ConciliacionIsRelated"]}<br/><br/><i>{conciliacion?.Cliente}</i><br/><br/>{string.Join("<br/>", names)}";
+                        resp.Mensaje = $"Conciliación con ID {sid} no encontrada.";
                         break;
                     }
-                    else
-                    {
-                        //En caso de no haber empleados con el registro asignado, procede a eliminar referencias y registro.
-                        foreach (Empleado e in empleados)
-                        {
-                            e.AreaId = null;
-                            await _empleadoManager.UpdateAsync(e);
-                        }
-                        await conciliacionManager.DeleteByIdAsync(sid);
 
-                        resp.TieneError = false;
-                        resp.Mensaje = stringLocalizer["ConciliacionesDeletedSuccessfully"];
-                    }
+                    // Marcar la conciliación como deshabilitada
+                    conciliacion.Deshabilitado = true;
+                    await conciliacionManager.UpdateAsync(conciliacion);
                 }
 
-                if (resp.TieneError) { throw new Exception(resp.Mensaje); }
+                // Si hubo algún error, lanzar excepción para revertir la transacción
+                //if (resp.TieneError) { throw new Exception(resp.Mensaje); }
 
                 await db.Database.CommitTransactionAsync();
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["ConciliacionesDeletedSuccessfully"];
             }
             catch (Exception ex)
             {
                 await db.Database.RollbackTransactionAsync();
                 logger.LogError(ex.Message);
+                resp.TieneError = true;
+                resp.Mensaje = "Ocurrió un error al procesar la solicitud.";
             }
 
             return new JsonResult(resp);
         }
 
+
         public async Task<JsonResult> OnPostFiltrarConciliaciones()
         {
+            // Inicializar la respuesta con mensaje de error por defecto
             ServerResponse resp = new(true, stringLocalizer["ConciliacionesFiltradosUnsuccessfully"]);
+
             try
             {
-                resp.Datos = await GetConciliacionList(InputFiltro);
+                resp.Datos = await OnGetConciliacionList(InputFiltro);
                 resp.TieneError = false;
                 resp.Mensaje = stringLocalizer["ConciliacionesFiltradosSuccessfully"];
             }
             catch (Exception ex)
             {
+                // Registrar el error en el log
                 logger.LogError(ex.Message);
             }
 
             return new JsonResult(resp);
         }
-        private async Task<string> GetConciliacionList(InputFiltroModel? filtro = null)
+
+        public async Task<JsonResult> OnGetConciliacionList(InputFiltroModel? filtro = null)
         {
-            string usuarioCreador;
-            string usuarioModificador;
-            DateTime? fechaElaboracionInicio;
-            DateTime? fechaElaboracionFin;
-            string jsonResponse;
-
-            List<string> jsonConciliaciones = [];
-            List<Conciliacion> conciliaciones;
-
-            if (filtro != null)
+            try
             {
-                conciliaciones = await conciliacionManager.GetAllAsync(
-                    filtro.Id,
-                    filtro.Cliente,
-                    filtro.UsuarioCreador,
-                    filtro.UsuarioModificador,
-                    filtro.FechaElaboracionInicio,
-                    filtro.FechaElaboracionFin
-                );
+                List<object> jsonConciliaciones = new List<object>();
+                List<Conciliacion> conciliaciones;
+
+                // Aplicar los filtros de InputFiltro a la llamada a GetAllAsync
+                if (filtro != null)
+                {
+                    conciliaciones = await conciliacionManager.GetAllAsync(
+                        filtro.Id,
+                        filtro.Cliente,
+                        filtro.UsuarioCreador,
+                        filtro.UsuarioModificador,
+                        filtro.FechaElaboracionInicio,
+                        filtro.FechaElaboracionFin
+                    );
+                }
+                else
+                {
+                    // Si no hay filtros, obtener todos los registros
+                    conciliaciones = await conciliacionManager.GetAllAsync();
+                }
+
+                // Construir el JSON con objetos anónimos
+                foreach (Conciliacion cons in conciliaciones)
+                {
+                    string UsuarioCreador = cons.UsuarioCreador?.Empleado?.NombreCompleto ?? cons.UsuarioCreador?.UserName ?? "-";
+                    string UsuarioModificador = cons.UsuarioModificador?.Empleado?.NombreCompleto ?? cons.UsuarioModificador?.UserName ?? "-";
+
+                    jsonConciliaciones.Add(new
+                    {
+                        id = cons.Id,
+                        Fecha = cons.Fecha,
+                        Descripcion = cons.Descripcion,
+                        Total = cons.Total,
+                        BancoId = cons.BancoId,
+                        Cliente = cons.Cliente?.RazonSocial,
+                        EmpresaId = cons.EmpresaId,
+                        UsuarioCreadorId = cons.UsuarioCreadorId,
+                        UsuarioCreador = UsuarioCreador,
+                        UsuarioModificadorId = cons.UsuarioModificadorId,
+                        UsuarioModificador = UsuarioModificador,
+                        Deshabilitado = cons.Deshabilitado
+                    });
+                }
+
+                // Retornar el JSON sin errores y con Datos como un array de objetos
+                return new JsonResult(new { TieneError = false, Mensaje = "Operación exitosa", Datos = jsonConciliaciones });
             }
-            else
+            catch (Exception ex)
             {
-                conciliaciones = await conciliacionManager.GetAllAsync();
+                // Registrar el error
+                logger.LogError(ex, "Error al obtener la lista de conciliaciones.");
+
+                // Retornar un mensaje de error
+                return new JsonResult(new { TieneError = true, Mensaje = "Ocurrió un error al procesar la solicitud.", Datos = new List<object>() });
             }
+        }
 
-            foreach (Conciliacion e in conciliaciones)
-            {
-                usuarioCreador = e.UsuarioCreador != null ? e.UsuarioCreador.UserName : "";
-                usuarioModificador = e.UsuarioModificador != null ? e.UsuarioModificador.UserName : "";
-                fechaElaboracionInicio = e.Fecha == DateTime.MinValue ? null : e.Fecha;
-                fechaElaboracionFin = e.Fecha == DateTime.MinValue ? null : e.Fecha;
-
-                jsonConciliaciones.Add(
-                    "{" +
-                        $"\"id\": {e.Id}," +
-                        $"\"nombre\": \"{e.Cliente}\", " +
-                        $"\"nombrePreferido\": \"{usuarioCreador}\", " +
-                        $"\"apellidoPaterno\": \"{usuarioModificador}\", " +
-                        $"\"apellidoMaterno\": \"{fechaElaboracionInicio:dd/MM/yyyy}\", " +
-                        $"\"nombreCompleto\": \"{fechaElaboracionFin:dd/MM/yyyy}\" " +
-                "}"
-                );
-            }
-
-            jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
-
-            return jsonResponse;
-
-            }
 
         public async Task<JsonResult> OnGetMovimientosList()
         {
@@ -379,24 +389,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
-
-        public async Task<JsonResult> OnPostDeleteConciliacion(string[] ids)
-        {
-            ServerResponse resp = new(true, stringLocalizer["RolDeletedUnsuccessfully"]);
-
-            try
-            {
-                // Lógica para eliminar la conciliación
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex.Message);
-                await db.Database.RollbackTransactionAsync();
-            }
-
-            return new JsonResult(resp);
-        }
-
         public ActionResult OnGetDownloadPlantilla()
         {
             return File("/templates/PlantillaMovimientosBancarios.xlsx", MediaTypeNames.Application.Octet, "PlantillaMovimientosBancarios.xlsx");
