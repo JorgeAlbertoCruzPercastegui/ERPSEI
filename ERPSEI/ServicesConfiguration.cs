@@ -25,6 +25,7 @@ using System.Globalization;
 using System.Reflection;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
 using ERPSEI.Data.Managers.Clientes;
+using ERPSEI.Data.Managers.Cuentas;
 
 namespace ERPSEI
 {
@@ -80,6 +81,8 @@ namespace ERPSEI
 			ConfigureDIAsistencias(_builder);
 
             ConfigureDIConciliaciones(_builder);
+
+            ConfigureDICuentasContables(_builder);
         }
         private static void ConfigureDIAsistencias(WebApplicationBuilder _builder) 
         {
@@ -99,8 +102,13 @@ namespace ERPSEI
             _builder.Services.AddScoped<IClienteManager, ClienteManager>();
             _builder.Services.AddScoped<IMovimientoBancarioManager, MovimientoBancarioManager>();
         }
+		private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)
+		{
+			//Cuentas Contables
+			_builder.Services.AddScoped<ICuentaContableManager, CuentaContableManager>();
+		}
 
-        private static void ConfigureDIFacturacion(WebApplicationBuilder _builder)
+		private static void ConfigureDIFacturacion(WebApplicationBuilder _builder)
         {
             //Comprobantes
             _builder.Services.AddScoped<IComprobanteManager, ComprobanteManager>();
