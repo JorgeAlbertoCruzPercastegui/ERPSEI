@@ -137,5 +137,8 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
     
 		[XmlIgnore]
 		public bool? Conciliado { get; set; }
+
+		[XmlIgnore]
+		public bool? Cancelado { get; set; }
 	}
 }
