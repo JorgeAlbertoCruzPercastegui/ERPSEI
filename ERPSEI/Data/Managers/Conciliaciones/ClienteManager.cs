@@ -99,6 +99,7 @@ namespace ERPSEI.Data.Managers.Conciliaciones
         {
             return await db.Clientes.Where(a => a.RazonSocial.ToLower() == name.ToLower() || a.RFC.ToLower() == name.ToLower()).FirstOrDefaultAsync();
         }
+
         /*public async Task<List<Cliente>> SearchClientes(string texto)
         {
             List<Cliente> clientes = await db.Clientes
@@ -113,6 +114,11 @@ namespace ERPSEI.Data.Managers.Conciliaciones
                 .ToListAsync();
 
             return clientes;
+        }
+
+        Task<List<ClienteBuscado>> IClienteManager.SearchClientes(string texto)
+        {
+            throw new NotImplementedException();
         }*/
     }
 }

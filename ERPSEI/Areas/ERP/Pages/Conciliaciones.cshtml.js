@@ -23,11 +23,19 @@ document.addEventListener("DOMContentLoaded", function (event) {
     dlgConciliacion.addEventListener('hidden.bs.modal', function (event) {
         onCerrarClick();
     });
+
+    dlgConciliacion.addEventListener('shown.bs.modal', function (event) {
+        autoCompletar("#inpConciliacionClienteId");
+    });
+
     initTable();
 
-    autoCompletar("#inpConciliacionClienteId");
+    let btnBuscar = document.getElementById("btnBuscar");
+    if (btnBuscar) { btnBuscar.click(); }
 
-    /*jQuery.validator.setDefaults({
+    //autoCompletar("#inpConciliacionClienteId");
+
+    jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
             $(element).addClass("is-invalid").removeClass("is-valid");
         },
@@ -36,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
                 $(element).addClass("is-valid").removeClass("is-invalid");
             }
         }
-    });*/
+    });
 });
 
 async function onImportarMovimientosBancariosClick(event) {

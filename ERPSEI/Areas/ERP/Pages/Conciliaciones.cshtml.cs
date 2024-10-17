@@ -102,7 +102,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             [Display(Name = "IdField")]
             //[StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
-            //[RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
+            [RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
             public int? Id { get; set; }
 
             [Display(Name = "FechaElaboracionInicioField")]
@@ -399,16 +399,16 @@ namespace ERPSEI.Areas.ERP.Pages
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
             try
             {
-                if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
-                {
+                /*if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+                {*/
                     resp.Datos = await GetClientesEmpresasSuggestion(texto);
                     resp.TieneError = false;
                     resp.Mensaje = localizer["ConsultadoSuccessfully"];
-                }
+                /*}
                 else
                 {
                     resp.Mensaje = localizer["AccesoDenegado"];
-                }
+                }*/
             }
             catch (Exception ex)
             {
@@ -441,6 +441,30 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return jsonResponse;
         }
+        /*private async Task<string> GetClientesEmpresas2Suggestion(string texto)
+        {
+            string jsonResponse;
+            List<string> jsonClientes = [];
+
+            List<ClienteBuscado> clientes = await clienteManager.SearchClientes(texto);
+
+            if (clientes != null)
+            {
+                foreach (ClienteBuscado e in clientes)
+                {
+                    string desc = $"{e.NombreCliente} - {e.RazonSocial}";
+                    jsonClientes.Add($"{{" +
+                                        $"\"id\": \"{e.Id}\", " +
+                                        $"\"value\": \"{desc}\", " +
+                                        $"\"label\": \"{desc}\"" +
+                                    $"}}");
+                }
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonClientes)}]";
+
+            return jsonResponse;
+        }*/
 
     }
 }
