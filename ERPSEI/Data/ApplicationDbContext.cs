@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ERPSEI.Data.Entities.SAT.Nomina12;
 using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
+using ERPSEI.Data.Entities.Cuentas;
 
 namespace ERPSEI.Data
 {
@@ -113,6 +114,11 @@ namespace ERPSEI.Data
         public DbSet<ConciliacionDetalleComprobante> ConciliacionesDetallesComprobantes { get; set; }
         public DbSet<ConciliacionDetalleMovimiento> ConciliacionesDetallesMovimientos { get; set; }
 
+		//Cuentas contables
+		public DbSet<CuentaContable> CuentasContables { get; set; }
+		public DbSet<CuentaContableTipo> CuentaContableTipos { get; set; }
+		public DbSet<CuentaContableSubtipo> CuentaContableSubtipos { get; set; }
+
 
         //Catálogos no administrables Usuarios
         public DbSet<AccesoModulo> AccesosModulos { get; set; }
@@ -145,6 +151,9 @@ namespace ERPSEI.Data
 
 			//Conciliaciones
             BuildConciliaciones(modelBuilder);
+
+			//Cuentas
+			BuildCuentasContables(modelBuilder);
         }
 
 		private static void BuildAsistencias(ModelBuilder b) 
@@ -497,6 +506,27 @@ namespace ERPSEI.Data
 					new Modulo() { Id = 18, Nombre = "Activos Fijos", NombreNormalizado = "activosfijos", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 19, Nombre = "Conciliaciones", NombreNormalizado = "conciliaciones", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 20, Nombre = "Administrador de Comprobantes", NombreNormalizado = "administradordecomprobantes", Deshabilitado = 0, Categoria = "erp" }
+				);
+		}
+
+		private static void BuildCuentasContables(ModelBuilder b)
+		{
+			b.Entity<CuentaContable>().HasOne(c => c.Empresa).WithMany(e => e.CuentasContables).OnDelete(DeleteBehavior.NoAction);
+			b.Entity<CuentaContable>().HasOne(c => c.Tipo).WithMany(t => t.CuentasContables).OnDelete(DeleteBehavior.NoAction);
+			b.Entity<CuentaContable>().HasOne(c => c.Subtipo).WithMany(t => t.CuentasContables).OnDelete(DeleteBehavior.NoAction);
+
+			b.Entity<CuentaContableTipo>()
+				.HasData(
+					new CuentaContableTipo() { Id = 1, Clave = "E", Descripcion = "Egreso" },
+					new CuentaContableTipo() { Id = 2, Clave = "I", Descripcion = "Ingreso" }
+				);
+
+			b.Entity<CuentaContableSubtipo>()
+				.HasData(
+					new CuentaContableSubtipo() { Id = 1, Clave = "C", Descripcion = "Cliente" },
+					new CuentaContableSubtipo() { Id = 2, Clave = "G", Descripcion = "Gasto" },
+					new CuentaContableSubtipo() { Id = 3, Clave = "I", Descripcion = "IVA" },
+					new CuentaContableSubtipo() { Id = 4, Clave = "P", Descripcion = "Proveedor" }
 				);
 		}
 	}

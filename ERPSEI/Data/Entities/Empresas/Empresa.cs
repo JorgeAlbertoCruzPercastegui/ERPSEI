@@ -2,6 +2,7 @@
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.Conciliaciones;
 using System.ComponentModel.DataAnnotations.Schema;
+using ERPSEI.Data.Entities.Cuentas;
 
 namespace ERPSEI.Data.Entities.Empresas
 {
@@ -63,7 +64,8 @@ namespace ERPSEI.Data.Entities.Empresas
 		public ICollection<Prefactura>? PrefacturasEmitidas { get; set; }
 		public ICollection<Prefactura>? PrefacturasRecibidas { get; set; }
         public ICollection<Conciliacion>? Conciliaciones { get; set; }
+		public ICollection<CuentaContable>? CuentasContables { get; set; } = [];
 
-        public string? PFESAT { get; set; }
+		public string? PFESAT { get; set; }
 	}
 }
