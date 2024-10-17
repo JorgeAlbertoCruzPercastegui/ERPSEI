@@ -438,4 +438,19 @@
   <data name="UUIDField" xml:space="preserve">
     <value>UUID</value>
   </data>
+  <data name="EmisorField" xml:space="preserve">
+    <value>Emitter</value>
+  </data>
+  <data name="ReceptorField" xml:space="preserve">
+    <value>Receiver</value>
+  </data>
+  <data name="AnioField" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="MesField" xml:space="preserve">
+    <value>Month</value>
+  </data>
+  <data name="EmpresaField" xml:space="preserve">
+    <value>Company</value>
+  </data>
 </root>

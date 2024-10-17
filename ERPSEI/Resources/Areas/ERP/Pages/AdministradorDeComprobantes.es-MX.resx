@@ -225,9 +225,6 @@
   <data name="PDFButtonTitle" xml:space="preserve">
     <value>PDF</value>
   </data>
-  <data name="PolizaButtonTitle" xml:space="preserve">
-    <value>Generar Póliza</value>
-  </data>
   <data name="RazonSocial" xml:space="preserve">
     <value>Razón Social</value>
   </data>
@@ -267,7 +264,43 @@
   <data name="Validar" xml:space="preserve">
     <value>Validar</value>
   </data>
+  <data name="ColTipoCambio" xml:space="preserve">
+    <value>Tipo de Cambio</value>
+  </data>
+  <data name="ColTipoComprobante" xml:space="preserve">
+    <value>Tipo de Comprobante</value>
+  </data>
+  <data name="ColUUIDHeader" xml:space="preserve">
+    <value>UUID</value>
+  </data>
+  <data name="PolizaIngresoButtonTitle" xml:space="preserve">
+    <value>Generar póliza de ingresos</value>
+  </data>
   <data name="XMLButtonTitle" xml:space="preserve">
     <value>XML</value>
+  </data>
+  <data name="AnioPlaceholder" xml:space="preserve">
+    <value>Año</value>
+  </data>
+  <data name="MesPlaceholder" xml:space="preserve">
+    <value>Mes</value>
+  </data>
+  <data name="TipoPlaceholder" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="TipoComprobantePlaceholder" xml:space="preserve">
+    <value>Tipo de Comprobante</value>
+  </data>
+  <data name="ColEmisorHeader" xml:space="preserve">
+    <value>Emisor</value>
+  </data>
+  <data name="ColReceptorHeader" xml:space="preserve">
+    <value>Receptor</value>
+  </data>
+  <data name="MixedItemsMessage" xml:space="preserve">
+    <value>La selección contiene elementos que no se pueden procesar para el tipo de póliza seleccionado. Dichos elementos se ignorarán para la elaboración de la póliza</value>
+  </data>
+  <data name="PolizaEgresoButtonTitle" xml:space="preserve">
+    <value>Generar póliza de egresos</value>
   </data>
 </root>

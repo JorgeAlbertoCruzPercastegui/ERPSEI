@@ -225,9 +225,6 @@
   <data name="PDFButtonTitle" xml:space="preserve">
     <value>PDF</value>
   </data>
-  <data name="PolizaButtonTitle" xml:space="preserve">
-    <value>Generate Policy</value>
-  </data>
   <data name="RazonSocial" xml:space="preserve">
     <value>Business Name</value>
   </data>
@@ -267,7 +264,43 @@
   <data name="Validar" xml:space="preserve">
     <value>Validate</value>
   </data>
+  <data name="ColTipoCambio" xml:space="preserve">
+    <value>Exchange Rate</value>
+  </data>
+  <data name="ColTipoComprobante" xml:space="preserve">
+    <value>Invoice Type</value>
+  </data>
+  <data name="ColUUIDHeader" xml:space="preserve">
+    <value>UUID</value>
+  </data>
+  <data name="PolizaIngresoButtonTitle" xml:space="preserve">
+    <value>Generate income policy</value>
+  </data>
   <data name="XMLButtonTitle" xml:space="preserve">
     <value>XML</value>
+  </data>
+  <data name="AnioPlaceholder" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="MesPlaceholder" xml:space="preserve">
+    <value>Month</value>
+  </data>
+  <data name="TipoPlaceholder" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="TipoComprobantePlaceholder" xml:space="preserve">
+    <value>Invoice Type</value>
+  </data>
+  <data name="ColEmisorHeader" xml:space="preserve">
+    <value>Emitter</value>
+  </data>
+  <data name="ColReceptorHeader" xml:space="preserve">
+    <value>Receiver</value>
+  </data>
+  <data name="MixedItemsMessage" xml:space="preserve">
+    <value>The selection contains elements that cannot be processed for the selected policy type. Such elements will be ignored for policy creation</value>
+  </data>
+  <data name="PolizaEgresoButtonTitle" xml:space="preserve">
+    <value>Generate expenditure policy</value>
   </data>
 </root>

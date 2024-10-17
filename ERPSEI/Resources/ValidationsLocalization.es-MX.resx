@@ -192,9 +192,6 @@
   <data name="EmailFormat" xml:space="preserve">
     <value>El campo {0} no es una dirección de correo electrónico válida.</value>
   </data>
-  <data name="EmisorField" xml:space="preserve">
-    <value>Emisor</value>
-  </data>
   <data name="EmployeeNameField" xml:space="preserve">
     <value>Nombre de empleado</value>
   </data>
@@ -372,9 +369,6 @@
   <data name="RazonSocialField" xml:space="preserve">
     <value>Razón social</value>
   </data>
-  <data name="ReceptorField" xml:space="preserve">
-    <value>Receptor</value>
-  </data>
   <data name="RememberField" xml:space="preserve">
     <value>¿Recordarme?</value>
   </data>
@@ -443,5 +437,20 @@
   </data>
   <data name="UUIDField" xml:space="preserve">
     <value>UUID</value>
+  </data>
+  <data name="EmisorField" xml:space="preserve">
+    <value>Emisor</value>
+  </data>
+  <data name="ReceptorField" xml:space="preserve">
+    <value>Receptor</value>
+  </data>
+  <data name="AnioField" xml:space="preserve">
+    <value>Año</value>
+  </data>
+  <data name="MesField" xml:space="preserve">
+    <value>Mes</value>
+  </data>
+  <data name="EmpresaField" xml:space="preserve">
+    <value>Empresa</value>
   </data>
 </root>
