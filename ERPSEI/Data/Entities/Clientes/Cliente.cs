@@ -19,5 +19,6 @@ namespace ERPSEI.Data.Entities.Clientes
         public string? Correo { get; set; }
         public bool Deshabilitado { get; set; }
         public ICollection<Conciliacion> Conciliaciones { get; set; } = [];
-    }
+        public string? CuentaContable { get; set; }
+	}
 }
