@@ -34,17 +34,10 @@
 
 	string cultureName = culture.Name;
 
-	List<TasaOCuota> tasasOCuotas = await TasaOCuotaManager.GetAllAsync();
-	List<TasaOCuota> tocTraslados = tasasOCuotas.Where(t => t.Traslado && t.Deshabilitado == 0).ToList();
-	List <TasaOCuota> tocRetenciones = tasasOCuotas.Where(t => t.Retencion && t.Deshabilitado == 0).ToList();
-	List<Impuesto> impuestos = await ImpuestoManager.GetAllAsync();
-	List<ObjetoImpuesto> objetosImpuesto = await ObjetoImpuestoManager.GetAllAsync();
 	List<TipoComprobante> tiposComprobante = await TipoComprobanteManager.GetAllAsync();
-	List<Moneda> monedas = await MonedaManager.GetAllAsync();
 	List<FormaPago> formasPago = await FormaPagoManager.GetAllAsync();
 	List<MetodoPago> metodosPago = await MetodoPagoManager.GetAllAsync();
 	List<UsoCFDI> usosCFDI = await UsoCFDIManager.GetAllAsync();
-	List<Exportacion> exportaciones = await ExportacionManager.GetAllAsync();
 
 	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
@@ -69,34 +62,49 @@
 					<div class="row">
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroPeriodo" asp-for="InputFiltro.Periodo" class="form-select" placeholder="@Localizer["FechaPlaceholder"]">
+								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@Localizer["EmpresaPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetEmpresaSuggestion" />
+								<label for="inpFiltroEmpresaRFC" asp-for="InputFiltro.EmpresaRFC" class="form-label"></label>
+								<span asp-validation-for="InputFiltro.EmpresaRFC" class="text-danger"></span>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@Localizer["AnioPlaceholder"]">
 									@{
-										for (int i = DateTime.Today.Year - 1; i <= DateTime.Today.Year; i++)
+										for (int i = DateTime.Today.Year - 5; i <= DateTime.Today.Year; i++)
 										{
-											for(int j = 1; j <= 12; j++)
-											{
-												DateTime f = new DateTime(i, j, 1);
-												string description = f.ToString("MMMM 'de' yyyy");
-												description = string.Concat(description[0].ToString().ToUpper(), description.AsSpan(1));
-												string value = f.ToString("yyyy-MM");
-
-												if (i == DateTime.Today.Year && j == DateTime.Today.Month) {
-													<option selected value='@value'>@description</option>
-													break; 
-												}
-
-												<option value='@value'>@description</option>
-											}
+											if (i == DateTime.Today.Year) { <option selected value='@i'>@i</option> }
+											else{ <option value='@i'>@i</option> }
 										}
 									}
 								</select>
-								<label for="selFiltroPeriodo" asp-for="InputFiltro.Periodo" class="form-label"></label>
+								<label for="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroMes" asp-for="InputFiltro.Mes" class="form-select" placeholder="@Localizer["MesPlaceholder"]">
+									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
+									@{
+										for(int j = 1; j <= 12; j++)
+										{
+											DateTime f = new DateTime(DateTime.Now.Year, j, 1);
+											string description = f.ToString("MMMM");
+											description = string.Concat(description[0].ToString().ToUpper(), description.AsSpan(1));
+											string value = f.ToString("MM");
+
+											if (j == DateTime.Today.Month) { <option selected value='@value'>@description</option> }
+											else { <option value='@value'>@description</option> }
+										}
+									}
+								</select>
+								<label for="selFiltroMes" asp-for="InputFiltro.Mes" class="form-label"></label>
 							</div>
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
 								<select id="selFiltroEstatus" asp-for="InputFiltro.EstatusId" class="form-select" placeholder="@Localizer["EstatusPlaceholder"]">
-									<option selected value="0">Todos</option>
+									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									<option value="1">Vigentes</option>
 									<option value="2">Cancelados</option>
 								</select>
@@ -106,64 +114,78 @@
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
 								<select id="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-select" placeholder="@Localizer["TipoPlaceholder"]" onchange="onTipoChanged();">
-									<option selected value="0">Emitidos</option>
-									<option value="1">Recibidos</option>
+									<option selected value="1">Emitidos</option>
+									<option value="2">Recibidos</option>
 								</select>
 								<label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
 							</div>
 						</div>
-						<div class="col-sm-6 col-md-6 col-lg-3">
+						<div style="display: none;" class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroFormaPago" asp-for="InputFiltro.FormaPagoId" class="form-select" placeholder="@Localizer["FormaPagoPlaceholder"]">
-									<option value="0">Seleccione...</option>
-									@{
-										@foreach (FormaPago forma in formasPago)
-										{
-											<option value='@forma.Id'>@forma.Descripcion</option>
-										}
-									}
-								</select>
-								<label for="selFiltroFormaPago" asp-for="InputFiltro.FormaPagoId" class="form-label"></label>
+								<input id="inpFiltroEmisor" type="search" asp-for="InputFiltro.EmisorRFC" class="form-control" placeholder="@Localizer["EmisorPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetEmisorSuggestion" />
+								<label for="inpFiltroEmisor" asp-for="InputFiltro.EmisorRFC" class="form-label"></label>
+							</div>
+						</div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroReceptor" type="search" asp-for="InputFiltro.ReceptorRFC" class="form-control" placeholder="@Localizer["ReceptorPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetReceptorSuggestion" />
+								<label for="inpFiltroReceptor" asp-for="InputFiltro.ReceptorRFC" class="form-label"></label>
 							</div>
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroMetodoPago" asp-for="InputFiltro.MetodoPagoId" class="form-select" placeholder="@Localizer["MetodoPagoPlaceholder"]">
-									<option value="0">Seleccione...</option>
+								<select id="selFiltroTipoComprobante" asp-for="InputFiltro.TipoComprobanteClave" class="form-select" placeholder="@Localizer["TipoComprobantePlaceholder"]">
+									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									@{
-										@foreach (MetodoPago metodo in metodosPago)
+										@foreach (TipoComprobante tipo in tiposComprobante)
 										{
-											<option value='@metodo.Id'>@metodo.Descripcion</option>
+											<option value='@tipo.Clave'>@tipo.Clave - @tipo.Descripcion</option>
 										}
 									}
 								</select>
-								<label for="selFiltroMetodoPago" asp-for="InputFiltro.MetodoPagoId" class="form-label"></label>
+								<label for="selFiltroTipoComprobante" asp-for="InputFiltro.TipoComprobanteClave" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroFormaPago" asp-for="InputFiltro.FormaPagoClave" class="form-select" placeholder="@Localizer["FormaPagoPlaceholder"]">
+									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
+									@{
+										@foreach (FormaPago forma in formasPago)
+										{
+											<option value='@forma.Clave'>@forma.Clave - @forma.Descripcion</option>
+										}
+									}
+								</select>
+								<label for="selFiltroFormaPago" asp-for="InputFiltro.FormaPagoClave" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroMetodoPago" asp-for="InputFiltro.MetodoPagoClave" class="form-select" placeholder="@Localizer["MetodoPagoPlaceholder"]">
+									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
+									@{
+										@foreach (MetodoPago metodo in metodosPago)
+										{
+											<option value='@metodo.Clave'>@metodo.Clave - @metodo.Descripcion</option>
+										}
+									}
+								</select>
+								<label for="selFiltroMetodoPago" asp-for="InputFiltro.MetodoPagoClave" class="form-label"></label>
 							</div>
 						</div>
 						<div class="col-sm-12 col-md-12 col-lg-6">
 							<div class="form-floating mb-3">
-								<select id="selFiltroUsoCFDI" asp-for="InputFiltro.UsoCFDIId" class="form-select" placeholder="@Localizer["UsoCFDIPlaceholder"]">
-									<option value="0">Seleccione...</option>
+								<select id="selFiltroUsoCFDI" asp-for="InputFiltro.UsoCFDIClave" class="form-select" placeholder="@Localizer["UsoCFDIPlaceholder"]">
+									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									@{
 										@foreach (UsoCFDI uso in usosCFDI)
 										{
-											<option value='@uso.Id'>@uso.Descripcion</option>
+											<option value='@uso.Clave'>@uso.Clave - @uso.Descripcion</option>
 										}
 									}
 								</select>
-								<label for="selFiltroUsoCFDI" asp-for="InputFiltro.UsoCFDIId" class="form-label"></label>
-							</div>
-						</div>
-						<div style="display: none;" class="col-sm-6 col-md-6 col-lg-3">
-							<div class="form-floating mb-3">
-								<input id="inpFiltroEmisor" type="search" asp-for="InputFiltro.EmisorId" class="form-control" placeholder="@Localizer["EmisorPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetEmisorSuggestion" />
-								<label for="inpFiltroEmisor" asp-for="InputFiltro.EmisorId" class="form-label"></label>
-							</div>
-						</div>
-						<div class="col-sm-6 col-md-6 col-lg-3">
-							<div class="form-floating mb-3">
-								<input id="inpFiltroReceptor" type="search" asp-for="InputFiltro.ReceptorId" class="form-control" placeholder="@Localizer["ReceptorPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetReceptorSuggestion" />
-								<label for="inpFiltroReceptor" asp-for="InputFiltro.ReceptorId" class="form-label"></label>
+								<label for="selFiltroUsoCFDI" asp-for="InputFiltro.UsoCFDIClave" class="form-label"></label>
 							</div>
 						</div>
 					</div>
@@ -198,34 +220,23 @@
 				<ul class="dropdown-menu">
 					@if (puedeTodo || puedeConsultar)
 					{
-						<li><a class="dropdown-item pdf" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]"><i class="bi bi-file-pdf"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]</a></li>
-						<li><a class="dropdown-item xml" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]"><i class="bi bi-file-code"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]</a></li>
-						<li><a class="dropdown-item excel" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]"><i class="bi bi-file-earmark-spreadsheet"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]</a></li>
+						<li><a class="dropdown-item pdf" onclick="onShowPDFClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]"><i class="bi bi-file-pdf"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]</a></li>
+						<li><a class="dropdown-item xml" onclick="onShowXMLClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]"><i class="bi bi-file-code"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]</a></li>
+						<li><a class="dropdown-item excel" onclick="onShowExcelClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]"><i class="bi bi-file-earmark-spreadsheet"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]</a></li>
 						<li><hr class="dropdown-divider"></li>
-						<li><a class="dropdown-item poliza" href="#" title="@Localizer["PolizaButtonTitle"]"><i class="bi bi-file-earmark-spreadsheet"></i> @Localizer["PolizaButtonTitle"]</a></li>
+						<li><a class="dropdown-item polizaIngreso" onclick="onShowPolizaIngresoClick();" href="#" title="@Localizer["PolizaIngresoButtonTitle"]"><i class="bi bi-file-earmark-plus"></i> @Localizer["PolizaIngresoButtonTitle"]</a></li>
+						<li><a class="dropdown-item polizaEgreso" onclick="onShowPolizaEgresoClick();" href="#" title="@Localizer["PolizaEgresoButtonTitle"]"><i class="bi bi-file-earmark-minus"></i> @Localizer["PolizaEgresoButtonTitle"]</a></li>
 					}
 
 					@if (puedeTodo || puedeEditar || puedeEliminar)
 					{
-						<li><a class="dropdown-item cancel" href="#" title="@Localizer["CancelButtonTitle"]"><i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]</a></li>
+						<li><a class="dropdown-item cancel" onclick="onCancelarClick();" href="#" title="@Localizer["CancelButtonTitle"]"><i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]</a></li>
 					}
 				</ul>
+				<a hidden id="downloadFileLink" href="" class="btn btn-primary"></a>
 			</div>
 		}
 	}
-	@* @if (puedeTodo || puedeEditar)
-	{
-		<button id="btnCancelar" class="btn btn-primary" disabled>
-			<i class="bi bi-x-lg"></i> <span class="d-none d-sm-inline">@Localizer["CancelButtonTitle"]</span>
-		</button>
-	}
-	@if (puedeTodo || puedeConsultar)
-	{
-		<button id="btnExportar" class="btn btn-primary" disabled>
-			<i class="bi bi-download"></i> <span class="d-none d-sm-inline">@Localizer["ExportCFDIDialogTitle"]</span>
-		</button>
-		<a hidden id="downloadFileLink" href="@Url.Page("AdministradorDeComprobantes", "DownloadExcel")" class="btn btn-primary"></a>
-	} *@
 </div>
 <table id="table" class="table-sm"
 	   data-unique-id="id"
@@ -277,6 +288,8 @@
 		var receptorLabel = '@Localizer["Receptor"]';
 		var emptyInfo = '@Localizer["EmptyInfo"]';
 		var title = '@Localizer["Title"]';
+		var NoItemSelectedMessage = '@Localizer["NoItemSelectedMessage"]';
+		var MixedItemsMessage = '@Localizer["MixedItemsMessage"]';
 
 		var btnCancelarTitle = '@Localizer["CancelButtonTitle"]';
 		var btnPolizaTitle = '@Localizer["PolizaButtonTitle"]';
@@ -288,23 +301,20 @@
 		var colSerieHeader = '@Localizer["ColSerieHeader"]';
 		var colFolioHeader = '@Localizer["ColFolioHeader"]';
 		var colFechaHeader = '@Localizer["ColFechaHeader"]';
-		var colMonedaHeader = '@Localizer["ColMonedaHeader"]';
+		var colUUIDHeader = '@Localizer["ColUUIDHeader"]';
+		var colEmisorHeader = '@Localizer["ColEmisorHeader"]';
+		var colReceptorHeader = '@Localizer["ColReceptorHeader"]';
 		var colFormaPagoHeader = '@Localizer["ColFormaPagoHeader"]';
+		var colMonedaHeader = '@Localizer["ColMonedaHeader"]';
+		var colTipoCambio = '@Localizer["ColTipoCambio"]';
+		var colTipoComprobante = '@Localizer["ColTipoComprobante"]';
 		var colMetodoPagoHeader = '@Localizer["ColMetodoPagoHeader"]';
 		var colUsoCFDIHeader = '@Localizer["ColUsoCFDIHeader"]';
 		var colEstatusHeader = '@Localizer["ColEstatusHeader"]';
-		var colAccionesHeader = '@Localizer["ColActionsHeader"]';
-
-		var colCantidadHeader = '@Localizer["ColCantidadHeader"]';
-		var colUnidadHeader = '@Localizer["ColUnidadHeader"]';
-		var colClaveHeader = '@Localizer["ColClaveHeader"]';
-		var colDescripcionHeader = '@Localizer["ColDescripcionHeader"]';
-		var colUnitarioHeader = '@Localizer["ColUnitarioHeader"]';
 		var colSubtotalHeader = '@Localizer["ColSubtotalHeader"]';
 		var colDescuentoHeader = '@Localizer["ColDescuentoHeader"]';
-		var colTrasladoHeader = '@Localizer["ColTrasladoHeader"]';
-		var colRetencionHeader = '@Localizer["ColRetencionHeader"]';
 		var colTotalHeader = '@Localizer["ColTotalHeader"]';
+		var colAccionesHeader = '@Localizer["ColActionsHeader"]';
 
 		var puedeTodo = '@puedeTodo' == 'True';
 		var puedeConsultar = '@puedeConsultar' == 'True';

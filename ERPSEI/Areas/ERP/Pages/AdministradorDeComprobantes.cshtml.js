@@ -11,6 +11,12 @@ const ESTATUS_SOLICITADA = 1;
 const ESTATUS_AUTORIZADA = 2;
 const ESTATUS_FINALIZADA = 3;
 
+const TIPO_EXPORTADO_PDF = 0
+const TIPO_EXPORTADO_XML = 1
+const TIPO_EXPORTADO_EXCEL = 2
+const TIPO_EXPORTADO_POLIZA_INGRESO = 3
+const TIPO_EXPORTADO_POLIZA_EGRESO = 4
+
 var numFormatter = null;
 var dialogMode = null;
 const NUEVO = 0;
@@ -28,8 +34,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initTable();
 
-    autoCompletar("#inpEmisor");
-    autoCompletar("#inpReceptor");
+    autoCompletar("#inpFiltroEmpresaRFC");
+    autoCompletar("#inpFiltroEmisor");
+    autoCompletar("#inpFiltroReceptor");
 
     jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
@@ -66,60 +73,24 @@ function responseHandler(res) {
     return res
 }
 
-//Función para dar formato a los iconos de operación de los registros
-function operateFormatter(value, row, index) {
-    let icons = [];
-    
-    //Icono Exportar
-    if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) {
-        icons.push(`<li><a class="dropdown-item pdf" href="#" title="${dlgExportTitle} ${btnPDFTitle}"><i class="bi bi-file-pdf"></i> ${dlgExportTitle} ${btnPDFTitle}</a></li>`);
-        icons.push(`<li><a class="dropdown-item xml" href="#" title="${dlgExportTitle} ${btnXMLTitle}"><i class="bi bi-file-code"></i> ${dlgExportTitle} ${btnXMLTitle}</a></li>`);
-        icons.push(`<li><a class="dropdown-item excel" href="#" title="${dlgExportTitle} ${btnExcelTitle}"><i class="bi bi-file-earmark-spreadsheet"></i> ${dlgExportTitle} ${btnExcelTitle}</a></li>`);
-        icons.push(`<li><hr class="dropdown-divider"></li>`);
-        icons.push(`<li><a class="dropdown-item poliza" href="#" title="${btnPolizaTitle}"><i class="bi bi-file-earmark-spreadsheet"></i> ${btnPolizaTitle}</a></li>`);
-    }
-    //Icono Cancelar
-    if (puedeTodo || puedeEliminar) { icons.push(`<li><a class="dropdown-item cancel" href="#" title="${btnCancelarTitle}"><i class="bi bi-x-lg"></i> ${btnCancelarTitle}</a></li>`); }
-
-    if (icons.length >= 1) {
-
-        return `<div class="dropdown">
-                  <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-three-dots-vertical success"></i>
-                  </button>
-                  <ul class="dropdown-menu">${icons.join("")}</ul>
-                </div>`;
-    }
-    else {
-        return '';
-    }
-}
-
-//Eventos de los iconos de operación
-window.operateEvents = {
-    'click .pdf': function (e, value, row, index) {
-        onShowPDF(row.safeL);
-    },
-    'click .xml': function (e, value, row, index) {
-        onShowXML(row.safeL);
-    },
-    'click .excel': function (e, value, row, index) {
-        onShowExcel(row.safeL);
-    },
-    'click .cancel': function (e, value, row, index) {
-        onCancelarComprobante(row.id);
-    }
+//Función para dar formato de moneda a los campos numéricos.
+function currencyFormatter(value, row, index) {
+    return `$ ${numFormatter.format(value)}`;
 }
 
 //Función para cancelar cfdis
-function onCancelarCFDIClick(ids = null) {
+function onCancelarClick() {
+    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
+
+    return;
+
     let oParams = {};
 
-    if (ids != null) { oParams.ids = ids; }
-    else { oParams.ids = [document.getElementById("inpCFDIId").value]; }
+    let ids = getIdSelections();
+    if ((ids || "").length <= 0) { showError(btnCancelarTitle, NoItemSelectedMessage); }
 
     doAjax(
-        "/ERP/AdministradorDeComprobantes/Cancelar",
+        "/ERP/AdministradorDeComprobantes/CancelarComprobante",
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -134,9 +105,6 @@ function onCancelarCFDIClick(ids = null) {
                 table.bootstrapTable('uncheckAll');
             }
 
-            let fileLink = document.getElementById("downloadFileLink");
-            fileLink.click();
-
             showSuccess(btnCancelarTitle, resp.mensaje);
         }, function (error) {
             showError(btnCancelarTitle, error);
@@ -146,14 +114,9 @@ function onCancelarCFDIClick(ids = null) {
 }
 
 //Función para exportar cfdis
-function onExportarCFDIClick(ids = null) {
-    let oParams = {};
-
-    if (ids != null) { oParams.ids = ids; }
-    else { oParams.ids = [document.getElementById("inpCFDIId").value]; }  
-
+function ajaxExportCFDIS(oParams) {
     doAjax(
-        "/ERP/Prefacturas/ExportExcel",
+        `/ERP/AdministradorDeComprobantes/ExportCFDIS`,
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -161,14 +124,15 @@ function onExportarCFDIClick(ids = null) {
                 return;
             }
 
-            if (ids != null) {
-                ids = [];
+            if (oParams.ids != null) {
+                oParams.ids = [];
                 selections = null;
-                if (buttonExport) { buttonExport.prop('disabled', true); }
+                if (buttonAcciones) { buttonAcciones.prop('disabled', true); }
                 table.bootstrapTable('uncheckAll');
             }
 
             let fileLink = document.getElementById("downloadFileLink");
+            fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)
             fileLink.click();
 
             showSuccess(dlgExportTitle, resp.mensaje);
@@ -213,8 +177,23 @@ function initTable() {
                 sortable: true
             },
             {
-                title: colMonedaHeader,
-                field: "moneda",
+                title: colUUIDHeader,
+                field: "uuid",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: colEmisorHeader,
+                field: "emisor",
+                align: "center",
+                valign: "middle",
+                visible: false,
+                sortable: true
+            },
+            {
+                title: colReceptorHeader,
+                field: "receptor",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -224,6 +203,30 @@ function initTable() {
                 field: "formaPago",
                 align: "center",
                 valign: "middle",
+                visible: false,
+                sortable: true
+            },
+            {
+                title: colMonedaHeader,
+                field: "moneda",
+                align: "center",
+                valign: "middle",
+                visible: false,
+                sortable: true
+            },
+            {
+                title: colTipoCambio,
+                field: "tipoCambio",
+                align: "center",
+                valign: "middle",
+                visible: false,
+                sortable: true
+            },
+            {
+                title: colTipoComprobante,
+                field: "tipoComprobante",
+                align: "center",
+                valign: "middle",
                 sortable: true
             },
             {
@@ -231,6 +234,7 @@ function initTable() {
                 field: "metodoPago",
                 align: "center",
                 valign: "middle",
+                visible: false,
                 sortable: true
             },
             {
@@ -238,42 +242,111 @@ function initTable() {
                 field: "usoCFDI",
                 align: "center",
                 valign: "middle",
+                visible: false,
                 sortable: true
             },
             {
-                title: colEstatusHeader,
-                field: "estatus",
+                title: colSubtotalHeader,
+                field: "subtotal",
                 align: "center",
                 valign: "middle",
-                sortable: true
+                sortable: true,
+                visible: false,
+                formatter: currencyFormatter
             },
             {
-                title: colAccionesHeader,
-                field: "operate",
+                title: colDescuentoHeader,
+                field: "descuento",
                 align: "center",
-                width: "100px",
-                clickToSelect: false,
-                events: window.operateEvents,
-                formatter: operateFormatter
+                valign: "middle",
+                sortable: true,
+                visible: false,
+                formatter: currencyFormatter
+            },
+            {
+                title: colTotalHeader,
+                field: "total",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                formatter: currencyFormatter
             }
         ]
     })
     table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
         if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
-        //if (buttonExport) { buttonExport.prop('disabled', !table.bootstrapTable('getSelections').length) }
-        //if (buttonCancel) { buttonCancel.prop('disabled', !table.bootstrapTable('getSelections').length) }
 
         // save your data, here just save the current page
         selections = getIdSelections()
-        // push or splice the selections if you want to save all data selections
     });
-    //if (buttonExport) { buttonExport.click(function () { onExportarCFDIClick(selections); }); }
-    //if (buttonCancel) { buttonCancel.click(function () { onTimbrarCFDIClick(selections); }); }
 }
 
 //Función para mostrar una prefactura como PDF
-function onShowPDF(safeL) {
-    if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
+function onShowPDFClick() {
+    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
+    //onShowCFDIs(TIPO_EXPORTADO_PDF);
+
+    //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
+}
+function onShowXMLClick() {
+    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
+    //onShowCFDIs(TIPO_EXPORTADO_XML);
+
+    //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
+}
+function onShowExcelClick() {
+    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
+    //onShowCFDIs(TIPO_EXPORTADO_EXCEL);
+
+    //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
+}
+function onShowPolizaIngresoClick() {
+    onShowCFDIs(TIPO_EXPORTADO_POLIZA_INGRESO);
+
+    //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
+}
+function onShowPolizaEgresoClick() {
+    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
+    //onShowCFDIs(TIPO_EXPORTADO_POLIZA_EGRESO);
+
+    //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
+}
+function onShowCFDIs(tipoExportado) {
+    let ids = [];
+    let descTipo = "";
+    switch (tipoExportado) {
+        case TIPO_EXPORTADO_POLIZA_INGRESO:
+            descTipo = "Ingreso";
+            break;
+        case TIPO_EXPORTADO_POLIZA_EGRESO:
+            descTipo = "Egreso"
+            break;
+        default:
+            break;
+    }
+
+    let selections = table.bootstrapTable('getSelections')||[];
+    ids = $.map(selections, function (row) {
+        if (row.tipoComprobante == descTipo) { return row.id }
+    })||[];
+
+    if (ids.length <= 0) {
+        showError(dlgExportTitle, NoItemSelectedMessage);
+        return;
+    }
+    else if (ids.length < selections.length) {
+        showInfo(dlgExportTitle, MixedItemsMessage, function () {
+            let oParams = { ids: ids, tipoExportado: tipoExportado };
+
+            ajaxExportCFDIS(oParams)
+        });
+    }
+    else {
+        let oParams = { ids: ids, tipoExportado: tipoExportado };
+
+        ajaxExportCFDIS(oParams)
+    }
+
 }
 ////////////////////////////////
 
@@ -282,32 +355,44 @@ function onShowPDF(safeL) {
 ////////////////////////////////
 //Función para detectar el cambio de valor en el campo Tipo
 function onTipoChanged() {
-    if ($("#selFiltroTipo").val() == "0") {
+    if ($("#selFiltroTipo").val() == "1") {
         $("#inpFiltroEmisor").parent().parent().hide();
         $("#inpFiltroReceptor").parent().parent().show();
+        table.bootstrapTable('hideColumn', 'emisor');
+        table.bootstrapTable('showColumn', 'receptor');
     }
-    else {
+    else if($("#selFiltroTipo").val() == "2") {
         $("#inpFiltroReceptor").parent().parent().hide();
         $("#inpFiltroEmisor").parent().parent().show();
+        table.bootstrapTable('showColumn', 'emisor');
+        table.bootstrapTable('hideColumn', 'receptor');
     }
+
+    $("#inpFiltroEmisor").val("").attr("idselected", "");
+    $("#inpFiltroReceptor").val("").attr("idselected", "");
 }
 
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
+    //Ejecuta la validación de los campos
+    $("#filtros").validate();
+
+    //Determina los errores. Si la forma no es válida, entonces finaliza.
+    if (!$("#filtros").valid()) { return; }
+
     let oParams = {
-        Periodo: $("#selFiltroPeriodo").val(),
+        EmpresaRFC: ($("#inpFiltroEmpresaRFC").data("rfc") || "") == "" ? null : $("#inpFiltroEmpresaRFC").data("rfc"),
+        Anio: $("#selFiltroAnio").val(),
+        Mes: $("#selFiltroMes").val() == 0 ? null : $("#selFiltroMes").val(),
         EstatusId: $("#selFiltroEstatus").val() == 0 ? null : parseInt($("#selFiltroEstatus").val()),
         TipoId: $("#selFiltroTipo").val() == 0 ? null : parseInt($("#selFiltroTipo").val()),
-        FormaPagoId: $("#selFiltroFormaPago").val() == 0 ? null : parseInt($("#selFiltroFormaPago").val()),
-        MetodoPagoId: $("#selFiltroMetodoPago").val() == 0 ? null : parseInt($("#selFiltroMetodoPago").val()),
-        UsoCFDIId: $("#selFiltroUsoCFDI").val() == 0 ? null : parseInt($("#selFiltroUsoCFDI").val()),
-        EmisorId: ($("#inpFiltroEmisor").attr("idselected") || "0") == "0" ? null : parseInt($("#inpFiltroEmisor").attr("idselected")),
-        ReceptorId: ($("#inpFiltroReceptor").attr("idselected") || "0") == "0" ? null : parseInt($("#inpFiltroReceptor").attr("idselected"))
+        TipoComprobanteClave: $("#selFiltroTipoComprobante").val() == 0 ? null : $("#selFiltroTipoComprobante").val(),
+        FormaPagoClave: $("#selFiltroFormaPago").val() == 0 ? null : $("#selFiltroFormaPago").val(),
+        MetodoPagoClave: $("#selFiltroMetodoPago").val() == 0 ? null : $("#selFiltroMetodoPago").val(),
+        UsoCFDIClave: $("#selFiltroUsoCFDI").val() == 0 ? null : $("#selFiltroUsoCFDI").val(),
+        EmisorRFC: ($("#inpFiltroEmisor").data("rfc") || "") == "" ? null : $("#inpFiltroEmisor").data("rfc"), 
+        ReceptorRFC: ($("#inpFiltroReceptor").data("rfc") || "") == "" ? null : $("#inpFiltroReceptor").data("rfc")
     };
-
-    //Resetea el valor de los filtros.
-    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; if (e.hasAttribute("idselected")) { e.setAttribute("idselected", ""); } });
-    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
 
     doAjax(
         "/ERP/AdministradorDeComprobantes/Filtrar",
@@ -330,20 +415,5 @@ function onBuscarClick() {
         },
         postOptions
     );
-}
-////////////////////////////////
-
-////////////////////////////////
-//Funcionalidad Diálogo CFDI
-////////////////////////////////
-
-//Función para dar formato de moneda a los campos numéricos.
-function currencyFormatter(value, row, index) {
-    return `$ ${numFormatter.format(value)}`;
-}
-
-//Función para dar formato de número a los campos numéricos.
-function numericFormatter(value, row, index) {
-    return numFormatter.format(value);
 }
 ////////////////////////////////

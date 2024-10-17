@@ -1,12 +1,8 @@
 using ERPSEI.Data;
 using ERPSEI.Data.Entities.Empresas;
-using ERPSEI.Data.Entities.SAT;
-using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
 using ERPSEI.Data.Entities.Usuarios;
-using ERPSEI.Data.Managers;
 using ERPSEI.Data.Managers.Empresas;
-using ERPSEI.Data.Managers.SAT.Catalogos;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
 using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Pages.Shared;
@@ -29,24 +25,37 @@ namespace ERPSEI.Areas.ERP.Pages
 			CFDi clienteEDICOM,
 			ApplicationDbContext db,
 			AppUserManager userManager,
-			IRWCatalogoManager<Perfil> perfilManager,
 			IEmpresaManager empresaManager,
 			IComprobanteManager comprobanteManager,
-			ITasaOCuotaManager tasaOCuotaManager,
-			IStringLocalizer<PrefacturasModel> localizer,
-			ILogger<PrefacturasModel> logger,
+			IStringLocalizer<AdministradorDeComprobantesModel> localizer,
+			ILogger<AdministradorDeComprobantesModel> logger,
 			IEncriptacionAES encriptacionAES
 		) : ERPPageModel
 	{
+
+		public enum TipoExportacion
+		{
+			PDF = 0,
+			XML,
+			Excel,
+			PolizaIngresos,
+			PolizaEgresos
+		}
 
 		[BindProperty]
 		public FiltroModel InputFiltro { get; set; } = new FiltroModel();
 
 		public class FiltroModel
 		{
-			[DataType(DataType.Text)]
-			[Display(Name = "PeriodoField")]
-			public string? Periodo { get; set; }
+			[Required(ErrorMessage = "Required")]
+			[Display(Name = "EmpresaField")]
+			public string? EmpresaRFC { get; set; }
+
+			[Display(Name = "AnioField")]
+			public string? Anio { get; set; }
+
+			[Display(Name = "MesField")]
+			public string? Mes { get; set; }
 
 			[Display(Name = "EstatusField")]
 			public int? EstatusId { get; set; }
@@ -54,20 +63,23 @@ namespace ERPSEI.Areas.ERP.Pages
 			[Display(Name = "TipoField")]
 			public int? TipoId { get; set; }
 
+			[Display(Name = "TipoComprobanteField")]
+			public string? TipoComprobanteClave { get; set; }
+
 			[Display(Name = "FormaPagoField")]
-			public int? FormaPagoId { get; set; }
+			public string? FormaPagoClave { get; set; }
 
 			[Display(Name = "MetodoPagoField")]
-			public int? MetodoPagoId { get; set; }
+			public string? MetodoPagoClave { get; set; }
 
 			[Display(Name = "UsoCFDIField")]
-			public int? UsoCFDIId { get; set; }
+			public string? UsoCFDIClave { get; set; }
 
 			[Display(Name = "EmisorField")]
-			public int? EmisorId { get; set; }
+			public string? EmisorRFC { get; set; }
 
 			[Display(Name = "ReceptorField")]
-			public int? ReceptorId { get; set; }
+			public string? ReceptorRFC { get; set; }
 		}
 
 		public void OnGet()
@@ -107,14 +119,17 @@ namespace ERPSEI.Areas.ERP.Pages
 			if (filtro != null)
 			{
 				comprobantes = await comprobanteManager.GetAllAsync(
-					filtro.Periodo,
+					filtro.EmpresaRFC,
+					filtro.Anio,
+					filtro.Mes,
 					filtro.EstatusId,
 					filtro.TipoId,
-					filtro.FormaPagoId,
-					filtro.MetodoPagoId,
-					filtro.UsoCFDIId,
-					filtro.EmisorId,
-					filtro.ReceptorId
+					filtro.TipoComprobanteClave,
+					filtro.FormaPagoClave,
+					filtro.MetodoPagoClave,
+					filtro.UsoCFDIClave,
+					filtro.EmisorRFC,
+					filtro.ReceptorRFC
 				);
 			}
 			else
@@ -140,19 +155,21 @@ namespace ERPSEI.Areas.ERP.Pages
 						$"\"safeL\": \"{safeL}\"," +
 						$"\"serie\": \"{c.Serie}\", " +
 						$"\"folio\": \"{c.Folio}\", " +
-						$"\"emisor\": \"{c.Emisor?.Nombre}\", " +
-						$"\"emisorId\": \"{c.Emisor?.Id}\", " +
-						$"\"receptor\": \"{c.Receptor?.Nombre}\", " +
-						$"\"receptorId\": \"{c.Receptor?.Id}\", " +
-						$"\"tipoComprobante\": \"{c.TipoDeComprobante}\", " +
 						$"\"fecha\": \"{fecha:dd/MM/yyyy HH:mm:ss}\", " +
 						$"\"fechaJS\": \"{fecha:yyyy-MM-dd HH:mm:ss}\", " +
-						$"\"tipoCambio\": {c.TipoCambio}, " +
-						$"\"moneda\": \"{c.Moneda}\", " +
+						$"\"uuid\": \"{c.Complemento?.TimbreFiscalDigital?.UUID}\", " +
 						$"\"formaPago\": \"{c.FormaPago}\", " +
+						$"\"subtotal\": \"{c.SubTotal}\", " +
+						$"\"descuento\": \"{c.Descuento}\", " +
+						$"\"moneda\": \"{c.Moneda}\", " +
+						$"\"tipoCambio\": {c.TipoCambio}, " +
+						$"\"total\": \"{c.Total}\", " +
+						$"\"tipoComprobante\": \"{c.TipoDeComprobante}\", " +
 						$"\"metodoPago\": \"{c.MetodoPago}\", " +
+						$"\"lugarExpedicion\": \"{c.LugarExpedicion}\", " +
+						$"\"emisor\": \"{c.Emisor?.Rfc}\", " +
+						$"\"receptor\": \"{c.Receptor?.Rfc}\", " +
 						$"\"usoCFDI\": \"{c.Receptor?.UsoCFDI}\", " +
-						$"\"exportacion\": \"{c.Exportacion}\", " +
 						$"\"estatus\": \"\"" +
 					"}"
 				);
@@ -199,36 +216,11 @@ namespace ERPSEI.Areas.ERP.Pages
 			{
 				foreach (EmpresaBuscada e in empresas)
 				{
-					Empresa? emp = await empresaManager.GetByIdWithAdicionalesAsync(e.Id);
-					List<Perfil> perfiles = await perfilManager.GetAllAsync();
-					perfiles = perfiles.Where(p => p.Id == emp?.PerfilId).ToList();
-					Perfil? perfilEmpresa = perfiles != null && perfiles.Count >= 1 ? perfiles.First() : null;
-
-					List<ProductoServicioPerfil> prodServEmpresa = [];
-					if (perfilEmpresa != null) { prodServEmpresa = [.. perfilEmpresa.ProductosServiciosPerfil]; }
-
-					//Si viene establecido el id empresa, omite el elemento con ese id.
-					if (idempresa >= 1 && e.Id == idempresa) { continue; }
-
-					e.ObjetoSocial = JsonEscape(e.ObjetoSocial ?? string.Empty);
-					List<Comprobante> comprobantes = await comprobanteManager.GetAllAsync();
-					comprobantes = [.. comprobantes.OrderByDescending(p => p.Id)];
-
 					jsonEmpresas.Add($"{{" +
 										$"\"id\": {e.Id}, " +
 										$"\"value\": \"{e.RazonSocial}\", " +
 										$"\"label\": \"{e.RFC} - {e.RazonSocial}\", " +
-										$"\"rfc\": \"{e.RFC}\", " +
-										$"\"razonSocial\": \"{e.RazonSocial}\", " +
-										$"\"objetoSocial\": \"{e.ObjetoSocial}\", " +
-										$"\"origen\": \"{e.Origen}\", " +
-										$"\"nivel\": {{" +
-														$"\"nombre\": \"{e.Nivel}\", " +
-														$"\"ordinal\": \"{e.Ordinal}\", " +
-														$"\"puedeFacturar\": \"{e.PuedeFacturar}\"" +
-													$"}}, " +
-										$"\"perfil\": \"{e.Perfil}\", " +
-										$"\"domicilioFiscal\": \"{e.DomicilioFiscal}\"" +
+										$"\"rfc\": \"{e.RFC}\"" +
 									$"}}");
 				}
 			}
@@ -242,59 +234,38 @@ namespace ERPSEI.Areas.ERP.Pages
 			return str.Replace("\n", "<br />").Replace("\r", "<br />").Replace("\t", "<br />");
 		}
 
-		public async Task<JsonResult> OnPostExportExcel(string[] ids)
+		public async Task<ActionResult> OnPostExportCFDIS(string[] ids, int tipoExportado)
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesExportedUnsuccessfully"]);
-
 			if (PuedeTodo || PuedeConsultar)
 			{
 				try
 				{
-					await db.Database.BeginTransactionAsync();
+					switch (tipoExportado)
+					{
+						case (int)TipoExportacion.PDF:
+							break;
+						case (int)TipoExportacion.XML:
+							break;
+						case (int)TipoExportacion.Excel:
+							break;
+						case (int)TipoExportacion.PolizaIngresos:
+							resp.Datos = await CreateWorkbook(ids, TipoExportacion.PolizaIngresos, comprobanteManager);
+							break;
+						case (int)TipoExportacion.PolizaEgresos:
+							break;
+						default:
+							break;
+					}
 
-						//El llenado de datos comienza en la fila 1 del archivo ya que la fila 0 es el encabezado que se crea junto con el excel.
-						int rowIndex = 1;
-						List<TasaOCuota> impuestos = await tasaOCuotaManager.GetAllAsync();
-						List<TasaOCuota> impuestosIEPS = impuestos.Where(t => t.ImpuestoId == 3).ToList();
-						List<TasaOCuota> impuestosIVA = impuestos.Where(t => t.ImpuestoId == 2).ToList();
-
-						//Crea el archivo Excel
-						using (HSSFWorkbook wb = await CreateExcel())
-						{
-							//Obtiene la primer hoja del archivo
-							ISheet sheet = wb.GetSheetAt(0);
-							//Crea el estilo de las celdas.
-							HSSFCellStyle cellStyle = (HSSFCellStyle)wb.CreateCellStyle();
-
-							foreach (string id in ids)
-							{
-								int intId = Convert.ToInt32(id);
-								Comprobante? p = await comprobanteManager.GetByIdAsync(intId);
-								if (p != null)
-								{
-									//TODO: Crear los rows del excel en base a cada concepto.
-								}
-							}
-
-							//Crea el archivo excel y lo exporta al usuario.
-							using (var fileData = new FileStream("wwwroot/templates/Comprobantes.xls", FileMode.OpenOrCreate))
-							{
-								wb.Write(fileData);
-							}
-
-							wb.Close();
-						}
-
-						await db.Database.CommitTransactionAsync();
-
-						resp.TieneError = false;
-						resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
+					
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 				}
 				catch (Exception ex)
 				{
 					logger.LogError(message: ex.Message);
 					resp.Mensaje = ex.Message;
-					await db.Database.RollbackTransactionAsync();
 				}
 			}
 			else
@@ -303,6 +274,167 @@ namespace ERPSEI.Areas.ERP.Pages
 			}
 
 			return new JsonResult(resp);
+		}
+
+		private async static Task<string> CreateWorkbook(string[] ids, TipoExportacion tipoExportacion, IComprobanteManager cmgr)
+		{
+			int rowIndex = 2;
+			string? strTipoPoliza = string.Empty;
+			HSSFWorkbook? wb = null;
+			string? nombreArchivo = string.Empty;
+			switch (tipoExportacion)
+			{
+				case TipoExportacion.Excel:
+					break;
+				case TipoExportacion.PolizaIngresos:
+					strTipoPoliza = "VENTA";
+					wb = await CreateExcelPolizaIngresos();
+					break;
+				case TipoExportacion.PolizaEgresos:
+					strTipoPoliza = "GASTO";
+					break;
+				default:
+					break;
+			}
+
+			if (wb == null) { throw new Exception("No workbook created"); }
+
+			using (wb)
+			{
+				//Obtiene la primer hoja del archivo
+				ISheet sheet = wb.GetSheetAt(0);
+				sheet.SetColumnWidth(1, 20 * 256);
+				sheet.SetColumnWidth(2, 70 * 256);
+				sheet.SetColumnWidth(3, 70 * 256);
+				sheet.SetColumnWidth(4, 10 * 256);
+				sheet.SetColumnWidth(5, 10 * 256);
+
+				//Crea el estilo de las celdas.
+				HSSFCellStyle cellStyle = (HSSFCellStyle)wb.CreateCellStyle();
+				HSSFFont myFont = (HSSFFont)wb.CreateFont();
+				myFont.FontHeightInPoints = 11;
+				myFont.FontName = "Calibri";
+				cellStyle.SetFont(myFont);
+
+				string conceptoString = string.Empty;
+				foreach (string id in ids)
+				{
+					int intId = Convert.ToInt32(id);
+					Comprobante? c = await cmgr.GetByIdAsync(intId);
+					if (c != null)
+					{
+						conceptoString = $"PROVISION DE {strTipoPoliza} '{c.Receptor?.Nombre}' {c.Serie}-{c.Folio}";
+
+						//Crea el row de encabezado de CFDI
+						IRow hRow = sheet.CreateRow(rowIndex);
+						//Tipo Pol
+						CreateCell(hRow, 0, "Dr", cellStyle);
+						//Placeholder
+						CreateCell(hRow, 1, "1", cellStyle);
+						//Concepto póliza
+						CreateCell(hRow, 2, conceptoString, cellStyle);
+
+						////Crea el row de detalle de CFDI
+						//IRow dRow = sheet.CreateRow(rowIndex + 1);
+						////No. Cuenta
+						//CreateCell(dRow, 1, "0000-000-000", cellStyle);
+						////Depto.
+						//CreateCell(dRow, 2, "0", cellStyle);
+						////Concepto
+						//CreateCell(dRow, 3, conceptoString, cellStyle);
+						////Total
+						//CreateCell(dRow, 4, "999999999", cellStyle);
+
+						//Crea el row de Importe antes de impuesto de CFDI
+						IRow g1Row = sheet.CreateRow(rowIndex + 1);
+						//No. Cuenta
+						CreateCell(g1Row, 1, "4100-001-000", cellStyle);
+						//Depto.
+						CreateCell(g1Row, 2, "0", cellStyle);
+						//Concepto
+						CreateCell(g1Row, 3, conceptoString, cellStyle);
+						if (tipoExportacion == TipoExportacion.PolizaIngresos)
+						{
+							//Debe
+							CreateCell(g1Row, 4, "", cellStyle);
+							//Haber
+							CreateCell(g1Row, 5, c.Total.ToString("N"), cellStyle);
+						}
+						else
+						{
+							//Debe
+							CreateCell(g1Row, 4, c.Total.ToString("N"), cellStyle);
+							//Haber
+							CreateCell(g1Row, 5, "", cellStyle);
+						}
+
+						//Crea el row de IVA Traslado de CFDI
+						IRow g2Row = sheet.CreateRow(rowIndex + 2);
+						//No. Cuenta
+						CreateCell(g2Row, 1, "2181-001-000", cellStyle);
+						//Depto.
+						CreateCell(g2Row, 2, "0", cellStyle);
+						//Concepto
+						CreateCell(g2Row, 3, conceptoString, cellStyle);
+						if (tipoExportacion == TipoExportacion.PolizaIngresos)
+						{
+							//Debe
+							CreateCell(g2Row, 4, "", cellStyle);
+							//Haber
+							CreateCell(g2Row, 5, c.Total.ToString("N"), cellStyle);
+						}
+						else
+						{
+							//Debe
+							CreateCell(g2Row, 4, c.Total.ToString("N"), cellStyle);
+							//Haber
+							CreateCell(g2Row, 5, "", cellStyle);
+						}
+
+						//Crea el row de IEPS Traslado de CFDI
+						IRow g3Row = sheet.CreateRow(rowIndex + 3);
+						//No. Cuenta
+						CreateCell(g3Row, 1, "2181-002-000", cellStyle);
+						//Depto.
+						CreateCell(g3Row, 2, "0", cellStyle);
+						//Concepto
+						CreateCell(g3Row, 3, conceptoString, cellStyle);
+						if(tipoExportacion == TipoExportacion.PolizaIngresos)
+						{
+							//Debe
+							CreateCell(g3Row, 4, c.Total.ToString("N"), cellStyle);
+							//Haber
+							CreateCell(g3Row, 5, "", cellStyle);
+						}
+						else
+						{
+							//Debe
+							CreateCell(g3Row, 4, "", cellStyle);
+							//Haber
+							CreateCell(g3Row, 5, c.Total.ToString("N"), cellStyle);
+						}
+
+						//Crea el row de fin de partida
+						IRow fRow = sheet.CreateRow(rowIndex + 4);
+						//Fin
+						CreateCell(fRow, 1, "FIN_PARTIDAS", cellStyle);
+					}
+
+					//Avanza 5 lineas para poder iniciar una nueva póliza.
+					rowIndex += 5;
+				}
+
+				//Crea el archivo excel y lo exporta al usuario.
+				nombreArchivo = $"{Enum.GetName(typeof(TipoExportacion), tipoExportacion)}_{DateTime.Now:yyyyMMddHHmmssfffffff}";
+				using (var fileData = new FileStream($"wwwroot/templates/{nombreArchivo}.xls", FileMode.OpenOrCreate))
+				{
+					wb.Write(fileData);
+				}
+
+				wb.Close();
+			}
+
+			return nombreArchivo;
 		}
 		private static Task<HSSFWorkbook> CreateExcel()
 		{
@@ -359,70 +491,56 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return Task.FromResult(workbook);
 		}
+		private static Task<HSSFWorkbook> CreateExcelPolizaIngresos()
+		{
+			HSSFWorkbook workbook = new();
+			HSSFFont myFont = (HSSFFont)workbook.CreateFont();
+			myFont.FontHeightInPoints = 11;
+			myFont.FontName = "Calibri";
+
+			// Define un borde
+			HSSFCellStyle borderedCellStyle = (HSSFCellStyle)workbook.CreateCellStyle();
+			borderedCellStyle.SetFont(myFont);
+			borderedCellStyle.BorderLeft = BorderStyle.Medium;
+			borderedCellStyle.BorderTop = BorderStyle.Medium;
+			borderedCellStyle.BorderRight = BorderStyle.Medium;
+			borderedCellStyle.BorderBottom = BorderStyle.Medium;
+			borderedCellStyle.VerticalAlignment = VerticalAlignment.Center;
+
+			ISheet Sheet = workbook.CreateSheet("Comprobantes");
+
+			////Crea los encabezados de la primer linea
+			//IRow FirstHeaderRow = Sheet.CreateRow(0);
+			//CreateCell(FirstHeaderRow, 0, "TipoPol", borderedCellStyle);
+			//CreateCell(FirstHeaderRow, 1, "Concepto póliza", borderedCellStyle);
+			//CreateCell(FirstHeaderRow, 3, "Póliza dinámica CFDI:", borderedCellStyle);
+			//CreateCell(FirstHeaderRow, 4, "Venta", borderedCellStyle);
+
+			////Crea los encabezados de la segunda linea
+			//IRow SecondHeaderRow = Sheet.CreateRow(1);
+			//CreateCell(SecondHeaderRow, 1, "No. Cuenta", borderedCellStyle);
+			//CreateCell(SecondHeaderRow, 1, "Depto.", borderedCellStyle);
+			//CreateCell(SecondHeaderRow, 1, "Concepto mov.", borderedCellStyle);
+			//CreateCell(SecondHeaderRow, 1, "Debe", borderedCellStyle);
+			//CreateCell(SecondHeaderRow, 1, "Haber", borderedCellStyle);
+			//CreateCell(SecondHeaderRow, 1, "Centro de Ctos", borderedCellStyle);
+			//CreateCell(SecondHeaderRow, 1, "Proyecto", borderedCellStyle);
+
+			return Task.FromResult(workbook);
+		}
 		private static void CreateCell(IRow CurrentRow, int CellIndex, string Value, HSSFCellStyle Style)
 		{
 			ICell Cell = CurrentRow.CreateCell(CellIndex);
 			Cell.SetCellValue(Value);
 			Cell.CellStyle = Style;
 		}
-		private static decimal GetIEPSConcepto(Concepto c, List<TasaOCuota> impuestos)
-		{
-			decimal total = 0;
-			if (c.ObjetoImpuestoId >= 2)
-			{
-				//Obtiene el valor total del IEPS
-				foreach (TasaOCuota t in impuestos)
-				{
-					if (c.TasaTraslado == (decimal)t.ValorMaximo)
-					{
-						total += c.Traslado;
-						break;
-					}
-					else if (c.TasaRetencion == (decimal)t.ValorMaximo)
-					{
-						total += c.Retencion;
-						break;
-					}
-				}
-			}
-			return total;
-		}
-		private static decimal GetIVAConcepto(Concepto c, List<TasaOCuota> impuestos)
-		{
-			decimal total = 0;
-			if (c.ObjetoImpuestoId >= 2)
-			{
-				//Obtiene el valor total del IVA
-				foreach (TasaOCuota t in impuestos)
-				{
-					if (c.TasaTraslado == (decimal)t.ValorMaximo)
-					{
-						total += c.Traslado;
-						break;
-					}
-					else if (c.TasaRetencion == (decimal)t.ValorMaximo)
-					{
-						total += c.Retencion;
-						break;
-					}
-				}
-			}
-			return total;
-		}
 
-		public ActionResult OnGetDownloadExcel()
+		public ActionResult OnGetDownloadExcel(string nombreArchivo)
 		{
-			if (PuedeTodo || PuedeConsultar)
-			{
-				return File("/templates/Prefacturas.xls", MediaTypeNames.Application.Octet, "Prefacturas.xls");
-			}
-			else
-			{
-				return new EmptyResult();
-			}
+			return File($"/templates/{nombreArchivo}.xls", MediaTypeNames.Application.Octet, $"{nombreArchivo}.xls");
 		}
 		
-		public async Task<JsonResult> OnPostCancelarMultiple(string[] ids)
+		public async Task<JsonResult> OnPostCancelarComprobante(string[] ids)
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesCancelledUnsuccessfully"]);
 
@@ -463,29 +581,6 @@ namespace ERPSEI.Areas.ERP.Pages
 			else
 			{
 				resp.Mensaje = localizer["AccesoDenegado"];
-			}
-
-			return new JsonResult(resp);
-		}
-		public async Task<JsonResult> OnPostCancelar(int idComprobante)
-		{
-			ServerResponse resp = new(true, localizer["ComprobanteCancelledUnsuccessfully"]);
-			try
-			{
-				if(PuedeTodo || PuedeEditar)
-				{
-					//Se timbra la prefactura
-					resp = await CancelarComprobante(idComprobante);
-				}
-				else
-				{
-					resp.Mensaje = localizer["AccesoDenegado"];
-				}
-			}
-			catch (Exception ex)
-			{
-				string message = ex.Message;
-				logger.LogError("{message}", message);
 			}
 
 			return new JsonResult(resp);
