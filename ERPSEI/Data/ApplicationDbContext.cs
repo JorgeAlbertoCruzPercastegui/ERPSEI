@@ -523,10 +523,14 @@ namespace ERPSEI.Data
 
 			b.Entity<CuentaContableSubtipo>()
 				.HasData(
-					new CuentaContableSubtipo() { Id = 1, Clave = "C", Descripcion = "Cliente" },
-					new CuentaContableSubtipo() { Id = 2, Clave = "G", Descripcion = "Gasto" },
-					new CuentaContableSubtipo() { Id = 3, Clave = "I", Descripcion = "IVA" },
-					new CuentaContableSubtipo() { Id = 4, Clave = "P", Descripcion = "Proveedor" }
+					new CuentaContableSubtipo() { Id = 1, Clave = "CL", Descripcion = "Cliente" },
+					new CuentaContableSubtipo() { Id = 2, Clave = "GA", Descripcion = "Gasto" },
+					new CuentaContableSubtipo() { Id = 3, Clave = "VA", Descripcion = "Ventas al 16" },
+					new CuentaContableSubtipo() { Id = 4, Clave = "PR", Descripcion = "Proveedor" },
+					new CuentaContableSubtipo() { Id = 5, Clave = "VB", Descripcion = "Ventas al 0" },
+					new CuentaContableSubtipo() { Id = 6, Clave = "VC", Descripcion = "Ventas Exentas" },
+					new CuentaContableSubtipo() { Id = 7, Clave = "IN", Descripcion = "I.V.A. No Cobrado" },
+					new CuentaContableSubtipo() { Id = 8, Clave = "IC", Descripcion = "I.V.A. Cobrado" }
 				);
 		}
 	}
