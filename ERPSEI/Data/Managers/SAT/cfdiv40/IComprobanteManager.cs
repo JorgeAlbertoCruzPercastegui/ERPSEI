@@ -5,14 +5,17 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
     public interface IComprobanteManager : IRWCatalogoManager<Comprobante>
     {
 		public Task<List<Comprobante>> GetAllAsync(
-			string? periodo = null,
+			string? empresaRFC = null,
+			string? anio = null,
+			string? mes = null,
 			int? estatusId = null,
 			int? tipoId = null,
-			int? formaPagoId = null,
-			int? metodoPagoId = null,
-			int? usoCFDIId = null,
-			int? emisorId = null,
-			int? receptorId = null
+			string? tipoComprobanteClave = null,
+			string? formaPagoClave = null,
+			string? metodoPagoClave = null,
+			string? usoCFDIClave = null,
+			string? emisorRFC = null,
+			string? receptorRFC = null
 		);
 
 	}

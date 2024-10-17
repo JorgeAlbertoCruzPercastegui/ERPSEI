@@ -78,41 +78,61 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
 		public async Task<List<Comprobante>> GetAllAsync()
 		{
-			return await _db.Comprobantes.ToListAsync();
+			return await GetAllAsync(null,null,null,null,null,null,null,null,null,null,null);
 		}
 
 		public async Task<List<Comprobante>> GetAllAsync(
-			string? periodo = null,
+			string? empresaRFC = null,
+			string? anio = null,
+			string? mes = null,
 			int? estatusId = null,
 			int? tipoId = null,
-			int? formaPagoId = null,
-			int? metodoPagoId = null,
-			int? usoCFDIId = null,
-			int? emisorId = null,
-			int? receptorId = null
+			string? tipoComprobanteClave = null,
+			string? formaPagoClave = null,
+			string? metodoPagoClave = null,
+			string? usoCFDIClave = null,
+			string? emisorRFC = null,
+			string? receptorRFC = null
 		)
 		{
+			bool isEmitida = tipoId == 1;
+
 			List<Comprobante> lc = await _db.Comprobantes
-				.Where(e => estatusId == null || 1 == estatusId)
-				.Where(e => tipoId == null || 1 == tipoId)
-				.Where(e => formaPagoId == null || 1 == formaPagoId)
-				.Where(e => metodoPagoId == null || 1 == metodoPagoId)
-				.Where(e => usoCFDIId == null || 1 == usoCFDIId)
-				.Where(e => emisorId == null || (1 == emisorId || 1 == emisorId))
-				.Where(e => receptorId == null || (1 == receptorId || 1 == receptorId))
+				.Where(e => tipoComprobanteClave == null || e.TipoDeComprobante == tipoComprobanteClave)
+				.Where(e => formaPagoClave == null || e.FormaPago == formaPagoClave)
+				.Where(e => metodoPagoClave == null || e.MetodoPago == metodoPagoClave)
+				.Where(e => usoCFDIClave == null || (e.Receptor != null && e.Receptor.UsoCFDI == usoCFDIClave))
+				.Where(e => emisorRFC == null || (e.Emisor != null && e.Emisor.Rfc == emisorRFC))
+				.Where(e => receptorRFC == null || (e.Receptor != null && e.Receptor.Rfc == receptorRFC))
+				.Include(e => e.Complemento).ThenInclude(c => c.TimbreFiscalDigital)
 				.Include(e => e.Emisor)
 				.Include(e => e.Receptor)
 				.ToListAsync();
 
-            foreach (Comprobante c in lc)
-            {
+			if (empresaRFC != null) { lc = lc.FindAll(c => (c.Emisor != null && c.Emisor.Rfc == empresaRFC) || (c.Receptor != null && c.Receptor.Rfc == empresaRFC)); }
+			if(estatusId != null) { lc = lc.FindAll(c => c.Cancelado == (estatusId == 2)); }
+			switch (tipoId)
+			{
+				case 1:
+					lc = lc.FindAll(c => c.Emisor != null && c.Emisor.Rfc == empresaRFC);
+					break;
+				case 2:
+					lc = lc.FindAll(c => c.Receptor != null && c.Receptor.Rfc == empresaRFC);
+					break;
+				default:
+					break;
+			}
+            if (anio != null) { lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("yyyy") == anio); }
+			if (mes != null) { lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("MM") == mes); }
+
+			foreach (Comprobante c in lc)
+			{
+				c.TipoDeComprobante = (await _db.TiposComprobante.Where(t => t.Clave == c.TipoDeComprobante).FirstOrDefaultAsync())?.Descripcion;
 				c.Moneda = (await _db.Monedas.Where(m => m.Clave == c.Moneda).FirstOrDefaultAsync())?.Descripcion;
 				c.MetodoPago = (await _db.MetodosPago.Where(m => m.Clave == c.MetodoPago).FirstOrDefaultAsync())?.Descripcion;
 				c.FormaPago = (await _db.FormasPago.Where(f => f.Clave == c.FormaPago).FirstOrDefaultAsync())?.Descripcion;
 				if (c.Receptor != null) { c.Receptor.UsoCFDI = (await _db.UsosCFDI.Where(u => u.Clave == c.Receptor.UsoCFDI).FirstOrDefaultAsync())?.Descripcion; }
-            }
-
-            if (periodo != null) { lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("yyyy-MM") == periodo); }
+			}
 
 			return lc;
 		}
@@ -121,6 +141,10 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
         {
             return await _db.Comprobantes
 				.Where(e => e.Id == id)
+				.Include(e => e.Impuestos)
+				.Include(e => e.Complemento).ThenInclude(c => c.TimbreFiscalDigital)
+				.Include(e => e.Emisor)
+				.Include(e => e.Receptor)
 				.FirstOrDefaultAsync();
         }
 
