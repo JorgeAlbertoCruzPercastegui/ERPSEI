@@ -12,6 +12,8 @@ using System.Net.Mime;
 using ERPSEI.Pages.Shared;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Managers.Conciliaciones;
+using ERPSEI.Data.Entities.SAT.cfdiv40;
+using ERPSEI.Data.Managers.SAT;
 using ERPSEI.Data.Managers;
 using ERPSEI.Data.Managers.Empleados;
 using iText.Kernel.Pdf.Canvas.Parser;
@@ -36,6 +38,8 @@ using Microsoft.DotNet.MSIdentity.Shared;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 using ERPSEI.Data.Entities.SAT;
 using ERPSEI.Data.Managers.SAT;
+using ERPSEI.Data.Migrations;
+using ERPSEI.Data.Managers.SAT.cfdiv40;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -53,6 +57,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly IMovimientoBancarioManager movimientoBancarioManager;
         private readonly IEmpresaManager empresaManager;
         private readonly IEmpleadoManager _empleadoManager;
+        private readonly IComprobanteManager comprobanteManager;
         private readonly IStringLocalizer<ConciliacionesModel> localizer;
 
         private readonly Data.ApplicationDbContext db;
@@ -156,6 +161,7 @@ namespace ERPSEI.Areas.ERP.Pages
             IMovimientoBancarioManager _movimientoBancarioManager,
             IEmpresaManager _empresaManager,
             IEmpleadoManager empleadoManager,
+            IComprobanteManager _comprobanteManager,
             IStringLocalizer<ConciliacionesModel> _localizer,
             Data.ApplicationDbContext _db
         )
@@ -171,6 +177,7 @@ namespace ERPSEI.Areas.ERP.Pages
             movimientoBancarioManager = _movimientoBancarioManager;
             empresaManager = _empresaManager;
             _empleadoManager = empleadoManager;
+            comprobanteManager = _comprobanteManager;
             localizer = _localizer;
             db = _db;
 
@@ -211,7 +218,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 jsonConciliaciones.Add("{" +
                     $"\"id\": \"{cons.Id}\", " +
-                    $"\"Fecha\": \"{cons.Fecha}\", " +
+                    $"\"Fecha\": \"{cons.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"FechaJS\": \"{cons.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
                     $"\"Descripcion\": \"{cons.Descripcion}\", " +
                     $"\"Total\": \"{cons.Total}\", " +
                     $"\"BancoId\": \"{cons.BancoId}\", " +
@@ -281,7 +289,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             try
             {
-                resp.Datos = await OnGetConciliacionList(InputFiltro);
+                resp.Datos = await GetConciliacionList(InputFiltro);
                 resp.TieneError = false;
                 resp.Mensaje = stringLocalizer["ConciliacionesFiltradosSuccessfully"];
             }
@@ -294,10 +302,8 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<JsonResult> OnGetConciliacionList(InputFiltroModel? filtro = null)
+        private async Task<string> GetConciliacionList(InputFiltroModel? filtro = null)
         {
-            try
-            {
                 List<object> jsonConciliaciones = new List<object>();
                 List<Conciliacion> conciliaciones;
 
@@ -311,6 +317,73 @@ namespace ERPSEI.Areas.ERP.Pages
                         filtro.UsuarioModificador,
                         filtro.FechaElaboracionInicio,
                         filtro.FechaElaboracionFin
+                    );
+                }
+                else
+                {
+                    // Si no hay filtros, obtener todos los registros
+                    conciliaciones = await conciliacionManager.GetAllAsync();
+                }
+
+                // Construir el JSON con objetos anónimos
+                foreach (Conciliacion cons in conciliaciones)
+                {
+                    string UsuarioCreador = cons.UsuarioCreador?.Empleado?.NombreCompleto ?? cons.UsuarioCreador?.UserName ?? "-";
+                    string UsuarioModificador = cons.UsuarioModificador?.Empleado?.NombreCompleto ?? cons.UsuarioModificador?.UserName ?? "-";
+
+                    jsonConciliaciones.Add("{" +
+                    $"\"id\": \"{cons.Id}\", " +
+                    $"\"Fecha\": \"{cons.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"FechaJS\": \"{cons.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
+                    $"\"Descripcion\": \"{cons.Descripcion}\", " +
+                    $"\"Total\": \"{cons.Total}\", " +
+                    $"\"BancoId\": \"{cons.BancoId}\", " +
+                    $"\"Cliente\": \"{cons.Cliente?.RazonSocial}\", " +
+                    $"\"EmpresaId\": \"{cons.EmpresaId}\", " +
+                    $"\"UsuarioCreadorId\": \"{cons.UsuarioCreadorId}\", " +
+                    $"\"UsuarioCreador\": \"{UsuarioCreador}\", " +
+                    $"\"UsuarioModificadorId\": \"{cons.UsuarioModificadorId}\", " +
+                    $"\"UsuarioModificador\": \"{UsuarioModificador}\", " +
+                    $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
+                    "}");
+                }
+                string jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
+                return jsonResponse;
+        }
+
+        /*public async Task<JsonResult> OnPostFiltrarComprobantesFechas()
+        {
+            // Inicializar la respuesta con mensaje de error por defecto
+            ServerResponse resp = new(true, stringLocalizer["ComprobantesFiltradosUnsuccessfully"]);
+
+            try
+            {
+                resp.Datos = await onGetConsultarComprobantes(InputFiltro);
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["ComprobantesFiltradosSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                // Registrar el error en el log
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }*/
+
+        /*public async Task<JsonResult> onGetConsultarComprobantes(InputFiltroModelDComprobantes? filtro = null)
+        {
+            try
+            {
+                List<object> jsonComprobantes = new List<object>();
+                List<Comprobante> comprobantes;
+
+                // Aplicar los filtros de InputFiltro a la llamada a GetAllAsync
+                if (filtro != null)
+                {
+                    Comprobante = await comprobanteManager.GetAllAsync(
+                        filtro.FechaInicioModalDComprobantes,
+                        filtro.FechaFinModalDComprobantes,
                     );
                 }
                 else
@@ -353,8 +426,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 // Retornar un mensaje de error
                 return new JsonResult(new { TieneError = true, Mensaje = "Ocurrió un error al procesar la solicitud.", Datos = new List<object>() });
             }
-        }
-
+        }*/
 
         public async Task<JsonResult> OnGetMovimientosList()
         {

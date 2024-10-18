@@ -156,7 +156,7 @@
                         <div class="row">
                             <div class="col-sm-6 col-md-4 col-lg-4">
                                 <div class="form-floating mb-2">
-                                    <input id="inpConciliacionFecha" asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" type="datetime" class="form-control" placeholder="@Localizer["FechaElaboracionPlaceholder"]" />
+                                    <input id="inpConciliacionFecha" asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" type="datetime-local" class="form-control" placeholder="@Localizer["FechaElaboracionPlaceholder"]" />
                                     <label asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" class="form-label required"></label>
                                 </div>
                             </div>
@@ -291,7 +291,7 @@
                                     <h4 class="text-center">Comprobantes</h4>
                                     <table id="tableRight"
                                            data-toggle="table"
-                                           data-search="false"
+                                           data-search="true"
                                            data-height="460"
                                            data-show-search-button="true"
                                            data-card-view="false"

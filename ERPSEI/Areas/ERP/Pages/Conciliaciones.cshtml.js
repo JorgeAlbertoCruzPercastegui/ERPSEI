@@ -74,7 +74,7 @@ function getIdSelections() {
     })
 }
 
-/*function responseHandler(res) {
+function responseHandler(res) {
     if (typeof res == "string" && res.length >= 1) {
         res = JSON.parse(res);
     }
@@ -83,31 +83,7 @@ function getIdSelections() {
     });
 
     return res
-}*/
-
-function responseHandler(res) {
-    if (typeof res == "string" && res.length >= 1) {
-        res = JSON.parse(res);
-    }
-
-    // Verifica si res es un array o si es un objeto con un array dentro
-    if (!Array.isArray(res) && res.length === undefined && res[0] !== undefined) {
-        res = res[0]; // O el nombre de la propiedad si el array está anidado
-    }
-
-    $.each(res, function (i, row) {
-        // Verifica que 'row' y 'row.Id' no sean null o undefined
-        if (row && row.id != null) {
-            row.state = $.inArray(row.id, selections) !== -1;
-        } else {
-            console.warn("Elemento sin Id encontrado:", row);
-        }
-    });
-
-    return res;
 }
-
-
 
 //Función para dar formato a los campos booleanos
 function booleanFormatter(value, row, index) {
@@ -327,16 +303,9 @@ function initConciliacionDialog(action, row) {
             break;
     }
 
-    // Extraer la parte de la fecha (YYYY-MM-DD) y verificar si el campo de fecha es de tipo "date"
-    let fechaFormateada = "";
-    if (row.Fecha) {
-        let fecha = row.Fecha.split(' ')[0]; // Tomar solo la fecha (YYYY-MM-DD)
-        fechaFormateada = fecha;  // Mantener el formato YYYY-MM-DD para campos de tipo date
-    }
-
     // Asignar valores a los campos del diálogo usando los valores de la entidad Conciliacion
     idField.value = row.id || "";
-    fechaField.value = fechaFormateada || "";
+    fechaField.value = row.FechaJS || "";
     clienteIdField.value = row.Cliente || "";
     descripcionField.value = row.Descripcion || "";
 
@@ -419,7 +388,6 @@ function eliminarRegistro(Id) {
     }
 }
 
-
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");
@@ -465,7 +433,43 @@ function onBuscarClick() {
     document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
 }
 
+function onConsultarComprobantesClick() {
+    let btnBuscar = document.getElementById("dlgConsultarBtnGuardar");
+    let inpFechaInicial = document.getElementById("inpFiltroFechaInicioModalDComprobantes");
+    let inpFechaFinal = document.getElementById("inpFiltroFechaFinModalDComprobantes");
 
+    let oParams = {
+        fechaInicio: inpFechaInicial.value,
+        fechaFin: inpFechaFinal.value
+    };
+
+    //Resetea el valor de los filtros.
+    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
+    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
+
+    doAjax(
+        "/ERP/Conciliaciones/FiltrarComprobantesFechas",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    let summary = ``;
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                }
+                showError(btnBuscar.innerHTML, resp.mensaje);
+                return;
+            }
+
+            table.bootstrapTable('load', responseHandler(resp.datos));
+        }, function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
 
 //Método para importar la información del excel y pdf
 function onImportarMovimientosBancariosClick() {
