@@ -332,7 +332,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					{
 						conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie}-{comprobante.Folio}";
 						Empresa? empresaEmisora = await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
-						cuentasContables = cuentasContables.Where(cuenta => empresaEmisora?.RFC == cuenta.RFC).ToList();
+						cuentasContables = cuentasContables.Where(cuenta => empresaEmisora?.Id == cuenta.EmpresaId).ToList();
 						CuentaContable? cuentaCliente = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Receptor?.Rfc).FirstOrDefault();
 						CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
 						CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
