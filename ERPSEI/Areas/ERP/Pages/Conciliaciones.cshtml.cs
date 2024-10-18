@@ -40,6 +40,7 @@ using ERPSEI.Data.Entities.SAT;
 using ERPSEI.Data.Managers.SAT;
 using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
+using static ERPSEI.Areas.ERP.Pages.PrefacturasModel;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -129,18 +130,18 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         [BindProperty]
-        public InputFiltroModelDComprobantes InputFiltroModalDComprobantes { get; set; }
+        public InputFiltroModelDComprobantes InputFiltroModalDComprobantes { get; set; } = new InputFiltroModelDComprobantes();
 
         public class InputFiltroModelDComprobantes
         {
             [Display(Name = "FechaInicioModalDComprobantesField")]
             [Required(ErrorMessage = "Required")]
-            [DataType(DataType.Date)]
+            [DataType(DataType.DateTime)]
             public DateTime? FechaInicioModalDComprobantes { get; set; }
 
             [Display(Name = "FechaFinModalDComprobantesField")]
             [Required(ErrorMessage = "Required")]
-            [DataType(DataType.Date)]
+            [DataType(DataType.DateTime)]
             public DateTime? FechaFinModalDComprobantes { get; set; }
         }
 
@@ -234,6 +235,25 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             string jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
+            return new JsonResult(jsonResponse);
+        }
+
+        public async Task<JsonResult> OnGetComprobantesList()
+        {
+            List<string> jsonComprobantes = new List<string>();
+            List<Comprobante> comprobantes = await comprobanteManager.GetAllAsync();
+
+            foreach (Comprobante comp in comprobantes)
+            {
+                jsonComprobantes.Add("{" +
+                    $"\"Serie\": \"{comp.Serie}\", " +
+                    $"\"Folio\": \"{comp.Folio}\", " +
+                    $"\"Fecha\": \"{comp.Fecha}\", " +
+                    $"\"Total\": \"{comp.Total}\"" +
+                    "}");
+            }
+
+            string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
             return new JsonResult(jsonResponse);
         }
 
@@ -358,7 +378,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             try
             {
-                resp.Datos = await onGetConsultarComprobantes(InputFiltro);
+                resp.Datos = await GetConsultarComprobantes(InputFiltro);
                 resp.TieneError = false;
                 resp.Mensaje = stringLocalizer["ComprobantesFiltradosSuccessfully"];
             }
@@ -369,27 +389,25 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(resp);
-        }*/
+        }
 
-        /*public async Task<JsonResult> onGetConsultarComprobantes(InputFiltroModelDComprobantes? filtro = null)
+        private async Task<JsonResult> GetConsultarComprobantes(InputFiltroModelDComprobantes? filtro = null)
         {
             try
             {
-                List<object> jsonComprobantes = new List<object>();
-                List<Comprobante> comprobantes;
+                List<string> jsonComprobantes = [];
+                List<Comprobante> comprobantes = [];
 
-                // Aplicar los filtros de InputFiltro a la llamada a GetAllAsync
                 if (filtro != null)
                 {
-                    Comprobante = await comprobanteManager.GetAllAsync(
+                    comprobantes = await comprobanteManager.GetAllAsync(
                         filtro.FechaInicioModalDComprobantes,
-                        filtro.FechaFinModalDComprobantes,
+                        filtro.FechaFinModalDComprobantes
                     );
                 }
                 else
                 {
-                    // Si no hay filtros, obtener todos los registros
-                    conciliaciones = await conciliacionManager.GetAllAsync();
+                    comprobantes = await comprobanteManager.GetAllAsync();
                 }
 
                 // Construir el JSON con objetos anónimos

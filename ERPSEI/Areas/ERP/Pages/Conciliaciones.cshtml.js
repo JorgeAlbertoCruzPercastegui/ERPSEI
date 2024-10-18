@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     dlgConciliacion.addEventListener('shown.bs.modal', function (event) {
         autoCompletar("#inpConciliacionClienteId");
+        initTableComprobantes()
     });
 
     initTable();
@@ -241,6 +242,45 @@ function initTable() {
         });
     })
 }
+function initTableComprobantes() {
+    $("#tableCardComprobantes").bootstrapTable('destroy').bootstrapTable({
+        locale: cultureName,
+        toolbar: '#toolbar2',
+        method: 'get',  // Método para obtener los datos
+        columns: [
+            {
+                title: "Serie",
+                field: "Serie",  // Campo Serie del objeto Comprobante
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Folio",
+                field: "Folio",  // Campo Folio del objeto Comprobante
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Fecha",
+                field: "Fecha",  // Campo Fecha del objeto Comprobante
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Total",
+                field: "Total",  // Campo Total del objeto Comprobante
+                align: "center",
+                valign: "middle",
+                sortable: true
+            }
+        ],
+        responseHandler: responseHandler  // Procesar la respuesta en el handler
+    });
+}
+
 function onCerrarClick() {
     //Removes validation from input-fields
     $('.input-validation-error').addClass('input-validation-valid');

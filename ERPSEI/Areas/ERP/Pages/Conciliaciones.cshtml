@@ -196,9 +196,9 @@
                                 <!-- Card del lado izquierdo -->
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalIzComprobantes"]</h4>
-                                    <table id="table"
+                                    <table id="tableCardComprobantes"
                                            data-toggle="table"
-                                           data-toolbar=".toolbar"
+                                           data-toolbar=".toolbar2"
                                            data-search="true"
                                            data-height="460"
                                            data-card-view="true"
@@ -206,16 +206,17 @@
                                            data-pagination-v-align="top"
                                            data-show-fullscreen="true"
                                            data-show-search-clear-button="false"
-                                           data-side-pagination="server"
+                                           data-side-pagination="client"
                                            data-buttons-class="primary"
                                            data-show-search-button="true"
-                                           data-url="">
+                                           data-url="/ERP/Conciliaciones/ComprobantesList">
                                         <thead>
-                                            <tr>
-                                                <th data-field="id">Folio</th>
-                                                <th data-field="name">Fecha</th>
-                                                <th data-field="price">Desc.</th>
-                                                <th data-field="">Total</th>
+                                            <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+                                                <!--</><th data-field="state" data-checkbox="true"></th>-->
+                                                <th data-field="Serie">Serie</th>
+                                                <th data-field="Folio">Folio</th>
+                                                <th data-field="Fecha">Fecha</th>
+                                                <th data-field="Total">Total</th>
                                                 <th data-field="actions" data-formatter="actionFormatter"></th>
                                             </tr>
                                         </thead>
