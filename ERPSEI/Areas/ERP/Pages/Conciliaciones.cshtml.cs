@@ -245,10 +245,21 @@ namespace ERPSEI.Areas.ERP.Pages
 
             foreach (Comprobante comp in comprobantes)
             {
+                // Inicializa el UUID como vacío o nulo por defecto
+                string uuid = string.Empty;
+
+                // Verifica si Complemento y TimbreFiscalDigital no son nulos antes de acceder a UUID
+                if (comp.Complemento != null && comp.Complemento.TimbreFiscalDigital != null)
+                {
+                    uuid = comp.Complemento.TimbreFiscalDigital.UUID ?? string.Empty;
+                }
+
+                // Construir el JSON con el UUID y los demás campos
                 jsonComprobantes.Add("{" +
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha}\", " +
+                    $"\"UUID\": \"{uuid}\", " +
                     $"\"Total\": \"{comp.Total}\"" +
                     "}");
             }
@@ -256,6 +267,7 @@ namespace ERPSEI.Areas.ERP.Pages
             string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
             return new JsonResult(jsonResponse);
         }
+
 
         public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
         {

@@ -246,38 +246,45 @@ function initTableComprobantes() {
     $("#tableCardComprobantes").bootstrapTable('destroy').bootstrapTable({
         locale: cultureName,
         toolbar: '#toolbar2',
-        method: 'get',  // Método para obtener los datos
+        method: 'get',
         columns: [
             {
                 title: "Serie",
-                field: "Serie",  // Campo Serie del objeto Comprobante
+                field: "Serie",  
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
                 title: "Folio",
-                field: "Folio",  // Campo Folio del objeto Comprobante
+                field: "Folio",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
                 title: "Fecha",
-                field: "Fecha",  // Campo Fecha del objeto Comprobante
+                field: "Fecha",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "UUID",
+                field: "UUID",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
                 title: "Total",
-                field: "Total",  // Campo Total del objeto Comprobante
+                field: "Total",
                 align: "center",
                 valign: "middle",
                 sortable: true
             }
         ],
-        responseHandler: responseHandler  // Procesar la respuesta en el handler
+        responseHandler: responseHandler
     });
 }
 
