@@ -1,7 +1,9 @@
 using ERPSEI.Data;
+using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
 using ERPSEI.Data.Entities.Usuarios;
+using ERPSEI.Data.Managers.Cuentas;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
 using ERPSEI.Data.Managers.Usuarios;
@@ -27,6 +29,7 @@ namespace ERPSEI.Areas.ERP.Pages
 			AppUserManager userManager,
 			IEmpresaManager empresaManager,
 			IComprobanteManager comprobanteManager,
+			ICuentaContableManager cuentaContableManager,
 			IStringLocalizer<AdministradorDeComprobantesModel> localizer,
 			ILogger<AdministradorDeComprobantesModel> logger,
 			IEncriptacionAES encriptacionAES
@@ -250,7 +253,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						case (int)TipoExportacion.Excel:
 							break;
 						case (int)TipoExportacion.PolizaIngresos:
-							resp.Datos = await CreateWorkbook(ids, TipoExportacion.PolizaIngresos, comprobanteManager);
+							resp.Datos = await CreateWorkbook(ids, TipoExportacion.PolizaIngresos, comprobanteManager, cuentaContableManager, empresaManager);
 							break;
 						case (int)TipoExportacion.PolizaEgresos:
 							break;
@@ -276,12 +279,13 @@ namespace ERPSEI.Areas.ERP.Pages
 			return new JsonResult(resp);
 		}
 
-		private async static Task<string> CreateWorkbook(string[] ids, TipoExportacion tipoExportacion, IComprobanteManager cmgr)
+		private async static Task<string> CreateWorkbook(string[] ids, TipoExportacion tipoExportacion, IComprobanteManager cmgr, ICuentaContableManager ccmgr, IEmpresaManager emgr)
 		{
 			int rowIndex = 2;
 			string? strTipoPoliza = string.Empty;
 			HSSFWorkbook? wb = null;
 			string? nombreArchivo = string.Empty;
+			List<CuentaContable>? cuentasContables = await ccmgr.GetAllAsync();
 			switch (tipoExportacion)
 			{
 				case TipoExportacion.Excel:
@@ -289,9 +293,12 @@ namespace ERPSEI.Areas.ERP.Pages
 				case TipoExportacion.PolizaIngresos:
 					strTipoPoliza = "VENTA";
 					wb = await CreateExcelPolizaIngresos();
+					cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
 					break;
 				case TipoExportacion.PolizaEgresos:
 					strTipoPoliza = "GASTO";
+					//wb = await CreateExcelPolizaEgresos();
+					cuentasContables = cuentasContables.Where(c => c.TipoId == 1).ToList();
 					break;
 				default:
 					break;
@@ -320,10 +327,18 @@ namespace ERPSEI.Areas.ERP.Pages
 				foreach (string id in ids)
 				{
 					int intId = Convert.ToInt32(id);
-					Comprobante? c = await cmgr.GetByIdAsync(intId);
-					if (c != null)
+					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
+					if (comprobante != null)
 					{
-						conceptoString = $"PROVISION DE {strTipoPoliza} '{c.Receptor?.Nombre}' {c.Serie}-{c.Folio}";
+						conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie}-{comprobante.Folio}";
+						Empresa? empresaEmisora = await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
+						cuentasContables = cuentasContables.Where(cuenta => empresaEmisora?.RFC == cuenta.RFC).ToList();
+						CuentaContable? cuentaCliente = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Receptor?.Rfc).FirstOrDefault();
+						CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
+						CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
+						CuentaContable? cuentaVentasExentas = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 6).FirstOrDefault();
+						CuentaContable? cuentaIVANoCobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 7).FirstOrDefault();
+						CuentaContable? cuentaIVACobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 8).FirstOrDefault();
 
 						//Crea el row de encabezado de CFDI
 						IRow hRow = sheet.CreateRow(rowIndex);
@@ -334,21 +349,26 @@ namespace ERPSEI.Areas.ERP.Pages
 						//Concepto póliza
 						CreateCell(hRow, 2, conceptoString, cellStyle);
 
-						////Crea el row de detalle de CFDI
-						//IRow dRow = sheet.CreateRow(rowIndex + 1);
-						////No. Cuenta
-						//CreateCell(dRow, 1, "0000-000-000", cellStyle);
-						////Depto.
-						//CreateCell(dRow, 2, "0", cellStyle);
-						////Concepto
-						//CreateCell(dRow, 3, conceptoString, cellStyle);
-						////Total
-						//CreateCell(dRow, 4, "999999999", cellStyle);
-
-						//Crea el row de Importe antes de impuesto de CFDI
-						IRow g1Row = sheet.CreateRow(rowIndex + 1);
+						//Crea el row del total de la factura
+						IRow dRow = sheet.CreateRow(rowIndex + 1);
 						//No. Cuenta
-						CreateCell(g1Row, 1, "4100-001-000", cellStyle);
+						CreateCell(dRow, 1, cuentaCliente?.Cuenta ?? "0000-000-000", cellStyle); 
+						//Depto.
+						CreateCell(dRow, 2, "0", cellStyle);
+						//Concepto
+						CreateCell(dRow, 3, conceptoString, cellStyle);
+						//Total
+						CreateCell(dRow, 4, comprobante.Total.ToString("N"), cellStyle);
+
+						CuentaContable? cuentaVenta = null;
+						if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.16m) ?? false)) { cuentaVenta = cuentaVentas16; }
+						else if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.0m) ?? false)) { cuentaVenta = cuentaVentas0; }
+						else if (comprobante.Impuestos == null) { cuentaVenta = cuentaVentasExentas; }
+
+						//Crea el row del subtotal de la factura de CFDI
+						IRow g1Row = sheet.CreateRow(rowIndex + 2);
+						//No. Cuenta
+						CreateCell(g1Row, 1, cuentaVenta?.Cuenta ?? "0000-000-000", cellStyle);
 						//Depto.
 						CreateCell(g1Row, 2, "0", cellStyle);
 						//Concepto
@@ -358,20 +378,20 @@ namespace ERPSEI.Areas.ERP.Pages
 							//Debe
 							CreateCell(g1Row, 4, "", cellStyle);
 							//Haber
-							CreateCell(g1Row, 5, c.Total.ToString("N"), cellStyle);
+							CreateCell(g1Row, 5, comprobante.SubTotal.ToString("N"), cellStyle);
 						}
 						else
 						{
 							//Debe
-							CreateCell(g1Row, 4, c.Total.ToString("N"), cellStyle);
+							CreateCell(g1Row, 4, comprobante.SubTotal.ToString("N"), cellStyle);
 							//Haber
 							CreateCell(g1Row, 5, "", cellStyle);
 						}
 
-						//Crea el row de IVA Traslado de CFDI
-						IRow g2Row = sheet.CreateRow(rowIndex + 2);
+						//Crea el row del IVA
+						IRow g2Row = sheet.CreateRow(rowIndex + 3);
 						//No. Cuenta
-						CreateCell(g2Row, 1, "2181-001-000", cellStyle);
+						CreateCell(g2Row, 1, cuentaIVANoCobrado?.Cuenta ?? "0000-000-000", cellStyle);
 						//Depto.
 						CreateCell(g2Row, 2, "0", cellStyle);
 						//Concepto
@@ -381,38 +401,38 @@ namespace ERPSEI.Areas.ERP.Pages
 							//Debe
 							CreateCell(g2Row, 4, "", cellStyle);
 							//Haber
-							CreateCell(g2Row, 5, c.Total.ToString("N"), cellStyle);
+							CreateCell(g2Row, 5, (comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0).ToString("N"), cellStyle);
 						}
 						else
 						{
 							//Debe
-							CreateCell(g2Row, 4, c.Total.ToString("N"), cellStyle);
+							CreateCell(g2Row, 4, (comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0).ToString("N"), cellStyle);
 							//Haber
 							CreateCell(g2Row, 5, "", cellStyle);
 						}
 
-						//Crea el row de IEPS Traslado de CFDI
-						IRow g3Row = sheet.CreateRow(rowIndex + 3);
-						//No. Cuenta
-						CreateCell(g3Row, 1, "2181-002-000", cellStyle);
-						//Depto.
-						CreateCell(g3Row, 2, "0", cellStyle);
-						//Concepto
-						CreateCell(g3Row, 3, conceptoString, cellStyle);
-						if(tipoExportacion == TipoExportacion.PolizaIngresos)
-						{
-							//Debe
-							CreateCell(g3Row, 4, c.Total.ToString("N"), cellStyle);
-							//Haber
-							CreateCell(g3Row, 5, "", cellStyle);
-						}
-						else
-						{
-							//Debe
-							CreateCell(g3Row, 4, "", cellStyle);
-							//Haber
-							CreateCell(g3Row, 5, c.Total.ToString("N"), cellStyle);
-						}
+						////Crea el row de IEPS Traslado de CFDI
+						//IRow g3Row = sheet.CreateRow(rowIndex + 4);
+						////No. Cuenta
+						//CreateCell(g3Row, 1, "2181-002-000", cellStyle);
+						////Depto.
+						//CreateCell(g3Row, 2, "0", cellStyle);
+						////Concepto
+						//CreateCell(g3Row, 3, conceptoString, cellStyle);
+						//if(tipoExportacion == TipoExportacion.PolizaIngresos)
+						//{
+						//	//Debe
+						//	CreateCell(g3Row, 4, comprobante.Total.ToString("N"), cellStyle);
+						//	//Haber
+						//	CreateCell(g3Row, 5, "", cellStyle);
+						//}
+						//else
+						//{
+						//	//Debe
+						//	CreateCell(g3Row, 4, "", cellStyle);
+						//	//Haber
+						//	CreateCell(g3Row, 5, comprobante.Total.ToString("N"), cellStyle);
+						//}
 
 						//Crea el row de fin de partida
 						IRow fRow = sheet.CreateRow(rowIndex + 4);
