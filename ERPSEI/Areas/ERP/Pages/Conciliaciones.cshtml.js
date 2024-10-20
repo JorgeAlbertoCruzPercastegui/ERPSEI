@@ -34,6 +34,53 @@ document.addEventListener("DOMContentLoaded", function (event) {
     let btnBuscar = document.getElementById("btnBuscar");
     if (btnBuscar) { btnBuscar.click(); }
 
+    // Evento para detectar cuando se cambia la opción del filtro
+    $('#filterOptionsC').on('change', function () {
+        const selectedOption = $(this).val();
+
+        // Filtro según la opción seleccionada
+        switch (selectedOption) {
+            case 'opcion1': // Mostrar Todo
+                $('#tableCardComprobantes').bootstrapTable('filterBy', {}); // Sin filtro, muestra todo
+                break;
+
+            case 'opcion2': // Mostrar Conciliados
+                $('#tableCardComprobantes').bootstrapTable('filterBy', {
+                    coincidencia: true // Filtrar solo los registros con coincidencia
+                });
+                break;
+
+            case 'opcion3': // Mostrar Pendientes
+                $('#tableCardComprobantes').bootstrapTable('filterBy', {
+                    coincidencia: false // Filtrar solo los registros sin coincidencia
+                });
+                break;
+        }
+    });
+
+    $('#filterOptionsM').on('change', function () {
+        const selectedOption = $(this).val();
+
+        // Filtro según la opción seleccionada
+        switch (selectedOption) {
+            case 'opcion1': // Mostrar Todo
+                $('#tableCardMovimientos').bootstrapTable('filterBy', {}); // Sin filtro, muestra todo
+                break;
+
+            case 'opcion2': // Mostrar Conciliados
+                $('#tableCardMovimientos').bootstrapTable('filterBy', {
+                    coincidencia: true // Filtrar solo los registros con coincidencia
+                });
+                break;
+
+            case 'opcion3': // Mostrar Pendientes
+                $('#tableCardMovimientos').bootstrapTable('filterBy', {
+                    coincidencia: false // Filtrar solo los registros sin coincidencia
+                });
+                break;
+        }
+    });
+
     //autoCompletar("#inpConciliacionClienteId");
 
     /*jQuery.validator.setDefaults({
@@ -295,7 +342,10 @@ function initTableComprobantes() {
     });
 }
 
-//Funciones para el cardview del lado izquierdo del principal modal
+// Lista para almacenar los IDs de registros sin coincidencia ya contados
+let registrosSinCoincidencia = [];
+let registrosSinCoincidenciaM = [];
+
 function conciliacionIndidual(value, row, index) {
     return `
         <button class="btn btn-primary btn-sm" onclick="consultarComp(${row.Id}, '${row.Serie}', '${row.Folio}', '${row.Fecha}', '${row.UUID}', '${row.Total}')">
@@ -325,9 +375,13 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
         return resultTableData.some(row => row.id === id);
     }
 
-    // Variables para controlar si se encuentra coincidencia
+    // Variables para contar coincidencias y no coincidencias
     let coincidenciaEncontrada = false;
     let resultadoMovimientos = "\nMovimientos Bancarios:\n";
+    let totalConciliadosC = parseInt(document.getElementById("TotalConciliadosC").innerText);
+    let totalSinConciliarC = parseInt(document.getElementById("TotalSinConciliarC").innerText);
+    let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText);
+    let totalSinConciliarM = parseInt(document.getElementById("TotalSinConciliarM").innerText);
 
     // Si no hay movimientos, indicarlo
     if (movimientosData.length === 0) {
@@ -368,6 +422,24 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
                         Descripción: mov.Descripción,
                         Total: mov.Cargos
                     });
+
+                    // Marcar la fila del comprobante como coincidente (color verde)
+                    $('#tableCardComprobantes').bootstrapTable('updateRow', {
+                        index: $('#tableCardComprobantes').bootstrapTable('getData').findIndex(comp => comp.Id === id),
+                        row: { coincidencia: true }
+                    });
+
+                    // Marcar la fila del movimiento como coincidente (color verde)
+                    $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                        index: index,
+                        row: { coincidencia: true }
+                    });
+
+                    // Actualizar el contador de coincidencias
+                    totalConciliadosC++;
+                    totalConciliadosM++;
+                    document.getElementById("TotalConciliadosC").innerText = totalConciliadosC;
+                    document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
                 }
             }
         });
@@ -375,6 +447,20 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
         // Si no se encuentra coincidencia, agregar mensaje de no coincidencia
         if (!coincidenciaEncontrada) {
             resultadoMovimientos += "No se encontró coincidencia con los movimientos.\n";
+
+            // Verificar si el registro sin coincidencia ya fue contado
+            if (!registrosSinCoincidencia.includes(id)) {
+                registrosSinCoincidencia.push(id); // Agregar el ID a la lista para que no se cuente nuevamente
+                totalSinConciliarC++;
+                document.getElementById("TotalSinConciliarC").innerText = totalSinConciliarC;
+            }
+
+            // Verificar si el registro sin coincidencia ya fue contado
+            if (!registrosSinCoincidenciaM.includes(id)) {
+                registrosSinCoincidenciaM.push(id); // Agregar el ID a la lista para que no se cuente nuevamente
+                totalSinConciliarM++;
+                document.getElementById("TotalSinConciliarM").innerText = totalSinConciliarM;
+            }
         }
     }
 
@@ -386,19 +472,22 @@ function conciliarAutomatico() {
     // Obtener todos los datos de la tabla de comprobantes
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
 
-    // Obtener los datos de la tabla tableCardMovimientos
+    // Obtener los datos de la tabla de movimientos
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
 
-    // Obtener los datos actuales de la tabla `tableResult` para verificar si el registro ya fue agregado
-    let resultTableData = $('#tableResult').bootstrapTable('getData');
+    // Variables para contar coincidencias y no coincidencias en ambas tablas
+    let coincidenciasComprobantes = 0;
+    let sinCoincidenciasComprobantes = 0;
+    let coincidenciasMovimientos = 0;
+    let sinCoincidenciasMovimientos = 0;
 
-    // Función para verificar si el registro ya está en la tabla resultante
-    function registroYaAgregado(id) {
-        return resultTableData.some(row => row.id === id);
-    }
-
-    // Variables para contar coincidencias
-    let coincidencias = 0;
+    // Inicializar todas las coincidencias como falsas para los movimientos
+    movimientosData.forEach((mov, indexMov) => {
+        $('#tableCardMovimientos').bootstrapTable('updateRow', {
+            index: indexMov,
+            row: { coincidencia: false } // Inicialmente marcar como no coincidente
+        });
+    });
 
     // Recorrer todos los comprobantes
     comprobantesData.forEach((comp, indexComp) => {
@@ -407,6 +496,9 @@ function conciliarAutomatico() {
 
         // Convertir el total del comprobante a un número con dos decimales
         let totalComprobanteFormateado = parseFloat(comp.Total).toFixed(2);
+
+        // Verificar si hubo coincidencia
+        let coincidenciaEncontradaComprobante = false;
 
         // Recorrer los movimientos para buscar coincidencias
         movimientosData.forEach((mov, indexMov) => {
@@ -418,50 +510,80 @@ function conciliarAutomatico() {
 
             // Comparar fechas y totales
             if (fechaMovimiento === fechaComprobanteFormateada && cargoMovimientoFormateado === totalComprobanteFormateado) {
-                // Verificar si el registro ya fue agregado
-                if (!registroYaAgregado(comp.Id)) {
-                    // Agregar la coincidencia a la tabla `tableResult` con la propiedad 'coincidencia: true'
-                    $('#tableResult').bootstrapTable('append', {
-                        id: comp.Id,
-                        Serie: comp.Serie,
-                        Folio: comp.Folio,
-                        Fecha: mov.Fecha,
-                        Banco: mov.Banco,
-                        Descripción: mov.Descripción,
-                        Total: mov.Cargos,
-                        coincidencia: true
-                    });
+                coincidenciaEncontradaComprobante = true;
 
-                    // Marcar la fila del comprobante como coincidente
-                    $('#tableCardComprobantes').bootstrapTable('updateRow', {
-                        index: indexComp,
-                        row: { coincidencia: true }
-                    });
+                // Agregar la coincidencia a la tabla `tableResult`
+                $('#tableResult').bootstrapTable('append', {
+                    id: comp.Id,
+                    Serie: comp.Serie,
+                    Folio: comp.Folio,
+                    Fecha: mov.Fecha,
+                    Banco: mov.Banco,
+                    Descripción: mov.Descripción,
+                    Total: mov.Cargos,
+                    coincidencia: true
+                });
 
-                    // Marcar la fila del movimiento como coincidente
-                    $('#tableCardMovimientos').bootstrapTable('updateRow', {
-                        index: indexMov,
-                        row: { coincidencia: true }
-                    });
+                // Marcar la fila del comprobante como coincidente
+                $('#tableCardComprobantes').bootstrapTable('updateRow', {
+                    index: indexComp,
+                    row: { coincidencia: true }
+                });
 
-                    coincidencias++;
-                }
+                // Marcar la fila del movimiento como coincidente
+                $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                    index: indexMov,
+                    row: { coincidencia: true } // Marcar como coincidente
+                });
+
+                coincidenciasComprobantes++;
+                coincidenciasMovimientos++;
             }
         });
+
+        // Si no se encontró coincidencia para este comprobante
+        if (!coincidenciaEncontradaComprobante) {
+            sinCoincidenciasComprobantes++;
+        }
     });
 
+    // Calcular movimientos sin coincidencia
+    movimientosData.forEach((mov, indexMov) => {
+        // Si el movimiento no tiene la propiedad de coincidencia, ya está marcado como false
+        if (!mov.coincidencia) {
+            sinCoincidenciasMovimientos++;
+        }
+    });
+
+    // Actualizar los valores de los contadores en la vista
+    document.getElementById("TotalSinConciliarC").innerText = sinCoincidenciasComprobantes;
+    document.getElementById("TotalConciliadosC").innerText = coincidenciasComprobantes;
+
+    document.getElementById("TotalSinConciliarM").innerText = sinCoincidenciasMovimientos;
+    document.getElementById("TotalConciliadosM").innerText = coincidenciasMovimientos;
+
     // Mostrar un mensaje con la cantidad de coincidencias encontradas
-    if (coincidencias > 0) {
-        alert(`${coincidencias} coincidencia(s) encontrada(s) y agregada(s) a la tabla de resultados.`);
+    if (coincidenciasComprobantes > 0 || coincidenciasMovimientos > 0) {
+        alert(`${coincidenciasComprobantes} coincidencia(s) de comprobantes y ${coincidenciasMovimientos} coincidencia(s) de movimientos encontrada(s) y agregada(s) a la tabla de resultados.`);
     } else {
         alert("No se encontraron coincidencias.");
     }
 }
 
+
 function rowStyleComprobantes(row, index) {
     if (row.coincidencia) {
         return {
             classes: 'table-success'
+        };
+    }
+    return {};
+}
+
+function rowStyle(row, index) {
+    if (row.coincidencia) {
+        return {
+            classes: 'table-success' // Clase Bootstrap para filas con fondo verde
         };
     }
     return {};
