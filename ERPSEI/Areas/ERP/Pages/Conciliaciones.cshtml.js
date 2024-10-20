@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     //autoCompletar("#inpConciliacionClienteId");
 
-    jQuery.validator.setDefaults({
+    /*jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
             $(element).addClass("is-invalid").removeClass("is-valid");
         },
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
                 $(element).addClass("is-valid").removeClass("is-invalid");
             }
         }
-    });
+    });*/
 });
 
 async function onImportarMovimientosBancariosClick(event) {
@@ -250,7 +250,7 @@ function initTableComprobantes() {
         columns: [
             {
                 title: "Serie",
-                field: "Serie",  
+                field: "Serie",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -282,10 +282,198 @@ function initTableComprobantes() {
                 align: "center",
                 valign: "middle",
                 sortable: true
+            },
+            {
+                title: "",
+                field: "",
+                formatter: conciliacionIndidual,
+                align: "center",
+                valign: "middle"
             }
         ],
         responseHandler: responseHandler
     });
+}
+
+//Funciones para el cardview del lado izquierdo del principal modal
+function conciliacionIndidual(value, row, index) {
+    return `
+        <button class="btn btn-primary btn-sm" onclick="consultarComp(${row.Id}, '${row.Serie}', '${row.Folio}', '${row.Fecha}', '${row.UUID}', '${row.Total}')">
+            <i class="bi bi-paperclip rotate-clip"></i> Conciliar
+        </button>
+    `;
+}
+
+function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobante) {
+    // Convertir la fecha del comprobante a formato YYYY-MM-DD
+    let fechaComprobanteFormateada = fechaComprobante.split('T')[0]; // Obtener solo la parte de la fecha (YYYY-MM-DD)
+
+    // Convertir el total del comprobante a un número con dos decimales
+    let totalComprobanteFormateado = parseFloat(totalComprobante).toFixed(2);
+
+    // Datos del registro seleccionado en tableCardComprobantes
+    let resultadoComprobante = `Registro con id ${id} conciliado exitosamente.\nFecha: ${fechaComprobanteFormateada}\nSerie: ${serie}\nFolio: ${folio}\nUUID: ${uuid}\nTotal: ${totalComprobanteFormateado}\n`;
+
+    // Obtener los datos de la tabla tableCardMovimientos
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+
+    // Obtener los datos actuales de la tabla `tableResult` para verificar si el registro ya fue agregado
+    let resultTableData = $('#tableResult').bootstrapTable('getData');
+
+    // Función para verificar si el registro ya está en la tabla resultante
+    function registroYaAgregado(id) {
+        return resultTableData.some(row => row.id === id);
+    }
+
+    // Variables para controlar si se encuentra coincidencia
+    let coincidenciaEncontrada = false;
+    let resultadoMovimientos = "\nMovimientos Bancarios:\n";
+
+    // Si no hay movimientos, indicarlo
+    if (movimientosData.length === 0) {
+        resultadoMovimientos += "No hay movimientos cargados.\n";
+    } else {
+        // Recorrer los movimientos para buscar coincidencias
+        movimientosData.forEach((mov, index) => {
+            // Normalizar la fecha del movimiento al formato YYYY-MM-DD
+            let fechaMovimiento = mov.Fecha.split('/').reverse().join('-'); // Convertir de DD/MM/YYYY a YYYY-MM-DD
+
+            // Normalizar el cargo del movimiento a dos decimales
+            let cargoMovimientoFormateado = parseFloat(mov.Cargos).toFixed(2);
+
+            // Comparar fechas y totales
+            if (fechaMovimiento === fechaComprobanteFormateada && cargoMovimientoFormateado === totalComprobanteFormateado) {
+                coincidenciaEncontrada = true;
+
+                // Verificar si el registro ya fue agregado
+                if (registroYaAgregado(id)) {
+                    resultadoMovimientos += `\nEl registro con Id: ${id} ya ha sido agregado.\n`;
+                } else {
+                    resultadoMovimientos += `\n¡Coincidencia encontrada en el movimiento ${index + 1}!\n` +
+                        `Id: ${id}\n` +
+                        `Serie: ${serie}\n` +
+                        `Folio: ${folio}\n` +
+                        `Fecha: ${mov.Fecha}\n` +
+                        `Banco: ${mov.Banco}\n` +
+                        `Descripción: ${mov.Descripción}\n` +
+                        `Total: ${mov.Cargos}\n`;
+
+                    // Agregar la coincidencia a la tabla `tableResult`
+                    $('#tableResult').bootstrapTable('append', {
+                        id: id,
+                        Serie: serie,
+                        Folio: folio,
+                        Fecha: mov.Fecha,
+                        Banco: mov.Banco,
+                        Descripción: mov.Descripción,
+                        Total: mov.Cargos
+                    });
+                }
+            }
+        });
+
+        // Si no se encuentra coincidencia, agregar mensaje de no coincidencia
+        if (!coincidenciaEncontrada) {
+            resultadoMovimientos += "No se encontró coincidencia con los movimientos.\n";
+        }
+    }
+
+    // Mostrar el alert con los resultados
+    alert(resultadoComprobante + resultadoMovimientos);
+}
+
+function conciliarAutomatico() {
+    // Obtener todos los datos de la tabla de comprobantes
+    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
+
+    // Obtener los datos de la tabla tableCardMovimientos
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+
+    // Obtener los datos actuales de la tabla `tableResult` para verificar si el registro ya fue agregado
+    let resultTableData = $('#tableResult').bootstrapTable('getData');
+
+    // Función para verificar si el registro ya está en la tabla resultante
+    function registroYaAgregado(id) {
+        return resultTableData.some(row => row.id === id);
+    }
+
+    // Variables para contar coincidencias
+    let coincidencias = 0;
+
+    // Recorrer todos los comprobantes
+    comprobantesData.forEach((comp, indexComp) => {
+        // Convertir la fecha del comprobante a formato YYYY-MM-DD
+        let fechaComprobanteFormateada = comp.Fecha.split('T')[0]; // Obtener solo la parte de la fecha (YYYY-MM-DD)
+
+        // Convertir el total del comprobante a un número con dos decimales
+        let totalComprobanteFormateado = parseFloat(comp.Total).toFixed(2);
+
+        // Recorrer los movimientos para buscar coincidencias
+        movimientosData.forEach((mov, indexMov) => {
+            // Normalizar la fecha del movimiento al formato YYYY-MM-DD
+            let fechaMovimiento = mov.Fecha.split('/').reverse().join('-'); // Convertir de DD/MM/YYYY a YYYY-MM-DD
+
+            // Normalizar el cargo del movimiento a dos decimales
+            let cargoMovimientoFormateado = parseFloat(mov.Cargos).toFixed(2);
+
+            // Comparar fechas y totales
+            if (fechaMovimiento === fechaComprobanteFormateada && cargoMovimientoFormateado === totalComprobanteFormateado) {
+                // Verificar si el registro ya fue agregado
+                if (!registroYaAgregado(comp.Id)) {
+                    // Agregar la coincidencia a la tabla `tableResult` con la propiedad 'coincidencia: true'
+                    $('#tableResult').bootstrapTable('append', {
+                        id: comp.Id,
+                        Serie: comp.Serie,
+                        Folio: comp.Folio,
+                        Fecha: mov.Fecha,
+                        Banco: mov.Banco,
+                        Descripción: mov.Descripción,
+                        Total: mov.Cargos,
+                        coincidencia: true
+                    });
+
+                    // Marcar la fila del comprobante como coincidente
+                    $('#tableCardComprobantes').bootstrapTable('updateRow', {
+                        index: indexComp,
+                        row: { coincidencia: true }
+                    });
+
+                    // Marcar la fila del movimiento como coincidente
+                    $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                        index: indexMov,
+                        row: { coincidencia: true }
+                    });
+
+                    coincidencias++;
+                }
+            }
+        });
+    });
+
+    // Mostrar un mensaje con la cantidad de coincidencias encontradas
+    if (coincidencias > 0) {
+        alert(`${coincidencias} coincidencia(s) encontrada(s) y agregada(s) a la tabla de resultados.`);
+    } else {
+        alert("No se encontraron coincidencias.");
+    }
+}
+
+function rowStyleComprobantes(row, index) {
+    if (row.coincidencia) {
+        return {
+            classes: 'table-success'
+        };
+    }
+    return {};
+}
+
+function rowStyleMovimientos(row, index) {
+    if (row.coincidencia) {
+        return {
+            classes: 'table-success'
+        };
+    }
+    return {};
 }
 
 function onCerrarClick() {
@@ -420,14 +608,6 @@ function onGuardarConciliacionClick() {
     );
 }
 
-//Funciones para el cardview del lado izquierdo del principal modal
-function actionFormatter(value, row, index) {
-    return `
-        <button class="btn btn-primary btn-sm" onclick="eliminarRegistro(${row.Id})">
-            <i class="bi bi-paperclip rotate-clip"></i> Conciliar/Reconciliar
-        </button>
-    `;
-}
 function eliminarRegistro(Id) {
     if (confirm('¿Estás seguro de eliminar el registro con ID: ' + Id + '?')) {
         alert('Registro eliminado con éxito.');
@@ -510,13 +690,21 @@ function onConsultarComprobantesClick() {
                 return;
             }
 
-            table.bootstrapTable('load', responseHandler(resp.datos));
+            $('#tableCardComprobantes').bootstrapTable('load', responseHandler(resp.datos));
+
+            // Cerrar el modal de fechas
+            let modal = bootstrap.Modal.getInstance(document.getElementById('consultarComprobantesModal'));
+            if (modal) {
+                modal.hide();
+            }
         }, function (error) {
             showError("Error", error);
         },
         postOptions
     );
 }
+
+
 
 //Método para importar la información del excel y pdf
 function onImportarMovimientosBancariosClick() {

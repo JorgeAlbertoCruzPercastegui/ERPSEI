@@ -80,13 +80,10 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
                 throw;
             }
         }
-
-        // Método actualizado para incluir Complemento y TimbreFiscalDigital
         public async Task<List<Comprobante>> GetAllAsync()
         {
             return await _db.Comprobantes
-                .Include(c => c.Complemento) 
-                .ThenInclude(e => e.TimbreFiscalDigital)
+                .Include(c => c.Complemento).ThenInclude(e => e.TimbreFiscalDigital)
                 .ToListAsync();
         }
 
@@ -146,6 +143,20 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
         public async Task<Comprobante?> GetByNameAsync(string name)
         {
             return await _db.Comprobantes.Where(p => $"{(p.Serie ?? string.Empty).ToLower()}{(p.Folio ?? string.Empty).ToLower()}".Equals(name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefaultAsync();
+        }
+        public async Task<List<Comprobante>> GetByDateRangeAsync(DateTime fechaInicio, DateTime fechaFin)
+        {
+            return await _db.Comprobantes
+                .Where(c => DateTime.ParseExact(c.Fecha, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) >= fechaInicio &&
+                            DateTime.ParseExact(c.Fecha, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) <= fechaFin)
+                .Include(c => c.Complemento)
+                .ThenInclude(e => e.TimbreFiscalDigital)
+                .ToListAsync();
+        }
+
+        public Task<List<Comprobante>> GetByDateRangeAsync(DateTime? fechaInicio, DateTime? fechaFin)
+        {
+            throw new NotImplementedException();
         }
     }
 }

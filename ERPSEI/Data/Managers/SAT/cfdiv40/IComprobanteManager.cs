@@ -14,6 +14,9 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			int? emisorId = null,
 			int? receptorId = null
 		);
-
-	}
+        public Task<List<Comprobante>> GetByDateRangeAsync(
+			DateTime? fechaInicio, 
+			DateTime? fechaFin
+			);
+    }
 }

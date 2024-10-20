@@ -208,17 +208,19 @@
                                            data-show-search-clear-button="false"
                                            data-side-pagination="client"
                                            data-buttons-class="primary"
+                                           data-unique-id="id"
+                                           data-row-style="rowStyleComprobantes"
                                            data-show-search-button="true"
                                            data-url="/ERP/Conciliaciones/ComprobantesList">
+                                           
                                         <thead>
                                             <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
-                                                <!--</><th data-field="state" data-checkbox="true"></th>-->
+                                                <!--<th data-field="state" data-checkbox="false"></th>-->
                                                 <th data-field="Serie">Serie</th>
                                                 <th data-field="Folio">Folio</th>
                                                 <th data-field="Fecha">Fecha</th>
                                                 <th data-field="UUID">UUID</th>
                                                 <th data-field="Total">Total</th>
-                                                <th data-field="actions" data-formatter="actionFormatter"></th>
                                             </tr>
                                         </thead>
                                     </table>
@@ -232,7 +234,7 @@
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalDerMovimientos"]</h4>
                                     <!-- Agregar combobox a la izquierda del buscador -->
-                                    <div class="toolbar">
+                                    <!--<div class="toolbar">
                                         <div class="form-group">
                                             <div class="custom-select">
                                                 <select id="filterOptions" class="form-control">
@@ -242,7 +244,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div>-->
                                 <!-- Card del lado derecho -->
                                     <table id="tableCardMovimientos"
                                            data-toggle="table"
@@ -256,6 +258,8 @@
                                            data-show-search-clear-button="false"
                                            data-side-pagination="client"
                                            data-buttons-class="primary"
+                                           data-unique-id="id"
+                                           data-row-style="rowStyleMovimientos"
                                            data-show-search-button="true">
                                         <thead>
                                             <tr>
@@ -263,7 +267,7 @@
                                                 <th data-field="Descripción">Descripción</th>
                                                 <th data-field="Cargos">Cargos</th>
                                                 <th data-field="Abonos">Abonos</th>
-                                                <th data-field="actions" data-formatter="actionFormatter"></th>
+                                                <!--<th data-field="actions" data-formatter="actionFormatter"></th>-->
                                             </tr>
                                         </thead>
                                     </table>
@@ -277,58 +281,35 @@
                             </div>
                         </div>
                         <br />
-                        <h5>@Localizer["TitleConciliacion"]</h5>
                         <hr />
                         <div class="container mt-4">
                             <!-- Botón para abrir el modal -->
-                            <a href="#" class="btn btn-primary w-20 mb-4" data-bs-toggle="modal" data-bs-target="#ConciliacionModal">
+                            <a href="#" class="btn btn-primary w-20 mb-4" onclick="conciliarAutomatico()" data-bs-toggle="modal" data-bs-target="#ConciliacionModal">
                                 @Localizer["TitleModalConciliacionAsistida"]
                             </a>
 
-                            <!-- Fila que contendrá dos columnas, una para cada tabla -->
                             <div class="row">
-                                <!-- Columna de la izquierda -->
                                 <br />
-                                <div class="col-md-6">
-                                    <h4 class="text-center">Comprobantes</h4>
-                                    <table id="tableRight"
+                                <div class="">
+                                    <table id="tableResult"
                                            data-toggle="table"
                                            data-search="true"
                                            data-height="460"
                                            data-show-search-button="true"
                                            data-card-view="false"
                                            data-pagination="false"
-                                           data-buttons-class="primary">
+                                           data-buttons-class="primary"
+                                           data-unique-id="id"
+                                           data-row-style="rowStyle">
                                         <thead>
                                             <tr>
-                                                <th data-field="id">Folio</th>
-                                                <th data-field="name">Fecha</th>
-                                                <th data-field="name">Banco</th>
-                                                <th data-field="price">Desc.</th>
-                                                <th data-field="price">Total</th>
-                                            </tr>
-                                        </thead>
-                                    </table>
-                                </div>
-
-                                <!-- Columna de la derecha -->
-                                <div class="col-md-6">
-                                    <h4 class="text-center">Movimientos</h4>
-                                    <table id="tableRight"
-                                           data-toggle="table"
-                                           data-search="true"
-                                           data-height="460"
-                                           data-show-search-button="true"
-                                           data-card-view="false"
-                                           data-pagination="false"
-                                           data-buttons-class="primary">
-                                        <thead>
-                                            <tr>
-                                                <th data-field="id">Folio</th>
-                                                <th data-field="name">Fecha</th>
-                                                <th data-field="name">Banco</th>
-                                                <th data-field="price">Desc.</th>
-                                                <th data-field="price">Total</th>
+                                                <th data-field="id">Id</th>
+                                                <th data-field="Serie">Serie</th>
+                                                <th data-field="Folio">Folio</th>
+                                                <th data-field="Fecha">Fecha</th>
+                                                <th data-field="Banco">Banco</th>
+                                                <th data-field="Descripción">Descripción</th>
+                                                <th data-field="Total">Total</th>
                                             </tr>
                                         </thead>
                                     </table>
@@ -361,6 +342,7 @@
                 <h5 class="modal-title" id="descargarComprobantesLabel">@Localizer["ConsultaDeComprobantesPlaceholder"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+            <form id="theForm" method="post">
             <div class="modal-body">
                 <!-- Contenido del modal -->
                 <h6>@Localizer["DescargarComprobantesPlaceholder"]</h6>
@@ -390,6 +372,7 @@
                     </button>
                 </div>
             </div>
+            </form>
         </div>
     </div>
 </div>

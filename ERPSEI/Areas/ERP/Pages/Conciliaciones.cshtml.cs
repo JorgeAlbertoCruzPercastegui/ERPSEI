@@ -130,7 +130,7 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         [BindProperty]
-        public InputFiltroModelDComprobantes InputFiltroModalDComprobantes { get; set; } = new InputFiltroModelDComprobantes();
+        public InputFiltroModelDComprobantes InputFiltroModalDComprobantes { get; set; }
 
         public class InputFiltroModelDComprobantes
         {
@@ -203,7 +203,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     UsuarioCreador = cons.UsuarioCreador.Empleado.NombreCompleto ?? string.Empty;
                 }
-                else 
+                else
                 {
                     UsuarioCreador = cons.UsuarioCreador?.UserName ?? "-";
                 }
@@ -256,6 +256,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 // Construir el JSON con el UUID y los demás campos
                 jsonComprobantes.Add("{" +
+                    $"\"Id\": \"{comp.Id}\", " +
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha}\", " +
@@ -336,61 +337,62 @@ namespace ERPSEI.Areas.ERP.Pages
 
         private async Task<string> GetConciliacionList(InputFiltroModel? filtro = null)
         {
-                List<object> jsonConciliaciones = new List<object>();
-                List<Conciliacion> conciliaciones;
+            List<object> jsonConciliaciones = new List<object>();
+            List<Conciliacion> conciliaciones;
 
-                // Aplicar los filtros de InputFiltro a la llamada a GetAllAsync
-                if (filtro != null)
-                {
-                    conciliaciones = await conciliacionManager.GetAllAsync(
-                        filtro.Id,
-                        filtro.Cliente,
-                        filtro.UsuarioCreador,
-                        filtro.UsuarioModificador,
-                        filtro.FechaElaboracionInicio,
-                        filtro.FechaElaboracionFin
-                    );
-                }
-                else
-                {
-                    // Si no hay filtros, obtener todos los registros
-                    conciliaciones = await conciliacionManager.GetAllAsync();
-                }
+            // Aplicar los filtros de InputFiltro a la llamada a GetAllAsync
+            if (filtro != null)
+            {
+                conciliaciones = await conciliacionManager.GetAllAsync(
+                    filtro.Id,
+                    filtro.Cliente,
+                    filtro.UsuarioCreador,
+                    filtro.UsuarioModificador,
+                    filtro.FechaElaboracionInicio,
+                    filtro.FechaElaboracionFin
+                );
+            }
+            else
+            {
+                // Si no hay filtros, obtener todos los registros
+                conciliaciones = await conciliacionManager.GetAllAsync();
+            }
 
-                // Construir el JSON con objetos anónimos
-                foreach (Conciliacion cons in conciliaciones)
-                {
-                    string UsuarioCreador = cons.UsuarioCreador?.Empleado?.NombreCompleto ?? cons.UsuarioCreador?.UserName ?? "-";
-                    string UsuarioModificador = cons.UsuarioModificador?.Empleado?.NombreCompleto ?? cons.UsuarioModificador?.UserName ?? "-";
+            // Construir el JSON con objetos anónimos
+            foreach (Conciliacion cons in conciliaciones)
+            {
+                string UsuarioCreador = cons.UsuarioCreador?.Empleado?.NombreCompleto ?? cons.UsuarioCreador?.UserName ?? "-";
+                string UsuarioModificador = cons.UsuarioModificador?.Empleado?.NombreCompleto ?? cons.UsuarioModificador?.UserName ?? "-";
 
-                    jsonConciliaciones.Add("{" +
-                    $"\"id\": \"{cons.Id}\", " +
-                    $"\"Fecha\": \"{cons.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
-                    $"\"FechaJS\": \"{cons.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
-                    $"\"Descripcion\": \"{cons.Descripcion}\", " +
-                    $"\"Total\": \"{cons.Total}\", " +
-                    $"\"BancoId\": \"{cons.BancoId}\", " +
-                    $"\"Cliente\": \"{cons.Cliente?.RazonSocial}\", " +
-                    $"\"EmpresaId\": \"{cons.EmpresaId}\", " +
-                    $"\"UsuarioCreadorId\": \"{cons.UsuarioCreadorId}\", " +
-                    $"\"UsuarioCreador\": \"{UsuarioCreador}\", " +
-                    $"\"UsuarioModificadorId\": \"{cons.UsuarioModificadorId}\", " +
-                    $"\"UsuarioModificador\": \"{UsuarioModificador}\", " +
-                    $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
-                    "}");
-                }
-                string jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
-                return jsonResponse;
+                jsonConciliaciones.Add("{" +
+                $"\"id\": \"{cons.Id}\", " +
+                $"\"Fecha\": \"{cons.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                $"\"FechaJS\": \"{cons.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
+                $"\"Descripcion\": \"{cons.Descripcion}\", " +
+                $"\"Total\": \"{cons.Total}\", " +
+                $"\"BancoId\": \"{cons.BancoId}\", " +
+                $"\"Cliente\": \"{cons.Cliente?.RazonSocial}\", " +
+                $"\"EmpresaId\": \"{cons.EmpresaId}\", " +
+                $"\"UsuarioCreadorId\": \"{cons.UsuarioCreadorId}\", " +
+                $"\"UsuarioCreador\": \"{UsuarioCreador}\", " +
+                $"\"UsuarioModificadorId\": \"{cons.UsuarioModificadorId}\", " +
+                $"\"UsuarioModificador\": \"{UsuarioModificador}\", " +
+                $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
+                "}");
+            }
+            string jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
+            return jsonResponse;
         }
 
         /*public async Task<JsonResult> OnPostFiltrarComprobantesFechas()
         {
-            // Inicializar la respuesta con mensaje de error por defecto
+            // Inicializar la respuesta con un mensaje de error por defecto
             ServerResponse resp = new(true, stringLocalizer["ComprobantesFiltradosUnsuccessfully"]);
 
             try
             {
-                resp.Datos = await GetConsultarComprobantes(InputFiltro);
+                // Obtener los comprobantes filtrados por fechas
+                resp.Datos = await GetConsultarComprobantes(InputFiltroModalDComprobantes);
                 resp.TieneError = false;
                 resp.Mensaje = stringLocalizer["ComprobantesFiltradosSuccessfully"];
             }
@@ -403,59 +405,46 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        private async Task<JsonResult> GetConsultarComprobantes(InputFiltroModelDComprobantes? filtro = null)
+        private async Task<string> GetConsultarComprobantes(InputFiltroModelDComprobantes? filtro = null)
         {
-            try
+            List<object> jsonComprobantes = [];
+            List<Comprobante> comprobantes;
+
+            // Aplicar los filtros de fechas en la llamada a GetAllAsync
+            if (filtro != null)
             {
-                List<string> jsonComprobantes = [];
-                List<Comprobante> comprobantes = [];
-
-                if (filtro != null)
-                {
-                    comprobantes = await comprobanteManager.GetAllAsync(
-                        filtro.FechaInicioModalDComprobantes,
-                        filtro.FechaFinModalDComprobantes
-                    );
-                }
-                else
-                {
-                    comprobantes = await comprobanteManager.GetAllAsync();
-                }
-
-                // Construir el JSON con objetos anónimos
-                foreach (Conciliacion cons in conciliaciones)
-                {
-                    string UsuarioCreador = cons.UsuarioCreador?.Empleado?.NombreCompleto ?? cons.UsuarioCreador?.UserName ?? "-";
-                    string UsuarioModificador = cons.UsuarioModificador?.Empleado?.NombreCompleto ?? cons.UsuarioModificador?.UserName ?? "-";
-
-                    jsonConciliaciones.Add(new
-                    {
-                        id = cons.Id,
-                        Fecha = cons.Fecha,
-                        Descripcion = cons.Descripcion,
-                        Total = cons.Total,
-                        BancoId = cons.BancoId,
-                        Cliente = cons.Cliente?.RazonSocial,
-                        EmpresaId = cons.EmpresaId,
-                        UsuarioCreadorId = cons.UsuarioCreadorId,
-                        UsuarioCreador = UsuarioCreador,
-                        UsuarioModificadorId = cons.UsuarioModificadorId,
-                        UsuarioModificador = UsuarioModificador,
-                        Deshabilitado = cons.Deshabilitado
-                    });
-                }
-
-                // Retornar el JSON sin errores y con Datos como un array de objetos
-                return new JsonResult(new { TieneError = false, Mensaje = "Operación exitosa", Datos = jsonConciliaciones });
+                comprobantes = await comprobanteManager.GetByDateRangeAsync(
+                    filtro.FechaInicioModalDComprobantes.Value,
+                    filtro.FechaFinModalDComprobantes.Value);
             }
-            catch (Exception ex)
+            else
             {
-                // Registrar el error
-                logger.LogError(ex, "Error al obtener la lista de conciliaciones.");
-
-                // Retornar un mensaje de error
-                return new JsonResult(new { TieneError = true, Mensaje = "Ocurrió un error al procesar la solicitud.", Datos = new List<object>() });
+                // Si no hay filtros, obtener todos los comprobantes
+                comprobantes = await comprobanteManager.GetAllAsync();
             }
+
+            // Construir el JSON con objetos anónimos
+            foreach (Comprobante comp in comprobantes)
+            {
+                //DateTime? fecha = comp.Fecha == DateTime.MinValue ? null : comp.Fecha;
+
+                // Si el complemento o TimbreFiscalDigital no existe, devolver valores por defecto
+                string uuid = comp.Complemento?.TimbreFiscalDigital?.UUID ?? "-";
+
+                // Añadir el comprobante a la lista en formato JSON
+                jsonComprobantes.Add("{" +
+                    $"\"Serie\": \"{comp.Serie}\", " +
+                    $"\"Folio\": \"{comp.Folio}\", " +
+                    $"\"Fecha\": \"{comp.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"FechaJS\": \"{comp.Fecha:yyyy-MM-dd HH:mm:ss}\", " +  
+                    $"\"UUID\": \"{uuid}\", " +
+                    $"\"Total\": \"{comp.Total}\"" +
+                    "}");
+            }
+
+            // Convertir la lista de comprobantes a un JSON string
+            string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
+            return jsonResponse;
         }*/
 
         public async Task<JsonResult> OnGetMovimientosList()
@@ -503,9 +492,9 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 /*if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
                 {*/
-                    resp.Datos = await GetClientesEmpresasSuggestion(texto);
-                    resp.TieneError = false;
-                    resp.Mensaje = localizer["ConsultadoSuccessfully"];
+                resp.Datos = await GetClientesEmpresasSuggestion(texto);
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
                 /*}
                 else
                 {

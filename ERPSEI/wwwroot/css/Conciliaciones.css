@@ -25,3 +25,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.table-success {
+    background-color: #d4edda !important;
+    color: #000000 !important;
+}
