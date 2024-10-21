@@ -362,7 +362,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
     let totalComprobanteFormateado = parseFloat(totalComprobante).toFixed(2);
 
     // Datos del registro seleccionado en tableCardComprobantes
-    let resultadoComprobante = `Registro con id ${id} conciliado exitosamente.<br/>Fecha: ${fechaComprobanteFormateada}<br/>Serie: ${serie}<br/>Folio: ${folio}<br/>UUID: ${uuid}<br/>Total: ${totalComprobanteFormateado}<br/>`;
+    let resultadoComprobante = `<strong>Comprobante:</strong><br/><br/>Registro con id ${id} conciliado exitosamente.<br/>Fecha: ${fechaComprobanteFormateada}<br/>Serie: ${serie}<br/>Folio: ${folio}<br/>UUID: ${uuid}<br/>Total: ${totalComprobanteFormateado}<br/>`;
 
     // Obtener los datos de la tabla tableCardMovimientos
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
@@ -400,8 +400,13 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
             // Normalizar el cargo del movimiento a dos decimales
             let cargoMovimientoFormateado = parseFloat(mov.Cargos).toFixed(2);
 
-            // Comparar fechas y totales
-            if (fechaMovimiento === fechaComprobanteFormateada && cargoMovimientoFormateado === totalComprobanteFormateado) {
+            // Calcular el porcentaje de similitud entre el total del comprobante y el cargo del movimiento
+            let porcentajeSimilitud = ((totalComprobanteFormateado * 100) / cargoMovimientoFormateado) ?? 0.00;
+
+            // Comparar fechas y totales con la condición del porcentaje de similitud
+            if (fechaMovimiento === fechaComprobanteFormateada &&
+                (porcentajeSimilitud === 100 || (porcentajeSimilitud >= 99.8 && porcentajeSimilitud < 100))) {
+
                 coincidenciaEncontrada = true;
 
                 // Verificar si el registro ya fue agregado o conciliado automáticamente
@@ -415,7 +420,8 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
                         Fecha: ${mov.Fecha}<br/>
                         Banco: ${mov.Banco}<br/>
                         Descripción: ${mov.Descripción}<br/>
-                        Total: ${mov.Cargos}<br/>`;
+                        Total: ${mov.Cargos}<br/>
+                        <strong>Porcentaje de similitud: ${porcentajeSimilitud.toFixed(2)}%</strong><br/>`;
 
                     // Agregar la coincidencia a la tabla `tableResult`
                     $('#tableResult').bootstrapTable('append', {
@@ -476,7 +482,6 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
     var myModal = new bootstrap.Modal(document.getElementById('modalConciliacionComp'));
     myModal.show();
 }
-
 
 function conciliarAutomatico() {
     // Obtener todos los datos de la tabla de comprobantes
@@ -708,12 +713,12 @@ function initConciliacionDialog(action, row) {
     // Mostrar el modal
     dlgConciliacionModal.show();
 }
-function onGuardarConciliacionClick() {
-    // Ejecuta la validación del formulario con el id "theForm"
+function onGuardarClick() {
+    //Ejecuta la validación
     $("#theForm").validate();
-    // Determina si la validación fue exitosa
+    //Determina los errores
     let valid = $("#theForm").valid();
-    // Si el formulario no es válido, termina la ejecución
+    //Si la forma no es válida, entonces finaliza.
     if (!valid) { return; }
 
     let btnClose = document.getElementById("dlgConciliacionBtnCancelar");

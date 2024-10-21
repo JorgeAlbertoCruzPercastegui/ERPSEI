@@ -41,6 +41,7 @@ using ERPSEI.Data.Managers.SAT;
 using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
 using static ERPSEI.Areas.ERP.Pages.PrefacturasModel;
+using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -465,21 +466,55 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<JsonResult> OnPostSaveConciliacion()
+        public async Task<JsonResult> OnPostSaveConciliacion([FromBody] Conciliacion conciliacionDto)
         {
-            ServerResponse resp = new(true, stringLocalizer["AsistenciaSavedUnsuccessfully"]);
+            ServerResponse resp = new(true, stringLocalizer["ConciliacionSavedUnsuccessfully"]);
 
             try
             {
-                // Lógica para guardar la conciliación
+                // Validación básica de los datos recibidos
+                if (conciliacionDto == null || string.IsNullOrEmpty(conciliacionDto.Descripcion) || conciliacionDto.ClienteId == 0)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = stringLocalizer["InvalidData"];
+                    return new JsonResult(resp);
+                }
+
+                // Crear un objeto de la entidad Conciliacion para guardar en la base de datos
+                Conciliacion conciliacion = new Conciliacion
+                {
+                    Id = conciliacionDto.Id == 0 ? 0 : conciliacionDto.Id,  // Si el ID es 0, es un nuevo registro
+                    Descripcion = conciliacionDto.Descripcion,
+                    Fecha = conciliacionDto.Fecha,
+                    ClienteId = conciliacionDto.ClienteId,
+                    // Puedes añadir más campos si es necesario
+                };
+
+                // Guardar en la base de datos. Si el ID es 0, será una nueva inserción, si no, es una actualización
+                if (conciliacionDto.Id == 0)
+                {
+                    await db.Conciliaciones.AddAsync(conciliacion);  // Añadir nueva conciliación
+                }
+                else
+                {
+                    db.Conciliaciones.Update(conciliacion);  // Actualizar conciliación existente
+                }
+
+                await db.SaveChangesAsync();  // Guardar los cambios en la base de datos
+
+                // Respuesta exitosa
+                resp = new ServerResponse(false, stringLocalizer["ConciliacionSavedSuccessfully"]);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
+                resp.TieneError = true;
+                resp.Mensaje = stringLocalizer["ConciliacionSavedUnsuccessfully"];
             }
 
             return new JsonResult(resp);
         }
+
         public ActionResult OnGetDownloadPlantilla()
         {
             return File("/templates/PlantillaMovimientosBancarios.xlsx", MediaTypeNames.Application.Octet, "PlantillaMovimientosBancarios.xlsx");

@@ -232,7 +232,7 @@
                                 </div>
 
 
-                                
+
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalDerMovimientos"]</h4>
                                     <!-- Agregar combobox a la izquierda del buscador -->
@@ -247,7 +247,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                <!-- Card del lado derecho -->
+                                    <!-- Card del lado derecho -->
                                     <table id="tableCardMovimientos"
                                            data-toggle="table"
                                            data-toolbar=".toolbar"
@@ -324,15 +324,15 @@
 
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button id="dlgConciliacionBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
-                    </button>
-                    <button id="dlgConciliacionBtnGuardar" type="button" class="btn btn-primary">
-                        <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
-                    </button>
-                </div>
             </form>
+            <div class="modal-footer">
+                <button id="dlgConciliacionBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
+                </button>
+                <button id="dlgConciliacionBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+                    <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -383,35 +383,35 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="theForm" method="post">
-            <div class="modal-body">
-                <!-- Contenido del modal -->
-                <h6>@Localizer["DescargarComprobantesPlaceholder"]</h6>
-                <div class="row justify-content-center">
-                    <div class="col-sm-6 col-md-5 col-lg-7">
-                        <div class="form-floating mb-3">
-                            <input id="inpFiltroFechaInicioModalDComprobantes" type="date" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-control" placeholder="@Localizer["FechaInicioModalDComprobantesField"]" />
-                            <label for="inpFiltroFechaInicioModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-label required"></label>
+                <div class="modal-body">
+                    <!-- Contenido del modal -->
+                    <h6>@Localizer["DescargarComprobantesPlaceholder"]</h6>
+                    <div class="row justify-content-center">
+                        <div class="col-sm-6 col-md-5 col-lg-7">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroFechaInicioModalDComprobantes" type="date" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-control" placeholder="@Localizer["FechaInicioModalDComprobantesField"]" />
+                                <label for="inpFiltroFechaInicioModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-label required"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-5 col-lg-7">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroFechaFinModalDComprobantes" type="date" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-control" placeholder="@Localizer["FechaFinModalDComprobantesField"]" />
+                                <label for="inpFiltroFechaFinModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-label required"></label>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-md-5 col-lg-7">
-                        <div class="form-floating mb-3">
-                            <input id="inpFiltroFechaFinModalDComprobantes" type="date" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-control" placeholder="@Localizer["FechaFinModalDComprobantesField"]" />
-                            <label for="inpFiltroFechaFinModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-label required"></label>
-                        </div>
-                    </div>
-                </div>
 
-            </div>
-            <div class="modal-footer">
-                <div class="col-7 text-end">
-                    <button id="dlgConsultarBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]
-                    </button>
-                    <button id="dlgConsultarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onConsultarComprobantesClick();">
-                         @Localizer["GetButtonTitle"]
-                    </button>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <div class="col-7 text-end">
+                        <button id="dlgConsultarBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]
+                        </button>
+                        <button id="dlgConsultarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onConsultarComprobantesClick();">
+                            @Localizer["GetButtonTitle"]
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
