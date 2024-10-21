@@ -56,6 +56,11 @@ namespace ERPSEI.Data.Managers.Cuentas
 			return await db.CuentasContables.Include(c => c.Empresa).Where(c => c.Nombre == name.ToLower()).FirstOrDefaultAsync();
 		}
 
+		public async Task<List<CuentaContable>> GetByIdEmpresaAsync(int id)
+		{
+			return await db.CuentasContables.Include(c => c.Empresa).Where(c => c.EmpresaId == id).ToListAsync();
+		}
+
 		public async Task UpdateAsync(CuentaContable element)
 		{
 			CuentaContable? c = db.Find<CuentaContable>(element.Id);
