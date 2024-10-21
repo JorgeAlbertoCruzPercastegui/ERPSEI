@@ -196,6 +196,8 @@
                                 <!-- Card del lado izquierdo -->
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalIzComprobantes"]</h4>
+
+                                    <!-- Tabla de comprobantes -->
                                     <table id="tableCardComprobantes"
                                            data-toggle="table"
                                            data-toolbar=".toolbar2"
@@ -212,10 +214,8 @@
                                            data-row-style="rowStyleComprobantes"
                                            data-show-search-button="true"
                                            data-url="/ERP/Conciliaciones/ComprobantesList">
-                                           
                                         <thead>
                                             <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
-                                                <!--<th data-field="state" data-checkbox="false"></th>-->
                                                 <th data-field="Serie">Serie</th>
                                                 <th data-field="Folio">Folio</th>
                                                 <th data-field="Fecha">Fecha</th>
@@ -230,6 +230,8 @@
                                     <br />
                                     <strong>@Localizer["TotalConciliados"]</strong> <span id="TotalConciliadosC">0</span>
                                 </div>
+
+
                                 
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalDerMovimientos"]</h4>
@@ -284,9 +286,10 @@
                         <hr />
                         <div class="container mt-4">
                             <!-- Botón para abrir el modal -->
-                            <a href="#" class="btn btn-primary w-20 mb-4" onclick="conciliarAutomatico()" data-bs-toggle="modal" data-bs-target="#ConciliacionModal">
+                            <button type="button" id="dlgConciliacionAsistidaBtn" class="btn btn-primary w-20 mb-4" onclick="conciliarAutomatico()" data-bs-toggle="modal" data-bs-target="#ConciliacionModal">
                                 @Localizer["TitleModalConciliacionAsistida"]
-                            </a>
+                            </button>
+
 
                             <div class="row">
                                 <br />
@@ -333,6 +336,43 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para mostrar mensajes -->
+<div class="modal fade" id="modalConciliacion" tabindex="-1" aria-labelledby="modalConciliacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConciliacionLabel">Resultado de la Conciliación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalConciliacionMensaje">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar mensajes de coincidencias -->
+<div class="modal fade" id="modalConciliacionComp" tabindex="-1" aria-labelledby="modalConciliacionCompLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConciliacionCompLabel">Resultado de la Conciliación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalConciliacionCompMensaje">
+                <!-- Mensaje del resultado de la conciliación se llenará dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <!-- Modal para consulta por fechas -->
 <div class="modal fade" id="consultarComprobantesModal" tabindex="-1" aria-labelledby="descargarComprobantesLabel" aria-hidden="true">

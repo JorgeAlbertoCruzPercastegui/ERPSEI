@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     let btnBuscar = document.getElementById("btnBuscar");
     if (btnBuscar) { btnBuscar.click(); }
 
-    // Evento para detectar cuando se cambia la opción del filtro
+    // Evento para detectar cuando se cambia la opción del filtro en la tabla de comprobantes
     $('#filterOptionsC').on('change', function () {
         const selectedOption = $(this).val();
 
@@ -362,7 +362,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
     let totalComprobanteFormateado = parseFloat(totalComprobante).toFixed(2);
 
     // Datos del registro seleccionado en tableCardComprobantes
-    let resultadoComprobante = `Registro con id ${id} conciliado exitosamente.\nFecha: ${fechaComprobanteFormateada}\nSerie: ${serie}\nFolio: ${folio}\nUUID: ${uuid}\nTotal: ${totalComprobanteFormateado}\n`;
+    let resultadoComprobante = `Registro con id ${id} conciliado exitosamente.<br/>Fecha: ${fechaComprobanteFormateada}<br/>Serie: ${serie}<br/>Folio: ${folio}<br/>UUID: ${uuid}<br/>Total: ${totalComprobanteFormateado}<br/>`;
 
     // Obtener los datos de la tabla tableCardMovimientos
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
@@ -375,9 +375,14 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
         return resultTableData.some(row => row.id === id);
     }
 
+    // Verificar si el registro ya fue conciliado automáticamente (si existe la propiedad `conciliado`)
+    function registroYaConciliadoAutomaticamente(id) {
+        return resultTableData.some(row => row.id === id && row.conciliado);
+    }
+
     // Variables para contar coincidencias y no coincidencias
     let coincidenciaEncontrada = false;
-    let resultadoMovimientos = "\nMovimientos Bancarios:\n";
+    let resultadoMovimientos = "<br/><strong>Movimientos Bancarios:</strong><br/>";
     let totalConciliadosC = parseInt(document.getElementById("TotalConciliadosC").innerText);
     let totalSinConciliarC = parseInt(document.getElementById("TotalSinConciliarC").innerText);
     let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText);
@@ -385,7 +390,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
 
     // Si no hay movimientos, indicarlo
     if (movimientosData.length === 0) {
-        resultadoMovimientos += "No hay movimientos cargados.\n";
+        resultadoMovimientos += "No hay movimientos cargados.<br/>";
     } else {
         // Recorrer los movimientos para buscar coincidencias
         movimientosData.forEach((mov, index) => {
@@ -399,18 +404,18 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
             if (fechaMovimiento === fechaComprobanteFormateada && cargoMovimientoFormateado === totalComprobanteFormateado) {
                 coincidenciaEncontrada = true;
 
-                // Verificar si el registro ya fue agregado
-                if (registroYaAgregado(id)) {
-                    resultadoMovimientos += `\nEl registro con Id: ${id} ya ha sido agregado.\n`;
+                // Verificar si el registro ya fue agregado o conciliado automáticamente
+                if (registroYaAgregado(id) || registroYaConciliadoAutomaticamente(id)) {
+                    resultadoMovimientos += `<br/>El registro con Id: ${id} ya ha sido agregado o conciliado automáticamente.<br/>`;
                 } else {
-                    resultadoMovimientos += `\n¡Coincidencia encontrada en el movimiento ${index + 1}!\n` +
-                        `Id: ${id}\n` +
-                        `Serie: ${serie}\n` +
-                        `Folio: ${folio}\n` +
-                        `Fecha: ${mov.Fecha}\n` +
-                        `Banco: ${mov.Banco}\n` +
-                        `Descripción: ${mov.Descripción}\n` +
-                        `Total: ${mov.Cargos}\n`;
+                    resultadoMovimientos += `<br/>¡Coincidencia encontrada en el movimiento ${index + 1}!<br/>
+                        Id: ${id}<br/>
+                        Serie: ${serie}<br/>
+                        Folio: ${folio}<br/>
+                        Fecha: ${mov.Fecha}<br/>
+                        Banco: ${mov.Banco}<br/>
+                        Descripción: ${mov.Descripción}<br/>
+                        Total: ${mov.Cargos}<br/>`;
 
                     // Agregar la coincidencia a la tabla `tableResult`
                     $('#tableResult').bootstrapTable('append', {
@@ -446,7 +451,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
 
         // Si no se encuentra coincidencia, agregar mensaje de no coincidencia
         if (!coincidenciaEncontrada) {
-            resultadoMovimientos += "No se encontró coincidencia con los movimientos.\n";
+            resultadoMovimientos += "No se encontró coincidencia con los movimientos.<br/>";
 
             // Verificar si el registro sin coincidencia ya fue contado
             if (!registrosSinCoincidencia.includes(id)) {
@@ -464,9 +469,14 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
         }
     }
 
-    // Mostrar el alert con los resultados
-    alert(resultadoComprobante + resultadoMovimientos);
+    // Insertar el mensaje en el modal
+    document.getElementById("modalConciliacionCompMensaje").innerHTML = resultadoComprobante + resultadoMovimientos;
+
+    // Mostrar el modal
+    var myModal = new bootstrap.Modal(document.getElementById('modalConciliacionComp'));
+    myModal.show();
 }
+
 
 function conciliarAutomatico() {
     // Obtener todos los datos de la tabla de comprobantes
@@ -475,19 +485,20 @@ function conciliarAutomatico() {
     // Obtener los datos de la tabla de movimientos
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
 
+    // Obtener los datos actuales de la tabla `tableResult` para verificar si el registro ya fue agregado
+    let resultTableData = $('#tableResult').bootstrapTable('getData');
+
     // Variables para contar coincidencias y no coincidencias en ambas tablas
     let coincidenciasComprobantes = 0;
     let sinCoincidenciasComprobantes = 0;
     let coincidenciasMovimientos = 0;
     let sinCoincidenciasMovimientos = 0;
+    let nuevasCoincidencias = false; // Para controlar si hay nuevas coincidencias
 
-    // Inicializar todas las coincidencias como falsas para los movimientos
-    movimientosData.forEach((mov, indexMov) => {
-        $('#tableCardMovimientos').bootstrapTable('updateRow', {
-            index: indexMov,
-            row: { coincidencia: false } // Inicialmente marcar como no coincidente
-        });
-    });
+    // Función para verificar si el registro ya está en la tabla resultante
+    function registroYaAgregado(id) {
+        return resultTableData.some(row => row.id === id);
+    }
 
     // Recorrer todos los comprobantes
     comprobantesData.forEach((comp, indexComp) => {
@@ -512,32 +523,41 @@ function conciliarAutomatico() {
             if (fechaMovimiento === fechaComprobanteFormateada && cargoMovimientoFormateado === totalComprobanteFormateado) {
                 coincidenciaEncontradaComprobante = true;
 
-                // Agregar la coincidencia a la tabla `tableResult`
-                $('#tableResult').bootstrapTable('append', {
-                    id: comp.Id,
-                    Serie: comp.Serie,
-                    Folio: comp.Folio,
-                    Fecha: mov.Fecha,
-                    Banco: mov.Banco,
-                    Descripción: mov.Descripción,
-                    Total: mov.Cargos,
-                    coincidencia: true
-                });
+                // Verificar si el registro ya fue agregado
+                if (!registroYaAgregado(comp.Id)) {
+                    // Agregar la coincidencia a la tabla `tableResult`
+                    $('#tableResult').bootstrapTable('append', {
+                        id: comp.Id,
+                        Serie: comp.Serie,
+                        Folio: comp.Folio,
+                        Fecha: mov.Fecha,
+                        Banco: mov.Banco,
+                        Descripción: mov.Descripción,
+                        Total: mov.Cargos,
+                        coincidencia: true,
+                        conciliado: true // MARCAR el registro como conciliado de manera automática
+                    });
 
-                // Marcar la fila del comprobante como coincidente
-                $('#tableCardComprobantes').bootstrapTable('updateRow', {
-                    index: indexComp,
-                    row: { coincidencia: true }
-                });
+                    // Marcar la fila del comprobante como coincidente solo si no ha sido marcada antes
+                    if (!comp.coincidencia) {
+                        $('#tableCardComprobantes').bootstrapTable('updateRow', {
+                            index: indexComp,
+                            row: { coincidencia: true }
+                        });
+                        coincidenciasComprobantes++; // Aumentar contador solo si es una nueva coincidencia
+                    }
 
-                // Marcar la fila del movimiento como coincidente
-                $('#tableCardMovimientos').bootstrapTable('updateRow', {
-                    index: indexMov,
-                    row: { coincidencia: true } // Marcar como coincidente
-                });
+                    // Marcar la fila del movimiento como coincidente solo si no ha sido marcada antes
+                    if (!mov.coincidencia) {
+                        $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                            index: indexMov,
+                            row: { coincidencia: true } // Marcar como coincidente
+                        });
+                        coincidenciasMovimientos++; // Aumentar contador solo si es una nueva coincidencia
+                    }
 
-                coincidenciasComprobantes++;
-                coincidenciasMovimientos++;
+                    nuevasCoincidencias = true; // Hubo al menos una nueva coincidencia
+                }
             }
         });
 
@@ -555,19 +575,29 @@ function conciliarAutomatico() {
         }
     });
 
-    // Actualizar los valores de los contadores en la vista
-    document.getElementById("TotalSinConciliarC").innerText = sinCoincidenciasComprobantes;
-    document.getElementById("TotalConciliadosC").innerText = coincidenciasComprobantes;
+    // Solo actualizar los contadores si hubo nuevas coincidencias
+    if (nuevasCoincidencias) {
+        document.getElementById("TotalSinConciliarC").innerText = sinCoincidenciasComprobantes;
+        document.getElementById("TotalConciliadosC").innerText = coincidenciasComprobantes;
 
-    document.getElementById("TotalSinConciliarM").innerText = sinCoincidenciasMovimientos;
-    document.getElementById("TotalConciliadosM").innerText = coincidenciasMovimientos;
-
-    // Mostrar un mensaje con la cantidad de coincidencias encontradas
-    if (coincidenciasComprobantes > 0 || coincidenciasMovimientos > 0) {
-        alert(`${coincidenciasComprobantes} coincidencia(s) de comprobantes y ${coincidenciasMovimientos} coincidencia(s) de movimientos encontrada(s) y agregada(s) a la tabla de resultados.`);
-    } else {
-        alert("No se encontraron coincidencias.");
+        document.getElementById("TotalSinConciliarM").innerText = sinCoincidenciasMovimientos;
+        document.getElementById("TotalConciliadosM").innerText = coincidenciasMovimientos;
     }
+
+    // Mostrar un cuadro de diálogo con el resultado
+    let mensaje = "";
+    if (nuevasCoincidencias) {
+        mensaje = `${coincidenciasComprobantes} coincidencia(s) de comprobantes y ${coincidenciasMovimientos} coincidencia(s) de movimientos encontrada(s) y agregada(s) a la tabla de resultados.`;
+    } else {
+        mensaje = "Ya se hicieron todas las coincidencias o no se encontraron nuevas coincidencias.";
+    }
+
+    // Insertar el mensaje en el modal
+    document.getElementById("modalConciliacionMensaje").innerText = mensaje;
+
+    // Mostrar el modal
+    var myModal = new bootstrap.Modal(document.getElementById('modalConciliacion'));
+    myModal.show();
 }
 
 
@@ -623,10 +653,10 @@ function initConciliacionDialog(action, row) {
 
     //Botones
     let btnGuardar = document.getElementById("dlgConciliacionBtnGuardar");
-    //let btnCancelar = document.getElementById("dlgConciliacionBtnCancelar");
-    //let btnComprobantesFechas = document.getElementById("dlgConciliacionBtnFechas");
-    //let btnBtnMovimientosImportar = document.getElementById("dlgConciliacionBtnMovimientos");
-    //let btnComprobantes = document.getElementById("dlgConciliacionBtnGuardar");
+    let botonConsultarComprobantes = document.getElementById("dlgConciliacionBtnFechas");
+    let botonConsultarMovimientos = document.getElementById("dlgConciliacionBtnMovimientos");
+    let botonConciliar = document.getElementById("");
+    let botonConciliacionAsistida = document.getElementById("dlgConciliacionAsistidaBtn");
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
@@ -641,6 +671,9 @@ function initConciliacionDialog(action, row) {
             clienteIdField.removeAttribute("disabled");
             descripcionField.removeAttribute("disabled");
             btnGuardar.removeAttribute("disabled");
+            botonConsultarComprobantes.removeAttribute("disabled");
+            botonConsultarMovimientos.removeAttribute("disabled");
+            botonConciliacionAsistida.removeAttribute("disabled");
             break;
         case EDITAR:
             dlgTitle.innerHTML = dlgEditarTitle;
@@ -649,6 +682,9 @@ function initConciliacionDialog(action, row) {
             clienteIdField.removeAttribute("disabled");
             descripcionField.removeAttribute("disabled");
             btnGuardar.removeAttribute("disabled");
+            botonConsultarComprobantes.removeAttribute("disabled");
+            botonConsultarMovimientos.removeAttribute("disabled");
+            botonConciliacionAsistida.removeAttribute("disabled");
             break;
         default:
             dlgTitle.innerHTML = dlgVerTitle;
@@ -657,6 +693,9 @@ function initConciliacionDialog(action, row) {
             clienteIdField.setAttribute("disabled", true);
             descripcionField.setAttribute("disabled", true);
             btnGuardar.setAttribute("disabled", true);
+            botonConsultarComprobantes.setAttribute("disabled", true);
+            botonConsultarMovimientos.setAttribute("disabled", true);
+            botonConciliacionAsistida.setAttribute("disabled", true);
             break;
     }
 
