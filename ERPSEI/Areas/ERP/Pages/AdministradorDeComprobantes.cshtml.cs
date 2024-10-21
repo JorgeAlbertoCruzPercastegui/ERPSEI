@@ -330,6 +330,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
 					if (comprobante != null)
 					{
+						DateTime fechaComprobante = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss",System.Globalization.CultureInfo.InvariantCulture);
 						conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie}-{comprobante.Folio}";
 						Empresa? empresaEmisora = await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
 						cuentasContables = cuentasContables.Where(cuenta => empresaEmisora?.Id == cuenta.EmpresaId).ToList();
@@ -345,20 +346,24 @@ namespace ERPSEI.Areas.ERP.Pages
 						//Tipo Pol
 						CreateCell(hRow, 0, "Dr", cellStyle);
 						//Placeholder
-						CreateCell(hRow, 1, "1", cellStyle);
+						CreateCell(hRow, 1, 1, cellStyle);
 						//Concepto póliza
 						CreateCell(hRow, 2, conceptoString, cellStyle);
+						//Día fecha
+						CreateCell(hRow, 3, fechaComprobante.Day, cellStyle);
 
 						//Crea el row del total de la factura
 						IRow dRow = sheet.CreateRow(rowIndex + 1);
 						//No. Cuenta
 						CreateCell(dRow, 1, cuentaCliente?.Cuenta ?? "0000-000-000", cellStyle); 
 						//Depto.
-						CreateCell(dRow, 2, "0", cellStyle);
+						CreateCell(dRow, 2, 0, cellStyle);
 						//Concepto
 						CreateCell(dRow, 3, conceptoString, cellStyle);
+						//Placeholder
+						CreateCell(dRow, 4, string.Empty, cellStyle);
 						//Total
-						CreateCell(dRow, 4, comprobante.Total.ToString("N"), cellStyle);
+						CreateCell(dRow, 5, (double)comprobante.Total, cellStyle);
 
 						CuentaContable? cuentaVenta = null;
 						if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.16m) ?? false)) { cuentaVenta = cuentaVentas16; }
@@ -370,22 +375,24 @@ namespace ERPSEI.Areas.ERP.Pages
 						//No. Cuenta
 						CreateCell(g1Row, 1, cuentaVenta?.Cuenta ?? "0000-000-000", cellStyle);
 						//Depto.
-						CreateCell(g1Row, 2, "0", cellStyle);
+						CreateCell(g1Row, 2, 0, cellStyle);
 						//Concepto
 						CreateCell(g1Row, 3, conceptoString, cellStyle);
+						//Placeholder
+						CreateCell(g1Row, 4, string.Empty, cellStyle);
 						if (tipoExportacion == TipoExportacion.PolizaIngresos)
 						{
 							//Debe
-							CreateCell(g1Row, 4, "", cellStyle);
+							CreateCell(g1Row, 5, "", cellStyle);
 							//Haber
-							CreateCell(g1Row, 5, comprobante.SubTotal.ToString("N"), cellStyle);
+							CreateCell(g1Row, 6, (double)comprobante.SubTotal, cellStyle);
 						}
 						else
 						{
 							//Debe
-							CreateCell(g1Row, 4, comprobante.SubTotal.ToString("N"), cellStyle);
+							CreateCell(g1Row, 5, (double)comprobante.SubTotal, cellStyle);
 							//Haber
-							CreateCell(g1Row, 5, "", cellStyle);
+							CreateCell(g1Row, 6, "", cellStyle);
 						}
 
 						//Crea el row del IVA
@@ -393,22 +400,24 @@ namespace ERPSEI.Areas.ERP.Pages
 						//No. Cuenta
 						CreateCell(g2Row, 1, cuentaIVANoCobrado?.Cuenta ?? "0000-000-000", cellStyle);
 						//Depto.
-						CreateCell(g2Row, 2, "0", cellStyle);
+						CreateCell(g2Row, 2, 0, cellStyle);
 						//Concepto
 						CreateCell(g2Row, 3, conceptoString, cellStyle);
+						//Placeholder
+						CreateCell(g1Row, 4, string.Empty, cellStyle);
 						if (tipoExportacion == TipoExportacion.PolizaIngresos)
 						{
 							//Debe
-							CreateCell(g2Row, 4, "", cellStyle);
+							CreateCell(g2Row, 5, "", cellStyle);
 							//Haber
-							CreateCell(g2Row, 5, (comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0).ToString("N"), cellStyle);
+							CreateCell(g2Row, 6, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
 						}
 						else
 						{
 							//Debe
-							CreateCell(g2Row, 4, (comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0).ToString("N"), cellStyle);
+							CreateCell(g2Row, 5, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
 							//Haber
-							CreateCell(g2Row, 5, "", cellStyle);
+							CreateCell(g2Row, 6, "", cellStyle);
 						}
 
 						////Crea el row de IEPS Traslado de CFDI
@@ -549,6 +558,18 @@ namespace ERPSEI.Areas.ERP.Pages
 			return Task.FromResult(workbook);
 		}
 		private static void CreateCell(IRow CurrentRow, int CellIndex, string Value, HSSFCellStyle Style)
+		{
+			ICell Cell = CurrentRow.CreateCell(CellIndex);
+			Cell.SetCellValue(Value);
+			Cell.CellStyle = Style;
+		}
+		private static void CreateCell(IRow CurrentRow, int CellIndex, int Value, HSSFCellStyle Style)
+		{
+			ICell Cell = CurrentRow.CreateCell(CellIndex);
+			Cell.SetCellValue(Value);
+			Cell.CellStyle = Style;
+		}
+		private static void CreateCell(IRow CurrentRow, int CellIndex, double Value, HSSFCellStyle Style)
 		{
 			ICell Cell = CurrentRow.CreateCell(CellIndex);
 			Cell.SetCellValue(Value);
