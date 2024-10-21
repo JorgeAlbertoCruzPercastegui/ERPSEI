@@ -10,12 +10,12 @@
 		public int Id { get; set; }
 
 		/// <remarks/>
-		[System.Xml.Serialization.XmlArrayItemAttribute("Retencion", IsNullable = false)]
-		public ComprobanteImpuestosRetencion[]? Retenciones { get; set; }
+		[System.Xml.Serialization.XmlArrayItem("Retencion", IsNullable = false)]
+		public ICollection<ComprobanteImpuestosRetencion>? Retenciones { get; set; }
 
 		/// <remarks/>
-		[System.Xml.Serialization.XmlArrayItemAttribute("Traslado", IsNullable = false)]
-		public ComprobanteImpuestosTraslado[]? Traslados { get; set; }
+		[System.Xml.Serialization.XmlArrayItem("Traslado", IsNullable = false)]
+		public ICollection<ComprobanteImpuestosTraslado>? Traslados { get; set; }
 
 		/// <remarks/>
 		[System.Xml.Serialization.XmlAttributeAttribute()]
