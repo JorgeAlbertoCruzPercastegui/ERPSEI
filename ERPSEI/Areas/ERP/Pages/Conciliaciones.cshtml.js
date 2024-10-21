@@ -524,8 +524,13 @@ function conciliarAutomatico() {
             // Normalizar el cargo del movimiento a dos decimales
             let cargoMovimientoFormateado = parseFloat(mov.Cargos).toFixed(2);
 
-            // Comparar fechas y totales
-            if (fechaMovimiento === fechaComprobanteFormateada && cargoMovimientoFormateado === totalComprobanteFormateado) {
+            // Calcular el porcentaje de similitud entre el total del comprobante y el cargo del movimiento
+            let porcentajeSimilitud = ((totalComprobanteFormateado * 100) / cargoMovimientoFormateado) || 0.00;
+
+            // Comparar fechas y totales y aplicar la regla del porcentaje de similitud
+            if (fechaMovimiento === fechaComprobanteFormateada &&
+                (porcentajeSimilitud === 100 || (porcentajeSimilitud >= 99.8 && porcentajeSimilitud < 100))) {
+
                 coincidenciaEncontradaComprobante = true;
 
                 // Verificar si el registro ya fue agregado
@@ -540,7 +545,8 @@ function conciliarAutomatico() {
                         Descripción: mov.Descripción,
                         Total: mov.Cargos,
                         coincidencia: true,
-                        conciliado: true // MARCAR el registro como conciliado de manera automática
+                        conciliado: true, // MARCAR el registro como conciliado de manera automática
+                        porcentajeSimilitud: porcentajeSimilitud.toFixed(2) // Guardar el porcentaje de similitud
                     });
 
                     // Marcar la fila del comprobante como coincidente solo si no ha sido marcada antes
@@ -589,21 +595,25 @@ function conciliarAutomatico() {
         document.getElementById("TotalConciliadosM").innerText = coincidenciasMovimientos;
     }
 
-    // Mostrar un cuadro de diálogo con el resultado
+    // Mostrar un cuadro de diálogo con el resultado y el porcentaje de similitud
     let mensaje = "";
     if (nuevasCoincidencias) {
-        mensaje = `${coincidenciasComprobantes} coincidencia(s) de comprobantes y ${coincidenciasMovimientos} coincidencia(s) de movimientos encontrada(s) y agregada(s) a la tabla de resultados.`;
+        mensaje = `${coincidenciasComprobantes} coincidencia(s) de comprobantes y ${coincidenciasMovimientos} coincidencia(s) de movimientos encontrada(s) y agregada(s) a la tabla de resultados.<br/>`;
+        resultTableData.forEach(row => {
+            mensaje += `Coincidencia en comprobante ID: ${row.id}, Porcentaje de similitud: ${row.porcentajeSimilitud}%<br/>`;
+        });
     } else {
         mensaje = "Ya se hicieron todas las coincidencias o no se encontraron nuevas coincidencias.";
     }
 
     // Insertar el mensaje en el modal
-    document.getElementById("modalConciliacionMensaje").innerText = mensaje;
+    document.getElementById("modalConciliacionMensaje").innerHTML = mensaje;
 
     // Mostrar el modal
     var myModal = new bootstrap.Modal(document.getElementById('modalConciliacion'));
     myModal.show();
 }
+
 
 
 function rowStyleComprobantes(row, index) {
