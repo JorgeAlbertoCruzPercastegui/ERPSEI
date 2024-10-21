@@ -132,6 +132,7 @@
 
 <!-- --------------------------- -->
 <!-- Sección Nuevo/Editar/Ver Registro (Agregar)-->
+<form id="theForm" method="post">
 <div id="dlgConciliacion" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -139,7 +140,7 @@
                 <h5 id="dlgConciliacionTitle" class="modal-title"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="theForm" method="post">
+            
                 <div class="modal-body">
                     <div class="container-fluid">
                         <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
@@ -175,7 +176,7 @@
                         </div>
                         <h5>@Localizer["TitleCMAgregar"]</h5>
                         <hr />
-                        <div class="container mt-4">
+                         <div class="container mt-4">
                             <div class="row">
                                 <!-- Botón en el lado izquierdo antes del primer CardView -->
                                 <div class="col-sm-6 col-md-6 col-lg-6 mb-3">
@@ -236,7 +237,7 @@
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalDerMovimientos"]</h4>
                                     <!-- Agregar combobox a la izquierda del buscador -->
-                                    <div class="toolbar">
+                                    <!--<div class="toolbar">
                                         <div class="form-group">
                                             <div class="custom-select">
                                                 <select id="filterOptionsM" class="form-control">
@@ -246,7 +247,7 @@
                                                 </select>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div>-->
                                     <!-- Card del lado derecho -->
                                     <table id="tableCardMovimientos"
                                            data-toggle="table"
@@ -281,7 +282,7 @@
 
                                 </div>
                             </div>
-                        </div>
+                        </div> 
                         <br />
                         <hr />
                         <div class="container mt-4">
@@ -306,25 +307,26 @@
                                            data-row-style="rowStyle">
                                         <thead>
                                             <tr>
-                                                <th data-field="id">Id</th>
-                                                <th data-field="Serie">Serie</th>
-                                                <th data-field="Folio">Folio</th>
-                                                <th data-field="Fecha">Fecha</th>
+                                                <th data-field="id" data-cell-style="darkGrayCellStyle">Id</th>
+                                                <th data-field="Serie" data-cell-style="darkGrayCellStyle">Serie</th>
+                                                <th data-field="Folio" data-cell-style="darkGrayCellStyle">Folio</th>
+                                                <th data-field="Fecha" data-cell-style="darkGrayCellStyle">Fecha</th>
                                                 <th data-field="Banco">Banco</th>
                                                 <th data-field="Descripción">Descripción</th>
                                                 <th data-field="Total">Total</th>
+                                                <th data-field="Desconciliar" data-formatter="desconciliarFormatter">Desconciliar</th>
                                             </tr>
                                         </thead>
                                     </table>
                                 </div>
                             </div>
-                        </div>
+                        </div> 
 
                         <!---->
 
                     </div>
                 </div>
-            </form>
+            
             <div class="modal-footer">
                 <button id="dlgConciliacionBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
@@ -336,6 +338,7 @@
         </div>
     </div>
 </div>
+</form>
 
 <!-- Modal para mostrar mensajes -->
 <div class="modal fade" id="modalConciliacion" tabindex="-1" aria-labelledby="modalConciliacionLabel" aria-hidden="true">
