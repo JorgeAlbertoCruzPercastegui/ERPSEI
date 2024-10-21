@@ -140,5 +140,9 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 
 		[XmlIgnore]
 		public bool? Cancelado { get; set; }
+
+		[NotMapped]
+		[XmlIgnore]
+		public DateTime FechaNET { get; set; } = DateTime.MinValue;
 	}
 }
