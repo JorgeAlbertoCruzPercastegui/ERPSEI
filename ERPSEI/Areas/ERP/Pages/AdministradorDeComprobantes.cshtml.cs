@@ -285,7 +285,6 @@ namespace ERPSEI.Areas.ERP.Pages
 			string? strTipoPoliza = string.Empty;
 			HSSFWorkbook? wb = null;
 			string? nombreArchivo = string.Empty;
-			List<CuentaContable>? cuentasContables = await ccmgr.GetAllAsync();
 			switch (tipoExportacion)
 			{
 				case TipoExportacion.Excel:
@@ -293,19 +292,15 @@ namespace ERPSEI.Areas.ERP.Pages
 				case TipoExportacion.PolizaIngresos:
 					strTipoPoliza = "VENTA";
 					wb = await CreateExcelPolizaIngresos();
-					cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
 					break;
 				case TipoExportacion.PolizaEgresos:
 					strTipoPoliza = "GASTO";
 					//wb = await CreateExcelPolizaEgresos();
-					cuentasContables = cuentasContables.Where(c => c.TipoId == 1).ToList();
 					break;
 				default:
 					break;
 			}
-
 			if (wb == null) { throw new Exception("No workbook created"); }
-
 			using (wb)
 			{
 				//Obtiene la primer hoja del archivo
@@ -323,131 +318,131 @@ namespace ERPSEI.Areas.ERP.Pages
 				myFont.FontName = "Calibri";
 				cellStyle.SetFont(myFont);
 
-				string conceptoString = string.Empty;
-				foreach (string id in ids)
-				{
+				Empresa? empresaEmisora = null;
+				List<Comprobante> comprobantes = [];
+                foreach (string id in ids)
+                {
 					int intId = Convert.ToInt32(id);
 					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
-					if (comprobante != null)
+					if (comprobante != null) 
 					{
-						DateTime fechaComprobante = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss",System.Globalization.CultureInfo.InvariantCulture);
-						conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie}-{comprobante.Folio}";
-						Empresa? empresaEmisora = await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
-						cuentasContables = cuentasContables.Where(cuenta => empresaEmisora?.Id == cuenta.EmpresaId).ToList();
-						CuentaContable? cuentaCliente = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Receptor?.Rfc).FirstOrDefault();
-						CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
-						CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
-						CuentaContable? cuentaVentasExentas = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 6).FirstOrDefault();
-						CuentaContable? cuentaIVANoCobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 7).FirstOrDefault();
-						CuentaContable? cuentaIVACobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 8).FirstOrDefault();
-
-						//Crea el row de encabezado de CFDI
-						IRow hRow = sheet.CreateRow(rowIndex);
-						//Tipo Pol
-						CreateCell(hRow, 0, "Dr", cellStyle);
-						//Placeholder
-						CreateCell(hRow, 1, 1, cellStyle);
-						//Concepto póliza
-						CreateCell(hRow, 2, conceptoString, cellStyle);
-						//Día fecha
-						CreateCell(hRow, 3, fechaComprobante.Day, cellStyle);
-
-						//Crea el row del total de la factura
-						IRow dRow = sheet.CreateRow(rowIndex + 1);
-						//No. Cuenta
-						CreateCell(dRow, 1, cuentaCliente?.Cuenta ?? "0000-000-000", cellStyle); 
-						//Depto.
-						CreateCell(dRow, 2, 0, cellStyle);
-						//Concepto
-						CreateCell(dRow, 3, conceptoString, cellStyle);
-						//Placeholder
-						CreateCell(dRow, 4, string.Empty, cellStyle);
-						//Total
-						CreateCell(dRow, 5, (double)comprobante.Total, cellStyle);
-
-						CuentaContable? cuentaVenta = null;
-						if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.16m) ?? false)) { cuentaVenta = cuentaVentas16; }
-						else if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.0m) ?? false)) { cuentaVenta = cuentaVentas0; }
-						else if (comprobante.Impuestos == null) { cuentaVenta = cuentaVentasExentas; }
-
-						//Crea el row del subtotal de la factura de CFDI
-						IRow g1Row = sheet.CreateRow(rowIndex + 2);
-						//No. Cuenta
-						CreateCell(g1Row, 1, cuentaVenta?.Cuenta ?? "0000-000-000", cellStyle);
-						//Depto.
-						CreateCell(g1Row, 2, 0, cellStyle);
-						//Concepto
-						CreateCell(g1Row, 3, conceptoString, cellStyle);
-						//Placeholder
-						CreateCell(g1Row, 4, string.Empty, cellStyle);
-						if (tipoExportacion == TipoExportacion.PolizaIngresos)
-						{
-							//Debe
-							CreateCell(g1Row, 5, "", cellStyle);
-							//Haber
-							CreateCell(g1Row, 6, (double)comprobante.SubTotal, cellStyle);
-						}
-						else
-						{
-							//Debe
-							CreateCell(g1Row, 5, (double)comprobante.SubTotal, cellStyle);
-							//Haber
-							CreateCell(g1Row, 6, "", cellStyle);
-						}
-
-						//Crea el row del IVA
-						IRow g2Row = sheet.CreateRow(rowIndex + 3);
-						//No. Cuenta
-						CreateCell(g2Row, 1, cuentaIVANoCobrado?.Cuenta ?? "0000-000-000", cellStyle);
-						//Depto.
-						CreateCell(g2Row, 2, 0, cellStyle);
-						//Concepto
-						CreateCell(g2Row, 3, conceptoString, cellStyle);
-						//Placeholder
-						CreateCell(g1Row, 4, string.Empty, cellStyle);
-						if (tipoExportacion == TipoExportacion.PolizaIngresos)
-						{
-							//Debe
-							CreateCell(g2Row, 5, "", cellStyle);
-							//Haber
-							CreateCell(g2Row, 6, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
-						}
-						else
-						{
-							//Debe
-							CreateCell(g2Row, 5, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
-							//Haber
-							CreateCell(g2Row, 6, "", cellStyle);
-						}
-
-						////Crea el row de IEPS Traslado de CFDI
-						//IRow g3Row = sheet.CreateRow(rowIndex + 4);
-						////No. Cuenta
-						//CreateCell(g3Row, 1, "2181-002-000", cellStyle);
-						////Depto.
-						//CreateCell(g3Row, 2, "0", cellStyle);
-						////Concepto
-						//CreateCell(g3Row, 3, conceptoString, cellStyle);
-						//if(tipoExportacion == TipoExportacion.PolizaIngresos)
-						//{
-						//	//Debe
-						//	CreateCell(g3Row, 4, comprobante.Total.ToString("N"), cellStyle);
-						//	//Haber
-						//	CreateCell(g3Row, 5, "", cellStyle);
-						//}
-						//else
-						//{
-						//	//Debe
-						//	CreateCell(g3Row, 4, "", cellStyle);
-						//	//Haber
-						//	CreateCell(g3Row, 5, comprobante.Total.ToString("N"), cellStyle);
-						//}
-
-						//Crea el row de fin de partida
-						IRow fRow = sheet.CreateRow(rowIndex + 4);
-						//Fin
-						CreateCell(fRow, 1, "FIN_PARTIDAS", cellStyle);
+						empresaEmisora ??= await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
+						comprobante.FechaNET = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+						comprobantes.Add(comprobante);
 					}
+				}
+
+				comprobantes = [..comprobantes.OrderBy(c => c.FechaNET)];
+
+				List<CuentaContable>? cuentasContables = await ccmgr.GetByIdEmpresaAsync(empresaEmisora?.Id ?? 0);
+				switch (tipoExportacion)
+				{
+					case TipoExportacion.Excel:
+						break;
+					case TipoExportacion.PolizaIngresos:
+						cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
+						break;
+					case TipoExportacion.PolizaEgresos:
+						cuentasContables = cuentasContables.Where(c => c.TipoId == 1).ToList();
+						break;
+					default:
+						break;
+				}
+				CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
+				CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
+				CuentaContable? cuentaVentasExentas = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 6).FirstOrDefault();
+				CuentaContable? cuentaIVANoCobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 7).FirstOrDefault();
+				CuentaContable? cuentaIVACobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 8).FirstOrDefault();
+				CuentaContable? cuentaCliente = null;
+				CuentaContable? cuentaVenta = null;
+
+				string conceptoString = string.Empty;
+				foreach (Comprobante comprobante in comprobantes)
+				{
+					conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie ?? "F"}-{comprobante.Folio}";
+					cuentaCliente = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Receptor?.Rfc).FirstOrDefault();
+					if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.16m) ?? false)) { cuentaVenta = cuentaVentas16; }
+					else if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.0m) ?? false)) { cuentaVenta = cuentaVentas0; }
+					else if (comprobante.Impuestos == null) { cuentaVenta = cuentaVentasExentas; }
+
+					//Crea el row de encabezado de CFDI
+					IRow hRow = sheet.CreateRow(rowIndex);
+					//Tipo Pol
+					CreateCell(hRow, 0, "Dr", cellStyle);
+					//Placeholder
+					CreateCell(hRow, 1, 1, cellStyle);
+					//Concepto póliza
+					CreateCell(hRow, 2, conceptoString, cellStyle);
+					//Día fecha
+					CreateCell(hRow, 3, comprobante.FechaNET.Day, cellStyle);
+
+					//Crea el row del total de la factura
+					IRow dRow = sheet.CreateRow(rowIndex + 1);
+					//No. Cuenta
+					CreateCell(dRow, 1, cuentaCliente?.Cuenta ?? "0000-000-000", cellStyle);
+					//Depto.
+					CreateCell(dRow, 2, 0, cellStyle);
+					//Concepto
+					CreateCell(dRow, 3, conceptoString, cellStyle);
+					//Placeholder
+					CreateCell(dRow, 4, string.Empty, cellStyle);
+					//Total
+					CreateCell(dRow, 5, (double)comprobante.Total, cellStyle);
+
+					//Crea el row del subtotal de la factura de CFDI
+					IRow g1Row = sheet.CreateRow(rowIndex + 2);
+					//No. Cuenta
+					CreateCell(g1Row, 1, cuentaVenta?.Cuenta ?? "0000-000-000", cellStyle);
+					//Depto.
+					CreateCell(g1Row, 2, 0, cellStyle);
+					//Concepto
+					CreateCell(g1Row, 3, conceptoString, cellStyle);
+					//Placeholder
+					CreateCell(g1Row, 4, string.Empty, cellStyle);
+					if (tipoExportacion == TipoExportacion.PolizaIngresos)
+					{
+						//Debe
+						CreateCell(g1Row, 5, "", cellStyle);
+						//Haber
+						CreateCell(g1Row, 6, (double)comprobante.SubTotal, cellStyle);
+					}
+					else
+					{
+						//Debe
+						CreateCell(g1Row, 5, (double)comprobante.SubTotal, cellStyle);
+						//Haber
+						CreateCell(g1Row, 6, "", cellStyle);
+					}
+
+					//Crea el row del IVA
+					IRow g2Row = sheet.CreateRow(rowIndex + 3);
+					//No. Cuenta
+					CreateCell(g2Row, 1, cuentaIVANoCobrado?.Cuenta ?? "0000-000-000", cellStyle);
+					//Depto.
+					CreateCell(g2Row, 2, 0, cellStyle);
+					//Concepto
+					CreateCell(g2Row, 3, conceptoString, cellStyle);
+					//Placeholder
+					CreateCell(g1Row, 4, string.Empty, cellStyle);
+					if (tipoExportacion == TipoExportacion.PolizaIngresos)
+					{
+						//Debe
+						CreateCell(g2Row, 5, "", cellStyle);
+						//Haber
+						CreateCell(g2Row, 6, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
+					}
+					else
+					{
+						//Debe
+						CreateCell(g2Row, 5, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
+						//Haber
+						CreateCell(g2Row, 6, "", cellStyle);
+					}
+
+					//Crea el row de fin de partida
+					IRow fRow = sheet.CreateRow(rowIndex + 4);
+					//Fin
+					CreateCell(fRow, 1, "FIN_PARTIDAS", cellStyle);
 
 					//Avanza 5 lineas para poder iniciar una nueva póliza.
 					rowIndex += 5;
@@ -455,11 +450,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
 				//Crea el archivo excel y lo exporta al usuario.
 				nombreArchivo = $"{Enum.GetName(typeof(TipoExportacion), tipoExportacion)}_{DateTime.Now:yyyyMMddHHmmssfffffff}";
-				using (var fileData = new FileStream($"wwwroot/templates/{nombreArchivo}.xls", FileMode.OpenOrCreate))
-				{
-					wb.Write(fileData);
-				}
-
+				using (var fileData = new FileStream($"wwwroot/templates/{nombreArchivo}.xls", FileMode.OpenOrCreate)){ wb.Write(fileData); }
 				wb.Close();
 			}
 
