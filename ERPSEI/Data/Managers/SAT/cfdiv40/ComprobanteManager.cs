@@ -141,7 +141,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
         {
             return await _db.Comprobantes
 				.Where(e => e.Id == id)
-				.Include(e => e.Impuestos)
+				.Include(e => e.Impuestos).ThenInclude(i => i.Traslados)
 				.Include(e => e.Complemento).ThenInclude(c => c.TimbreFiscalDigital)
 				.Include(e => e.Emisor)
 				.Include(e => e.Receptor)
