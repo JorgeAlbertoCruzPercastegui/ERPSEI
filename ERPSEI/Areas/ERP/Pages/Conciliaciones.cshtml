@@ -270,7 +270,7 @@
                                                 <th data-field="Descripción">Descripción</th>
                                                 <th data-field="Cargos">Cargos</th>
                                                 <th data-field="Abonos">Abonos</th>
-                                                <!--<th data-field="actions" data-formatter="actionFormatter"></th>-->
+                                                <th data-field="conciliar" data-formatter="conciliarFormatterMov">Conciliar</th>
                                             </tr>
                                         </thead>
                                     </table>
@@ -339,6 +339,39 @@
     </div>
 </div>
 </form>
+
+<!-- Modal para mostrar coincidencias de comprobantes -->
+<div class="modal fade" id="modalSimilitud" tabindex="-1" aria-labelledby="modalSimilitudLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSimilitudLabel">Coincidencias de Comprobantes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalSimilitudHeader"></div> <!-- Datos del movimiento seleccionado -->
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Id</th>
+                            <th>Serie</th>
+                            <th>Folio</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Porcentaje de Similitud</th>
+                            <th>Seleccionar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalSimilitudBody">
+                        <!-- Aquí se mostrarán los comprobantes con coincidencias -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <!-- Modal para mostrar mensajes -->
 <div class="modal fade" id="modalConciliacion" tabindex="-1" aria-labelledby="modalConciliacionLabel" aria-hidden="true">

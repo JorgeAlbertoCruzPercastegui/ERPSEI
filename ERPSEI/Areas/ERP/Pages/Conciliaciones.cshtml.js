@@ -365,134 +365,85 @@ function conciliacionIndidual(value, row, index) {
 
 // Función para consultar y conciliar un comprobante
 function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobante) {
-    // Convertir la fecha del comprobante a formato YYYY-MM-DD
-    let fechaComprobanteFormateada = fechaComprobante.split('T')[0]; // Obtener solo la parte de la fecha (YYYY-MM-DD)
-
-    // Convertir el total del comprobante a un número con dos decimales
+    let fechaComprobanteFormateada = fechaComprobante.split('T')[0];
     let totalComprobanteFormateado = parseFloat(totalComprobante).toFixed(2);
-
-    // Datos del registro seleccionado en tableCardComprobantes
     let resultadoComprobante = `<strong>Comprobante:</strong><br/><br/>Registro con id ${id} conciliado exitosamente.<br/>Fecha: ${fechaComprobanteFormateada}<br/>Serie: ${serie}<br/>Folio: ${folio}<br/>UUID: ${uuid}<br/>Total: ${totalComprobanteFormateado}<br/>`;
 
-    // Obtener los datos de la tabla `tableCardMovimientos`
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
-
-    // Obtener los datos actuales de la tabla `tableResult` para verificar si el registro ya fue agregado
     let resultTableData = $('#tableResult').bootstrapTable('getData');
 
-    // Función para verificar si el registro ya está en la tabla resultante
     function registroYaAgregado(id) {
         return resultTableData.some(row => row.id === id);
     }
 
-    // Verificar si el registro ya fue conciliado automáticamente (si existe la propiedad `conciliado`)
-    function registroYaConciliadoAutomaticamente(id) {
-        return resultTableData.some(row => row.id === id && row.conciliado);
-    }
-
-    // Variables para contar coincidencias y no coincidencias
     let coincidenciaEncontrada = false;
     let resultadoMovimientos = "<br/><strong>Movimientos Bancarios:</strong><br/>";
     let totalConciliadosC = parseInt(document.getElementById("TotalConciliadosC").innerText);
-    let totalSinConciliarC = parseInt(document.getElementById("TotalSinConciliarC").innerText);
     let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText);
-    let totalSinConciliarM = parseInt(document.getElementById("TotalSinConciliarM").innerText);
 
-    // Si no hay movimientos, indicarlo
-    if (movimientosData.length === 0) {
-        resultadoMovimientos += "No hay movimientos cargados.<br/>";
-    } else {
-        // Recorrer los movimientos para buscar coincidencias
-        movimientosData.forEach((mov, index) => {
-            // Normalizar la fecha del movimiento al formato YYYY-MM-DD
-            let fechaMovimiento = mov.Fecha.split('/').reverse().join('-'); // Convertir de DD/MM/YYYY a YYYY-MM-DD
+    movimientosData.forEach((mov, index) => {
+        let fechaMovimiento = mov.Fecha.split('/').reverse().join('-');
+        let cargoMovimientoFormateado = parseFloat(mov.Cargos).toFixed(2);
+        let porcentajeSimilitud = ((totalComprobanteFormateado * 100) / cargoMovimientoFormateado) ?? 0.00;
 
-            // Normalizar el cargo del movimiento a dos decimales
-            let cargoMovimientoFormateado = parseFloat(mov.Cargos).toFixed(2);
+        if (fechaMovimiento === fechaComprobanteFormateada &&
+            (porcentajeSimilitud === 100 || (porcentajeSimilitud >= 99.8 && porcentajeSimilitud < 100))) {
 
-            // Calcular el porcentaje de similitud entre el total del comprobante y el cargo del movimiento
-            let porcentajeSimilitud = ((totalComprobanteFormateado * 100) / cargoMovimientoFormateado) ?? 0.00;
+            coincidenciaEncontrada = true;
 
-            // Comparar fechas y totales con la condición del porcentaje de similitud
-            if (fechaMovimiento === fechaComprobanteFormateada &&
-                (porcentajeSimilitud === 100 || (porcentajeSimilitud >= 99.8 && porcentajeSimilitud < 100))) {
+            if (!registroYaAgregado(id)) {
+                resultadoMovimientos += `<br/>¡Coincidencia encontrada en el movimiento ${index + 1}!<br/>
+                    Id: ${id}<br/>
+                    Serie: ${serie}<br/>
+                    Folio: ${folio}<br/>
+                    Fecha: ${mov.Fecha}<br/>
+                    Banco: ${mov.Banco}<br/>
+                    Descripción: ${mov.Descripción}<br/>
+                    Total: ${mov.Cargos}<br/>
+                    <strong>Porcentaje de similitud: ${porcentajeSimilitud.toFixed(2)}%</strong><br/>`;
 
-                coincidenciaEncontrada = true;
+                $('#tableResult').bootstrapTable('append', {
+                    id: id,
+                    Serie: serie,
+                    Folio: folio,
+                    Fecha: mov.Fecha,
+                    Banco: mov.Banco,
+                    Descripción: mov.Descripción,
+                    Total: mov.Cargos,
+                    coincidencia: true,
+                    manual: true  // Marcar como conciliado manualmente
+                });
 
-                // Verificar si el registro ya fue agregado o conciliado automáticamente
-                if (registroYaAgregado(id) || registroYaConciliadoAutomaticamente(id)) {
-                    resultadoMovimientos += `<br/>El registro con Id: ${id} ya ha sido agregado o conciliado automáticamente.<br/>`;
-                } else {
-                    resultadoMovimientos += `<br/>¡Coincidencia encontrada en el movimiento ${index + 1}!<br/>
-                        Id: ${id}<br/>
-                        Serie: ${serie}<br/>
-                        Folio: ${folio}<br/>
-                        Fecha: ${mov.Fecha}<br/>
-                        Banco: ${mov.Banco}<br/>
-                        Descripción: ${mov.Descripción}<br/>
-                        Total: ${mov.Cargos}<br/>
-                        <strong>Porcentaje de similitud: ${porcentajeSimilitud.toFixed(2)}%</strong><br/>`;
+                $('#tableCardComprobantes').bootstrapTable('updateRow', {
+                    index: $('#tableCardComprobantes').bootstrapTable('getData').findIndex(comp => comp.Id === id),
+                    row: { coincidencia: true }
+                });
 
-                    // Agregar la coincidencia a la tabla `tableResult`
-                    $('#tableResult').bootstrapTable('append', {
-                        id: id,
-                        Serie: serie,
-                        Folio: folio,
-                        Fecha: mov.Fecha,
-                        Banco: mov.Banco,
-                        Descripción: mov.Descripción,
-                        Total: mov.Cargos,
-                        coincidencia: true
-                    });
+                $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                    index: index,
+                    row: { coincidencia: true }
+                });
 
-                    // Marcar la fila del comprobante como coincidente (color verde)
-                    $('#tableCardComprobantes').bootstrapTable('updateRow', {
-                        index: $('#tableCardComprobantes').bootstrapTable('getData').findIndex(comp => comp.Id === id),
-                        row: { coincidencia: true }
-                    });
-
-                    // Marcar la fila del movimiento como coincidente (color verde)
-                    $('#tableCardMovimientos').bootstrapTable('updateRow', {
-                        index: index,
-                        row: { coincidencia: true }
-                    });
-
-                    // Actualizar el contador de coincidencias
-                    totalConciliadosC++;
-                    totalConciliadosM++;
-                    document.getElementById("TotalConciliadosC").innerText = totalConciliadosC;
-                    document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
-                }
-            }
-        });
-
-        // Si no se encuentra coincidencia, agregar mensaje de no coincidencia
-        if (!coincidenciaEncontrada) {
-            resultadoMovimientos += "No se encontró coincidencia con los movimientos.<br/>";
-
-            // Verificar si el registro sin coincidencia ya fue contado
-            if (!registrosSinCoincidencia.includes(id)) {
-                registrosSinCoincidencia.push(id); // Agregar el ID a la lista para que no se cuente nuevamente
-                totalSinConciliarC++;
-                document.getElementById("TotalSinConciliarC").innerText = totalSinConciliarC;
-            }
-
-            // Verificar si el registro sin coincidencia ya fue contado
-            if (!registrosSinCoincidenciaM.includes(id)) {
-                registrosSinCoincidenciaM.push(id); // Agregar el ID a la lista para que no se cuente nuevamente
-                totalSinConciliarM++;
-                document.getElementById("TotalSinConciliarM").innerText = totalSinConciliarM;
+                totalConciliadosC++;
+                totalConciliadosM++;
+                document.getElementById("TotalConciliadosC").innerText = totalConciliadosC;
+                document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
             }
         }
+    });
+
+    // Si no se encuentra coincidencia, agregar mensaje de no coincidencia
+    if (!coincidenciaEncontrada) {
+        resultadoMovimientos += "No se encontró coincidencia con los movimientos.<br/>";
     }
 
-    // Insertar el mensaje en el modal
     document.getElementById("modalConciliacionCompMensaje").innerHTML = resultadoComprobante + resultadoMovimientos;
 
-    // Mostrar el modal
     var myModal = new bootstrap.Modal(document.getElementById('modalConciliacionComp'));
     myModal.show();
 }
+
+
 
 // Función para deshacer la conciliación
 function desconciliarComp(id, fechaMovimiento, totalMovimiento) {
@@ -549,36 +500,45 @@ function desconciliarComp(id, fechaMovimiento, totalMovimiento) {
     document.getElementById("TotalSinConciliarM").innerText = totalSinConciliarM;
 }
 
-
 function conciliarAutomatico() {
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
-    let resultTableData = $('#tableResult').bootstrapTable('getData');
+    let resultTableData = $('#tableResult').bootstrapTable('getData');  // Obtener los datos actuales de la tabla resultante
 
     let coincidenciasComprobantes = 0;
     let coincidenciasMovimientos = 0;
     let nuevasCoincidencias = false;
 
-    function registroYaAgregado(id) {
-        return resultTableData.some(row => row.id === id);
+    // Eliminar registros que fueron conciliados manualmente
+    let manualEntries = resultTableData.filter(row => row.manual === true);
+    if (manualEntries.length > 0) {
+        manualEntries.forEach(row => {
+            $('#tableResult').bootstrapTable('remove', { field: 'id', values: [row.id] });
+        });
+    }
+
+    function registroYaAgregado(id, serie, folio, fecha, total) {
+        return resultTableData.some(row => row.id === id &&
+            row.Serie === serie &&
+            row.Folio === folio &&
+            row.Fecha === fecha &&
+            parseFloat(row.Total).toFixed(2) === parseFloat(total).toFixed(2));
     }
 
     comprobantesData.forEach((comp, indexComp) => {
         let fechaComprobanteFormateada = comp.Fecha.split('T')[0];
         let totalComprobanteFormateado = parseFloat(comp.Total).toFixed(2);
-        let coincidenciaEncontradaComprobante = false;
 
         movimientosData.forEach((mov, indexMov) => {
-            let fechaMovimiento = mov.Fecha.split('/').reverse().join('-');
+            let fechaMovimiento = mov.Fecha.split('/').reverse().join('-'); // Convertir DD/MM/YYYY a YYYY-MM-DD
             let cargoMovimientoFormateado = parseFloat(mov.Cargos).toFixed(2);
             let porcentajeSimilitud = ((totalComprobanteFormateado * 100) / cargoMovimientoFormateado) || 0.00;
 
             if (fechaMovimiento === fechaComprobanteFormateada &&
                 (porcentajeSimilitud === 100 || (porcentajeSimilitud >= 99.8 && porcentajeSimilitud < 100))) {
 
-                coincidenciaEncontradaComprobante = true;
-
-                if (!registroYaAgregado(comp.Id)) {
+                if (!registroYaAgregado(comp.Id, comp.Serie, comp.Folio, fechaComprobanteFormateada, totalComprobanteFormateado)) {
+                    // Conciliar y agregar a la tabla
                     $('#tableResult').bootstrapTable('append', {
                         id: comp.Id,
                         Serie: comp.Serie,
@@ -588,10 +548,11 @@ function conciliarAutomatico() {
                         Descripción: mov.Descripción,
                         Total: mov.Cargos,
                         coincidencia: true,
-                        conciliado: true,
+                        conciliado: true, // MARCAR el registro como conciliado de manera automática
                         porcentajeSimilitud: porcentajeSimilitud.toFixed(2)
                     });
 
+                    // Marcar la fila del comprobante y del movimiento como coincidente
                     if (!comp.coincidencia) {
                         $('#tableCardComprobantes').bootstrapTable('updateRow', {
                             index: indexComp,
@@ -614,12 +575,19 @@ function conciliarAutomatico() {
         });
     });
 
-    let mensaje = `${coincidenciasComprobantes} coincidencia(s) de comprobantes y ${coincidenciasMovimientos} coincidencia(s) de movimientos agregada(s).`;
+    let mensaje = `${coincidenciasComprobantes} coincidencia(s) de comprobantes y ${coincidenciasMovimientos} coincidencia(s) de movimientos agregada(s).<br/>`;
+
+    // Agregar al mensaje la lista de coincidencias con porcentaje de similitud
+    resultTableData.forEach(row => {
+        mensaje += `Coincidencia en comprobante ID: ${row.id}, Porcentaje de similitud: ${row.porcentajeSimilitud}%<br/>`;
+    });
+
     document.getElementById("modalConciliacionMensaje").innerHTML = mensaje;
 
     let myModal = new bootstrap.Modal(document.getElementById('modalConciliacion'));
     myModal.show();
 }
+
 
 
 function desconciliarRegistro(id) {
@@ -657,7 +625,6 @@ function desconciliarRegistro(id) {
     document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
 }
 
-
 function rowStyleComprobantes(row, index) {
     if (row.coincidencia) {
         return {
@@ -682,8 +649,6 @@ function darkGrayCellStyle(value, row, index, field) {
     };
 }
 
-
-
 function rowStyleMovimientos(row, index) {
     if (row.coincidencia) {
         return {
@@ -692,6 +657,210 @@ function rowStyleMovimientos(row, index) {
     }
     return {};
 }
+
+// Formatter para agregar el botón en la tabla de movimientos
+function conciliarFormatterMov(value, row, index) {
+    return `
+        <button class="btn btn-primary btn-sm" onclick="conciliarMovimiento(${index}, '${row.Fecha}', '${row.Cargos}')">
+            Conciliar
+        </button>
+    `;
+}
+
+function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
+
+    let mov = movimientosData[index];
+    let totalMovimientoFormateado = parseFloat(cargoMovimiento).toFixed(2);  // Aseguramos que el cargo tenga solo 2 decimales
+
+    // Filtrar registros de comprobantes que coincidan en el mismo mes y año, ignorando el día y formateando adecuadamente los cargos
+    let fechaMovimientoDate = new Date(fechaMovimiento.split('/').reverse().join('-')); // Convertir de DD/MM/YYYY a YYYY-MM-DD
+    let mesMovimiento = fechaMovimientoDate.getMonth();
+    let anioMovimiento = fechaMovimientoDate.getFullYear();
+
+    let coincidenciasComprobantes = comprobantesData.filter(comp => {
+        // Convertir la fecha del comprobante a Date para ignorar la hora
+        let fechaComprobanteDate = new Date(comp.Fecha); // Usar el formato ISO de la fecha del comprobante
+        let mesComprobante = fechaComprobanteDate.getMonth();
+        let anioComprobante = fechaComprobanteDate.getFullYear();
+
+        // Convertir ambos totales a un formato con 2 decimales para asegurarse de que sean comparables
+        let totalComprobanteFormateado = parseFloat(comp.Total).toFixed(2);
+
+        // Calcular el porcentaje de similitud entre el total del comprobante y el cargo del movimiento
+        let porcentajeSimilitud = ((totalComprobanteFormateado * 100) / totalMovimientoFormateado) ?? 0.00;
+
+        // Comparar mes, año y porcentaje de similitud
+        return mesComprobante === mesMovimiento &&
+            anioComprobante === anioMovimiento &&
+            (porcentajeSimilitud === 100 || (porcentajeSimilitud >= 99.8 && porcentajeSimilitud < 100));
+    });
+
+    if (coincidenciasComprobantes.length > 0) {
+        // Mostrar los datos del movimiento seleccionado en la parte superior del modal
+        let modalHeader = document.getElementById('modalSimilitudHeader');
+        modalHeader.innerHTML = `
+            <p><strong>Movimiento Seleccionado:</strong></p>
+            <p>Fecha: ${mov.Fecha}</p>
+            <p>Descripción: ${mov.Descripción}</p>
+            <p>Cargos: ${mov.Cargos}</p>
+            <hr/>
+        `;
+
+        // Mostrar coincidencias en el modal
+        let modalBody = document.getElementById('modalSimilitudBody');
+        modalBody.innerHTML = '';  // Limpiar el contenido anterior del modal
+
+        coincidenciasComprobantes.forEach(comp => {
+            let porcentajeSimilitud = ((parseFloat(comp.Total).toFixed(2) * 100) / totalMovimientoFormateado) ?? 0.00;
+
+            modalBody.innerHTML += `
+                <tr>
+                    <td>${comp.Id}</td>
+                    <td>${comp.Serie}</td>
+                    <td>${comp.Folio}</td>
+                    <td>${comp.Fecha}</td>
+                    <td>${comp.Total}</td>
+                    <td><strong>${porcentajeSimilitud.toFixed(2)}%</strong></td>
+                    <td><input type="checkbox" class="form-check-input" id="check-${comp.Id}" value="${comp.Id}"></td>
+                </tr>
+            `;
+        });
+
+        // Agregar un botón para realizar la conciliación masiva
+        modalBody.innerHTML += `
+            <tr>
+                <td colspan="7">
+                    <button class="btn btn-primary" onclick="conciliarSeleccionados(${index})">Conciliar Seleccionados</button>
+                </td>
+            </tr>
+        `;
+
+        let myModal = new bootstrap.Modal(document.getElementById('modalSimilitud'));
+        myModal.show();
+    } else {
+        // Mostrar mensaje de que no se encontraron coincidencias
+        let modalHeader = document.getElementById('modalSimilitudHeader');
+        modalHeader.innerHTML = `
+            <p><strong>Movimiento Seleccionado:</strong></p>
+            <p>Fecha: ${mov.Fecha}</p>
+            <p>Descripción: ${mov.Descripción}</p>
+            <p>Cargos: ${mov.Cargos}</p>
+            <hr/>
+        `;
+
+        let modalBody = document.getElementById('modalSimilitudBody');
+        modalBody.innerHTML = `<p>No se encontraron comprobantes con cargos similares para el mismo mes y año.</p>`;
+        let myModal = new bootstrap.Modal(document.getElementById('modalSimilitud'));
+        myModal.show();
+    }
+}
+
+// Función para conciliar los comprobantes seleccionados
+function conciliarSeleccionados(indexMovimiento) {
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+    let resultTableData = $('#tableResult').bootstrapTable('getData');
+
+    let mov = movimientosData[indexMovimiento];
+
+    // Recorrer todos los checkboxes que fueron seleccionados
+    document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+        let compId = checkbox.value;
+
+        // Verificar si el registro ya está conciliado en la tabla resultante
+        let registroYaAgregado = resultTableData.some(row => row.id === compId);
+
+        if (!registroYaAgregado) {
+            // Agregar la conciliación del movimiento en la tabla `tableResult`
+            let comprobante = comprobantesData.find(comp => comp.Id == compId);
+
+            $('#tableResult').bootstrapTable('append', {
+                id: comprobante.Id,
+                Serie: comprobante.Serie,
+                Folio: comprobante.Folio,
+                Fecha: comprobante.Fecha,
+                Banco: mov.Banco,
+                Descripción: mov.Descripción,
+                Total: comprobante.Total,
+                coincidencia: true
+            });
+
+            // Marcar el movimiento y comprobante como conciliado (color verde)
+            $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                index: indexMovimiento,
+                row: { coincidencia: true }
+            });
+
+            $('#tableCardComprobantes').bootstrapTable('updateRow', {
+                index: comprobantesData.findIndex(comp => comp.Id == compId),
+                row: { coincidencia: true }
+            });
+
+            // Actualizar el contador de conciliados
+            let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText);
+            totalConciliadosM++;
+            document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
+        }
+    });
+
+    // Cerrar el modal después de la conciliación
+    let myModal = bootstrap.Modal.getInstance(document.getElementById('modalSimilitud'));
+    myModal.hide();
+}
+
+
+    function conciliarDesdeModal(idComprobante, fechaMovimiento, cargoMovimiento, indexMovimiento) {
+        let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
+        let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+        let resultTableData = $('#tableResult').bootstrapTable('getData');
+
+        let comp = comprobantesData.find(comp => comp.Id === idComprobante);
+        let mov = movimientosData[indexMovimiento];
+        let totalMovimientoFormateado = parseFloat(cargoMovimiento).toFixed(2);
+
+        // Verificar si ya está conciliado
+        let registroYaAgregado = resultTableData.some(row => row.Fecha === mov.Fecha && parseFloat(row.Total).toFixed(2) === totalMovimientoFormateado);
+
+        if (!registroYaAgregado) {
+            // Agregar la conciliación del movimiento y comprobante en la tabla `tableResult`
+            $('#tableResult').bootstrapTable('append', {
+                id: comp.Id,
+                Serie: comp.Serie,
+                Folio: comp.Folio,
+                Fecha: mov.Fecha,
+                Banco: mov.Banco,
+                Descripción: mov.Descripción,
+                Total: mov.Cargos,
+                coincidencia: true
+            });
+
+            // Marcar el comprobante y movimiento como conciliados
+            $('#tableCardComprobantes').bootstrapTable('updateRow', {
+                index: $('#tableCardComprobantes').bootstrapTable('getData').findIndex(c => c.Id === comp.Id),
+                row: { coincidencia: true }
+            });
+
+            $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                index: indexMovimiento,
+                row: { coincidencia: true }
+            });
+
+            // Actualizar el contador de conciliados
+            let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText);
+            totalConciliadosM++;
+            document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
+
+            // Cerrar el modal
+            let myModal = bootstrap.Modal.getInstance(document.getElementById('modalSimilitud'));
+            myModal.hide();
+        } else {
+            alert("El movimiento ya ha sido conciliado.");
+        }
+    }
+
+
+
 
 function onCerrarClick() {
     //Removes validation from input-fields
