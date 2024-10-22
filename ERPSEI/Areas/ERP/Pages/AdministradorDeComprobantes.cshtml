@@ -127,7 +127,7 @@
 								<label for="inpFiltroEmisor" asp-for="InputFiltro.EmisorRFC" class="form-label"></label>
 							</div>
 						</div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
+						<div style="display: none;" class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
 								<input id="inpFiltroReceptor" type="search" asp-for="InputFiltro.ReceptorRFC" class="form-control" placeholder="@Localizer["ReceptorPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetReceptorSuggestion" />
 								<label for="inpFiltroReceptor" asp-for="InputFiltro.ReceptorRFC" class="form-label"></label>
@@ -321,6 +321,8 @@
 		var puedeEditar = '@puedeEditar' == 'True';
 		var puedeEliminar = '@puedeEliminar' == 'True';
 		var puedeAutorizar = '@puedeAutorizar' == 'True';
+
+		var tipoId = '@Model.InputFiltro.TipoId';
 	</script>
 
 	<partial name="_ValidationScriptsPartial" />

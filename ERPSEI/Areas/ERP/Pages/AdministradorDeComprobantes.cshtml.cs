@@ -89,7 +89,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
 		public void OnGet(int tipoId)
 		{
-			Console.WriteLine("Hello");
+			InputFiltro.TipoId = tipoId;
 		}
 
 		public async Task<JsonResult> OnPostFiltrar()
