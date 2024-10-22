@@ -38,6 +38,22 @@ document.addEventListener('DOMContentLoaded', function () {
     autoCompletar("#inpFiltroEmisor");
     autoCompletar("#inpFiltroReceptor");
 
+    if (window.tipoId == "1") {
+        $("#inpFiltroEmisor").parent().parent().hide();
+        $("#inpFiltroReceptor").parent().parent().show();
+        table.bootstrapTable('hideColumn', 'emisor');
+        table.bootstrapTable('showColumn', 'receptor');
+    }
+    else if (window.tipoId == "2") {
+        $("#inpFiltroReceptor").parent().parent().hide();
+        $("#inpFiltroEmisor").parent().parent().show();
+        table.bootstrapTable('showColumn', 'emisor');
+        table.bootstrapTable('hideColumn', 'receptor');
+    }
+
+    $("#inpFiltroEmisor").val("").attr("idselected", "");
+    $("#inpFiltroReceptor").val("").attr("idselected", "");
+
     jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
             $(element).addClass("is-invalid").removeClass("is-valid");
@@ -353,25 +369,6 @@ function onShowCFDIs(tipoExportado) {
 ////////////////////////////////
 //Funcionalidad Filtrar
 ////////////////////////////////
-//Función para detectar el cambio de valor en el campo Tipo
-function onTipoChanged() {
-    if ($("#selFiltroTipo").val() == "1") {
-        $("#inpFiltroEmisor").parent().parent().hide();
-        $("#inpFiltroReceptor").parent().parent().show();
-        table.bootstrapTable('hideColumn', 'emisor');
-        table.bootstrapTable('showColumn', 'receptor');
-    }
-    else if($("#selFiltroTipo").val() == "2") {
-        $("#inpFiltroReceptor").parent().parent().hide();
-        $("#inpFiltroEmisor").parent().parent().show();
-        table.bootstrapTable('showColumn', 'emisor');
-        table.bootstrapTable('hideColumn', 'receptor');
-    }
-
-    $("#inpFiltroEmisor").val("").attr("idselected", "");
-    $("#inpFiltroReceptor").val("").attr("idselected", "");
-}
-
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
     //Ejecuta la validación de los campos

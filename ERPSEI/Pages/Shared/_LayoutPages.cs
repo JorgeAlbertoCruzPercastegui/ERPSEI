@@ -84,7 +84,7 @@ namespace ERPSEI.Pages.Shared
 		public static string AdministradorDeComprobantes = "AdministradorDeComprobantes";
 		public static string AdministradorDeComprobantesNavClass(ViewContext viewContext) => PageNavClass(viewContext, AdministradorDeComprobantes);
 
-		public static string Conciliaciones = "Conciliaciones";
+        public static string Conciliaciones = "Conciliaciones";
 		public static string ConciliacionesNavClass(ViewContext viewContext) => PageNavClass(viewContext, Conciliaciones);
 
 		#endregion

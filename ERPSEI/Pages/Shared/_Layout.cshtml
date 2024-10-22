@@ -344,9 +344,13 @@
                                                             }
                                                             @if (permisos["administradordecomprobantes"])
                                                             {
-                                                                <a class="dropdown-item p-2 @_LayoutPages.AdministradorDeComprobantesNavClass(ViewContext)" asp-area="ERP" asp-page="/AdministradorDeComprobantes">
-                                                                    <i class="bi bi-journal-check"></i> @Localizer["AdministradorDeComprobantesMenu"]
-                                                                </a>
+                                                                <div role="button" class="dropdown-submenu dropdown-item dropdown dropend p-2 @_LayoutPages.AdministradorDeComprobantesNavClass(ViewContext)">
+                                                                    <span onclick="OnSubmenuClick();" id="ddtg" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-check"></i> @Localizer["AdministradorDeComprobantesMenu"] </span>
+                                                                    <div id="administracionComprobantesMenu" class="dropdown-menu" aria-labelledby="ddtg">
+                                                                        <a class="dropdown-item p-2" asp-area="ERP" asp-page="/AdministradorDeComprobantes" asp-route-tipoId="1">Emitidos</a>
+                                                                        <a class="dropdown-item p-2" asp-area="ERP" asp-page="/AdministradorDeComprobantes" asp-route-tipoId="2">Recibidos</a>
+                                                                    </div>
+                                                                </div>
                                                             }
                                                             @if (permisos["conciliaciones"])
                                                             {
@@ -438,6 +442,12 @@
     <script src="@Context.Request.Scheme://@Context.Request.Host/js/MessageDialog.js"></script>
     <script src="@Context.Request.Scheme://@Context.Request.Host/js/Utilities.js"></script>
     <script src="@Context.Request.Scheme://@Context.Request.Host/js/site.js" asp-append-version="true"></script>
+    <script type="text/javascript">
+        function OnSubmenuClick() {
+            this.event.stopPropagation();
+            this.event.preventDefault();
+        }
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

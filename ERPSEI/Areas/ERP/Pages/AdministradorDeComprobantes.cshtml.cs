@@ -13,10 +13,10 @@ using ERPSEI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
-using NPOI.HSSF.UserModel;
+using NPOI.XSSF.UserModel;
 using NPOI.SS.UserModel;
+using NPOI.SS.Util;
 using NuGet.Packaging;
-using ServicioEDICOM;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 
@@ -24,7 +24,6 @@ namespace ERPSEI.Areas.ERP.Pages
 {
 	[Authorize(Policy = "AccessPolicy")]
 	public class AdministradorDeComprobantesModel(
-			CFDi clienteEDICOM,
 			ApplicationDbContext db,
 			AppUserManager userManager,
 			IEmpresaManager empresaManager,
@@ -66,6 +65,9 @@ namespace ERPSEI.Areas.ERP.Pages
 			[Display(Name = "TipoField")]
 			public int? TipoId { get; set; }
 
+			[Display(Name = "EstatusContableField")]
+			public int? EstatusContableId { get; set; }
+
 			[Display(Name = "TipoComprobanteField")]
 			public string? TipoComprobanteClave { get; set; }
 
@@ -85,8 +87,9 @@ namespace ERPSEI.Areas.ERP.Pages
 			public string? ReceptorRFC { get; set; }
 		}
 
-		public void OnGet()
+		public void OnGet(int tipoId)
 		{
+			InputFiltro.TipoId = tipoId;
 		}
 
 		public async Task<JsonResult> OnPostFiltrar()
@@ -127,6 +130,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					filtro.Mes,
 					filtro.EstatusId,
 					filtro.TipoId,
+					filtro.EstatusContableId,
 					filtro.TipoComprobanteClave,
 					filtro.FormaPagoClave,
 					filtro.MetodoPagoClave,
@@ -173,7 +177,8 @@ namespace ERPSEI.Areas.ERP.Pages
 						$"\"emisor\": \"{c.Emisor?.Rfc}\", " +
 						$"\"receptor\": \"{c.Receptor?.Rfc}\", " +
 						$"\"usoCFDI\": \"{c.Receptor?.UsoCFDI}\", " +
-						$"\"estatus\": \"\"" +
+						$"\"cancelado\": \"{(c.Cancelado??false ? 1 : 0)}\", " +
+						$"\"contabilizado\": \"{(c.Contabilizado??false ? 1 : 0)}\"" +
 					"}"
 				);
 			}
@@ -283,7 +288,7 @@ namespace ERPSEI.Areas.ERP.Pages
 		{
 			int rowIndex = 2;
 			string? strTipoPoliza = string.Empty;
-			HSSFWorkbook? wb = null;
+			XSSFWorkbook? wb = null;
 			string? nombreArchivo = string.Empty;
 			switch (tipoExportacion)
 			{
@@ -312,8 +317,8 @@ namespace ERPSEI.Areas.ERP.Pages
 				sheet.SetColumnWidth(5, 10 * 256);
 
 				//Crea el estilo de las celdas.
-				HSSFCellStyle cellStyle = (HSSFCellStyle)wb.CreateCellStyle();
-				HSSFFont myFont = (HSSFFont)wb.CreateFont();
+				XSSFCellStyle cellStyle = (XSSFCellStyle)wb.CreateCellStyle();
+				XSSFFont myFont = (XSSFFont)wb.CreateFont();
 				myFont.FontHeightInPoints = 11;
 				myFont.FontName = "Calibri";
 				cellStyle.SetFont(myFont);
@@ -446,25 +451,30 @@ namespace ERPSEI.Areas.ERP.Pages
 
 					//Avanza 5 lineas para poder iniciar una nueva póliza.
 					rowIndex += 5;
+
+					comprobante.Contabilizado = true;
 				}
 
 				//Crea el archivo excel y lo exporta al usuario.
 				nombreArchivo = $"{Enum.GetName(typeof(TipoExportacion), tipoExportacion)}_{DateTime.Now:yyyyMMddHHmmssfffffff}";
-				using (var fileData = new FileStream($"wwwroot/templates/{nombreArchivo}.xls", FileMode.OpenOrCreate)){ wb.Write(fileData); }
+				using (var fileData = new FileStream($"wwwroot/templates/{nombreArchivo}.xlsx", FileMode.OpenOrCreate)){ wb.Write(fileData); }
 				wb.Close();
+
+				//Actualiza los comprobantes para que queden marcados con el flag "Contabilizado = true"
+				//await cmgr.UpdateMultipleAsync(comprobantes);
 			}
 
 			return nombreArchivo;
 		}
-		private static Task<HSSFWorkbook> CreateExcel()
+		private static Task<XSSFWorkbook> CreateExcel()
 		{
-			HSSFWorkbook workbook = new();
-			HSSFFont myFont = (HSSFFont)workbook.CreateFont();
+			XSSFWorkbook workbook = new();
+			XSSFFont myFont = (XSSFFont)workbook.CreateFont();
 			myFont.FontHeightInPoints = 11;
 			myFont.FontName = "Tahoma";
 
 			// Define un borde
-			HSSFCellStyle borderedCellStyle = (HSSFCellStyle)workbook.CreateCellStyle();
+			XSSFCellStyle borderedCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
 			borderedCellStyle.SetFont(myFont);
 			borderedCellStyle.BorderLeft = BorderStyle.Medium;
 			borderedCellStyle.BorderTop = BorderStyle.Medium;
@@ -511,56 +521,86 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return Task.FromResult(workbook);
 		}
-		private static Task<HSSFWorkbook> CreateExcelPolizaIngresos()
+		private static Task<XSSFWorkbook> CreateExcelPolizaIngresos()
 		{
-			HSSFWorkbook workbook = new();
-			HSSFFont myFont = (HSSFFont)workbook.CreateFont();
+			XSSFWorkbook workbook = new();
+			XSSFFont myFont = (XSSFFont)workbook.CreateFont();
 			myFont.FontHeightInPoints = 11;
 			myFont.FontName = "Calibri";
+			myFont.IsItalic = true;
 
 			// Define un borde
-			HSSFCellStyle borderedCellStyle = (HSSFCellStyle)workbook.CreateCellStyle();
-			borderedCellStyle.SetFont(myFont);
-			borderedCellStyle.BorderLeft = BorderStyle.Medium;
-			borderedCellStyle.BorderTop = BorderStyle.Medium;
-			borderedCellStyle.BorderRight = BorderStyle.Medium;
-			borderedCellStyle.BorderBottom = BorderStyle.Medium;
-			borderedCellStyle.VerticalAlignment = VerticalAlignment.Center;
+			XSSFCellStyle FirstHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			FirstHeaderCellStyle.SetFont(myFont);
+			FirstHeaderCellStyle.BorderLeft = BorderStyle.Medium;
+			FirstHeaderCellStyle.BorderTop = BorderStyle.Medium;
+			FirstHeaderCellStyle.BorderRight = BorderStyle.Medium;
+			FirstHeaderCellStyle.BorderBottom = BorderStyle.Medium;
+			FirstHeaderCellStyle.VerticalAlignment = VerticalAlignment.Center;
+			FirstHeaderCellStyle.Alignment = HorizontalAlignment.Center;
+
+			XSSFCellStyle SecondHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			SecondHeaderCellStyle.CloneStyleFrom(FirstHeaderCellStyle);
+			SecondHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+			SecondHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
+
+			XSSFCellStyle ThirdHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			ThirdHeaderCellStyle.CloneStyleFrom(FirstHeaderCellStyle);
+			ThirdHeaderCellStyle.Alignment = HorizontalAlignment.Right;
+			ThirdHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.PaleBlue.Index;
+			ThirdHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
+
+			XSSFCellStyle FourthHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			FourthHeaderCellStyle.CloneStyleFrom(FirstHeaderCellStyle);
+			FourthHeaderCellStyle.Alignment = HorizontalAlignment.Left;
+			FourthHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.PaleBlue.Index;
+			FourthHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
+
+			FirstHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.PaleBlue.Index;
+			FirstHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
 
 			ISheet Sheet = workbook.CreateSheet("Comprobantes");
 
-			////Crea los encabezados de la primer linea
-			//IRow FirstHeaderRow = Sheet.CreateRow(0);
-			//CreateCell(FirstHeaderRow, 0, "TipoPol", borderedCellStyle);
-			//CreateCell(FirstHeaderRow, 1, "Concepto póliza", borderedCellStyle);
-			//CreateCell(FirstHeaderRow, 3, "Póliza dinámica CFDI:", borderedCellStyle);
-			//CreateCell(FirstHeaderRow, 4, "Venta", borderedCellStyle);
+			//Crea los encabezados de la primer linea
+			IRow FirstHeaderRow = Sheet.CreateRow(0);
+			CreateCell(FirstHeaderRow, 0, "TipoPol", FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 1, "Concepto póliza", FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 2, string.Empty, FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 3, "Póliza dinámica CFDI:", ThirdHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 4, "Venta", FourthHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 5, string.Empty, FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 6, string.Empty, FirstHeaderCellStyle);
+			CellRangeAddress regionA = new(0, 0, 1, 2);
+			Sheet.AddMergedRegion(regionA);
+			CellRangeAddress regionB = new(0, 0, 4, 6);
+			Sheet.AddMergedRegion(regionB);
 
-			////Crea los encabezados de la segunda linea
-			//IRow SecondHeaderRow = Sheet.CreateRow(1);
-			//CreateCell(SecondHeaderRow, 1, "No. Cuenta", borderedCellStyle);
-			//CreateCell(SecondHeaderRow, 1, "Depto.", borderedCellStyle);
-			//CreateCell(SecondHeaderRow, 1, "Concepto mov.", borderedCellStyle);
-			//CreateCell(SecondHeaderRow, 1, "Debe", borderedCellStyle);
-			//CreateCell(SecondHeaderRow, 1, "Haber", borderedCellStyle);
-			//CreateCell(SecondHeaderRow, 1, "Centro de Ctos", borderedCellStyle);
-			//CreateCell(SecondHeaderRow, 1, "Proyecto", borderedCellStyle);
+			//Crea los encabezados de la segunda linea
+			IRow SecondHeaderRow = Sheet.CreateRow(1);
+			CreateCell(SecondHeaderRow, 1, "No. Cuenta", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 2, "Depto.", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 3, "Concepto mov.", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 4, string.Empty, SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 5, "Debe", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 6, "Haber", SecondHeaderCellStyle);
+			CellRangeAddress regionC = new(1, 1, 3, 4);
+			Sheet.AddMergedRegion(regionC);
 
 			return Task.FromResult(workbook);
 		}
-		private static void CreateCell(IRow CurrentRow, int CellIndex, string Value, HSSFCellStyle Style)
+		private static void CreateCell(IRow CurrentRow, int CellIndex, string Value, XSSFCellStyle Style)
 		{
 			ICell Cell = CurrentRow.CreateCell(CellIndex);
 			Cell.SetCellValue(Value);
 			Cell.CellStyle = Style;
 		}
-		private static void CreateCell(IRow CurrentRow, int CellIndex, int Value, HSSFCellStyle Style)
+		private static void CreateCell(IRow CurrentRow, int CellIndex, int Value, XSSFCellStyle Style)
 		{
 			ICell Cell = CurrentRow.CreateCell(CellIndex);
 			Cell.SetCellValue(Value);
 			Cell.CellStyle = Style;
 		}
-		private static void CreateCell(IRow CurrentRow, int CellIndex, double Value, HSSFCellStyle Style)
+		private static void CreateCell(IRow CurrentRow, int CellIndex, double Value, XSSFCellStyle Style)
 		{
 			ICell Cell = CurrentRow.CreateCell(CellIndex);
 			Cell.SetCellValue(Value);
@@ -569,7 +609,25 @@ namespace ERPSEI.Areas.ERP.Pages
 
 		public ActionResult OnGetDownloadExcel(string nombreArchivo)
 		{
-			return File($"/templates/{nombreArchivo}.xls", MediaTypeNames.Application.Octet, $"{nombreArchivo}.xls");
+			try
+			{
+				byte[] bytes;
+				FileStream fs = System.IO.File.OpenRead($"wwwroot/templates/{nombreArchivo}.xlsx");
+				bytes = new byte[fs.Length];
+				fs.Read(bytes, 0, bytes.Length);
+				fs.Close();
+				fs.Dispose();
+
+				System.IO.File.Delete($"wwwroot/templates/{nombreArchivo}.xlsx");
+
+				return File(bytes, MediaTypeNames.Application.Octet, $"{nombreArchivo}.xlsx");
+			}
+			catch (Exception ex)
+			{
+				logger.LogError("{message}", ex.Message);
+			}
+
+			return new EmptyResult();
 		}
 		
 		public async Task<JsonResult> OnPostCancelarComprobante(string[] ids)
