@@ -87,8 +87,9 @@ namespace ERPSEI.Areas.ERP.Pages
 			public string? ReceptorRFC { get; set; }
 		}
 
-		public void OnGet()
+		public void OnGet(int tipoId)
 		{
+			Console.WriteLine("Hello");
 		}
 
 		public async Task<JsonResult> OnPostFiltrar()
