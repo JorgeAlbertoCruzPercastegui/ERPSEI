@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.SAT.cfdiv40;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -29,7 +30,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			if (n != null)
 			{
 				n.Conciliado = c.Conciliado;
-
+				n.Cancelado = c.Cancelado;
+				n.Contabilizado = c.Contabilizado;
 				await _db.SaveChangesAsync();
 			}
 		}
@@ -87,6 +89,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			string? mes = null,
 			int? estatusId = null,
 			int? tipoId = null,
+			int? estatusContableId = null,
 			string? tipoComprobanteClave = null,
 			string? formaPagoClave = null,
 			string? metodoPagoClave = null,
@@ -95,7 +98,6 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			string? receptorRFC = null
 		)
 		{
-			bool isEmitida = tipoId == 1;
 
 			List<Comprobante> lc = await _db.Comprobantes
 				.Where(e => tipoComprobanteClave == null || e.TipoDeComprobante == tipoComprobanteClave)
@@ -121,6 +123,16 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 					break;
 				default:
 					break;
+			}
+			if (estatusContableId != null) { 
+				if(estatusContableId == 1)
+				{
+					lc = lc.FindAll(c => (c.Contabilizado ?? false) == true); 
+				}
+				else
+				{
+					lc = lc.FindAll(c => (c.Contabilizado ?? false) == false);
+				}
 			}
             if (anio != null) { lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("yyyy") == anio); }
 			if (mes != null) { lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("MM") == mes); }
@@ -151,6 +163,23 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 		public async Task<Comprobante?> GetByNameAsync(string name)
 		{
 			return await _db.Comprobantes.Where(p => $"{(p.Serie ?? string.Empty).ToLower()}{(p.Folio ?? string.Empty).ToLower()}".Equals(name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefaultAsync();
+		}
+
+		public async Task UpdateMultipleAsync(List<Comprobante> comprobantes)
+		{
+			//Inicia una transacción.
+			await _db.Database.BeginTransactionAsync();
+			try
+			{
+				_db.Comprobantes.UpdateRange(comprobantes);
+
+				await _db.Database.CommitTransactionAsync();
+			}
+			catch (Exception)
+			{
+				await _db.Database.RollbackTransactionAsync();
+				throw;
+			}
 		}
 
 	}

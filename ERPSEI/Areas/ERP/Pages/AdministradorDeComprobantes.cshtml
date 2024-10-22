@@ -105,19 +105,20 @@
 							<div class="form-floating mb-3">
 								<select id="selFiltroEstatus" asp-for="InputFiltro.EstatusId" class="form-select" placeholder="@Localizer["EstatusPlaceholder"]">
 									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
-									<option value="1">Vigentes</option>
-									<option value="2">Cancelados</option>
+									<option value="1">@Localizer["EstatusVigente"]</option>
+									<option value="2">@Localizer["EstatusCancelado"]</option>
 								</select>
 								<label for="selFiltroEstatus" asp-for="InputFiltro.EstatusId" class="form-label"></label>
 							</div>
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-select" placeholder="@Localizer["TipoPlaceholder"]" onchange="onTipoChanged();">
-									<option selected value="1">Emitidos</option>
-									<option value="2">Recibidos</option>
+								<select id="selFiltroTipo" asp-for="InputFiltro.EstatusContableId" class="form-select" placeholder="@Localizer["EstatusContablePlaceholder"]">
+									<option value="0">@Localizer["EmptySelectItemText"]</option>
+									<option selected value="1">No @Localizer["EstatusContabilizado"]</option>
+									<option value="2">@Localizer["EstatusContabilizado"]</option>
 								</select>
-								<label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
+								<label for="selFiltroTipo" asp-for="InputFiltro.EstatusContableId" class="form-label"></label>
 							</div>
 						</div>
 						<div style="display: none;" class="col-sm-6 col-md-6 col-lg-3">
@@ -135,7 +136,6 @@
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
 								<select id="selFiltroTipoComprobante" asp-for="InputFiltro.TipoComprobanteClave" class="form-select" placeholder="@Localizer["TipoComprobantePlaceholder"]">
-									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									@{
 										@foreach (TipoComprobante tipo in tiposComprobante)
 										{

@@ -10,6 +10,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			string? mes = null,
 			int? estatusId = null,
 			int? tipoId = null,
+			int? estatusContableId = null,
 			string? tipoComprobanteClave = null,
 			string? formaPagoClave = null,
 			string? metodoPagoClave = null,
@@ -17,6 +18,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			string? emisorRFC = null,
 			string? receptorRFC = null
 		);
+
+		public Task UpdateMultipleAsync(List<Comprobante> comprobantes);
 
 	}
 }
