@@ -118,201 +118,195 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CancelButtonTitle" xml:space="preserve">
-    <value>Cancelar</value>
+    <value />
   </data>
   <data name="CloseButtonTitle" xml:space="preserve">
-    <value>Cerrar</value>
+    <value />
   </data>
   <data name="ColActionsHeader" xml:space="preserve">
-    <value>Acciones</value>
+    <value />
   </data>
   <data name="ColCantidadHeader" xml:space="preserve">
-    <value>Cantidad</value>
+    <value />
   </data>
   <data name="ColClaveHeader" xml:space="preserve">
-    <value>Clave</value>
+    <value />
   </data>
   <data name="ColDescripcionHeader" xml:space="preserve">
-    <value>Descripción</value>
+    <value />
   </data>
   <data name="ColDescuentoHeader" xml:space="preserve">
-    <value>Descuento</value>
+    <value />
   </data>
   <data name="ColEstatusHeader" xml:space="preserve">
-    <value>Estatus</value>
+    <value />
   </data>
   <data name="ColFechaHeader" xml:space="preserve">
-    <value>Fecha</value>
+    <value />
   </data>
   <data name="ColFolioHeader" xml:space="preserve">
-    <value>Folio</value>
+    <value />
   </data>
   <data name="ColFormaPagoHeader" xml:space="preserve">
-    <value>Forma de pago</value>
+    <value />
   </data>
   <data name="ColMetodoPagoHeader" xml:space="preserve">
-    <value>Método de pago</value>
+    <value />
   </data>
   <data name="ColMonedaHeader" xml:space="preserve">
-    <value>Moneda</value>
+    <value />
   </data>
   <data name="ColRetencionHeader" xml:space="preserve">
-    <value>Retención</value>
+    <value />
   </data>
   <data name="ColSerieHeader" xml:space="preserve">
-    <value>Serie</value>
+    <value />
   </data>
   <data name="ColSubtotalHeader" xml:space="preserve">
-    <value>Subtotal</value>
+    <value />
   </data>
   <data name="ColTotalHeader" xml:space="preserve">
-    <value>Total</value>
+    <value />
   </data>
   <data name="ColTrasladoHeader" xml:space="preserve">
-    <value>Traslado</value>
+    <value />
   </data>
   <data name="ColUnidadHeader" xml:space="preserve">
-    <value>Unidad</value>
+    <value />
   </data>
   <data name="ColUnitarioHeader" xml:space="preserve">
-    <value>Unitario</value>
+    <value />
   </data>
   <data name="ColUsoCFDIHeader" xml:space="preserve">
-    <value>Uso de CFDI</value>
+    <value />
   </data>
   <data name="DatosGenerales" xml:space="preserve">
-    <value>Datos Generales</value>
+    <value />
   </data>
   <data name="Detalles" xml:space="preserve">
-    <value>Detalles</value>
+    <value />
   </data>
   <data name="DomicilioFiscal" xml:space="preserve">
-    <value>Domicilio Fiscal</value>
+    <value />
   </data>
   <data name="Emisor" xml:space="preserve">
-    <value>Emisor</value>
+    <value />
   </data>
   <data name="EmisorPlaceholder" xml:space="preserve">
-    <value>Emisor</value>
+    <value />
   </data>
   <data name="EmptyInfo" xml:space="preserve">
-    <value>---</value>
+    <value />
   </data>
   <data name="EmptySelectItemText" xml:space="preserve">
-    <value>Seleccione...</value>
+    <value />
   </data>
   <data name="EstatusPlaceholder" xml:space="preserve">
-    <value>Estatus</value>
+    <value />
   </data>
   <data name="ExcelButtonTitle" xml:space="preserve">
-    <value>Excel</value>
+    <value />
   </data>
   <data name="ExportCFDIDialogTitle" xml:space="preserve">
-    <value>Exportar</value>
+    <value />
   </data>
   <data name="FechaPlaceholder" xml:space="preserve">
-    <value>Fecha</value>
+    <value />
   </data>
   <data name="FilterTitle" xml:space="preserve">
-    <value>Filtros de búsqueda</value>
+    <value />
   </data>
   <data name="FormaPagoPlaceholder" xml:space="preserve">
-    <value>Forma Pago</value>
+    <value />
   </data>
   <data name="MetodoPagoPlaceholder" xml:space="preserve">
-    <value>Método Pago</value>
+    <value />
   </data>
   <data name="PDFButtonTitle" xml:space="preserve">
-    <value>PDF</value>
+    <value />
   </data>
   <data name="RazonSocial" xml:space="preserve">
-    <value>Razón Social</value>
+    <value />
   </data>
   <data name="Receptor" xml:space="preserve">
-    <value>Receptor</value>
+    <value />
   </data>
   <data name="ReceptorPlaceholder" xml:space="preserve">
-    <value>Receptor</value>
+    <value />
   </data>
   <data name="RFC" xml:space="preserve">
-    <value>RFC</value>
+    <value />
   </data>
   <data name="SaveButtonTitle" xml:space="preserve">
-    <value>Guardar</value>
+    <value />
   </data>
   <data name="SearchButton" xml:space="preserve">
-    <value>Buscar</value>
+    <value />
   </data>
   <data name="SeeButtonTitle" xml:space="preserve">
-    <value>Ver</value>
+    <value />
   </data>
   <data name="SeeDialogTitle" xml:space="preserve">
-    <value>Ver Registro</value>
+    <value />
   </data>
   <data name="SeriePlaceholder" xml:space="preserve">
-    <value>Serie</value>
+    <value />
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Administrador de Comprobantes</value>
+    <value />
   </data>
   <data name="UsoCFDIPlaceholder" xml:space="preserve">
-    <value>Uso CFDI</value>
+    <value />
   </data>
   <data name="UUIDPlaceholder" xml:space="preserve">
-    <value>UUID</value>
+    <value />
   </data>
   <data name="Validar" xml:space="preserve">
-    <value>Validar</value>
+    <value />
   </data>
   <data name="ColTipoCambio" xml:space="preserve">
-    <value>Tipo de Cambio</value>
+    <value />
   </data>
   <data name="ColTipoComprobante" xml:space="preserve">
-    <value>Tipo de Comprobante</value>
+    <value />
   </data>
   <data name="ColUUIDHeader" xml:space="preserve">
-    <value>UUID</value>
+    <value />
   </data>
   <data name="PolizaIngresoButtonTitle" xml:space="preserve">
-    <value>Generar póliza de ingresos</value>
+    <value />
   </data>
   <data name="XMLButtonTitle" xml:space="preserve">
-    <value>XML</value>
+    <value />
   </data>
   <data name="AnioPlaceholder" xml:space="preserve">
-    <value>Año</value>
+    <value />
   </data>
   <data name="MesPlaceholder" xml:space="preserve">
-    <value>Mes</value>
+    <value />
   </data>
   <data name="TipoPlaceholder" xml:space="preserve">
-    <value>Tipo</value>
+    <value />
   </data>
   <data name="TipoComprobantePlaceholder" xml:space="preserve">
-    <value>Tipo de Comprobante</value>
+    <value />
   </data>
   <data name="ColEmisorHeader" xml:space="preserve">
-    <value>Emisor</value>
+    <value />
   </data>
   <data name="ColReceptorHeader" xml:space="preserve">
-    <value>Receptor</value>
+    <value />
   </data>
   <data name="MixedItemsMessage" xml:space="preserve">
-    <value>La selección contiene elementos que no se pueden procesar para el tipo de póliza seleccionado. Dichos elementos se ignorarán para la elaboración de la póliza</value>
+    <value />
   </data>
   <data name="PolizaEgresoButtonTitle" xml:space="preserve">
-    <value>Generar póliza de egresos</value>
+    <value />
   </data>
   <data name="EstatusContabilizado" xml:space="preserve">
-    <value>Contabilizado</value>
+    <value />
   </data>
-  <data name="EstatusCancelado" xml:space="preserve">
-    <value>Cancelado</value>
-  </data>
-  <data name="EstatusContablePlaceholder" xml:space="preserve">
-    <value>Estatus Contable</value>
-  </data>
-  <data name="EstatusVigente" xml:space="preserve">
-    <value>Vigente</value>
+  <data name="EstatusNoContabilizado" xml:space="preserve">
+    <value />
   </data>
 </root>

@@ -303,4 +303,16 @@
   <data name="PolizaEgresoButtonTitle" xml:space="preserve">
     <value>Generate expenditure policy</value>
   </data>
+  <data name="EstatusContabilizado" xml:space="preserve">
+    <value>Accounted</value>
+  </data>
+  <data name="EstatusCancelado" xml:space="preserve">
+    <value>Canceled</value>
+  </data>
+  <data name="EstatusContablePlaceholder" xml:space="preserve">
+    <value>Accounting Status</value>
+  </data>
+  <data name="EstatusVigente" xml:space="preserve">
+    <value>Valid</value>
+  </data>
 </root>

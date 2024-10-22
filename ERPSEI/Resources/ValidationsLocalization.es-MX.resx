@@ -453,4 +453,7 @@
   <data name="EmpresaField" xml:space="preserve">
     <value>Empresa</value>
   </data>
+  <data name="EstatusContableField" xml:space="preserve">
+    <value>Estatus Contable</value>
+  </data>
 </root>
