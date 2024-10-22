@@ -87,9 +87,13 @@ namespace ERPSEI.Areas.ERP.Pages
 			public string? ReceptorRFC { get; set; }
 		}
 
-		public void OnGet(int tipoId)
+		public IActionResult OnGet(int tipoId)
 		{
+			if (tipoId <= 0 || tipoId >= 3){ return RedirectToPage("/404"); }
+			
 			InputFiltro.TipoId = tipoId;
+			return Page();
+
 		}
 
 		public async Task<JsonResult> OnPostFiltrar()

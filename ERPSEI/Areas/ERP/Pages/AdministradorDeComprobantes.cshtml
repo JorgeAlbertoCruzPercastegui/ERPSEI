@@ -93,8 +93,7 @@
 											description = string.Concat(description[0].ToString().ToUpper(), description.AsSpan(1));
 											string value = f.ToString("MM");
 
-											if (j == DateTime.Today.Month) { <option selected value='@value'>@description</option> }
-											else { <option value='@value'>@description</option> }
+											<option value='@value'>@description</option>
 										}
 									}
 								</select>
@@ -113,12 +112,12 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroTipo" asp-for="InputFiltro.EstatusContableId" class="form-select" placeholder="@Localizer["EstatusContablePlaceholder"]">
+								<select id="selFiltroEstatusContable" asp-for="InputFiltro.EstatusContableId" class="form-select" placeholder="@Localizer["EstatusContablePlaceholder"]">
 									<option value="0">@Localizer["EmptySelectItemText"]</option>
 									<option selected value="1">No @Localizer["EstatusContabilizado"]</option>
 									<option value="2">@Localizer["EstatusContabilizado"]</option>
 								</select>
-								<label for="selFiltroTipo" asp-for="InputFiltro.EstatusContableId" class="form-label"></label>
+								<label for="selFiltroEstatusContable" asp-for="InputFiltro.EstatusContableId" class="form-label"></label>
 							</div>
 						</div>
 						<div style="display: none;" class="col-sm-6 col-md-6 col-lg-3">

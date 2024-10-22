@@ -125,11 +125,11 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 					break;
 			}
 			if (estatusContableId != null) { 
-				if(estatusContableId == 1)
+				if(estatusContableId == 2)
 				{
 					lc = lc.FindAll(c => (c.Contabilizado ?? false) == true); 
 				}
-				else
+				else if(estatusContableId == 1)
 				{
 					lc = lc.FindAll(c => (c.Contabilizado ?? false) == false);
 				}
