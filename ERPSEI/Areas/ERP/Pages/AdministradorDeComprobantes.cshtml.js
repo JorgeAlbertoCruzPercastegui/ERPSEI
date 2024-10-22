@@ -72,6 +72,17 @@ document.addEventListener('DOMContentLoaded', function () {
 ////////////////////////////////
 //Funcionalidad Tabla
 ////////////////////////////////
+//Función para establecer el estilo de los rows individualmente
+function rowStyle(row, index) {
+    //Se verifica el estatus del row
+    if (row.contabilizado == 1) {
+        return {
+            classes: "bd-callout bd-callout-success border-5 border-top-0 border-bottom-0"
+        };
+    }
+
+    return {};
+}
 //Función para obtener los identificadores de los registros seleccionados
 function getIdSelections() {
     return $.map(table.bootstrapTable('getSelections'), function (row) {
@@ -142,12 +153,7 @@ function ajaxExportCFDIS(oParams) {
                 return;
             }
 
-            if (oParams.ids != null) {
-                oParams.ids = [];
-                selections = null;
-                if (buttonAcciones) { buttonAcciones.prop('disabled', true); }
-                table.bootstrapTable('uncheckAll');
-            }
+            clearTable();
 
             let fileLink = document.getElementById("downloadFileLink");
             fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)

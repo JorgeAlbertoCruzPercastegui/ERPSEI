@@ -465,7 +465,7 @@ namespace ERPSEI.Areas.ERP.Pages
 				wb.Close();
 
 				//Actualiza los comprobantes para que queden marcados con el flag "Contabilizado = true"
-				//await cmgr.UpdateMultipleAsync(comprobantes);
+				await cmgr.UpdateMultipleAsync(comprobantes);
 			}
 
 			return nombreArchivo;
