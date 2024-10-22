@@ -112,7 +112,16 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				.ToListAsync();
 
 			if (empresaRFC != null) { lc = lc.FindAll(c => (c.Emisor != null && c.Emisor.Rfc == empresaRFC) || (c.Receptor != null && c.Receptor.Rfc == empresaRFC)); }
-			if(estatusId != null) { lc = lc.FindAll(c => c.Cancelado == (estatusId == 2)); }
+			if(estatusId != null) { 
+				if(estatusId == 1)
+				{
+					lc = lc.FindAll(c => c.Cancelado == false); 
+				}
+				else if (estatusId == 2)
+				{
+					lc = lc.FindAll(c => c.Cancelado == true);
+				}
+			}
 			switch (tipoId)
 			{
 				case 1:
