@@ -69,7 +69,7 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@Localizer["AnioPlaceholder"]">
+								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@Localizer["AnioPlaceholder"]" onchange="clearTable();">
 									@{
 										for (int i = DateTime.Today.Year - 5; i <= DateTime.Today.Year; i++)
 										{
@@ -83,7 +83,7 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroMes" asp-for="InputFiltro.Mes" class="form-select" placeholder="@Localizer["MesPlaceholder"]">
+								<select id="selFiltroMes" asp-for="InputFiltro.Mes" class="form-select" placeholder="@Localizer["MesPlaceholder"]" onchange="clearTable();">
 									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									@{
 										for(int j = 1; j <= 12; j++)
@@ -102,7 +102,7 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroEstatus" asp-for="InputFiltro.EstatusId" class="form-select" placeholder="@Localizer["EstatusPlaceholder"]">
+								<select id="selFiltroEstatus" asp-for="InputFiltro.EstatusId" class="form-select" placeholder="@Localizer["EstatusPlaceholder"]" onchange="clearTable();">
 									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									<option value="1">@Localizer["EstatusVigente"]</option>
 									<option value="2">@Localizer["EstatusCancelado"]</option>
@@ -112,7 +112,7 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroEstatusContable" asp-for="InputFiltro.EstatusContableId" class="form-select" placeholder="@Localizer["EstatusContablePlaceholder"]">
+								<select id="selFiltroEstatusContable" asp-for="InputFiltro.EstatusContableId" class="form-select" placeholder="@Localizer["EstatusContablePlaceholder"]" onchange="clearTable();">
 									<option value="0">@Localizer["EmptySelectItemText"]</option>
 									<option selected value="1">No @Localizer["EstatusContabilizado"]</option>
 									<option value="2">@Localizer["EstatusContabilizado"]</option>
@@ -134,7 +134,7 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroTipoComprobante" asp-for="InputFiltro.TipoComprobanteClave" class="form-select" placeholder="@Localizer["TipoComprobantePlaceholder"]">
+								<select id="selFiltroTipoComprobante" asp-for="InputFiltro.TipoComprobanteClave" onchange="onTipoComprobanteChanged();" class="form-select" placeholder="@Localizer["TipoComprobantePlaceholder"]" onchange="clearTable();">
 									@{
 										@foreach (TipoComprobante tipo in tiposComprobante)
 										{
@@ -147,7 +147,7 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroFormaPago" asp-for="InputFiltro.FormaPagoClave" class="form-select" placeholder="@Localizer["FormaPagoPlaceholder"]">
+								<select id="selFiltroFormaPago" asp-for="InputFiltro.FormaPagoClave" class="form-select" placeholder="@Localizer["FormaPagoPlaceholder"]" onchange="clearTable();">
 									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									@{
 										@foreach (FormaPago forma in formasPago)
@@ -161,7 +161,7 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroMetodoPago" asp-for="InputFiltro.MetodoPagoClave" class="form-select" placeholder="@Localizer["MetodoPagoPlaceholder"]">
+								<select id="selFiltroMetodoPago" asp-for="InputFiltro.MetodoPagoClave" class="form-select" placeholder="@Localizer["MetodoPagoPlaceholder"]" onchange="clearTable();">
 									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									@{
 										@foreach (MetodoPago metodo in metodosPago)
@@ -175,7 +175,7 @@
 						</div>
 						<div class="col-sm-12 col-md-12 col-lg-6">
 							<div class="form-floating mb-3">
-								<select id="selFiltroUsoCFDI" asp-for="InputFiltro.UsoCFDIClave" class="form-select" placeholder="@Localizer["UsoCFDIPlaceholder"]">
+								<select id="selFiltroUsoCFDI" asp-for="InputFiltro.UsoCFDIClave" class="form-select" placeholder="@Localizer["UsoCFDIPlaceholder"]" onchange="clearTable();">
 									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
 									@{
 										@foreach (UsoCFDI uso in usosCFDI)
@@ -223,8 +223,8 @@
 						<li><a class="dropdown-item xml" onclick="onShowXMLClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]"><i class="bi bi-file-code"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]</a></li>
 						<li><a class="dropdown-item excel" onclick="onShowExcelClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]"><i class="bi bi-file-earmark-spreadsheet"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]</a></li>
 						<li><hr class="dropdown-divider"></li>
-						<li><a class="dropdown-item polizaIngreso" onclick="onShowPolizaIngresoClick();" href="#" title="@Localizer["PolizaIngresoButtonTitle"]"><i class="bi bi-file-earmark-plus"></i> @Localizer["PolizaIngresoButtonTitle"]</a></li>
-						<li><a class="dropdown-item polizaEgreso" onclick="onShowPolizaEgresoClick();" href="#" title="@Localizer["PolizaEgresoButtonTitle"]"><i class="bi bi-file-earmark-minus"></i> @Localizer["PolizaEgresoButtonTitle"]</a></li>
+						<li style="display:none;"><a class="dropdown-item polizaIngreso" onclick="onShowPolizaIngresoClick();" href="#" title="@Localizer["PolizaIngresoButtonTitle"]"><i class="bi bi-file-earmark-plus"></i> @Localizer["PolizaIngresoButtonTitle"]</a></li>
+						<li style="display:none;"><a class="dropdown-item polizaEgreso" onclick="onShowPolizaEgresoClick();" href="#" title="@Localizer["PolizaEgresoButtonTitle"]"><i class="bi bi-file-earmark-minus"></i> @Localizer["PolizaEgresoButtonTitle"]</a></li>
 					}
 
 					@if (puedeTodo || puedeEditar || puedeEliminar)

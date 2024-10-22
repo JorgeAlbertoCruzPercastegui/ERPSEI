@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initTable();
 
-    autoCompletar("#inpFiltroEmpresaRFC");
-    autoCompletar("#inpFiltroEmisor");
-    autoCompletar("#inpFiltroReceptor");
+    autoCompletar("#inpFiltroEmpresaRFC", { change: function (element, item) { clearTable(); } });
+    autoCompletar("#inpFiltroEmisor", { change: function (element, item) { clearTable(); } });
+    autoCompletar("#inpFiltroReceptor", { change: function (element, item) { clearTable(); } });
 
     if (window.tipoId == "1") {
         $("#inpFiltroEmisor").parent().parent().hide();
@@ -64,6 +64,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
+
+    onTipoComprobanteChanged();
 
 });
 
@@ -369,6 +371,33 @@ function onShowCFDIs(tipoExportado) {
 ////////////////////////////////
 //Funcionalidad Filtrar
 ////////////////////////////////
+//Función para limpiar la tabla de resultados
+function clearTable() {
+    table.bootstrapTable('load', []);
+    table.bootstrapTable('uncheckAll');
+    if (buttonAcciones) { buttonAcciones.prop('disabled', true) }
+}
+//Función para mostrar/ocultar las opciones de exportado de pólizas dependiendo el tipo de comprobante seleccionado
+function onTipoComprobanteChanged() {
+    switch ($("#selFiltroTipoComprobante").val()) {
+        case "I":
+            $(".dropdown-item.polizaIngreso").parent().show();
+            $(".dropdown-item.polizaEgreso").parent().hide();
+            break;
+        case "E":
+            $(".dropdown-item.polizaIngreso").parent().hide();
+            $(".dropdown-item.polizaEgreso").parent().show();
+            break;
+        case "T":
+        case "N":
+        case "P":
+        default:
+            $(".dropdown-item.polizaIngreso").parent().hide();
+            $(".dropdown-item.polizaEgreso").parent().hide();
+    }
+
+    clearTable();
+}
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
     //Ejecuta la validación de los campos
@@ -376,6 +405,8 @@ function onBuscarClick() {
 
     //Determina los errores. Si la forma no es válida, entonces finaliza.
     if (!$("#filtros").valid()) { return; }
+
+    clearTable();
 
     let oParams = {
         EmpresaRFC: ($("#inpFiltroEmpresaRFC").data("rfc") || "") == "" ? null : $("#inpFiltroEmpresaRFC").data("rfc"),
