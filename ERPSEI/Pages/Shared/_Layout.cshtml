@@ -347,8 +347,8 @@
                                                                 <div role="button" class="dropdown-submenu dropdown-item dropdown dropend p-2 @_LayoutPages.AdministradorDeComprobantesNavClass(ViewContext)">
                                                                     <span onclick="OnSubmenuClick();" id="ddtg" class="dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-check"></i> @Localizer["AdministradorDeComprobantesMenu"] </span>
                                                                     <div id="administracionComprobantesMenu" class="dropdown-menu" aria-labelledby="ddtg">
-                                                                        <a class="dropdown-item p-2" asp-area="ERP" asp-page="/AdministradorDeComprobantes" asp-route-tipoId="1">Emitidos</a>
-                                                                        <a class="dropdown-item p-2" asp-area="ERP" asp-page="/AdministradorDeComprobantes" asp-route-tipoId="2">Recibidos</a>
+                                                                        <a class="dropdown-item p-2" asp-area="ERP" asp-page="/AdministradorDeComprobantes" asp-route-tipoId="1">@Localizer["EmitidosSubmenu"]</a>
+                                                                        <a class="dropdown-item p-2" asp-area="ERP" asp-page="/AdministradorDeComprobantes" asp-route-tipoId="2">@Localizer["RecibidosSubmenu"]</a>
                                                                     </div>
                                                                 </div>
                                                             }

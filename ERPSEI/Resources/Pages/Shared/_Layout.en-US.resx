@@ -138,6 +138,9 @@
   <data name="DisabilitiesMenu" xml:space="preserve">
     <value>Disabilities</value>
   </data>
+  <data name="EmitidosSubmenu" xml:space="preserve">
+    <value>Emitted</value>
+  </data>
   <data name="EmpresasCatalogMenu" xml:space="preserve">
     <value>Companies</value>
   </data>
@@ -182,6 +185,9 @@
   </data>
   <data name="ProfilesCatalogMenu" xml:space="preserve">
     <value>Profiles</value>
+  </data>
+  <data name="RecibidosSubmenu" xml:space="preserve">
+    <value>Received</value>
   </data>
   <data name="ReportesMenu" xml:space="preserve">
     <value>Reports</value>
