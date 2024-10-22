@@ -182,6 +182,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			{
 				_db.Comprobantes.UpdateRange(comprobantes);
 
+				await _db.SaveChangesAsync();
+
 				await _db.Database.CommitTransactionAsync();
 			}
 			catch (Exception)
