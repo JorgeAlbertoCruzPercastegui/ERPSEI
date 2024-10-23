@@ -882,6 +882,15 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
             parseFloat(comp.Total) <= parseFloat(cargoMovimiento);
     });
 
+    // Calcular el porcentaje de similitud para cada comprobante y añadirlo al objeto
+    coincidenciasComprobantes = coincidenciasComprobantes.map(comp => {
+        let porcentajeSimilitud = ((parseFloat(comp.Total) / parseFloat(cargoMovimiento)) * 100).toFixed(2);
+        return { ...comp, porcentajeSimilitud };  // Añadir el porcentaje al objeto
+    });
+
+    // Ordenar los comprobantes por el porcentaje de similitud en orden descendente
+    coincidenciasComprobantes.sort((a, b) => parseFloat(b.porcentajeSimilitud) - parseFloat(a.porcentajeSimilitud));
+
     // Actualizar el header del modal con los datos del movimiento seleccionado
     let modalHeader = document.getElementById('modalSimilitudHeader');
     modalHeader.innerHTML = `
@@ -889,7 +898,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
         <p>Fecha: ${mov.Fecha}</p>
         <p>Descripción: ${mov.Descripción}</p>
         <p>Cargos: ${mov.Cargos}</p>
-        <p><strong>Total Seleccionado: $<span id="totalSeleccionado">0.00</span> (<span id="porcentajeSeleccionado">0%</span>)</strong></p> <!-- Mostrar el total y porcentaje -->
+        <p><strong>Total Seleccionado: $<span id="totalSeleccionado">0.00</span> (<span id="porcentajeSeleccionado">0%</span>)</strong></p>
         <hr/>
     `;
 
@@ -898,7 +907,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
     modalTableBody.innerHTML = '';
 
     if (coincidenciasComprobantes.length > 0) {
-        // Mostrar cada comprobante coincidente
+        // Mostrar cada comprobante coincidente ordenado por porcentaje de similitud descendente
         coincidenciasComprobantes.forEach(comp => {
             let fechaComprobanteDate = new Date(comp.Fecha);
             let fechaFormateada = ("0" + fechaComprobanteDate.getDate()).slice(-2) + "/" +
@@ -907,10 +916,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
 
             let totalFormateado = parseFloat(comp.Total).toFixed(2);
 
-            // Calcular el porcentaje de similitud
-            let porcentajeSimilitud = ((parseFloat(comp.Total) / parseFloat(cargoMovimiento)) * 100).toFixed(2);
-
-            // Cambia el valor del checkbox a comp.Id
+            // Añadir las filas a la tabla con checkbox y manejar el evento de selección
             modalTableBody.innerHTML += `
                 <tr>
                     <td>${comp.Id}</td>
@@ -918,7 +924,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
                     <td>${comp.Folio}</td>
                     <td>${fechaFormateada}</td>
                     <td>${totalFormateado}</td>
-                    <td><strong>${porcentajeSimilitud}%</strong></td>
+                    <td><strong>${comp.porcentajeSimilitud}%</strong></td>
                     <td><input type="checkbox" class="form-check-input" value="${comp.Total}" onchange="actualizarSumaSeleccionados(this, ${cargoMovimiento})"></td>
                 </tr>
             `;
@@ -938,6 +944,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
     let myModal = new bootstrap.Modal(document.getElementById('modalSimilitud'));
     myModal.show();
 }
+
 
 
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
