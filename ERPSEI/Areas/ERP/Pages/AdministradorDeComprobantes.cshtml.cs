@@ -12,6 +12,7 @@ using ERPSEI.Requests;
 using ERPSEI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.MSIdentity.Shared;
 using Microsoft.Extensions.Localization;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
@@ -98,57 +99,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
 		}
 
-		public async Task<JsonResult> OnPostFiltrar()
+		private string CreateJsonComprobantes(List<Comprobante> comprobantes)
 		{
-			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
-			try
-			{
-				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
-				{
-					resp.Datos = await GetComprobantesList(InputFiltro);
-					resp.TieneError = false;
-					resp.Mensaje = localizer["ConsultadoSuccessfully"];
-				}
-				else
-				{
-					resp.Mensaje = localizer["AccesoDenegado"];
-				}
-			}
-			catch (Exception ex)
-			{
-				string message = ex.Message;
-				logger.LogError("{message}", message);
-			}
-
-			return new JsonResult(resp);
-		}
-		private async Task<string> GetComprobantesList(FiltroModel? filtro = null)
-		{
-			string jsonResponse;
 			List<string> jsonComprobantes = [];
-			List<Comprobante> comprobantes = [];
-
-			if (filtro != null)
-			{
-				comprobantes = await comprobanteManager.GetAllAsync(
-					filtro.EmpresaRFC,
-					filtro.Anio,
-					filtro.Mes,
-					filtro.EstatusId,
-					filtro.TipoId,
-					filtro.EstatusContableId,
-					filtro.TipoComprobanteClave,
-					filtro.FormaPagoClave,
-					filtro.MetodoPagoClave,
-					filtro.UsoCFDIClave,
-					filtro.EmisorRFC,
-					filtro.ReceptorRFC
-				);
-			}
-			else
-			{
-				comprobantes = await comprobanteManager.GetAllAsync();
-			}
+			string jsonResponse;
 
 			foreach (Comprobante c in comprobantes)
 			{
@@ -183,14 +137,70 @@ namespace ERPSEI.Areas.ERP.Pages
 						$"\"emisor\": \"{c.Emisor?.Rfc}\", " +
 						$"\"receptor\": \"{c.Receptor?.Rfc}\", " +
 						$"\"usoCFDI\": \"{c.Receptor?.UsoCFDI}\", " +
-						$"\"cancelado\": \"{(c.Cancelado??false ? 1 : 0)}\", " +
+						$"\"cancelado\": \"{(c.Cancelado ?? false ? 1 : 0)}\", " +
 						$"\"valido\": \"{(c.Valido ?? false ? 1 : 0)}\", " +
-						$"\"contabilizado\": \"{(c.Contabilizado??false ? 1 : 0)}\"" +
-					"}"
+						$"\"contabilizado\": \"{(c.Contabilizado ?? false ? 1 : 0)}\"" +
+				"}"
 				);
 			}
 
 			jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
+
+			return jsonResponse;
+		}
+
+		public async Task<JsonResult> OnPostFiltrar()
+		{
+			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+			try
+			{
+				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+				{
+					resp.Datos = await GetComprobantesList(InputFiltro);
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ConsultadoSuccessfully"];
+				}
+				else
+				{
+					resp.Mensaje = localizer["AccesoDenegado"];
+				}
+			}
+			catch (Exception ex)
+			{
+				string message = ex.Message;
+				logger.LogError("{message}", message);
+			}
+
+			return new JsonResult(resp);
+		}
+		private async Task<string> GetComprobantesList(FiltroModel? filtro = null)
+		{
+			string jsonResponse;
+			List<Comprobante> comprobantes;
+
+			if (filtro != null)
+			{
+				comprobantes = await comprobanteManager.GetAllAsync(
+					filtro.EmpresaRFC,
+					filtro.Anio,
+					filtro.Mes,
+					filtro.EstatusId,
+					filtro.TipoId,
+					filtro.EstatusContableId,
+					filtro.TipoComprobanteClave,
+					filtro.FormaPagoClave,
+					filtro.MetodoPagoClave,
+					filtro.UsoCFDIClave,
+					filtro.EmisorRFC,
+					filtro.ReceptorRFC
+				);
+			}
+			else
+			{
+				comprobantes = await comprobanteManager.GetAllAsync();
+			}
+
+			jsonResponse = CreateJsonComprobantes(comprobantes);
 
 			return jsonResponse;
 		}
@@ -755,7 +765,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						_ = int.TryParse(id, out int idComprobante);
 
 						//Se timbra la prefactura
-						ServerResponse respCancelacion = new(true, localizer["FailedToCancel"] + $" {idComprobante}");
+						ServerResponse respCancelacion = new(true, localizer["ComprobanteCancelledUnsuccessfully"] + $" {idComprobante}");
 						if (idComprobante >= 1){ 
 							respCancelacion = await CancelarComprobante(idComprobante);
 							if (respCancelacion.TieneError) {
@@ -807,6 +817,73 @@ namespace ERPSEI.Areas.ERP.Pages
 			{
 				//Devuelve el error en el timbrado.
 				resp.Errores = [..resp.Errores.Append(ex.Message)];
+			}
+
+			return resp;
+		}
+
+		public async Task<JsonResult> OnPostValidarComprobantes(string[] ids)
+		{
+			ServerResponse resp = new(true, localizer["ComprobantesValidatedUnsuccessfully"]);
+			List<Comprobante> comprobantes = [];
+			if (PuedeTodo || PuedeEditar)
+			{
+				try
+				{
+					foreach (string id in ids)
+					{
+						_ = int.TryParse(id, out int idComprobante);
+
+						//Se timbra la prefactura
+						ServerResponse respValidacion = new(true, localizer["ComprobanteValidatedUnsuccessfully"] + $" {idComprobante}");
+						if (idComprobante >= 1)
+						{
+							//Obtiene los datos del comprobante
+							Comprobante? c = await comprobanteManager.GetByIdAsync(idComprobante);
+
+							if (c != null){ 
+								respValidacion = await ValidarComprobante(c);
+								comprobantes.Add(c);
+							}
+
+							if (respValidacion.TieneError){ resp.Errores.AddRange(respValidacion.Errores); }
+						}
+					}
+
+					resp.Datos = CreateJsonComprobantes(comprobantes);
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ComprobantesValidatedSuccessfully"];
+				}
+				catch (Exception ex)
+				{
+					string message = ex.Message;
+					logger.LogError("{message}", message);
+					resp.Mensaje = message;
+				}
+			}
+			else
+			{
+				resp.Mensaje = localizer["AccesoDenegado"];
+			}
+
+			return new JsonResult(resp);
+		}
+		private async Task<ServerResponse> ValidarComprobante(Comprobante comprobante)
+		{
+			ServerResponse resp = new(true, localizer["ComprobanteValidatedUnsuccessfully"]);
+			try
+			{
+				//TODO: Proceso de validación de comprobantes
+
+				//Devuelve mensaje correcto de validación.
+				resp.TieneError = false;
+				resp.Errores = [];
+				resp.Mensaje = localizer["ComprobanteValidatedSuccessfully"];
+			}
+			catch (Exception ex)
+			{
+				//Devuelve el error en el timbrado.
+				resp.Errores = [.. resp.Errores.Append(ex.Message)];
 			}
 
 			return resp;

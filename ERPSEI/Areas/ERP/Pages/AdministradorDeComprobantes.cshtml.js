@@ -112,7 +112,6 @@ function getIdSelections() {
         return row.id
     })
 }
-
 //Función para procesar la respuesta del servidor al consultar datos
 function responseHandler(res) {
     if (typeof res == "string" && res.length >= 1) {
@@ -129,7 +128,6 @@ function responseHandler(res) {
 function currencyFormatter(value, row, index) {
     return `$ ${numFormatter.format(value)}`;
 }
-
 //Función para dar formato a la validez de un comprobante
 function validFormatter(value, row, index) {
     if ((row.cancelado || 0) == 1) {
@@ -202,7 +200,6 @@ function ajaxExportCFDIS(oParams) {
         postOptions
     );
 }
-
 //Función para inicializar la tabla
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
@@ -357,58 +354,101 @@ function initTable() {
     });
 }
 
-//Función para mostrar una prefactura como PDF
+//Función para mostrar comprobantes como PDF
 function onShowPDFClick() {
     showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
     //onShowCFDIs(TIPO_EXPORTADO_PDF);
 
     //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
 }
+//Función para mostrar comprobantes como XML
 function onShowXMLClick() {
     showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
     //onShowCFDIs(TIPO_EXPORTADO_XML);
 
     //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
 }
+//Función para mostrar comprobantes como Excel
 function onShowExcelClick() {
     showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
     //onShowCFDIs(TIPO_EXPORTADO_EXCEL);
 
     //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
 }
+//Función para mostrar comprobantes como Póliza de Ingresos
 function onShowPolizaIngresoClick() {
     onShowCFDIs(TIPO_EXPORTADO_POLIZA_INGRESO);
 
     //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
 }
+//Función para mostrar comprobantes como Póliza de Egresos
 function onShowPolizaEgresoClick() {
     showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
     //onShowCFDIs(TIPO_EXPORTADO_POLIZA_EGRESO);
 
     //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
 }
+//Función para mostrar comprobantes en diferentes formatos
 function onShowCFDIs(tipoExportado) {
-    let unaccounted = [];
-    let selections = table.bootstrapTable('getSelections') || [];
+    switch (tipoExportado) {
+        case TIPO_EXPORTADO_PDF:
+            break;
+        case TIPO_EXPORTADO_XML:
+            break;
+        case TIPO_EXPORTADO_EXCEL:
+            break;
+        case TIPO_EXPORTADO_POLIZA_INGRESO:
+        case TIPO_EXPORTADO_POLIZA_EGRESO:
+            let unaccounted = [];
+            let selections = table.bootstrapTable('getSelections') || [];
 
-    //Obtiene todos los comprobantes que no se han contabilizado
-    unaccounted = $.map(selections, function (row) { if (row.contabilizado == 0) { return row.id } }) || [];
+            //Obtiene todos los comprobantes que no se han contabilizado
+            unaccounted = $.map(selections, function (row) { if (row.contabilizado == 0) { return row.id } }) || [];
 
-    if (unaccounted.length <= 0) {
-        //Si no hay elementos sin contabilizar seleccionados, se notifica error al usuario.
-        showError(dlgExportTitle, NoItemSelectedMessage);
-        return;
+            if (unaccounted.length <= 0) {
+                //Si no hay elementos sin contabilizar seleccionados, se notifica error al usuario.
+                showError(dlgExportTitle, NoItemSelectedMessage);
+                return;
+            }
+            else if (unaccounted.length < selections.length) {
+                //Si la cantidad de elementos no contabilizados es menor a la cantidad de elementos seleccionados, notifica al usuario que solo se realizará la póliza con los elementos sin contabilizar y los contabilizados se ignorarán.
+                showInfo(dlgExportTitle, MixedItemsMessage, function () {
+                    ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
+                });
+            }
+            else {
+                //En cualquier otro caso, manda a elaborar la póliza directamente.
+                ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
+            }
+            break;
+        default:
     }
-    else if (unaccounted.length < selections.length) {
-        //Si la cantidad de elementos no contabilizados es menor a la cantidad de elementos seleccionados, notifica al usuario que solo se realizará la póliza con los elementos sin contabilizar y los contabilizados se ignorarán.
-        showInfo(dlgExportTitle, MixedItemsMessage, function () {
-            ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
-        });
-    }
-    else {
-        //En cualquier otro caso, manda a elaborar la póliza directamente.
-        ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
-    }
+}
+
+//Función para validar comprobantes
+function onValidarClick() {
+    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
+    return;
+
+    let ids = getIdSelections();
+    let oParams = { ids: ids };
+    doAjax(
+        `/ERP/AdministradorDeComprobantes/ValidarCFDIS`,
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                showError(dlgExportTitle, resp.mensaje);
+                return;
+            }
+
+            resp.datos.foreach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: row }); });
+
+            showSuccess(dlgExportTitle, resp.mensaje);
+        }, function (error) {
+            showError(dlgExportTitle, error);
+        },
+        postOptions
+    );
 }
 ////////////////////////////////
 

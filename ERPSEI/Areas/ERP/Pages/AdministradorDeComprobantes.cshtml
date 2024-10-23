@@ -223,13 +223,14 @@
 						<li><a class="dropdown-item xml" onclick="onShowXMLClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]"><i class="bi bi-file-code"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["XMLButtonTitle"]</a></li>
 						<li><a class="dropdown-item excel" onclick="onShowExcelClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]"><i class="bi bi-file-earmark-spreadsheet"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["ExcelButtonTitle"]</a></li>
 						<li><hr class="dropdown-divider"></li>
+						<li><a class="dropdown-item validate" onclick="onValidarClick();" href="#" title="@Localizer["ValidateButtonTitle"]"><i class="bi bi-check2"></i> @Localizer["ValidateButtonTitle"]</a></li>
+						@if (puedeTodo || puedeEditar || puedeEliminar)
+						{
+							<li><a class="dropdown-item cancel" onclick="onCancelarClick();" href="#" title="@Localizer["CancelButtonTitle"]"><i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]</a></li>
+						}
+						<li><hr class="dropdown-divider"></li>
 						<li style="display:none;"><a class="dropdown-item polizaIngreso" onclick="onShowPolizaIngresoClick();" href="#" title="@Localizer["PolizaIngresoButtonTitle"]"><i class="bi bi-file-earmark-plus"></i> @Localizer["PolizaIngresoButtonTitle"]</a></li>
 						<li style="display:none;"><a class="dropdown-item polizaEgreso" onclick="onShowPolizaEgresoClick();" href="#" title="@Localizer["PolizaEgresoButtonTitle"]"><i class="bi bi-file-earmark-minus"></i> @Localizer["PolizaEgresoButtonTitle"]</a></li>
-					}
-
-					@if (puedeTodo || puedeEditar || puedeEliminar)
-					{
-						<li><a class="dropdown-item cancel" onclick="onCancelarClick();" href="#" title="@Localizer["CancelButtonTitle"]"><i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]</a></li>
 					}
 				</ul>
 				<a hidden id="downloadFileLink" href="" class="btn btn-primary"></a>
