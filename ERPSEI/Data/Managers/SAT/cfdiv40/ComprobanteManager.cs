@@ -32,6 +32,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				n.Conciliado = c.Conciliado;
 				n.Cancelado = c.Cancelado;
 				n.Contabilizado = c.Contabilizado;
+				n.Valido = c.Valido;
 				await _db.SaveChangesAsync();
 			}
 		}
