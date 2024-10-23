@@ -141,6 +141,9 @@
   <data name="ColActionsHeader" xml:space="preserve">
     <value>Acciones</value>
   </data>
+  <data name="colCheckHeaderD" xml:space="preserve">
+    <value>Check</value>
+  </data>
   <data name="ColCreatedUserHeader" xml:space="preserve">
     <value>Usuario Creador</value>
   </data>
@@ -153,13 +156,31 @@
   <data name="ColDescriptionHeader" xml:space="preserve">
     <value>Descripción</value>
   </data>
+  <data name="colFechaHeaderD" xml:space="preserve">
+    <value>Fecha</value>
+  </data>
+  <data name="colFolioHeaderD" xml:space="preserve">
+    <value>Folio</value>
+  </data>
   <data name="colIdHeader" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="colIdHeaderD" xml:space="preserve">
     <value>Id</value>
   </data>
   <data name="ColModifyUserHeader" xml:space="preserve">
     <value>Último usuario Mod.</value>
   </data>
+  <data name="colPSimilitudHeaderD" xml:space="preserve">
+    <value>% Similitud</value>
+  </data>
+  <data name="colSerieHeaderD" xml:space="preserve">
+    <value>Serie</value>
+  </data>
   <data name="ColTotalHeader" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="colTotalHeaderD" xml:space="preserve">
     <value>Total</value>
   </data>
   <data name="ConciliacionesDeletedSuccessfully" xml:space="preserve">

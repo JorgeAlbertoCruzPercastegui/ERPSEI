@@ -300,6 +300,8 @@
                                            data-search="true"
                                            data-height="460"
                                            data-show-search-button="true"
+                                           data-detail-view="true"
+                                           data-detail-formatter="detailFormatter"
                                            data-card-view="false"
                                            data-pagination="false"
                                            data-buttons-class="primary"
@@ -319,6 +321,7 @@
                                         </thead>
                                     </table>
                                 </div>
+
                             </div>
                         </div> 
 
@@ -340,6 +343,7 @@
 </div>
 </form>
 
+
 <!-- Modal para mostrar coincidencias de comprobantes -->
 <div class="modal fade" id="modalSimilitud" tabindex="-1" aria-labelledby="modalSimilitudLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -350,26 +354,36 @@
             </div>
             <div class="modal-body">
                 <div id="modalSimilitudHeader"></div> <!-- Datos del movimiento seleccionado -->
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Id</th>
-                            <th>Serie</th>
-                            <th>Folio</th>
-                            <th>Fecha</th>
-                            <th>Total</th>
-                            <th>Porcentaje de Similitud</th>
-                            <th>Seleccionar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="modalSimilitudBody">
-                        <!-- Aquí se mostrarán los comprobantes con coincidencias -->
-                    </tbody>
-                </table>
+                <!-- Contenedor con scroll para la tabla -->
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Serie</th>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th>Porcentaje de Similitud</th>
+                                <th>Seleccionar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalSimilitudBody">
+                            <!-- Aquí se mostrarán los comprobantes con coincidencias -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Nuevo footer para el botón de conciliar -->
+            <div class="modal-footer" id="modalSimilitudFooter">
+                <!-- Aquí se añadirá dinámicamente el botón de conciliar -->
             </div>
         </div>
     </div>
 </div>
+
+
+
 
 
 
@@ -390,23 +404,26 @@
     </div>
 </div>
 
-<!-- Modal para mostrar mensajes de coincidencias -->
+<!-- Modal para mostrar coincidencias de movimientos -->
 <div class="modal fade" id="modalConciliacionComp" tabindex="-1" aria-labelledby="modalConciliacionCompLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalConciliacionCompLabel">Resultado de la Conciliación</h5>
+                <h5 class="modal-title" id="modalConciliacionCompLabel">Movimientos Coincidentes</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modalConciliacionCompMensaje">
-                <!-- Mensaje del resultado de la conciliación se llenará dinámicamente -->
+                <!-- Aquí se muestran los resultados de movimientos coincidentes -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+                <button type="button" class="btn btn-primary" onclick="conciliarSeleccionadosComprobante()">Conciliar Seleccionados</button>
             </div>
         </div>
     </div>
 </div>
+
+
+
 
 
 
@@ -571,6 +588,15 @@
         var colUsuarioCreadorHeader = '@Localizer["ColCreatedUserHeader"]';
         var colUsuarioModificoHeader = '@Localizer["ColModifyUserHeader"]';
         var colAccionesHeader = '@Localizer["ColActionsHeader"]';
+
+        /*Tabla de resultados Detalles*/
+        var colIdHeaderD = '@Localizer["colIdHeaderD"]';
+        var colSerieHeaderD = '@Localizer["colSerieHeaderD"]';
+        var colFolioHeaderD = '@Localizer["colFolioHeaderD"]';
+        var colFechaHeaderD = '@Localizer["colFechaHeaderD"]';
+        var colTotalHeaderD = '@Localizer["colTotalHeaderD"]';
+        var colPSimilitudHeaderD = '@Localizer["colPSimilitudHeaderD"]';
+        var colCheckHeaderD = '@Localizer["colCheckHeaderD"]';
 
         /*Permisos*/
         var puedeTodo = '@puedeTodo' == 'True';
