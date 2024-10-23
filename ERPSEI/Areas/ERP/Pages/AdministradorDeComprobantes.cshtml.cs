@@ -19,6 +19,7 @@ using NPOI.SS.Util;
 using NuGet.Packaging;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
+using ERPSEI.Data.Entities.Empleados;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -27,6 +28,8 @@ namespace ERPSEI.Areas.ERP.Pages
 			ApplicationDbContext db,
 			AppUserManager userManager,
 			IEmpresaManager empresaManager,
+			IComprobanteEmisorManager comprobanteEmisorManager,
+			IComprobanteReceptorManager comprobanteReceptorManager,
 			IComprobanteManager comprobanteManager,
 			ICuentaContableManager cuentaContableManager,
 			IStringLocalizer<AdministradorDeComprobantesModel> localizer,
@@ -192,16 +195,14 @@ namespace ERPSEI.Areas.ERP.Pages
 			return jsonResponse;
 		}
 
-		public async Task<JsonResult> OnPostGetEmpresaSuggestion(string texto, string idempresa)
+		public async Task<JsonResult> OnPostGetEmpresaSuggestion(string texto)
 		{
 			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 			try
 			{
 				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
 				{
-					if (!int.TryParse(idempresa, out int idEmp)) { idEmp = 0; }
-
-					resp.Datos = await GetEmpresasSuggestion(texto, idEmp);
+					resp.Datos = await GetEmpresasSuggestion(texto);
 					resp.TieneError = false;
 					resp.Mensaje = localizer["ConsultadoSuccessfully"];
 				}
@@ -217,10 +218,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return new JsonResult(resp);
 		}
-		private async Task<string> GetEmpresasSuggestion(string texto, int idempresa)
+		private async Task<string> GetEmpresasSuggestion(string texto)
 		{
 			string jsonResponse;
-			List<string> jsonEmpresas = [];
+			List<string> jsonResult = [];
 
 			List<EmpresaBuscada> empresas = await empresaManager.SearchEmpresas(texto);
 
@@ -228,7 +229,9 @@ namespace ERPSEI.Areas.ERP.Pages
 			{
 				foreach (EmpresaBuscada e in empresas)
 				{
-					jsonEmpresas.Add($"{{" +
+					e.RazonSocial = JsonEscape(e.RazonSocial ?? string.Empty);
+
+					jsonResult.Add($"{{" +
 										$"\"id\": {e.Id}, " +
 										$"\"value\": \"{e.RazonSocial}\", " +
 										$"\"label\": \"{e.RFC} - {e.RazonSocial}\", " +
@@ -237,13 +240,116 @@ namespace ERPSEI.Areas.ERP.Pages
 				}
 			}
 
-			jsonResponse = $"[{string.Join(",", jsonEmpresas)}]";
+			jsonResponse = $"[{string.Join(",", jsonResult)}]";
 
 			return jsonResponse;
 		}
+
+		public async Task<JsonResult> OnPostGetEmisorSuggestion(string texto)
+		{
+			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+			try
+			{
+				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+				{
+					resp.Datos = await GetEmisorSuggestion(texto);
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ConsultadoSuccessfully"];
+				}
+				else
+				{
+					resp.Mensaje = localizer["AccesoDenegado"];
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.LogError("{message}", ex.Message);
+			}
+
+			return new JsonResult(resp);
+		}
+		private async Task<string> GetEmisorSuggestion(string texto)
+		{
+			string jsonResponse;
+			List<string> jsonResult = [];
+
+			List<ComprobanteEmisor> emisores = await comprobanteEmisorManager.SearchEmisor(texto);
+			emisores = [.. emisores.Take(20)];
+
+			if (emisores != null)
+			{
+				foreach (ComprobanteEmisor e in emisores)
+				{
+					e.Nombre = JsonEscape(e.Nombre??string.Empty);
+
+					jsonResult.Add($"{{" +
+										$"\"id\": {e.Id}, " +
+										$"\"value\": \"{e.Nombre}\", " +
+										$"\"label\": \"{e.Rfc} - {e.Nombre}\", " +
+										$"\"rfc\": \"{e.Rfc}\"" +
+									$"}}");
+				}
+			}
+
+			jsonResponse = $"[{string.Join(",", jsonResult)}]";
+
+			return jsonResponse;
+		}
+
+		public async Task<JsonResult> OnPostGetReceptorSuggestion(string texto)
+		{
+			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+			try
+			{
+				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+				{
+					resp.Datos = await GetReceptorSuggestion(texto);
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ConsultadoSuccessfully"];
+				}
+				else
+				{
+					resp.Mensaje = localizer["AccesoDenegado"];
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.LogError("{message}", ex.Message);
+			}
+
+			return new JsonResult(resp);
+		}
+		private async Task<string> GetReceptorSuggestion(string texto)
+		{
+			string jsonResponse;
+			List<string> jsonResult = [];
+
+			List<ComprobanteReceptor> receptores = await comprobanteReceptorManager.SearchReceptor(texto);
+			receptores = [.. receptores.Take(20)];
+
+			if (receptores != null)
+			{
+				foreach (ComprobanteReceptor r in receptores)
+				{
+					r.Nombre = JsonEscape(r.Nombre ?? string.Empty);
+
+					jsonResult.Add($"{{" +
+										$"\"id\": {r.Id}, " +
+										$"\"value\": \"{r.Nombre}\", " +
+										$"\"label\": \"{r.Rfc} - {r.Nombre}\", " +
+										$"\"rfc\": \"{r.Rfc}\"" +
+									$"}}");
+				}
+			}
+
+			jsonResponse = $"[{string.Join(",", jsonResult)}]";
+
+			return jsonResponse;
+		}
+
 		private static string JsonEscape(string str)
 		{
-			return str.Replace("\n", "<br />").Replace("\r", "<br />").Replace("\t", "<br />");
+			return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t").Replace("\"", "\\\"");
 		}
 
 		public async Task<ActionResult> OnPostExportCFDIS(string[] ids, int tipoExportado)

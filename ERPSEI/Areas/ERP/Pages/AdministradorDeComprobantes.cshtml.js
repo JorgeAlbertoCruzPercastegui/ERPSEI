@@ -34,21 +34,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initTable();
 
-    autoCompletar("#inpFiltroEmpresaRFC", { change: function (element, item) { clearTable(); } });
-    autoCompletar("#inpFiltroEmisor", { change: function (element, item) { clearTable(); } });
-    autoCompletar("#inpFiltroReceptor", { change: function (element, item) { clearTable(); } });
+    autoCompletar("#inpFiltroEmpresaRFC", {
+        change: function (element, item) {
+            clearTable();
+            if (!item) { $('#inpFiltroEmpresaRFC').data('rfc', null); }
+        }
+    });
+    autoCompletar("#inpFiltroEmisor", {
+        change: function (element, item) {
+            clearTable();
+            if (!item) { $('#inpFiltroEmisor').data('rfc', null); }
+        }
+    });
+    autoCompletar("#inpFiltroReceptor", {
+        change: function (element, item) {
+            clearTable();
+            if (!item) { $('#inpFiltroReceptor').data('rfc', null); }
+        }
+    });
 
     if (window.tipoId == "1") {
+        //Para los comprobantes emitidos, no se muestra el filtro de emisor pero si el de receptor
         $("#inpFiltroEmisor").parent().parent().hide();
         $("#inpFiltroReceptor").parent().parent().show();
         table.bootstrapTable('hideColumn', 'emisor');
         table.bootstrapTable('showColumn', 'receptor');
+
+        //El tipo de comprobante seleccionado será el de I - Ingreso
+        $("#selFiltroTipoComprobante").val("I");
     }
     else if (window.tipoId == "2") {
+        //Para los comprobantes recibidos, no se muestra el filtro de receptor pero si el de emisor
         $("#inpFiltroReceptor").parent().parent().hide();
         $("#inpFiltroEmisor").parent().parent().show();
         table.bootstrapTable('showColumn', 'emisor');
         table.bootstrapTable('hideColumn', 'receptor');
+
+        //El tipo de comprobante seleccionado será el de E - Egreso
+        $("#selFiltroTipoComprobante").val("E");
     }
 
     $("#inpFiltroEmisor").val("").attr("idselected", "");
