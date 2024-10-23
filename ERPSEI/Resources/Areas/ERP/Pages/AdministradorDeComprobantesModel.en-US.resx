@@ -144,4 +144,16 @@
   <data name="ComprobantesExportedUnsuccessfully" xml:space="preserve">
     <value>Error exporting invoices</value>
   </data>
+  <data name="ComprobantesValidatedSuccessfully" xml:space="preserve">
+    <value>Invoices successfully validated!</value>
+  </data>
+  <data name="ComprobantesValidatedUnsuccessfully" xml:space="preserve">
+    <value>Error validating invoices</value>
+  </data>
+  <data name="ComprobanteValidatedSuccessfully" xml:space="preserve">
+    <value>Invoice successfully validated!</value>
+  </data>
+  <data name="ComprobanteValidatedUnsuccessfully" xml:space="preserve">
+    <value>Error validating invoice</value>
+  </data>
 </root>

@@ -144,4 +144,16 @@
   <data name="ComprobantesExportedUnsuccessfully" xml:space="preserve">
     <value>Error al exportar los comprobantes</value>
   </data>
+  <data name="ComprobantesValidatedSuccessfully" xml:space="preserve">
+    <value>¡Comprobantes validados satisfactoriamente!</value>
+  </data>
+  <data name="ComprobantesValidatedUnsuccessfully" xml:space="preserve">
+    <value>Error al validar los comprobantes</value>
+  </data>
+  <data name="ComprobanteValidatedSuccessfully" xml:space="preserve">
+    <value>¡Comprobante validado satisfactoriamente!</value>
+  </data>
+  <data name="ComprobanteValidatedUnsuccessfully" xml:space="preserve">
+    <value>Error al validar el comprobante</value>
+  </data>
 </root>
