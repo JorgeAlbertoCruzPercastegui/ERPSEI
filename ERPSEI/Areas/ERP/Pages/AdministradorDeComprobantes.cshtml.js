@@ -427,13 +427,10 @@ function onShowCFDIs(tipoExportado) {
 
 //Función para validar comprobantes
 function onValidarClick() {
-    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
-    return;
-
     let ids = getIdSelections();
     let oParams = { ids: ids };
     doAjax(
-        `/ERP/AdministradorDeComprobantes/ValidarCFDIS`,
+        `/ERP/AdministradorDeComprobantes/ValidarComprobantes`,
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -441,7 +438,9 @@ function onValidarClick() {
                 return;
             }
 
-            resp.datos.foreach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: row }); });
+            resp.datos = responseHandler(resp.datos)
+
+            resp.datos.forEach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: row }); });
 
             showSuccess(dlgExportTitle, resp.mensaje);
         }, function (error) {

@@ -14,12 +14,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.DotNet.MSIdentity.Shared;
 using Microsoft.Extensions.Localization;
+using NPOI.SS.Formula.Functions;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
 using NuGet.Packaging;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
+using WS_SAT_ConsultaEstatusCFDI;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -830,6 +832,7 @@ namespace ERPSEI.Areas.ERP.Pages
 			{
 				try
 				{
+					ConsultaCFDIServiceClient wsConsultaEstatus = new();
 					foreach (string id in ids)
 					{
 						_ = int.TryParse(id, out int idComprobante);
@@ -842,8 +845,8 @@ namespace ERPSEI.Areas.ERP.Pages
 							Comprobante? c = await comprobanteManager.GetByIdAsync(idComprobante);
 
 							if (c != null){ 
-								respValidacion = await ValidarComprobante(c);
-								comprobantes.Add(c);
+								respValidacion = await ValidarComprobante(c, wsConsultaEstatus);
+								if (!respValidacion.TieneError) { comprobantes.Add(c); }
 							}
 
 							if (respValidacion.TieneError){ resp.Errores.AddRange(respValidacion.Errores); }
@@ -868,17 +871,30 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return new JsonResult(resp);
 		}
-		private async Task<ServerResponse> ValidarComprobante(Comprobante comprobante)
+		private async Task<ServerResponse> ValidarComprobante(Comprobante comprobante, ConsultaCFDIServiceClient wsConsultaEstatus)
 		{
 			ServerResponse resp = new(true, localizer["ComprobanteValidatedUnsuccessfully"]);
 			try
 			{
-				//TODO: Proceso de validación de comprobantes
+				string peticion = $"?re={comprobante.Emisor?.Rfc?.ToUpper()}&rr={comprobante.Receptor?.Rfc?.ToUpper()}&tt={comprobante.Total}&id={comprobante.Complemento?.TimbreFiscalDigital?.UUID?.ToUpper()}&fe={comprobante.Sello}";
+				Acuse a = await wsConsultaEstatus.ConsultaAsync(peticion);
+				if(a.CodigoEstatus.Contains("Comprobante obtenido satisfactoriamente", StringComparison.InvariantCultureIgnoreCase))
+				{
+					comprobante.Cancelado = a.Estado == "Cancelado";
+					comprobante.Valido = a.Estado == "Vigente";
 
-				//Devuelve mensaje correcto de validación.
-				resp.TieneError = false;
-				resp.Errores = [];
-				resp.Mensaje = localizer["ComprobanteValidatedSuccessfully"];
+					//Actualiza su estatus en base de datos.
+					await comprobanteManager.UpdateAsync(comprobante);
+
+					//Devuelve mensaje correcto de validación.
+					resp.TieneError = false;
+					resp.Errores = [];
+					resp.Mensaje = localizer["ComprobanteValidatedSuccessfully"];
+				}
+				else
+				{
+					resp.Mensaje = a.CodigoEstatus;
+				}
 			}
 			catch (Exception ex)
 			{
