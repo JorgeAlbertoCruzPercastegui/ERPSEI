@@ -298,7 +298,7 @@
     <value>Receptor</value>
   </data>
   <data name="MixedItemsMessage" xml:space="preserve">
-    <value>La selección contiene elementos que no se pueden procesar para el tipo de póliza seleccionado. Dichos elementos se ignorarán para la elaboración de la póliza</value>
+    <value>La selección contiene elementos para los que ya se elaboró una póliza. Dichos elementos se ignorarán para la elaboración de la póliza actual.</value>
   </data>
   <data name="PolizaEgresoButtonTitle" xml:space="preserve">
     <value>Generar póliza de egresos</value>
@@ -317,5 +317,8 @@
   </data>
   <data name="EmpresaPlaceholder" xml:space="preserve">
     <value>Empresa</value>
+  </data>
+  <data name="NoItemSelectedMessage" xml:space="preserve">
+    <value>No se seleccionaron elementos para generar la póliza</value>
   </data>
 </root>

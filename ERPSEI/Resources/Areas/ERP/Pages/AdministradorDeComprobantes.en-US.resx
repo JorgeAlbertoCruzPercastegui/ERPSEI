@@ -318,4 +318,10 @@
   <data name="EmpresaPlaceholder" xml:space="preserve">
     <value>Company</value>
   </data>
+  <data name="MixedItemsMessage1" xml:space="preserve">
+    <value>The selection contains items for which a policy has already been drawn up. These items will be ignored when drawing up the current policy.</value>
+  </data>
+  <data name="NoItemSelectedMessage" xml:space="preserve">
+    <value>No items were selected to generate the policy</value>
+  </data>
 </root>
