@@ -116,7 +116,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			if(estatusId != null) { 
 				if(estatusId == 1)
 				{
-					lc = lc.FindAll(c => c.Cancelado == false); 
+					lc = lc.FindAll(c => c.Valido == true); 
 				}
 				else if (estatusId == 2)
 				{
