@@ -321,4 +321,7 @@
   <data name="NoItemSelectedMessage" xml:space="preserve">
     <value>No se seleccionaron elementos para generar la póliza</value>
   </data>
+  <data name="ColValidezHeader" xml:space="preserve">
+    <value>Validez</value>
+  </data>
 </root>

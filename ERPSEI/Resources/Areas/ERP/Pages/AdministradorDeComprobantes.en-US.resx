@@ -324,4 +324,7 @@
   <data name="NoItemSelectedMessage" xml:space="preserve">
     <value>No items were selected to generate the policy</value>
   </data>
+  <data name="ColValidezHeader" xml:space="preserve">
+    <value>Validity</value>
+  </data>
 </root>
