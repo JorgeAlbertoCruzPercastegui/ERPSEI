@@ -333,4 +333,7 @@
   <data name="TooltipValido" xml:space="preserve">
     <value>Válido</value>
   </data>
+  <data name="ValidateButtonTitle" xml:space="preserve">
+    <value>Validar</value>
+  </data>
 </root>
