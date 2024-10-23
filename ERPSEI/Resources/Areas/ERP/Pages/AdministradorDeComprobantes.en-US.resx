@@ -327,4 +327,13 @@
   <data name="ColValidezHeader" xml:space="preserve">
     <value>Validity</value>
   </data>
+  <data name="TooltipCancelado" xml:space="preserve">
+    <value>Canceled</value>
+  </data>
+  <data name="TooltipSinValidar" xml:space="preserve">
+    <value>Unvalidated</value>
+  </data>
+  <data name="TooltipValido" xml:space="preserve">
+    <value>Valid</value>
+  </data>
 </root>
