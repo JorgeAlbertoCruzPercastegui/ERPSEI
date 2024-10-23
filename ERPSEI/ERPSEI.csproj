@@ -44,7 +44,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Managers\SAT\cfdiv40\" />
     <Folder Include="wwwroot\cfdiv40\xml\" />
     <Folder Include="wwwroot\templates\" />
   </ItemGroup>

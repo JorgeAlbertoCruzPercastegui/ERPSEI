@@ -112,9 +112,11 @@ namespace ERPSEI
         {
             //Comprobantes
             _builder.Services.AddScoped<IComprobanteManager, ComprobanteManager>();
+            _builder.Services.AddScoped<IComprobanteEmisorManager, ComprobanteEmisorManager>();
+			_builder.Services.AddScoped<IComprobanteReceptorManager, ComprobanteReceptorManager>();
 
-            //Catálogos SAT
-            _builder.Services.AddScoped<IAutorizacionesPrefactura, AutorizacionesPrefacturaManager>();
+			//Catálogos SAT
+			_builder.Services.AddScoped<IAutorizacionesPrefactura, AutorizacionesPrefacturaManager>();
 			_builder.Services.AddScoped<IExportacionManager, ExportacionManager>();
 			_builder.Services.AddScoped<IFormaPagoManager, FormaPagoManager>();
 			_builder.Services.AddScoped<IImpuestoManager, ImpuestoManager>();
