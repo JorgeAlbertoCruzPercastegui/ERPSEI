@@ -130,6 +130,19 @@ function currencyFormatter(value, row, index) {
     return `$ ${numFormatter.format(value)}`;
 }
 
+//Función para dar formato a la validez de un comprobante
+function validFormatter(value, row, index) {
+    if ((row.cancelado || 0) == 1) {
+        return `<i title="${tooltipCancelado}" class="bi bi-x-circle-fill text-danger"></i>`;
+    }
+    else if ((row.valido || 0) == 1) {
+        return `<i title="${tooltipValido}" class="bi bi-check-circle-fill text-success"></i>`;
+    }
+    else {
+        return `<i title="${tooltipSinValidar}" class="bi bi-question-circle-fill text-primary"></i>`;
+    }
+}
+
 //Función para cancelar cfdis
 function onCancelarClick() {
     showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
@@ -201,6 +214,13 @@ function initTable() {
                 checkbox: true,
                 align: "center",
                 valign: "middle"
+            },
+            {
+                align: "center",
+                valign: "middle",
+                formatter: validFormatter,
+                sortable: true,
+                width: "30px"
             },
             {
                 title: colSerieHeader,
@@ -322,9 +342,18 @@ function initTable() {
     })
     table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
         if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
+        selections = getIdSelections();
+        let selectedRows = table.bootstrapTable('getSelections') || [];
 
-        // save your data, here just save the current page
-        selections = getIdSelections()
+        //Obtiene todos los comprobantes que no se han contabilizado
+        unaccounted = $.map(selectedRows, function (row) { if (row.contabilizado == 0) { return row.id } }) || [];
+        if (unaccounted.length <= 0) {
+            $(".dropdown-item.polizaIngreso").parent().hide();
+            $(".dropdown-item.polizaEgreso").parent().hide();
+        }
+        else {
+            onTipoComprobanteChanged(false);
+        }
     });
 }
 
@@ -363,7 +392,7 @@ function onShowCFDIs(tipoExportado) {
     let selections = table.bootstrapTable('getSelections') || [];
 
     //Obtiene todos los comprobantes que no se han contabilizado
-    unaccounted = $.map(selections, function (row) { if (row.contabilizado == '0') { return row.id } }) || [];
+    unaccounted = $.map(selections, function (row) { if (row.contabilizado == 0) { return row.id } }) || [];
 
     if (unaccounted.length <= 0) {
         //Si no hay elementos sin contabilizar seleccionados, se notifica error al usuario.
@@ -393,7 +422,7 @@ function clearTable() {
     if (buttonAcciones) { buttonAcciones.prop('disabled', true) }
 }
 //Función para mostrar/ocultar las opciones de exportado de pólizas dependiendo el tipo de comprobante seleccionado
-function onTipoComprobanteChanged() {
+function onTipoComprobanteChanged(clear = true) {
     switch ($("#selFiltroTipoComprobante").val()) {
         case "I":
             $(".dropdown-item.polizaIngreso").parent().show();
@@ -411,7 +440,7 @@ function onTipoComprobanteChanged() {
             $(".dropdown-item.polizaEgreso").parent().hide();
     }
 
-    clearTable();
+    if (clear) { clearTable(); }
 }
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {

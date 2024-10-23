@@ -184,6 +184,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						$"\"receptor\": \"{c.Receptor?.Rfc}\", " +
 						$"\"usoCFDI\": \"{c.Receptor?.UsoCFDI}\", " +
 						$"\"cancelado\": \"{(c.Cancelado??false ? 1 : 0)}\", " +
+						$"\"valido\": \"{(c.Valido ?? false ? 1 : 0)}\", " +
 						$"\"contabilizado\": \"{(c.Contabilizado??false ? 1 : 0)}\"" +
 					"}"
 				);
