@@ -359,41 +359,27 @@ function onShowPolizaEgresoClick() {
     //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
 }
 function onShowCFDIs(tipoExportado) {
-    let ids = [];
-    let descTipo = "";
-    switch (tipoExportado) {
-        case TIPO_EXPORTADO_POLIZA_INGRESO:
-            descTipo = "Ingreso";
-            break;
-        case TIPO_EXPORTADO_POLIZA_EGRESO:
-            descTipo = "Egreso"
-            break;
-        default:
-            break;
-    }
+    let unaccounted = [];
+    let selections = table.bootstrapTable('getSelections') || [];
 
-    let selections = table.bootstrapTable('getSelections')||[];
-    ids = $.map(selections, function (row) {
-        if (row.tipoComprobante == descTipo) { return row.id }
-    })||[];
+    //Obtiene todos los comprobantes que no se han contabilizado
+    unaccounted = $.map(selections, function (row) { if (row.contabilizado == '0') { return row.id } }) || [];
 
-    if (ids.length <= 0) {
+    if (unaccounted.length <= 0) {
+        //Si no hay elementos sin contabilizar seleccionados, se notifica error al usuario.
         showError(dlgExportTitle, NoItemSelectedMessage);
         return;
     }
-    else if (ids.length < selections.length) {
+    else if (unaccounted.length < selections.length) {
+        //Si la cantidad de elementos no contabilizados es menor a la cantidad de elementos seleccionados, notifica al usuario que solo se realizará la póliza con los elementos sin contabilizar y los contabilizados se ignorarán.
         showInfo(dlgExportTitle, MixedItemsMessage, function () {
-            let oParams = { ids: ids, tipoExportado: tipoExportado };
-
-            ajaxExportCFDIS(oParams)
+            ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
         });
     }
     else {
-        let oParams = { ids: ids, tipoExportado: tipoExportado };
-
-        ajaxExportCFDIS(oParams)
+        //En cualquier otro caso, manda a elaborar la póliza directamente.
+        ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
     }
-
 }
 ////////////////////////////////
 

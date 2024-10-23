@@ -13,13 +13,12 @@ using ERPSEI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
-using NPOI.XSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
+using NPOI.XSSF.UserModel;
 using NuGet.Packaging;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
-using ERPSEI.Data.Entities.Empleados;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
