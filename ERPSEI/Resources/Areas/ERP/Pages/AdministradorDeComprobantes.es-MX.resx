@@ -315,4 +315,7 @@
   <data name="EstatusVigente" xml:space="preserve">
     <value>Vigente</value>
   </data>
+  <data name="EmpresaPlaceholder" xml:space="preserve">
+    <value>Empresa</value>
+  </data>
 </root>

@@ -120,73 +120,28 @@
   <data name="AccesoDenegado" xml:space="preserve">
     <value>Access denied</value>
   </data>
-  <data name="ArchivoCERMissing" xml:space="preserve">
-    <value>Emitter's CER file was not found</value>
-  </data>
-  <data name="ArchivoKEYMissing" xml:space="preserve">
-    <value>Emitter's KEY file was not found</value>
-  </data>
   <data name="ConsultadoSuccessfully" xml:space="preserve">
     <value>Successful information query!</value>
   </data>
   <data name="ConsultadoUnsuccessfully" xml:space="preserve">
     <value>Error querying information</value>
   </data>
-  <data name="ErrorEstructuraCFDI" xml:space="preserve">
-    <value>Failed to create CFDI structure with pre-invoice</value>
+  <data name="ComprobanteCancelledSuccessfully" xml:space="preserve">
+    <value>Invoice successfully cancelled!</value>
   </data>
-  <data name="ErrorPrefacturaExistenteA" xml:space="preserve">
-    <value>There is already a prebill registered with the serie and file number</value>
+  <data name="ComprobanteCancelledUnsuccessfully" xml:space="preserve">
+    <value>Error canceling invoice</value>
   </data>
-  <data name="ErrorPrefacturaExistenteB" xml:space="preserve">
-    <value>Please verify</value>
+  <data name="ComprobantesCancelledSuccessfully" xml:space="preserve">
+    <value>Invoices successfully cancelled!</value>
   </data>
-  <data name="PrefacturaAuthorizedSuccessfully" xml:space="preserve">
-    <value>Prebill authorized successfully!</value>
+  <data name="ComprobantesCancelledUnsuccessfully" xml:space="preserve">
+    <value>Error canceling invoices</value>
   </data>
-  <data name="PrefacturaAuthorizedUnsuccessfully" xml:space="preserve">
-    <value>Error authorizing prebill</value>
+  <data name="ComprobantesExportedSuccessfully" xml:space="preserve">
+    <value>Invoices successfully exported!</value>
   </data>
-  <data name="PrefacturaSavedSuccessfully" xml:space="preserve">
-    <value>Prebill saved successfully!</value>
-  </data>
-  <data name="PrefacturaSavedUnsuccessfully" xml:space="preserve">
-    <value>Error saving prebill</value>
-  </data>
-  <data name="PrefacturasExportedSuccessfully" xml:space="preserve">
-    <value>Records exported successfully!</value>
-  </data>
-  <data name="PrefacturasExportedUnsuccessfully" xml:space="preserve">
-    <value>Error exporting records</value>
-  </data>
-  <data name="PrefacturaStampedSuccessfully" xml:space="preserve">
-    <value>Prebill stamped successfully!</value>
-  </data>
-  <data name="PrefacturaStampedUnsuccessfully" xml:space="preserve">
-    <value>Error stamping prebill</value>
-  </data>
-		<data name="ErrorNumeroCertificado" xml:space="preserve">
-    <value>Could not get certificate number</value>
-  </data>
-		<data name="ErrorEstructuraXML" xml:space="preserve">
-    <value>Could not create XML structure</value>
-  </data>
-		<data name="ErrorCadenaOriginal" xml:space="preserve">
-    <value>Could not get original string</value>
-  </data>
-		<data name="ErrorCertificado" xml:space="preserve">
-    <value>The voucher certificate could not be generated with the issuer's CER file</value>
-  </data>
-		<data name="ErrorSello" xml:space="preserve">
-    <value>The receipt stamp could not be generated with the original chain, KEY file and private key of the issuer</value>
-  </data>
-		<data name="ErrorBytesXMLCFDI" xml:space="preserve">
-    <value>The receipt file could not be generated to send the stamp to the PAC</value>
-  </data>
-		<data name="ErrorTimbradoCFDI" xml:space="preserve">
-    <value>CFDI could not be stamped</value>
-  </data>
-		<data name="ErrorGuardadoCFDI" xml:space="preserve">
-    <value>Could not save file returned by PAC</value>
+  <data name="ComprobantesExportedUnsuccessfully" xml:space="preserve">
+    <value>Error exporting invoices</value>
   </data>
 </root>
