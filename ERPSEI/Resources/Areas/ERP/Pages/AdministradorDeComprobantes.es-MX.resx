@@ -298,7 +298,7 @@
     <value>Receptor</value>
   </data>
   <data name="MixedItemsMessage" xml:space="preserve">
-    <value>La selección contiene elementos para los que ya se elaboró una póliza. Dichos elementos se ignorarán para la elaboración de la póliza actual.</value>
+    <value>La selección contiene elementos que ya fueron contabilizados, cancelados o que no cuentan con una validación. Dichos elementos se ignorarán para la elaboración de la póliza actual.</value>
   </data>
   <data name="PolizaEgresoButtonTitle" xml:space="preserve">
     <value>Generar póliza de egresos</value>
@@ -319,7 +319,7 @@
     <value>Empresa</value>
   </data>
   <data name="NoItemSelectedMessage" xml:space="preserve">
-    <value>No se seleccionaron elementos para generar la póliza</value>
+    <value>No se seleccionaron elementos válidos y no contabilizados para generar la póliza</value>
   </data>
   <data name="ColValidezHeader" xml:space="preserve">
     <value>Validez</value>
@@ -335,5 +335,17 @@
   </data>
   <data name="ValidateButtonTitle" xml:space="preserve">
     <value>Validar</value>
+  </data>
+  <data name="AccountedMessage" xml:space="preserve">
+    <value>Contabilizados</value>
+  </data>
+  <data name="CancelledMessage" xml:space="preserve">
+    <value>Cancelados</value>
+  </data>
+  <data name="QuestionToContinueExport" xml:space="preserve">
+    <value>¿Desea continar con la generación de la póliza?</value>
+  </data>
+  <data name="UnvalidatedMessage" xml:space="preserve">
+    <value>No Validados</value>
   </data>
 </root>

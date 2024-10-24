@@ -343,7 +343,7 @@ function initTable() {
         let selectedRows = table.bootstrapTable('getSelections') || [];
 
         //Obtiene todos los comprobantes que no se han contabilizado
-        unaccounted = $.map(selectedRows, function (row) { if (row.contabilizado == 0) { return row.id } }) || [];
+        unaccounted = $.map(selectedRows, function (row) { if (row.contabilizado == 0 && row.valido == 1 && row.cancelado == 0) { return row.id } }) || [];
         if (unaccounted.length <= 0) {
             $(".dropdown-item.polizaIngreso").parent().hide();
             $(".dropdown-item.polizaEgreso").parent().hide();
@@ -403,22 +403,36 @@ function onShowCFDIs(tipoExportado) {
             let selections = table.bootstrapTable('getSelections') || [];
 
             //Obtiene todos los comprobantes que no se han contabilizado
-            unaccounted = $.map(selections, function (row) { if (row.contabilizado == 0) { return row.id } }) || [];
-
-            if (unaccounted.length <= 0) {
+            unaccounted = $.map(selections, function (row) { if (row.contabilizado == 0 && row.valido == 1 && row.cancelado == 0) { return row.id } }) || [];
+            if (unaccounted <= 0) {
                 //Si no hay elementos sin contabilizar seleccionados, se notifica error al usuario.
                 showError(dlgExportTitle, NoItemSelectedMessage);
                 return;
             }
-            else if (unaccounted.length < selections.length) {
-                //Si la cantidad de elementos no contabilizados es menor a la cantidad de elementos seleccionados, notifica al usuario que solo se realizará la póliza con los elementos sin contabilizar y los contabilizados se ignorarán.
-                showInfo(dlgExportTitle, MixedItemsMessage, function () {
-                    ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
-                });
+
+            let accounted = [];
+            let cancelled = [];
+            let unvalidated = [];
+            //Obtiene todos los comprobantes que no se han contabilizado
+            accounted = $.map(selections, function (row) { if (row.contabilizado == 1) { return row.id } }) || [];
+            //Obtiene todos los comprobantes que se encuentren cancelados
+            cancelled = $.map(selections, function (row) { if (row.cancelado == 1) { return row.id } }) || [];
+            //Obtiene todos los comprobantes que se encuentren sin validación de estatus
+            unvalidated = $.map(selections, function (row) { if (row.valido == 0 && row.cancelado == 0) { return row.id } }) || [];
+
+            if (accounted <= 0 && cancelled <= 0 && unvalidated <= 0) {
+                //Si dentro de la selección del usuario, no hay elementos contabilizados y no hay elementos cancelados y no hay elementos sin validación, entonces procede a generar la póliza directamente.
+                ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
             }
             else {
-                //En cualquier otro caso, manda a elaborar la póliza directamente.
-                ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
+                //Se le notifica al usuario que hay elementos ya contabilizados, cancelados o sin validación y que serán ignorados y solo se tomarán en cuenta los no contabilizados vigentes una vez que confirme la acción.
+                let strAccounted = accounted.length >= 1 ? `<br>${AccountedMessage}: ${accounted.length}` : "";
+                let strCancelled = cancelled.length >= 1 ? `<br>${CancelledMessage}: ${cancelled.length}` : "";
+                let strUnvalidated = unvalidated.length >= 1 ? `<br>${UnvalidatedMessage}: ${unvalidated.length}` : "";
+                let wholeMessage = `${MixedItemsMessage}<br> ${strAccounted} ${strCancelled} ${strUnvalidated} <br><br>${QuestionToContinueExport}`;
+                askConfirmation(dlgExportTitle, wholeMessage, function () {
+                    ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
+                });
             }
             break;
         default:

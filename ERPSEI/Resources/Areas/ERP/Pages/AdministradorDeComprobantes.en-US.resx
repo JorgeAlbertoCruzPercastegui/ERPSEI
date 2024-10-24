@@ -297,9 +297,6 @@
   <data name="ColReceptorHeader" xml:space="preserve">
     <value>Receiver</value>
   </data>
-  <data name="MixedItemsMessage" xml:space="preserve">
-    <value>The selection contains elements that cannot be processed for the selected policy type. Such elements will be ignored for policy creation</value>
-  </data>
   <data name="PolizaEgresoButtonTitle" xml:space="preserve">
     <value>Generate expenditure policy</value>
   </data>
@@ -318,11 +315,11 @@
   <data name="EmpresaPlaceholder" xml:space="preserve">
     <value>Company</value>
   </data>
-  <data name="MixedItemsMessage1" xml:space="preserve">
-    <value>The selection contains items for which a policy has already been drawn up. These items will be ignored when drawing up the current policy.</value>
+  <data name="MixedItemsMessage" xml:space="preserve">
+    <value>The selection contains items that have already been accounted for, cancelled or do not have validation. These items will be ignored for the current policy preparation.</value>
   </data>
   <data name="NoItemSelectedMessage" xml:space="preserve">
-    <value>No items were selected to generate the policy</value>
+    <value>No valid and unaccounted items were selected to generate the policy</value>
   </data>
   <data name="ColValidezHeader" xml:space="preserve">
     <value>Validity</value>
@@ -338,5 +335,17 @@
   </data>
   <data name="ValidateButtonTitle" xml:space="preserve">
     <value>Validate</value>
+  </data>
+  <data name="AccountedMessage" xml:space="preserve">
+    <value>Unaccounted</value>
+  </data>
+  <data name="CancelledMessage" xml:space="preserve">
+    <value>Cancelled</value>
+  </data>
+  <data name="QuestionToContinueExport" xml:space="preserve">
+    <value>Do you wish to continue with policy generation?</value>
+  </data>
+  <data name="UnvalidatedMessage" xml:space="preserve">
+    <value>Unvalidated</value>
   </data>
 </root>
