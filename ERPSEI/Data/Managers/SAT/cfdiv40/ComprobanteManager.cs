@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 namespace ERPSEI.Data.Managers.SAT.cfdiv40
 {
@@ -161,18 +162,46 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
 		public async Task<Comprobante?> GetByIdAsync(int id)
         {
-            return await _db.Comprobantes
+			Comprobante? c = await _db.Comprobantes
 				.Where(e => e.Id == id)
 				.Include(e => e.Impuestos).ThenInclude(i => i.Traslados)
 				.Include(e => e.Complemento).ThenInclude(c => c.TimbreFiscalDigital)
 				.Include(e => e.Emisor)
 				.Include(e => e.Receptor)
 				.FirstOrDefaultAsync();
+
+			if(c != null)
+			{
+				c.TipoDeComprobante = (await _db.TiposComprobante.Where(t => t.Clave == c.TipoDeComprobante).FirstOrDefaultAsync())?.Descripcion;
+				c.Moneda = (await _db.Monedas.Where(m => m.Clave == c.Moneda).FirstOrDefaultAsync())?.Descripcion;
+				c.MetodoPago = (await _db.MetodosPago.Where(m => m.Clave == c.MetodoPago).FirstOrDefaultAsync())?.Descripcion;
+				c.FormaPago = (await _db.FormasPago.Where(f => f.Clave == c.FormaPago).FirstOrDefaultAsync())?.Descripcion;
+				if (c.Receptor != null) { c.Receptor.UsoCFDI = (await _db.UsosCFDI.Where(u => u.Clave == c.Receptor.UsoCFDI).FirstOrDefaultAsync())?.Descripcion; }
+			}
+
+			return c;
         }
 
 		public async Task<Comprobante?> GetByNameAsync(string name)
 		{
-			return await _db.Comprobantes.Where(p => $"{(p.Serie ?? string.Empty).ToLower()}{(p.Folio ?? string.Empty).ToLower()}".Equals(name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefaultAsync();
+			Comprobante? c = await _db.Comprobantes
+				.Where(p => $"{(p.Serie ?? string.Empty).ToLower()}{(p.Folio ?? string.Empty).ToLower()}".Equals(name, StringComparison.CurrentCultureIgnoreCase))
+				.Include(e => e.Impuestos).ThenInclude(i => i.Traslados)
+				.Include(e => e.Complemento).ThenInclude(c => c.TimbreFiscalDigital)
+				.Include(e => e.Emisor)
+				.Include(e => e.Receptor)
+				.FirstOrDefaultAsync();
+
+			if (c != null)
+			{
+				c.TipoDeComprobante = (await _db.TiposComprobante.Where(t => t.Clave == c.TipoDeComprobante).FirstOrDefaultAsync())?.Descripcion;
+				c.Moneda = (await _db.Monedas.Where(m => m.Clave == c.Moneda).FirstOrDefaultAsync())?.Descripcion;
+				c.MetodoPago = (await _db.MetodosPago.Where(m => m.Clave == c.MetodoPago).FirstOrDefaultAsync())?.Descripcion;
+				c.FormaPago = (await _db.FormasPago.Where(f => f.Clave == c.FormaPago).FirstOrDefaultAsync())?.Descripcion;
+				if (c.Receptor != null) { c.Receptor.UsoCFDI = (await _db.UsosCFDI.Where(u => u.Clave == c.Receptor.UsoCFDI).FirstOrDefaultAsync())?.Descripcion; }
+			}
+
+			return c;
 		}
 
 		public async Task UpdateMultipleAsync(List<Comprobante> comprobantes)
