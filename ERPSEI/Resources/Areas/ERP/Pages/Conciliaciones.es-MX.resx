@@ -295,7 +295,7 @@
     <value>Consultar Comprobantes</value>
   </data>
   <data name="TitleModalConciliacionAsistida" xml:space="preserve">
-    <value>Conciliación Asistida</value>
+    <value>Conciliación Automática</value>
   </data>
   <data name="TitleModalDerMovimientos" xml:space="preserve">
     <value>Movimientos</value>
