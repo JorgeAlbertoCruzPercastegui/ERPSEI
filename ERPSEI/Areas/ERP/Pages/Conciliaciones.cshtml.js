@@ -317,7 +317,8 @@ function initTableComprobantes() {
                 field: "Fecha",
                 align: "center",
                 valign: "middle",
-                sortable: true
+                sortable: true,
+                formatter: formatDate
             },
             {
                 title: "UUID",
@@ -872,7 +873,7 @@ function detailFormatterM(index, row) {
         tableHtml += `<tr>
                         <td>${comp.Serie}</td>
                         <td>${comp.Folio}</td>
-                        <td>${comp.Fecha}</td>
+                        <td>${formatDate(comp.Fecha)}</td>
                         <td>${currencyFormatter(comp.Total)}</td>
                         <td>${porcentajeSimilitud.toFixed(2)}%</td> <!-- Mostrar % de Similitud -->
                       </tr>`;
@@ -1245,6 +1246,21 @@ function currencyFormatter(value, row, index) {
 function numericFormatter(value, row, index) {
     return numFormatter.format(value);
 }
+
+//Función para dar formato a fechas
+function formatDate(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date)) return ""; // Verifica si la fecha es válida
+
+    // Formatear como dd/MM/yyyy
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Meses son 0-indexados
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+}
+
 function onCerrarClick() {
     //Removes validation from input-fields
     $('.input-validation-error').addClass('input-validation-valid');
