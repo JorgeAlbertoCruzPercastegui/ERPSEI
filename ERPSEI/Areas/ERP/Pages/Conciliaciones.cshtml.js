@@ -4,6 +4,7 @@ var tableActividad;
 var selections = [];
 var dlgConciliacion = null;
 var dlgConciliacionModal = null;
+var numFormatter = null;
 
 const NUEVO = 0;
 const EDITAR = 1;
@@ -16,6 +17,7 @@ const postOptions = {
     }
 };
 document.addEventListener("DOMContentLoaded", function (event) {
+    numFormatter = new Intl.NumberFormat(cultureName);
     table = $("#table");
     buttonRemove = $("#remove");
     dlgConciliacion = document.getElementById('dlgConciliacion');
@@ -218,7 +220,8 @@ function initTable() {
                 field: "Total",
                 align: "center",
                 valign: "middle",
-                sortable: true
+                sortable: true,
+                formatter: currencyFormatter
             },
             {
                 title: colUsuarioCreadorHeader,
@@ -328,7 +331,8 @@ function initTableComprobantes() {
                 field: "Total",
                 align: "center",
                 valign: "middle",
-                sortable: true
+                sortable: true,
+                formatter: currencyFormatter
             },
             {
                 title: "",
@@ -374,7 +378,7 @@ function detailFormatterC(index, row) {
                         <td>${mov.Fecha}</td>
                         <td>${mov.Banco}</td>
                         <td>${mov.Descripción}</td>
-                        <td>${mov.Cargos}</td>
+                        <td>${currencyFormatter(mov.Cargos)}</td>
                         <td>${porcentajeSimilitud.toFixed(2)}%</td> <!-- Mostrar % de Similitud -->
                       </tr>`;
     });
@@ -433,7 +437,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
         <p>Folio: ${folio}</p>
         <p>Fecha: ${fechaComprobanteFormateada}</p>
         <p>UUID: ${uuid}</p>
-        <p>Total: ${totalComprobanteFormateado}</p>
+        <p>Total: ${currencyFormatter(totalComprobanteFormateado)}</p>
         <p><strong>Cargos Seleccionados: $<span id="totalCargosSeleccionados">0.00</span> (<span id="porcentajeSimilitudSeleccionado">0%</span>)</strong></p>
         <hr /><strong>Movimientos Coincidentes</strong><br/>`;
 
@@ -496,7 +500,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
                     <td>${mov.Fecha}</td>
                     <td>${mov.Banco}</td>
                     <td>${mov.Descripción}</td>
-                    <td>${parseFloat(mov.Cargos).toFixed(3)}</td>
+                    <td>${currencyFormatter(parseFloat(mov.Cargos).toFixed(3))}</td>
                     <td>${mov.porcentajeSimilitud}%</td>
                     <td>
                         <input type="checkbox" class="form-check-input" value="${mov.Cargos}" data-id="${mov.id}" 
@@ -646,7 +650,7 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
         alert("Los movimientos seleccionados han sido conciliados.");
 
         // Recargar las tablas para que los registros conciliados desaparezcan
-        recargarTablas();
+        //recargarTablas();
         actualizarContadores();
     } else {
         // Mensaje si por algún motivo no se seleccionan movimientos
@@ -654,22 +658,7 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
     }
 
     // Recargar las tablas para que los elementos conciliados no se muestren
-    recargarTablasMC();
-}
-
-// Función para recargar las tablas de movimientos y comprobantes, filtrando solo los no conciliados
-function recargarTablasMC() {
-    // Obtener los datos de las tablas
-    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
-    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
-
-    // Filtrar los que no están conciliados
-    let movimientosNoConciliados = movimientosData.filter(mov => !mov.conciliado);
-    let comprobantesNoConciliados = comprobantesData.filter(comp => !comp.conciliado);
-
-    // Recargar las tablas con los datos filtrados
-    $('#tableCardMovimientos').bootstrapTable('load', movimientosNoConciliados);
-    $('#tableCardComprobantes').bootstrapTable('load', comprobantesNoConciliados);
+    recargarTablas();
 }
 
 // Función para pasar los movimientos seleccionados al `tableResult`
@@ -884,7 +873,7 @@ function detailFormatterM(index, row) {
                         <td>${comp.Serie}</td>
                         <td>${comp.Folio}</td>
                         <td>${comp.Fecha}</td>
-                        <td>${comp.Total}</td>
+                        <td>${currencyFormatter(comp.Total)}</td>
                         <td>${porcentajeSimilitud.toFixed(2)}%</td> <!-- Mostrar % de Similitud -->
                       </tr>`;
     });
@@ -943,7 +932,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
         <p><strong>Movimiento Seleccionado:</strong></p>
         <p>Fecha: ${mov.Fecha}</p>
         <p>Descripción: ${mov.Descripción}</p>
-        <p>Cargos: ${mov.Cargos}</p>
+        <p>Cargos: <span>${currencyFormatter(mov.Cargos)}</span></p>
         <p><strong>Total Seleccionado: $<span id="totalSeleccionado">0.00</span> (<span id="porcentajeSeleccionado">0%</span>)</strong></p>
         <hr/>
     `;
@@ -970,7 +959,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
                 <td>${comp.Serie}</td>
                 <td>${comp.Folio}</td>
                 <td>${fechaFormateada}</td>
-                <td>${totalFormateado}</td>
+                <td>${currencyFormatter(totalFormateado)}</td>
                 <td><strong>${comp.porcentajeSimilitud}%</strong></td>
                 <td><input type="checkbox" class="form-check-input" data-id="${comp.Id}" value="${comp.Total}" onchange="actualizarSumaSeleccionados(this, ${cargoMovimiento})"></td>
             </tr>
@@ -1245,6 +1234,16 @@ function detailFormatter(index, row) {
     } else {
         return detailFormatterC(index, row);
     }
+}
+
+//Función para dar formato de moneda a los campos numéricos.
+function currencyFormatter(value, row, index) {
+    return `$ ${numFormatter.format(value)}`;
+}
+
+//Función para dar formato de número a los campos numéricos.
+function numericFormatter(value, row, index) {
+    return numFormatter.format(value);
 }
 function onCerrarClick() {
     //Removes validation from input-fields

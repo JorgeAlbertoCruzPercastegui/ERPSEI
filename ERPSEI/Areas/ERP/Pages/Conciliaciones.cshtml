@@ -268,8 +268,8 @@
                                             <tr>
                                                 <th data-field="Fecha">Fecha</th>
                                                 <th data-field="Descripción">Descripción</th>
-                                                <th data-field="Cargos">Cargos</th>
-                                                <th data-field="Abonos">Abonos</th>
+                                                <th data-field="Cargos" data-formatter="currencyFormatter">Cargos</th>
+                                                <th data-field="Abonos" data-formatter="currencyFormatter">Abonos</th>
                                                 <th data-field="conciliar" data-formatter="conciliarFormatterMov">Conciliar</th>
                                             </tr>
                                         </thead>
@@ -315,7 +315,7 @@
                                                 <th data-field="Fecha">Fecha</th>
                                                 <th data-field="Banco">Banco</th>
                                                 <th data-field="Descripción">Descripción</th>
-                                                <th data-field="Total">Total</th>
+                                                <th data-field="Total" data-formatter="currencyFormatter">Total</th>
                                                 <th data-field="Desconciliar" data-formatter="desconciliarFormatter">Desconciliar</th>
                                             </tr>
                                         </thead>
@@ -363,7 +363,7 @@
                                 <th>Serie</th>
                                 <th>Folio</th>
                                 <th>Fecha</th>
-                                <th>Total</th>
+                                <th data-formatter="currencyFormatter">Total</th>
                                 <th>Porcentaje de Similitud</th>
                                 <th>Seleccionar</th>
                             </tr>
