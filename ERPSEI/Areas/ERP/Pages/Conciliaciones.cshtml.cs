@@ -567,30 +567,5 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return jsonResponse;
         }
-        /*private async Task<string> GetClientesEmpresas2Suggestion(string texto)
-        {
-            string jsonResponse;
-            List<string> jsonClientes = [];
-
-            List<ClienteBuscado> clientes = await clienteManager.SearchClientes(texto);
-
-            if (clientes != null)
-            {
-                foreach (ClienteBuscado e in clientes)
-                {
-                    string desc = $"{e.NombreCliente} - {e.RazonSocial}";
-                    jsonClientes.Add($"{{" +
-                                        $"\"id\": \"{e.Id}\", " +
-                                        $"\"value\": \"{desc}\", " +
-                                        $"\"label\": \"{desc}\"" +
-                                    $"}}");
-                }
-            }
-
-            jsonResponse = $"[{string.Join(",", jsonClientes)}]";
-
-            return jsonResponse;
-        }*/
-
     }
 }

@@ -213,6 +213,9 @@
   <data name="EditDialogTitle" xml:space="preserve">
     <value>Editar registro</value>
   </data>
+  <data name="EmpresaIdPlaceholder" xml:space="preserve">
+    <value>Empresa</value>
+  </data>
   <data name="FechaElaboracionFinField" xml:space="preserve">
     <value>Fecha Elaboración (Fin)</value>
   </data>

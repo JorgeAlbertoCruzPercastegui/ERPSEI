@@ -348,7 +348,6 @@ function initTableComprobantes() {
 }
 
 /*******Aquí empieza el codigo de comrpobante seleccionado con movimientos */
-
 function detailFormatterC(index, row) {
     let movimientosConciliados = row.movimientosConciliados || [];
 
@@ -390,7 +389,6 @@ function detailFormatterC(index, row) {
 
     return tableHtml;
 }
-
 
 // Lista para almacenar los IDs de registros sin coincidencia ya contados
 let registrosSinCoincidencia = [];
@@ -568,7 +566,8 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 
     // Verificar si se encontró el comprobante
     if (!comprobanteSeleccionado) {
-        alert("No se encontró el comprobante con el ID: " + idComprobante);
+        //alert("No se encontró el comprobante con el ID: " + idComprobante);
+        showModal("No se encontró el comprobante con el ID: " + idComprobante);
         return;
     }
 
@@ -577,7 +576,8 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 
     // Verificar si no hay ningún checkbox seleccionado
     if (checkboxesSeleccionados.length === 0) {
-        alert("No se ha seleccionado ningún movimiento.");
+        //alert("No se ha seleccionado ningún movimiento.");
+        showModal("No se ha seleccionado ningún movimiento.");
         return;  // Salimos de la función si no hay selección
     }
 
@@ -593,7 +593,8 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
         let diferencia = (totalCargosSeleccionados - parseFloat(totalComprobante)).toFixed(2);
         let mensajeDiferencia = diferencia > 0 ? `Te has excedido por ${diferencia}` : `Te faltan ${Math.abs(diferencia)}`;
 
-        alert(`El total acumulado de los cargos seleccionados (${totalCargosSeleccionados.toFixed(2)}) no coincide con el total del comprobante (${parseFloat(totalComprobante).toFixed(2)}). ${mensajeDiferencia}. Por favor selecciona los movimientos correctos.`);
+        //alert(`El total acumulado de los cargos seleccionados (${totalCargosSeleccionados.toFixed(2)}) no coincide con el total del comprobante (${parseFloat(totalComprobante).toFixed(2)}). ${mensajeDiferencia}. Por favor selecciona los movimientos correctos.`);
+        showModal(`El total acumulado de los cargos seleccionados (${totalCargosSeleccionados.toFixed(2)}) no coincide con el total del comprobante (${parseFloat(totalComprobante).toFixed(2)}). ${mensajeDiferencia}. Por favor selecciona los movimientos correctos.`);
         return;  // Si no coinciden, no hacer nada más y mostrar la alerta
     }
 
@@ -648,14 +649,16 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
         let myModal = bootstrap.Modal.getInstance(document.getElementById('modalConciliacionComp'));
         myModal.hide();
 
-        alert("Los movimientos seleccionados han sido conciliados.");
+        //alert("Los movimientos seleccionados han sido conciliados.");
+        showModal("Los movimientos seleccionados han sido conciliados.");
 
         // Recargar las tablas para que los registros conciliados desaparezcan
         //recargarTablas();
         actualizarContadores();
     } else {
         // Mensaje si por algún motivo no se seleccionan movimientos
-        alert("No se ha seleccionado ningún movimiento.");
+        //alert("No se ha seleccionado ningún movimiento.");
+        showModal("No se ha seleccionado ningún movimiento.");
     }
 
     // Recargar las tablas para que los elementos conciliados no se muestren
@@ -674,7 +677,9 @@ function conciliarSeleccionados(totalComprobanteFormateado) {
                 let movSeleccionado = $('#tableCardMovimientos').bootstrapTable('getRowByUniqueId', idMovimiento);
                 $('#tableResult').bootstrapTable('append', movSeleccionado); // Pasar los movimientos seleccionados a `tableResult`
             });
-            alert("Los movimientos seleccionados han sido conciliados.");
+            //alert("Los movimientos seleccionados han sido conciliados.");
+            showModal("Los movimientos seleccionados han sido conciliados.");
+
         }
     } else {
         // Si no es igual, mostrar un mensaje de error con la diferencia
@@ -682,7 +687,8 @@ function conciliarSeleccionados(totalComprobanteFormateado) {
         let mensaje = diferencia > 0
             ? `Faltan $${diferencia.toFixed(2)} para igualar el total del comprobante.`
             : `Se ha excedido por $${Math.abs(diferencia).toFixed(2)} del total del comprobante.`;
-        alert(mensaje + " Por favor, seleccione los movimientos correctos.");
+        //alert(mensaje + " Por favor, seleccione los movimientos correctos.");
+        showModal(mensaje + " Por favor, seleccione los movimientos correctos.");
     }
 }
 
@@ -886,7 +892,6 @@ function detailFormatterM(index, row) {
     return tableHtml;
 }
 
-
 // Formatter para agregar el botón en la tabla de movimientos
 function conciliarFormatterMov(value, row, index) {
     return `
@@ -990,9 +995,12 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
     if (totalSeleccionado !== parseFloat(cargoMovimiento)) {
         let diferencia = (totalSeleccionado - parseFloat(cargoMovimiento)).toFixed(2);
         if (totalSeleccionado > cargoMovimiento) {
-            alert(`El total seleccionado es mayor por $${diferencia}. Selecciona correctamente los registros.`);
+            //alert(`El total seleccionado es mayor por $${diferencia}. Selecciona correctamente los registros.`);
+            showModal(`El total seleccionado es mayor por $${diferencia}. Selecciona correctamente los registros.`);
         } else {
-            alert(`El total seleccionado es menor por $${Math.abs(diferencia)}. Selecciona correctamente los registros.`);
+            //alert(`El total seleccionado es menor por $${Math.abs(diferencia)}. Selecciona correctamente los registros.`);
+            showModal(`El total seleccionado es menor por $${Math.abs(diferencia)}. Selecciona correctamente los registros.`);
+
         }
         return; // No continuar si los valores no coinciden
     }
@@ -1054,13 +1062,15 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
         let myModal = bootstrap.Modal.getInstance(document.getElementById('modalSimilitud'));
         myModal.hide();
 
-        alert("Los registros seleccionados han sido conciliados.");
+        //alert("Los registros seleccionados han sido conciliados.");
+        showModal("Los registros seleccionados han sido conciliados.");
 
         // Recargar las tablas para que los registros conciliados desaparezcan
         recargarTablas();
         actualizarContadores();
     } else {
-        alert("No se ha seleccionado ningún registro.");
+        //alert("No se ha seleccionado ningún registro.");
+        showModal("No se ha seleccionado ningún registro.");
     }
 }
 
@@ -1162,7 +1172,6 @@ function recargarTablas(mostrarTodos = false) {
     $('#tableCardMovimientos').bootstrapTable('load', movimientosFiltrados);
 }
 
-
 function actualizarContadores() {
     // Calcular el número de comprobantes conciliados y no conciliados
     let totalConciliadosC = $('#tableCardComprobantes').bootstrapTable('getData').filter(comp => comp.conciliado).length;
@@ -1224,7 +1233,8 @@ function conciliarDesdeModal(idComprobante, fechaMovimiento, cargoMovimiento, in
         let myModal = bootstrap.Modal.getInstance(document.getElementById('modalSimilitud'));
         myModal.hide();
     } else {
-        alert("El movimiento ya ha sido conciliado.");
+        //alert("El movimiento ya ha sido conciliado.");
+        showModal("El movimiento ya ha sido conciliado.");
     }
 }
 
@@ -1261,6 +1271,12 @@ function formatDate(dateString) {
     return `${day}/${month}/${year}`;
 }
 
+//Función que servira para el modal de conciliados y no conciliados
+function showModal(message) {
+    document.getElementById("alertModalBody").innerText = message;
+    var alertModal = new bootstrap.Modal(document.getElementById("alertModal"));
+    alertModal.show();
+}
 function onCerrarClick() {
     //Removes validation from input-fields
     $('.input-validation-error').addClass('input-validation-valid');
