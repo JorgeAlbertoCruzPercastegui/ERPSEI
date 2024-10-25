@@ -1052,8 +1052,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
     myModal.show();
 }
 
-// Función para conciliar los comprobantes seleccionados
-// Función para conciliar los comprobantes seleccionados
+// Función para conciliar los comprobantes o movimientos seleccionados
 function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
     let totalSeleccionado = parseFloat(document.getElementById('totalSeleccionado').innerText);
 
@@ -1069,11 +1068,14 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
     }
 
     let selectedRows = [];
-    let conciliacionIdCounter = 1;
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');  // Obtener los datos de la tabla de comprobantes
 
     let mov = movimientosData[indexMovimiento];
+
+    // Obtener el último ID de `tableResult`
+    let tableResultData = $('#tableResult').bootstrapTable('getData');
+    let lastId = tableResultData.length > 0 ? Math.max(...tableResultData.map(row => row.id)) : 0; // Obtener el último ID utilizado
 
     // Obtener los registros seleccionados (checkboxes marcados) dentro del modal de comprobantes
     document.querySelectorAll('#modalSimilitudBody input[type="checkbox"]:checked').forEach(checkbox => {
@@ -1089,7 +1091,7 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
 
         // Agregar un solo registro a `tableResult` con los detalles de los comprobantes seleccionados
         $('#tableResult').bootstrapTable('append', {
-            id: conciliacionIdCounter++,  // Usamos el ID del movimiento
+            id: lastId + 1,  // Asignar el siguiente ID disponible (único)
             Serie: primerComprobante.Serie,  // Si aplica, tomamos la serie del movimiento
             Folio: primerComprobante.Folio,  // Si aplica, tomamos el folio del movimiento
             Fecha: mov.Fecha,  // Tomamos la fecha del movimiento
@@ -1109,7 +1111,6 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
         alert("No se ha seleccionado ningún registro.");
     }
 }
-
 
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
 function actualizarSumaSeleccionados(checkbox, cargoMovimiento) {
