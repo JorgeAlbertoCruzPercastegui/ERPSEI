@@ -556,8 +556,6 @@ function actualizarContadorSeleccionados(checkbox, totalComprobanteFormateado) {
 }
 
 /*Función para validar los resultados seleccionados de cada movimiento en el comprobante*/
-let idConciliacion = 1;
-
 function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaComprobante, uuid, totalComprobante) {
     let selectedMovimientos = [];
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
@@ -607,13 +605,17 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
         }
     });
 
+    // Obtener el último ID de `tableResult`
+    let tableResultData = $('#tableResult').bootstrapTable('getData');
+    let lastId = tableResultData.length > 0 ? Math.max(...tableResultData.map(row => row.id)) : 0; // Obtener el último ID utilizado
+
     // Continuamos con la conciliación solo si se seleccionaron movimientos
     if (selectedMovimientos.length > 0) {
         console.log("Movimientos seleccionados:", selectedMovimientos); // Verificar los movimientos seleccionados en la consola
 
         // Agregar los movimientos seleccionados a `tableResult` con los datos del comprobante y los movimientos seleccionados
         $('#tableResult').bootstrapTable('append', {
-            id: idConciliacion++,  // Usamos un ID incremental para la conciliación
+            id: lastId + 1,  // Asignar el siguiente ID disponible de manera secuencial
             Serie: comprobanteSeleccionado.Serie,  // Usamos la serie del comprobante seleccionado
             Folio: comprobanteSeleccionado.Folio,  // Usamos el folio que ya está en los parámetros de la función
             Fecha: comprobanteSeleccionado.Fecha,  // Usamos la fecha del comprobante seleccionado
@@ -653,7 +655,6 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
     // Recargar las tablas para que los elementos conciliados no se muestren
     recargarTablas();
 }
-
 
 // Función para deshacer la conciliación
 function desconciliarComp(id, fechaMovimiento, totalMovimiento) {
