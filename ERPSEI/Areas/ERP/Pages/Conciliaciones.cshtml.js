@@ -653,7 +653,22 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
     }
 
     // Recargar las tablas para que los elementos conciliados no se muestren
-    recargarTablas();
+    recargarTablasMC();
+}
+
+// Función para recargar las tablas de movimientos y comprobantes, filtrando solo los no conciliados
+function recargarTablasMC() {
+    // Obtener los datos de las tablas
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
+
+    // Filtrar los que no están conciliados
+    let movimientosNoConciliados = movimientosData.filter(mov => !mov.conciliado);
+    let comprobantesNoConciliados = comprobantesData.filter(comp => !comp.conciliado);
+
+    // Recargar las tablas con los datos filtrados
+    $('#tableCardMovimientos').bootstrapTable('load', movimientosNoConciliados);
+    $('#tableCardComprobantes').bootstrapTable('load', comprobantesNoConciliados);
 }
 
 // Función para deshacer la conciliación
@@ -1093,8 +1108,8 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
         // Agregar un solo registro a `tableResult` con los detalles de los comprobantes seleccionados
         $('#tableResult').bootstrapTable('append', {
             id: lastId + 1,  // Asignar el siguiente ID disponible (único)
-            Serie: primerComprobante.Serie,  // Si aplica, tomamos la serie del movimiento
-            Folio: primerComprobante.Folio,  // Si aplica, tomamos el folio del movimiento
+            Serie: primerComprobante.Serie,  // Tomar la serie del comprobante
+            Folio: primerComprobante.Folio,  // Tomar el folio del comprobante
             Fecha: mov.Fecha,  // Tomamos la fecha del movimiento
             Banco: mov.Banco,  // Tomar el banco del movimiento
             Descripción: mov.Descripción,  // Tomar la descripción del movimiento
@@ -1103,14 +1118,50 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
             comprobantesConciliados: selectedRows  // Almacenar todos los comprobantes seleccionados
         });
 
+        // Marcar los comprobantes seleccionados como conciliados
+        selectedRows.forEach(comp => {
+            comp.conciliado = true;
+            // Actualizar el comprobante en la tabla de comprobantes
+            $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
+                id: comp.Id,
+                row: comp
+            });
+        });
+
+        // Marcar el movimiento como conciliado
+        mov.conciliado = true;
+        // Actualizar el movimiento en la tabla de movimientos
+        $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
+            id: mov.Id,
+            row: mov
+        });
+
         // Cerrar el modal
         let myModal = bootstrap.Modal.getInstance(document.getElementById('modalSimilitud'));
         myModal.hide();
 
         alert("Los registros seleccionados han sido conciliados.");
+
+        // Recargar las tablas para que los registros conciliados desaparezcan
+        recargarTablas();
     } else {
         alert("No se ha seleccionado ningún registro.");
     }
+}
+
+// Función para recargar las tablas de movimientos y comprobantes, filtrando solo los no conciliados
+function recargarTablas() {
+    // Obtener los datos de las tablas
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
+
+    // Filtrar los que no están conciliados
+    let movimientosNoConciliados = movimientosData.filter(mov => !mov.conciliado);
+    let comprobantesNoConciliados = comprobantesData.filter(comp => !comp.conciliado);
+
+    // Recargar las tablas con los datos filtrados
+    $('#tableCardMovimientos').bootstrapTable('load', movimientosNoConciliados);
+    $('#tableCardComprobantes').bootstrapTable('load', comprobantesNoConciliados);
 }
 
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
