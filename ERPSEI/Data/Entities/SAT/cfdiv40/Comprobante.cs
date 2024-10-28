@@ -17,11 +17,10 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 
 		public ComprobanteInformacionGlobal? InformacionGlobal{ get; set; }
 
-		[XmlArray("CfdiRelacionados")]
-		[XmlArrayItem(typeof(ComprobanteCfdiRelacionados), ElementName = "CfdiRelacionados", IsNullable = false)]
-		public ComprobanteCfdiRelacionados[]? CfdiRelacionados { get; set; }
+		[XmlElement("CfdiRelacionados")]
+		public virtual List<ComprobanteCfdiRelacionados>? CfdiRelacionados { get; set; }
 
-		
+
 		public ComprobanteEmisor? Emisor { get; set; }
 
 		
@@ -30,9 +29,9 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 
 		[XmlArray("Conceptos")]
 		[XmlArrayItem(typeof(ComprobanteConcepto), ElementName = "Concepto", IsNullable = false)]
-		public ComprobanteConcepto[]? Conceptos { get; set; }
+		public virtual List<ComprobanteConcepto>? ComprobantesConceptos { get; set; }
 
-		
+
 		public ComprobanteImpuestos? Impuestos { get; set; }
 
 
