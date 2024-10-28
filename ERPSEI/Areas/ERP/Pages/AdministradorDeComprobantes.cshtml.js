@@ -189,9 +189,20 @@ function ajaxExportCFDIS(oParams) {
 
             clearTable();
 
-            let fileLink = document.getElementById("downloadFileLink");
-            fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)
-            fileLink.click();
+            switch (tipoExportado) {
+                case TIPO_EXPORTADO_PDF:
+                    break;
+                case TIPO_EXPORTADO_XML:
+                    break;
+                case TIPO_EXPORTADO_EXCEL:
+                case TIPO_EXPORTADO_POLIZA_INGRESO:
+                case TIPO_EXPORTADO_POLIZA_EGRESO:
+                    let fileLink = document.getElementById("downloadFileLink");
+                    fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)
+                    fileLink.click();
+                    break;
+                default:
+            }
 
             showSuccess(dlgExportTitle, resp.mensaje);
         }, function (error) {
@@ -394,6 +405,8 @@ function onShowCFDIs(tipoExportado) {
         case TIPO_EXPORTADO_PDF:
             break;
         case TIPO_EXPORTADO_XML:
+            let idsXML = getIdSelections();
+            ajaxExportCFDIS({ ids: idsXML, tipoExportado: tipoExportado });
             break;
         case TIPO_EXPORTADO_EXCEL:
             break;
