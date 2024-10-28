@@ -394,14 +394,6 @@ function detailFormatterC(index, row) {
 let registrosSinCoincidencia = [];
 let registrosSinCoincidenciaM = [];
 
-function desconciliarFormatter(value, row, index) {
-    return `
-        <button class="btn btn-danger btn-sm" onclick="desconciliarComp(${row.id}, '${row.Fecha}', '${row.Total}')">
-            Desconciliar
-        </button>
-    `;
-}
-
 // Función para realizar la conciliación individual
 function conciliacionIndidual(value, row, index) {
     return `
@@ -662,7 +654,7 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
     }
 
     // Recargar las tablas para que los elementos conciliados no se muestren
-    recargarTablas();
+    recargarTablas(false);
 }
 
 // Función para pasar los movimientos seleccionados al `tableResult`
@@ -692,7 +684,7 @@ function conciliarSeleccionados(totalComprobanteFormateado) {
     }
 }
 
-//Conciliación en automático
+// Conciliación en automático
 function conciliarAutomatico() {
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
@@ -745,19 +737,20 @@ function conciliarAutomatico() {
                         porcentajeSimilitud: porcentajeSimilitud.toFixed(2)
                     });
 
-                    // Marcar la fila del comprobante y del movimiento como coincidente
+                    // Marcar el comprobante como coincidente y ocultarlo de la tabla
                     if (!comp.coincidencia) {
                         $('#tableCardComprobantes').bootstrapTable('updateRow', {
                             index: indexComp,
-                            row: { coincidencia: true }
+                            row: { coincidencia: true, conciliado: true } // Conciliado y listo para ocultarse
                         });
                         coincidenciasComprobantes++;
                     }
 
+                    // Marcar el movimiento como coincidente y ocultarlo de la tabla
                     if (!mov.coincidencia) {
                         $('#tableCardMovimientos').bootstrapTable('updateRow', {
                             index: indexMov,
-                            row: { coincidencia: true }
+                            row: { coincidencia: true, conciliado: true } // Conciliado y listo para ocultarse
                         });
                         coincidenciasMovimientos++;
                     }
@@ -775,11 +768,20 @@ function conciliarAutomatico() {
         mensaje += `Coincidencia en comprobante ID: ${row.id}, Porcentaje de similitud: ${row.porcentajeSimilitud}%<br/>`;
     });
 
+    // Actualizar el mensaje en el modal de conciliación automática
     document.getElementById("modalConciliacionMensaje").innerHTML = mensaje;
 
+    // Mostrar el modal
     let myModal = new bootstrap.Modal(document.getElementById('modalConciliacion'));
     myModal.show();
+
+    // Recargar ambas tablas para que los registros conciliados desaparezcan
+    recargarTablas(false);
+
+    // Actualizar los contadores de registros conciliados y no conciliados
+    actualizarContadores();
 }
+
 
 //Desconcilia un comprobante que ha sido asociado con uno o varios movimientos.
 function desconciliarRegistro(id) {
@@ -815,6 +817,12 @@ function desconciliarRegistro(id) {
     let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText) - 1;
     document.getElementById("TotalConciliadosC").innerText = totalConciliadosC;
     document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
+
+    // Recargar tablas y actualizar contadores
+    recargarTablas(false);
+    actualizarContadores();
+
+    showModal("El registro ha sido desconciliado y los datos se han actualizado.");
 }
 
 function rowStyleComprobantes(row, index) {
@@ -1066,27 +1074,12 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
         showModal("Los registros seleccionados han sido conciliados.");
 
         // Recargar las tablas para que los registros conciliados desaparezcan
-        recargarTablas();
+        recargarTablas(false);
         actualizarContadores();
     } else {
         //alert("No se ha seleccionado ningún registro.");
         showModal("No se ha seleccionado ningún registro.");
     }
-}
-
-// Función para recargar las tablas de movimientos y comprobantes, filtrando solo los no conciliados
-function recargarTablas() {
-    // Obtener los datos de las tablas
-    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
-    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
-
-    // Filtrar los que no están conciliados
-    let movimientosNoConciliados = movimientosData.filter(mov => !mov.conciliado);
-    let comprobantesNoConciliados = comprobantesData.filter(comp => !comp.conciliado);
-
-    // Recargar las tablas con los datos filtrados
-    $('#tableCardMovimientos').bootstrapTable('load', movimientosNoConciliados);
-    $('#tableCardComprobantes').bootstrapTable('load', comprobantesNoConciliados);
 }
 
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
@@ -1109,84 +1102,97 @@ function actualizarSumaSeleccionados(checkbox, cargoMovimiento) {
     document.getElementById('porcentajeSeleccionado').innerText = `${porcentajeSeleccionado}%`;
 }
 
-// Función para deshacer la conciliación
+function desconciliarFormatter(value, row, index) {
+    return `
+        <button class="btn btn-danger btn-sm" onclick="desconciliarComp(${row.id}, '${row.Fecha}', '${row.Total}')">
+            Desconciliar
+        </button>
+    `;
+}
+
 function desconciliarComp(id, fechaMovimiento, totalMovimiento) {
-    // Eliminar la fila de la tabla `tableResult`
+    // Eliminar el registro de la tabla `tableResult`
     $('#tableResult').bootstrapTable('remove', {
         field: 'id',
         values: [id]
     });
 
-    // Obtener los datos de las tablas de comprobantes y movimientos
+    // Obtener los datos completos de las tablas de comprobantes y movimientos
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
 
-    // Actualizar el estado de conciliación para el comprobante
-    let comprobante = comprobantesData.find(comp => comp.Id === id);
-    if (comprobante) {
-        comprobante.conciliado = false;  // Marcar como no conciliado
-        $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
-            id: comprobante.Id,
-            row: comprobante  // Actualizar el comprobante en la tabla
-        });
-    }
-
-    // Actualizar el estado de conciliación para el movimiento correspondiente
+    // Encontrar el movimiento específico y actualizar su estado a no conciliado
     let movimiento = movimientosData.find(mov =>
         mov.Fecha === fechaMovimiento &&
         parseFloat(mov.Cargos).toFixed(2) === parseFloat(totalMovimiento).toFixed(2)
     );
 
     if (movimiento) {
-        movimiento.conciliado = false;  // Marcar como no conciliado
+        movimiento.conciliado = false;  // Marcar el movimiento como no conciliado
         $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
             id: movimiento.Id,
-            row: movimiento  // Actualizar el movimiento en la tabla
+            row: movimiento
         });
-
-        // Remover el color verde (usualmente se usa 'table-success' para verde)
-        let rowEl = $('#tableCardMovimientos').find(`tr[data-index="${movimientosData.indexOf(movimiento)}"]`);
-        rowEl.removeClass('table-success');  // Remover el color verde de la fila
     }
 
-    // Actualizar los contadores de conciliados y no conciliados
-    actualizarContadores();
+    // Obtener el registro eliminado que contiene los comprobantes conciliados
+    let registroEliminado = $('#tableResult').bootstrapTable('getData').find(row => row.id === id);
 
-    // Recargar las tablas para que los comprobantes y movimientos desconciliados vuelvan a aparecer
-    recargarTablas(false);  // Asegúrate de recargar con el filtro adecuado
+    if (registroEliminado && registroEliminado.comprobantesConciliados) {
+        registroEliminado.comprobantesConciliados.forEach(comp => {
+            let comprobante = comprobantesData.find(c => c.Id === comp.Id);
+            if (comprobante) {
+                comprobante.conciliado = false;  // Marcar el comprobante como no conciliado
+                $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
+                    id: comprobante.Id,
+                    row: comprobante
+                });
+            }
+        });
+    }
+
+    // Mostrar mensaje de confirmación
+    showModal("El movimiento y los comprobantes han sido desconciliados y ahora están visibles.");
+
+    // Recargar ambas tablas para que los registros desconciliados se muestren
+    recargarTablas(true);
+
+    // Actualizar los contadores
+    actualizarContadores();
 }
 
 
-// Función para recargar las tablas de movimientos y comprobantes, filtrando solo los no conciliados
+// Función para recargar las tablas de movimientos y comprobantes, asegurando que solo los no conciliados se muestren
 function recargarTablas(mostrarTodos = false) {
     // Obtener los datos completos de las tablas
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
 
-    // Filtrar comprobantes y movimientos, solo mostrar los no conciliados si mostrarTodos es false
+    // Mostrar todos o solo los no conciliados dependiendo de `mostrarTodos`
     let comprobantesFiltrados = mostrarTodos ? comprobantesData : comprobantesData.filter(comp => !comp.conciliado);
     let movimientosFiltrados = mostrarTodos ? movimientosData : movimientosData.filter(mov => !mov.conciliado);
 
-    // Actualizar las tablas con los datos filtrados
+    // Recargar las tablas con los datos filtrados
     $('#tableCardComprobantes').bootstrapTable('load', comprobantesFiltrados);
     $('#tableCardMovimientos').bootstrapTable('load', movimientosFiltrados);
 }
 
+
+
+// Función para actualizar los contadores de conciliados y no conciliados
 function actualizarContadores() {
-    // Calcular el número de comprobantes conciliados y no conciliados
     let totalConciliadosC = $('#tableCardComprobantes').bootstrapTable('getData').filter(comp => comp.conciliado).length;
     let totalSinConciliarC = $('#tableCardComprobantes').bootstrapTable('getData').filter(comp => !comp.conciliado).length;
 
-    // Calcular el número de movimientos conciliados y no conciliados
     let totalConciliadosM = $('#tableCardMovimientos').bootstrapTable('getData').filter(mov => mov.conciliado).length;
     let totalSinConciliarM = $('#tableCardMovimientos').bootstrapTable('getData').filter(mov => !mov.conciliado).length;
 
-    // Actualizar los valores en el DOM
     document.getElementById("TotalConciliadosC").innerText = totalConciliadosC;
     document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
     document.getElementById("TotalSinConciliarC").innerText = totalSinConciliarC;
     document.getElementById("TotalSinConciliarM").innerText = totalSinConciliarM;
 }
+
 
 function conciliarDesdeModal(idComprobante, fechaMovimiento, cargoMovimiento, indexMovimiento) {
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
@@ -1416,7 +1422,10 @@ function onGuardarClick() {
 function eliminarRegistro(Id) {
     if (confirm('¿Estás seguro de eliminar el registro con ID: ' + Id + '?')) {
         alert('Registro eliminado con éxito.');
-        // Lógica para eliminar el registro
+
+        // Recargar tablas y actualizar contadores
+        recargarTablas(false);
+        actualizarContadores();
     }
 }
 
@@ -1533,7 +1542,7 @@ function onImportarMovimientosBancariosClick() {
         actualizarContadores();
 
         // Recargar las tablas para que los comprobantes y movimientos desconciliados vuelvan a aparecer
-        recargarTablas();
+        recargarTablas(false);
 
     } else if (fileType === 'pdf') {
         importarMovimientosDesdePDF(fileUpload.files[0], selectedBank);
@@ -1828,12 +1837,6 @@ function exportToTxt(extractedText) {
     // Revocar el objeto URL para liberar memoria
     URL.revokeObjectURL(url);
 }
-
-
-
-
-
-
 
 function exportarToExcel(extractedText) {
 
