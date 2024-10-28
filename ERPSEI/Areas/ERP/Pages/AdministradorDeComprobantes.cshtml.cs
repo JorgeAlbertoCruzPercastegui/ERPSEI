@@ -12,9 +12,7 @@ using ERPSEI.Requests;
 using ERPSEI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.MSIdentity.Shared;
 using Microsoft.Extensions.Localization;
-using NPOI.SS.Formula.Functions;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
@@ -756,7 +754,7 @@ namespace ERPSEI.Areas.ERP.Pages
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesCancelledUnsuccessfully"]);
 
-			if (PuedeTodo || PuedeEditar)
+			if (PuedeTodo || PuedeEditar || PuedeEliminar)
 			{
 				try
 				{
