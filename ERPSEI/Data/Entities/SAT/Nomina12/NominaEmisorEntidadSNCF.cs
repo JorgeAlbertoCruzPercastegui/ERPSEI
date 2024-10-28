@@ -4,21 +4,18 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 {
 	[Serializable]
 	[XmlType(AnonymousType = true, Namespace = "http://www.sat.gob.mx/nomina12")]
-	public partial class NominaDeduccionesDeduccion
+	public partial class NominaEmisorEntidadSNCF
 	{
 		[XmlIgnore]
 		public int Id { get; set; }
 
 		[XmlAttribute]
-		public string? Clave { get; set; }
+		public string? OrigenRecurso { get; set; }
 
 		[XmlAttribute]
-		public string? Concepto { get; set; }
+		public decimal MontoRecursoPropio { get; set; }
 
-		[XmlAttribute]
-		public decimal Importe { get; set; }
-
-		[XmlAttribute]
-		public string? TipoDeduccion { get; set; }
+		[XmlIgnore]
+		public bool MontoRecursoPropioSpecified { get; set; }
 	}
 }
