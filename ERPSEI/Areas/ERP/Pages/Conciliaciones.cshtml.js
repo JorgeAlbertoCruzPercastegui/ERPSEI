@@ -685,6 +685,7 @@ function conciliarSeleccionados(totalComprobanteFormateado) {
 }
 
 // Conciliación en automático
+// Conciliación en automático
 function conciliarAutomatico() {
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
@@ -723,7 +724,7 @@ function conciliarAutomatico() {
                 (porcentajeSimilitud === 100 || (porcentajeSimilitud >= 99.8 && porcentajeSimilitud < 100))) {
 
                 if (!registroYaAgregado(comp.Id, comp.Serie, comp.Folio, fechaComprobanteFormateada, totalComprobanteFormateado)) {
-                    // Conciliar y agregar a la tabla
+                    // Conciliar y agregar a la tabla con los movimientos relacionados
                     $('#tableResult').bootstrapTable('append', {
                         id: comp.Id,
                         Serie: comp.Serie,
@@ -734,23 +735,23 @@ function conciliarAutomatico() {
                         Total: mov.Cargos,
                         coincidencia: true,
                         conciliado: true, // MARCAR el registro como conciliado de manera automática
-                        porcentajeSimilitud: porcentajeSimilitud.toFixed(2)
+                        porcentajeSimilitud: porcentajeSimilitud.toFixed(2),
+                        movimientosConciliados: [mov] // Guardar el movimiento relacionado
                     });
 
-                    // Marcar el comprobante como coincidente y ocultarlo de la tabla
+                    // Marcar el comprobante y el movimiento como coincidente
                     if (!comp.coincidencia) {
                         $('#tableCardComprobantes').bootstrapTable('updateRow', {
                             index: indexComp,
-                            row: { coincidencia: true, conciliado: true } // Conciliado y listo para ocultarse
+                            row: { coincidencia: true, conciliado: true }
                         });
                         coincidenciasComprobantes++;
                     }
 
-                    // Marcar el movimiento como coincidente y ocultarlo de la tabla
                     if (!mov.coincidencia) {
                         $('#tableCardMovimientos').bootstrapTable('updateRow', {
                             index: indexMov,
-                            row: { coincidencia: true, conciliado: true } // Conciliado y listo para ocultarse
+                            row: { coincidencia: true, conciliado: true }
                         });
                         coincidenciasMovimientos++;
                     }
@@ -781,6 +782,54 @@ function conciliarAutomatico() {
     // Actualizar los contadores de registros conciliados y no conciliados
     actualizarContadores();
 }
+
+// Función para mostrar detalles de un registro en `tableResult`
+function detailFormatterA(index, row) {
+    let movimientosConciliados = row.movimientosConciliados || [];
+
+    if (movimientosConciliados.length === 0) {
+        return `<p>No hay movimientos asociados a esta conciliación automática.</p>`;
+    }
+
+    let tableHtml = `<div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Banco</th>
+                                    <th>Descripción</th>
+                                    <th>Cargos</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+    movimientosConciliados.forEach(mov => {
+        tableHtml += `<tr>
+                        <td>${mov.Fecha}</td>
+                        <td>${mov.Banco}</td>
+                        <td>${mov.Descripción}</td>
+                        <td>${currencyFormatter(mov.Cargos)}</td>
+                      </tr>`;
+    });
+
+    tableHtml += `    </tbody>
+                    </table>
+                </div>`;
+
+    return tableHtml;
+}
+
+// Función de formateo para valores en formato de moneda
+function currencyFormatter(value) {
+    return `$${parseFloat(value).toFixed(2)}`;
+}
+
+
+// Función de formateo para los valores en formato de moneda
+function currencyFormatter(value) {
+    return `$${parseFloat(value).toFixed(2)}`;
+}
+
 
 
 //Desconcilia un comprobante que ha sido asociado con uno o varios movimientos.
@@ -1246,7 +1295,9 @@ function conciliarDesdeModal(idComprobante, fechaMovimiento, cargoMovimiento, in
 
 //Función para mostrar detalles de los movimientos o comprobantes seleccionados
 function detailFormatter(index, row) {
-    if (row.comprobantesConciliados) {
+    if (row.tipoConciliacion === 'automatica') {
+        return detailFormatterA(index, row);
+    } else if (row.comprobantesConciliados) {
         return detailFormatterM(index, row);
     } else {
         return detailFormatterC(index, row);
