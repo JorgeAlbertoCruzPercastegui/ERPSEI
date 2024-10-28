@@ -11,6 +11,14 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 		[XmlIgnore]
 		public int Id { get; set; }
 
+		public NominaPercepcionesPercepcionAccionesOTitulos? AccionesOTitulos { get; set; }
+
+		[XmlElement("HorasExtra")]
+		public NominaPercepcionesPercepcionHorasExtra[]? HorasExtra { get; set; }
+
+		[XmlAttribute]
+		public string? TipoPercepcion { get; set; }
+
 		[XmlAttribute]
 		public string? Clave { get; set; }
 
@@ -18,12 +26,9 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 		public string? Concepto { get; set; }
 
 		[XmlAttribute]
-		public decimal ImporteExento { get; set; }
-
-		[XmlAttribute]
 		public decimal ImporteGravado { get; set; }
 
 		[XmlAttribute]
-		public byte TipoPercepcion { get; set; }
+		public decimal ImporteExento { get; set; }
 	}
 }
