@@ -29,7 +29,7 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 
 		[XmlArray("Conceptos")]
 		[XmlArrayItem(typeof(ComprobanteConcepto), ElementName = "Concepto", IsNullable = false)]
-		public virtual List<ComprobanteConcepto>? ComprobantesConceptos { get; set; }
+		public virtual List<ComprobanteConcepto>? Conceptos { get; set; }
 
 
 		public ComprobanteImpuestos? Impuestos { get; set; }
