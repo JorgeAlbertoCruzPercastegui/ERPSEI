@@ -46,3 +46,12 @@
     max-height: 300px; /* Altura máxima de la tabla */
     overflow-y: auto; /* Activar desplazamiento vertical */
 }
+/* En tu archivo CSS */
+.oculto {
+    display: none !important;
+}
+.blocked {
+    pointer-events: none; /* Desactiva la interacción */
+    opacity: 0.6; /* Visualmente indica que está bloqueado */
+}
+
