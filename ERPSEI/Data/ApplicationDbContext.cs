@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using ERPSEI.Data.Entities.SAT.Nomina12;
 using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
 using ERPSEI.Data.Entities.Cuentas;
+using ERPSEI.Data.Entities.SAT.Pagos20;
 
 namespace ERPSEI.Data
 {
@@ -56,13 +57,6 @@ namespace ERPSEI.Data
 		public DbSet<ComprobanteAddenda> ComprobantesAddendas { get; set; }
 		public DbSet<ComprobanteCfdiRelacionados> ComprobantesCfdisRelacionados { get; set; }
 		public DbSet<ComprobanteComplemento> ComprobantesComplementos { get; set; }
-		public DbSet<Nomina> Nominas { get; set; }
-		public DbSet<NominaDeducciones> NominasDeducciones { get; set; }
-		public DbSet<NominaDeduccionesDeduccion> NominasDeduccionesDeducciones { get; set; }
-		public DbSet<NominaPercepciones> NominasPercepciones { get; set; }
-		public DbSet<NominaPercepcionesPercepcion> NominasPercepcionePercepciones { get; set; }
-		public DbSet<NominaReceptor> NominasReceptores { get; set; }
-		public DbSet<TimbreFiscalDigital> TimbresFiscalesDigitales { get; set; }
 		public DbSet<ComprobanteConcepto> ComprobantesConceptos { get; set; }
 		public DbSet<ComprobanteConceptoACuentaTerceros> ComprobantesConceptosACuentaTerceros { get; set; }
 		public DbSet<ComprobanteConceptoComplementoConcepto> ComprobantesConceptosComplementosConceptos { get; set; }
@@ -80,8 +74,41 @@ namespace ERPSEI.Data
 		public DbSet<ComprobanteInformacionGlobal> ComprobantesInformacionesGlobales { get; set; }
 		public DbSet<ComprobanteReceptor> ComprobantesReceptores { get; set; }
 
-
 		public DbSet<Comprobante> Comprobantes { get; set; }
+
+		//Complemento de Nómina
+		public DbSet<Nomina> Nominas { get; set; }
+		public DbSet<NominaDeducciones> NominasDeducciones { get; set; }
+		public DbSet<NominaDeduccionesDeduccion> NominasDeduccionesDeducciones { get; set; }
+		public DbSet<NominaEmisor> NominasEmisores { get; set; }
+		public DbSet<NominaEmisorEntidadSNCF> NominasEmisoresEntidadesSNCF { get; set; }
+		public DbSet<NominaIncapacidad> NominasIncapacidades { get; set; }
+		public DbSet<NominaOtroPago> NominasOtrosPagos { get; set; }
+		public DbSet<NominaOtroPagoCompensacionSaldosAFavor> NominasOtrosPagosCompensacionesSaldosAFavor { get; set; }
+		public DbSet<NominaOtroPagoSubsidioAlEmpleo> NominasOtrosPagosSubsidiosAlEmpleo { get; set; }
+		public DbSet<NominaPercepciones> NominasPercepciones { get; set; }
+		public DbSet<NominaPercepcionesJubilacionPensionRetiro> NominasPercepcionesJubilacionesPensionesRetiros { get; set; }
+		public DbSet<NominaPercepcionesPercepcion> NominasPercepcionesPercepciones { get; set; }
+		public DbSet<NominaPercepcionesPercepcionAccionesOTitulos> NominasPercepcionesPercepcionesAccionesOTitulos { get; set; }
+		public DbSet<NominaPercepcionesPercepcionHorasExtra> NominasPercepcionesPercepcionesHorasExtras { get; set; }
+		public DbSet<NominaPercepcionesSeparacionIndemnizacion> NominasPercepcionesSeparacionesIndemnizaciones { get; set; }
+		public DbSet<NominaReceptor> NominasReceptores { get; set; }
+		public DbSet<NominaReceptorSubContratacion> NominasReceptoresSubContrataciones { get; set; }
+
+		//Complemento de Pago
+		public DbSet<Pagos> Pagos { get; set; }
+		public DbSet<PagosPago> PagosPagos { get; set; }
+		public DbSet<PagosPagoDoctoRelacionado> PagosPagosDoctosRelacionados { get; set; }
+		public DbSet<PagosPagoDoctoRelacionadoImpuestosDR> PagosPagosDoctosRelacionadosImpuestosDR { get; set; }
+		public DbSet<PagosPagoDoctoRelacionadoImpuestosDRRetencionDR> PagosPagosDoctosRelacionadosImpuestosDRRetencionesDR { get; set; }
+		public DbSet<PagosPagoDoctoRelacionadoImpuestosDRTrasladoDR> PagosPagosDoctosRelacionadosImpuestosDRTrasladosDR { get; set; }
+		public DbSet<PagosPagoImpuestosP> PagosPagosImpuestosP { get; set; }
+		public DbSet<PagosPagoImpuestosPRetencionP> PagosPagosImpuestosPRetencionesP { get; set; }
+		public DbSet<PagosPagoImpuestosPTrasladoP> PagosPagosImpuestosPTrasladosP { get; set; }
+		public DbSet<PagosTotales> PagosTotales { get; set; }
+
+		//Complemento de Timbre Fiscal Digital
+		public DbSet<TimbreFiscalDigital> TimbresFiscalesDigitales { get; set; }
 
 		//Catálogos no Administrables SAT
 		public DbSet<Exportacion> Exportaciones { get; set; }
@@ -462,18 +489,66 @@ namespace ERPSEI.Data
 			b.Entity<Nomina>().Property(n => n.TotalDeducciones).HasPrecision(18, 6);
 			b.Entity<Nomina>().Property(n => n.TotalPercepciones).HasPrecision(18, 6);
 			b.Entity<Nomina>().Property(n => n.Version).HasPrecision(18, 6);
-
+			b.Entity<Nomina>().Property(n => n.TotalOtrosPagos).HasPrecision(18, 6);
 			b.Entity<NominaDeducciones>().Property(n => n.TotalImpuestosRetenidos).HasPrecision(18, 6);
 			b.Entity<NominaDeducciones>().Property(n => n.TotalOtrasDeducciones).HasPrecision(18, 6);
-
 			b.Entity<NominaDeduccionesDeduccion>().Property(n => n.Importe).HasPrecision(18, 6);
-
-			b.Entity<NominaPercepciones>().Property(n => n.TotalExento).HasPrecision(18, 6);
-			b.Entity<NominaPercepciones>().Property(n => n.TotalGravado).HasPrecision(18, 6);
-			b.Entity<NominaPercepciones>().Property(n => n.TotalSueldos).HasPrecision(18, 6);
-
+			b.Entity<NominaEmisorEntidadSNCF>().Property(p => p.MontoRecursoPropio).HasPrecision(18, 6);
+			b.Entity<NominaIncapacidad>().Property(p => p.ImporteMonetario).HasPrecision(18, 6);
+			b.Entity<NominaOtroPago>().Property(p => p.Importe).HasPrecision(18, 6);
+			b.Entity<NominaOtroPagoCompensacionSaldosAFavor>().Property(p => p.SaldoAFavor).HasPrecision(18, 6);
+			b.Entity<NominaOtroPagoCompensacionSaldosAFavor>().Property(p => p.RemanenteSalFav).HasPrecision(18, 6);
+			b.Entity<NominaOtroPagoSubsidioAlEmpleo>().Property(p => p.SubsidioCausado).HasPrecision(18, 6);
+			b.Entity<NominaPercepciones>().Property(p => p.TotalSueldos).HasPrecision(18, 6);
+			b.Entity<NominaPercepciones>().Property(p => p.TotalSeparacionIndemnizacion).HasPrecision(18, 6);
+			b.Entity<NominaPercepciones>().Property(p => p.TotalJubilacionPensionRetiro).HasPrecision(18, 6);
+			b.Entity<NominaPercepciones>().Property(p => p.TotalExento).HasPrecision(18, 6);
+			b.Entity<NominaPercepciones>().Property(p => p.TotalGravado).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesJubilacionPensionRetiro>().Property(p => p.TotalUnaExhibicion).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesJubilacionPensionRetiro>().Property(p => p.TotalParcialidad).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesJubilacionPensionRetiro>().Property(p => p.MontoDiario).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesJubilacionPensionRetiro>().Property(p => p.IngresoAcumulable).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesJubilacionPensionRetiro>().Property(p => p.IngresoNoAcumulable).HasPrecision(18, 6);
 			b.Entity<NominaPercepcionesPercepcion>().Property(n => n.ImporteExento).HasPrecision(18, 6);
 			b.Entity<NominaPercepcionesPercepcion>().Property(n => n.ImporteGravado).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesPercepcionAccionesOTitulos>().Property(p => p.ValorMercado).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesPercepcionAccionesOTitulos>().Property(p => p.PrecioAlOtorgarse).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesPercepcionHorasExtra>().Property(p => p.ImportePagado).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesSeparacionIndemnizacion>().Property(p => p.TotalPagado).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesSeparacionIndemnizacion>().Property(p => p.UltimoSueldoMensOrd).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesSeparacionIndemnizacion>().Property(p => p.IngresoAcumulable).HasPrecision(18, 6);
+			b.Entity<NominaPercepcionesSeparacionIndemnizacion>().Property(p => p.IngresoNoAcumulable).HasPrecision(18, 6);
+			b.Entity<NominaReceptor>().Property(p => p.SalarioBaseCotApor).HasPrecision(18, 6);
+			b.Entity<NominaReceptor>().Property(p => p.SalarioDiarioIntegrado).HasPrecision(18, 6);
+			b.Entity<NominaReceptorSubContratacion>().Property(p => p.PorcentajeTiempo).HasPrecision(18, 6);
+
+			b.Entity<PagosPago>().Property(p => p.TipoCambioP).HasPrecision(18, 6);
+			b.Entity<PagosPago>().Property(p => p.Monto).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionado>().Property(p => p.EquivalenciaDR).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionado>().Property(p => p.ImpSaldoAnt).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionado>().Property(p => p.ImpPagado).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionado>().Property(p => p.ImpSaldoInsoluto).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionadoImpuestosDRRetencionDR>().Property(p => p.BaseDR).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionadoImpuestosDRRetencionDR>().Property(p => p.TasaOCuotaDR).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionadoImpuestosDRRetencionDR>().Property(p => p.ImporteDR).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionadoImpuestosDRTrasladoDR>().Property(p => p.BaseDR).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionadoImpuestosDRTrasladoDR>().Property(p => p.TasaOCuotaDR).HasPrecision(18, 6);
+			b.Entity<PagosPagoDoctoRelacionadoImpuestosDRTrasladoDR>().Property(p => p.ImporteDR).HasPrecision(18, 6);
+			b.Entity<PagosPagoImpuestosPRetencionP>().Property(p => p.ImporteP).HasPrecision(18, 6);
+			b.Entity<PagosPagoImpuestosPTrasladoP>().Property(p => p.BaseP).HasPrecision(18, 6);
+			b.Entity<PagosPagoImpuestosPTrasladoP>().Property(p => p.TasaOCuotaP).HasPrecision(18, 6);
+			b.Entity<PagosPagoImpuestosPTrasladoP>().Property(p => p.ImporteP).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalRetencionesIVA).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalRetencionesISR).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalRetencionesIEPS).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalTrasladosBaseIVA16).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalTrasladosImpuestoIVA16).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalTrasladosBaseIVA8).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalTrasladosImpuestoIVA8).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalTrasladosBaseIVA0).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalTrasladosImpuestoIVA0).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.TotalTrasladosBaseIVAExento).HasPrecision(18, 6);
+			b.Entity<PagosTotales>().Property(p => p.MontoTotalPagos).HasPrecision(18, 6);
 
 			b.Entity<TimbreFiscalDigital>().Property(n => n.Version).HasPrecision(18, 6);
 
