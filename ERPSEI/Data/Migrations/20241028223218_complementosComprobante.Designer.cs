@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241028223218_complementosComprobante")]
+    partial class complementosComprobante
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3529,17 +3532,12 @@ namespace ERPSEI.Data.Migrations
                     b.Property<int?>("NominaId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PagoId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("TimbreFiscalDigitalId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("NominaId");
-
-                    b.HasIndex("PagoId");
 
                     b.HasIndex("TimbreFiscalDigitalId");
 
@@ -5226,17 +5224,11 @@ namespace ERPSEI.Data.Migrations
                         .WithMany()
                         .HasForeignKey("NominaId");
 
-                    b.HasOne("ERPSEI.Data.Entities.SAT.Pagos20.Pagos", "Pago")
-                        .WithMany()
-                        .HasForeignKey("PagoId");
-
                     b.HasOne("ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11.TimbreFiscalDigital", "TimbreFiscalDigital")
                         .WithMany()
                         .HasForeignKey("TimbreFiscalDigitalId");
 
                     b.Navigation("Nomina");
-
-                    b.Navigation("Pago");
 
                     b.Navigation("TimbreFiscalDigital");
                 });
