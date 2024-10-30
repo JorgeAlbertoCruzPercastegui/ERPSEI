@@ -10,7 +10,7 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 		public int Id { get; set; }
 
 		[XmlElement("Deduccion")]
-		public NominaDeduccionesDeduccion[]? Deduccion { get; set; }
+		public List<NominaDeduccionesDeduccion>? Deduccion { get; set; }
 
 		[XmlAttribute]
 		public decimal TotalOtrasDeducciones { get; set; }

@@ -22,7 +22,7 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 
 		
 		[XmlAttribute(DataType = "date")]
-		public DateTime? FechaInicioRelLaboral { get; set; }
+		public DateTime FechaInicioRelLaboral { get; set; }
 
 		
 		[XmlIgnore]

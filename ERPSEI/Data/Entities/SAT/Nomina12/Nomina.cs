@@ -17,14 +17,16 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 
 		public NominaDeducciones? Deducciones { get; set; }
 
-		[XmlArray("OtroPago", IsNullable = false)]
-		public NominaOtroPago[]? OtrosPagos { get; set; }
+		[XmlArray("OtrosPagos", IsNullable = false)]
+		[XmlArrayItem(typeof(NominaOtroPago), ElementName = "OtroPago", IsNullable = false)]
+		public List<NominaOtroPago>? OtrosPagos { get; set; }
 
-		[XmlArray("Incapacidad", IsNullable = false)]
-		public NominaIncapacidad[]? Incapacidades { get; set; }
+		[XmlArray("Incapacidades", IsNullable = false)]
+		[XmlArrayItem(typeof(NominaIncapacidad), ElementName = "Incapacidad", IsNullable = false)]
+		public List<NominaIncapacidad>? Incapacidades { get; set; }
 
 		[XmlAttribute]
-		public decimal Version { get; set; }
+		public decimal Version { get; set; } = 1.2m;
 
 		[XmlAttribute]
 		public string? TipoNomina { get; set; }
@@ -49,11 +51,6 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 
 		[XmlAttribute]
 		public decimal TotalOtrosPagos { get; set; }
-
-		public Nomina()
-		{
-			this.Version = 1.2m;
-		}
 
 	}
 }

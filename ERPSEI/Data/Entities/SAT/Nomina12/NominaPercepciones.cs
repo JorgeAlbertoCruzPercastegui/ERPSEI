@@ -10,7 +10,7 @@ namespace ERPSEI.Data.Entities.SAT.Nomina12
 		public int Id { get; set; }
 
 		[XmlElement("Percepcion")]
-		public NominaPercepcionesPercepcion[]? Percepcion { get; set; }
+		public List<NominaPercepcionesPercepcion>? Percepcion { get; set; }
 
 		public NominaPercepcionesJubilacionPensionRetiro? JubilacionPensionRetiro { get; set; }
 

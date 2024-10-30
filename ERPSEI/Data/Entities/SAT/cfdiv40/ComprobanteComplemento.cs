@@ -2,6 +2,7 @@
 using System.Xml;
 using System.Xml.Serialization;
 using ERPSEI.Data.Entities.SAT.Nomina12;
+using ERPSEI.Data.Entities.SAT.Pagos20;
 using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
 
 namespace ERPSEI.Data.Entities.SAT.cfdiv40
@@ -24,5 +25,8 @@ namespace ERPSEI.Data.Entities.SAT.cfdiv40
 
 		[XmlIgnore]
 		public virtual TimbreFiscalDigital? TimbreFiscalDigital { get; set; }
+
+		[XmlIgnore]
+		public virtual Pagos? Pago { get; set; }
 	}
 }
