@@ -1590,8 +1590,8 @@ function onConsultarComprobantesClick() {
     let inpFechaFinal = document.getElementById("inpFiltroFechaFinModalDComprobantes");
 
     let oParams = {
-        fechaInicio: inpFechaInicial.value,
-        fechaFin: inpFechaFinal.value
+        FechaInicioModalDComprobantes: inpFechaInicial.value,
+        FechaFinModalDComprobantes: inpFechaFinal.value
     };
 
     //Resetea el valor de los filtros.
@@ -1627,6 +1627,77 @@ function onConsultarComprobantesClick() {
         postOptions
     );
 }
+
+function onGuardarMovimientos() {
+    // Validación para asegurar que haya datos en la tabla
+    $("#theForm").validate();
+    let valid = $("#theForm").valid();
+    if (!valid) { return; }
+
+    // Contenedor de resumen de validación
+    let summaryContainer = document.getElementById("saveValidationSummaryM");
+    summaryContainer.innerHTML = "";
+
+    // Obtén todos los datos de la tabla `tableCardMovimientos`
+    var datosMovimientos = $('#tableCardMovimientos').bootstrapTable('getData');
+
+    if (datosMovimientos.length === 0) {
+        summaryContainer.innerHTML = `<ul><li>No hay datos para subir a la base de datos.</li></ul>`;
+        return;
+    }
+
+    // Transformar los datos para que coincidan con la entidad MovimientoBancario
+    let movimientosParaEnviar = datosMovimientos.map(mov => {
+        let importe = mov.Cargos ? parseFloat(mov.Cargos) : parseFloat(mov.Abonos);
+
+        return {
+            Fecha: mov.Fecha,
+            Descripción: mov.Descripción,
+            Importe: importe,
+            Conciliado: false // Se inicializa como no conciliado
+        };
+    });
+
+    console.table(movimientosParaEnviar);
+
+    // Parámetros que se enviarán en la solicitud
+    let oParams = { movimientos: movimientosParaEnviar };
+
+    // Llamada AJAX utilizando `doAjax`
+    doAjax(
+        "/ERP/Conciliaciones/GuardarMovimientosImportados",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    let summary = ``;
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                }
+                showError("Error al guardar movimientos", resp.mensaje);
+                return;
+            }
+
+            // Acción al cerrar
+            $('#ImportarMovimientosModal').modal('hide');
+
+            // Refrescar la vista
+            let e = document.querySelector("[name='refresh']");
+            e.click();
+
+            showSuccess("Movimientos guardados", resp.mensaje);
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
+
+
+
 
 //Método para importar la información del excel y pdf
 function onImportarMovimientosBancariosClick() {
@@ -1727,54 +1798,132 @@ function importarMovimientosDesdePDF(file, selectedBank) {
     reader.onload = function (e) {
         var typedArray = new Uint8Array(e.target.result);
 
-        // Utilizar pdfjs-dist para leer el archivo PDF
         pdfjsLib.getDocument(typedArray).promise.then(function (pdf) {
             var numPages = pdf.numPages;
             var extractedText = '';
-
-            // Leer todas las páginas del PDF
             var promises = [];
+
             for (var i = 1; i <= numPages; i++) {
                 promises.push(pdf.getPage(i).then(function (page) {
                     return page.getTextContent().then(function (textContent) {
                         textContent.items.forEach(function (item) {
-                            extractedText += item.str + ' '; // Concatenar el texto extraído
+                            extractedText += item.str + ' ';
                         });
                     });
                 }));
             }
 
-            // Esperar a que todas las páginas se hayan procesado
             Promise.all(promises).then(function () {
-                // Detectar el banco en el texto extraído
                 var bancoDetectado = detectarBanco(extractedText);
-
-                // Comparar el banco detectado con el banco seleccionado
                 if (bancoDetectado.toLowerCase() === selectedBank.toLowerCase()) {
                     var confirmation = confirm(`Banco detectado y seleccionado: ${bancoDetectado}. ¿Desea continuar?`);
 
                     if (confirmation) {
-                        // Si el usuario hace clic en "Aceptar", vamos a exportar los datos del pdf al Cardview
-                        // Aquí puedes mostrar el texto extraído en un alert
-                        //alert("Texto extraído del PDF:\n" + extractedText); // Mostrar el texto extraído
-                        exportToTxt(extractedText); // Llama a la función pasando el texto extraído
+                        const processedData = [];
+                        const lines = extractedText.split(/\r\n|\r|\n/);
+
+                        let currentTraSection = '';
+                        let currentDocSection = '';
+                        let currentIntSection = '';
+                        let insideTraSection = false;
+                        let insideDocSection = false;
+                        let insideIntSection = false;
+                        let ignoreSection = false;
+
+                        lines.forEach((line, index) => {
+                            // Eliminar el saldo final del registro, si existe
+                            line = line.replace(/\s\d{1,3}(?:,\d{3})*(\.\d{2})?\s*$/, '');
+
+                            const conceptoIndex = line.indexOf("CONCEPTO");
+                            if (conceptoIndex !== -1) {
+                                line = line.slice(conceptoIndex);
+                            }
+
+                            if (ignoreSection) {
+                                if (/TRA|DOC|INT/.test(line)) {
+                                    ignoreSection = false;
+                                } else {
+                                    return;
+                                }
+                            }
+
+                            if (line.includes("Régimen Fiscal del Emisor:") && line.includes(" Cliente :")) {
+                                ignoreSection = false;
+                                return;
+                            }
+
+                            let parts = line.split(/TRA|DOC|INT/);
+
+                            parts.forEach((part, i) => {
+                                if (i > 0) {
+                                    if (line.includes("TRA")) {
+                                        if (insideTraSection) processedData.push([currentTraSection.trim()]);
+                                        currentTraSection = 'TRA' + part;
+                                        insideTraSection = true;
+                                        insideDocSection = false;
+                                        insideIntSection = false;
+                                    } else if (line.includes("DOC")) {
+                                        if (insideDocSection) processedData.push([currentDocSection.trim()]);
+                                        currentDocSection = 'DOC' + part;
+                                        insideDocSection = true;
+                                        insideTraSection = false;
+                                        insideIntSection = false;
+                                    } else if (line.includes("INT")) {
+                                        if (insideIntSection) processedData.push([currentIntSection.trim()]);
+                                        currentIntSection = 'INT' + part;
+                                        insideIntSection = true;
+                                        insideTraSection = false;
+                                        insideDocSection = false;
+                                    }
+                                } else {
+                                    if (insideTraSection) currentTraSection += ' ' + part;
+                                    if (insideDocSection) currentDocSection += ' ' + part;
+                                    if (insideIntSection) currentIntSection += ' ' + part;
+                                }
+                            });
+
+                            const extractDayAndCleanLine = (section) => {
+                                const match = section.match(/(\d{2})\s+\d+\.\d{2}/);
+                                if (match) {
+                                    const day = match[1];
+                                    const cleanedSection = section.replace(/^\d{2}\s+/, '');
+                                    return [day, cleanedSection];
+                                }
+                                return [null, section];
+                            };
+
+                            if (index === lines.length - 1) {
+                                if (currentTraSection) {
+                                    const [day, cleanedSection] = extractDayAndCleanLine(currentTraSection);
+                                    if (day) processedData.push([day, cleanedSection.trim()]);
+                                }
+                                if (currentDocSection) {
+                                    const [day, cleanedSection] = extractDayAndCleanLine(currentDocSection);
+                                    if (day) processedData.push([day, cleanedSection.trim()]);
+                                }
+                                if (currentIntSection) {
+                                    const [day, cleanedSection] = extractDayAndCleanLine(currentIntSection);
+                                    if (day) processedData.push([day, cleanedSection.trim()]);
+                                }
+                            }
+                        });
+
+                        const worksheet = XLSX.utils.aoa_to_sheet(processedData);
+                        const workbook = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
+                        XLSX.writeFile(workbook, 'Banregio.xlsx');
+
                     } else {
-                        // Si el usuario hace clic en "Cancelar"
                         console.log('El usuario ha cancelado la operación.');
-                        // Aquí puedes detener o deshacer alguna operación si es necesario.
                     }
-                }
-                else {
+                } else {
                     alert(`Banco detectado: ${bancoDetectado}, pero seleccionaste: ${selectedBank}. \nFavor de seleccionar el correcto.`);
                 }
-
-                // Aquí puedes continuar con el procesamiento del PDF si se detecta el banco.
-                console.log('Log: ' + extractedText); // Mostrar el texto extraído para depuración
+                console.log('Log: ' + extractedText);
             });
         });
     };
-
-    reader.readAsArrayBuffer(file); // Leer el archivo PDF como ArrayBuffer
+    reader.readAsArrayBuffer(file);
 }
 
 function detectarBanco(extractedText) {
@@ -1814,140 +1963,6 @@ function dividirConceptoPorPalabrasClave(concepto) {
 
     return concepto;
 }
-// Función para exportar texto extraído a un archivo .txt
-function exportToTxt(extractedText) {
-    if (!extractedText || extractedText.trim() === '') {
-        alert("No hay texto extraído para exportar.");
-        return;
-    }
-
-    // Crear un array para almacenar las líneas procesadas
-    const processedData = [];
-
-    // Dividir el texto extraído en líneas
-    const lines = extractedText.split(/\r\n|\r|\n/);
-
-    let currentTraSection = '';
-    let currentDocSection = '';
-    let currentIntSection = '';
-    let insideTraSection = false; // Para saber si estamos en una sección TRA
-    let insideDocSection = false; // Para saber si estamos en una sección DOC
-    let insideIntSection = false; // Para saber si estamos en una sección INT
-    let ignoreSection = false; // Para saber si debemos ignorar líneas (después de "Régimen Fiscal del Emisor:")
-
-    lines.forEach((line, index) => {
-        // Ignorar lo que hay antes de la palabra "CONCEPTO"
-        const conceptoIndex = line.indexOf("CONCEPTO");
-        if (conceptoIndex !== -1) {
-            // Si se encuentra "CONCEPTO", eliminar lo que hay antes
-            line = line.slice(conceptoIndex);
-        }
-
-        // Comprobar si estamos en la sección a ignorar
-        if (ignoreSection) {
-            // Si encontramos "TRA", "DOC" o "INT", salir de la sección a ignorar
-            if (/TRA|DOC|INT/.test(line)) {
-                ignoreSection = false; // Dejar de ignorar
-            } else {
-                return; // Ignorar la línea actual
-            }
-        }
-
-        // Verificar si encontramos "Régimen Fiscal del Emisor:"
-        if (line.includes("Régimen Fiscal del Emisor:")) {
-            ignoreSection = true; // Iniciar el estado de ignorar
-            return; // Ignorar la línea actual
-        }
-
-        // Buscar todas las ocurrencias de "TRA", "DOC" e "INT" en la línea
-        let parts = line.split(/TRA|DOC|INT/);
-
-        parts.forEach((part, i) => {
-            if (i > 0) {
-                if (line.includes("TRA")) {
-                    if (insideTraSection) {
-                        // Si estamos en una sección TRA, agregar lo acumulado
-                        processedData.push(currentTraSection.trim());
-                    }
-                    // Agregar "TRA" antes de continuar
-                    currentTraSection = 'TRA' + part; // Iniciar la nueva sección con "TRA"
-                    insideTraSection = true; // Comenzamos una nueva sección TRA
-                    insideDocSection = false; // Asegurarnos de que no estamos en DOC
-                    insideIntSection = false; // Asegurarnos de que no estamos en INT
-                } else if (line.includes("DOC")) {
-                    if (insideDocSection) {
-                        // Si estamos en una sección DOC, agregar lo acumulado
-                        processedData.push(currentDocSection.trim());
-                    }
-                    // Agregar "DOC" antes de continuar
-                    currentDocSection = 'DOC' + part; // Iniciar la nueva sección con "DOC"
-                    insideDocSection = true; // Comenzamos una nueva sección DOC
-                    insideTraSection = false; // Asegurarnos de que no estamos en TRA
-                    insideIntSection = false; // Asegurarnos de que no estamos en INT
-                } else if (line.includes("INT")) {
-                    if (insideIntSection) {
-                        // Si estamos en una sección INT, agregar lo acumulado
-                        processedData.push(currentIntSection.trim());
-                    }
-                    // Agregar "INT" antes de continuar
-                    currentIntSection = 'INT' + part; // Iniciar la nueva sección con "INT"
-                    insideIntSection = true; // Comenzamos una nueva sección INT
-                    insideTraSection = false; // Asegurarnos de que no estamos en TRA
-                    insideDocSection = false; // Asegurarnos de que no estamos en DOC
-                }
-            } else {
-                // Si estamos en una sección TRA, seguir concatenando
-                if (insideTraSection) {
-                    currentTraSection += ' ' + part;
-                }
-                // Si estamos en una sección DOC, seguir concatenando
-                if (insideDocSection) {
-                    currentDocSection += ' ' + part;
-                }
-                // Si estamos en una sección INT, seguir concatenando
-                if (insideIntSection) {
-                    currentIntSection += ' ' + part;
-                }
-            }
-        });
-
-        // Si es la última línea, agregar las últimas secciones
-        if (index === lines.length - 1) {
-            if (currentTraSection) {
-                processedData.push(currentTraSection.trim());
-            }
-            if (currentDocSection) {
-                processedData.push(currentDocSection.trim());
-            }
-            if (currentIntSection) {
-                processedData.push(currentIntSection.trim());
-            }
-        }
-    });
-
-    // Unir todas las líneas procesadas en una sola cadena con doble salto de línea
-    const outputText = processedData
-        .map((line, idx) => `${idx + 1}.- ${line}`) // Añadir número secuencial
-        .join('\n');
-
-    // Crear un Blob para el archivo de texto
-    const blob = new Blob([outputText], { type: 'text/plain' });
-
-    // Crear un URL para el Blob
-    const url = URL.createObjectURL(blob);
-
-    // Crear un elemento <a> para descargar el archivo automáticamente
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Banregio.txt';
-
-    // Simular el clic en el enlace para iniciar la descarga
-    a.click();
-
-    // Revocar el objeto URL para liberar memoria
-    URL.revokeObjectURL(url);
-}
-
 function exportarToExcel(extractedText) {
 
     if (!extractedText || extractedText.trim() === '') {

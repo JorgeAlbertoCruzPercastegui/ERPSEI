@@ -144,19 +144,17 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
         {
             return await _db.Comprobantes.Where(p => $"{(p.Serie ?? string.Empty).ToLower()}{(p.Folio ?? string.Empty).ToLower()}".Equals(name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefaultAsync();
         }
-        public async Task<List<Comprobante>> GetByDateRangeAsync(DateTime fechaInicio, DateTime fechaFin)
+        public async Task<List<Comprobante>> GetByDateRangeAsync(DateTime? fechaInicio, DateTime? fechaFin)
         {
-            return await _db.Comprobantes
-                .Where(c => DateTime.ParseExact(c.Fecha, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) >= fechaInicio &&
-                            DateTime.ParseExact(c.Fecha, "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) <= fechaFin)
+            List<Comprobante> ls = await _db.Comprobantes
                 .Include(c => c.Complemento)
                 .ThenInclude(e => e.TimbreFiscalDigital)
                 .ToListAsync();
-        }
 
-        public Task<List<Comprobante>> GetByDateRangeAsync(DateTime? fechaInicio, DateTime? fechaFin)
-        {
-            throw new NotImplementedException();
+            ls = ls.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) >= fechaInicio);
+            ls = ls.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) <= fechaFin);
+
+            return ls;
         }
     }
 }

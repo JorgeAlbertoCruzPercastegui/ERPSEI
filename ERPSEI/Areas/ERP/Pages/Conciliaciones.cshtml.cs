@@ -42,6 +42,9 @@ using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
 using static ERPSEI.Areas.ERP.Pages.PrefacturasModel;
 using Microsoft.EntityFrameworkCore;
+using ERPSEI.Data.Managers.SAT.Catalogos;
+using ERPSEI.Data.Entities.SAT.Catalogos;
+using System.Globalization;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -137,18 +140,35 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             [Display(Name = "FechaInicioModalDComprobantesField")]
             [Required(ErrorMessage = "Required")]
-            [DataType(DataType.DateTime)]
-            public DateTime? FechaInicioModalDComprobantes { get; set; }
+            public string? FechaInicioModalDComprobantes { get; set; }
 
             [Display(Name = "FechaFinModalDComprobantesField")]
             [Required(ErrorMessage = "Required")]
-            [DataType(DataType.DateTime)]
-            public DateTime? FechaFinModalDComprobantes { get; set; }
+            public string? FechaFinModalDComprobantes { get; set; }
         }
 
         [BindProperty]
         public Conciliacion? ConciliacionesList { get; set; }
         public Banco BancoList { get; set; }
+
+        public MovimientoBancario movimientoBancario { get; set; }
+        public class MovimientoBancario 
+        {
+            [Display(Name = "Fecha")]
+            public DateTime? Fecha { get; set; }
+
+            [Display(Name = "Descripción")]
+            public string? Descripcion { get; set; }
+
+            [Display(Name = "Importe")]
+            public decimal? Importe { get; set; }
+
+            [Display(Name = "Banco")]
+            public string Banco { get; set; } = string.Empty;
+
+            [Display(Name = "Conciliado")]
+            public bool Conciliado { get; set; } = false;
+        }
 
         public ConciliacionesModel(
             IStringLocalizer<ConciliacionesModel> _stringLocalizer,
@@ -183,6 +203,7 @@ namespace ERPSEI.Areas.ERP.Pages
             localizer = _localizer;
             db = _db;
 
+            movimientoBancario = new MovimientoBancario();
             BancoList = new Banco();
             InputFiltro = new InputFiltroModel();
             InputFiltroModalDComprobantes = new InputFiltroModelDComprobantes();
@@ -269,7 +290,6 @@ namespace ERPSEI.Areas.ERP.Pages
             string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
             return new JsonResult(jsonResponse);
         }
-
 
         public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
         {
@@ -385,7 +405,77 @@ namespace ERPSEI.Areas.ERP.Pages
             return jsonResponse;
         }
 
-        /*public async Task<JsonResult> OnPostFiltrarComprobantesFechas()
+        public async Task<JsonResult> OnPostGuardarMovimientos()
+        {
+            ServerResponse resp = new(true, stringLocalizer["MovimientoSavedUnsuccessfully"]);
+
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    resp.Errores = ModelState.Keys.SelectMany(k => ModelState[k]?.Errors ?? []).Select(m => m.ErrorMessage).ToArray();
+                }
+                else
+                {
+                    // Crear un nuevo registro de movimiento bancario
+                    var nuevoMovimiento = new ERPSEI.Data.Entities.Conciliaciones.MovimientoBancario
+                    {
+                        Fecha = movimientoBancario.Fecha,             // Fecha importada del Excel
+                        Descripcion = movimientoBancario.Descripcion, // Descripción importada del Excel
+                        Importe = movimientoBancario.Importe,         // Importe (cargos) importado del Excel
+                        Conciliado = false               // Inicialmente no conciliado
+                    };
+
+                    await db.MovimientosBancarios.AddAsync(nuevoMovimiento); // Agregar a la base de datos
+                    await db.SaveChangesAsync(); // Guardar cambios
+
+                    resp.TieneError = false;
+                    resp.Mensaje = stringLocalizer["MovimientoSavedSuccessfully"];
+                }
+            }
+            catch (Exception ex)
+            {
+                resp.TieneError = true;
+                resp.Mensaje = stringLocalizer["MovimientoSavedUnsuccessfully"];
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> GuardarMovimientosImportados([FromBody] List<ERPSEI.Data.Entities.Conciliaciones.MovimientoBancario> movimientos)
+        {
+            ServerResponse resp = new(true, "Movimientos guardados sin éxito.");
+
+            try
+            {
+                if (movimientos == null || movimientos.Count == 0)
+                {
+                    resp.Mensaje = "No se recibieron movimientos para guardar.";
+                    return new JsonResult(resp);
+                }
+
+                foreach (var movimiento in movimientos)
+                {
+                    movimiento.Conciliado = false; // Ajuste necesario si aplica
+                    db.MovimientosBancarios.Add(movimiento); // Agregar cada movimiento a la base de datos
+                }
+
+                await db.SaveChangesAsync();
+
+                resp.TieneError = false;
+                resp.Mensaje = "Movimientos guardados exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                resp.Mensaje = "Ocurrió un error al guardar los movimientos.";
+                logger.LogError(ex, "Error al guardar movimientos importados.");
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> OnPostFiltrarComprobantesFechas()
         {
             // Inicializar la respuesta con un mensaje de error por defecto
             ServerResponse resp = new(true, stringLocalizer["ComprobantesFiltradosUnsuccessfully"]);
@@ -408,15 +498,17 @@ namespace ERPSEI.Areas.ERP.Pages
 
         private async Task<string> GetConsultarComprobantes(InputFiltroModelDComprobantes? filtro = null)
         {
-            List<object> jsonComprobantes = [];
+            List<object> jsonComprobantes = new List<object>();
             List<Comprobante> comprobantes;
+            DateTime? fechaI = DateTime.ParseExact(filtro?.FechaInicioModalDComprobantes?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+            DateTime? fechaF = DateTime.ParseExact(filtro?.FechaFinModalDComprobantes ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture); ;
 
             // Aplicar los filtros de fechas en la llamada a GetAllAsync
             if (filtro != null)
             {
                 comprobantes = await comprobanteManager.GetByDateRangeAsync(
-                    filtro.FechaInicioModalDComprobantes.Value,
-                    filtro.FechaFinModalDComprobantes.Value);
+                    fechaI,
+                    fechaF);
             }
             else
             {
@@ -446,7 +538,7 @@ namespace ERPSEI.Areas.ERP.Pages
             // Convertir la lista de comprobantes a un JSON string
             string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
             return jsonResponse;
-        }*/
+        }
 
         public async Task<JsonResult> OnGetMovimientosList()
         {

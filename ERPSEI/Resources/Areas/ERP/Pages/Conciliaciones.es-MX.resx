@@ -264,6 +264,12 @@
   <data name="ImportButtonTitle" xml:space="preserve">
     <value>Importar</value>
   </data>
+  <data name="MovimientoSavedSuccessfully" xml:space="preserve">
+    <value>Movimientos importados exitosamente</value>
+  </data>
+  <data name="MovimientoSavedUnsuccessfully" xml:space="preserve">
+    <value>Error al guardar los movimientos bancarios</value>
+  </data>
   <data name="NewDialogTitle" xml:space="preserve">
     <value>Nuevo registro</value>
   </data>
