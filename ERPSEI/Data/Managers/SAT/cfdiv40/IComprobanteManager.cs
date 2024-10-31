@@ -18,5 +18,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			DateTime? fechaInicio, 
 			DateTime? fechaFin
 			);
+
+        Task<List<Comprobante>> GetByRFCAsync(string rfc);
+
     }
 }

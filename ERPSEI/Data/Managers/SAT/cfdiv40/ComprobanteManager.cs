@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.SAT.cfdiv40;
+using iText.Commons.Actions.Contexts;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 
@@ -155,6 +156,16 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
             ls = ls.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) <= fechaFin);
 
             return ls;
+        }
+
+        public async Task<List<Comprobante>> GetByRFCAsync(string rfc)
+        {
+            return await _db.Comprobantes
+                .Include(c => c.Receptor)
+                .Include(c => c.Emisor)
+                .Include(c => c.Complemento).ThenInclude(e => e.TimbreFiscalDigital)
+                .Where(c => c.Receptor.Rfc == rfc || c.Emisor.Rfc == rfc)
+                .ToListAsync();
         }
     }
 }

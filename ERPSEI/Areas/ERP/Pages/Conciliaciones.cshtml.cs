@@ -45,6 +45,7 @@ using Microsoft.EntityFrameworkCore;
 using ERPSEI.Data.Managers.SAT.Catalogos;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using System.Globalization;
+using iText.Commons.Actions.Contexts;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -125,6 +126,9 @@ namespace ERPSEI.Areas.ERP.Pages
             [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Cliente { get; set; } = string.Empty;
+
+            [DataType(DataType.Text)]
+            public string? rfc { get; set; } = string.Empty;
 
             [DataType(DataType.Text)]
             [Display(Name = "DescripcionField")]
@@ -278,7 +282,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 // Construir el JSON con el UUID y los demás campos
                 jsonComprobantes.Add("{" +
-                    $"\"Id\": \"{comp.Id}\", " +
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha}\", " +
@@ -290,6 +293,48 @@ namespace ERPSEI.Areas.ERP.Pages
             string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
             return new JsonResult(jsonResponse);
         }
+
+        public async Task<JsonResult> OnGetComprobantesListEmpresa(string? rfc = null)
+        {
+            List<string> jsonComprobantes = new List<string>();
+            List<Comprobante> comprobantes;
+
+            // Captura solo los caracteres antes del primer espacio en el RFC, si existe
+            string rfcFiltrado = rfc?.Split(' ')[0] ?? string.Empty;
+
+            if (!string.IsNullOrEmpty(rfcFiltrado))
+            {
+                // Filtra los comprobantes según el RFC filtrado
+                comprobantes = await comprobanteManager.GetByRFCAsync(rfcFiltrado);
+            }
+            else
+            {
+                // Si no se proporciona RFC, obtiene todos los comprobantes
+                comprobantes = await comprobanteManager.GetAllAsync();
+            }
+
+            foreach (Comprobante comp in comprobantes)
+            {
+                string uuid = string.Empty;
+
+                if (comp.Complemento != null && comp.Complemento.TimbreFiscalDigital != null)
+                {
+                    uuid = comp.Complemento.TimbreFiscalDigital.UUID ?? string.Empty;
+                }
+
+                jsonComprobantes.Add("{" +
+                    $"\"Serie\": \"{comp.Serie}\", " +
+                    $"\"Folio\": \"{comp.Folio}\", " +
+                    $"\"Fecha\": \"{comp.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"UUID\": \"{uuid}\", " +
+                    $"\"Total\": \"{comp.Total}\"" +
+                    "}");
+            }
+
+            string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
+            return new JsonResult(jsonResponse);
+        }
+
 
         public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
         {
@@ -617,16 +662,9 @@ namespace ERPSEI.Areas.ERP.Pages
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
             try
             {
-                /*if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
-                {*/
                 resp.Datos = await GetClientesEmpresasSuggestion(texto);
                 resp.TieneError = false;
                 resp.Mensaje = localizer["ConsultadoSuccessfully"];
-                /*}
-                else
-                {
-                    resp.Mensaje = localizer["AccesoDenegado"];
-                }*/
             }
             catch (Exception ex)
             {
@@ -635,6 +673,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
         private async Task<string> GetClientesEmpresasSuggestion(string texto)
         {
             string jsonResponse;
