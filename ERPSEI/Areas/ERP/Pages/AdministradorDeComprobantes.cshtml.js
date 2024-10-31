@@ -54,6 +54,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (window.tipoId == "1") {
+        switch (cultureName) {
+            case 'en-US':
+                $("#hTitle").html(`${emitidosTitle} ${title}`);
+                break;
+            default:
+                $("#hTitle").html(`${title} ${emitidosTitle}`);
+        }
+
         //Para los comprobantes emitidos, no se muestra el filtro de emisor pero si el de receptor
         $("#inpFiltroEmisor").parent().parent().hide();
         $("#inpFiltroReceptor").parent().parent().show();
@@ -64,6 +72,14 @@ document.addEventListener('DOMContentLoaded', function () {
         $("#selFiltroTipoComprobante").val("I");
     }
     else if (window.tipoId == "2") {
+        switch (cultureName) {
+            case 'en-US':
+                $("#hTitle").html(`${recibidosTitle} ${title}`);
+                break;
+            default:
+                $("#hTitle").html(`${title} ${recibidosTitle}`);
+        }
+
         //Para los comprobantes recibidos, no se muestra el filtro de receptor pero si el de emisor
         $("#inpFiltroReceptor").parent().parent().hide();
         $("#inpFiltroEmisor").parent().parent().show();
