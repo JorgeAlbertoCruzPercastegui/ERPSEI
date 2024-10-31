@@ -27,8 +27,13 @@ document.addEventListener("DOMContentLoaded", function (event) {
     });
 
     dlgConciliacion.addEventListener('shown.bs.modal', function (event) {
-        autoCompletar("#inpConciliacionClienteId");
-        initTableComprobantes()
+        autoCompletar("#inpConciliacionClienteId", {
+            select: function (Element, item) {
+                buscarComprobantesPorRFC(item.rfc);
+            }
+        });
+        initTableComprobantes(
+        )
     });
 
     initTable();
@@ -96,6 +101,35 @@ document.addEventListener("DOMContentLoaded", function (event) {
         }
     });*/
 });
+
+// Nueva función para buscar comprobantes por RFC y cargar en tableCardView
+function buscarComprobantesPorRFC(rfc) {
+    if (!rfc) {
+        showError("Error", "Por favor, selecciona una empresa válida.");
+        return;
+    }
+
+    let oParams = { rfc: rfc };
+
+    doAjax(
+        "/ERP/Conciliaciones/ComprobantesListEmpresas",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                showError("Buscar Comprobantes", resp.mensaje);
+                return;
+            }
+
+            $('#tableCardComprobantes').bootstrapTable('load', responseHandler(resp.datos));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
 
 async function onImportarMovimientosBancariosClick(event) {
     const file = event.target.files[0];

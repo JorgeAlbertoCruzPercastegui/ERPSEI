@@ -89,9 +89,6 @@ function autoCompletar(selector, oExtend) {
 			// Asigna atributos 'data' al elemento con atributos del item seleccionado
 			itemDOM.data(ui.item);
 
-			// Llama a la función para buscar comprobantes usando el RFC seleccionado
-			buscarComprobantesPorRFC(ui.item.value);  // Enviar el RFC
-
 			// Invoca la función personalizada para procesar el elemento seleccionado
 			if (typeof oExtend.select == 'function' || typeof eval(itemDOM.attr('onselect')) == 'function') {
 				let exec = typeof oExtend.select == 'function' ? oExtend.select : eval(itemDOM.attr('onselect'));
@@ -110,43 +107,7 @@ function autoCompletar(selector, oExtend) {
 			if (typeof oExtend.change == 'function') oExtend.change(itemDOM, ui.item);
 		}
 	}).addClass(classIcon);
-} //function autoCompletar
-
-// Nueva función para buscar comprobantes por RFC y cargar en tableCardView
-function buscarComprobantesPorRFC(rfc) {
-	if (!rfc) {
-		showError("Error", "Por favor, selecciona una empresa válida.");
-		return;
-	}
-
-	// Captura solo los caracteres antes del primer espacio en el RFC
-	let rfcFiltrado = rfc.split(' ')[0];
-
-	let oParams = { rfc: rfcFiltrado };
-
-	// Realiza una solicitud AJAX para buscar los comprobantes
-	$.ajax({
-		url: "/ERP/Conciliaciones/ComprobantesListEmpresa",  // Asegúrate de que la ruta sea correcta
-		type: "GET",
-		data: oParams,
-		success: function (resp) {
-			console.log(resp);  // Verifica el contenido de la respuesta
-			if (resp.tieneError) {
-				showError("Error", resp.mensaje);
-				return;
-			}
-
-			// Carga los datos en la tabla
-			$('#tableCardComprobantes').bootstrapTable('load', resp.datos);
-			//$('#tableCardComprobantes').bootstrapTable('load', responseHandler(resp.datos));
-
-		},
-		error: function (error) {
-			showError("Error", "Hubo un problema al buscar los comprobantes.");
-		}
-	});
 }
-
 
 /**
 * Este método permite deshabilitar componentes de la UI mediante un selector

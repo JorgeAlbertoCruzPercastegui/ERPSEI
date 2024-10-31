@@ -294,18 +294,35 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonResponse);
         }
 
-        public async Task<JsonResult> OnGetComprobantesListEmpresa(string? rfc = null)
+        public async Task<JsonResult> OnPostComprobantesListEmpresas()
+        {
+            // Inicializar la respuesta con mensaje de error por defecto
+            ServerResponse resp = new(true, stringLocalizer["ComprobantesFiltradosUnsuccessfully"]);
+
+            try
+            {
+                resp.Datos = await GetComprobantesListEmpresas(InputFiltroModalAgregar.rfc);
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["ComprobantesFiltradosSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                // Registrar el error en el log
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task<string> GetComprobantesListEmpresas(string? rfc = null)
         {
             List<string> jsonComprobantes = new List<string>();
             List<Comprobante> comprobantes;
 
-            // Captura solo los caracteres antes del primer espacio en el RFC, si existe
-            string rfcFiltrado = rfc?.Split(' ')[0] ?? string.Empty;
-
-            if (!string.IsNullOrEmpty(rfcFiltrado))
+            if (!string.IsNullOrEmpty(rfc))
             {
                 // Filtra los comprobantes según el RFC filtrado
-                comprobantes = await comprobanteManager.GetByRFCAsync(rfcFiltrado);
+                comprobantes = await comprobanteManager.GetByRFCAsync(rfc);
             }
             else
             {
@@ -326,18 +343,19 @@ namespace ERPSEI.Areas.ERP.Pages
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"FechaJS\": \"{comp.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
                     $"\"UUID\": \"{uuid}\", " +
                     $"\"Total\": \"{comp.Total}\"" +
                     "}");
             }
 
             string jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
-            return new JsonResult(jsonResponse);
+            return jsonResponse;
         }
 
 
-        public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
-        {
+            public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
+            {
             ServerResponse resp = new(true, stringLocalizer["ConciliacionesDeletedUnsuccessfully"]);
             try
             {
@@ -450,7 +468,7 @@ namespace ERPSEI.Areas.ERP.Pages
             return jsonResponse;
         }
 
-        public async Task<JsonResult> OnPostGuardarMovimientos()
+        /*public async Task<JsonResult> OnPostGuardarMovimientos()
         {
             ServerResponse resp = new(true, stringLocalizer["MovimientoSavedUnsuccessfully"]);
 
@@ -518,7 +536,7 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(resp);
-        }
+        }*/
 
         public async Task<JsonResult> OnPostFiltrarComprobantesFechas()
         {
@@ -688,8 +706,9 @@ namespace ERPSEI.Areas.ERP.Pages
                     string desc = $"{e.RFC} - {e.RazonSocial}";
                     jsonEmpresas.Add($"{{" +
                                         $"\"id\": \"{e.Id}\", " +
-                                        $"\"value\": \"{desc}\", " +
-                                        $"\"label\": \"{desc}\"" +
+                                        $"\"value\": \"{e.RazonSocial}\", " +
+                                        $"\"label\": \"{desc}\", " +
+                                        $"\"rfc\": \"{e.RFC}\""+
                                     $"}}");
                 }
             }
