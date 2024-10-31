@@ -840,7 +840,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						if (idComprobante >= 1)
 						{
 							//Obtiene los datos del comprobante
-							Comprobante? c = await comprobanteManager.GetByIdAsync(idComprobante);
+							Comprobante? c = await comprobanteManager.GetValidatableComprobanteByIdAsync(idComprobante);
 
 							if (c != null){ 
 								respValidacion = await ValidarComprobante(c, wsConsultaEstatus);
