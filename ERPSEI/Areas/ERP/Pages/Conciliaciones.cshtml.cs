@@ -282,6 +282,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 // Construir el JSON con el UUID y los demás campos
                 jsonComprobantes.Add("{" +
+                    $"\"Id\": \"{comp.Id}\", " +
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha}\", " +
@@ -340,6 +341,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 }
 
                 jsonComprobantes.Add("{" +
+                    $"\"Id\": \"{comp.Id}\", " +
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
@@ -589,6 +591,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 // Añadir el comprobante a la lista en formato JSON
                 jsonComprobantes.Add("{" +
+                    $"\"Id\": \"{comp.Id}\", " +
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha:dd/MM/yyyy HH:mm:ss}\", " +

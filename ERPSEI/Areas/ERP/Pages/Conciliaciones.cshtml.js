@@ -333,6 +333,13 @@ function initTableComprobantes() {
         method: 'get',
         columns: [
             {
+                title: "Id",
+                field: "Id",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
                 title: "Serie",
                 field: "Serie",
                 align: "center",
@@ -663,7 +670,7 @@ function actualizarContadorSeleccionados(checkbox, totalComprobanteFormateado) {
 }
 
 // Función para pasar los movimientos seleccionados al `tableResult`
-function conciliarSeleccionados(totalComprobanteFormateado) {
+/*function conciliarSeleccionados(totalComprobanteFormateado) {
     let totalCargosSeleccionados = parseFloat(document.getElementById('totalCargosSeleccionados').innerText);
 
     // Verificar si el total seleccionado es igual al total del comprobante
@@ -687,7 +694,7 @@ function conciliarSeleccionados(totalComprobanteFormateado) {
         //alert(mensaje + " Por favor, seleccione los movimientos correctos.");
         showModal(mensaje + " Por favor, seleccione los movimientos correctos.");
     }
-}
+}*/
 
 // Conciliación en automático
 function conciliarAutomatico() {
