@@ -160,6 +160,16 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			return lc;
 		}
 
+		public async Task<Comprobante?> GetValidatableComprobanteByIdAsync(int id)
+		{
+			return await _db.Comprobantes
+				.Where(e => e.Id == id)
+				.Include(e => e.Complemento).ThenInclude(c => c.TimbreFiscalDigital)
+				.Include(e => e.Emisor)
+				.Include(e => e.Receptor)
+				.FirstOrDefaultAsync();
+		}
+
 		public async Task<Comprobante?> GetByIdAsync(int id)
         {
 			Comprobante? c = await _db.Comprobantes

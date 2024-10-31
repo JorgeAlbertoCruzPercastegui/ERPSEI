@@ -21,5 +21,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
 		public Task UpdateMultipleAsync(List<Comprobante> comprobantes);
 
+		public Task<Comprobante?> GetValidatableComprobanteByIdAsync(int id);
+
 	}
 }
