@@ -348,4 +348,10 @@
   <data name="UnvalidatedMessage" xml:space="preserve">
     <value>No Validados</value>
   </data>
+  <data name="EmitidosTitle" xml:space="preserve">
+    <value>Emitidos</value>
+  </data>
+  <data name="RecibidosTitle" xml:space="preserve">
+    <value>Recibidos</value>
+  </data>
 </root>
