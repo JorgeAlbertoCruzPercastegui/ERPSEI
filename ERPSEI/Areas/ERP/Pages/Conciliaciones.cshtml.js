@@ -601,7 +601,8 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 
     if (selectedMovimientos.length > 0) {
         $('#tableResult').bootstrapTable('append', {
-            id: lastId + 1,
+            id: comprobanteSeleccionado.Id,
+            //idComprobante: comprobanteSeleccionado.Id,  // Guardar el idComprobante original
             Serie: comprobanteSeleccionado.Serie,
             Folio: comprobanteSeleccionado.Folio,
             Fecha: comprobanteSeleccionado.Fecha,
@@ -635,11 +636,86 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 
         // Actualizar contadores y refrescar tablas para aplicar estilos
         actualizarContadores();
-        //$('#tableCardComprobantes').bootstrapTable('refresh');
+
+        $('#tableCardComprobantes').bootstrapTable('refresh');
         $('#tableCardMovimientos').bootstrapTable('refresh');
+
     } else {
         showModal("No se ha seleccionado ningún movimiento.");
     }
+}
+
+function desconciliarFormatter(value, row, index) {
+    return `
+        <button class="btn btn-danger btn-sm" onclick="desconciliarComp(${row.id}, '${row.Fecha}', '${row.Total}')">
+            Desconciliar
+        </button>
+    `;
+}
+function desconciliarComp(idComprobante, fechaMovimiento, totalMovimiento) {
+
+    // Obtener los datos actuales de `tableResult`
+    let resultData = $('#tableResult').bootstrapTable('getData');
+    let comprobanteEnResultado = resultData.find(row => row.id === String(idComprobante));
+
+    // Obtener los datos de las tablas de comprobantes y movimientos
+    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+
+    // Desconciliar el comprobante en `tableCardComprobantes`
+    let comprobante = comprobantesData.find(comp => comp.Id == idComprobante);
+    if (comprobante) {
+        comprobante.conciliado = false;
+        comprobante.coincidencia = false;
+        $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
+            id: comprobante.Id,
+            row: comprobante
+        });
+        $(`#tableCardComprobantes tr[data-uniqueid="${comprobante.Id}"]`).removeClass("table-success");
+
+        if (comprobanteEnResultado) {
+            // Mostrar el registro en un alert antes de eliminarlo
+            alert("Registro encontrado en tableResult:\n" + JSON.stringify(comprobanteEnResultado, null, 2));
+
+            // Eliminar el comprobante de tableResult
+            $('#tableResult').bootstrapTable('remove', {
+                field: 'id',
+                values: [String(idComprobante)]
+            });
+
+            console.log("Comprobante eliminado de tableResult.");
+
+            // Refrescar la tabla para reflejar visualmente la eliminación
+            $('#tableResult').bootstrapTable('refresh');
+        } else {
+            alert("El comprobante no se encontró en tableResult.");
+        }
+
+    }
+
+    // Desconciliar movimientos asociados en `tableCardMovimientos`
+    movimientosData.forEach(mov => {
+        if (mov.idComprobante === idComprobante && mov.conciliado === true) {
+            mov.conciliado = false;
+            mov.coincidencia = false;
+            $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
+                id: mov.Id,
+                row: mov
+            });
+            $(`#tableCardComprobantes tr[data-uniqueid="${comprobante.Id}"]`).removeClass("table-success");
+        }
+    });
+
+    // Mostrar un mensaje de desconciliación exitosa
+    showModal("La desconciliación del comprobante y sus movimientos asociados se realizó correctamente.");
+
+    // Refrescar ambas tablas para reflejar los cambios visualmente
+    $('#tableCardMovimientos').bootstrapTable('refresh');
+    $('#tableCardComprobantes').bootstrapTable('refresh');
+    $('#tableResult').bootstrapTable('refresh');
+
+    // Actualizar los contadores
+    actualizarContadores();
 }
 
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
@@ -668,33 +744,6 @@ function actualizarContadorSeleccionados(checkbox, totalComprobanteFormateado) {
     document.getElementById('totalCargosSeleccionados').innerText = totalCargosSeleccionados.toFixed(3);
     document.getElementById('porcentajeSimilitudSeleccionado').innerText = `${porcentajeSimilitudSeleccionado}%`;
 }
-
-// Función para pasar los movimientos seleccionados al `tableResult`
-/*function conciliarSeleccionados(totalComprobanteFormateado) {
-    let totalCargosSeleccionados = parseFloat(document.getElementById('totalCargosSeleccionados').innerText);
-
-    // Verificar si el total seleccionado es igual al total del comprobante
-    if (totalCargosSeleccionados === totalComprobanteFormateado) {
-        // Si es igual, pasar los movimientos seleccionados al tableResult
-        if (movimientosSeleccionados.length > 0) {
-            movimientosSeleccionados.forEach(idMovimiento => {
-                let movSeleccionado = $('#tableCardMovimientos').bootstrapTable('getRowByUniqueId', idMovimiento);
-                $('#tableResult').bootstrapTable('append', movSeleccionado); // Pasar los movimientos seleccionados a `tableResult`
-            });
-            //alert("Los movimientos seleccionados han sido conciliados.");
-            showModal("Los movimientos seleccionados han sido conciliados.");
-
-        }
-    } else {
-        // Si no es igual, mostrar un mensaje de error con la diferencia
-        let diferencia = totalComprobanteFormateado - totalCargosSeleccionados;
-        let mensaje = diferencia > 0
-            ? `Faltan $${diferencia.toFixed(2)} para igualar el total del comprobante.`
-            : `Se ha excedido por $${Math.abs(diferencia).toFixed(2)} del total del comprobante.`;
-        //alert(mensaje + " Por favor, seleccione los movimientos correctos.");
-        showModal(mensaje + " Por favor, seleccione los movimientos correctos.");
-    }
-}*/
 
 // Conciliación en automático
 function conciliarAutomatico() {
@@ -838,48 +887,7 @@ function currencyFormatter(value) {
     return `$${parseFloat(value).toFixed(2)}`;
 }
 
-//Desconcilia un comprobante que ha sido asociado con uno o varios movimientos.
-function desconciliarRegistro(id) {
-    // Eliminar el registro de la tabla tableResult
-    $('#tableResult').bootstrapTable('remove', { field: 'id', values: [id] });
-
-    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
-    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
-
-    // Encontrar el índice del comprobante en la tabla de comprobantes y quitar el color verde
-    let indexComp = comprobantesData.findIndex(comp => comp.Id === id);
-    if (indexComp !== -1) {
-        $('#tableCardComprobantes').bootstrapTable('updateRow', {
-            index: indexComp,
-            row: { coincidencia: false }
-        });
-    }
-
-    // Buscar en la tabla de movimientos, para quitar el color verde en base al movimiento asociado al comprobante
-    let rowToRemove = $('#tableResult').bootstrapTable('getRowByUniqueId', id);
-
-    movimientosData.forEach((mov, indexMov) => {
-        if (mov.Total === rowToRemove.Total && mov.Fecha === rowToRemove.Fecha) {
-            $('#tableCardMovimientos').bootstrapTable('updateRow', {
-                index: indexMov,
-                row: { coincidencia: false }
-            });
-        }
-    });
-
-    // Actualizar los contadores
-    let totalConciliadosC = parseInt(document.getElementById("TotalConciliadosC").innerText) - 1;
-    let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText) - 1;
-    document.getElementById("TotalConciliadosC").innerText = totalConciliadosC;
-    document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
-
-    // Recargar tablas y actualizar contadores
-    recargarTablas(false);
-    actualizarContadores();
-
-    showModal("El registro ha sido desconciliado y los datos se han actualizado.");
-}
-
+//Tabla tableCardComprobantes
 function rowStyleComprobantes(row, index) {
     if (row.coincidencia) {
         return {
@@ -889,6 +897,7 @@ function rowStyleComprobantes(row, index) {
     return {};
 }
 
+//Tabla tableResult
 function rowStyle(row, index) {
     if (row.coincidencia) {
         return {
@@ -1139,6 +1148,48 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
     }
 }
 
+//Desconcilia un comprobante que ha sido asociado con uno o varios movimientos.
+function desconciliarRegistro(id) {
+    console.log("ID recibido del Movimiento:", id);
+    // Eliminar el registro de la tabla tableResult
+    $('#tableResult').bootstrapTable('remove', { field: 'id', values: [id] });
+
+    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
+    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+
+    // Encontrar el índice del comprobante en la tabla de comprobantes y quitar el color verde
+    let indexComp = comprobantesData.findIndex(comp => comp.Id === id);
+    if (indexComp !== -1) {
+        $('#tableCardComprobantes').bootstrapTable('updateRow', {
+            index: indexComp,
+            row: { coincidencia: false }
+        });
+    }
+
+    // Buscar en la tabla de movimientos, para quitar el color verde en base al movimiento asociado al comprobante
+    let rowToRemove = $('#tableResult').bootstrapTable('getRowByUniqueId', id);
+
+    movimientosData.forEach((mov, indexMov) => {
+        if (mov.Total === rowToRemove.Total && mov.Fecha === rowToRemove.Fecha) {
+            $('#tableCardMovimientos').bootstrapTable('updateRow', {
+                index: indexMov,
+                row: { coincidencia: false }
+            });
+        }
+    });
+
+    // Actualizar los contadores
+    let totalConciliadosC = parseInt(document.getElementById("TotalConciliadosC").innerText) - 1;
+    let totalConciliadosM = parseInt(document.getElementById("TotalConciliadosM").innerText) - 1;
+    document.getElementById("TotalConciliadosC").innerText = totalConciliadosC;
+    document.getElementById("TotalConciliadosM").innerText = totalConciliadosM;
+
+    // Recargar tablas y actualizar contadores
+    recargarTablas(false);
+    actualizarContadores();
+
+    showModal("El registro ha sido desconciliado y los datos se han actualizado.");
+}
 
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
 function actualizarSumaSeleccionados(checkbox, cargoMovimiento) {
@@ -1158,72 +1209,6 @@ function actualizarSumaSeleccionados(checkbox, cargoMovimiento) {
     // Actualizar el texto en el contador y porcentaje
     document.getElementById('totalSeleccionado').innerText = totalSeleccionado.toFixed(2);
     document.getElementById('porcentajeSeleccionado').innerText = `${porcentajeSeleccionado}%`;
-}
-
-function desconciliarFormatter(value, row, index) {
-    return `
-        <button class="btn btn-danger btn-sm" onclick="desconciliarComp(${row.id}, '${row.Fecha}', '${row.Total}')">
-            Desconciliar
-        </button>
-    `;
-}
-
-function desconciliarComp(id, fechaMovimiento, totalMovimiento) {
-    console.log("ID recibido en desconciliarComp:", id);
-
-    // Eliminar el registro de tableResult
-    $('#tableResult').bootstrapTable('remove', {
-        field: 'id',
-        values: [id]
-    });
-
-    // Obtener los datos de las tablas de comprobantes y movimientos
-    let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
-    let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
-
-    // Buscar el movimiento para quitar la conciliación
-    let movimiento = movimientosData.find(mov =>
-        mov.conciliado === true &&
-        mov.Fecha === fechaMovimiento &&
-        parseFloat(mov.Cargos).toFixed(2) === parseFloat(totalMovimiento).toFixed(2)
-    );
-
-    if (movimiento) {
-        // Marcar el movimiento como no conciliado
-        movimiento.conciliado = false;
-        movimiento.coincidencia = false;
-        $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
-            id: movimiento.Id,
-            row: movimiento
-        });
-    }
-
-    // Buscar el registro eliminado en `tableResult` para obtener comprobantes asociados y quitar la conciliación
-    let registroEliminado = $('#tableResult').bootstrapTable('getData').find(row => row.id === id);
-
-    if (registroEliminado && registroEliminado.comprobantesConciliados) {
-        registroEliminado.comprobantesConciliados.forEach(compEliminado => {
-            let comprobante = comprobantesData.find(c => c.Id === compEliminado.Id && c.conciliado === true);
-            if (comprobante) {
-                comprobante.conciliado = false;
-                comprobante.coincidencia = false;
-                $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
-                    id: comprobante.Id,
-                    row: comprobante
-                });
-            }
-        });
-    }
-
-    // Mostrar un mensaje general de desconciliación exitosa
-    showModal("La desconciliación se realizó correctamente.");
-
-    // Refrescar ambas tablas para reflejar los cambios visualmente
-    $('#tableCardMovimientos').bootstrapTable('refresh');
-    //$('#tableCardComprobantes').bootstrapTable('refresh');
-
-    // Actualizar los contadores
-    actualizarContadores();
 }
 
 // Función para recargar las tablas de movimientos y comprobantes, asegurando que solo los no conciliados se muestren
