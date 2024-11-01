@@ -402,6 +402,7 @@ function detailFormatterC(index, row) {
                         <table class="table table-striped table-bordered">
                             <thead>
                                 <tr>
+                                    <th>Id</th>
                                     <th>Fecha</th>
                                     <th>Banco</th>
                                     <th>Descripción</th>
@@ -416,6 +417,7 @@ function detailFormatterC(index, row) {
         let porcentajeSimilitud = ((totalMovimiento * 100) / totalComprobante) || 0; // Calcular el % de similitud
 
         tableHtml += `<tr>
+                        <td>${mov.Id}</td>
                         <td>${mov.Fecha}</td>
                         <td>${mov.Banco}</td>
                         <td>${mov.Descripción}</td>
@@ -675,7 +677,7 @@ function desconciliarComp(idComprobante, fechaMovimiento, totalMovimiento) {
 
         if (comprobanteEnResultado) {
             // Mostrar el registro en un alert antes de eliminarlo
-            alert("Registro encontrado en tableResult:\n" + JSON.stringify(comprobanteEnResultado, null, 2));
+            //alert("Registro encontrado en tableResult:\n" + JSON.stringify(comprobanteEnResultado, null, 2));
 
             // Eliminar el comprobante de tableResult
             $('#tableResult').bootstrapTable('remove', {
@@ -690,21 +692,23 @@ function desconciliarComp(idComprobante, fechaMovimiento, totalMovimiento) {
         } else {
             alert("El comprobante no se encontró en tableResult.");
         }
-
     }
 
-    // Desconciliar movimientos asociados en `tableCardMovimientos`
-    movimientosData.forEach(mov => {
-        if (mov.idComprobante === idComprobante && mov.conciliado === true) {
-            mov.conciliado = false;
-            mov.coincidencia = false;
-            $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
-                id: mov.Id,
-                row: mov
-            });
-            $(`#tableCardComprobantes tr[data-uniqueid="${comprobante.Id}"]`).removeClass("table-success");
-        }
-    });
+    // Desconciliar los movimientos específicos asociados al comprobante
+    if (comprobanteEnResultado && comprobanteEnResultado.movimientosConciliados) {
+        comprobanteEnResultado.movimientosConciliados.forEach(movimiento => {
+            let movimientoEncontrado = movimientosData.find(mov => mov.Id === movimiento.Id);
+            if (movimientoEncontrado) {
+                movimientoEncontrado.conciliado = false;
+                movimientoEncontrado.coincidencia = false;
+                $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
+                    id: movimientoEncontrado.Id,
+                    row: movimientoEncontrado
+                });
+                $(`#tableCardMovimientos tr[data-uniqueid="${movimientoEncontrado.Id}"]`).removeClass("table-success");
+            }
+        });
+    }
 
     // Mostrar un mensaje de desconciliación exitosa
     showModal("La desconciliación del comprobante y sus movimientos asociados se realizó correctamente.");
@@ -717,6 +721,7 @@ function desconciliarComp(idComprobante, fechaMovimiento, totalMovimiento) {
     // Actualizar los contadores
     actualizarContadores();
 }
+
 
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
 function actualizarContadorSeleccionados(checkbox, totalComprobanteFormateado) {
