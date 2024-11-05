@@ -16,6 +16,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="wwwroot\cfdiv40\**" />
+    <Content Remove="wwwroot\cfdiv40\**" />
+    <EmbeddedResource Remove="wwwroot\cfdiv40\**" />
+    <None Remove="wwwroot\cfdiv40\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EPPlus" Version="7.3.2" />
     <PackageReference Include="ExcelDataReader" Version="3.7.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
@@ -44,7 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\cfdiv40\xml\" />
     <Folder Include="wwwroot\templates\" />
   </ItemGroup>
 
