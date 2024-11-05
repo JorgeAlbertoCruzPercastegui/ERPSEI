@@ -354,4 +354,19 @@
   <data name="RecibidosTitle" xml:space="preserve">
     <value>Received</value>
   </data>
+  <data name="ColClaveProdServHeader" xml:space="preserve">
+    <value>Key</value>
+  </data>
+  <data name="ColCuentaContableHeader" xml:space="preserve">
+    <value>Accounting Account</value>
+  </data>
+  <data name="ColImporteHeader" xml:space="preserve">
+    <value>Amount</value>
+  </data>
+  <data name="DlgCuentasPolizaEgresosMessage" xml:space="preserve">
+    <value>In order to generate the expenditure policy, you must assign an accounting account to each item on the list. Edit the accounting account by clicking on the corresponding cell and enter a value to search for the account.</value>
+  </data>
+  <data name="DlgCuentasPolizaEgresosTitle" xml:space="preserve">
+    <value>Assignment of accounting accounts</value>
+  </data>
 </root>

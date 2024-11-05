@@ -354,4 +354,19 @@
   <data name="RecibidosTitle" xml:space="preserve">
     <value>Recibidos</value>
   </data>
+  <data name="ColClaveProdServHeader" xml:space="preserve">
+    <value>Clave</value>
+  </data>
+  <data name="ColCuentaContableHeader" xml:space="preserve">
+    <value>Cuenta Contable</value>
+  </data>
+  <data name="ColImporteHeader" xml:space="preserve">
+    <value>Importe</value>
+  </data>
+  <data name="DlgCuentasPolizaEgresosMessage" xml:space="preserve">
+    <value>Para poder generar la póliza de egresos, es necesario que asigne una cuenta contable a cada elemento del listado. Edite la cuenta contable haciendo clic sobre la celda correspondiente e introduzca un valor para buscar la cuenta.</value>
+  </data>
+  <data name="DlgCuentasPolizaEgresosTitle" xml:space="preserve">
+    <value>Asignación de cuentas contables</value>
+  </data>
 </root>
