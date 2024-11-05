@@ -23,5 +23,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
 		public Task<Comprobante?> GetValidatableComprobanteByIdAsync(int id);
 
+		public Task<Comprobante?> GetComprobanteWithConceptosByIdAsync(int id);
+
 	}
 }

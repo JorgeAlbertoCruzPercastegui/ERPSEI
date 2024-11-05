@@ -1,8 +1,6 @@
 ﻿using ERPSEI.Data.Entities.SAT.cfdiv40;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
-using static iText.StyledXmlParser.Jsoup.Select.Evaluator;
 
 namespace ERPSEI.Data.Managers.SAT.cfdiv40
 {
@@ -231,6 +229,17 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				await _db.Database.RollbackTransactionAsync();
 				throw;
 			}
+		}
+
+		public async Task<Comprobante?> GetComprobanteWithConceptosByIdAsync(int id)
+		{
+			Comprobante? c = await _db.Comprobantes
+				.Where(e => e.Id == id)
+				.Include(e => e.Conceptos)
+				.Include(e => e.Emisor)
+				.FirstOrDefaultAsync();
+
+			return c;
 		}
 
 	}
