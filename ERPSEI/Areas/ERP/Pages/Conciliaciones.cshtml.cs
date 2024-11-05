@@ -60,7 +60,6 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly IConciliacionDetalleManager conciliacionDetalleManager;
         private readonly IConciliacionDetalleComprobanteManager conciliacionDetalleComprobanteManager;
         private readonly IConciliacionDetalleMovimientoManager conciliacionDetalleMovimientoManager;
-        private readonly IClienteManager clienteManager;
         private readonly IMovimientoBancarioManager movimientoBancarioManager;
         private readonly IEmpresaManager empresaManager;
         private readonly IEmpleadoManager _empleadoManager;
@@ -193,7 +192,6 @@ namespace ERPSEI.Areas.ERP.Pages
             IConciliacionDetalleManager _conciliacionDetalleManager,
             IConciliacionDetalleComprobanteManager _conciliacionDetalleComprobanteManager,
             IConciliacionDetalleMovimientoManager _conciliacionDetalleMovimientoManager,
-            IClienteManager _clienteManager,
             IMovimientoBancarioManager _movimientoBancarioManager,
             IEmpresaManager _empresaManager,
             IEmpleadoManager empleadoManager,
@@ -209,7 +207,6 @@ namespace ERPSEI.Areas.ERP.Pages
             conciliacionDetalleManager = _conciliacionDetalleManager;
             conciliacionDetalleComprobanteManager = _conciliacionDetalleComprobanteManager;
             conciliacionDetalleMovimientoManager = _conciliacionDetalleMovimientoManager;
-            clienteManager = _clienteManager;
             movimientoBancarioManager = _movimientoBancarioManager;
             empresaManager = _empresaManager;
             _empleadoManager = empleadoManager;

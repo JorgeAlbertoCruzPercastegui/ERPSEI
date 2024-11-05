@@ -187,27 +187,20 @@ namespace ERPSEI.Areas.ERP.Pages
 			string jsonResponse;
 			List<Comprobante> comprobantes;
 
-			if (filtro != null)
-			{
-				comprobantes = await comprobanteManager.GetAllAsync(
-					filtro.EmpresaRFC,
-					filtro.Anio,
-					filtro.Mes,
-					filtro.EstatusId,
-					filtro.TipoId,
-					filtro.EstatusContableId,
-					filtro.TipoComprobanteClave,
-					filtro.FormaPagoClave,
-					filtro.MetodoPagoClave,
-					filtro.UsoCFDIClave,
-					filtro.EmisorRFC,
-					filtro.ReceptorRFC
-				);
-			}
-			else
-			{
-				comprobantes = await comprobanteManager.GetAllAsync();
-			}
+			comprobantes = await comprobanteManager.GetAllAsync(
+				filtro?.EmpresaRFC,
+				filtro?.Anio,
+				filtro?.Mes,
+				filtro?.EstatusId,
+				filtro?.TipoId,
+				filtro?.EstatusContableId,
+				filtro?.TipoComprobanteClave,
+				filtro?.FormaPagoClave,
+				filtro?.MetodoPagoClave,
+				filtro?.UsoCFDIClave,
+				filtro?.EmisorRFC,
+				filtro?.ReceptorRFC
+			);
 
 			jsonResponse = CreateJsonComprobantes(comprobantes);
 
@@ -457,7 +450,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 foreach (string id in ids)
                 {
 					int intId = Convert.ToInt32(id);
-					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
+					Comprobante? comprobante = await cmgr.GetByIdWithDescripcionesAsync(intId);
 					if (comprobante != null) 
 					{
 						empresaEmisora ??= await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
@@ -810,7 +803,7 @@ namespace ERPSEI.Areas.ERP.Pages
 			try
 			{
 				//Obtiene los datos de la prefactura
-				Comprobante? c = await comprobanteManager.GetByIdAsync(idComprobante);
+				Comprobante? c = await comprobanteManager.GetByIdWithDescripcionesAsync(idComprobante);
 
 				if (c != null)
 				{

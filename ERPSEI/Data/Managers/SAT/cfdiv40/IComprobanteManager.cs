@@ -3,7 +3,7 @@
 namespace ERPSEI.Data.Managers.SAT.cfdiv40
 {
     public interface IComprobanteManager : IRWCatalogoManager<Comprobante>
-    {
+	{
 		public Task<List<Comprobante>> GetAllAsync(
 			string? empresaRFC = null,
 			string? anio = null,
@@ -18,7 +18,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			string? emisorRFC = null,
 			string? receptorRFC = null
 		);
-        public Task<List<Comprobante>> GetByDateRangeAsync(
+
+		public Task<List<Comprobante>> GetByDateRangeAsync(
 			DateTime? fechaInicio, 
 			DateTime? fechaFin
 			);
@@ -30,6 +31,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 		public Task<Comprobante?> GetValidatableComprobanteByIdAsync(int id);
 
 		public Task<Comprobante?> GetComprobanteWithConceptosByIdAsync(int id);
+
+		public Task<Comprobante?> GetByIdWithDescripcionesAsync(int id);
 
 	}
 }

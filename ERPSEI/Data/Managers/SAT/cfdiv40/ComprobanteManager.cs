@@ -33,7 +33,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 		}
 		public async Task UpdateAsync(Comprobante c)
 		{
-			Comprobante? n = _db.Find<Comprobante>(c.Id);
+			Comprobante? n = await _db.FindAsync<Comprobante>(c.Id);
 			if (n != null)
 			{
 				n.Conciliado = c.Conciliado;
@@ -43,23 +43,6 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				await _db.SaveChangesAsync();
 			}
 		}
-        public async Task<int> CreateAsync(Comprobante c)
-        {
-            c.Id = await GetNextId();
-            _db.Comprobantes.Add(c);
-            await _db.SaveChangesAsync();
-            return c.Id;
-        }
-
-        public async Task UpdateAsync(Comprobante c)
-        {
-            Comprobante? n = await _db.FindAsync<Comprobante>(c.Id);
-            if (n != null)
-            {
-                n.Conciliado = c.Conciliado;
-                await _db.SaveChangesAsync();
-            }
-        }
 
         public async Task DeleteAsync(Comprobante c)
         {
@@ -69,8 +52,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
         public async Task DeleteByIdAsync(int id)
         {
-            Comprobante? c = await GetByIdAsync(id);
-            if (c != null)
+			Comprobante? c = await _db.FindAsync<Comprobante>(id);
+			if (c != null)
             {
                 _db.Remove(c);
                 await _db.SaveChangesAsync();
@@ -84,7 +67,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
             {
                 foreach (string id in ids)
                 {
-                    Comprobante? c = await GetByIdAsync(int.Parse(id));
+					Comprobante? c = await _db.FindAsync<Comprobante>(int.Parse(id));
                     if (c != null)
                     {
                         _db.Remove(c);
@@ -100,26 +83,13 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
                 throw;
             }
         }
+
         public async Task<List<Comprobante>> GetAllAsync()
         {
             return await _db.Comprobantes
                 .Include(c => c.Complemento).ThenInclude(e => e.TimbreFiscalDigital)
                 .ToListAsync();
         }
-				await _db.Database.CommitTransactionAsync();
-			}
-			catch (Exception)
-			{
-				await _db.Database.RollbackTransactionAsync();
-				throw;
-
-			}
-		}
-
-		public async Task<List<Comprobante>> GetAllAsync()
-		{
-			return await GetAllAsync(null,null,null,null,null,null,null,null,null,null,null);
-		}
 
 		public async Task<List<Comprobante>> GetAllAsync(
 			string? empresaRFC = null,
@@ -148,30 +118,6 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				.Include(e => e.Emisor)
 				.Include(e => e.Receptor)
 				.ToListAsync();
-        public async Task<List<Comprobante>> GetAllAsync(
-            string? periodo = null,
-            int? estatusId = null,
-            int? tipoId = null,
-            int? formaPagoId = null,
-            int? metodoPagoId = null,
-            int? usoCFDIId = null,
-            int? emisorId = null,
-            int? receptorId = null
-        )
-        {
-            List<Comprobante> lc = await _db.Comprobantes
-                .Where(e => estatusId == null || 1 == estatusId)
-                .Where(e => tipoId == null || 1 == tipoId)
-                .Where(e => formaPagoId == null || 1 == formaPagoId)
-                .Where(e => metodoPagoId == null || 1 == metodoPagoId)
-                .Where(e => usoCFDIId == null || 1 == usoCFDIId)
-                .Where(e => emisorId == null || (1 == emisorId || 1 == emisorId))
-                .Where(e => receptorId == null || (1 == receptorId || 1 == receptorId))
-                .Include(e => e.Emisor)
-                .Include(e => e.Receptor)
-                .Include(e => e.Complemento) 
-                .ThenInclude(e => e.TimbreFiscalDigital)
-                .ToListAsync();
 
             foreach (Comprobante c in lc)
             {
@@ -227,15 +173,9 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				if (c.Receptor != null) { c.Receptor.UsoCFDI = (await _db.UsosCFDI.Where(u => u.Clave == c.Receptor.UsoCFDI).FirstOrDefaultAsync())?.Descripcion; }
 			}
 
-            if (periodo != null)
-            {
-                lc = lc.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("yyyy-MM") == periodo);
-            }
 			return lc;
 		}
 
-            return lc;
-        }
 		public async Task<Comprobante?> GetValidatableComprobanteByIdAsync(int id)
 		{
 			return await _db.Comprobantes
@@ -253,6 +193,10 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
                 .ThenInclude(e => e.TimbreFiscalDigital)
                 .Where(e => e.Id == id)
                 .FirstOrDefaultAsync();
+        }
+
+		public async Task<Comprobante?> GetByIdWithDescripcionesAsync(int id)
+		{
 			Comprobante? c = await _db.Comprobantes
 				.Where(e => e.Id == id)
 				.Include(e => e.Impuestos).ThenInclude(i => i.Traslados)
@@ -261,7 +205,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 				.Include(e => e.Receptor)
 				.FirstOrDefaultAsync();
 
-			if(c != null)
+			if (c != null)
 			{
 				c.TipoDeComprobante = (await _db.TiposComprobante.Where(t => t.Clave == c.TipoDeComprobante).FirstOrDefaultAsync())?.Descripcion;
 				c.Moneda = (await _db.Monedas.Where(m => m.Clave == c.Moneda).FirstOrDefaultAsync())?.Descripcion;
@@ -271,12 +215,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			}
 
 			return c;
-        }
+		}
 
-        public async Task<Comprobante?> GetByNameAsync(string name)
-        {
-            return await _db.Comprobantes.Where(p => $"{(p.Serie ?? string.Empty).ToLower()}{(p.Folio ?? string.Empty).ToLower()}".Equals(name, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefaultAsync();
-        }
         public async Task<List<Comprobante>> GetByDateRangeAsync(DateTime? fechaInicio, DateTime? fechaFin)
         {
             List<Comprobante> ls = await _db.Comprobantes
@@ -289,6 +229,7 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
             return ls;
         }
+
 		public async Task<Comprobante?> GetByNameAsync(string name)
 		{
 			Comprobante? c = await _db.Comprobantes
