@@ -46,6 +46,7 @@ using ERPSEI.Data.Managers.SAT.Catalogos;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using System.Globalization;
 using iText.Commons.Actions.Contexts;
+using System.Security.Claims;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -128,13 +129,22 @@ namespace ERPSEI.Areas.ERP.Pages
             public string? Cliente { get; set; } = string.Empty;
 
             [DataType(DataType.Text)]
-            public string? rfc { get; set; } = string.Empty;
-
-            [DataType(DataType.Text)]
             [Display(Name = "DescripcionField")]
             [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Descripcion { get; set; } = string.Empty;
+
+            [DataType(DataType.Text)]
+            public string? rfc { get; set; } = string.Empty;
+
+            [DataType(DataType.Text)]
+            public string? UsuarioCreador { get; set; }
+
+            [DataType(DataType.Text)]
+            public string? UsuarioModificador { get; set; }
+
+            public int BancoId { get; set; }
+            public int EmpresaId { get; set; }
         }
 
         [BindProperty]
@@ -608,7 +618,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
         public async Task<JsonResult> OnGetMovimientosList()
         {
-            ServerResponse resp = new(true, stringLocalizer["AsistenciaSavedUnsuccessfully"]);
+            ServerResponse resp = new(true, stringLocalizer["BankingMovementSavedUnsuccessfully"]);
 
             try
             {
@@ -624,44 +634,55 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<JsonResult> OnPostSaveConciliacion([FromBody] Conciliacion conciliacionDto)
+        public async Task<JsonResult> OnPostSaveConciliacion()
         {
-            ServerResponse resp = new(true, stringLocalizer["ConciliacionSavedUnsuccessfully"]);
+            ServerResponse resp = new(false, stringLocalizer["ConciliacionSavedUnsuccessfully"]);
 
             try
             {
-                // Validación básica de los datos recibidos
-                if (conciliacionDto == null || string.IsNullOrEmpty(conciliacionDto.Descripcion) || conciliacionDto.ClienteId == 0)
+                // Buscar el ClienteId en base al nombre del cliente
+                var cliente = await db.Clientes.FirstOrDefaultAsync(c => c.RazonSocial == InputFiltroModalAgregar.Cliente);
+                if (cliente == null)
                 {
                     resp.TieneError = true;
-                    resp.Mensaje = stringLocalizer["InvalidData"];
+                    resp.Mensaje = stringLocalizer["ClienteNotFound"];
                     return new JsonResult(resp);
                 }
 
-                // Crear un objeto de la entidad Conciliacion para guardar en la base de datos
+                // Obtener el ID del usuario autenticado y buscar el objeto AppUser correspondiente
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var usuarioCreador = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (usuarioCreador == null)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = stringLocalizer["UserNotFound"];
+                    return new JsonResult(resp);
+                }
+
+                // Obtener el último Id en la tabla de conciliaciones
+                var lastConciliacion = await db.Conciliaciones.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
+                int nextId = (lastConciliacion?.Id ?? 0) + 1;
+
+                // Crear el objeto Conciliacion con el siguiente Id y demás valores necesarios
                 Conciliacion conciliacion = new Conciliacion
                 {
-                    Id = conciliacionDto.Id == 0 ? 0 : conciliacionDto.Id,  // Si el ID es 0, es un nuevo registro
-                    Descripcion = conciliacionDto.Descripcion,
-                    Fecha = conciliacionDto.Fecha,
-                    ClienteId = conciliacionDto.ClienteId,
-                    // Puedes añadir más campos si es necesario
+                    Id = nextId, // Asigna el próximo Id disponible
+                    Fecha = InputFiltroModalAgregar.FechaElaboracionInicio,
+                    ClienteId = cliente.Id,
+                    Descripcion = InputFiltroModalAgregar.Descripcion,
+                    UsuarioCreador = usuarioCreador,
+                    UsuarioModificador = usuarioCreador,
+                    BancoId = InputFiltroModalAgregar.BancoId,
+                    EmpresaId = cliente.Id
                 };
 
-                // Guardar en la base de datos. Si el ID es 0, será una nueva inserción, si no, es una actualización
-                if (conciliacionDto.Id == 0)
-                {
-                    await db.Conciliaciones.AddAsync(conciliacion);  // Añadir nueva conciliación
-                }
-                else
-                {
-                    db.Conciliaciones.Update(conciliacion);  // Actualizar conciliación existente
-                }
+                // Agregar el nuevo registro
+                await db.Conciliaciones.AddAsync(conciliacion);
+                resp.Mensaje = stringLocalizer["ConciliacionCreatedSuccessfully"];
 
-                await db.SaveChangesAsync();  // Guardar los cambios en la base de datos
-
-                // Respuesta exitosa
-                resp = new ServerResponse(false, stringLocalizer["ConciliacionSavedSuccessfully"]);
+                await db.SaveChangesAsync();
+                resp.TieneError = false;
             }
             catch (Exception ex)
             {
@@ -672,6 +693,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
 
         public ActionResult OnGetDownloadPlantilla()
         {

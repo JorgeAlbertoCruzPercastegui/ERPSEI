@@ -132,7 +132,7 @@
 
 <!-- --------------------------- -->
 <!-- Sección Nuevo/Editar/Ver Registro (Agregar)-->
-<form id="theForm" method="post">
+<form id="theFormT" method="post">
 <div id="dlgConciliacion" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -140,7 +140,6 @@
                 <h5 id="dlgConciliacionTitle" class="modal-title"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            
                 <div class="modal-body">
                     <div class="container-fluid ui-front" >
                         <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
@@ -299,13 +298,10 @@
                             </button>
                             <br />
 
-                            <div class="d-flex justify-content-end mb-3">
+                            <!--<div class="d-flex justify-content-end mb-3">
                                 <button onclick="mostrarMovimientosConciliacion()" class="btn btn-primary btn-sm">Conciliación Masiva</button>
                             </div>
-
-
-
-
+                            -->
                             <div class="row">
                                 <br />
                                 <div class="">
@@ -338,9 +334,6 @@
 
                             </div>
                         </div> 
-
-                        <!---->
-
                     </div>
                 </div>
             
@@ -569,6 +562,8 @@
                                         </select>
                                         <label for="selFiltroBanco" asp-for="BancoList.Id" class="form-label">@Localizer["BancoLabel"]</label>
                                     </div>
+                                    <input type="hidden" asp-for="InputFiltroModalAgregar.BancoId" id="BancoSeleccionado" />
+
                                 </div>
                             </div>
                         </div>

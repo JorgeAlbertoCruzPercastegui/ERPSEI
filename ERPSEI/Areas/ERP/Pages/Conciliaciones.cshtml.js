@@ -888,7 +888,6 @@ function desconciliarComp(idComprobante, fechaMovimiento, totalMovimiento) {
     actualizarContadores();
 }
 
-
 // Función para actualizar la suma de los totales seleccionados y el porcentaje de similitud
 function actualizarContadorSeleccionados(checkbox, totalComprobanteFormateado) {
     let totalCargosSeleccionados = parseFloat(document.getElementById('totalCargosSeleccionados').innerText);
@@ -1010,7 +1009,6 @@ function conciliarAutomatico() {
     // Llamar a actualizarContadores para actualizar los contadores
     actualizarContadores();
 }
-
 
 // Función para mostrar detalles de un registro en `tableResult`
 function detailFormatterA(index, row) {
@@ -1318,7 +1316,6 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
     }
 }
 
-
 //Desconcilia un comprobante que ha sido asociado con uno o varios movimientos.
 function desconciliarRegistro(id) {
     console.log("ID recibido del Movimiento:", id);
@@ -1397,8 +1394,6 @@ function recargarTablas(mostrarTodos = false) {
     $('#tableCardMovimientos').bootstrapTable('load', movimientosFiltrados);
 }
 
-
-
 // Función para actualizar los contadores de conciliados y no conciliados
 function actualizarContadores() {
     // Obtener los datos de comprobantes y movimientos desde el DOM en lugar de `bootstrapTable`
@@ -1425,8 +1420,6 @@ function actualizarContadores() {
     document.getElementById("TotalSinConciliarC").innerText = totalSinConciliarC;
     document.getElementById("TotalSinConciliarM").innerText = totalSinConciliarM;
 }
-
-
 
 function conciliarDesdeModal(idComprobante, fechaMovimiento, cargoMovimiento, indexMovimiento) {
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
@@ -1545,9 +1538,6 @@ function mostrarMovimientosConciliacion() {
     });
     myModal.show();
 }
-
-
-
 
 //Función para mostrar detalles de los movimientos o comprobantes seleccionados
 function detailFormatter(index, row) {
@@ -1673,27 +1663,30 @@ function initConciliacionDialog(action, row) {
 function onGuardarClick() {
 
     //Ejecuta la validación
-    $("#theForm").validate();
+    $("#theFormT").validate();
     //Determina los errores
-    let valid = $("#theForm").valid();
+    let valid = $("#theFormT").valid();
     //Si la forma no es válida, entonces finaliza.
     if (!valid) { return; }
 
-    let btnClose = document.getElementById("dlgConciliacionBtnCancelar");
     let idField = document.getElementById("inpConciliacionId");
     let fechaField = document.getElementById("inpConciliacionFecha");
     let clienteIdField = document.getElementById("inpConciliacionClienteId");
     let descripcionField = document.getElementById("inpConciliacionDescripcion");
+    let bancoIdField = document.getElementById("selFiltroBanco"); 
+
     let dlgTitle = document.getElementById("dlgConciliacionTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
+    let btnClose = document.getElementById("dlgConciliacionBtnCancelar");
     summaryContainer.innerHTML = "";
 
     // Parámetros que se enviarán en la solicitud
     let oParams = {
-        id: idField.value == "Nuevo" ? 0 : idField.value,
-        descripcion: descripcionField.value,
-        fecha: fechaField.value,
-        clienteId: clienteIdField.value
+        Id: idField.value == "Nuevo" ? 0 : idField.value,
+        FechaElaboracionInicio: fechaField.value,
+        Cliente: clienteIdField.value,
+        Descripcion: descripcionField.value,
+        BancoId: bancoIdField.value // Agrega el BancoId seleccionado
     };
 
     // Llamada AJAX para guardar los datos
@@ -1714,10 +1707,7 @@ function onGuardarClick() {
             }
 
             btnClose.click();
-
-            let e = document.querySelector("[name='refresh']");
-            e.click();
-
+            onBuscarClick();
             showSuccess(dlgTitle.innerHTML, resp.mensaje);
         }, function (error) {
             showError("Error", error);
@@ -1827,8 +1817,8 @@ function onConsultarComprobantesClick() {
 
 function onGuardarMovimientos() {
     // Validación para asegurar que haya datos en la tabla
-    $("#theForm").validate();
-    let valid = $("#theForm").valid();
+    $("#theFormM").validate();
+    let valid = $("#theFormM").valid();
     if (!valid) { return; }
 
     // Contenedor de resumen de validación
@@ -1893,41 +1883,37 @@ function onGuardarMovimientos() {
     );
 }
 
-
-
-
 //Método para importar la información del excel y pdf
 function onImportarMovimientosBancariosClick() {
     var fileUpload = document.getElementById('fileUpload');
-    var selectedBank = $('#selFiltroBanco option:selected').text();
+    var selectedBankId = $('#selFiltroBanco').val(); // Obtener el ID del banco seleccionado
 
     if (fileUpload.files.length === 0) {
         alert('Por favor selecciona un archivo.');
         return;
     }
 
-    if (selectedBank === 'Seleccione...') {
+    if (selectedBankId === '0') {
         alert('Por favor selecciona un banco.');
         return;
     }
 
+    // Almacena el ID del banco seleccionado en el campo oculto para enviarlo con el formulario
+    $('#BancoSeleccionado').val(selectedBankId);
+
     var fileType = fileUpload.files[0].name.split('.').pop().toLowerCase();
 
     if (fileType === 'xlsx' || fileType === 'xls') {
-        importarMovimientosDesdeExcel(fileUpload.files[0], selectedBank);
-
-        // Actualizar los contadores de conciliados y no conciliados
+        importarMovimientosDesdeExcel(fileUpload.files[0], selectedBankId);
         actualizarContadores();
-
-        // Recargar las tablas para que los comprobantes y movimientos desconciliados vuelvan a aparecer
         recargarTablas(false);
-
     } else if (fileType === 'pdf') {
-        importarMovimientosDesdePDF(fileUpload.files[0], selectedBank);
+        importarMovimientosDesdePDF(fileUpload.files[0], selectedBankId);
     } else {
         alert('Por favor selecciona un archivo Excel o PDF.');
     }
 }
+
 function importarMovimientosDesdeExcel(file, selectedBank) {
     var reader = new FileReader();
     reader.onload = function (e) {

@@ -135,6 +135,9 @@
   <data name="ClienteIdPlaceholder" xml:space="preserve">
     <value>Cliente</value>
   </data>
+  <data name="ClienteNotFound" xml:space="preserve">
+    <value>Cliente no encontrado</value>
+  </data>
   <data name="ClientePlaceholder" xml:space="preserve">
     <value>Cliente</value>
   </data>
@@ -183,11 +186,17 @@
   <data name="colTotalHeaderD" xml:space="preserve">
     <value>Total</value>
   </data>
+  <data name="ConciliacionCreatedSuccessfully" xml:space="preserve">
+    <value>Conciliación creada exitosamente</value>
+  </data>
   <data name="ConciliacionesDeletedSuccessfully" xml:space="preserve">
     <value>Conciliación eliminada exitosamente</value>
   </data>
   <data name="ConciliacionesDeletedUnsuccessfully" xml:space="preserve">
     <value>Error al eliminar la conciliación</value>
+  </data>
+  <data name="ConciliacionSavedUnsuccessfully" xml:space="preserve">
+    <value>Error al guardar la conciliación</value>
   </data>
   <data name="ConsultaDeComprobantesPlaceholder" xml:space="preserve">
     <value>Consulta de Comprobantes</value>
