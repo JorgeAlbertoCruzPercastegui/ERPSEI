@@ -144,6 +144,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
             public int BancoId { get; set; }
             public int EmpresaId { get; set; }
+            public List<MovimientoBancario> Movimientos { get; set; } = new List<MovimientoBancario>();
+
         }
 
         [BindProperty]
@@ -664,7 +666,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 // Crear el objeto Conciliacion con el siguiente Id y demás valores necesarios
                 Conciliacion conciliacion = new Conciliacion
                 {
-                    Id = nextId, // Asigna el próximo Id disponible
+                    Id = nextId,
                     Fecha = InputFiltroModalAgregar.FechaElaboracionInicio,
                     ClienteId = cliente.Id,
                     Descripcion = InputFiltroModalAgregar.Descripcion,
@@ -674,12 +676,36 @@ namespace ERPSEI.Areas.ERP.Pages
                     EmpresaId = cliente.Id
                 };
 
-                // Agregar el nuevo registro
+                // Agregar la conciliación a la base de datos
                 await db.Conciliaciones.AddAsync(conciliacion);
-                resp.Mensaje = stringLocalizer["ConciliacionCreatedSuccessfully"];
 
+                // Obtener el último Id en la tabla de movimientos bancarios
+                int nextMovimientoId = await db.MovimientosBancarios.MaxAsync(m => (int?)m.Id) ?? 0;
+
+                // Procesar y agregar todos los movimientos bancarios importados
+                if (InputFiltroModalAgregar.Movimientos != null && InputFiltroModalAgregar.Movimientos.Any())
+                {
+                    foreach (var mov in InputFiltroModalAgregar.Movimientos)
+                    {
+                        var movimiento = new ERPSEI.Data.Entities.Conciliaciones.MovimientoBancario
+                        {
+                            Id = ++nextMovimientoId, // Asigna manualmente un Id incrementado
+                            Fecha = mov.Fecha,
+                            Descripcion = mov.Descripcion,
+                            Importe = mov.Importe,
+                            Conciliado = mov.Conciliado,
+                            Conciliacion = conciliacion
+                        };
+
+                        await db.MovimientosBancarios.AddAsync(movimiento);
+                    }
+                }
+
+                // Guardar los cambios en la base de datos
                 await db.SaveChangesAsync();
+
                 resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["ConciliacionCreatedSuccessfully"];
             }
             catch (Exception ex)
             {
@@ -690,6 +716,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
+
+
+
 
 
         public ActionResult OnGetDownloadPlantilla()
