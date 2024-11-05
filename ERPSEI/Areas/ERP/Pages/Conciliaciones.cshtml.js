@@ -117,7 +117,7 @@ function buscarComprobantesPorRFC(rfc) {
         function (resp) {
             if (resp.tieneError) {
                 let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
-                summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 showError("Buscar Comprobantes", resp.mensaje);
                 return;
             }
@@ -1609,8 +1609,8 @@ function initConciliacionDialog(action, row) {
     let botonConsultarMovimientos = document.getElementById("dlgConciliacionBtnMovimientos");
     let botonConciliar = document.getElementById("");
     let botonConciliacionAsistida = document.getElementById("dlgConciliacionAsistidaBtn");
-    let summaryContainer = document.getElementById("saveValidationSummary");
-    summaryContainer.innerHTML = "";
+    let saveValidationSummary = document.getElementById("saveValidationSummary");
+    saveValidationSummary.innerHTML = "";
 
     idField.setAttribute("disabled", true);
 
@@ -1676,9 +1676,9 @@ function onGuardarClick() {
     let bancoIdField = document.getElementById("selFiltroBanco");
 
     let dlgTitle = document.getElementById("dlgConciliacionTitle");
-    let summaryContainer = document.getElementById("saveValidationSummary");
+    let saveValidationSummary = document.getElementById("saveValidationSummary");
     let btnClose = document.getElementById("dlgConciliacionBtnCancelar");
-    summaryContainer.innerHTML = "";
+    saveValidationSummary.innerHTML = "";
 
     // Parámetros principales
     let oParams = {
@@ -1687,22 +1687,24 @@ function onGuardarClick() {
         Cliente: clienteIdField.value,
         Descripcion: descripcionField.value,
         BancoId: bancoIdField.value,
-        Movimientos: []
+        Movimientos: [] // Inicializamos el arreglo de movimientos vacío
     };
 
     // Obtener todas las filas de la tabla `tableCardMovimientos`
     let allRows = $('#tableCardMovimientos').bootstrapTable('getData');
     allRows.forEach(function (row) {
-        // Crear cada movimiento sin la propiedad Id, dejando que la base de datos lo asigne
-        let movimiento = {
-            Fecha: row.Fecha,
-            Descripcion: row.Descripción,
-            Importe: row.Cargos // Cambia a `Importe` si es necesario
-        };
-        oParams.Movimientos.push(movimiento);
+        // Verifica si el movimiento está marcado como conciliado (verde y bloqueado)
+        if (row.coincidencia === true) { // Asegúrate de que 'coincidencia' sea el indicador correcto
+            // Crear cada movimiento sin la propiedad Id, dejando que la base de datos lo asigne
+            let movimiento = {
+                Fecha: row.Fecha,
+                Descripcion: row.Descripción,
+                Importe: row.Cargos // Cambia a `Importe` si es necesario
+            };
+            oParams.Movimientos.push(movimiento);
+        }
     });
-
-    // Llamada AJAX para guardar los datos
+    
     doAjax(
         "/ERP/Conciliaciones/SaveConciliacion",
         oParams,
@@ -1713,7 +1715,7 @@ function onGuardarClick() {
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 }
                 showError(dlgTitle.innerHTML, resp.mensaje);
                 return;
@@ -1729,9 +1731,6 @@ function onGuardarClick() {
         postOptions
     );
 }
-
-
-
 
 
 function eliminarRegistro(Id) {
@@ -1770,7 +1769,7 @@ function onBuscarClick() {
             if (resp.tieneError) {
                 if (Array.isArray(resp.errores) && resp.errores.length > 0) {
                     let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
-                    summaryContainer.innerHTML = `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
                 }
                 showError(btnBuscar.innerHTML, resp.mensaje);
                 return;
@@ -1813,7 +1812,7 @@ function onConsultarComprobantesClick() {
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 }
                 showError(btnBuscar.innerHTML, resp.mensaje);
                 return;
@@ -1840,14 +1839,14 @@ function onGuardarMovimientos() {
     if (!valid) { return; }
 
     // Contenedor de resumen de validación
-    let summaryContainer = document.getElementById("saveValidationSummaryM");
-    summaryContainer.innerHTML = "";
+    let saveValidationSummary = document.getElementById("saveValidationSummaryM");
+    saveValidationSummary.innerHTML = "";
 
     // Obtén todos los datos de la tabla `tableCardMovimientos`
     var datosMovimientos = $('#tableCardMovimientos').bootstrapTable('getData');
 
     if (datosMovimientos.length === 0) {
-        summaryContainer.innerHTML = `<ul><li>No hay datos para subir a la base de datos.</li></ul>`;
+        saveValidationSummary.innerHTML = `<ul><li>No hay datos para subir a la base de datos.</li></ul>`;
         return;
     }
 
@@ -1879,7 +1878,7 @@ function onGuardarMovimientos() {
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 }
                 showError("Error al guardar movimientos", resp.mensaje);
                 return;

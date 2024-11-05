@@ -1,51 +1,20 @@
-using ERPSEI.Areas.Reportes.Pages;
 using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Requests;
 using ERPSEI.Resources;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using System.Net.Mime;
 using ERPSEI.Pages.Shared;
-using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Managers.Conciliaciones;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
-using ERPSEI.Data.Managers.SAT;
-using ERPSEI.Data.Managers;
 using ERPSEI.Data.Managers.Empleados;
-using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Kernel.Pdf;
-// Para Excel usando EPPlus
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
-
-// Para PDF usando iTextSharp
-using iText.Layout;
-using iText.Layout.Element;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
-using ERPSEI.Data.Entities.Usuarios;
-using Microsoft.AspNetCore.Identity;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Entities.Empresas;
-using ERPSEI.Areas.Catalogos.Pages;
-using ERPSEI.Data.Entities.Reportes;
-using ERPSEI.Data.Managers.Reportes;
-using NPOI.SS.Formula.Functions;
-using Microsoft.DotNet.MSIdentity.Shared;
-using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
-using ERPSEI.Data.Entities.SAT;
-using ERPSEI.Data.Managers.SAT;
-using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
-using static ERPSEI.Areas.ERP.Pages.PrefacturasModel;
 using Microsoft.EntityFrameworkCore;
-using ERPSEI.Data.Managers.SAT.Catalogos;
-using ERPSEI.Data.Entities.SAT.Catalogos;
 using System.Globalization;
-using iText.Commons.Actions.Contexts;
 using System.Security.Claims;
 
 namespace ERPSEI.Areas.ERP.Pages
