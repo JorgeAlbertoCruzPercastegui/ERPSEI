@@ -17,5 +17,5 @@
 		public Task<T?> GetByIdAsync(int id);
 
 		public Task<T?> GetByNameAsync(string name);
-	}
+    }
 }

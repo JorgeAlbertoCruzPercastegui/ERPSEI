@@ -25,3 +25,33 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.table-success {
+    background-color: #d4edda !important;
+    color: #000000 !important;
+}
+.bg-light {
+    background-color: #f8f9fa !important;
+    color: #6c757d; /* Color gris */
+}
+
+.table-successRes td {
+    background-color: white !important; /* Aseguramos que no haya color verde en la tabla de resultados */
+}
+.table-dark-gray-cell {
+    background-color: #343a40 !important; /* Fondo gris oscuro */
+    color: #000000; /* Texto negro */
+    font-weight: bold; /* Texto en negritas */
+}
+.table-responsive {
+    max-height: 300px; /* Altura máxima de la tabla */
+    overflow-y: auto; /* Activar desplazamiento vertical */
+}
+/* En tu archivo CSS */
+.oculto {
+    display: none !important;
+}
+.blocked {
+    pointer-events: none; /* Desactiva la interacción */
+    opacity: 0.6; /* Visualmente indica que está bloqueado */
+}
+

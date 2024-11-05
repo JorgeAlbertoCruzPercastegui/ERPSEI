@@ -135,11 +135,17 @@
   <data name="ClienteIdPlaceholder" xml:space="preserve">
     <value>Cliente</value>
   </data>
+  <data name="ClienteNotFound" xml:space="preserve">
+    <value>Cliente no encontrado</value>
+  </data>
   <data name="ClientePlaceholder" xml:space="preserve">
     <value>Cliente</value>
   </data>
   <data name="ColActionsHeader" xml:space="preserve">
     <value>Acciones</value>
+  </data>
+  <data name="colCheckHeaderD" xml:space="preserve">
+    <value>Check</value>
   </data>
   <data name="ColCreatedUserHeader" xml:space="preserve">
     <value>Usuario Creador</value>
@@ -153,14 +159,44 @@
   <data name="ColDescriptionHeader" xml:space="preserve">
     <value>Descripción</value>
   </data>
+  <data name="colFechaHeaderD" xml:space="preserve">
+    <value>Fecha</value>
+  </data>
+  <data name="colFolioHeaderD" xml:space="preserve">
+    <value>Folio</value>
+  </data>
   <data name="colIdHeader" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="colIdHeaderD" xml:space="preserve">
     <value>Id</value>
   </data>
   <data name="ColModifyUserHeader" xml:space="preserve">
     <value>Último usuario Mod.</value>
   </data>
+  <data name="colPSimilitudHeaderD" xml:space="preserve">
+    <value>% Similitud</value>
+  </data>
+  <data name="colSerieHeaderD" xml:space="preserve">
+    <value>Serie</value>
+  </data>
   <data name="ColTotalHeader" xml:space="preserve">
     <value>Total</value>
+  </data>
+  <data name="colTotalHeaderD" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="ConciliacionCreatedSuccessfully" xml:space="preserve">
+    <value>Conciliación creada exitosamente</value>
+  </data>
+  <data name="ConciliacionesDeletedSuccessfully" xml:space="preserve">
+    <value>Conciliación eliminada exitosamente</value>
+  </data>
+  <data name="ConciliacionesDeletedUnsuccessfully" xml:space="preserve">
+    <value>Error al eliminar la conciliación</value>
+  </data>
+  <data name="ConciliacionSavedUnsuccessfully" xml:space="preserve">
+    <value>Error al guardar la conciliación</value>
   </data>
   <data name="ConsultaDeComprobantesPlaceholder" xml:space="preserve">
     <value>Consulta de Comprobantes</value>
@@ -185,6 +221,9 @@
   </data>
   <data name="EditDialogTitle" xml:space="preserve">
     <value>Editar registro</value>
+  </data>
+  <data name="EmpresaIdPlaceholder" xml:space="preserve">
+    <value>Empresa</value>
   </data>
   <data name="FechaElaboracionFinField" xml:space="preserve">
     <value>Fecha Elaboración (Fin)</value>
@@ -234,6 +273,12 @@
   <data name="ImportButtonTitle" xml:space="preserve">
     <value>Importar</value>
   </data>
+  <data name="MovimientoSavedSuccessfully" xml:space="preserve">
+    <value>Movimientos importados exitosamente</value>
+  </data>
+  <data name="MovimientoSavedUnsuccessfully" xml:space="preserve">
+    <value>Error al guardar los movimientos bancarios</value>
+  </data>
   <data name="NewDialogTitle" xml:space="preserve">
     <value>Nuevo registro</value>
   </data>
@@ -268,7 +313,7 @@
     <value>Consultar Comprobantes</value>
   </data>
   <data name="TitleModalConciliacionAsistida" xml:space="preserve">
-    <value>Conciliación Asistida</value>
+    <value>Conciliación Automática</value>
   </data>
   <data name="TitleModalDerMovimientos" xml:space="preserve">
     <value>Movimientos</value>

@@ -99,7 +99,7 @@
         <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
     </button>
     <button id="remove" class="btn btn-danger" disabled>
-        <i class="bi bi-ban"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
+        <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
     </button>
 </div>
 <!-- --------------------------- -->
@@ -132,6 +132,7 @@
 
 <!-- --------------------------- -->
 <!-- Sección Nuevo/Editar/Ver Registro (Agregar)-->
+<form id="theFormT" method="post">
 <div id="dlgConciliacion" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
@@ -139,9 +140,8 @@
                 <h5 id="dlgConciliacionTitle" class="modal-title"></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="theForm" method="post">
                 <div class="modal-body">
-                    <div class="container-fluid">
+                    <div class="container-fluid ui-front" >
                         <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
                         <div class="row">
                             <div class="col-3">
@@ -156,13 +156,13 @@
                         <div class="row">
                             <div class="col-sm-6 col-md-4 col-lg-4">
                                 <div class="form-floating mb-2">
-                                    <input id="inpConciliacionFecha" asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" type="datetime" class="form-control" placeholder="@Localizer["FechaElaboracionPlaceholder"]" />
+                                    <input id="inpConciliacionFecha" asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" type="datetime-local" class="form-control" placeholder="@Localizer["FechaElaboracionPlaceholder"]" />
                                     <label asp-for="InputFiltroModalAgregar.FechaElaboracionInicio" class="form-label required"></label>
                                 </div>
                             </div>
                             <div class="col-sm-6 col-md-4 col-lg-4">
                                 <div class="form-floating mb-3">
-                                    <input id="inpConciliacionClienteId" asp-for="InputFiltroModalAgregar.Cliente" type="text" class="form-control" placeholder="@Localizer["ClienteIdPlaceholder"]" idselected='' area="ERP" module="Conciliaciones" source="GetClientesEmpresasSuggestion" />
+                                    <input id="inpConciliacionClienteId" asp-for="InputFiltroModalAgregar.Cliente" type="text" class="form-control" placeholder="@Localizer["EmpresaIdPlaceholder"]" idselected='' area="ERP" module="Conciliaciones" source="GetClientesEmpresasSuggestion" />
                                     <label asp-for="InputFiltroModalAgregar.Cliente" class="form-label required"></label>
                                 </div>
                             </div>
@@ -175,7 +175,7 @@
                         </div>
                         <h5>@Localizer["TitleCMAgregar"]</h5>
                         <hr />
-                        <div class="container mt-4">
+                         <div class="container mt-4">
                             <div class="row">
                                 <!-- Botón en el lado izquierdo antes del primer CardView -->
                                 <div class="col-sm-6 col-md-6 col-lg-6 mb-3">
@@ -196,9 +196,11 @@
                                 <!-- Card del lado izquierdo -->
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalIzComprobantes"]</h4>
-                                    <table id="table"
+
+                                    <!-- Tabla de comprobantes -->
+                                    <table id="tableCardComprobantes"
                                            data-toggle="table"
-                                           data-toolbar=".toolbar"
+                                           data-toolbar=".toolbar2"
                                            data-search="true"
                                            data-height="460"
                                            data-card-view="true"
@@ -206,42 +208,48 @@
                                            data-pagination-v-align="top"
                                            data-show-fullscreen="true"
                                            data-show-search-clear-button="false"
-                                           data-side-pagination="server"
+                                           data-side-pagination="client"
                                            data-buttons-class="primary"
-                                           data-show-search-button="true"
-                                           data-url="">
+                                           data-unique-id="id"
+                                           data-row-style="rowStyleComprobantes"
+                                           data-show-search-button="true">
                                         <thead>
-                                            <tr>
-                                                <th data-field="id">Folio</th>
-                                                <th data-field="name">Fecha</th>
-                                                <th data-field="price">Desc.</th>
-                                                <th data-field="">Total</th>
-                                                <th data-field="actions" data-formatter="actionFormatter"></th>
+                                            <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+                                                <th data-field="Serie">Serie</th>
+                                                <th data-field="Folio">Folio</th>
+                                                <th data-field="Fecha">Fecha</th>
+                                                <th data-field="UUID">UUID</th>
+                                                <th data-field="Total">Total</th>
                                             </tr>
                                         </thead>
                                     </table>
 
                                     <br />
-                                    @Localizer["TotalSinConciliar"]
+                                    <strong>@Localizer["TotalSinConciliar"]</strong> <span id="TotalSinConciliarC">0</span>
                                     <br />
-                                    @Localizer["TotalConciliados"]
+                                    <strong>@Localizer["TotalConciliados"]</strong> <span id="TotalConciliadosC">0</span>
                                 </div>
-                                
+
+
+                                <form id="theFormM" method="post">
+                                <!-- Contenedor para mensajes de validación -->
+                                <div id="saveValidationSummaryM" class="alert alert-danger" style="display: none;"></div>
+
                                 <div class="col-sm-6 col-md-6 col-lg-6">
                                     <h4 class="text-center">@Localizer["TitleModalDerMovimientos"]</h4>
                                     <!-- Agregar combobox a la izquierda del buscador -->
-                                    <div class="toolbar">
+                                    <!--<div class="toolbar">
                                         <div class="form-group">
                                             <div class="custom-select">
-                                                <select id="filterOptions" class="form-control">
+                                                <select id="filterOptionsM" class="form-control">
                                                     <option value="opcion1">Mostrar Todo</option>
                                                     <option value="opcion2">Mostrar Conciliados</option>
                                                     <option value="opcion3">Mostrar Pendientes</option>
                                                 </select>
                                             </div>
                                         </div>
-                                    </div>
-                                <!-- Card del lado derecho -->
+                                    </div>-->
+                                    <!-- Card del lado derecho -->
                                     <table id="tableCardMovimientos"
                                            data-toggle="table"
                                            data-toolbar=".toolbar"
@@ -254,102 +262,206 @@
                                            data-show-search-clear-button="false"
                                            data-side-pagination="client"
                                            data-buttons-class="primary"
+                                           data-unique-id="id"
+                                           data-row-style="rowStyleMovimientos"
                                            data-show-search-button="true">
                                         <thead>
                                             <tr>
+                                                <th data-field="Id">Id</th>
                                                 <th data-field="Fecha">Fecha</th>
                                                 <th data-field="Descripción">Descripción</th>
-                                                <th data-field="Cargos">Cargos</th>
-                                                <th data-field="Abonos">Abonos</th>
-                                                <th data-field="actions" data-formatter="actionFormatter"></th>
+                                                <th data-field="Cargos" data-formatter="currencyFormatter">Cargos</th>
+                                                <th data-field="Abonos" data-formatter="currencyFormatter">Abonos</th>
+                                                <th data-field="conciliar" data-formatter="conciliarFormatterMov">Conciliar</th>
                                             </tr>
                                         </thead>
                                     </table>
 
+                                    <br />
+                                    <strong>@Localizer["TotalSinConciliar"]</strong> <span id="TotalSinConciliarM">0</span>
+                                    <br />
+                                    <strong>@Localizer["TotalConciliados"]</strong> <span id="TotalConciliadosM">0</span>
 
-                                    <br />
-                                    @Localizer["TotalSinConciliar"]
-                                    <br />
-                                    @Localizer["TotalConciliados"]
+                                    <!-- Botón para subir datos a la base de datos -->
+                                        <!--<button id="btnSubirDatos" class="btn btn-primary mt-3" type="button" onclick="onGuardarMovimientos()">Subir Movimientos a BD</button>-->
+                                    
                                 </div>
+                                </form>
                             </div>
-                        </div>
+                        </div> 
                         <br />
-                        <h5>@Localizer["TitleConciliacion"]</h5>
                         <hr />
                         <div class="container mt-4">
                             <!-- Botón para abrir el modal -->
-                            <a href="#" class="btn btn-primary w-20 mb-4" data-bs-toggle="modal" data-bs-target="#ConciliacionModal">
+                            <button type="button" id="dlgConciliacionAsistidaBtn" class="btn btn-primary w-20 mb-4" onclick="conciliarAutomatico()" data-bs-toggle="modal" data-bs-target="#ConciliacionModal">
                                 @Localizer["TitleModalConciliacionAsistida"]
-                            </a>
+                            </button>
+                            <br />
 
-                            <!-- Fila que contendrá dos columnas, una para cada tabla -->
+                            <!--<div class="d-flex justify-content-end mb-3">
+                                <button onclick="mostrarMovimientosConciliacion()" class="btn btn-primary btn-sm">Conciliación Masiva</button>
+                            </div>
+                            -->
                             <div class="row">
-                                <!-- Columna de la izquierda -->
                                 <br />
-                                <div class="col-md-6">
-                                    <h4 class="text-center">Comprobantes</h4>
-                                    <table id="tableRight"
-                                           data-toggle="table"
-                                           data-search="false"
-                                           data-height="460"
-                                           data-show-search-button="true"
-                                           data-card-view="false"
-                                           data-pagination="false"
-                                           data-buttons-class="primary">
-                                        <thead>
-                                            <tr>
-                                                <th data-field="id">Folio</th>
-                                                <th data-field="name">Fecha</th>
-                                                <th data-field="name">Banco</th>
-                                                <th data-field="price">Desc.</th>
-                                                <th data-field="price">Total</th>
-                                            </tr>
-                                        </thead>
-                                    </table>
-                                </div>
-
-                                <!-- Columna de la derecha -->
-                                <div class="col-md-6">
-                                    <h4 class="text-center">Movimientos</h4>
-                                    <table id="tableRight"
+                                <div class="">
+                                    <table id="tableResult"
                                            data-toggle="table"
                                            data-search="true"
                                            data-height="460"
                                            data-show-search-button="true"
+                                           data-detail-view="true"
+                                           data-detail-formatter="detailFormatter"
                                            data-card-view="false"
                                            data-pagination="false"
-                                           data-buttons-class="primary">
+                                           data-buttons-class="primary"
+                                           data-unique-id="id"
+                                           data-row-style="rowStyle">
                                         <thead>
                                             <tr>
-                                                <th data-field="id">Folio</th>
-                                                <th data-field="name">Fecha</th>
-                                                <th data-field="name">Banco</th>
-                                                <th data-field="price">Desc.</th>
-                                                <th data-field="price">Total</th>
+                                                <th data-field="id">Id</th>
+                                                <th data-field="Serie">Serie</th>
+                                                <th data-field="Folio">Folio</th>
+                                                <th data-field="Fecha">Fecha</th>
+                                                <th data-field="Banco">Banco</th>
+                                                <th data-field="Descripción">Descripción</th>
+                                                <th data-field="Total" data-formatter="currencyFormatter">Total</th>
+                                                <th data-field="Desconciliar" data-formatter="desconciliarFormatter">Desconciliar</th>
                                             </tr>
                                         </thead>
                                     </table>
                                 </div>
+
                             </div>
-                        </div>
-
-                        <!---->
-
+                        </div> 
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button id="dlgConciliacionBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
-                    </button>
-                    <button id="dlgConciliacionBtnGuardar" type="button" class="btn btn-primary">
-                        <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
-                    </button>
-                </div>
-            </form>
+            
+            <div class="modal-footer">
+                <button id="dlgConciliacionBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
+                </button>
+                <button id="dlgConciliacionBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+                    <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
+                </button>
+            </div>
         </div>
     </div>
 </div>
+</form>
+
+<!-- Modal para mostrar la lista de movimientos conciliados y no conciliados -->
+<div class="modal fade" id="modalConciliacionMasiva" tabindex="-1" aria-labelledby="modalConciliacionMasivaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConciliacionMasivaLabel">Lista de Movimientos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="listaMovimientos" class="list-group">
+                    <!-- Aquí se cargarán los datos de movimientos dinámicamente -->
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar coincidencias de comprobantes -->
+<div class="modal fade" id="modalSimilitud" tabindex="-1" aria-labelledby="modalSimilitudLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalSimilitudLabel">Coincidencias de Comprobantes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalSimilitudHeader"></div> <!-- Datos del movimiento seleccionado -->
+                <!-- Contenedor con scroll para la tabla -->
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Serie</th>
+                                <th>Folio</th>
+                                <th>Fecha</th>
+                                <th data-formatter="currencyFormatter">Total</th>
+                                <th>Porcentaje de Similitud</th>
+                                <th>Seleccionar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalSimilitudBody">
+                            <!-- Aquí se mostrarán los comprobantes con coincidencias -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Nuevo footer para el botón de conciliar -->
+            <div class="modal-footer" id="modalSimilitudFooter">
+                <!-- Aquí se añadirá dinámicamente el botón de conciliar -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar mensajes -->
+<div class="modal fade" id="modalConciliacion" tabindex="-1" aria-labelledby="modalConciliacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConciliacionLabel">Resultado de la Conciliación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalConciliacionMensaje">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar coincidencias de movimientos -->
+<div class="modal fade" id="modalConciliacionComp" tabindex="-1" aria-labelledby="modalConciliacionCompLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConciliacionCompLabel">Movimientos Coincidentes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalConciliacionCompMensaje">
+                <!-- Aquí se muestran los resultados de movimientos coincidentes -->
+            </div>
+            <div class="modal-footer">
+                <!-- No es necesario tener otro botón de conciliación aquí, ya que se incluye dinámicamente en la función consultarComp del js-->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="alertModalLabel">Mensaje de conciliación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="alertModalBody">
+                <!-- Aquí se mostrará el mensaje -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 <!-- Modal para consulta por fechas -->
 <div class="modal fade" id="consultarComprobantesModal" tabindex="-1" aria-labelledby="descargarComprobantesLabel" aria-hidden="true">
@@ -359,70 +471,75 @@
                 <h5 class="modal-title" id="descargarComprobantesLabel">@Localizer["ConsultaDeComprobantesPlaceholder"]</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <!-- Contenido del modal -->
-                <h6>@Localizer["DescargarComprobantesPlaceholder"]</h6>
-                <div class="row justify-content-center">
-                    <div class="col-sm-6 col-md-5 col-lg-7">
-                        <div class="form-floating mb-3">
-                            <input id="inpFiltroFechaInicioModalDComprobantes" type="date" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-control" placeholder="@Localizer["FechaInicioModalDComprobantesField"]" />
-                            <label for="inpFiltroFechaInicioModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-label required"></label>
+            <form id="theForm" method="post">
+                <div class="modal-body">
+                    <!-- Contenido del modal -->
+                    <h6>@Localizer["DescargarComprobantesPlaceholder"]</h6>
+                    <div class="row justify-content-center">
+                        <div class="col-sm-6 col-md-5 col-lg-7">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroFechaInicioModalDComprobantes" type="datetime-local" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-control" placeholder="@Localizer["FechaInicioModalDComprobantesField"]" />
+                                <label for="inpFiltroFechaInicioModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaInicioModalDComprobantes" class="form-label required"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-5 col-lg-7">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroFechaFinModalDComprobantes" type="datetime-local" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-control" placeholder="@Localizer["FechaFinModalDComprobantesField"]" />
+                                <label for="inpFiltroFechaFinModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-label required"></label>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-sm-6 col-md-5 col-lg-7">
-                        <div class="form-floating mb-3">
-                            <input id="inpFiltroFechaFinModalDComprobantes" type="date" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-control" placeholder="@Localizer["FechaFinModalDComprobantesField"]" />
-                            <label for="inpFiltroFechaFinModalDComprobantes" asp-for="InputFiltroModalDComprobantes.FechaFinModalDComprobantes" class="form-label required"></label>
-                        </div>
-                    </div>
-                </div>
 
-            </div>
-            <div class="modal-footer">
-                <div class="col-7 text-end">
-                    <button id="dlgConsultarBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]
-                    </button>
-                    <button id="dlgConsultarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onConsultarComprobantesClick();">
-                         @Localizer["GetButtonTitle"]
-                    </button>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <div class="col-7 text-end">
+                        <button id="dlgConsultarBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]
+                        </button>
+                        <button id="dlgConsultarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onConsultarComprobantesClick();">
+                            @Localizer["GetButtonTitle"]
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-<!--Modal para Movimientos-->
-<div class="modal fade" id="ImportarMovimientosModal" tabindex="-1" aria-labelledby="ImportarMovimientosModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="ImportarMovimientosModalLabel">@Localizer["ImportarMovimientosModalPlaceholder"]</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Contenido del modal -->
-                <center>@Localizer["ImportarMovimientosModalP1Placeholder"]</center>
-                <br />
-                <br />
-                <div class="row justify-content-center">
-                    <div class="col-sm-6 col-md-5 col-lg-7">
-                        <div class="container">
-                            <div class="row">
-                                <div class="col-12 text-center mb-3">
-                                    <a id="dlgExcelBtnPlantilla" href="@Url.Page("Conciliaciones", "DownloadPlantilla")" class="btn btn-primary">
-                                        <i class="bi bi-file-earmark-ruled"></i> @Localizer["PlantillaButtonTitle"]
-                                    </a>
+<!-- Modal para Movimientos -->
+<form id="theForm" method="post">
+    <div class="modal fade" id="ImportarMovimientosModal" tabindex="-1" aria-labelledby="ImportarMovimientosModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ImportarMovimientosModalLabel">@Localizer["ImportarMovimientosModalPlaceholder"]</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Contenedor para mensajes de error de validación -->
+                    <div id="importValidationSummary" class="alert alert-danger" style="display: none;"></div>
+
+                    <!-- Contenido del modal -->
+                    <center>@Localizer["ImportarMovimientosModalP1Placeholder"]</center>
+                    <br />
+                    <br />
+                    <div class="row justify-content-center">
+                        <div class="col-sm-6 col-md-5 col-lg-7">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-12 text-center mb-3">
+                                        <a id="dlgExcelBtnPlantilla" href="@Url.Page("Conciliaciones", "DownloadPlantilla")" class="btn btn-primary">
+                                            <i class="bi bi-file-earmark-ruled"></i> @Localizer["PlantillaButtonTitle"]
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <!-- Contenido del modal -->
-                    <center>@Localizer["ImportarMovimientosModalP2Placeholder"]</center>
-                    <br />
-                    <!-- Formulario para importar archivos -->
-                    <div class="container mt-4">
-                        <form id="importForm" method="post" enctype="multipart/form-data">
+                        <!-- Contenido del modal -->
+                        <center>@Localizer["ImportarMovimientosModalP2Placeholder"]</center>
+                        <br />
+                        <!-- Formulario para importar archivos -->
+                        <div class="container mt-4">
                             <div class="row">
                                 <div class="col-12">
                                     <div class="form-group">
@@ -430,41 +547,44 @@
                                     </div>
                                 </div>
                             </div>
-                        </form>
-                    </div>
-                    <!-- Combobox para seleccionar el banco -->
-                    <div class="container mt-4">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="form-floating mb-3">
-                                    <select id="selFiltroBanco" class="form-select" placeholder="@Localizer["BancoPlaceholder"]">
-                                        <option value="0">Seleccione...</option>
-                                        @foreach (Banco bancos in banco)
-                                        {
-                                            <option value="@bancos.Id">@bancos.Nombre</option>
-                                        }
-                                    </select>
-                                    <label for="selFiltroBanco" asp-for="BancoList.Id" class="form-label">@Localizer["BancoLabel"]</label>
+                        </div>
+                        <!-- Combobox para seleccionar el banco -->
+                        <div class="container mt-4">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-floating mb-3">
+                                        <select id="selFiltroBanco" class="form-select" placeholder="@Localizer["BancoPlaceholder"]">
+                                            <option value="0">Seleccione...</option>
+                                            @foreach (Banco bancos in banco)
+                                            {
+                                                <option value="@bancos.Id">@bancos.Nombre</option>
+                                            }
+                                        </select>
+                                        <label for="selFiltroBanco" asp-for="BancoList.Id" class="form-label">@Localizer["BancoLabel"]</label>
+                                    </div>
+                                    <input type="hidden" asp-for="InputFiltroModalAgregar.BancoId" id="BancoSeleccionado" />
+
                                 </div>
                             </div>
                         </div>
+                        <br />
                     </div>
-                    <br />
                 </div>
-            </div>
-            <div class="modal-footer">
-                <div class="col-7 text-end">
-                    <button id="dlgImportarBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]
-                    </button>
-                    <button id="dlgImportarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onImportarMovimientosBancariosClick();">
-                        @Localizer["ImportButtonTitle"]
-                    </button>
+                <div class="modal-footer">
+                    <div class="col-7 text-end">
+                        <button id="dlgImportarBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]
+                        </button>
+                        <button id="dlgImportarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onImportarMovimientosBancariosClick();">
+                            @Localizer["ImportButtonTitle"]
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</form>
+
 
 @section Scripts {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
@@ -484,9 +604,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <link rel="stylesheet" href="~/css/Conciliaciones.css" />
     <link rel="stylesheet" href="~/css/ConciliacionesDes.css" />
@@ -513,6 +632,15 @@
         var colUsuarioCreadorHeader = '@Localizer["ColCreatedUserHeader"]';
         var colUsuarioModificoHeader = '@Localizer["ColModifyUserHeader"]';
         var colAccionesHeader = '@Localizer["ColActionsHeader"]';
+
+        /*Tabla de resultados Detalles*/
+        var colIdHeaderD = '@Localizer["colIdHeaderD"]';
+        var colSerieHeaderD = '@Localizer["colSerieHeaderD"]';
+        var colFolioHeaderD = '@Localizer["colFolioHeaderD"]';
+        var colFechaHeaderD = '@Localizer["colFechaHeaderD"]';
+        var colTotalHeaderD = '@Localizer["colTotalHeaderD"]';
+        var colPSimilitudHeaderD = '@Localizer["colPSimilitudHeaderD"]';
+        var colCheckHeaderD = '@Localizer["colCheckHeaderD"]';
 
         /*Permisos*/
         var puedeTodo = '@puedeTodo' == 'True';

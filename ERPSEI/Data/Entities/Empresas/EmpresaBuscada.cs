@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using ERPSEI.Data.Entities.SAT.cfdiv40;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ERPSEI.Data.Entities.Empresas
 {
@@ -24,6 +25,5 @@ namespace ERPSEI.Data.Entities.Empresas
 		public string? Perfil { get; set; } = string.Empty;
 
 		public string? ObjetoSocial { get; set; } = string.Empty;
-
 	}
 }

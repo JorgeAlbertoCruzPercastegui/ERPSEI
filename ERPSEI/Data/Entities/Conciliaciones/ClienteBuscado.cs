@@ -7,5 +7,6 @@ namespace ERPSEI.Data.Entities.Conciliaciones
     {
         public int Id { get; set; }
         public string? NombreCliente { get; set; } = string.Empty;
+        public string RazonSocial { get; set; } = string.Empty;
     }
 }

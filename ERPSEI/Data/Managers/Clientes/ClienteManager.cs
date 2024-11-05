@@ -1,4 +1,6 @@
 ﻿using ERPSEI.Data.Entities.Clientes;
+using ERPSEI.Data.Entities.Conciliaciones;
+using ERPSEI.Data.Entities.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.Clientes
@@ -97,5 +99,26 @@ namespace ERPSEI.Data.Managers.Clientes
         {
             return await db.Clientes.Where(a => a.RazonSocial.ToLower() == name.ToLower() || a.RFC.ToLower() == name.ToLower()).FirstOrDefaultAsync();
         }
-	}
+
+        /*public async Task<List<Cliente>> SearchClientes(string texto)
+        {
+            List<Cliente> clientes = await db.Clientes
+                .Where(c => !c.Deshabilitado)
+                .Where(c =>
+                    (c.RazonSocial != null && c.RazonSocial.Contains(texto)) ||
+                    (c.RFC != null && c.RFC.Contains(texto)) ||
+                    (c.DomicilioFiscal != null && c.DomicilioFiscal.Contains(texto)) ||
+                    (c.Telefono != null && c.Telefono.Contains(texto)) ||
+                    (c.Correo != null && c.Correo.Contains(texto)))
+                .Take(20)
+                .ToListAsync();
+
+            return clientes;
+        }
+
+        Task<List<ClienteBuscado>> IClienteManager.SearchClientes(string texto)
+        {
+            throw new NotImplementedException();
+        }*/
+    }
 }

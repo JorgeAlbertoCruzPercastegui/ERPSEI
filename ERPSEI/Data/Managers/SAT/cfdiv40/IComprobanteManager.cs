@@ -18,6 +18,12 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			string? emisorRFC = null,
 			string? receptorRFC = null
 		);
+        public Task<List<Comprobante>> GetByDateRangeAsync(
+			DateTime? fechaInicio, 
+			DateTime? fechaFin
+			);
+
+        Task<List<Comprobante>> GetByRFCAsync(string rfc);
 
 		public Task UpdateMultipleAsync(List<Comprobante> comprobantes);
 
