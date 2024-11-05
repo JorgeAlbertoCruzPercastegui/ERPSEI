@@ -1661,33 +1661,46 @@ function initConciliacionDialog(action, row) {
     dlgConciliacionModal.show();
 }
 function onGuardarClick() {
-
-    //Ejecuta la validación
+    // Ejecuta la validación
     $("#theFormT").validate();
-    //Determina los errores
+    // Determina los errores
     let valid = $("#theFormT").valid();
-    //Si la forma no es válida, entonces finaliza.
+    // Si la forma no es válida, entonces finaliza.
     if (!valid) { return; }
 
+    // Campos principales para tabla conciliaciones
     let idField = document.getElementById("inpConciliacionId");
     let fechaField = document.getElementById("inpConciliacionFecha");
     let clienteIdField = document.getElementById("inpConciliacionClienteId");
     let descripcionField = document.getElementById("inpConciliacionDescripcion");
-    let bancoIdField = document.getElementById("selFiltroBanco"); 
+    let bancoIdField = document.getElementById("selFiltroBanco");
 
     let dlgTitle = document.getElementById("dlgConciliacionTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     let btnClose = document.getElementById("dlgConciliacionBtnCancelar");
     summaryContainer.innerHTML = "";
 
-    // Parámetros que se enviarán en la solicitud
+    // Parámetros principales
     let oParams = {
-        Id: idField.value == "Nuevo" ? 0 : idField.value,
+        Id: idField.value === "Nuevo" ? 0 : idField.value,
         FechaElaboracionInicio: fechaField.value,
         Cliente: clienteIdField.value,
         Descripcion: descripcionField.value,
-        BancoId: bancoIdField.value // Agrega el BancoId seleccionado
+        BancoId: bancoIdField.value,
+        Movimientos: []
     };
+
+    // Obtener todas las filas de la tabla `tableCardMovimientos`
+    let allRows = $('#tableCardMovimientos').bootstrapTable('getData');
+    allRows.forEach(function (row) {
+        // Crear cada movimiento sin la propiedad Id, dejando que la base de datos lo asigne
+        let movimiento = {
+            Fecha: row.Fecha,
+            Descripcion: row.Descripción,
+            Importe: row.Cargos // Cambia a `Importe` si es necesario
+        };
+        oParams.Movimientos.push(movimiento);
+    });
 
     // Llamada AJAX para guardar los datos
     doAjax(
@@ -1696,7 +1709,7 @@ function onGuardarClick() {
         function (resp) {
             if (resp.tieneError) {
                 if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
-                    let summary = ``;
+                    let summary = "";
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
@@ -1709,12 +1722,17 @@ function onGuardarClick() {
             btnClose.click();
             onBuscarClick();
             showSuccess(dlgTitle.innerHTML, resp.mensaje);
-        }, function (error) {
+        },
+        function (error) {
             showError("Error", error);
         },
         postOptions
     );
 }
+
+
+
+
 
 function eliminarRegistro(Id) {
     if (confirm('¿Estás seguro de eliminar el registro con ID: ' + Id + '?')) {
