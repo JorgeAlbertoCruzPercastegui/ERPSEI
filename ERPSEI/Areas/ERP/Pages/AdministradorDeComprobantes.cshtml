@@ -45,7 +45,7 @@
 	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 }
-<h3 class="title mb-3">@ViewData["Title"]</h3>
+<h3 id="hTitle" class="title mb-3">@ViewData["Title"]</h3>
 
 <!-- --------------------------- -->
 <!-- Sección de filtros -------- -->
@@ -207,6 +207,98 @@
 <!-- --------------------------- -->
 
 <!-- --------------------------- -->
+<!-- Diálogo Póliza Egresos----- -->
+<form id="theform" method="post">
+	<div id="dlgCuentasPolizaEgresos" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 id="dlgTitle" class="modal-title">@Localizer["DlgCuentasPolizaEgresosTitle"]</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body align-items-center">
+					<div class="container-fluid">
+						<div class="row">
+							<div class="alert alert-primary d-flex align-items-center mb-3" role="alert">
+								<i class="bi bi-info-circle-fill me-2" style="font-size: x-large"></i>
+								<div>@Localizer["DlgCuentasPolizaEgresosMessage"]</div>
+							</div>
+						</div>
+						@* <div class="row">
+							<div class="col-12 mb-3">
+								<h6>@Localizer["CuentaContableTitle"]</h6>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-12">
+								<div class="form-floating mb-4">
+									<input id="inpCuentaContable" type="search" asp-for="InputCuentaContable.CuentaContableId" class="form-control formInput" placeholder="@Localizer["CuentaContablePlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetCuentaContableSuggestion" />
+									<label for="inpCuentaContable" asp-for="InputCuentaContable.CuentaContableId" class="form-label"></label>
+									<span asp-validation-for="InputCuentaContable.CuentaContableId" class="text-danger"></span>
+								</div>
+							</div>
+						</div> *@
+						<div class="row">
+							<div class="col-12">
+								<div id="toolbarCuentasContables" class="col-xl-12">
+									@{
+										if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar)
+										{
+											<div class="dropdown">
+												<button id="btnAccionesCuentas" class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+													<span class="d-none d-sm-inline">@Localizer["ColActionsHeader"]</span>
+												</button>
+												<ul class="dropdown-menu">
+													<li><a class="dropdown-item pdf" onclick="onShowPDFClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]"><i class="bi bi-file-pdf"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]</a></li>
+												</ul>
+											</div>
+										}
+									}
+								</div>
+							</div>
+							<table id="tableCuentasContables" class="table-sm"
+									data-unique-id="id"
+									data-toolbar="#toolbarCuentasContables"
+									data-search="true"
+									data-show-fullscreen="false"
+									data-show-columns="false"
+									data-show-columns-toggle-all="false"
+									data-click-to-select="true"
+									data-minimum-count-columns="2"
+									data-show-pagination-switch="false"
+									data-pagination="true"
+									data-id-field="id"
+									data-page-list="[10, 25, 50, 100, all]"
+									data-show-footer="false"
+									data-side-pagination="client"
+									data-response-handler="responseHandler"
+									data-detail-view="true"
+									data-detail-formatter="detailFormatter"
+									data-buttons-class="primary">
+								<thead><tr align="center" valign="middle" class="bg-primary bg-opacity-10"></tr></thead>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button id="dlgBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<i class="bi bi-x-lg"></i> @Localizer["CloseButtonTitle"]
+					</button>
+					@if (puedeTodo || puedeEditar)
+					{
+						<button id="dlgBtnAgregar" type="button" class="btn btn-primary formButton" onclick="onAgregarProductoServicioClick();">
+							<i class="bi bi-file-earmark-minus"></i> @Localizer["PolizaEgresoButtonTitle"]
+						</button>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</form>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+<!-- --------------------------- -->
 <!-- Sección tabla de resultados -->
 <div id="toolbar" class="col-xl-12">
 	@{
@@ -271,14 +363,15 @@
 	<script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
 	<script src="~/js/autocompletar.js"></script>
 
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"></script>
+
 	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
-
-	<script src="~/lib/bootstrap-table/extensions/export/tableExport.min.js"></script>
-
 	<script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
 	<script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
 	<script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
-	<script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
+
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet" />
+	<script src="~/lib/bootstrap-table/extensions/editable/bootstrap-table-editable.min.js"></script>
 
 	<!-- Scripts del módulo y dependencias -->
 	<link rel="stylesheet" href="~/css/AdministradorDeComprobantes.css" />
@@ -322,7 +415,11 @@
 		var colSubtotalHeader = '@Localizer["ColSubtotalHeader"]';
 		var colDescuentoHeader = '@Localizer["ColDescuentoHeader"]';
 		var colTotalHeader = '@Localizer["ColTotalHeader"]';
+		var colCuentaContableHeader = '@Localizer["ColCuentaContableHeader"]';
 		var colAccionesHeader = '@Localizer["ColActionsHeader"]';
+		var colClaveProdServHeader = '@Localizer["ColClaveProdServHeader"]';
+		var colDescripcionHeader = '@Localizer["ColDescripcionHeader"]';
+		var colImporteHeader = '@Localizer["ColImporteHeader"]';
 
 		var tooltipCancelado = '@Localizer["TooltipCancelado"]';
 		var tooltipValido = '@Localizer["TooltipValido"]';

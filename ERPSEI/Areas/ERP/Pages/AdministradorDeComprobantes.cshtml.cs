@@ -90,6 +90,15 @@ namespace ERPSEI.Areas.ERP.Pages
 			public string? ReceptorRFC { get; set; }
 		}
 
+		[BindProperty]
+		public CuentaContableModel InputCuentaContable { get; set; } = new CuentaContableModel();
+
+		public class CuentaContableModel
+		{
+			[Display(Name = "SearchCuentaContableField")]
+			public int? CuentaContableId { get; set; }
+		}
+
 		public IActionResult OnGet(int tipoId)
 		{
 			if (tipoId <= 0 || tipoId >= 3){ return RedirectToPage("/404"); }
@@ -381,12 +390,12 @@ namespace ERPSEI.Areas.ERP.Pages
 							resp.Datos = await CreateWorkbook(ids, TipoExportacion.PolizaIngresos, comprobanteManager, cuentaContableManager, empresaManager);
 							break;
 						case (int)TipoExportacion.PolizaEgresos:
+							resp.Datos = await CreateWorkbook(ids, TipoExportacion.PolizaEgresos, comprobanteManager, cuentaContableManager, empresaManager);
 							break;
 						default:
 							break;
 					}
 
-					
 					resp.TieneError = false;
 					resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 				}
@@ -901,6 +910,90 @@ namespace ERPSEI.Areas.ERP.Pages
 			}
 
 			return resp;
+		}
+
+		public async Task<JsonResult> OnPostComprobantesWithConceptos(string[] ids)
+		{
+			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+			if (PuedeTodo || PuedeEditar)
+			{
+				try
+				{
+					resp.Datos = await CreateJsonComprobantesWithConceptos(ids);
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ConsultadoSuccessfully"];
+				}
+				catch (Exception ex)
+				{
+					logger.LogError("{message}", ex.Message);
+					resp.Mensaje = ex.Message;
+				}
+			}
+			else
+			{
+				resp.Mensaje = localizer["AccesoDenegado"];
+			}
+
+			return new JsonResult(resp);
+		}
+		private async Task<string> CreateJsonComprobantesWithConceptos(string[] ids)
+		{
+			List<string> jsonComprobantes = [];
+			string jsonResponse;
+			string jsonConceptos;
+
+			foreach (string id in ids)
+			{
+				_ = int.TryParse(id, out int idComprobante);
+
+				//Se obtiene el comprobante con sus conceptos
+				if (idComprobante >= 1)
+				{
+					//Obtiene los datos del comprobante
+					Comprobante? c = await comprobanteManager.GetComprobanteWithConceptosByIdAsync(idComprobante);
+
+					if (c != null)
+					{
+						jsonConceptos = CreateJsonConceptos(c.Conceptos ?? []);
+
+						jsonComprobantes.Add(
+							"{" +
+								$"\"id\": {c.Id}," +
+								$"\"serieFolio\": \"{c.Serie}-{c.Folio}\", " +
+								$"\"total\": {c.Total}, " +
+								$"\"rfcEmisor\": \"{c.Emisor?.Rfc}\", " +
+								$"\"cuentaContable\": \"Seleccione...\", " +
+								$"\"conceptos\": {jsonConceptos}" +
+							"}"
+						);
+					}
+				}
+			}
+
+			jsonResponse = $"[{string.Join(",", jsonComprobantes)}]";
+
+			return jsonResponse;
+		}
+		private static string CreateJsonConceptos(List<ComprobanteConcepto> conceptos)
+		{
+			List<string> jsonConceptos = [];
+			string jsonResponse;
+			foreach(ComprobanteConcepto cc in conceptos)
+			{
+				jsonConceptos.Add(
+					"{" +
+						$"\"id\": {cc.Id}," +
+						$"\"claveProdServ\":\"{cc.ClaveProdServ}\"," +
+						$"\"descripcion\":\"{cc.Descripcion}\"," +
+						$"\"importe\": {cc.Importe}" +
+					"}"
+				);
+			}
+
+			jsonResponse = $"[{string.Join(",", jsonConceptos)}]";
+
+			return jsonResponse;
+
 		}
 	}
 }

@@ -1,12 +1,18 @@
 ﻿var table;
+var selections = [];
 var buttonAcciones;
+
+var tableCuentasContables;
+var cuentasSelected = [];
+var buttonAccionesCuentas;
+
 var buttonExport;
 var buttonCancel;
 var tableProdServ;
-var selections = [];
 var dlgProdServ = null;
-var dlgCFDI = null;
-var dlgCFDIModal = null;
+var dlgCuentasPolizaEgresos = null;
+var dlgCuentasPolizaEgresosModal = null;
+
 const ESTATUS_SOLICITADA = 1;
 const ESTATUS_AUTORIZADA = 2;
 const ESTATUS_FINALIZADA = 3;
@@ -19,18 +25,34 @@ const TIPO_EXPORTADO_POLIZA_EGRESO = 4
 
 var numFormatter = null;
 var dialogMode = null;
+
 const NUEVO = 0;
 const EDITAR = 1;
 const VER = 2;
+
 const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
+$(window).on("load", function () {
+    $.fn.editable.defaults.mode = 'inline';
+    $.fn.editableform.buttons = `<button type="submit" class="btn btn-primary btn-sm editable-submit"><i class="bi bi-check"></i></button>
+                                 <button type="button" class="btn btn-danger btn-sm editable-cancel"><i class="bi bi-x"></i></button>`;
+});
+
 document.addEventListener('DOMContentLoaded', function () {
+    let script = document.createElement('script');
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js";
+    document.getElementsByTagName('head')[0].appendChild(script);
+
     numFormatter = new Intl.NumberFormat(cultureName);
 
     table = $("#table");
+    tableCuentasContables = $("#tableCuentasContables");
     buttonAcciones = $("#btnAcciones");
+    buttonAccionesCuentas = $("#btnAccionesCuentas");
     buttonExport = $("#btnExportar");
     buttonCancel = $("#btnCancelar");
+    dlgCuentasPolizaEgresos = document.getElementById('dlgCuentasPolizaEgresos');
+    dlgCuentasPolizaEgresosModal = new bootstrap.Modal(dlgCuentasPolizaEgresos, null);
 
     initTable();
 
@@ -123,8 +145,8 @@ function rowStyle(row, index) {
     return {};
 }
 //Función para obtener los identificadores de los registros seleccionados
-function getIdSelections() {
-    return $.map(table.bootstrapTable('getSelections'), function (row) {
+function getIdSelections(bootstrapTable) {
+    return $.map(bootstrapTable.bootstrapTable('getSelections'), function (row) {
         return row.id
     })
 }
@@ -165,7 +187,7 @@ function onCancelarClick() {
 
     let oParams = {};
 
-    let ids = getIdSelections();
+    let ids = getIdSelections(table);
     if ((ids || "").length <= 0) { showError(btnCancelarTitle, NoItemSelectedMessage); }
 
     doAjax(
@@ -192,41 +214,6 @@ function onCancelarClick() {
     );
 }
 
-//Función para exportar cfdis
-function ajaxExportCFDIS(oParams) {
-    doAjax(
-        `/ERP/AdministradorDeComprobantes/ExportCFDIS`,
-        oParams,
-        function (resp) {
-            if (resp.tieneError) {
-                showError(dlgExportTitle, resp.mensaje);
-                return;
-            }
-
-            clearTable();
-
-            switch (tipoExportado) {
-                case TIPO_EXPORTADO_PDF:
-                    break;
-                case TIPO_EXPORTADO_XML:
-                    break;
-                case TIPO_EXPORTADO_EXCEL:
-                case TIPO_EXPORTADO_POLIZA_INGRESO:
-                case TIPO_EXPORTADO_POLIZA_EGRESO:
-                    let fileLink = document.getElementById("downloadFileLink");
-                    fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)
-                    fileLink.click();
-                    break;
-                default:
-            }
-
-            showSuccess(dlgExportTitle, resp.mensaje);
-        }, function (error) {
-            showError(dlgExportTitle, error);
-        },
-        postOptions
-    );
-}
 //Función para inicializar la tabla
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
@@ -366,7 +353,7 @@ function initTable() {
     })
     table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
         if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
-        selections = getIdSelections();
+        selections = getIdSelections(table);
         let selectedRows = table.bootstrapTable('getSelections') || [];
 
         //Obtiene todos los comprobantes que no se han contabilizado
@@ -379,6 +366,99 @@ function initTable() {
             onTipoComprobanteChanged(false);
         }
     });
+}
+
+//Función para inicializar la tabla de cuentas contables
+function initTableCuentasContables() {
+    tableCuentasContables.bootstrapTable('destroy').bootstrapTable({
+        locale: cultureName,
+        columns: [
+            {
+                field: "state",
+                checkbox: true,
+                align: "center",
+                valign: "middle"
+            },
+            {
+                title: colSerieHeader + ' ' + colFolioHeader,
+                field: "serieFolio",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: colEmisorHeader,
+                field: "rfcEmisor",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: colTotalHeader,
+                field: "total",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                formatter: currencyFormatter
+            },
+            {
+                title: colCuentaContableHeader,
+                field: "cuentaContable",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                editable: true
+            }
+        ]
+    })
+    tableCuentasContables.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
+        if (buttonAccionesCuentas) { buttonAccionesCuentas.prop('disabled', !tableCuentasContables.bootstrapTable('getSelections').length) }
+        cuentasSelected = getIdSelections(tableCuentasContables);
+    });
+}
+//Función para dar formato al detalle del comprobante
+function detailFormatter(index, row) {
+    let htmlConceptos = [];
+    let i = 1;
+    row.conceptos.forEach(function (cc) {
+        htmlConceptos.push(`
+            <div class="row text-center">
+                <div class="col-12 col-lg-1 mb-1">
+					<span><b>${i}.- </b></span>
+				</div>
+                <div class="col-12 col-lg-3 mb-1">
+					<span>${cc.claveProdServ}</span>
+				</div>
+				<div class="col-12 col-lg-5 mb-1">
+					<span>${cc.descripcion}</span>
+				</div>
+				<div class="col-12 col-lg-3 mb-1">
+					<span>${cc.importe}</span>
+				</div>
+            </div>
+        `);
+        i++;
+    });
+
+    return `
+        <div class="container-fluid alert alert-light mb-0">
+            <div class="row text-center d-none d-lg-flex">
+                <div class="col-12 col-lg-1 mb-2">
+					<span>&nbsp;</span>
+				</div>
+                <div class="col-12 col-lg-3 mb-2">
+					<span><b>${colClaveProdServHeader}</b></span>
+				</div>
+				<div class="col-12 col-lg-5 mb-2">
+					<span><b>${colDescripcionHeader}</b></span>
+				</div>
+				<div class="col-12 col-lg-3 mb-2">
+					<span><b>${colImporteHeader}</b></span>
+				</div>
+            </div>
+            ${htmlConceptos.join('')}
+        </div>
+    `;
 }
 
 //Función para mostrar comprobantes como PDF
@@ -405,15 +485,38 @@ function onShowExcelClick() {
 //Función para mostrar comprobantes como Póliza de Ingresos
 function onShowPolizaIngresoClick() {
     onShowCFDIs(TIPO_EXPORTADO_POLIZA_INGRESO);
-
-    //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
 }
 //Función para mostrar comprobantes como Póliza de Egresos
 function onShowPolizaEgresoClick() {
-    showInfo("En desarrollo", "Esta funcionalidad se encuentra en desarrollo. Seguimos trabajando para tenerla disponible cuanto antes.");
-    //onShowCFDIs(TIPO_EXPORTADO_POLIZA_EGRESO);
+    //let selectedComprobantes = $.map(table.bootstrapTable('getSelections'), function (row) {
+    //    return {
+    //        id: row.id,
+    //        serieFolio: `${row.serie}-${row.folio}`,
+    //        rfcEmisor: row.emisor,
+    //        total: row.total
+    //    };
+    //});
+    let oParams = { ids: getIdSelections(table) }
+    doAjax(
+        `/ERP/AdministradorDeComprobantes/ComprobantesWithConceptos`,
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                showError(dlgExportTitle, resp.mensaje);
+                return;
+            }
 
-    //if (safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(safeL)}`, "_blank"); }
+            initTableCuentasContables();
+            tableCuentasContables.bootstrapTable('load', responseHandler(resp.datos));
+            tableCuentasContables.bootstrapTable('uncheckAll');
+            if (buttonAccionesCuentas) { buttonAccionesCuentas.prop('disabled', true) }
+
+            dlgCuentasPolizaEgresosModal.toggle();
+        }, function (error) {
+            showError(dlgExportTitle, error);
+        },
+        postOptions
+    );
 }
 //Función para mostrar comprobantes en diferentes formatos
 function onShowCFDIs(tipoExportado) {
@@ -421,7 +524,7 @@ function onShowCFDIs(tipoExportado) {
         case TIPO_EXPORTADO_PDF:
             break;
         case TIPO_EXPORTADO_XML:
-            let idsXML = getIdSelections();
+            let idsXML = getIdSelections(table);
             ajaxExportCFDIS({ ids: idsXML, tipoExportado: tipoExportado });
             break;
         case TIPO_EXPORTADO_EXCEL:
@@ -467,10 +570,45 @@ function onShowCFDIs(tipoExportado) {
         default:
     }
 }
+//Función para exportar cfdis
+function ajaxExportCFDIS(oParams) {
+    doAjax(
+        `/ERP/AdministradorDeComprobantes/ExportCFDIS`,
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                showError(dlgExportTitle, resp.mensaje);
+                return;
+            }
+
+            clearTable();
+
+            switch (tipoExportado) {
+                case TIPO_EXPORTADO_PDF:
+                    break;
+                case TIPO_EXPORTADO_XML:
+                    break;
+                case TIPO_EXPORTADO_EXCEL:
+                case TIPO_EXPORTADO_POLIZA_INGRESO:
+                case TIPO_EXPORTADO_POLIZA_EGRESO:
+                    let fileLink = document.getElementById("downloadFileLink");
+                    fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)
+                    fileLink.click();
+                    break;
+                default:
+            }
+
+            showSuccess(dlgExportTitle, resp.mensaje);
+        }, function (error) {
+            showError(dlgExportTitle, error);
+        },
+        postOptions
+    );
+}
 
 //Función para validar comprobantes
 function onValidarClick() {
-    let ids = getIdSelections();
+    let ids = getIdSelections(table);
     let oParams = { ids: ids };
     doAjax(
         `/ERP/AdministradorDeComprobantes/ValidarComprobantes`,
