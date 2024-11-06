@@ -608,7 +608,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
             try
             {
-                // Buscar el ClienteId en base al nombre del cliente
                 var cliente = await db.Clientes.FirstOrDefaultAsync(c => c.RazonSocial == InputFiltroModalAgregar.Cliente);
                 if (cliente == null)
                 {
@@ -617,7 +616,6 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                // Obtener el ID del usuario autenticado y buscar el objeto AppUser correspondiente
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var usuarioCreador = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -628,14 +626,14 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                // Obtener el último Id en la tabla de conciliaciones
+                // Calcular el próximo ID para Conciliacion
                 var lastConciliacion = await db.Conciliaciones.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
-                int nextId = (lastConciliacion?.Id ?? 0) + 1;
+                int nextConciliacionId = (lastConciliacion?.Id ?? 0) + 1;
 
-                // Crear el objeto Conciliacion con el siguiente Id y demás valores necesarios
+                // Crear el registro de Conciliacion
                 Conciliacion conciliacion = new Conciliacion
                 {
-                    Id = nextId,
+                    Id = nextConciliacionId,
                     Fecha = InputFiltroModalAgregar.FechaElaboracionInicio,
                     ClienteId = cliente.Id,
                     Descripcion = InputFiltroModalAgregar.Descripcion,
@@ -645,20 +643,24 @@ namespace ERPSEI.Areas.ERP.Pages
                     EmpresaId = cliente.Id
                 };
 
-                // Agregar la conciliación a la base de datos
                 await db.Conciliaciones.AddAsync(conciliacion);
 
-                // Obtener el último Id en la tabla de movimientos bancarios
-                int nextMovimientoId = await db.MovimientosBancarios.MaxAsync(m => (int?)m.Id) ?? 0;
+                // Calcular el próximo ID para ConciliacionDetalle
+                var lastDetalleConciliacion = await db.ConciliacionesDetalles.OrderByDescending(cd => cd.Id).FirstOrDefaultAsync();
+                int nextDetalleId = (lastDetalleConciliacion?.Id ?? 0) + 1;
 
-                // Procesar y agregar todos los movimientos bancarios importados
+                // Crear un ConciliacionDetalle por cada movimiento en InputFiltroModalAgregar.Movimientos
                 if (InputFiltroModalAgregar.Movimientos != null && InputFiltroModalAgregar.Movimientos.Any())
                 {
+                    int nextMovimientoId = await db.MovimientosBancarios.MaxAsync(m => (int?)m.Id) ?? 0;
+                    int nextDetalleMovimientoId = await db.ConciliacionesDetallesMovimientos.MaxAsync(dm => (int?)dm.Id) ?? 0;
+
                     foreach (var mov in InputFiltroModalAgregar.Movimientos)
                     {
+                        // Crear y guardar el movimiento bancario
                         var movimiento = new ERPSEI.Data.Entities.Conciliaciones.MovimientoBancario
                         {
-                            Id = ++nextMovimientoId, // Asigna manualmente un Id incrementado
+                            Id = ++nextMovimientoId,
                             Fecha = mov.Fecha,
                             Descripcion = mov.Descripcion,
                             Importe = mov.Importe,
@@ -667,10 +669,29 @@ namespace ERPSEI.Areas.ERP.Pages
                         };
 
                         await db.MovimientosBancarios.AddAsync(movimiento);
+
+                        // Crear un nuevo registro de ConciliacionDetalle para cada movimiento
+                        var detalleConciliacion = new ConciliacionDetalle
+                        {
+                            Id = nextDetalleId++, // Incrementa el ID para cada nuevo detalle
+                            ConciliacionId = conciliacion.Id,
+                            Conciliacion = conciliacion,
+                            ConciliacionesDetallesComprobantes = new List<ConciliacionDetalleComprobante>(),
+                            ConciliacionesDetallesMovimientos = new List<ConciliacionDetalleMovimiento>()
+                        };
+
+                        // Agregar detalle de movimiento a ConciliacionDetalle
+                        detalleConciliacion.ConciliacionesDetallesMovimientos.Add(new ConciliacionDetalleMovimiento
+                        {
+                            Id = ++nextDetalleMovimientoId, // Incrementa el ID para cada nuevo detalle de movimiento
+                            MovimientoBancarioId = movimiento.Id,
+                            ConciliacionDetalleId = detalleConciliacion.Id
+                        });
+
+                        await db.ConciliacionesDetalles.AddAsync(detalleConciliacion); // Guarda cada detalle de conciliación
                     }
                 }
 
-                // Guardar los cambios en la base de datos
                 await db.SaveChangesAsync();
 
                 resp.TieneError = false;
@@ -685,11 +706,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
-
-
-
-
-
 
         public ActionResult OnGetDownloadPlantilla()
         {

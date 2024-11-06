@@ -1661,14 +1661,10 @@ function initConciliacionDialog(action, row) {
     dlgConciliacionModal.show();
 }
 function onGuardarClick() {
-    // Ejecuta la validación
     $("#theFormT").validate();
-    // Determina los errores
     let valid = $("#theFormT").valid();
-    // Si la forma no es válida, entonces finaliza.
     if (!valid) { return; }
 
-    // Campos principales para tabla conciliaciones
     let idField = document.getElementById("inpConciliacionId");
     let fechaField = document.getElementById("inpConciliacionFecha");
     let clienteIdField = document.getElementById("inpConciliacionClienteId");
@@ -1680,31 +1676,42 @@ function onGuardarClick() {
     let btnClose = document.getElementById("dlgConciliacionBtnCancelar");
     saveValidationSummary.innerHTML = "";
 
-    // Parámetros principales
     let oParams = {
         Id: idField.value === "Nuevo" ? 0 : idField.value,
         FechaElaboracionInicio: fechaField.value,
         Cliente: clienteIdField.value,
         Descripcion: descripcionField.value,
         BancoId: bancoIdField.value,
-        Movimientos: [] // Inicializamos el arreglo de movimientos vacío
+        Movimientos: [],
+        Comprobantes: [] // Arreglo para los comprobantes seleccionados
     };
 
-    // Obtener todas las filas de la tabla `tableCardMovimientos`
-    let allRows = $('#tableCardMovimientos').bootstrapTable('getData');
-    allRows.forEach(function (row) {
-        // Verifica si el movimiento está marcado como conciliado (verde y bloqueado)
-        if (row.coincidencia === true) { // Asegúrate de que 'coincidencia' sea el indicador correcto
-            // Crear cada movimiento sin la propiedad Id, dejando que la base de datos lo asigne
+    let allMovRows = $('#tableCardMovimientos').bootstrapTable('getData');
+    allMovRows.forEach(function (row) {
+        if (row.coincidencia === true) {
             let movimiento = {
                 Fecha: row.Fecha,
                 Descripcion: row.Descripción,
-                Importe: row.Cargos // Cambia a `Importe` si es necesario
+                Importe: row.Cargos
             };
             oParams.Movimientos.push(movimiento);
         }
     });
-    
+
+    let allCompRows = $('#tableCardComprobantes').bootstrapTable('getData');
+    allCompRows.forEach(function (row) {
+        if (row.coincidencia === true) {
+            let comprobante = {
+                Id: row.id,
+                Serie: row.serie,
+                Folio: row.folio,
+                Fecha: row.fecha,
+                Total: row.total
+            };
+            oParams.Comprobantes.push(comprobante);
+        }
+    });
+
     doAjax(
         "/ERP/Conciliaciones/SaveConciliacion",
         oParams,
@@ -1731,7 +1738,6 @@ function onGuardarClick() {
         postOptions
     );
 }
-
 
 function eliminarRegistro(Id) {
     if (confirm('¿Estás seguro de eliminar el registro con ID: ' + Id + '?')) {
