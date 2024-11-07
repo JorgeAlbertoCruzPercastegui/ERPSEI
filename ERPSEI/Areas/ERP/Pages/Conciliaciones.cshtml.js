@@ -45,11 +45,9 @@ document.addEventListener("DOMContentLoaded", function (event) {
     jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
             $(element).addClass("is-invalid").removeClass("is-valid");
-            actualizarContadores();
         },
         unhighlight: function (element, errorClass, validClass) {
             if ($(element).hasClass("is-invalid")) {
-                actualizarContadores();
                 $(element).addClass("is-valid").removeClass("is-invalid");
             }
         }
@@ -120,7 +118,6 @@ function buscarComprobantesPorRFC(rfc) {
         postOptions
     );
 }
-
 
 async function onImportarMovimientosBancariosClick(event) {
     const file = event.target.files[0];
@@ -1594,11 +1591,10 @@ function initConciliacionDialog(action, row) {
     let descripcionField = document.getElementById("inpConciliacionDescripcion");
     let dlgTitle = document.getElementById("dlgConciliacionTitle");
 
-    //Botones
+    // Botones
     let btnGuardar = document.getElementById("dlgConciliacionBtnGuardar");
     let botonConsultarComprobantes = document.getElementById("dlgConciliacionBtnFechas");
     let botonConsultarMovimientos = document.getElementById("dlgConciliacionBtnMovimientos");
-    let botonConciliar = document.getElementById("");
     let botonConciliacionAsistida = document.getElementById("dlgConciliacionAsistidaBtn");
     let saveValidationSummary = document.getElementById("saveValidationSummary");
     saveValidationSummary.innerHTML = "";
@@ -1614,9 +1610,21 @@ function initConciliacionDialog(action, row) {
             clienteIdField.removeAttribute("disabled");
             descripcionField.removeAttribute("disabled");
             btnGuardar.removeAttribute("disabled");
-            botonConsultarComprobantes.removeAttribute("disabled");
             botonConsultarMovimientos.removeAttribute("disabled");
             botonConciliacionAsistida.removeAttribute("disabled");
+
+            // Deshabilitar el botón `botonConsultarComprobantes` inicialmente
+            botonConsultarComprobantes.setAttribute("disabled", true);
+
+            // Habilitar el botón `botonConsultarComprobantes` solo cuando `clienteIdField` tenga un valor completo
+            clienteIdField.addEventListener("change", function () {
+                if (clienteIdField.value.trim() !== "") {
+                    botonConsultarComprobantes.removeAttribute("disabled");
+                } else {
+                    botonConsultarComprobantes.setAttribute("disabled", true);
+                }
+            });
+
             break;
         case EDITAR:
             dlgTitle.innerHTML = dlgEditarTitle;
@@ -1630,7 +1638,7 @@ function initConciliacionDialog(action, row) {
             botonConciliacionAsistida.removeAttribute("disabled");
 
             // Cargar comprobantes y movimientos solo en modo EDITAR
-            obtenerRegistrosConciliados(row.id);
+            // obtenerRegistrosConciliados(row.id);
             break;
         default:
             dlgTitle.innerHTML = dlgVerTitle;
@@ -1644,7 +1652,7 @@ function initConciliacionDialog(action, row) {
             botonConciliacionAsistida.setAttribute("disabled", true);
 
             // Cargar comprobantes y movimientos solo en modo VER
-            obtenerRegistrosConciliados(row.id);
+            // obtenerRegistrosConciliados(row.id);
             break;
     }
 
@@ -1657,6 +1665,7 @@ function initConciliacionDialog(action, row) {
     // Mostrar el modal
     dlgConciliacionModal.show();
 }
+
 
 // Función para obtener comprobantes y movimientos conciliados
 function obtenerRegistrosConciliados(conciliacionId) {
