@@ -1683,7 +1683,7 @@ function onGuardarClick() {
         Descripcion: descripcionField.value,
         BancoId: bancoIdField.value,
         Movimientos: [],
-        Comprobantes: [] // Arreglo para los comprobantes seleccionados
+        Comprobantes: []
     };
 
     let allMovRows = $('#tableCardMovimientos').bootstrapTable('getData');
@@ -1702,15 +1702,18 @@ function onGuardarClick() {
     allCompRows.forEach(function (row) {
         if (row.coincidencia === true) {
             let comprobante = {
-                Id: row.id,
-                Serie: row.serie,
-                Folio: row.folio,
-                Fecha: row.fecha,
-                Total: row.total
+                Id: row.Id,
+                Serie: row.Serie,
+                Folio: row.Folio,
+                Fecha: row.Fecha,
+                UUID: row.UUID,
+                Total: row.Total
             };
             oParams.Comprobantes.push(comprobante);
         }
     });
+
+    console.log("Comprobantes seleccionados:", oParams.Comprobantes); // Para verificar
 
     doAjax(
         "/ERP/Conciliaciones/SaveConciliacion",
