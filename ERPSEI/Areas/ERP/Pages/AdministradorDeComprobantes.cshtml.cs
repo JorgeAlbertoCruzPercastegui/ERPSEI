@@ -13,6 +13,7 @@ using ERPSEI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
+using Newtonsoft.Json;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
@@ -359,6 +360,58 @@ namespace ERPSEI.Areas.ERP.Pages
 			return jsonResponse;
 		}
 
+		public async Task<JsonResult> OnPostGetCuentasContablesSuggestion(string texto, string rfcreceptor)
+		{
+			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+			try
+			{
+				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+				{
+					resp.Datos = await GetCuentasContablesSuggestion(texto, rfcreceptor);
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ConsultadoSuccessfully"];
+				}
+				else
+				{
+					resp.Mensaje = localizer["AccesoDenegado"];
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.LogError("{message}", ex.Message);
+			}
+
+			return new JsonResult(resp);
+		}
+		private async Task<string> GetCuentasContablesSuggestion(string texto, string rfcreceptor)
+		{
+			string jsonResponse;
+			List<string> jsonResult = [];
+			int tipoCuentaEgresosId = 1;
+			int subtipoCuentaGastosId = 2;
+			List<CuentaContable> cuentas = await cuentaContableManager.SearchCuentas(texto, rfcreceptor, tipoCuentaEgresosId, subtipoCuentaGastosId);
+
+			if (cuentas != null)
+			{
+				foreach (CuentaContable r in cuentas)
+				{
+					r.Nombre = JsonEscape(r.Nombre ?? string.Empty);
+					r.Cuenta = JsonEscape(r.Cuenta ?? string.Empty);
+					r.RFC = JsonEscape(r.RFC ?? string.Empty);
+
+					jsonResult.Add($"{{" +
+										$"\"id\": {r.Id}, " +
+										$"\"value\": \"{r.Cuenta}\", " +
+										$"\"label\": \"{r.Cuenta} - {r.Nombre}\"" +
+									$"}}");
+				}
+			}
+
+			jsonResponse = $"[{string.Join(",", jsonResult)}]";
+
+			return jsonResponse;
+		}
+
 		private static string JsonEscape(string str)
 		{
 			return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t").Replace("\"", "\\\"");
@@ -367,30 +420,51 @@ namespace ERPSEI.Areas.ERP.Pages
 		public async Task<ActionResult> OnPostExportCFDIS(string[] ids, int tipoExportado)
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesExportedUnsuccessfully"]);
-			if (PuedeTodo || PuedeConsultar)
+			if (PuedeTodo || PuedeConsultar || PuedeEditar)
 			{
 				try
 				{
 					switch (tipoExportado)
 					{
 						case (int)TipoExportacion.PDF:
+							resp.TieneError = false;
+							resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							break;
 						case (int)TipoExportacion.XML:
+							resp.TieneError = false;
+							resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							break;
 						case (int)TipoExportacion.Excel:
+							resp.TieneError = false;
+							resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							break;
 						case (int)TipoExportacion.PolizaIngresos:
-							resp.Datos = await CreateWorkbook(ids, TipoExportacion.PolizaIngresos, comprobanteManager, cuentaContableManager, empresaManager);
+							if(PuedeTodo || PuedeEditar)
+							{
+								resp.Datos = await CreateWorkbookIngresos(ids, comprobanteManager, cuentaContableManager, empresaManager);
+								resp.TieneError = false;
+								resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
+							}
+							else
+							{
+								resp.Mensaje = localizer["AccesoDenegado"];
+							}
 							break;
 						case (int)TipoExportacion.PolizaEgresos:
-							resp.Datos = await CreateWorkbook(ids, TipoExportacion.PolizaEgresos, comprobanteManager, cuentaContableManager, empresaManager);
+							if (PuedeTodo || PuedeEditar)
+							{
+								resp.Datos = await CreateWorkbookEgresos(ids, comprobanteManager, cuentaContableManager, empresaManager);
+								resp.TieneError = false;
+								resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
+							}
+							else
+							{
+								resp.Mensaje = localizer["AccesoDenegado"];
+							}
 							break;
 						default:
 							break;
 					}
-
-					resp.TieneError = false;
-					resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 				}
 				catch (Exception ex)
 				{
@@ -406,28 +480,149 @@ namespace ERPSEI.Areas.ERP.Pages
 			return new JsonResult(resp);
 		}
 
-		private async static Task<string> CreateWorkbook(string[] ids, TipoExportacion tipoExportacion, IComprobanteManager cmgr, ICuentaContableManager ccmgr, IEmpresaManager emgr)
+		private async static Task<string> CreateWorkbookEgresos(string[] ids, IComprobanteManager cmgr, ICuentaContableManager ccmgr, IEmpresaManager emgr)
 		{
 			int rowIndex = 2;
-			string? strTipoPoliza = string.Empty;
+			string? strTipoPoliza = "GASTOS";
 			XSSFWorkbook? wb = null;
 			string? nombreArchivo = string.Empty;
-			switch (tipoExportacion)
-			{
-				case TipoExportacion.Excel:
-					break;
-				case TipoExportacion.PolizaIngresos:
-					strTipoPoliza = "VENTA";
-					wb = await CreateExcelPolizaIngresos();
-					break;
-				case TipoExportacion.PolizaEgresos:
-					strTipoPoliza = "GASTO";
-					//wb = await CreateExcelPolizaEgresos();
-					break;
-				default:
-					break;
-			}
+			wb = await CreateExcelPolizaEgresos();
 			if (wb == null) { throw new Exception("No workbook created"); }
+
+			using (wb)
+			{
+				//Obtiene la primer hoja del archivo
+				ISheet sheet = wb.GetSheetAt(0);
+				sheet.SetColumnWidth(1, 20 * 256);
+				sheet.SetColumnWidth(2, 70 * 256);
+				sheet.SetColumnWidth(3, 70 * 256);
+				sheet.SetColumnWidth(4, 10 * 256);
+				sheet.SetColumnWidth(5, 10 * 256);
+
+				//Crea el estilo de las celdas.
+				XSSFCellStyle cellStyle = (XSSFCellStyle)wb.CreateCellStyle();
+				XSSFFont myFont = (XSSFFont)wb.CreateFont();
+				myFont.FontHeightInPoints = 11;
+				myFont.FontName = "Calibri";
+				cellStyle.SetFont(myFont);
+
+				Empresa? empresaReceptora = null;
+
+				List<Comprobante> comprobantes = [];//Dictionary<Comprobante, string> comprobantes = [];
+				//Dictionary<string, string>? elements = JsonConvert.DeserializeObject<Dictionary<string, string>>($"[{string.Join(",", ids)}]");
+				foreach (string id in ids) //KeyValuePair<string, string> kvp in elements
+				{
+					int intId = Convert.ToInt32(id); //int intId = Convert.ToInt32(kvp.Key);
+					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
+					if (comprobante != null)
+					{
+						empresaReceptora ??= await emgr.GetByRFCAsync(comprobante.Receptor?.Rfc ?? string.Empty);
+						comprobante.FechaNET = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+						comprobantes.Add(comprobante);//comprobantes.Add(comprobante, kvp.Value);
+					}
+				}
+
+				comprobantes = [.. comprobantes.OrderBy(c => c.FechaNET)];
+
+				List<CuentaContable>? cuentasContables = await ccmgr.GetByIdEmpresaAsync(empresaReceptora?.Id ?? 0);
+				cuentasContables = cuentasContables.Where(c => c.TipoId == 1).ToList();
+				
+				CuentaContable? cuentaIVAPorAcreditar = cuentasContables.Where(cuenta => cuenta.TipoId == 1 && cuenta.SubtipoId == 10).FirstOrDefault();
+				CuentaContable? cuentaIVAAcreditable = cuentasContables.Where(cuenta => cuenta.TipoId == 1 && cuenta.SubtipoId == 9).FirstOrDefault();
+				CuentaContable? cuentaProveedor = null;
+				CuentaContable? cuentaGasto = null;
+
+				string conceptoString = string.Empty;
+				foreach (Comprobante comprobante in comprobantes)
+				{
+					conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Emisor?.Nombre}' {comprobante.Serie ?? "F"}-{comprobante.Folio}";
+					cuentaProveedor = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Emisor?.Rfc).FirstOrDefault();
+
+					//Crea el row de encabezado de CFDI
+					IRow hRow = sheet.CreateRow(rowIndex);
+					//Tipo Pol
+					CreateCell(hRow, 0, "Dr", cellStyle);
+					//Placeholder
+					CreateCell(hRow, 1, 1, cellStyle);
+					//Concepto póliza
+					CreateCell(hRow, 2, conceptoString, cellStyle);
+					//Día fecha
+					CreateCell(hRow, 3, comprobante.FechaNET.Day, cellStyle);
+
+					//Crea el row del total de la factura
+					IRow dRow = sheet.CreateRow(rowIndex + 1);
+					//No. Cuenta
+					CreateCell(dRow, 1, cuentaProveedor?.Cuenta ?? "0000-000-000", cellStyle);
+					//Depto.
+					CreateCell(dRow, 2, 0, cellStyle);
+					//Concepto
+					CreateCell(dRow, 3, conceptoString, cellStyle);
+					//Placeholder
+					CreateCell(dRow, 4, string.Empty, cellStyle);
+					//Total
+					CreateCell(dRow, 6, (double)comprobante.Total, cellStyle);
+
+					//Crea el row del subtotal de la factura de CFDI
+					IRow g1Row = sheet.CreateRow(rowIndex + 2);
+					//No. Cuenta
+					CreateCell(g1Row, 1, cuentaGasto?.Cuenta ?? "0000-000-000", cellStyle);
+					//Depto.
+					CreateCell(g1Row, 2, 0, cellStyle);
+					//Concepto
+					CreateCell(g1Row, 3, conceptoString, cellStyle);
+					//Placeholder
+					CreateCell(g1Row, 4, string.Empty, cellStyle);
+					//Debe
+					CreateCell(g1Row, 5, (double)comprobante.SubTotal, cellStyle);
+					//Haber
+					CreateCell(g1Row, 6, "", cellStyle);
+
+					//Crea el row del IVA
+					IRow g2Row = sheet.CreateRow(rowIndex + 3);
+					//No. Cuenta
+					CreateCell(g2Row, 1, cuentaIVAPorAcreditar?.Cuenta ?? "0000-000-000", cellStyle);
+					//Depto.
+					CreateCell(g2Row, 2, 0, cellStyle);
+					//Concepto
+					CreateCell(g2Row, 3, conceptoString, cellStyle);
+					//Placeholder
+					CreateCell(g1Row, 4, string.Empty, cellStyle);
+					//Debe
+					CreateCell(g2Row, 5, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
+					//Haber
+					CreateCell(g2Row, 6, "", cellStyle);
+
+					//Crea el row de fin de partida
+					IRow fRow = sheet.CreateRow(rowIndex + 4);
+					//Fin
+					CreateCell(fRow, 1, "FIN_PARTIDAS", cellStyle);
+
+					//Avanza 5 lineas para poder iniciar una nueva póliza.
+					rowIndex += 5;
+
+					comprobante.Contabilizado = true;
+				}
+
+				//Crea el archivo excel y lo exporta al usuario.
+				nombreArchivo = $"{Enum.GetName(typeof(TipoExportacion), TipoExportacion.PolizaEgresos)}_{DateTime.Now:yyyyMMddHHmmssfffffff}";
+				using (var fileData = new FileStream($"wwwroot/templates/{nombreArchivo}.xlsx", FileMode.OpenOrCreate)) { wb.Write(fileData); }
+				wb.Close();
+
+				//Actualiza los comprobantes para que queden marcados con el flag "Contabilizado = true"
+				//await cmgr.UpdateMultipleAsync(comprobantes);
+			}
+
+			return nombreArchivo;
+		}
+		private async static Task<string> CreateWorkbookIngresos(string[] ids, IComprobanteManager cmgr, ICuentaContableManager ccmgr, IEmpresaManager emgr)
+		{
+			int rowIndex = 2;
+			string? strTipoPoliza = "VENTA";
+			XSSFWorkbook? wb = null;
+			string? nombreArchivo = string.Empty;
+			wb = await CreateExcelPolizaIngresos();
+			if (wb == null) { throw new Exception("No workbook created"); }
+
 			using (wb)
 			{
 				//Obtiene la primer hoja del archivo
@@ -450,7 +645,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 foreach (string id in ids)
                 {
 					int intId = Convert.ToInt32(id);
-					Comprobante? comprobante = await cmgr.GetByIdWithDescripcionesAsync(intId);
+					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
 					if (comprobante != null) 
 					{
 						empresaEmisora ??= await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
@@ -462,19 +657,8 @@ namespace ERPSEI.Areas.ERP.Pages
 				comprobantes = [..comprobantes.OrderBy(c => c.FechaNET)];
 
 				List<CuentaContable>? cuentasContables = await ccmgr.GetByIdEmpresaAsync(empresaEmisora?.Id ?? 0);
-				switch (tipoExportacion)
-				{
-					case TipoExportacion.Excel:
-						break;
-					case TipoExportacion.PolizaIngresos:
-						cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
-						break;
-					case TipoExportacion.PolizaEgresos:
-						cuentasContables = cuentasContables.Where(c => c.TipoId == 1).ToList();
-						break;
-					default:
-						break;
-				}
+				cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
+
 				CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
 				CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
 				CuentaContable? cuentaVentasExentas = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 6).FirstOrDefault();
@@ -526,20 +710,11 @@ namespace ERPSEI.Areas.ERP.Pages
 					CreateCell(g1Row, 3, conceptoString, cellStyle);
 					//Placeholder
 					CreateCell(g1Row, 4, string.Empty, cellStyle);
-					if (tipoExportacion == TipoExportacion.PolizaIngresos)
-					{
-						//Debe
-						CreateCell(g1Row, 5, "", cellStyle);
-						//Haber
-						CreateCell(g1Row, 6, (double)comprobante.SubTotal, cellStyle);
-					}
-					else
-					{
-						//Debe
-						CreateCell(g1Row, 5, (double)comprobante.SubTotal, cellStyle);
-						//Haber
-						CreateCell(g1Row, 6, "", cellStyle);
-					}
+					//Debe
+					CreateCell(g1Row, 5, "", cellStyle);
+					//Haber
+					CreateCell(g1Row, 6, (double)comprobante.SubTotal, cellStyle);
+
 
 					//Crea el row del IVA
 					IRow g2Row = sheet.CreateRow(rowIndex + 3);
@@ -551,20 +726,10 @@ namespace ERPSEI.Areas.ERP.Pages
 					CreateCell(g2Row, 3, conceptoString, cellStyle);
 					//Placeholder
 					CreateCell(g1Row, 4, string.Empty, cellStyle);
-					if (tipoExportacion == TipoExportacion.PolizaIngresos)
-					{
-						//Debe
-						CreateCell(g2Row, 5, "", cellStyle);
-						//Haber
-						CreateCell(g2Row, 6, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
-					}
-					else
-					{
-						//Debe
-						CreateCell(g2Row, 5, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
-						//Haber
-						CreateCell(g2Row, 6, "", cellStyle);
-					}
+					//Debe
+					CreateCell(g2Row, 5, "", cellStyle);
+					//Haber
+					CreateCell(g2Row, 6, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
 
 					//Crea el row de fin de partida
 					IRow fRow = sheet.CreateRow(rowIndex + 4);
@@ -578,7 +743,7 @@ namespace ERPSEI.Areas.ERP.Pages
 				}
 
 				//Crea el archivo excel y lo exporta al usuario.
-				nombreArchivo = $"{Enum.GetName(typeof(TipoExportacion), tipoExportacion)}_{DateTime.Now:yyyyMMddHHmmssfffffff}";
+				nombreArchivo = $"{Enum.GetName(typeof(TipoExportacion), TipoExportacion.PolizaIngresos)}_{DateTime.Now:yyyyMMddHHmmssfffffff}";
 				using (var fileData = new FileStream($"wwwroot/templates/{nombreArchivo}.xlsx", FileMode.OpenOrCreate)){ wb.Write(fileData); }
 				wb.Close();
 
@@ -690,6 +855,73 @@ namespace ERPSEI.Areas.ERP.Pages
 			CreateCell(FirstHeaderRow, 2, string.Empty, FirstHeaderCellStyle);
 			CreateCell(FirstHeaderRow, 3, "Póliza dinámica CFDI:", ThirdHeaderCellStyle);
 			CreateCell(FirstHeaderRow, 4, "Venta", FourthHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 5, string.Empty, FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 6, string.Empty, FirstHeaderCellStyle);
+			CellRangeAddress regionA = new(0, 0, 1, 2);
+			Sheet.AddMergedRegion(regionA);
+			CellRangeAddress regionB = new(0, 0, 4, 6);
+			Sheet.AddMergedRegion(regionB);
+
+			//Crea los encabezados de la segunda linea
+			IRow SecondHeaderRow = Sheet.CreateRow(1);
+			CreateCell(SecondHeaderRow, 1, "No. Cuenta", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 2, "Depto.", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 3, "Concepto mov.", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 4, string.Empty, SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 5, "Debe", SecondHeaderCellStyle);
+			CreateCell(SecondHeaderRow, 6, "Haber", SecondHeaderCellStyle);
+			CellRangeAddress regionC = new(1, 1, 3, 4);
+			Sheet.AddMergedRegion(regionC);
+
+			return Task.FromResult(workbook);
+		}
+		private static Task<XSSFWorkbook> CreateExcelPolizaEgresos()
+		{
+			XSSFWorkbook workbook = new();
+			XSSFFont myFont = (XSSFFont)workbook.CreateFont();
+			myFont.FontHeightInPoints = 11;
+			myFont.FontName = "Calibri";
+			myFont.IsItalic = true;
+
+			// Define un borde
+			XSSFCellStyle FirstHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			FirstHeaderCellStyle.SetFont(myFont);
+			FirstHeaderCellStyle.BorderLeft = BorderStyle.Medium;
+			FirstHeaderCellStyle.BorderTop = BorderStyle.Medium;
+			FirstHeaderCellStyle.BorderRight = BorderStyle.Medium;
+			FirstHeaderCellStyle.BorderBottom = BorderStyle.Medium;
+			FirstHeaderCellStyle.VerticalAlignment = VerticalAlignment.Center;
+			FirstHeaderCellStyle.Alignment = HorizontalAlignment.Center;
+
+			XSSFCellStyle SecondHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			SecondHeaderCellStyle.CloneStyleFrom(FirstHeaderCellStyle);
+			SecondHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.LightGreen.Index;
+			SecondHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
+
+			XSSFCellStyle ThirdHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			ThirdHeaderCellStyle.CloneStyleFrom(FirstHeaderCellStyle);
+			ThirdHeaderCellStyle.Alignment = HorizontalAlignment.Right;
+			ThirdHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.PaleBlue.Index;
+			ThirdHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
+
+			XSSFCellStyle FourthHeaderCellStyle = (XSSFCellStyle)workbook.CreateCellStyle();
+			FourthHeaderCellStyle.CloneStyleFrom(FirstHeaderCellStyle);
+			FourthHeaderCellStyle.Alignment = HorizontalAlignment.Left;
+			FourthHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.PaleBlue.Index;
+			FourthHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
+
+			FirstHeaderCellStyle.FillForegroundColor = NPOI.HSSF.Util.HSSFColor.PaleBlue.Index;
+			FirstHeaderCellStyle.FillPattern = FillPattern.SolidForeground;
+
+			ISheet Sheet = workbook.CreateSheet("Comprobantes");
+
+			//Crea los encabezados de la primer linea
+			IRow FirstHeaderRow = Sheet.CreateRow(0);
+			CreateCell(FirstHeaderRow, 0, "TipoPol", FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 1, "Concepto póliza", FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 2, string.Empty, FirstHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 3, "Póliza dinámica CFDI:", ThirdHeaderCellStyle);
+			CreateCell(FirstHeaderRow, 4, "Provisión gastos en general", FourthHeaderCellStyle);
 			CreateCell(FirstHeaderRow, 5, string.Empty, FirstHeaderCellStyle);
 			CreateCell(FirstHeaderRow, 6, string.Empty, FirstHeaderCellStyle);
 			CellRangeAddress regionA = new(0, 0, 1, 2);
@@ -943,7 +1175,7 @@ namespace ERPSEI.Areas.ERP.Pages
 				if (idComprobante >= 1)
 				{
 					//Obtiene los datos del comprobante
-					Comprobante? c = await comprobanteManager.GetComprobanteWithConceptosByIdAsync(idComprobante);
+					Comprobante? c = await comprobanteManager.GetWithConceptosByIdAsync(idComprobante);
 
 					if (c != null)
 					{
@@ -955,7 +1187,7 @@ namespace ERPSEI.Areas.ERP.Pages
 								$"\"serieFolio\": \"{c.Serie}-{c.Folio}\", " +
 								$"\"total\": {c.Total}, " +
 								$"\"rfcEmisor\": \"{c.Emisor?.Rfc}\", " +
-								$"\"cuentaContable\": \"Seleccione...\", " +
+								$"\"rfcReceptor\": \"{c.Receptor?.Rfc}\", " +
 								$"\"conceptos\": {jsonConceptos}" +
 							"}"
 						);
@@ -973,6 +1205,8 @@ namespace ERPSEI.Areas.ERP.Pages
 			string jsonResponse;
 			foreach(ComprobanteConcepto cc in conceptos)
 			{
+				cc.Descripcion = JsonEscape(cc.Descripcion);
+
 				jsonConceptos.Add(
 					"{" +
 						$"\"id\": {cc.Id}," +
