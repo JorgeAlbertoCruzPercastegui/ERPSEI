@@ -100,6 +100,33 @@ document.addEventListener("DOMContentLoaded", function (event) {
             }
         }
     });*/
+
+    // Variable para verificar si es la primera vez que el modal se abre
+    let isFirstTimeOpening = true;
+
+    document.getElementById('consultarComprobantesModal').addEventListener('shown.bs.modal', function () {
+        // Solo establecer las fechas automáticamente la primera vez que se abre el modal
+        if (isFirstTimeOpening) {
+            // Obtener la fecha actual
+            const today = new Date();
+            // Configurar la fecha de inicio como el primer día del mes
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            // Formatear fechas a formato compatible con 'datetime-local' (YYYY-MM-DDTHH:MM)
+            const formatDate = (date) => {
+                const offset = date.getTimezoneOffset();
+                const localDate = new Date(date.getTime() - offset * 60 * 1000);
+                return localDate.toISOString().slice(0, 16); // Solo incluye fecha y hora
+            };
+
+            // Asignar la fecha de inicio y la fecha de fin a los campos de entrada
+            document.getElementById("inpFiltroFechaInicioModalDComprobantes").value = formatDate(firstDayOfMonth);
+            document.getElementById("inpFiltroFechaFinModalDComprobantes").value = formatDate(today);
+
+            // Cambiar el indicador para que no se vuelva a ejecutar esta lógica
+            isFirstTimeOpening = false;
+        }
+    });
 });
 
 // Nueva función para buscar comprobantes por RFC y cargar en tableCardView
@@ -1637,6 +1664,9 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.removeAttribute("disabled");
             botonConsultarMovimientos.removeAttribute("disabled");
             botonConciliacionAsistida.removeAttribute("disabled");
+
+            // Cargar comprobantes y movimientos solo en modo EDITAR
+            obtenerRegistrosConciliados(row.id);
             break;
         default:
             dlgTitle.innerHTML = dlgVerTitle;
@@ -1648,6 +1678,9 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.setAttribute("disabled", true);
             botonConsultarMovimientos.setAttribute("disabled", true);
             botonConciliacionAsistida.setAttribute("disabled", true);
+
+            // Cargar comprobantes y movimientos solo en modo VER
+            obtenerRegistrosConciliados(row.id);
             break;
     }
 
@@ -1660,6 +1693,38 @@ function initConciliacionDialog(action, row) {
     // Mostrar el modal
     dlgConciliacionModal.show();
 }
+
+// Función para obtener comprobantes y movimientos conciliados
+function obtenerRegistrosConciliados(conciliacionId) {
+    // Definir los parámetros con el ID de conciliación
+    let oParams = { id: conciliacionId };
+
+    // Llamada a doAjax con la estructura adecuada
+    doAjax(
+        "/ERP/Conciliaciones/ComprobantesMovimientosList", // URL para obtener detalles de conciliación
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError("Error", resp.mensaje);
+                return;
+            }
+
+            // Cargar los datos en las tablas de comprobantes y movimientos
+            $('#tableCardComprobantes').bootstrapTable('load', resp.datos.comprobantes);
+            $('#tableCardMovimientos').bootstrapTable('load', resp.datos.movimientos);
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
+
+
 function onGuardarClick() {
     $("#theFormT").validate();
     let valid = $("#theFormT").valid();

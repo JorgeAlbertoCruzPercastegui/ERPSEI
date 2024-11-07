@@ -285,10 +285,11 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
         public async Task<List<Comprobante>> GetByRFCAsync(string rfc)
         {
             return await _db.Comprobantes
-                .Include(c => c.Receptor)
+                //.Include(c => c.Receptor)
                 .Include(c => c.Emisor)
                 .Include(c => c.Complemento).ThenInclude(e => e.TimbreFiscalDigital)
-                .Where(c => c.Receptor.Rfc == rfc || c.Emisor.Rfc == rfc)
+                .Where(c => c.Emisor.Rfc == rfc)
+                //.Where(c => c.Receptor.Rfc == rfc || c.Emisor.Rfc == rfc)
                 .ToListAsync();
         }
     }

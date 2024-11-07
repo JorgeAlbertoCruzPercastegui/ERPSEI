@@ -23,7 +23,6 @@ namespace ERPSEI.Areas.ERP.Pages
     {
         private readonly IStringLocalizer<ConciliacionesModel> stringLocalizer;
         private readonly ILogger<ConciliacionesModel> logger;
-        //private readonly IRCatalogoManager<Banco> bancoManager;
         private readonly IBancoManager bancoManager;
         private readonly IConciliacionManager conciliacionManager;
         private readonly IConciliacionDetalleManager conciliacionDetalleManager;
@@ -137,7 +136,7 @@ namespace ERPSEI.Areas.ERP.Pages
         public Banco BancoList { get; set; }
 
         public MovimientoBancario movimientoBancario { get; set; }
-        public class MovimientoBancario 
+        public class MovimientoBancario
         {
             [Display(Name = "Fecha")]
             public DateTime? Fecha { get; set; }
@@ -158,7 +157,6 @@ namespace ERPSEI.Areas.ERP.Pages
         public ConciliacionesModel(
             IStringLocalizer<ConciliacionesModel> _stringLocalizer,
             ILogger<ConciliacionesModel> _logger,
-            //IRCatalogoManager<Banco> _bancoManager,
             IBancoManager _bancoManager,
             IConciliacionManager _conciliacionManager,
             IConciliacionDetalleManager _conciliacionDetalleManager,
@@ -274,6 +272,68 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonResponse);
         }
 
+        public async Task<JsonResult> OnGetComprobantesMovimientosList(int id)
+        {
+            var response = new Dictionary<string, object>
+    {
+        { "tieneError", false },
+        { "mensaje", string.Empty },
+        { "errores", new List<string>() },
+        { "datos", new Dictionary<string, object>
+            {
+                { "comprobantes", new List<object>() },
+                { "movimientos", new List<object>() }
+            }
+        }
+    };
+
+            try
+            {
+                string uuid = string.Empty;
+                // Obtener comprobantes asociados al ConciliacionDetalleId
+                var comprobantes = await db.ConciliacionesDetallesComprobantes
+                    .Where(c => c.ConciliacionDetalle.ConciliacionId == id)
+                    .Select(c => new
+                    {
+                        c.ComprobanteId,
+                        c.Comprobante.Serie,
+                        c.Comprobante.Folio,
+                        Fecha = c.Comprobante.Fecha,
+                        UUID = uuid,
+                        c.Comprobante.Total
+                    }).ToListAsync();
+
+                // Obtener movimientos asociados al ConciliacionDetalleId
+                var movimientos = await db.ConciliacionesDetallesMovimientos
+                    .Where(m => m.ConciliacionDetalle.ConciliacionId == id)
+                    .Select(m => new
+                    {
+                        m.MovimientoBancarioId,
+                        Fecha = m.MovimientoBancario.Fecha,
+                        m.MovimientoBancario.Descripcion,
+                        m.MovimientoBancario.Importe
+                    }).ToListAsync();
+
+                // Actualizar datos de comprobantes y movimientos en response
+                var datos = (Dictionary<string, object>)response["datos"];
+                datos["comprobantes"] = comprobantes;
+                datos["movimientos"] = movimientos;
+            }
+            catch (Exception ex)
+            {
+                response["tieneError"] = true;
+                response["mensaje"] = "Error al obtener detalles de conciliación";
+                ((List<string>)response["errores"]).Add(ex.Message);
+                logger.LogError(ex, "Error al obtener detalles de conciliación");
+            }
+
+            return new JsonResult(response);
+        }
+
+
+
+
+
         public async Task<JsonResult> OnPostComprobantesListEmpresas()
         {
             // Inicializar la respuesta con mensaje de error por defecto
@@ -335,8 +395,8 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
 
-            public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
-            {
+        public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
+        {
             ServerResponse resp = new(true, stringLocalizer["ConciliacionesDeletedUnsuccessfully"]);
             try
             {
@@ -544,7 +604,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             List<object> jsonComprobantes = new List<object>();
             List<Comprobante> comprobantes;
-            DateTime? fechaI = DateTime.ParseExact(filtro?.FechaInicioModalDComprobantes?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+            DateTime? fechaI = DateTime.ParseExact(filtro?.FechaInicioModalDComprobantes ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
             DateTime? fechaF = DateTime.ParseExact(filtro?.FechaFinModalDComprobantes ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture); ;
 
             // Aplicar los filtros de fechas en la llamada a GetAllAsync
@@ -574,7 +634,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
-                    $"\"FechaJS\": \"{comp.Fecha:yyyy-MM-dd HH:mm:ss}\", " +  
+                    $"\"FechaJS\": \"{comp.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
                     $"\"UUID\": \"{uuid}\", " +
                     $"\"Total\": \"{comp.Total}\"" +
                     "}");
@@ -780,7 +840,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                         $"\"id\": \"{e.Id}\", " +
                                         $"\"value\": \"{e.RazonSocial}\", " +
                                         $"\"label\": \"{desc}\", " +
-                                        $"\"rfc\": \"{e.RFC}\""+
+                                        $"\"rfc\": \"{e.RFC}\"" +
                                     $"}}");
                 }
             }
