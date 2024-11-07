@@ -30,10 +30,11 @@ document.addEventListener("DOMContentLoaded", function (event) {
         autoCompletar("#inpConciliacionClienteId", {
             select: function (Element, item) {
                 buscarComprobantesPorRFC(item.rfc);
+                actualizarContadores();
             }
         });
-        initTableComprobantes(
-        )
+
+        initTableComprobantes();
     });
 
     initTable();
@@ -41,65 +42,18 @@ document.addEventListener("DOMContentLoaded", function (event) {
     let btnBuscar = document.getElementById("btnBuscar");
     if (btnBuscar) { btnBuscar.click(); }
 
-    // Evento para detectar cuando se cambia la opción del filtro en la tabla de comprobantes
-    /*$('#filterOptionsC').on('change', function () {
-        const selectedOption = $(this).val();
-
-        // Filtro según la opción seleccionada
-        switch (selectedOption) {
-            case 'opcion1': // Mostrar Todo
-                $('#tableCardComprobantes').bootstrapTable('filterBy', {}); // Sin filtro, muestra todo
-                break;
-
-            case 'opcion2': // Mostrar Conciliados
-                $('#tableCardComprobantes').bootstrapTable('filterBy', {
-                    coincidencia: true // Filtrar solo los registros con coincidencia
-                });
-                break;
-
-            case 'opcion3': // Mostrar Pendientes
-                $('#tableCardComprobantes').bootstrapTable('filterBy', {
-                    coincidencia: false // Filtrar solo los registros sin coincidencia
-                });
-                break;
-        }
-    });*/
-
-    /*$('#filterOptionsM').on('change', function () {
-        const selectedOption = $(this).val();
-
-        // Filtro según la opción seleccionada
-        switch (selectedOption) {
-            case 'opcion1': // Mostrar Todo
-                $('#tableCardMovimientos').bootstrapTable('filterBy', {}); // Sin filtro, muestra todo
-                break;
-
-            case 'opcion2': // Mostrar Conciliados
-                $('#tableCardMovimientos').bootstrapTable('filterBy', {
-                    coincidencia: true // Filtrar solo los registros con coincidencia
-                });
-                break;
-
-            case 'opcion3': // Mostrar Pendientes
-                $('#tableCardMovimientos').bootstrapTable('filterBy', {
-                    coincidencia: false // Filtrar solo los registros sin coincidencia
-                });
-                break;
-        }
-    });*/
-
-    //autoCompletar("#inpConciliacionClienteId");
-
-    /*jQuery.validator.setDefaults({
+    jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
             $(element).addClass("is-invalid").removeClass("is-valid");
+            actualizarContadores();
         },
         unhighlight: function (element, errorClass, validClass) {
             if ($(element).hasClass("is-invalid")) {
+                actualizarContadores();
                 $(element).addClass("is-valid").removeClass("is-invalid");
             }
         }
-    });*/
+    });
 
     // Variable para verificar si es la primera vez que el modal se abre
     let isFirstTimeOpening = true;
@@ -136,7 +90,16 @@ function buscarComprobantesPorRFC(rfc) {
         return;
     }
 
-    let oParams = { rfc: rfc };
+    // Obtener los valores de fecha de inicio y fecha de fin
+    let fechaInicio = document.getElementById("inpFiltroFechaInicioModalDComprobantes").value;
+    let fechaFin = document.getElementById("inpFiltroFechaFinModalDComprobantes").value;
+
+    // Agregar las fechas al objeto de parámetros
+    let oParams = {
+        rfc: rfc,
+        fechaInicio: fechaInicio,
+        fechaFin: fechaFin
+    };
 
     doAjax(
         "/ERP/Conciliaciones/ComprobantesListEmpresas",
@@ -157,6 +120,7 @@ function buscarComprobantesPorRFC(rfc) {
         postOptions
     );
 }
+
 
 async function onImportarMovimientosBancariosClick(event) {
     const file = event.target.files[0];
@@ -1893,6 +1857,9 @@ function onConsultarComprobantesClick() {
             }
 
             $('#tableCardComprobantes').bootstrapTable('load', responseHandler(resp.datos));
+
+            // Actualizar contadores después de cargar los datos
+            actualizarContadores();
 
             // Cerrar el modal de fechas
             let modal = bootstrap.Modal.getInstance(document.getElementById('consultarComprobantesModal'));

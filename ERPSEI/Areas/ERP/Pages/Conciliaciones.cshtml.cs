@@ -330,10 +330,6 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(response);
         }
 
-
-
-
-
         public async Task<JsonResult> OnPostComprobantesListEmpresas()
         {
             // Inicializar la respuesta con mensaje de error por defecto
@@ -394,7 +390,6 @@ namespace ERPSEI.Areas.ERP.Pages
             return jsonResponse;
         }
 
-
         public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
         {
             ServerResponse resp = new(true, stringLocalizer["ConciliacionesDeletedUnsuccessfully"]);
@@ -438,7 +433,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
-
 
         public async Task<JsonResult> OnPostFiltrarConciliaciones()
         {
@@ -693,6 +687,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 var lastConciliacion = await db.Conciliaciones.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
                 int nextConciliacionId = (lastConciliacion?.Id ?? 0) + 1;
 
+                // Calcular el total sumando los totales de todos los comprobantes conciliados
+                decimal totalConciliacion = InputFiltroModalAgregar.Comprobantes?.Sum(comp => comp.Total) ?? 0;
+
                 // Crear el registro de Conciliacion
                 Conciliacion conciliacion = new Conciliacion
                 {
@@ -703,7 +700,8 @@ namespace ERPSEI.Areas.ERP.Pages
                     UsuarioCreador = usuarioCreador,
                     UsuarioModificador = usuarioCreador,
                     BancoId = InputFiltroModalAgregar.BancoId,
-                    EmpresaId = cliente.Id
+                    EmpresaId = cliente.Id,
+                    Total = totalConciliacion // Asignar el total calculado
                 };
 
                 await db.Conciliaciones.AddAsync(conciliacion);
@@ -801,6 +799,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
 
         public ActionResult OnGetDownloadPlantilla()
         {
