@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Cuentas;
+using ERPSEI.Data.Entities.SAT.cfdiv40;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.Cuentas
@@ -75,6 +76,13 @@ namespace ERPSEI.Data.Managers.Cuentas
 
 				await db.SaveChangesAsync();
 			}
+		}
+
+		public Task<List<CuentaContable>> SearchCuentas(string text, string receptorRFC, int tipoCuentaId, int subtipoCuentaId)
+		{
+			List<CuentaContable> cuentas = [..db.CuentasContables.Include(cc => cc.Empresa).ToList().Where(cc => cc.Empresa.RFC == receptorRFC).Where(cc => cc.TipoId == tipoCuentaId).Where(cc => cc.SubtipoId == subtipoCuentaId).Where(c => c.Cuenta.Contains(text, StringComparison.InvariantCultureIgnoreCase) || c.Nombre.Contains(text, StringComparison.InvariantCultureIgnoreCase)).Take(20)];
+
+			return Task.FromResult(cuentas);
 		}
 	}
 }
