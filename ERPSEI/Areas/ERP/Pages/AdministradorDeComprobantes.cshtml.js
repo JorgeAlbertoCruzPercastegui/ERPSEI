@@ -36,6 +36,10 @@ $(window).on("load", function () {
     $.fn.editable.defaults.mode = 'inline';
     $.fn.editableform.buttons = `<button type="submit" class="btn btn-primary btn-sm editable-submit"><i class="bi bi-check"></i></button>
                                  <button type="button" class="btn btn-danger btn-sm editable-cancel"><i class="bi bi-x"></i></button>`;
+
+    $.fn.editable.defaults.emptytext = emptySelectInfo;
+    $.fn.editable.defaults.onblur = 'submit';
+    $.fn.editable.defaults.showbuttons = 'false';
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -108,8 +112,8 @@ document.addEventListener('DOMContentLoaded', function () {
         table.bootstrapTable('showColumn', 'emisor');
         table.bootstrapTable('hideColumn', 'receptor');
 
-        //El tipo de comprobante seleccionado será el de E - Egreso
-        $("#selFiltroTipoComprobante").val("E");
+        //El tipo de comprobante seleccionado será el de I - Ingreso
+        $("#selFiltroTipoComprobante").val("I");
     }
 
     $("#inpFiltroEmisor").val("").attr("idselected", "");
@@ -407,6 +411,7 @@ function initTableCuentasContables() {
                 align: "center",
                 valign: "middle",
                 sortable: true,
+                clickToSelect: false,
                 editable: true
             }
         ]
@@ -414,6 +419,28 @@ function initTableCuentasContables() {
     tableCuentasContables.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
         if (buttonAccionesCuentas) { buttonAccionesCuentas.prop('disabled', !tableCuentasContables.bootstrapTable('getSelections').length) }
         cuentasSelected = getIdSelections(tableCuentasContables);
+    });
+
+    tableCuentasContables.on('editable-shown.bs.table', function (field, row, $el) {
+        if (row == 'cuentaContable') {
+            let strElement = "#tableCuentasContables .editable-input input";
+            $(strElement).attr({ idselected: '', area: 'ERP', module: 'AdministradorDeComprobantes', source: 'GetCuentasContablesSuggestion', filtro: 'rfcreceptor' });
+            $(strElement).data('rfcreceptor', $el.rfcReceptor);
+            autoCompletar(strElement);
+        }
+    });
+
+    tableCuentasContables.on('editable-save.bs.table', function (field, row, $el) {
+        if (row == 'cuentaContable') {
+            let idselected = parseInt($("#tableCuentasContables .editable-input input").attr('idselected') || '0');
+            if (idselected <= 0) {
+                $el.cuentaContable = '';
+                $el.cuentaContableId = 0;
+            }
+            else {
+                $el.cuentaContableId = idselected;
+            }
+        }
     });
 }
 //Función para dar formato al detalle del comprobante
@@ -488,14 +515,6 @@ function onShowPolizaIngresoClick() {
 }
 //Función para mostrar comprobantes como Póliza de Egresos
 function onShowPolizaEgresoClick() {
-    //let selectedComprobantes = $.map(table.bootstrapTable('getSelections'), function (row) {
-    //    return {
-    //        id: row.id,
-    //        serieFolio: `${row.serie}-${row.folio}`,
-    //        rfcEmisor: row.emisor,
-    //        total: row.total
-    //    };
-    //});
     let oParams = { ids: getIdSelections(table) }
     doAjax(
         `/ERP/AdministradorDeComprobantes/ComprobantesWithConceptos`,
@@ -542,6 +561,21 @@ function onShowCFDIs(tipoExportado) {
                 return;
             }
 
+            if (tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) {
+                let comprobantesCuentasSelections = tableCuentasContables.bootstrapTable('getData') || [];
+
+                //Se valida que todos los comprobantes seleccionados para la póliza de egreso tengan cuenta contable asignada.
+                let match = comprobantesCuentasSelections.find(cc => (cc.cuentaContableId || 0) <= 0);
+
+                if (match) {
+                    //Si se encontró algún comprobante sin cuenta contable asignada, entonces se notifica el error al usuario.
+                    showError(dlgExportTitle, NoCuentaContableAsignadaMessage);
+                    return;
+                }
+
+                /*unaccounted = $.map(comprobantesCuentasSelections, function (row) { return `{'id': '${row.id}', 'cuentaId': '${row.cuentaContableId}'}` }) || [];*/
+            }
+
             let accounted = [];
             let cancelled = [];
             let unvalidated = [];
@@ -583,7 +617,7 @@ function ajaxExportCFDIS(oParams) {
 
             clearTable();
 
-            switch (tipoExportado) {
+            switch (oParams.tipoExportado) {
                 case TIPO_EXPORTADO_PDF:
                     break;
                 case TIPO_EXPORTADO_XML:
@@ -594,6 +628,9 @@ function ajaxExportCFDIS(oParams) {
                     let fileLink = document.getElementById("downloadFileLink");
                     fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)
                     fileLink.click();
+
+                    if (oParams.tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) { $("#dlgBtnCancelar").click(); }
+
                     break;
                 default:
             }
@@ -645,13 +682,16 @@ function clearTable() {
 function onTipoComprobanteChanged(clear = true) {
     switch ($("#selFiltroTipoComprobante").val()) {
         case "I":
-            $(".dropdown-item.polizaIngreso").parent().show();
-            $(".dropdown-item.polizaEgreso").parent().hide();
+            if (window.tipoId == "1") {
+                $(".dropdown-item.polizaIngreso").parent().show();
+                $(".dropdown-item.polizaEgreso").parent().hide();
+            }
+            else if (window.tipoId == "2") {
+                $(".dropdown-item.polizaIngreso").parent().hide();
+                $(".dropdown-item.polizaEgreso").parent().show();
+            }
             break;
         case "E":
-            $(".dropdown-item.polizaIngreso").parent().hide();
-            $(".dropdown-item.polizaEgreso").parent().show();
-            break;
         case "T":
         case "N":
         case "P":
