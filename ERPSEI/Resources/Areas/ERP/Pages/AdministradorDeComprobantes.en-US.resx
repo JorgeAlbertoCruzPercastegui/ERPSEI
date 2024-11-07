@@ -369,4 +369,7 @@
   <data name="DlgCuentasPolizaEgresosTitle" xml:space="preserve">
     <value>Assignment of accounting accounts</value>
   </data>
+  <data name="NoCuentaContableAsignadaMessage" xml:space="preserve">
+    <value>To generate the policy, all invoices must have an assigned accounting account. Currently there are items without an accounting account, please verify.</value>
+  </data>
 </root>

@@ -369,4 +369,7 @@
   <data name="DlgCuentasPolizaEgresosTitle" xml:space="preserve">
     <value>Asignación de cuentas contables</value>
   </data>
+  <data name="NoCuentaContableAsignadaMessage" xml:space="preserve">
+    <value>Para generar la póliza, se requiere que todos los comprobantes tengan cuenta contable asignada. Actualmente existen elementos sin cuenta contable, por favor verifique.</value>
+  </data>
 </root>
