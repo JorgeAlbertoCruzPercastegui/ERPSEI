@@ -609,6 +609,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
             try
             {
+                await db.Database.BeginTransactionAsync();
+
                 var cliente = await db.Clientes.FirstOrDefaultAsync(c => c.RazonSocial == InputFiltroModalAgregar.Cliente);
                 if (cliente == null)
                 {
@@ -726,12 +728,15 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 resp.TieneError = false;
                 resp.Mensaje = stringLocalizer["ConciliacionCreatedSuccessfully"];
+
+                await db.Database.CommitTransactionAsync();
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
                 resp.TieneError = true;
                 resp.Mensaje = stringLocalizer["ConciliacionSavedUnsuccessfully"];
+                await db.Database.RollbackTransactionAsync();
             }
 
             return new JsonResult(resp);
