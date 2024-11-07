@@ -210,13 +210,13 @@
 <!-- Diálogo Póliza Egresos----- -->
 <form id="theform" method="post">
 	<div id="dlgCuentasPolizaEgresos" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered modal-lg">
+		<div class="modal-dialog modal-dialog-centered modal-xl">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h5 id="dlgTitle" class="modal-title">@Localizer["DlgCuentasPolizaEgresosTitle"]</h5>
 					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 				</div>
-				<div class="modal-body align-items-center">
+				<div class="modal-body align-items-center ui-front">
 					<div class="container-fluid">
 						<div class="row">
 							<div class="alert alert-primary d-flex align-items-center mb-3" role="alert">
@@ -224,40 +224,10 @@
 								<div>@Localizer["DlgCuentasPolizaEgresosMessage"]</div>
 							</div>
 						</div>
-						@* <div class="row">
-							<div class="col-12 mb-3">
-								<h6>@Localizer["CuentaContableTitle"]</h6>
-							</div>
-						</div>
 						<div class="row">
-							<div class="col-12">
-								<div class="form-floating mb-4">
-									<input id="inpCuentaContable" type="search" asp-for="InputCuentaContable.CuentaContableId" class="form-control formInput" placeholder="@Localizer["CuentaContablePlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetCuentaContableSuggestion" />
-									<label for="inpCuentaContable" asp-for="InputCuentaContable.CuentaContableId" class="form-label"></label>
-									<span asp-validation-for="InputCuentaContable.CuentaContableId" class="text-danger"></span>
-								</div>
-							</div>
-						</div> *@
-						<div class="row">
-							<div class="col-12">
-								<div id="toolbarCuentasContables" class="col-xl-12">
-									@{
-										if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar)
-										{
-											<div class="dropdown">
-												<button id="btnAccionesCuentas" class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" disabled>
-													<span class="d-none d-sm-inline">@Localizer["ColActionsHeader"]</span>
-												</button>
-												<ul class="dropdown-menu">
-													<li><a class="dropdown-item pdf" onclick="onShowPDFClick();" href="#" title="@Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]"><i class="bi bi-file-pdf"></i> @Localizer["ExportCFDIDialogTitle"] @Localizer["PDFButtonTitle"]</a></li>
-												</ul>
-											</div>
-										}
-									}
-								</div>
-							</div>
 							<table id="tableCuentasContables" class="table-sm"
 									data-unique-id="id"
+									data-undefined-text=""
 									data-toolbar="#toolbarCuentasContables"
 									data-search="true"
 									data-show-fullscreen="false"
@@ -286,7 +256,7 @@
 					</button>
 					@if (puedeTodo || puedeEditar)
 					{
-						<button id="dlgBtnAgregar" type="button" class="btn btn-primary formButton" onclick="onAgregarProductoServicioClick();">
+						<button id="dlgBtnAgregar" type="button" class="btn btn-primary formButton" onclick="onShowCFDIs(TIPO_EXPORTADO_POLIZA_EGRESO);">
 							<i class="bi bi-file-earmark-minus"></i> @Localizer["PolizaEgresoButtonTitle"]
 						</button>
 					}
@@ -381,10 +351,12 @@
 		var emisorLabel = '@Localizer["Emisor"]';
 		var receptorLabel = '@Localizer["Receptor"]';
 		var emptyInfo = '@Localizer["EmptyInfo"]';
+		var emptySelectInfo = '@Localizer["EmptySelectItemText"]';
 		var title = '@Localizer["Title"]';
 		var emitidosTitle = '@Localizer["EmitidosTitle"]';
 		var recibidosTitle = '@Localizer["RecibidosTitle"]';
 		var NoItemSelectedMessage = '@Localizer["NoItemSelectedMessage"]';
+		var NoCuentaContableAsignadaMessage = '@Localizer["NoCuentaContableAsignadaMessage"]';
 		var MixedItemsMessage = '@Localizer["MixedItemsMessage"]';
 		var AccountedMessage = '@Localizer["AccountedMessage"]';
 		var CancelledMessage = '@Localizer["CancelledMessage"]';
