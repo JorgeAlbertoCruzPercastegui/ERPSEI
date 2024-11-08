@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.Empresas;
 
 namespace ERPSEI.Data.Entities.SAT.Catalogos
@@ -18,9 +19,11 @@ namespace ERPSEI.Data.Entities.SAT.Catalogos
 
         public string PalabrasSimilares { get; set; } = string.Empty;
 
+        public int Deshabilitado { get; set; } = 0;
+
         public ICollection<ProductoServicioPerfil>? ProductosServiciosPerfil { get; set; }
 
-        public int Deshabilitado { get; set; } = 0;
+        public ICollection<CuentaContableProductoServicio>? Cuentas { get; set; } = [];
 
     }
 }

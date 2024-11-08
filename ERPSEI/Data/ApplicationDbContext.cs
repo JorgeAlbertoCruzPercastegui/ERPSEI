@@ -145,6 +145,7 @@ namespace ERPSEI.Data
 		public DbSet<CuentaContable> CuentasContables { get; set; }
 		public DbSet<CuentaContableTipo> CuentaContableTipos { get; set; }
 		public DbSet<CuentaContableSubtipo> CuentaContableSubtipos { get; set; }
+		public DbSet<CuentaContableProductoServicio> CuentaContableProductosServicios { get; set; }
 
 
         //Catálogos no administrables Usuarios
@@ -607,6 +608,9 @@ namespace ERPSEI.Data
 					new CuentaContableSubtipo() { Id = 7, Clave = "IN", Descripcion = "I.V.A. No Cobrado" },
 					new CuentaContableSubtipo() { Id = 8, Clave = "IC", Descripcion = "I.V.A. Cobrado" }
 				);
+			b.Entity<CuentaContable>().HasMany(c => c.ProductosServicios).WithOne(p => p.CuentaContable).OnDelete(DeleteBehavior.NoAction);
+
+			b.Entity<ProductoServicio>().HasMany(p => p.Cuentas).WithOne(c => c.ProductoServicio).OnDelete(DeleteBehavior.NoAction);
 		}
 	}
 }
