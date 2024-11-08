@@ -392,7 +392,7 @@ function initTableCuentasContables() {
             },
             {
                 title: colEmisorHeader,
-                field: "rfcEmisor",
+                field: "razonSocialEmisor",
                 align: "center",
                 valign: "middle",
                 sortable: true

@@ -130,8 +130,8 @@ namespace ERPSEI.Areas.ERP.Pages
 					"{" +
 						$"\"id\": {c.Id}," +
 						$"\"safeL\": \"{safeL}\"," +
-						$"\"serie\": \"{c.Serie}\", " +
-						$"\"folio\": \"{c.Folio}\", " +
+						$"\"serie\": \"{c.Serie ?? "F"}\", " +
+						$"\"folio\": \"{c.Folio ?? "0"}\", " +
 						$"\"fecha\": \"{fecha:dd/MM/yyyy HH:mm:ss}\", " +
 						$"\"fechaJS\": \"{fecha:yyyy-MM-dd HH:mm:ss}\", " +
 						$"\"uuid\": \"{c.Complemento?.TimbreFiscalDigital?.UUID}\", " +
@@ -1140,7 +1140,7 @@ namespace ERPSEI.Areas.ERP.Pages
 		public async Task<JsonResult> OnPostComprobantesWithConceptos(string[] ids)
 		{
 			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
-			if (PuedeTodo || PuedeEditar)
+			if (PuedeTodo || PuedeConsultar)
 			{
 				try
 				{
@@ -1180,14 +1180,16 @@ namespace ERPSEI.Areas.ERP.Pages
 					if (c != null)
 					{
 						jsonConceptos = CreateJsonConceptos(c.Conceptos ?? []);
-
+						string serieFolio = $"{c.Serie ?? "F"}{c.Folio ?? "0"}";
 						jsonComprobantes.Add(
 							"{" +
 								$"\"id\": {c.Id}," +
-								$"\"serieFolio\": \"{c.Serie}-{c.Folio}\", " +
+								$"\"serieFolio\": \"{serieFolio}\", " +
 								$"\"total\": {c.Total}, " +
 								$"\"rfcEmisor\": \"{c.Emisor?.Rfc}\", " +
+								$"\"razonSocialEmisor\": \"{c.Emisor?.Rfc} - {c.Emisor?.Nombre}\", " +
 								$"\"rfcReceptor\": \"{c.Receptor?.Rfc}\", " +
+								$"\"razonSocialReceptor\": \"{c.Receptor?.Nombre}\", " +
 								$"\"conceptos\": {jsonConceptos}" +
 							"}"
 						);
