@@ -9,7 +9,7 @@ namespace ERPSEI.Data.Entities.Cuentas
 		public int? CuentaContableId { get; set; }
 		public CuentaContable? CuentaContable { get; set; }
 
-		public int? ProductoServicioId;
+		public int? ProductoServicioId { get; set; }
 		public ProductoServicio? ProductoServicio { get; set; }
 	}
 }
