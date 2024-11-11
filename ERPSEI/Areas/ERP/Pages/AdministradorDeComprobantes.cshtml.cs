@@ -828,7 +828,7 @@ namespace ERPSEI.Areas.ERP.Pages
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesValidatedUnsuccessfully"]);
 			List<Comprobante> comprobantes = [];
-			if (PuedeTodo || PuedeEditar)
+			if (PuedeTodo || PuedeConsultar)
 			{
 				try
 				{
