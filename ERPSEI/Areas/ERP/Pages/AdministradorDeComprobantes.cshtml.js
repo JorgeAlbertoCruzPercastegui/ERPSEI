@@ -658,7 +658,7 @@ function onValidarClick() {
 
             resp.datos = responseHandler(resp.datos)
 
-            resp.datos.forEach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: row }); });
+            resp.datos.forEach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: {valido: row.valido, cancelado: row.cancelado} }); });
 
             showSuccess(dlgExportTitle, resp.mensaje);
         }, function (error) {
