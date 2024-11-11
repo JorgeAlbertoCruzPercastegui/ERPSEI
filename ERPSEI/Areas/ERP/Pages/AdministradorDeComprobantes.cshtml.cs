@@ -753,6 +753,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return nombreArchivo;
 		}
+
 		private static Task<XSSFWorkbook> CreateExcel()
 		{
 			XSSFWorkbook workbook = new();
@@ -942,6 +943,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return Task.FromResult(workbook);
 		}
+
 		private static void CreateCell(IRow CurrentRow, int CellIndex, string Value, XSSFCellStyle Style)
 		{
 			ICell Cell = CurrentRow.CreateCell(CellIndex);
@@ -988,7 +990,7 @@ namespace ERPSEI.Areas.ERP.Pages
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesCancelledUnsuccessfully"]);
 
-			if (PuedeTodo || PuedeEditar || PuedeEliminar)
+			if (PuedeTodo || PuedeEliminar)
 			{
 				try
 				{
