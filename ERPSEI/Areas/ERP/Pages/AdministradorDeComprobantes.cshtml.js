@@ -356,20 +356,24 @@ function initTable() {
         ]
     })
     table.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
-        if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
-        selections = getIdSelections(table);
-        let selectedRows = table.bootstrapTable('getSelections') || [];
-
-        //Obtiene todos los comprobantes que no se han contabilizado
-        unaccounted = $.map(selectedRows, function (row) { if (row.contabilizado == 0 && row.valido == 1 && row.cancelado == 0) { return row.id } }) || [];
-        if (unaccounted.length <= 0) {
-            $(".dropdown-item.polizaIngreso").parent().hide();
-            $(".dropdown-item.polizaEgreso").parent().hide();
-        }
-        else {
-            onTipoComprobanteChanged(false);
-        }
+        onComprobanteSelectionChanged();
     });
+}
+//Función para realizar una acción cuando uno o más elementos del listado son seleccionados / deseleccionados.
+function onComprobanteSelectionChanged() {
+    if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
+    selections = getIdSelections(table);
+    let selectedRows = table.bootstrapTable('getSelections') || [];
+
+    //Obtiene todos los comprobantes que no se han contabilizado
+    unaccounted = $.map(selectedRows, function (row) { if (row.contabilizado == 0 && row.valido == 1 && row.cancelado == 0) { return row.id } }) || [];
+    if (unaccounted.length <= 0) {
+        $(".dropdown-item.polizaIngreso").parent().hide();
+        $(".dropdown-item.polizaEgreso").parent().hide();
+    }
+    else {
+        onTipoComprobanteChanged(false);
+    }
 }
 
 //Función para inicializar la tabla de cuentas contables
@@ -658,7 +662,9 @@ function onValidarClick() {
 
             resp.datos = responseHandler(resp.datos)
 
-            resp.datos.forEach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: {valido: row.valido, cancelado: row.cancelado} }); });
+            resp.datos.forEach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: { valido: row.valido, cancelado: row.cancelado } }); });
+
+            onComprobanteSelectionChanged();
 
             showSuccess(dlgExportTitle, resp.mensaje);
         }, function (error) {
