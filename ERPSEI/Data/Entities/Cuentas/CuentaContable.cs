@@ -18,6 +18,6 @@ namespace ERPSEI.Data.Entities.Cuentas
 		public int? SubtipoId { get; set; }
 		public CuentaContableSubtipo? Subtipo { get; set; }
 
-		public ICollection<CuentaContableProductoServicio>? ProductosServicios { get; set; } = [];
+		public ICollection<CuentaContableProductoServicio>? CuentasProductoServicio { get; set; } = [];
 	}
 }

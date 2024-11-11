@@ -23,7 +23,7 @@ namespace ERPSEI.Data.Entities.SAT.Catalogos
 
         public ICollection<ProductoServicioPerfil>? ProductosServiciosPerfil { get; set; }
 
-        public ICollection<CuentaContableProductoServicio>? Cuentas { get; set; } = [];
+        public ICollection<CuentaContableProductoServicio>? ProductosServiciosCuenta { get; set; } = [];
 
     }
 }
