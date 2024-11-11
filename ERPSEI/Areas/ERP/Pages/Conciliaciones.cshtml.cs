@@ -312,14 +312,20 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 foreach (var detalle in c.DetallesConciliacion)
                 {
+                    // Generar JSON para comprobantes y movimientos
                     string jsonComprobantes = CreateJsonComprobantes([.. detalle.ConciliacionesDetallesComprobantes]);
                     string jsonMovimientos = CreateJsonMovimientos([.. detalle.ConciliacionesDetallesMovimientos]);
+                    string jsonResultadosComprobantes = CreateJsonResultados([.. detalle.ConciliacionesDetallesComprobantes]);
+                    string jsonResultadosMovimientos = CreateJsonResultadosMovimientos([.. detalle.ConciliacionesDetallesMovimientos]);
 
+                    // Agregar los detalles al JSON
                     detallesConId.Add(
                         "{" +
                             $"\"id\": \"{contadorId++}\"," +
                             $"\"detallesComprobantes\": {jsonComprobantes}," +
-                            $"\"detallesMovimientos\": {jsonMovimientos}" +
+                            $"\"detallesMovimientos\": {jsonMovimientos}," +
+                            $"\"resultadosComprobantes\": {jsonResultadosComprobantes}," +
+                            $"\"resultadosMovimientos\": {jsonResultadosMovimientos}" +
                         "}"
                     );
                 }
@@ -342,7 +348,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
-
 
         private static string CreateJsonDetalles(List<ConciliacionDetalle> detalles)
         {
@@ -416,6 +421,55 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return jsonResponse;
         }
+
+        private static string CreateJsonResultados(List<ConciliacionDetalleComprobante> detalles)
+        {
+            List<string> jsonDetalles = [];
+            string jsonResponse;
+            foreach (var cc in detalles)
+            {
+                jsonDetalles.Add("{" +
+                    $"\"Id\": {cc.Comprobante?.Id}, " +
+                    $"\"Serie\": \"{cc.Comprobante?.Serie}\", " +
+                    $"\"Folio\": \"{cc.Comprobante?.Folio}\", " +
+                    $"\"Fecha\": \"{cc.Comprobante?.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"Total\": \"{cc.Comprobante?.Total}\", " +
+                    $"\"Similitud\": \"100.00%\"" +
+                "}");
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
+
+            return jsonResponse;
+        }
+
+        private static string CreateJsonResultadosMovimientos(List<ConciliacionDetalleMovimiento> detalles)
+        {
+            List<string> jsonDetalles = [];
+            string jsonResponse;
+
+            foreach (var cc in detalles)
+            {
+                // Extraer información del movimiento bancario
+                var movimiento = cc.MovimientoBancario;
+                if (movimiento != null)
+                {
+                    jsonDetalles.Add("{" +
+                        $"\"Id\": \"{movimiento.Id}\", " +
+                        $"\"Fecha\": \"{movimiento.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                        $"\"Descripcion\": \"{movimiento.Descripcion ?? "Sin descripción"}\", " +
+                        $"\"Banco\": \"{movimiento.Conciliacion?.BancoId}\", " +
+                        $"\"Total\": \"{movimiento.Importe}\", " +
+                        $"\"Similitud\": \"100.00%\"" +
+                    "}");
+                }
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
+
+            return jsonResponse;
+        }
+
 
         public async Task<JsonResult> OnPostComprobantesListEmpresas()
         {

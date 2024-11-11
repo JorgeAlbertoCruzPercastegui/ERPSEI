@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     });
 
     initTable();
+    initTableComprobantes();
 
     let btnBuscar = document.getElementById("btnBuscar");
     if (btnBuscar) { btnBuscar.click(); }
@@ -193,6 +194,10 @@ window.operateEvents = {
 }
 function onAgregarClick() {
     initConciliacionDialog(NUEVO, { id: "Nuevo", nombre: "" });
+
+    $('#tableCardComprobantes').bootstrapTable('load', []);
+    $('#tableCardMovimientos').bootstrapTable('load', []);
+    $('#tableResult').bootstrapTable('load', []);
 }
 
 function initTable() {
@@ -429,13 +434,16 @@ let registrosSinCoincidenciaM = [];
 
 // Función para realizar la conciliación individual
 function conciliacionIndidual(value, row, index) {
-    let disabled = row.coincidencia ? 'disabled' : '';
+    // Si el comprobante ya ha sido conciliado o está bloqueado, deshabilitar el botón
+    let disabled = row.coincidencia || row.bloqueado ? 'disabled' : '';
+
     return `
         <button class="btn btn-primary btn-sm" onclick="consultarComp(${row.Id}, '${row.Serie}', '${row.Folio}', '${row.Fecha}', '${row.UUID}', '${row.Total}')" ${disabled}>
             <i class="bi bi-paperclip rotate-clip"></i> Conciliar
         </button>
     `;
 }
+
 
 let movimientosSeleccionados = []; // Lista para almacenar los movimientos seleccionados
 
@@ -514,7 +522,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
                     <td>${mov.id}</td>
                     <td>${mov.Fecha}</td>
                     <td>${mov.Banco}</td>
-                    <td>${mov.Descripcion}</td>
+                    <td>${mov.Descripción}</td>
                     <td>${currencyFormatter(parseFloat(mov.Cargos).toFixed(3))}</td>
                     <td>${mov.porcentajeSimilitud}%</td>
                     <td>
@@ -638,12 +646,16 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 }
 
 function desconciliarFormatter(value, row, index) {
+    // Verificar si el registro está bloqueado para deshabilitar el botón
+    let disabled = row.bloqueado ? 'disabled' : '';
+
     return `
-        <button class="btn btn-danger btn-sm" onclick="desconciliar(${row.id}, '${row.Fecha}', '${row.Total}')">
-            Desconciliar
-        </button>
+        <center><button class="btn btn-danger btn-sm" onclick="desconciliar(${row.id}, '${row.Fecha}', '${row.Total}')" ${disabled}>
+            <i class=""></i> Desconciliar
+        </button></center>
     `;
 }
+
 
 //Desconciliar comprobante con movimientos y movimiento con comprobantes(unión de desconciliarMov y desconciliarComp)
 function desconciliar(id, fechaMovimiento, totalMovimiento) {
@@ -1127,8 +1139,9 @@ function detailFormatterM(index, row) {
 
 // Función para formatear el botón de conciliación en movimientos
 function conciliarFormatterMov(value, row, index) {
-    // Si el registro está conciliado, deshabilita el botón
-    let disabled = row.coincidencia ? 'disabled' : '';
+    // Si el movimiento ya ha sido conciliado o está bloqueado, deshabilitar el botón
+    let disabled = row.coincidencia || row.bloqueado ? 'disabled' : '';
+
     return `
         <button class="btn btn-primary btn-sm" onclick="conciliarMovimiento(${index}, '${row.Fecha}', '${row.Cargos}')" ${disabled}>
             <i class="bi bi-paperclip rotate-clip"></i> Conciliar
@@ -1584,6 +1597,35 @@ function onCerrarClick() {
     $(".text-danger").children().remove()
 }
 
+function bloquearRegistrosAlVer() {
+    // Bloquear registros de comprobantes
+    $("#tableCardComprobantes .comprobante-row").each(function () {
+        let rowData = $(this).data("row");
+        if (rowData.coincidencia) {
+            rowData.bloqueado = true;
+        }
+    });
+
+    // Bloquear registros de movimientos
+    $("#tableCardMovimientos .movimiento-row").each(function () {
+        let rowData = $(this).data("row");
+        if (rowData.coincidencia) {
+            rowData.bloqueado = true;
+        }
+    });
+
+    // Bloquear registros de tableResult
+    $("#tableResult .table-result-row").each(function () {
+        let rowData = $(this).data("row");
+        rowData.bloqueado = true; // Marcar como bloqueado
+    });
+
+    // Refrescar las tablas para aplicar los cambios visuales
+    $('#tableCardComprobantes').bootstrapTable('refresh');
+    $('#tableCardMovimientos').bootstrapTable('refresh');
+    $('#tableResult').bootstrapTable('refresh');
+}
+
 //Funcionalidad Diálogo Conciliación
 function initConciliacionDialog(action, row) {
     // Obtener los campos del formulario
@@ -1654,10 +1696,8 @@ function initConciliacionDialog(action, row) {
             botonConciliacionAsistida.setAttribute("disabled", true);
 
             // Verificar si la tabla ya tiene datos antes de recargar
-                obtenerRegistrosConciliados(row.id);
-                //$('#tableCardComprobantes').bootstrapTable('refresh');
-                //$('#tableCardMovimientos').bootstrapTable('refresh');
-            
+            obtenerRegistrosConciliados(row.id);
+            bloquearRegistrosAlVer();
 
             break;
     }
@@ -1705,6 +1745,7 @@ function obtenerRegistrosConciliados(conciliacionId) {
     // Limpiar las tablas antes de cargar nuevos datos
     $('#tableCardComprobantes').bootstrapTable('load', []);
     $('#tableCardMovimientos').bootstrapTable('load', []);
+    $('#tableResult').bootstrapTable('load', []);
 
     let oParams = { id: conciliacionId };
     $.extend(postOptions, { type: 'GET' });
@@ -1725,11 +1766,13 @@ function obtenerRegistrosConciliados(conciliacionId) {
             }
 
             // Procesar los datos y extraer los arreglos de comprobantes y movimientos
-            const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
+            //const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
+            const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
 
             // Cargar los datos en las tablas correspondientes
             $('#tableCardComprobantes').bootstrapTable('load', comprobantes);
             $('#tableCardMovimientos').bootstrapTable('load', movimientos);
+            $('#tableResult').bootstrapTable('load', conciliaciones);
 
             //console.log("Comprobantes cargados:", comprobantes);
             //console.log("Movimientos cargados:", movimientos);
@@ -1741,63 +1784,99 @@ function obtenerRegistrosConciliados(conciliacionId) {
     );
 }
 
-
-// Función para procesar el JSON y extraer el arreglo de objetos
 function procesarDatosConciliados(datos) {
     let parsedData;
     try {
         parsedData = JSON.parse(datos.value.datos);
     } catch (error) {
         console.error("Error al parsear los datos:", error);
-        return { comprobantes: [], movimientos: [] };
+        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
     }
 
     let detalles = parsedData.detalles;
 
-    // Verificar si 'detalles' es un arreglo
     if (!Array.isArray(detalles)) {
         console.error("La propiedad 'detalles' no existe o no es un arreglo.");
-        return { comprobantes: [], movimientos: [] };
+        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
     }
 
     let comprobantes = [];
     let movimientos = [];
+    let conciliaciones = [];
+    let idsConciliados = new Set();
+    let mapaMovimientos = {};
 
+    // Procesar detallesMovimientos y llenar el mapa de movimientos
     detalles.forEach(detalle => {
-        let id = detalle.id;
+        if (Array.isArray(detalle.detallesMovimientos)) {
+            detalle.detallesMovimientos.forEach(movimiento => {
+                mapaMovimientos[movimiento.Id] = movimiento;
 
-        // Procesar detallesComprobantes
+                movimientos.push({
+                    Id: movimiento.Id,
+                    Fecha: movimiento.Fecha,
+                    Descripcion: movimiento.Descripción || "Sin descripción",
+                    Cargos: parseFloat(movimiento.Cargos) || 0,
+                    Abonos: parseFloat(movimiento.Abonos) || 0,
+                    Banco: movimiento.BancoId || "No especificado 1",
+                    bloqueado: true
+                });
+            });
+        }
+    });
+
+    // Procesar detallesComprobantes y asociar movimientos conciliados
+    detalles.forEach(detalle => {
         if (Array.isArray(detalle.detallesComprobantes)) {
             detalle.detallesComprobantes.forEach(comprobante => {
+                if (idsConciliados.has(comprobante.Id)) return;
+                idsConciliados.add(comprobante.Id);
+
+                // Buscar movimientos asociados a este comprobante
+                let movimientosConciliados = [];
+                if (Array.isArray(detalle.detallesMovimientos)) {
+                    detalle.detallesMovimientos.forEach(mov => {
+                        if (mov.Id) {
+                            movimientosConciliados.push({
+                                Id: mov.Id,
+                                Fecha: mov.Fecha,
+                                Banco: mov.BancoId || "No especificado 2",
+                                Descripcion: mov.Descripción || "Sin descripción",
+                                Cargos: parseFloat(mov.Cargos) || 0,
+                                Abonos: parseFloat(mov.Abonos) || 0,
+                                bloqueado: true // Marcar como bloqueado
+                            });
+                        }
+                    });
+                }
+
+                // Agregar comprobante con movimientos conciliados
                 comprobantes.push({
                     Id: comprobante.Id,
                     Serie: comprobante.Serie,
                     Folio: comprobante.Folio,
                     Fecha: comprobante.Fecha,
                     UUID: comprobante.UUID,
-                    Total: comprobante.Total,
-                    ConciliacionId: id
+                    Total: parseFloat(comprobante.Total) || 0,
+                    movimientosConciliados: movimientosConciliados,
+                    bloqueado: true // Marcar como bloqueado
                 });
-            });
-        }
 
-        // Procesar detallesMovimientos
-        if (Array.isArray(detalle.detallesMovimientos)) {
-            detalle.detallesMovimientos.forEach(movimiento => {
-                console.log("Movimiento:", movimiento);
-                movimientos.push({
-                    Id: movimiento.Id,
-                    Fecha: movimiento.Fecha,
-                    Descripcion: movimiento.Descripción,
-                    Cargos: parseFloat(movimiento.Cargos) || 0,
-                    Abonos: 0,
-                    ConciliacionId: id
+                // Añadir a conciliaciones para tableResult
+                conciliaciones.push({
+                    id: comprobante.Id,
+                    Serie: comprobante.Serie,
+                    Folio: comprobante.Folio,
+                    Fecha: comprobante.Fecha,
+                    Total: parseFloat(comprobante.Total) || 0,
+                    movimientosConciliados: movimientosConciliados,
+                    bloqueado: true // Marcar como bloqueado
                 });
             });
         }
     });
 
-    return { comprobantes, movimientos };
+    return { comprobantes, movimientos, conciliaciones };
 }
 
 
