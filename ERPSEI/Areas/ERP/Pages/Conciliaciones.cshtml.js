@@ -172,10 +172,12 @@ function booleanFormatter(value, row, index) {
 function operateFormatter(value, row, index) {
     let icons = [];
 
-    //Icono Ver
+    // Icono Ver
     icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
-    //Icono Editar
+    // Icono Editar
     icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
+    // Icono Exportar a Excel
+    icons.push(`<li><a class="dropdown-item export" href="#" title="Exportar a Excel"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</a></li>`);
 
     return `<div class="dropdown">
               <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -184,6 +186,7 @@ function operateFormatter(value, row, index) {
               <ul class="dropdown-menu">${icons.join("")}</ul>
             </div>`;
 }
+
 window.operateEvents = {
     'click .see': function (e, value, row, index) {
         initConciliacionDialog(VER, row);
@@ -194,8 +197,13 @@ window.operateEvents = {
         $('#tableCardComprobantes').bootstrapTable('load', []);
         $('#tableCardMovimientos').bootstrapTable('load', []);
         $('#tableResult').bootstrapTable('load', []);
+    },
+    'click .export': function (e, value, row, index) {
+        const cliente = row.Cliente || row.Empresa || 'Sin cliente';
+        exportarAExcelConFormato(cliente);
     }
 }
+
 function onAgregarClick() {
     initConciliacionDialog(NUEVO, { id: "Nuevo", nombre: "" });
 
@@ -203,6 +211,90 @@ function onAgregarClick() {
     $('#tableCardMovimientos').bootstrapTable('load', []);
     $('#tableResult').bootstrapTable('load', []);
 }
+
+/*function exportarAExcel(row) {
+    //Crear un libro de Excel usando SheetJS
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+        ["Id", "Fecha", "Total", "Descripción"],
+        [row.id, row.Fecha, row.Total, row.Descripcion || "Sin descripción"]
+    ];
+
+    //Crear la hoja de Excel
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "Datos");
+
+    //Descargar el archivo Excel
+    XLSX.writeFile(wb, `Export_${row.id}.xlsx`);
+}*/
+
+async function exportarAExcelConFormato(cliente) {
+    const ExcelJS = window.ExcelJS;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('POLIZA COMPLETA');
+
+    // Configuración de las columnas
+    worksheet.columns = [
+        { header: '', width: 5 },  // Columna de 'lg'
+        { header: '', width: 10 }, // Columna con el número
+        { header: '', width: 40 }, // Columna para el cliente/empresa
+        { header: '', width: 25 }, // Columna de descripción
+        { header: '', width: 5 }
+    ];
+
+    // Fila vacía inicial (sin encabezados)
+    worksheet.addRow([]);
+
+    // Fila del título con el número y cliente/empresa
+    const titleRow = worksheet.addRow(['lg', 1, cliente || 'Sin cliente', '', '', 'CARGO', 'ABONO']);
+    titleRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+
+    // Aplicar color azul solo a las primeras dos columnas
+    titleRow.getCell(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '0070C0' }
+    };
+    titleRow.getCell(2).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '0070C0' }
+    };
+
+    // Ajustar el color del cliente a negro
+    titleRow.getCell(3).font = { bold: true, color: { argb: '000000' } };
+
+    // Añadir títulos de "CARGOS" y "ABONOS" en negritas
+    worksheet.getCell('F3').value = 'CARGO';
+    worksheet.getCell('F3').font = { bold: true };
+    worksheet.getCell('G3').value = 'ABONO';
+    worksheet.getCell('G3').font = { bold: true };
+
+    // Filas de partidas con valores enteros y centrados
+    for (let j = 0; j < 3; j++) {
+        let partidaRow = worksheet.addRow(['', 1120 + j, 0, `Descripción ${j + 1}`, '', 0, 0]);
+        partidaRow.getCell(3).numFmt = '0'; // Asegura que sea un entero
+        partidaRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }; // Centrar el valor numérico
+        partidaRow.getCell(6).numFmt = '#,##0.00'; // Formato de moneda para CARGO
+        partidaRow.getCell(7).numFmt = '#,##0.00'; // Formato de moneda para ABONO
+    }
+
+    // Fila de fin de partidas sin negritas
+    const finPartidasRow = worksheet.addRow(['', 'FIN_PARTIDAS', '', '', '', '', '']);
+    finPartidasRow.font = { bold: false };
+
+    // Guardar el archivo Excel
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Poliza_Completa_Con_Formato.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+
 
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
