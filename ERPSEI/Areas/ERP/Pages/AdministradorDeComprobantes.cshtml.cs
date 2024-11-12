@@ -447,7 +447,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						case (int)TipoExportacion.PolizaIngresos:
 							if(PuedeTodo || PuedeEditar)
 							{
-								resp.Datos = await CreateWorkbookIngresos(ids, comprobanteManager, cuentaContableManager, empresaManager);
+								resp.Datos = await CreateWorkbookIngresos(ids);
 								resp.TieneError = false;
 								resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							}
@@ -459,7 +459,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						case (int)TipoExportacion.PolizaEgresos:
 							if (PuedeTodo || PuedeEditar)
 							{
-								resp.Datos = await CreateWorkbookEgresos(ids, comprobanteManager, cuentaContableManager, empresaManager);
+								resp.Datos = await CreateWorkbookEgresos(ids);
 								resp.TieneError = false;
 								resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							}
@@ -474,7 +474,7 @@ namespace ERPSEI.Areas.ERP.Pages
 				}
 				catch (Exception ex)
 				{
-					logger.LogError(message: ex.Message);
+					logger.LogError("{message}", ex.Message);
 					resp.Mensaje = ex.Message;
 				}
 			}
