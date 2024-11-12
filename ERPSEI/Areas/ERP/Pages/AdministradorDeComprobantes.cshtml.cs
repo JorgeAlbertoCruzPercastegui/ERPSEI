@@ -486,7 +486,7 @@ namespace ERPSEI.Areas.ERP.Pages
 			return new JsonResult(resp);
 		}
 
-		private async static Task<string> CreateWorkbookEgresos(string[] ids, IComprobanteManager cmgr, ICuentaContableManager ccmgr, IEmpresaManager emgr)
+		private async Task<string> CreateWorkbookEgresos(string[] ids)
 		{
 			int rowIndex = 2;
 			string? strTipoPoliza = "GASTOS";
@@ -518,10 +518,10 @@ namespace ERPSEI.Areas.ERP.Pages
 				List<ComprobanteYCuenta>? elements = JsonConvert.DeserializeObject<List<ComprobanteYCuenta>>($"[{string.Join(",", ids)}]") ?? [];
 				foreach (ComprobanteYCuenta cyc in elements)
 				{
-					Comprobante? comprobante = await cmgr.GetByIdAsync(cyc.Id);
+					Comprobante? comprobante = await comprobanteManager.GetByIdAsync(cyc.Id);
 					if (comprobante != null)
 					{
-						empresaReceptora ??= await emgr.GetByRFCAsync(comprobante.Receptor?.Rfc ?? string.Empty);
+						empresaReceptora ??= await empresaManager.GetByRFCAsync(comprobante.Receptor?.Rfc ?? string.Empty);
 						comprobante.FechaNET = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
 						comprobantes.Add(comprobante, cyc.CuentaId);
 					}
@@ -529,11 +529,14 @@ namespace ERPSEI.Areas.ERP.Pages
 
 				var comprobantesOrdenados = from entry in comprobantes orderby entry.Key.FechaNET ascending select entry;
 
-				List<CuentaContable> ? cuentasContables = await ccmgr.GetByIdEmpresaAsync(empresaReceptora?.Id ?? 0);
+				List<CuentaContable> ? cuentasContables = await cuentaContableManager.GetByIdEmpresaAsync(empresaReceptora?.Id ?? 0);
 				cuentasContables = cuentasContables.Where(c => c.TipoId == 1).ToList();
-				
+				if (cuentasContables == null || cuentasContables.Count <= 0) { throw new Exception($"{localizer["SinCuentasContables"]} {localizer["PolizaNoCreada"]}"); }
+
 				CuentaContable? cuentaIVAPorAcreditar = cuentasContables.Where(cuenta => cuenta.TipoId == 1 && cuenta.SubtipoId == 10).FirstOrDefault();
 				CuentaContable? cuentaIVAAcreditable = cuentasContables.Where(cuenta => cuenta.TipoId == 1 && cuenta.SubtipoId == 9).FirstOrDefault();
+				if (cuentaIVAPorAcreditar == null || cuentaIVAAcreditable == null) { throw new Exception($"{localizer["SinCuentasContablesIVAEgreso"]} {localizer["PolizaNoCreada"]}"); }
+
 				CuentaContable? cuentaProveedor = null;
 				CuentaContable? cuentaGasto = null;
 
@@ -542,7 +545,10 @@ namespace ERPSEI.Areas.ERP.Pages
 				{
 					conceptoString = $"PROVISION DE {strTipoPoliza} '{kvp.Key.Emisor?.Nombre}' {kvp.Key.Serie ?? "F"}-{kvp.Key.Folio}";
 					cuentaProveedor = cuentasContables.Where(cuenta => cuenta.RFC == kvp.Key.Emisor?.Rfc).FirstOrDefault();
+					if (cuentaProveedor == null) { throw new Exception($"{localizer["SinCuentaContableProveedor"]} {kvp.Key.Emisor?.Nombre}. {localizer["PolizaNoCreada"]}"); }
+
 					cuentaGasto = cuentasContables.Where(cuenta => cuenta.Id == kvp.Value).FirstOrDefault();
+					if (cuentaGasto == null) { throw new Exception($"{localizer["SinCuentaContableGasto"]} {localizer["PolizaNoCreada"]}"); }
 
 					//Crea el row de encabezado de CFDI
 					IRow hRow = sheet.CreateRow(rowIndex);
@@ -615,12 +621,12 @@ namespace ERPSEI.Areas.ERP.Pages
 				wb.Close();
 
 				//Actualiza los comprobantes para que queden marcados con el flag "Contabilizado = true"
-				await cmgr.UpdateMultipleAsync([..comprobantes.Keys]);
+				await comprobanteManager.UpdateMultipleAsync([..comprobantes.Keys]);
 			}
 
 			return nombreArchivo;
 		}
-		private async static Task<string> CreateWorkbookIngresos(string[] ids, IComprobanteManager cmgr, ICuentaContableManager ccmgr, IEmpresaManager emgr)
+		private async Task<string> CreateWorkbookIngresos(string[] ids)
 		{
 			int rowIndex = 2;
 			string? strTipoPoliza = "VENTA";
@@ -651,10 +657,10 @@ namespace ERPSEI.Areas.ERP.Pages
                 foreach (string id in ids)
                 {
 					int intId = Convert.ToInt32(id);
-					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
+					Comprobante? comprobante = await comprobanteManager.GetByIdAsync(intId);
 					if (comprobante != null) 
 					{
-						empresaEmisora ??= await emgr.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
+						empresaEmisora ??= await empresaManager.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
 						comprobante.FechaNET = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
 						comprobantes.Add(comprobante);
 					}
@@ -662,22 +668,29 @@ namespace ERPSEI.Areas.ERP.Pages
 
 				comprobantes = [..comprobantes.OrderBy(c => c.FechaNET)];
 
-				List<CuentaContable>? cuentasContables = await ccmgr.GetByIdEmpresaAsync(empresaEmisora?.Id ?? 0);
+				List<CuentaContable>? cuentasContables = await cuentaContableManager.GetByIdEmpresaAsync(empresaEmisora?.Id ?? 0);
 				cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
+				if (cuentasContables == null || cuentasContables.Count <= 0) { throw new Exception($"{localizer["SinCuentasContables"]} {localizer["PolizaNoCreada"]}"); }
 
 				CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
 				CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
 				CuentaContable? cuentaVentasExentas = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 6).FirstOrDefault();
+				if (cuentaVentas16 == null || cuentaVentas0 == null || cuentaVentasExentas == null) { throw new Exception($"{localizer["SinCuentasContablesVentas"]} {localizer["PolizaNoCreada"]}"); }
+
 				CuentaContable? cuentaIVANoCobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 7).FirstOrDefault();
 				CuentaContable? cuentaIVACobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 8).FirstOrDefault();
+				if (cuentaIVANoCobrado == null || cuentaIVACobrado == null) { throw new Exception($"{localizer["SinCuentasContablesIVAIngreso"]} {localizer["PolizaNoCreada"]}"); }
+
 				CuentaContable? cuentaCliente = null;
 				CuentaContable? cuentaVenta = null;
 
 				string conceptoString = string.Empty;
 				foreach (Comprobante comprobante in comprobantes)
 				{
-					conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie ?? "F"}-{comprobante.Folio}";
 					cuentaCliente = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Receptor?.Rfc).FirstOrDefault();
+					if (cuentaCliente == null) { throw new Exception($"{localizer["SinCuentaContableCliente"]} {comprobante.Receptor?.Nombre}. {localizer["PolizaNoCreada"]}"); }
+
+					conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie ?? "F"}-{comprobante.Folio}";
 					if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.16m) ?? false)) { cuentaVenta = cuentaVentas16; }
 					else if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.0m) ?? false)) { cuentaVenta = cuentaVentas0; }
 					else if (comprobante.Impuestos == null) { cuentaVenta = cuentaVentasExentas; }
@@ -754,7 +767,7 @@ namespace ERPSEI.Areas.ERP.Pages
 				wb.Close();
 
 				//Actualiza los comprobantes para que queden marcados con el flag "Contabilizado = true"
-				await cmgr.UpdateMultipleAsync(comprobantes);
+				await comprobanteManager.UpdateMultipleAsync(comprobantes);
 			}
 
 			return nombreArchivo;

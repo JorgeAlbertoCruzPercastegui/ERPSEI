@@ -156,4 +156,28 @@
   <data name="ComprobanteValidatedUnsuccessfully" xml:space="preserve">
     <value>Error validating invoice</value>
   </data>
+  <data name="PolizaNoCreada" xml:space="preserve">
+    <value>The policy could not be generated.</value>
+  </data>
+  <data name="SinCuentaContableCliente" xml:space="preserve">
+    <value>Customer's accounting account was not found</value>
+  </data>
+  <data name="SinCuentaContableGasto" xml:space="preserve">
+    <value>Expense accounting account not found</value>
+  </data>
+  <data name="SinCuentaContableProveedor" xml:space="preserve">
+    <value>Supplier accounting account not found</value>
+  </data>
+  <data name="SinCuentasContables" xml:space="preserve">
+    <value>No accounting accounts were found.</value>
+  </data>
+  <data name="SinCuentasContablesIVAEgreso" xml:space="preserve">
+    <value>No IVA accounting accounts to be credited and IVA creditable were found.</value>
+  </data>
+  <data name="SinCuentasContablesIVAIngreso" xml:space="preserve">
+    <value>No accounting accounts were found for IVA Not Collected and IVA Collected.</value>
+  </data>
+  <data name="SinCuentasContablesVentas" xml:space="preserve">
+    <value>No sales accounting accounts were found.</value>
+  </data>
 </root>

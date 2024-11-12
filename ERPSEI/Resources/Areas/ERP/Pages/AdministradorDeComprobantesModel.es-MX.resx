@@ -156,4 +156,28 @@
   <data name="ComprobanteValidatedUnsuccessfully" xml:space="preserve">
     <value>Error al validar el comprobante</value>
   </data>
+  <data name="PolizaNoCreada" xml:space="preserve">
+    <value>No se pudo generar la póliza.</value>
+  </data>
+  <data name="SinCuentaContableCliente" xml:space="preserve">
+    <value>No se encontró la cuenta contable del cliente</value>
+  </data>
+  <data name="SinCuentaContableGasto" xml:space="preserve">
+    <value>No se encontró la cuenta contable del gasto</value>
+  </data>
+  <data name="SinCuentaContableProveedor" xml:space="preserve">
+    <value>No se encontró la cuenta contable del proveedor</value>
+  </data>
+  <data name="SinCuentasContables" xml:space="preserve">
+    <value>No se encontraron cuentas contables.</value>
+  </data>
+  <data name="SinCuentasContablesIVAEgreso" xml:space="preserve">
+    <value>No se encontraron cuentas contables de IVA por acreditar e IVA acreditable.</value>
+  </data>
+  <data name="SinCuentasContablesIVAIngreso" xml:space="preserve">
+    <value>No se encontraron cuentas contables de IVA No Cobrado e IVA Cobrado.</value>
+  </data>
+  <data name="SinCuentasContablesVentas" xml:space="preserve">
+    <value>No se encontraron cuentas contables de ventas.</value>
+  </data>
 </root>
