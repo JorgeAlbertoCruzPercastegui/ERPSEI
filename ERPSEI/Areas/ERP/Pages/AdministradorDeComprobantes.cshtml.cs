@@ -39,6 +39,12 @@ namespace ERPSEI.Areas.ERP.Pages
 		) : ERPPageModel
 	{
 
+		public class ComprobanteYCuenta
+		{
+			public int Id { get; set; } 
+			public int CuentaId { get; set; }
+		}
+
 		public enum TipoExportacion
 		{
 			PDF = 0,
@@ -508,23 +514,22 @@ namespace ERPSEI.Areas.ERP.Pages
 
 				Empresa? empresaReceptora = null;
 
-				List<Comprobante> comprobantes = [];//Dictionary<Comprobante, string> comprobantes = [];
-				//Dictionary<string, string>? elements = JsonConvert.DeserializeObject<Dictionary<string, string>>($"[{string.Join(",", ids)}]");
-				foreach (string id in ids) //KeyValuePair<string, string> kvp in elements
+				Dictionary<Comprobante, int> comprobantes = [];
+				List<ComprobanteYCuenta>? elements = JsonConvert.DeserializeObject<List<ComprobanteYCuenta>>($"[{string.Join(",", ids)}]") ?? [];
+				foreach (ComprobanteYCuenta cyc in elements)
 				{
-					int intId = Convert.ToInt32(id); //int intId = Convert.ToInt32(kvp.Key);
-					Comprobante? comprobante = await cmgr.GetByIdAsync(intId);
+					Comprobante? comprobante = await cmgr.GetByIdAsync(cyc.Id);
 					if (comprobante != null)
 					{
 						empresaReceptora ??= await emgr.GetByRFCAsync(comprobante.Receptor?.Rfc ?? string.Empty);
 						comprobante.FechaNET = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-						comprobantes.Add(comprobante);//comprobantes.Add(comprobante, kvp.Value);
+						comprobantes.Add(comprobante, cyc.CuentaId);
 					}
 				}
 
-				comprobantes = [.. comprobantes.OrderBy(c => c.FechaNET)];
+				var comprobantesOrdenados = from entry in comprobantes orderby entry.Key.FechaNET ascending select entry;
 
-				List<CuentaContable>? cuentasContables = await ccmgr.GetByIdEmpresaAsync(empresaReceptora?.Id ?? 0);
+				List<CuentaContable> ? cuentasContables = await ccmgr.GetByIdEmpresaAsync(empresaReceptora?.Id ?? 0);
 				cuentasContables = cuentasContables.Where(c => c.TipoId == 1).ToList();
 				
 				CuentaContable? cuentaIVAPorAcreditar = cuentasContables.Where(cuenta => cuenta.TipoId == 1 && cuenta.SubtipoId == 10).FirstOrDefault();
@@ -533,10 +538,11 @@ namespace ERPSEI.Areas.ERP.Pages
 				CuentaContable? cuentaGasto = null;
 
 				string conceptoString = string.Empty;
-				foreach (Comprobante comprobante in comprobantes)
+				foreach (KeyValuePair<Comprobante, int> kvp in comprobantesOrdenados)
 				{
-					conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Emisor?.Nombre}' {comprobante.Serie ?? "F"}-{comprobante.Folio}";
-					cuentaProveedor = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Emisor?.Rfc).FirstOrDefault();
+					conceptoString = $"PROVISION DE {strTipoPoliza} '{kvp.Key.Emisor?.Nombre}' {kvp.Key.Serie ?? "F"}-{kvp.Key.Folio}";
+					cuentaProveedor = cuentasContables.Where(cuenta => cuenta.RFC == kvp.Key.Emisor?.Rfc).FirstOrDefault();
+					cuentaGasto = cuentasContables.Where(cuenta => cuenta.Id == kvp.Value).FirstOrDefault();
 
 					//Crea el row de encabezado de CFDI
 					IRow hRow = sheet.CreateRow(rowIndex);
@@ -547,7 +553,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Concepto póliza
 					CreateCell(hRow, 2, conceptoString, cellStyle);
 					//Día fecha
-					CreateCell(hRow, 3, comprobante.FechaNET.Day, cellStyle);
+					CreateCell(hRow, 3, kvp.Key.FechaNET.Day, cellStyle);
 
 					//Crea el row del total de la factura
 					IRow dRow = sheet.CreateRow(rowIndex + 1);
@@ -560,7 +566,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Placeholder
 					CreateCell(dRow, 4, string.Empty, cellStyle);
 					//Total
-					CreateCell(dRow, 6, (double)comprobante.Total, cellStyle);
+					CreateCell(dRow, 6, (double)kvp.Key.Total, cellStyle);
 
 					//Crea el row del subtotal de la factura de CFDI
 					IRow g1Row = sheet.CreateRow(rowIndex + 2);
@@ -573,7 +579,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Placeholder
 					CreateCell(g1Row, 4, string.Empty, cellStyle);
 					//Debe
-					CreateCell(g1Row, 5, (double)comprobante.SubTotal, cellStyle);
+					CreateCell(g1Row, 5, (double)kvp.Key.SubTotal, cellStyle);
 					//Haber
 					CreateCell(g1Row, 6, "", cellStyle);
 
@@ -588,7 +594,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Placeholder
 					CreateCell(g1Row, 4, string.Empty, cellStyle);
 					//Debe
-					CreateCell(g2Row, 5, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
+					CreateCell(g2Row, 5, (double)(kvp.Key.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
 					//Haber
 					CreateCell(g2Row, 6, "", cellStyle);
 
@@ -600,7 +606,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Avanza 5 lineas para poder iniciar una nueva póliza.
 					rowIndex += 5;
 
-					comprobante.Contabilizado = true;
+					kvp.Key.Contabilizado = true;
 				}
 
 				//Crea el archivo excel y lo exporta al usuario.
@@ -609,7 +615,7 @@ namespace ERPSEI.Areas.ERP.Pages
 				wb.Close();
 
 				//Actualiza los comprobantes para que queden marcados con el flag "Contabilizado = true"
-				//await cmgr.UpdateMultipleAsync(comprobantes);
+				await cmgr.UpdateMultipleAsync([..comprobantes.Keys]);
 			}
 
 			return nombreArchivo;

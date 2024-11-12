@@ -577,7 +577,7 @@ function onShowCFDIs(tipoExportado) {
                     return;
                 }
 
-                /*unaccounted = $.map(comprobantesCuentasSelections, function (row) { return `{'id': '${row.id}', 'cuentaId': '${row.cuentaContableId}'}` }) || [];*/
+                unaccounted = $.map(comprobantesCuentasSelections, function (row) { return `{"Id": "${row.id}", "CuentaId": "${row.cuentaContableId}"}` }) || [];
             }
 
             let accounted = [];
