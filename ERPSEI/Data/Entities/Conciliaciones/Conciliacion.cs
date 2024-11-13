@@ -23,6 +23,7 @@ namespace ERPSEI.Data.Entities.Conciliaciones
         public AppUser? UsuarioCreador { get; set; }
         public string? UsuarioModificadorId { get; set; } = string.Empty;
         public AppUser? UsuarioModificador { get; set; }
+        public bool Estatus { get; set; }
         public ICollection<ConciliacionDetalle>? DetallesConciliacion { get; set; } = [];
         public bool Deshabilitado { get; set; }
     }

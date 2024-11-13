@@ -336,15 +336,20 @@
                         </div> 
                     </div>
                 </div>
-            
-            <div class="modal-footer">
-                <button id="dlgConciliacionBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
-                </button>
-                <button id="dlgConciliacionBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
-                    <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
-                </button>
-            </div>
+
+                <div class="modal-footer">
+                    <button id="dlgConciliacionBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
+                    </button>
+                    <button id="dlgConciliacionBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+                        <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
+                    </button>
+                    <!-- Nuevo botón Cerrar Conciliación -->
+                    <button id="dlgConciliacionBtnCerrar" type="button" class="btn btn-success" onclick="onCerrarConciliacionClick();">
+                        <i class="bi bi-check-circle"></i> @Localizer["FinalizeConciliation"]
+                    </button>
+                </div>
+
         </div>
     </div>
 </div>

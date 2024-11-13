@@ -200,7 +200,8 @@ window.operateEvents = {
     },
     'click .export': function (e, value, row, index) {
         const cliente = row.Cliente || row.Empresa || 'Sin cliente';
-        exportarAExcelConFormato(cliente);
+        const totalComprobante = row.Total || 0; // Obtener el total del comprobante
+        exportarAExcelConFormato(cliente, totalComprobante);
     }
 }
 
@@ -228,17 +229,17 @@ function onAgregarClick() {
     XLSX.writeFile(wb, `Export_${row.id}.xlsx`);
 }*/
 
-async function exportarAExcelConFormato(cliente) {
+async function exportarAExcelConFormato(cliente, totalComprobante) {
     const ExcelJS = window.ExcelJS;
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('POLIZA COMPLETA');
 
     // Configuración de las columnas
     worksheet.columns = [
-        { header: '', width: 5 },  // Columna de 'lg'
-        { header: '', width: 10 }, // Columna con el número
-        { header: '', width: 40 }, // Columna para el cliente/empresa
-        { header: '', width: 25 }, // Columna de descripción
+        { header: '', width: 5 },   // Columna de 'lg'
+        { header: '', width: 10 },  // Columna con el número
+        { header: '', width: 40 },  // Columna para el cliente/empresa
+        { header: '', width: 25 },  // Columna de descripción
         { header: '', width: 5 }
     ];
 
@@ -270,14 +271,26 @@ async function exportarAExcelConFormato(cliente) {
     worksheet.getCell('G3').value = 'ABONO';
     worksheet.getCell('G3').font = { bold: true };
 
+    // Colocar el total del comprobante en la celda F4 y limitar a dos decimales
+    const formattedTotal = parseFloat(totalComprobante).toFixed(2);
+
     // Filas de partidas con valores enteros y centrados
-    for (let j = 0; j < 3; j++) {
-        let partidaRow = worksheet.addRow(['', 1120 + j, 0, `Descripción ${j + 1}`, '', 0, 0]);
-        partidaRow.getCell(3).numFmt = '0'; // Asegura que sea un entero
-        partidaRow.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' }; // Centrar el valor numérico
+    const partidas = [
+        { numero: 1120, descripcion: 'Descripción 1', cargo: parseFloat(formattedTotal), abono: 0 },
+        { numero: 1121, descripcion: 'Descripción 2', cargo: 0, abono: 0 },
+        { numero: 1122, descripcion: 'Descripción 3', cargo: 0, abono: 0 }
+    ];
+
+    partidas.forEach((partida, index) => {
+        let partidaRow = worksheet.addRow(['', partida.numero, 0, partida.descripcion, '', partida.cargo, partida.abono]);
+        partidaRow.getCell(2).numFmt = '0'; // Asegura que sea un entero
         partidaRow.getCell(6).numFmt = '#,##0.00'; // Formato de moneda para CARGO
         partidaRow.getCell(7).numFmt = '#,##0.00'; // Formato de moneda para ABONO
-    }
+        partidaRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+        partidaRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
+        partidaRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+        partidaRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
+    });
 
     // Fila de fin de partidas sin negritas
     const finPartidasRow = worksheet.addRow(['', 'FIN_PARTIDAS', '', '', '', '', '']);
@@ -293,8 +306,6 @@ async function exportarAExcelConFormato(cliente) {
     a.click();
     window.URL.revokeObjectURL(url);
 }
-
-
 
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
@@ -356,6 +367,13 @@ function initTable() {
             {
                 title: colUsuarioModificoHeader,
                 field: "UsuarioModificador",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Estatus",
+                field: "Estatus",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -1952,7 +1970,7 @@ function procesarDatosConciliados(datos) {
                     Serie: comprobante.Serie,
                     Folio: comprobante.Folio,
                     Fecha: comprobante.Fecha,
-                    UUID: comprobante.UUID,
+                    UUID: comprobante?.Complemento?.TimbreFiscalDigital?.UUID || "UUID no disponible",
                     Total: parseFloat(comprobante.Total) || 0,
                     movimientosConciliados: movimientosConciliados,
                     bloqueado: true // Marcar como bloqueado
