@@ -216,13 +216,21 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
                 .ThenInclude(e => e.TimbreFiscalDigital)
                 .ToListAsync();
 
+            // Filtrar por rango de fechas
             ls = ls.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) >= fechaInicio);
             ls = ls.FindAll(c => DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) <= fechaFin);
+
+            // Filtrar por clienteId si se proporciona
+            /*if (clienteId.HasValue)
+            {
+                ls = ls.FindAll(c => c.Id == clienteId.Value);
+            }*/
 
             return ls;
         }
 
-		public async Task<Comprobante?> GetByNameAsync(string name)
+
+        public async Task<Comprobante?> GetByNameAsync(string name)
 		{
 			Comprobante? c = await _db.Comprobantes
 				.Where(p => $"{(p.Serie ?? string.Empty).ToLower()}{(p.Folio ?? string.Empty).ToLower()}".Equals(name, StringComparison.CurrentCultureIgnoreCase))
@@ -278,10 +286,11 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
         public async Task<List<Comprobante>> GetByRFCAsync(string rfc)
         {
             return await _db.Comprobantes
-                .Include(c => c.Receptor)
+                //.Include(c => c.Receptor)
                 .Include(c => c.Emisor)
                 .Include(c => c.Complemento).ThenInclude(e => e.TimbreFiscalDigital)
-                .Where(c => c.Receptor.Rfc == rfc || c.Emisor.Rfc == rfc)
+                .Where(c => c.Emisor.Rfc == rfc)
+                //.Where(c => c.Receptor.Rfc == rfc || c.Emisor.Rfc == rfc)
                 .ToListAsync();
         }
     }

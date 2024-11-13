@@ -117,7 +117,11 @@ namespace ERPSEI.Data.Managers.Conciliaciones
 
         public async Task<Conciliacion?> GetByIdAsync(int id)
         {
-            return await db.Conciliaciones.Where(p => p.Id == id).FirstOrDefaultAsync();
+            return await db.Conciliaciones
+                .Where(p => p.Id == id)
+                .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante)
+                .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesMovimientos).ThenInclude(p => p.MovimientoBancario)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<Conciliacion?> GetByNameAsync(string desc)

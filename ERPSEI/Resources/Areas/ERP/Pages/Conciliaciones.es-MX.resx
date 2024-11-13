@@ -252,6 +252,9 @@
   <data name="FilterTitle" xml:space="preserve">
     <value>Filtros de búsqueda</value>
   </data>
+  <data name="FinalizeConciliation" xml:space="preserve">
+    <value>Finalizar Conciliación</value>
+  </data>
   <data name="GetButtonTitle" xml:space="preserve">
     <value>Consultar</value>
   </data>
@@ -286,7 +289,7 @@
     <value>Descargar Plantilla</value>
   </data>
   <data name="SaveButton" xml:space="preserve">
-    <value>Guardar</value>
+    <value>Guardar Progreso</value>
   </data>
   <data name="SearchButton" xml:space="preserve">
     <value>Buscar</value>

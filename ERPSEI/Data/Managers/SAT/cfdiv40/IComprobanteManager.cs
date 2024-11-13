@@ -22,7 +22,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 		public Task<List<Comprobante>> GetByDateRangeAsync(
 			DateTime? fechaInicio, 
 			DateTime? fechaFin
-			);
+            //int? clienteId = null
+            );
 
         Task<List<Comprobante>> GetByRFCAsync(string rfc);
 
