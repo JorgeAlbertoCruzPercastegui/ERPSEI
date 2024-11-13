@@ -30,67 +30,20 @@ document.addEventListener("DOMContentLoaded", function (event) {
         autoCompletar("#inpConciliacionClienteId", {
             select: function (Element, item) {
                 buscarComprobantesPorRFC(item.rfc);
+                actualizarContadores();
             }
         });
-        initTableComprobantes(
-        )
+
+        //initTableComprobantes();
     });
 
     initTable();
+    initTableComprobantes();
 
     let btnBuscar = document.getElementById("btnBuscar");
     if (btnBuscar) { btnBuscar.click(); }
 
-    // Evento para detectar cuando se cambia la opción del filtro en la tabla de comprobantes
-    /*$('#filterOptionsC').on('change', function () {
-        const selectedOption = $(this).val();
-
-        // Filtro según la opción seleccionada
-        switch (selectedOption) {
-            case 'opcion1': // Mostrar Todo
-                $('#tableCardComprobantes').bootstrapTable('filterBy', {}); // Sin filtro, muestra todo
-                break;
-
-            case 'opcion2': // Mostrar Conciliados
-                $('#tableCardComprobantes').bootstrapTable('filterBy', {
-                    coincidencia: true // Filtrar solo los registros con coincidencia
-                });
-                break;
-
-            case 'opcion3': // Mostrar Pendientes
-                $('#tableCardComprobantes').bootstrapTable('filterBy', {
-                    coincidencia: false // Filtrar solo los registros sin coincidencia
-                });
-                break;
-        }
-    });*/
-
-    /*$('#filterOptionsM').on('change', function () {
-        const selectedOption = $(this).val();
-
-        // Filtro según la opción seleccionada
-        switch (selectedOption) {
-            case 'opcion1': // Mostrar Todo
-                $('#tableCardMovimientos').bootstrapTable('filterBy', {}); // Sin filtro, muestra todo
-                break;
-
-            case 'opcion2': // Mostrar Conciliados
-                $('#tableCardMovimientos').bootstrapTable('filterBy', {
-                    coincidencia: true // Filtrar solo los registros con coincidencia
-                });
-                break;
-
-            case 'opcion3': // Mostrar Pendientes
-                $('#tableCardMovimientos').bootstrapTable('filterBy', {
-                    coincidencia: false // Filtrar solo los registros sin coincidencia
-                });
-                break;
-        }
-    });*/
-
-    //autoCompletar("#inpConciliacionClienteId");
-
-    /*jQuery.validator.setDefaults({
+    jQuery.validator.setDefaults({
         highlight: function (element, errorClass, validClass) {
             $(element).addClass("is-invalid").removeClass("is-valid");
         },
@@ -99,7 +52,34 @@ document.addEventListener("DOMContentLoaded", function (event) {
                 $(element).addClass("is-valid").removeClass("is-invalid");
             }
         }
-    });*/
+    });
+
+    // Variable para verificar si es la primera vez que el modal se abre
+    let isFirstTimeOpening = true;
+
+    document.getElementById('consultarComprobantesModal').addEventListener('shown.bs.modal', function () {
+        // Solo establecer las fechas automáticamente la primera vez que se abre el modal
+        if (isFirstTimeOpening) {
+            // Obtener la fecha actual
+            const today = new Date();
+            // Configurar la fecha de inicio como el primer día del mes
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            // Formatear fechas a formato compatible con 'datetime-local' (YYYY-MM-DDTHH:MM)
+            const formatDate = (date) => {
+                const offset = date.getTimezoneOffset();
+                const localDate = new Date(date.getTime() - offset * 60 * 1000);
+                return localDate.toISOString().slice(0, 16); // Solo incluye fecha y hora
+            };
+
+            // Asignar la fecha de inicio y la fecha de fin a los campos de entrada
+            document.getElementById("inpFiltroFechaInicioModalDComprobantes").value = formatDate(firstDayOfMonth);
+            document.getElementById("inpFiltroFechaFinModalDComprobantes").value = formatDate(today);
+
+            // Cambiar el indicador para que no se vuelva a ejecutar esta lógica
+            isFirstTimeOpening = false;
+        }
+    });
 });
 
 // Nueva función para buscar comprobantes por RFC y cargar en tableCardView
@@ -109,7 +89,16 @@ function buscarComprobantesPorRFC(rfc) {
         return;
     }
 
-    let oParams = { rfc: rfc };
+    // Obtener los valores de fecha de inicio y fecha de fin
+    let fechaInicio = document.getElementById("inpFiltroFechaInicioModalDComprobantes").value;
+    let fechaFin = document.getElementById("inpFiltroFechaFinModalDComprobantes").value;
+
+    // Agregar las fechas al objeto de parámetros
+    let oParams = {
+        rfc: rfc,
+        fechaInicio: fechaInicio,
+        fechaFin: fechaFin
+    };
 
     doAjax(
         "/ERP/Conciliaciones/ComprobantesListEmpresas",
@@ -117,7 +106,7 @@ function buscarComprobantesPorRFC(rfc) {
         function (resp) {
             if (resp.tieneError) {
                 let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
-                summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 showError("Buscar Comprobantes", resp.mensaje);
                 return;
             }
@@ -183,10 +172,12 @@ function booleanFormatter(value, row, index) {
 function operateFormatter(value, row, index) {
     let icons = [];
 
-    //Icono Ver
+    // Icono Ver
     icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
-    //Icono Editar
+    // Icono Editar
     icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
+    // Icono Exportar a Excel
+    icons.push(`<li><a class="dropdown-item export" href="#" title="Exportar a Excel"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</a></li>`);
 
     return `<div class="dropdown">
               <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -195,16 +186,125 @@ function operateFormatter(value, row, index) {
               <ul class="dropdown-menu">${icons.join("")}</ul>
             </div>`;
 }
+
 window.operateEvents = {
     'click .see': function (e, value, row, index) {
         initConciliacionDialog(VER, row);
     },
     'click .edit': function (e, value, row, index) {
         initConciliacionDialog(EDITAR, row);
+
+        $('#tableCardComprobantes').bootstrapTable('load', []);
+        $('#tableCardMovimientos').bootstrapTable('load', []);
+        $('#tableResult').bootstrapTable('load', []);
+    },
+    'click .export': function (e, value, row, index) {
+        const cliente = row.Cliente || row.Empresa || 'Sin cliente';
+        const totalComprobante = row.Total || 0; // Obtener el total del comprobante
+        exportarAExcelConFormato(cliente, totalComprobante);
     }
 }
+
 function onAgregarClick() {
     initConciliacionDialog(NUEVO, { id: "Nuevo", nombre: "" });
+
+    $('#tableCardComprobantes').bootstrapTable('load', []);
+    $('#tableCardMovimientos').bootstrapTable('load', []);
+    $('#tableResult').bootstrapTable('load', []);
+}
+
+/*function exportarAExcel(row) {
+    //Crear un libro de Excel usando SheetJS
+    const wb = XLSX.utils.book_new();
+    const wsData = [
+        ["Id", "Fecha", "Total", "Descripción"],
+        [row.id, row.Fecha, row.Total, row.Descripcion || "Sin descripción"]
+    ];
+
+    //Crear la hoja de Excel
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "Datos");
+
+    //Descargar el archivo Excel
+    XLSX.writeFile(wb, `Export_${row.id}.xlsx`);
+}*/
+
+async function exportarAExcelConFormato(cliente, totalComprobante) {
+    const ExcelJS = window.ExcelJS;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('POLIZA COMPLETA');
+
+    // Configuración de las columnas
+    worksheet.columns = [
+        { header: '', width: 5 },   // Columna de 'lg'
+        { header: '', width: 10 },  // Columna con el número
+        { header: '', width: 40 },  // Columna para el cliente/empresa
+        { header: '', width: 25 },  // Columna de descripción
+        { header: '', width: 5 }
+    ];
+
+    // Fila vacía inicial (sin encabezados)
+    worksheet.addRow([]);
+
+    // Fila del título con el número y cliente/empresa
+    const titleRow = worksheet.addRow(['lg', 1, cliente || 'Sin cliente', '', '', 'CARGO', 'ABONO']);
+    titleRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+
+    // Aplicar color azul solo a las primeras dos columnas
+    titleRow.getCell(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '0070C0' }
+    };
+    titleRow.getCell(2).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: '0070C0' }
+    };
+
+    // Ajustar el color del cliente a negro
+    titleRow.getCell(3).font = { bold: true, color: { argb: '000000' } };
+
+    // Añadir títulos de "CARGOS" y "ABONOS" en negritas
+    worksheet.getCell('F3').value = 'CARGO';
+    worksheet.getCell('F3').font = { bold: true };
+    worksheet.getCell('G3').value = 'ABONO';
+    worksheet.getCell('G3').font = { bold: true };
+
+    // Colocar el total del comprobante en la celda F4 y limitar a dos decimales
+    const formattedTotal = parseFloat(totalComprobante).toFixed(2);
+
+    // Filas de partidas con valores enteros y centrados
+    const partidas = [
+        { numero: 1120, descripcion: 'Descripción 1', cargo: parseFloat(formattedTotal), abono: 0 },
+        { numero: 1121, descripcion: 'Descripción 2', cargo: 0, abono: 0 },
+        { numero: 1122, descripcion: 'Descripción 3', cargo: 0, abono: 0 }
+    ];
+
+    partidas.forEach((partida, index) => {
+        let partidaRow = worksheet.addRow(['', partida.numero, 0, partida.descripcion, '', partida.cargo, partida.abono]);
+        partidaRow.getCell(2).numFmt = '0'; // Asegura que sea un entero
+        partidaRow.getCell(6).numFmt = '#,##0.00'; // Formato de moneda para CARGO
+        partidaRow.getCell(7).numFmt = '#,##0.00'; // Formato de moneda para ABONO
+        partidaRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
+        partidaRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
+        partidaRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+        partidaRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // Fila de fin de partidas sin negritas
+    const finPartidasRow = worksheet.addRow(['', 'FIN_PARTIDAS', '', '', '', '', '']);
+    finPartidasRow.font = { bold: false };
+
+    // Guardar el archivo Excel
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Poliza_Completa_Con_Formato.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
 }
 
 function initTable() {
@@ -272,6 +372,13 @@ function initTable() {
                 sortable: true
             },
             {
+                title: "Estatus",
+                field: "Estatus",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
                 title: colAccionesHeader,
                 field: "operate",
                 align: 'center',
@@ -326,8 +433,10 @@ function initTable() {
         });
     })
 }
+
+let cachedData = $('#tableCardComprobantes').bootstrapTable('getData');
 function initTableComprobantes() {
-    $("#tableCardComprobantes").bootstrapTable('destroy').bootstrapTable({
+    $("#tableCardComprobantes").bootstrapTable({
         locale: cultureName,
         toolbar: '#toolbar2',
         method: 'get',
@@ -420,7 +529,7 @@ function detailFormatterC(index, row) {
                         <td>${mov.Id}</td>
                         <td>${mov.Fecha}</td>
                         <td>${mov.Banco}</td>
-                        <td>${mov.Descripción}</td>
+                        <td>${mov.Descripcion}</td>
                         <td>${currencyFormatter(mov.Cargos)}</td>
                         <td>${porcentajeSimilitud.toFixed(2)}%</td> <!-- Mostrar % de Similitud -->
                       </tr>`;
@@ -439,13 +548,16 @@ let registrosSinCoincidenciaM = [];
 
 // Función para realizar la conciliación individual
 function conciliacionIndidual(value, row, index) {
-    let disabled = row.coincidencia ? 'disabled' : '';
+    // Si el comprobante ya ha sido conciliado o está bloqueado, deshabilitar el botón
+    let disabled = row.coincidencia || row.bloqueado ? 'disabled' : '';
+
     return `
         <button class="btn btn-primary btn-sm" onclick="consultarComp(${row.Id}, '${row.Serie}', '${row.Folio}', '${row.Fecha}', '${row.UUID}', '${row.Total}')" ${disabled}>
             <i class="bi bi-paperclip rotate-clip"></i> Conciliar
         </button>
     `;
 }
+
 
 let movimientosSeleccionados = []; // Lista para almacenar los movimientos seleccionados
 
@@ -492,7 +604,7 @@ function consultarComp(id, serie, folio, fechaComprobante, uuid, totalComprobant
                 id: mov.Id,
                 Fecha: mov.Fecha,
                 Banco: mov.Banco,
-                Descripción: mov.Descripción,
+                Descripción: mov.Descripcion,
                 Cargos: mov.Cargos,
                 porcentajeSimilitud: porcentajeSimilitud.toFixed(2),
                 idComprobante: id
@@ -609,7 +721,7 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
             Folio: comprobanteSeleccionado.Folio,
             Fecha: comprobanteSeleccionado.Fecha,
             Banco: selectedMovimientos[0].Banco,
-            Descripción: selectedMovimientos[0].Descripción,
+            Descripción: selectedMovimientos[0].Descripcion,
             Total: parseFloat(comprobanteSeleccionado.Total).toFixed(2),
             UUID: uuid,
             movimientosConciliados: selectedMovimientos
@@ -648,12 +760,16 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 }
 
 function desconciliarFormatter(value, row, index) {
+    // Verificar si el registro está bloqueado para deshabilitar el botón
+    let disabled = row.bloqueado ? 'disabled' : '';
+
     return `
-        <button class="btn btn-danger btn-sm" onclick="desconciliar(${row.id}, '${row.Fecha}', '${row.Total}')">
-            Desconciliar
-        </button>
+        <center><button class="btn btn-danger btn-sm" onclick="desconciliar(${row.id}, '${row.Fecha}', '${row.Total}')" ${disabled}>
+            <i class=""></i> Desconciliar
+        </button></center>
     `;
 }
+
 
 //Desconciliar comprobante con movimientos y movimiento con comprobantes(unión de desconciliarMov y desconciliarComp)
 function desconciliar(id, fechaMovimiento, totalMovimiento) {
@@ -961,7 +1077,7 @@ function conciliarAutomatico() {
                         Folio: comp.Folio,
                         Fecha: mov.Fecha,
                         Banco: mov.Banco,
-                        Descripción: mov.Descripción,
+                        Descripción: mov.Descripcion,
                         Total: mov.Cargos,
                         coincidencia: true,
                         conciliado: true,
@@ -1034,7 +1150,7 @@ function detailFormatterA(index, row) {
         tableHtml += `<tr>
                         <td>${mov.Fecha}</td>
                         <td>${mov.Banco}</td>
-                        <td>${mov.Descripción}</td>
+                        <td>${mov.Descripcion}</td>
                         <td>${currencyFormatter(mov.Cargos)}</td>
                       </tr>`;
     });
@@ -1137,8 +1253,9 @@ function detailFormatterM(index, row) {
 
 // Función para formatear el botón de conciliación en movimientos
 function conciliarFormatterMov(value, row, index) {
-    // Si el registro está conciliado, deshabilita el botón
-    let disabled = row.coincidencia ? 'disabled' : '';
+    // Si el movimiento ya ha sido conciliado o está bloqueado, deshabilitar el botón
+    let disabled = row.coincidencia || row.bloqueado ? 'disabled' : '';
+
     return `
         <button class="btn btn-primary btn-sm" onclick="conciliarMovimiento(${index}, '${row.Fecha}', '${row.Cargos}')" ${disabled}>
             <i class="bi bi-paperclip rotate-clip"></i> Conciliar
@@ -1189,7 +1306,7 @@ function conciliarMovimiento(index, fechaMovimiento, cargoMovimiento) {
         <p><strong>Movimiento Seleccionado:</strong></p>
         <p>ID: ${mov.id}</p>
         <p>Fecha: ${mov.Fecha}</p>
-        <p>Descripción: ${mov.Descripción}</p>
+        <p>Descripción: ${mov.Descripcion}</p>
         <p>Cargos: <span>${currencyFormatter(mov.Cargos)}</span></p>
         <p><strong>Total Seleccionado: $<span id="totalSeleccionado">0.00</span> (<span id="porcentajeSeleccionado">0%</span>)</strong></p>
         <hr/>
@@ -1277,7 +1394,7 @@ function conciliarSeleccionados(indexMovimiento, cargoMovimiento) {
             Folio: primerComprobante.Folio,
             Fecha: mov.Fecha,
             Banco: mov.Banco,
-            Descripción: mov.Descripción,
+            Descripción: mov.Descripcion,
             Total: mov.Cargos,
             coincidencia: true,
             comprobantesConciliados: selectedRows
@@ -1441,7 +1558,7 @@ function conciliarDesdeModal(idComprobante, fechaMovimiento, cargoMovimiento, in
             Folio: comp.Folio,
             Fecha: mov.Fecha,
             Banco: mov.Banco,
-            Descripción: mov.Descripción,
+            Descripción: mov.Descripcion,
             Total: mov.Cargos,
             coincidencia: true
         });
@@ -1492,7 +1609,7 @@ function mostrarMovimientosConciliacion() {
                 <strong>ID:</strong> ${mov.Id} |
                 <strong>Fecha:</strong> ${mov.Fecha} |
                 <strong>Banco:</strong> ${mov.Banco} |
-                <strong>Descripción:</strong> ${mov.Descripción} |
+                <strong>Descripción:</strong> ${mov.Descripcion} |
                 <strong>Total:</strong> ${mov.Cargos}
             </div>
             <div class="mt-2">
@@ -1594,6 +1711,35 @@ function onCerrarClick() {
     $(".text-danger").children().remove()
 }
 
+function bloquearRegistrosAlVer() {
+    // Bloquear registros de comprobantes
+    $("#tableCardComprobantes .comprobante-row").each(function () {
+        let rowData = $(this).data("row");
+        if (rowData.coincidencia) {
+            rowData.bloqueado = true;
+        }
+    });
+
+    // Bloquear registros de movimientos
+    $("#tableCardMovimientos .movimiento-row").each(function () {
+        let rowData = $(this).data("row");
+        if (rowData.coincidencia) {
+            rowData.bloqueado = true;
+        }
+    });
+
+    // Bloquear registros de tableResult
+    $("#tableResult .table-result-row").each(function () {
+        let rowData = $(this).data("row");
+        rowData.bloqueado = true; // Marcar como bloqueado
+    });
+
+    // Refrescar las tablas para aplicar los cambios visuales
+    $('#tableCardComprobantes').bootstrapTable('refresh');
+    $('#tableCardMovimientos').bootstrapTable('refresh');
+    $('#tableResult').bootstrapTable('refresh');
+}
+
 //Funcionalidad Diálogo Conciliación
 function initConciliacionDialog(action, row) {
     // Obtener los campos del formulario
@@ -1603,14 +1749,13 @@ function initConciliacionDialog(action, row) {
     let descripcionField = document.getElementById("inpConciliacionDescripcion");
     let dlgTitle = document.getElementById("dlgConciliacionTitle");
 
-    //Botones
+    // Botones
     let btnGuardar = document.getElementById("dlgConciliacionBtnGuardar");
     let botonConsultarComprobantes = document.getElementById("dlgConciliacionBtnFechas");
     let botonConsultarMovimientos = document.getElementById("dlgConciliacionBtnMovimientos");
-    let botonConciliar = document.getElementById("");
     let botonConciliacionAsistida = document.getElementById("dlgConciliacionAsistidaBtn");
-    let summaryContainer = document.getElementById("saveValidationSummary");
-    summaryContainer.innerHTML = "";
+    let saveValidationSummary = document.getElementById("saveValidationSummary");
+    saveValidationSummary.innerHTML = "";
 
     idField.setAttribute("disabled", true);
 
@@ -1623,9 +1768,21 @@ function initConciliacionDialog(action, row) {
             clienteIdField.removeAttribute("disabled");
             descripcionField.removeAttribute("disabled");
             btnGuardar.removeAttribute("disabled");
-            botonConsultarComprobantes.removeAttribute("disabled");
             botonConsultarMovimientos.removeAttribute("disabled");
             botonConciliacionAsistida.removeAttribute("disabled");
+
+            // Deshabilitar el botón `botonConsultarComprobantes` inicialmente
+            botonConsultarComprobantes.setAttribute("disabled", true);
+
+            // Habilitar el botón `botonConsultarComprobantes` solo cuando `clienteIdField` tenga un valor completo
+            clienteIdField.addEventListener("change", function () {
+                if (clienteIdField.value.trim() !== "") {
+                    botonConsultarComprobantes.removeAttribute("disabled");
+                } else {
+                    botonConsultarComprobantes.setAttribute("disabled", true);
+                }
+            });
+
             break;
         case EDITAR:
             dlgTitle.innerHTML = dlgEditarTitle;
@@ -1637,6 +1794,9 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.removeAttribute("disabled");
             botonConsultarMovimientos.removeAttribute("disabled");
             botonConciliacionAsistida.removeAttribute("disabled");
+
+            // Cargar comprobantes y movimientos solo en modo EDITAR
+            obtenerRegistrosConciliadosEdit(row.id);
             break;
         default:
             dlgTitle.innerHTML = dlgVerTitle;
@@ -1648,6 +1808,11 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.setAttribute("disabled", true);
             botonConsultarMovimientos.setAttribute("disabled", true);
             botonConciliacionAsistida.setAttribute("disabled", true);
+
+            // Verificar si la tabla ya tiene datos antes de recargar
+            obtenerRegistrosConciliados(row.id);
+            bloquearRegistrosAlVer();
+
             break;
     }
 
@@ -1660,15 +1825,318 @@ function initConciliacionDialog(action, row) {
     // Mostrar el modal
     dlgConciliacionModal.show();
 }
+
+// Función para obtener comprobantes y movimientos conciliados
+/*function obtenerRegistrosConciliados(conciliacionId) {
+    let oParams = { id: conciliacionId };
+    $.extend(postOptions, { type: 'GET' });
+    
+    doAjax(
+        "/ERP/Conciliaciones/ComprobantesMovimientosList",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                let summary = ``;
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                }
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+
+            $('#tableCardComprobantes').bootstrapTable('load', responseHandler(resp.datos));
+
+        }, function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}*/
+function obtenerRegistrosConciliados(conciliacionId) {
+
+    // Limpiar las tablas antes de cargar nuevos datos
+    $('#tableCardComprobantes').bootstrapTable('load', []);
+    $('#tableCardMovimientos').bootstrapTable('load', []);
+    $('#tableResult').bootstrapTable('load', []);
+
+    let oParams = { id: conciliacionId };
+    $.extend(postOptions, { type: 'GET' });
+
+    doAjax(
+        "/ERP/Conciliaciones/ComprobantesMovimientosList",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                let summary = ``;
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                }
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+
+            // Procesar los datos y extraer los arreglos de comprobantes, movimientos y conciliados
+            //const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
+            const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
+
+            // Cargar los datos en las tablas correspondientes
+            $('#tableCardComprobantes').bootstrapTable('load', comprobantes);
+            $('#tableCardMovimientos').bootstrapTable('load', movimientos);
+            $('#tableResult').bootstrapTable('load', conciliaciones);
+
+            //console.log("Comprobantes cargados:", comprobantes);
+            //console.log("Movimientos cargados:", movimientos);
+
+        }, function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
+
+function procesarDatosConciliados(datos) {
+    let parsedData;
+    try {
+        parsedData = JSON.parse(datos.value.datos);
+    } catch (error) {
+        console.error("Error al parsear los datos:", error);
+        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
+    }
+
+    let detalles = parsedData.detalles;
+
+    if (!Array.isArray(detalles)) {
+        console.error("La propiedad 'detalles' no existe o no es un arreglo.");
+        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
+    }
+
+    let comprobantes = [];
+    let movimientos = [];
+    let conciliaciones = [];
+    let idsConciliados = new Set();
+    let mapaMovimientos = {};
+
+    // Procesar detallesMovimientos y llenar el mapa de movimientos
+    detalles.forEach(detalle => {
+        if (Array.isArray(detalle.detallesMovimientos)) {
+            detalle.detallesMovimientos.forEach(movimiento => {
+                mapaMovimientos[movimiento.Id] = movimiento;
+
+                movimientos.push({
+                    Id: movimiento.Id,
+                    Fecha: movimiento.Fecha,
+                    Descripcion: movimiento.Descripción || "Sin descripción",
+                    Cargos: parseFloat(movimiento.Cargos) || 0,
+                    Abonos: parseFloat(movimiento.Abonos) || 0,
+                    Banco: movimiento.BancoId || "No especificado 1",
+                    bloqueado: true
+                });
+            });
+        }
+    });
+
+    // Procesar detallesComprobantes y asociar movimientos conciliados
+    detalles.forEach(detalle => {
+        if (Array.isArray(detalle.detallesComprobantes)) {
+            detalle.detallesComprobantes.forEach(comprobante => {
+                if (idsConciliados.has(comprobante.Id)) return;
+                idsConciliados.add(comprobante.Id);
+
+                // Buscar movimientos asociados a este comprobante
+                let movimientosConciliados = [];
+                if (Array.isArray(detalle.detallesMovimientos)) {
+                    detalle.detallesMovimientos.forEach(mov => {
+                        if (mov.Id) {
+                            movimientosConciliados.push({
+                                Id: mov.Id,
+                                Fecha: mov.Fecha,
+                                Banco: mov.BancoId || "No especificado 2",
+                                Descripcion: mov.Descripción || "Sin descripción",
+                                Cargos: parseFloat(mov.Cargos) || 0,
+                                Abonos: parseFloat(mov.Abonos) || 0,
+                                bloqueado: true // Marcar como bloqueado
+                            });
+                        }
+                    });
+                }
+
+                // Agregar comprobante con movimientos conciliados
+                comprobantes.push({
+                    Id: comprobante.Id,
+                    Serie: comprobante.Serie,
+                    Folio: comprobante.Folio,
+                    Fecha: comprobante.Fecha,
+                    UUID: comprobante?.Complemento?.TimbreFiscalDigital?.UUID || "UUID no disponible",
+                    Total: parseFloat(comprobante.Total) || 0,
+                    movimientosConciliados: movimientosConciliados,
+                    bloqueado: true // Marcar como bloqueado
+                });
+
+                // Añadir a conciliaciones para tableResult
+                conciliaciones.push({
+                    id: comprobante.Id,
+                    Serie: comprobante.Serie,
+                    Folio: comprobante.Folio,
+                    Fecha: comprobante.Fecha,
+                    Total: parseFloat(comprobante.Total) || 0,
+                    movimientosConciliados: movimientosConciliados,
+                    bloqueado: true // Marcar como bloqueado
+                });
+            });
+        }
+    });
+
+    return { comprobantes, movimientos, conciliaciones };
+}
+
+function obtenerRegistrosConciliadosEdit(conciliacionId) {
+
+    // Limpiar las tablas antes de cargar nuevos datos
+    $('#tableCardComprobantes').bootstrapTable('load', []);
+    $('#tableCardMovimientos').bootstrapTable('load', []);
+    $('#tableResult').bootstrapTable('load', []);
+
+    let oParams = { id: conciliacionId };
+    $.extend(postOptions, { type: 'GET' });
+
+    doAjax(
+        "/ERP/Conciliaciones/ComprobantesMovimientosList",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                let summary = ``;
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                }
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+
+            // Procesar los datos y extraer los arreglos de comprobantes, movimientos y conciliados
+            //const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
+            const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliadosEdit(resp.datos);
+
+            // Cargar los datos en las tablas correspondientes
+            $('#tableCardComprobantes').bootstrapTable('load', comprobantes);
+            $('#tableCardMovimientos').bootstrapTable('load', movimientos);
+            $('#tableResult').bootstrapTable('load', conciliaciones);
+
+            //console.log("Comprobantes cargados:", comprobantes);
+            //console.log("Movimientos cargados:", movimientos);
+
+        }, function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
+
+function procesarDatosConciliadosEdit(datos) {
+    let parsedData;
+    try {
+        parsedData = JSON.parse(datos.value.datos);
+    } catch (error) {
+        console.error("Error al parsear los datos:", error);
+        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
+    }
+
+    let detalles = parsedData.detalles;
+
+    if (!Array.isArray(detalles)) {
+        console.error("La propiedad 'detalles' no existe o no es un arreglo.");
+        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
+    }
+
+    let comprobantes = [];
+    let movimientos = [];
+    let conciliaciones = [];
+    let idsConciliados = new Set();
+    let mapaMovimientos = {};
+
+    // Procesar detallesMovimientos y llenar el mapa de movimientos
+    detalles.forEach(detalle => {
+        if (Array.isArray(detalle.detallesMovimientos)) {
+            detalle.detallesMovimientos.forEach(movimiento => {
+                mapaMovimientos[movimiento.Id] = movimiento;
+
+                movimientos.push({
+                    Id: movimiento.Id,
+                    Fecha: movimiento.Fecha,
+                    Descripcion: movimiento.Descripción || "Sin descripción",
+                    Cargos: parseFloat(movimiento.Cargos) || 0,
+                    Abonos: parseFloat(movimiento.Abonos) || 0,
+                    Banco: movimiento.BancoId || "-",
+                    bloqueado: true
+                });
+            });
+        }
+    });
+
+    // Procesar detallesComprobantes y asociar movimientos conciliados
+    detalles.forEach(detalle => {
+        if (Array.isArray(detalle.detallesComprobantes)) {
+            detalle.detallesComprobantes.forEach(comprobante => {
+                if (idsConciliados.has(comprobante.Id)) return;
+                idsConciliados.add(comprobante.Id);
+
+                // Buscar movimientos asociados a este comprobante
+                let movimientosConciliados = [];
+                if (Array.isArray(detalle.detallesMovimientos)) {
+                    detalle.detallesMovimientos.forEach(mov => {
+                        if (mov.Id) {
+                            movimientosConciliados.push({
+                                Id: mov.Id,
+                                Fecha: mov.Fecha,
+                                Banco: mov.BancoId || "-",
+                                Descripcion: mov.Descripción || "Sin descripción",
+                                Cargos: parseFloat(mov.Cargos) || 0,
+                                Abonos: parseFloat(mov.Abonos) || 0,
+                                bloqueado: true
+                            });
+                        }
+                    });
+                }
+
+                // Agregar comprobante con movimientos conciliados
+                comprobantes.push({
+                    Id: comprobante.Id,
+                    Serie: comprobante.Serie,
+                    Folio: comprobante.Folio,
+                    Fecha: comprobante.Fecha,
+                    UUID: comprobante.UUID,
+                    Total: parseFloat(comprobante.Total) || 0,
+                    movimientosConciliados: movimientosConciliados,
+                    bloqueado: true
+                });
+
+                // Añadir a conciliaciones para tableResult
+                conciliaciones.push({
+                    id: comprobante.Id,
+                    Serie: comprobante.Serie,
+                    Folio: comprobante.Folio,
+                    Fecha: comprobante.Fecha,
+                    Total: parseFloat(comprobante.Total) || 0,
+                    movimientosConciliados: movimientosConciliados
+                });
+            });
+        }
+    });
+
+    return { comprobantes, movimientos, conciliaciones };
+}
+
+
 function onGuardarClick() {
-    // Ejecuta la validación
     $("#theFormT").validate();
-    // Determina los errores
     let valid = $("#theFormT").valid();
-    // Si la forma no es válida, entonces finaliza.
     if (!valid) { return; }
 
-    // Campos principales para tabla conciliaciones
     let idField = document.getElementById("inpConciliacionId");
     let fechaField = document.getElementById("inpConciliacionFecha");
     let clienteIdField = document.getElementById("inpConciliacionClienteId");
@@ -1676,33 +2144,49 @@ function onGuardarClick() {
     let bancoIdField = document.getElementById("selFiltroBanco");
 
     let dlgTitle = document.getElementById("dlgConciliacionTitle");
-    let summaryContainer = document.getElementById("saveValidationSummary");
+    let saveValidationSummary = document.getElementById("saveValidationSummary");
     let btnClose = document.getElementById("dlgConciliacionBtnCancelar");
-    summaryContainer.innerHTML = "";
+    saveValidationSummary.innerHTML = "";
 
-    // Parámetros principales
     let oParams = {
         Id: idField.value === "Nuevo" ? 0 : idField.value,
         FechaElaboracionInicio: fechaField.value,
         Cliente: clienteIdField.value,
         Descripcion: descripcionField.value,
         BancoId: bancoIdField.value,
-        Movimientos: []
+        Movimientos: [],
+        Comprobantes: []
     };
 
-    // Obtener todas las filas de la tabla `tableCardMovimientos`
-    let allRows = $('#tableCardMovimientos').bootstrapTable('getData');
-    allRows.forEach(function (row) {
-        // Crear cada movimiento sin la propiedad Id, dejando que la base de datos lo asigne
-        let movimiento = {
-            Fecha: row.Fecha,
-            Descripcion: row.Descripción,
-            Importe: row.Cargos // Cambia a `Importe` si es necesario
-        };
-        oParams.Movimientos.push(movimiento);
+    let allMovRows = $('#tableCardMovimientos').bootstrapTable('getData');
+    allMovRows.forEach(function (row) {
+        if (row.coincidencia === true) {
+            let movimiento = {
+                Fecha: row.Fecha,
+                Descripcion: row.Descripcion,
+                Importe: row.Cargos
+            };
+            oParams.Movimientos.push(movimiento);
+        }
     });
 
-    // Llamada AJAX para guardar los datos
+    let allCompRows = $('#tableCardComprobantes').bootstrapTable('getData');
+    allCompRows.forEach(function (row) {
+        if (row.coincidencia === true) {
+            let comprobante = {
+                Id: row.Id,
+                Serie: row.Serie,
+                Folio: row.Folio,
+                Fecha: row.Fecha,
+                UUID: row.UUID,
+                Total: row.Total
+            };
+            oParams.Comprobantes.push(comprobante);
+        }
+    });
+
+    console.log("Comprobantes seleccionados:", oParams.Comprobantes); // Para verificar
+
     doAjax(
         "/ERP/Conciliaciones/SaveConciliacion",
         oParams,
@@ -1713,7 +2197,7 @@ function onGuardarClick() {
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 }
                 showError(dlgTitle.innerHTML, resp.mensaje);
                 return;
@@ -1729,10 +2213,6 @@ function onGuardarClick() {
         postOptions
     );
 }
-
-
-
-
 
 function eliminarRegistro(Id) {
     if (confirm('¿Estás seguro de eliminar el registro con ID: ' + Id + '?')) {
@@ -1770,7 +2250,7 @@ function onBuscarClick() {
             if (resp.tieneError) {
                 if (Array.isArray(resp.errores) && resp.errores.length > 0) {
                     let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
-                    summaryContainer.innerHTML = `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
                 }
                 showError(btnBuscar.innerHTML, resp.mensaje);
                 return;
@@ -1793,13 +2273,15 @@ function onConsultarComprobantesClick() {
     let btnBuscar = document.getElementById("dlgConsultarBtnGuardar");
     let inpFechaInicial = document.getElementById("inpFiltroFechaInicioModalDComprobantes");
     let inpFechaFinal = document.getElementById("inpFiltroFechaFinModalDComprobantes");
+    //let clienteIdField = document.getElementById("inpConciliacionClienteId"); // Obtener el campo del cliente seleccionado
 
     let oParams = {
         FechaInicioModalDComprobantes: inpFechaInicial.value,
-        FechaFinModalDComprobantes: inpFechaFinal.value
+        FechaFinModalDComprobantes: inpFechaFinal.value,
+        //Cliente: clienteIdField.value // Incluir el cliente seleccionado
     };
 
-    //Resetea el valor de los filtros.
+    // Resetea el valor de los filtros
     document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
     document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
 
@@ -1813,13 +2295,16 @@ function onConsultarComprobantesClick() {
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 }
                 showError(btnBuscar.innerHTML, resp.mensaje);
                 return;
             }
 
             $('#tableCardComprobantes').bootstrapTable('load', responseHandler(resp.datos));
+
+            // Actualizar contadores después de cargar los datos
+            actualizarContadores();
 
             // Cerrar el modal de fechas
             let modal = bootstrap.Modal.getInstance(document.getElementById('consultarComprobantesModal'));
@@ -1840,14 +2325,14 @@ function onGuardarMovimientos() {
     if (!valid) { return; }
 
     // Contenedor de resumen de validación
-    let summaryContainer = document.getElementById("saveValidationSummaryM");
-    summaryContainer.innerHTML = "";
+    let saveValidationSummary = document.getElementById("saveValidationSummaryM");
+    saveValidationSummary.innerHTML = "";
 
     // Obtén todos los datos de la tabla `tableCardMovimientos`
     var datosMovimientos = $('#tableCardMovimientos').bootstrapTable('getData');
 
     if (datosMovimientos.length === 0) {
-        summaryContainer.innerHTML = `<ul><li>No hay datos para subir a la base de datos.</li></ul>`;
+        saveValidationSummary.innerHTML = `<ul><li>No hay datos para subir a la base de datos.</li></ul>`;
         return;
     }
 
@@ -1857,7 +2342,7 @@ function onGuardarMovimientos() {
 
         return {
             Fecha: mov.Fecha,
-            Descripción: mov.Descripción,
+            Descripcion: mov.Descripcion,
             Importe: importe,
             Conciliado: false // Se inicializa como no conciliado
         };
@@ -1879,7 +2364,7 @@ function onGuardarMovimientos() {
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                    saveValidationSummary.innerHTML += `<ul>${summary}</ul>`;
                 }
                 showError("Error al guardar movimientos", resp.mensaje);
                 return;
@@ -1980,7 +2465,7 @@ function importarMovimientosDesdeExcel(file, selectedBank) {
                 Id: idCounter++, // Asignar ID y luego incrementarlo
                 Fecha: fecha || '',
                 Banco: selectedBank, // Usar el valor seleccionado del banco
-                Descripción: row[1] || '',
+                Descripcion: row[1] || '',
                 Cargos: row[2] || '',
                 Abonos: row[3] || ''
             });
@@ -2390,5 +2875,3 @@ function exportarToExcel(extractedText) {
     // Exportar el libro de trabajo a un archivo
     XLSX.writeFile(workbook, "Estado_Cuenta.xlsx");
 }
-
-

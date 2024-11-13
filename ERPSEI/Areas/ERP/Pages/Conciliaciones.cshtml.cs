@@ -1,52 +1,22 @@
-using ERPSEI.Areas.Reportes.Pages;
 using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Requests;
 using ERPSEI.Resources;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using System.Net.Mime;
 using ERPSEI.Pages.Shared;
-using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Managers.Conciliaciones;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
-using ERPSEI.Data.Managers.SAT;
-using ERPSEI.Data.Managers;
 using ERPSEI.Data.Managers.Empleados;
-using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Kernel.Pdf;
-// Para Excel usando EPPlus
-using OfficeOpenXml;
-using OfficeOpenXml.Style;
-
-// Para PDF usando iTextSharp
-using iText.Layout;
-using iText.Layout.Element;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
-using ERPSEI.Data.Entities.Usuarios;
-using Microsoft.AspNetCore.Identity;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Entities.Empresas;
-using ERPSEI.Areas.Catalogos.Pages;
-using ERPSEI.Data.Entities.Reportes;
-using ERPSEI.Data.Managers.Reportes;
-using NPOI.SS.Formula.Functions;
-using Microsoft.DotNet.MSIdentity.Shared;
-using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
-using ERPSEI.Data.Entities.SAT;
-using ERPSEI.Data.Managers.SAT;
-using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
-using static ERPSEI.Areas.ERP.Pages.PrefacturasModel;
 using Microsoft.EntityFrameworkCore;
-using ERPSEI.Data.Managers.SAT.Catalogos;
-using ERPSEI.Data.Entities.SAT.Catalogos;
 using System.Globalization;
-using iText.Commons.Actions.Contexts;
 using System.Security.Claims;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -54,7 +24,6 @@ namespace ERPSEI.Areas.ERP.Pages
     {
         private readonly IStringLocalizer<ConciliacionesModel> stringLocalizer;
         private readonly ILogger<ConciliacionesModel> logger;
-        //private readonly IRCatalogoManager<Banco> bancoManager;
         private readonly IBancoManager bancoManager;
         private readonly IConciliacionManager conciliacionManager;
         private readonly IConciliacionDetalleManager conciliacionDetalleManager;
@@ -145,6 +114,7 @@ namespace ERPSEI.Areas.ERP.Pages
             public int BancoId { get; set; }
             public int EmpresaId { get; set; }
             public List<MovimientoBancario> Movimientos { get; set; } = new List<MovimientoBancario>();
+            public List<Comprobante> Comprobantes { get; set; } = new List<Comprobante>();
 
         }
 
@@ -160,14 +130,19 @@ namespace ERPSEI.Areas.ERP.Pages
             [Display(Name = "FechaFinModalDComprobantesField")]
             [Required(ErrorMessage = "Required")]
             public string? FechaFinModalDComprobantes { get; set; }
+
+            [Display(Name = "ClienteIdField")]
+            [Required(ErrorMessage = "Required")]
+            public int? ClienteId { get; set; }
         }
+
 
         [BindProperty]
         public Conciliacion? ConciliacionesList { get; set; }
         public Banco BancoList { get; set; }
 
         public MovimientoBancario movimientoBancario { get; set; }
-        public class MovimientoBancario 
+        public class MovimientoBancario
         {
             [Display(Name = "Fecha")]
             public DateTime? Fecha { get; set; }
@@ -188,7 +163,6 @@ namespace ERPSEI.Areas.ERP.Pages
         public ConciliacionesModel(
             IStringLocalizer<ConciliacionesModel> _stringLocalizer,
             ILogger<ConciliacionesModel> _logger,
-            //IRCatalogoManager<Banco> _bancoManager,
             IBancoManager _bancoManager,
             IConciliacionManager _conciliacionManager,
             IConciliacionDetalleManager _conciliacionDetalleManager,
@@ -304,6 +278,199 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonResponse);
         }
 
+        public async Task<JsonResult> OnGetComprobantesMovimientosList(int id)
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+                try
+                {
+                    resp.Datos = await CreateJsonComprobantesMovimientosList(id);
+                    resp.TieneError = false;
+                    resp.Mensaje = localizer["ConsultadoSuccessfully"];
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("{message}", ex.Message);
+                    resp.Mensaje = ex.Message;
+                }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> CreateJsonComprobantesMovimientosList(int id)
+        {
+            ServerResponse resp = new(true, stringLocalizer["ComprobantesFiltradosUnsuccessfully"]);
+
+            try
+            {
+                string jsonConciliacion = string.Empty;
+                Conciliacion? c = await conciliacionManager.GetByIdAsync(id);
+                string jsonDetalles = string.Empty;
+
+                // Obtenemos los detalles y les agregamos un identificador único
+                List<string> detallesConId = new();
+                int contadorId = 1;
+
+                foreach (var detalle in c.DetallesConciliacion)
+                {
+                    // Generar JSON para comprobantes y movimientos
+                    string jsonComprobantes = CreateJsonComprobantes([.. detalle.ConciliacionesDetallesComprobantes]);
+                    string jsonMovimientos = CreateJsonMovimientos([.. detalle.ConciliacionesDetallesMovimientos]);
+                    string jsonResultadosComprobantes = CreateJsonResultados([.. detalle.ConciliacionesDetallesComprobantes]);
+                    string jsonResultadosMovimientos = CreateJsonResultadosMovimientos([.. detalle.ConciliacionesDetallesMovimientos]);
+
+                    // Agregar los detalles al JSON
+                    detallesConId.Add(
+                        "{" +
+                            $"\"id\": \"{contadorId++}\"," +
+                            $"\"detallesComprobantes\": {jsonComprobantes}," +
+                            $"\"detallesMovimientos\": {jsonMovimientos}," +
+                            $"\"resultadosComprobantes\": {jsonResultadosComprobantes}," +
+                            $"\"resultadosMovimientos\": {jsonResultadosMovimientos}" +
+                        "}"
+                    );
+                }
+
+                jsonDetalles = $"[{string.Join(",", detallesConId)}]";
+
+                // Construimos el JSON final para la respuesta
+                jsonConciliacion = "{" +
+                    $"\"detalles\": {jsonDetalles}" +
+                    "}";
+
+                resp.Mensaje = stringLocalizer["ComprobantesFiltradosSuccessfully"];
+                resp.Datos = jsonConciliacion;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{message}", ex.Message);
+                resp.Mensaje = ex.Message;
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private static string CreateJsonDetalles(List<ConciliacionDetalle> detalles)
+        {
+            List<string> jsonDetalles = [];
+            string jsonComprobantes = string.Empty;
+            string jsonMovimientos = string.Empty;
+            string jsonResponse;
+            foreach (ConciliacionDetalle cc in detalles)
+            {
+                jsonComprobantes = CreateJsonComprobantes([.. cc.ConciliacionesDetallesComprobantes]);
+                jsonMovimientos = CreateJsonMovimientos([.. cc.ConciliacionesDetallesMovimientos]);
+
+                jsonDetalles.Add(
+                    "{" +
+                        $"\"detallesComprobantes\":{jsonComprobantes}," +
+                        $"\"detallesMovimientos\":{jsonMovimientos}" +
+                    "}");
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
+
+            return jsonResponse;
+
+        }
+
+        private static string CreateJsonComprobantes(List<ConciliacionDetalleComprobante> detalles)
+        {
+            List<string> jsonDetalles = [];
+            string jsonResponse;
+            foreach (ConciliacionDetalleComprobante cc in detalles)
+            {
+                string uuid = string.Empty;
+                if (cc.Comprobante?.Complemento?.TimbreFiscalDigital != null)
+                {
+                    uuid = cc.Comprobante.Complemento.TimbreFiscalDigital.UUID ?? "-";
+                }
+
+                jsonDetalles.Add("{" +
+                    $"\"Id\": {cc.Comprobante?.Id}, " +
+                    $"\"Serie\": \"{cc.Comprobante?.Serie}\", " +
+                    $"\"Folio\": \"{cc.Comprobante?.Folio}\", " +
+                    $"\"Fecha\": \"{cc.Comprobante?.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"FechaJS\": \"{cc.Comprobante?.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
+                    $"\"UUID\": \"{uuid}\", " +
+                    $"\"Total\": \"{cc.Comprobante?.Total}\"" +
+                    "}");
+
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
+
+            return jsonResponse;
+        }
+
+        private static string CreateJsonMovimientos(List<ConciliacionDetalleMovimiento> detalles)
+        {
+            List<string> jsonDetalles = [];
+            string jsonResponse;
+            foreach (ConciliacionDetalleMovimiento cc in detalles)
+            {
+
+                jsonDetalles.Add("{" +
+                    $"\"Id\":\"{cc.MovimientoBancario?.Id}\"," +
+                    $"\"Fecha\":\"{cc.MovimientoBancario?.Fecha:yyyy-MM-dd HH:mm:ss}\"," +
+                    $"\"Descripción\":\"{cc.MovimientoBancario?.Descripcion}\"," +
+                    $"\"Cargos\":\"{cc.MovimientoBancario?.Importe}\"" +
+                "}");
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
+
+            return jsonResponse;
+        }
+
+        private static string CreateJsonResultados(List<ConciliacionDetalleComprobante> detalles)
+        {
+            List<string> jsonDetalles = [];
+            string jsonResponse;
+            foreach (var cc in detalles)
+            {
+                jsonDetalles.Add("{" +
+                    $"\"Id\": {cc.Comprobante?.Id}, " +
+                    $"\"Serie\": \"{cc.Comprobante?.Serie}\", " +
+                    $"\"Folio\": \"{cc.Comprobante?.Folio}\", " +
+                    $"\"Fecha\": \"{cc.Comprobante?.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                    $"\"Total\": \"{cc.Comprobante?.Total}\", " +
+                    $"\"Similitud\": \"100.00%\"" +
+                "}");
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
+
+            return jsonResponse;
+        }
+
+        private static string CreateJsonResultadosMovimientos(List<ConciliacionDetalleMovimiento> detalles)
+        {
+            List<string> jsonDetalles = [];
+            string jsonResponse;
+
+            foreach (var cc in detalles)
+            {
+                // Extraer información del movimiento bancario
+                var movimiento = cc.MovimientoBancario;
+                if (movimiento != null)
+                {
+                    jsonDetalles.Add("{" +
+                        $"\"Id\": \"{movimiento.Id}\", " +
+                        $"\"Fecha\": \"{movimiento.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
+                        $"\"Descripcion\": \"{movimiento.Descripcion ?? "Sin descripción"}\", " +
+                        $"\"Banco\": \"{movimiento.Conciliacion?.BancoId}\", " +
+                        $"\"Total\": \"{movimiento.Importe}\", " +
+                        $"\"Similitud\": \"100.00%\"" +
+                    "}");
+                }
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
+
+            return jsonResponse;
+        }
+
+
         public async Task<JsonResult> OnPostComprobantesListEmpresas()
         {
             // Inicializar la respuesta con mensaje de error por defecto
@@ -364,9 +531,8 @@ namespace ERPSEI.Areas.ERP.Pages
             return jsonResponse;
         }
 
-
-            public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
-            {
+        public async Task<JsonResult> OnPostDeleteConciliaciones(string[] ids)
+        {
             ServerResponse resp = new(true, stringLocalizer["ConciliacionesDeletedUnsuccessfully"]);
             try
             {
@@ -408,7 +574,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
-
 
         public async Task<JsonResult> OnPostFiltrarConciliaciones()
         {
@@ -574,7 +739,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             List<object> jsonComprobantes = new List<object>();
             List<Comprobante> comprobantes;
-            DateTime? fechaI = DateTime.ParseExact(filtro?.FechaInicioModalDComprobantes?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+            DateTime? fechaI = DateTime.ParseExact(filtro?.FechaInicioModalDComprobantes ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
             DateTime? fechaF = DateTime.ParseExact(filtro?.FechaFinModalDComprobantes ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm"), "yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture); ;
 
             // Aplicar los filtros de fechas en la llamada a GetAllAsync
@@ -582,7 +747,9 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 comprobantes = await comprobanteManager.GetByDateRangeAsync(
                     fechaI,
-                    fechaF);
+                    fechaF
+                    //filtro.ClienteId
+                    );
             }
             else
             {
@@ -590,11 +757,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 comprobantes = await comprobanteManager.GetAllAsync();
             }
 
-            // Construir el JSON con objetos anónimos
             foreach (Comprobante comp in comprobantes)
             {
-                //DateTime? fecha = comp.Fecha == DateTime.MinValue ? null : comp.Fecha;
-
                 // Si el complemento o TimbreFiscalDigital no existe, devolver valores por defecto
                 string uuid = comp.Complemento?.TimbreFiscalDigital?.UUID ?? "-";
 
@@ -604,7 +768,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     $"\"Serie\": \"{comp.Serie}\", " +
                     $"\"Folio\": \"{comp.Folio}\", " +
                     $"\"Fecha\": \"{comp.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
-                    $"\"FechaJS\": \"{comp.Fecha:yyyy-MM-dd HH:mm:ss}\", " +  
+                    $"\"FechaJS\": \"{comp.Fecha:yyyy-MM-dd HH:mm:ss}\", " +
                     $"\"UUID\": \"{uuid}\", " +
                     $"\"Total\": \"{comp.Total}\"" +
                     "}");
@@ -639,7 +803,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
             try
             {
-                // Buscar el ClienteId en base al nombre del cliente
+                await db.Database.BeginTransactionAsync();
+
                 var cliente = await db.Clientes.FirstOrDefaultAsync(c => c.RazonSocial == InputFiltroModalAgregar.Cliente);
                 if (cliente == null)
                 {
@@ -648,7 +813,6 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                // Obtener el ID del usuario autenticado y buscar el objeto AppUser correspondiente
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var usuarioCreador = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -659,37 +823,81 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                // Obtener el último Id en la tabla de conciliaciones
+                // Calcular el próximo ID para Conciliacion
                 var lastConciliacion = await db.Conciliaciones.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
-                int nextId = (lastConciliacion?.Id ?? 0) + 1;
+                int nextConciliacionId = (lastConciliacion?.Id ?? 0) + 1;
 
-                // Crear el objeto Conciliacion con el siguiente Id y demás valores necesarios
+                // Calcular el total sumando los totales de todos los comprobantes conciliados
+                decimal totalConciliacion = InputFiltroModalAgregar.Comprobantes?.Sum(comp => comp.Total) ?? 0;
+
+                // Crear el registro de Conciliacion
                 Conciliacion conciliacion = new Conciliacion
                 {
-                    Id = nextId,
+                    Id = nextConciliacionId,
                     Fecha = InputFiltroModalAgregar.FechaElaboracionInicio,
                     ClienteId = cliente.Id,
                     Descripcion = InputFiltroModalAgregar.Descripcion,
                     UsuarioCreador = usuarioCreador,
                     UsuarioModificador = usuarioCreador,
                     BancoId = InputFiltroModalAgregar.BancoId,
-                    EmpresaId = cliente.Id
+                    EmpresaId = cliente.Id,
+                    Total = totalConciliacion // Asignar el total calculado
                 };
 
-                // Agregar la conciliación a la base de datos
                 await db.Conciliaciones.AddAsync(conciliacion);
+                await db.SaveChangesAsync(); // Guardar para asegurar que ConciliacionId esté disponible
 
-                // Obtener el último Id en la tabla de movimientos bancarios
-                int nextMovimientoId = await db.MovimientosBancarios.MaxAsync(m => (int?)m.Id) ?? 0;
+                // Obtener los IDs iniciales para ConciliacionDetalle y ConciliacionDetalleComprobante
+                var lastDetalleConciliacion = await db.ConciliacionesDetalles.OrderByDescending(cd => cd.Id).FirstOrDefaultAsync();
+                int nextDetalleId = (lastDetalleConciliacion?.Id ?? 0) + 1;
+                int nextComprobanteId = await db.ConciliacionesDetallesComprobantes.MaxAsync(dc => (int?)dc.Id) ?? 0;
 
-                // Procesar y agregar todos los movimientos bancarios importados
+                // Crear un registro en ConciliacionDetalle para cada comprobante seleccionado
+                List<int> detalleConciliacionIds = new List<int>();
+                if (InputFiltroModalAgregar.Comprobantes != null && InputFiltroModalAgregar.Comprobantes.Any())
+                {
+                    foreach (var comp in InputFiltroModalAgregar.Comprobantes)
+                    {
+                        // Crear un nuevo detalle de conciliación para cada comprobante
+                        var detalleConciliacion = new ConciliacionDetalle
+                        {
+                            Id = nextDetalleId++,  // Incrementa el ID para cada detalle
+                            ConciliacionId = conciliacion.Id, // Asocia el mismo ConciliacionId para cada registro
+                            Conciliacion = conciliacion,
+                            ConciliacionesDetallesComprobantes = new List<ConciliacionDetalleComprobante>(),
+                            ConciliacionesDetallesMovimientos = new List<ConciliacionDetalleMovimiento>()
+                        };
+
+                        // Agregar el comprobante a ConciliacionDetalleComprobante
+                        detalleConciliacion.ConciliacionesDetallesComprobantes.Add(new ConciliacionDetalleComprobante
+                        {
+                            Id = ++nextComprobanteId,  // Incrementa el ID para cada comprobante
+                            ConciliacionDetalleId = detalleConciliacion.Id,
+                            ComprobanteId = comp.Id
+                        });
+
+                        // Guardar cada ConciliacionDetalle individualmente para asegurar su disponibilidad
+                        await db.ConciliacionesDetalles.AddAsync(detalleConciliacion);
+
+                        // Guardar el ID del detalle de conciliación recién creado
+                        detalleConciliacionIds.Add(detalleConciliacion.Id);
+                    }
+
+                    await db.SaveChangesAsync(); // Guardar cambios para asegurar que todos los detalles estén en la base de datos
+                }
+
+                // Agregar los movimientos bancarios distribuidos entre los ConciliacionDetalleIds creados
+                var nextMovimientoId = await db.MovimientosBancarios.MaxAsync(m => (int?)m.Id) ?? 0;
+                var nextDetalleMovimientoId = await db.ConciliacionesDetallesMovimientos.MaxAsync(dm => (int?)dm.Id) ?? 0;
+
                 if (InputFiltroModalAgregar.Movimientos != null && InputFiltroModalAgregar.Movimientos.Any())
                 {
+                    int index = 0;
                     foreach (var mov in InputFiltroModalAgregar.Movimientos)
                     {
                         var movimiento = new ERPSEI.Data.Entities.Conciliaciones.MovimientoBancario
                         {
-                            Id = ++nextMovimientoId, // Asigna manualmente un Id incrementado
+                            Id = ++nextMovimientoId,
                             Fecha = mov.Fecha,
                             Descripcion = mov.Descripcion,
                             Importe = mov.Importe,
@@ -698,28 +906,39 @@ namespace ERPSEI.Areas.ERP.Pages
                         };
 
                         await db.MovimientosBancarios.AddAsync(movimiento);
+
+                        // Asocia el movimiento con el correspondiente ConciliacionDetalleId
+                        var detalleMovimiento = new ConciliacionDetalleMovimiento
+                        {
+                            Id = ++nextDetalleMovimientoId,
+                            MovimientoBancarioId = movimiento.Id,
+                            ConciliacionDetalleId = detalleConciliacionIds[index]  // Asociar al ConciliacionDetalleId correspondiente
+                        };
+
+                        await db.ConciliacionesDetallesMovimientos.AddAsync(detalleMovimiento);
+
+                        // Incrementa el índice y reinicia si es necesario para distribuir entre los IDs disponibles
+                        index = (index + 1) % detalleConciliacionIds.Count;
                     }
                 }
 
-                // Guardar los cambios en la base de datos
                 await db.SaveChangesAsync();
 
                 resp.TieneError = false;
                 resp.Mensaje = stringLocalizer["ConciliacionCreatedSuccessfully"];
+
+                await db.Database.CommitTransactionAsync();
             }
             catch (Exception ex)
             {
                 logger.LogError(ex.Message);
                 resp.TieneError = true;
                 resp.Mensaje = stringLocalizer["ConciliacionSavedUnsuccessfully"];
+                await db.Database.RollbackTransactionAsync();
             }
 
             return new JsonResult(resp);
         }
-
-
-
-
 
 
         public ActionResult OnGetDownloadPlantilla()
@@ -760,7 +979,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                         $"\"id\": \"{e.Id}\", " +
                                         $"\"value\": \"{e.RazonSocial}\", " +
                                         $"\"label\": \"{desc}\", " +
-                                        $"\"rfc\": \"{e.RFC}\""+
+                                        $"\"rfc\": \"{e.RFC}\"" +
                                     $"}}");
                 }
             }
