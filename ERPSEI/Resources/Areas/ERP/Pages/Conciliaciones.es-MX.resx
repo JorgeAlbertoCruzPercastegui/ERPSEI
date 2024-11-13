@@ -180,6 +180,9 @@
   <data name="colSerieHeaderD" xml:space="preserve">
     <value>Serie</value>
   </data>
+  <data name="ColStatushHeader" xml:space="preserve">
+    <value>Estatus</value>
+  </data>
   <data name="ColTotalHeader" xml:space="preserve">
     <value>Total</value>
   </data>

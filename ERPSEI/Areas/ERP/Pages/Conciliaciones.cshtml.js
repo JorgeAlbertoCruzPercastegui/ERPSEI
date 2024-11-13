@@ -372,8 +372,8 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "Estatus",
-                field: "Estatus",
+                title: colFinalizadaHeader,
+                field: "Finalizada",
                 align: "center",
                 valign: "middle",
                 sortable: true

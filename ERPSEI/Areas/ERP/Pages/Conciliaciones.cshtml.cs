@@ -113,6 +113,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             public int BancoId { get; set; }
             public int EmpresaId { get; set; }
+            public bool Finalizada { get; set; } = false;
             public List<MovimientoBancario> Movimientos { get; set; } = new List<MovimientoBancario>();
             public List<Comprobante> Comprobantes { get; set; } = new List<Comprobante>();
 
@@ -239,6 +240,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     $"\"UsuarioCreador\": \"{UsuarioCreador}\", " +
                     $"\"UsuarioModificadorId\": \"{cons.UsuarioModificadorId}\", " +
                     $"\"UsuarioModificador\": \"{UsuarioModificador}\", " +
+                    $"\"Finalizada\": \"{(cons.Finalizada ? "Finalizada" : "En progreso")}\", " +
                     $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
                     "}");
             }
@@ -637,6 +639,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 $"\"UsuarioCreador\": \"{UsuarioCreador}\", " +
                 $"\"UsuarioModificadorId\": \"{cons.UsuarioModificadorId}\", " +
                 $"\"UsuarioModificador\": \"{UsuarioModificador}\", " +
+                $"\"Finalizada\": \"{(cons.Finalizada ? "Finalizada" : "En progreso")}\", " +
                 $"\"Deshabilitado\": \"{cons.Deshabilitado}\"" +
                 "}");
             }
@@ -841,7 +844,8 @@ namespace ERPSEI.Areas.ERP.Pages
                     UsuarioModificador = usuarioCreador,
                     BancoId = InputFiltroModalAgregar.BancoId,
                     EmpresaId = cliente.Id,
-                    Total = totalConciliacion // Asignar el total calculado
+                    Finalizada = InputFiltroModalAgregar.Finalizada,
+                    Total = totalConciliacion
                 };
 
                 await db.Conciliaciones.AddAsync(conciliacion);
