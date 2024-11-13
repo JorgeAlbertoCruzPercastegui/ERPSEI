@@ -1,0 +1,133 @@
+﻿@page "{handler?}"
+@using Microsoft.AspNetCore.Localization;
+@using Microsoft.AspNetCore.Mvc.Localization;
+@using ERPSEI.Data.Entities.SAT;
+@using ERPSEI.Data.Managers.SAT;
+@using ERPSEI.Data.Entities.Usuarios;
+@using ERPSEI.Data.Managers.Usuarios;
+@using ERPSEI.Data.Entities.SAT.Catalogos;
+@using ERPSEI.Data.Managers.SAT.Catalogos;
+
+@model ERPSEI.Areas.Reportes.Pages.FacturacionModel
+@inject IViewLocalizer Localizer;
+@{
+	ViewData["Title"] = Localizer["Title"];
+
+	// Retrieves the requested culture
+	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+
+	// Culture contains the information of the requested culture
+	System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+
+	string cultureName = culture.Name;
+
+	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+}
+<h3 id="hTitle" class="title mb-3">@ViewData["Title"]</h3>
+
+<!-- --------------------------- -->
+<!-- Sección de filtros -------- -->
+<div class="accordion shadow mb-5" id="accordionFiltros">
+	<div class="accordion-item">
+		<h2 class="accordion-header" id="headingOne">
+			<button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+				<h6>@Localizer["FilterTitle"]</h6>
+			</button>
+		</h2>
+		<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+			<div class="accordion-body">
+				<form id="filtros" method="post">
+					<div class="row">
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@Localizer["EmpresaPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetEmpresaSuggestion" />
+								<label for="inpFiltroEmpresaRFC" asp-for="InputFiltro.EmpresaRFC" class="form-label"></label>
+								<span asp-validation-for="InputFiltro.EmpresaRFC" class="text-danger"></span>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@Localizer["AnioPlaceholder"]" onchange="clearTable();">
+									@{
+										for (int i = DateTime.Today.Year - 5; i <= DateTime.Today.Year; i++)
+										{
+											if (i == DateTime.Today.Year) { <option selected value='@i'>@i</option> }
+											else{ <option value='@i'>@i</option> }
+										}
+									}
+								</select>
+								<label for="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroMes" asp-for="InputFiltro.Mes" class="form-select" placeholder="@Localizer["MesPlaceholder"]" onchange="clearTable();">
+									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
+									@{
+										for(int j = 1; j <= 12; j++)
+										{
+											DateTime f = new DateTime(DateTime.Now.Year, j, 1);
+											string description = f.ToString("MMMM");
+											description = string.Concat(description[0].ToString().ToUpper(), description.AsSpan(1));
+											string value = f.ToString("MM");
+
+											<option value='@value'>@description</option>
+										}
+									}
+								</select>
+								<label for="selFiltroMes" asp-for="InputFiltro.Mes" class="form-label"></label>
+							</div>
+						</div>
+					</div>
+				</form>
+				@if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar)
+				{
+					<div class="row text-end">
+						<div class="col-12">
+							<button id="btnBuscar" class="btn btn-primary" onclick="onBuscarClick();">
+								<i class="bi bi-search"></i> @Localizer["SearchButton"]
+							</button>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+</div>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+@section Scripts
+{	
+	<!-- Librería autocompletar y dependencias -->
+	<link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+	<script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+	<script src="~/js/autocompletar.js"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"></script>
+
+	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+	<script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
+
+	<!-- Scripts del módulo y dependencias -->
+	<link rel="stylesheet" href="~/css/Facturacion.css" />
+	<script src="~/../Areas/Reportes/Pages/Facturacion.cshtml.js"></script>
+	<script type="text/javascript">
+		var cultureName = "@cultureName";
+		var title = '@Localizer["Title"]';
+
+		var puedeTodo = '@puedeTodo' == 'True';
+		var puedeConsultar = '@puedeConsultar' == 'True';
+		var puedeEditar = '@puedeEditar' == 'True';
+		var puedeEliminar = '@puedeEliminar' == 'True';
+		var puedeAutorizar = '@puedeAutorizar' == 'True';
+	</script>
+
+	<partial name="_ValidationScriptsPartial" />
+}

@@ -67,6 +67,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="Areas\Reportes\Pages\Facturacion.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Update="Resources\Areas\Catalogos\Pages\UsuariosModel.es-MX.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
