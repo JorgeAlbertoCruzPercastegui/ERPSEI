@@ -202,12 +202,12 @@ namespace ERPSEI.Areas.ERP.Pages
             ConciliacionesList = new Conciliacion();
         }
 
-        public async Task<JsonResult> OnGetExportarExcelNPOI(int id)
+        public async Task<JsonResult> OnGetExportarExcel(int id)
         {
             ServerResponse resp = new(true, localizer["ExportExcelUnsuccessfully"]);
             try
             {
-                resp.Datos = await GetExportarExcelNPOI(id);
+                resp.Datos = await GetExportarExcel(id);
                 resp.TieneError = false;
                 resp.Mensaje = localizer["finalizarConciliacionSuccessfully"];
             }
@@ -220,7 +220,7 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<List<object>> GetExportarExcelNPOI(int conciliacionId)
+        public async Task<List<object>> GetExportarExcel(int conciliacionId)
         {
             try
             {
@@ -246,7 +246,8 @@ namespace ERPSEI.Areas.ERP.Pages
                                 Total = comprobante.Comprobante?.Total ?? 0,
                                 MovimientoId = movimiento.MovimientoBancario?.Id ?? 0,
                                 DescripcionMovimiento = movimiento.MovimientoBancario?.Descripcion ?? "N/A",
-                                Cargos = movimiento.MovimientoBancario?.Importe ?? 0
+                                Cargos = movimiento.MovimientoBancario?.Importe ?? 0,
+                                Emisor = comprobante.Comprobante?.Fecha ?? "N/A"
                             });
                         }
                     }

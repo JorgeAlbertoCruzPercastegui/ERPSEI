@@ -233,16 +233,16 @@ window.operateEvents = {
         }
 
         // Llamar a la función para exportar a Excel
-        exportarAExcelNPOI(conciliacionId);
+        exportarAExcel(conciliacionId);
     }
 }
 
-async function exportarAExcelNPOI(conciliacionId) {
+async function exportarAExcel(conciliacionId) {
     let oParams = { id: conciliacionId };
     $.extend(postOptions, { type: 'GET' });
 
     doAjax(
-        "/ERP/Conciliaciones/ExportarExcelNPOI",
+        "/ERP/Conciliaciones/ExportarExcel",
         oParams,
         async function (resp) {
             if (resp.tieneError) {
@@ -254,27 +254,79 @@ async function exportarAExcelNPOI(conciliacionId) {
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Conciliación');
 
-            // Definir las columnas del Excel
-            worksheet.columns = [
-                { header: 'Cliente', key: 'cliente', width: 30 },
-                { header: 'Comprobante ID', key: 'comprobanteId', width: 15 },
-                { header: 'Serie', key: 'serie', width: 10 },
-                { header: 'Folio', key: 'folio', width: 10 },
-                { header: 'Total', key: 'total', width: 15 },
-                { header: 'Movimiento ID', key: 'movimientoId', width: 15 },
-                { header: 'Descripción Movimiento', key: 'descripcionMovimiento', width: 30 },
-                { header: 'Cargos', key: 'cargos', width: 15 }
-            ];
+            // Ajustes en el diseño inicial
+            worksheet.getCell('A3').value = 'lg';
+            worksheet.getCell('A3').font = { bold: true };
+            worksheet.getCell('B3').value = 1;
+            worksheet.getCell('B3').font = { bold: true };
+            worksheet.getCell('C3').value = resp.datos.length > 0
+                ? `${resp.datos[0].cliente} ${resp.datos[0].serie}-F-${resp.datos[0].folio}`
+                : 'Sin Cliente';
+            worksheet.getCell('C3').font = { bold: true };
+
+            // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
+            const fechaEmisor = resp.datos.length > 0 ? resp.datos[0].emisor : 'N/A';
+            const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
+            worksheet.getCell('D3').value = dia;
+            worksheet.getCell('D3').font = { bold: true };
+
+            // Aplicar color azul claro a las celdas A3 y B3
+            const lightBlue = 'CCECFF';
+            worksheet.getCell('A3').fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF45C9ED' }
+            };
+            worksheet.getCell('B3').fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF45C9ED' }
+            };
+
+            // Colocar texto en las celdas B5 y B6
+            worksheet.getCell('B5').value = '2180-001-000';
+            worksheet.getCell('B6').value = '2181-001-000';
+
+            // Colocar el número 0 en las celdas C4, C5, C6 y C7, centrado
+            ['C4', 'C5', 'C6', 'C7'].forEach(cell => {
+                worksheet.getCell(cell).value = 0;
+                worksheet.getCell(cell).alignment = { horizontal: 'center' };
+            });
+
+            // Texto "CARGO" y "ABONO" en negritas
+            worksheet.getCell('F3').value = 'CARGO';
+            worksheet.getCell('F3').font = { bold: true };
+            worksheet.getCell('G3').value = 'ABONO';
+            worksheet.getCell('G3').font = { bold: true };
+
+            // Calcular el total de los cargos y colocarlo en la celda F4
+            const datos = Array.isArray(resp.datos) ? resp.datos : [];
+            const totalCargos = datos.reduce((sum, dato) => sum + (dato.cargos || 0), 0);
+            worksheet.getCell('F4').value = totalCargos;
+
+            // Colocar el cargo del movimiento en la celda G7
+            worksheet.getCell('G7').value = datos.length > 0 ? datos[0].cargos : 0;
 
             // Validar si hay datos para exportar
-            const datos = Array.isArray(resp.datos) ? resp.datos : [];
             if (datos.length === 0) {
                 showError("Exportación Fallida", "No se encontraron datos para exportar.");
                 return;
             }
 
+            // Definir las columnas del Excel
+            worksheet.columns = [
+                { header: '', key: 'cliente', width: 5 },
+                { header: '', key: 'comprobanteId', width: 15 },
+                { header: '', key: 'serie', width: 38 },
+                { header: '', key: 'folio', width: 38 },
+                { header: '', key: 'total', width: 3 },
+                { header: '', key: 'movimientoId', width: 15 },
+                { header: '', key: 'descripcionMovimiento', width: 15 },
+                { header: '', key: 'cargos', width: 15 }
+            ];
+
             // Agregar los datos al Excel
-            datos.forEach((dato, index) => {
+            /*datos.forEach((dato) => {
                 worksheet.addRow({
                     cliente: dato.cliente,
                     comprobanteId: dato.comprobanteId,
@@ -285,7 +337,7 @@ async function exportarAExcelNPOI(conciliacionId) {
                     descripcionMovimiento: dato.descripcionMovimiento,
                     cargos: dato.cargos
                 });
-            });
+            });*/
 
             // Crear el archivo Excel y descargarlo
             const buffer = await workbook.xlsx.writeBuffer();
@@ -302,6 +354,8 @@ async function exportarAExcelNPOI(conciliacionId) {
         postOptions
     );
 }
+
+
 
 function onAgregarClick() {
     initConciliacionDialog(NUEVO, { id: "Nuevo", nombre: "" });
