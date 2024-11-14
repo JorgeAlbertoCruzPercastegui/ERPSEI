@@ -16,7 +16,10 @@ using ERPSEI.Data.Managers.SAT.cfdiv40;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Claims;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using SixLabors.ImageSharp.PixelFormats;
+using iText.Commons.Actions.Contexts;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -199,6 +202,66 @@ namespace ERPSEI.Areas.ERP.Pages
             ConciliacionesList = new Conciliacion();
         }
 
+        public async Task<JsonResult> OnGetExportarExcelNPOI(int id)
+        {
+            ServerResponse resp = new(true, localizer["ExportExcelUnsuccessfully"]);
+            try
+            {
+                resp.Datos = await GetExportarExcelNPOI(id);
+                resp.TieneError = false;
+                resp.Mensaje = localizer["finalizarConciliacionSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{message}", ex.Message);
+                resp.Mensaje = ex.Message;
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<List<object>> GetExportarExcelNPOI(int conciliacionId)
+        {
+            try
+            {
+                // Obtener la conciliación por ID
+                var conciliacion = await conciliacionManager.GetByIdAsync(conciliacionId);
+
+                // Crear una lista para almacenar los datos del Excel
+                var datosExcel = new List<object>();
+
+                // Recorrer los detalles de la conciliación y preparar los datos
+                foreach (var detalle in conciliacion.DetallesConciliacion)
+                {
+                    foreach (var comprobante in detalle.ConciliacionesDetallesComprobantes)
+                    {
+                        foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
+                        {
+                            datosExcel.Add(new
+                            {
+                                Cliente = conciliacion.Cliente?.RazonSocial ?? "Sin Cliente",
+                                ComprobanteId = comprobante.Comprobante?.Id ?? 0,
+                                Serie = comprobante.Comprobante?.Serie ?? "N/A",
+                                Folio = comprobante.Comprobante?.Folio ?? "N/A",
+                                Total = comprobante.Comprobante?.Total ?? 0,
+                                MovimientoId = movimiento.MovimientoBancario?.Id ?? 0,
+                                DescripcionMovimiento = movimiento.MovimientoBancario?.Descripcion ?? "N/A",
+                                Cargos = movimiento.MovimientoBancario?.Importe ?? 0
+                            });
+                        }
+                    }
+                }
+
+                return datosExcel;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{message}", ex.Message);
+                return null;
+            }
+        }
+
+
         public async Task<JsonResult> OnGetConciliacionesList()
         {
             List<string> jsonConciliaciones = new List<string>();
@@ -248,6 +311,50 @@ namespace ERPSEI.Areas.ERP.Pages
             string jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
             return new JsonResult(jsonResponse);
         }
+
+        public async Task<JsonResult> OnPostfinalizarConciliacion(int id)
+        {
+            ServerResponse resp = new(true, localizer["finalizarConciliacionUnsuccessfully"]);
+            try
+            {
+                resp.Datos = await UpdatefinalizarConciliacion(id);
+                resp.TieneError = false;
+                resp.Mensaje = localizer["finalizarConciliacionSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{message}", ex.Message);
+                resp.Mensaje = ex.Message;
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<Conciliacion?> UpdatefinalizarConciliacion(int id)
+        {
+            // Buscar la conciliación en la base de datos
+            var conciliacion = await db.Conciliaciones.FindAsync(id);
+            if (conciliacion == null)
+            {
+                return null;
+            }
+
+            // Verificar si ya está finalizada
+            if (conciliacion.Finalizada)
+            {
+                return null;
+            }
+
+            // Actualizar el estado de la conciliación
+            conciliacion.Finalizada = true;
+            //conciliacion.UsuarioModificadorId = GetCurrentUserId();
+
+            // Guardar cambios
+            await db.SaveChangesAsync();
+
+            return conciliacion;
+        }
+
 
         public async Task<JsonResult> OnGetComprobantesList()
         {
@@ -646,76 +753,6 @@ namespace ERPSEI.Areas.ERP.Pages
             string jsonResponse = $"[{string.Join(",", jsonConciliaciones)}]";
             return jsonResponse;
         }
-
-        /*public async Task<JsonResult> OnPostGuardarMovimientos()
-        {
-            ServerResponse resp = new(true, stringLocalizer["MovimientoSavedUnsuccessfully"]);
-
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    resp.Errores = ModelState.Keys.SelectMany(k => ModelState[k]?.Errors ?? []).Select(m => m.ErrorMessage).ToArray();
-                }
-                else
-                {
-                    // Crear un nuevo registro de movimiento bancario
-                    var nuevoMovimiento = new ERPSEI.Data.Entities.Conciliaciones.MovimientoBancario
-                    {
-                        Fecha = movimientoBancario.Fecha,             // Fecha importada del Excel
-                        Descripcion = movimientoBancario.Descripcion, // Descripción importada del Excel
-                        Importe = movimientoBancario.Importe,         // Importe (cargos) importado del Excel
-                        Conciliado = false               // Inicialmente no conciliado
-                    };
-
-                    await db.MovimientosBancarios.AddAsync(nuevoMovimiento); // Agregar a la base de datos
-                    await db.SaveChangesAsync(); // Guardar cambios
-
-                    resp.TieneError = false;
-                    resp.Mensaje = stringLocalizer["MovimientoSavedSuccessfully"];
-                }
-            }
-            catch (Exception ex)
-            {
-                resp.TieneError = true;
-                resp.Mensaje = stringLocalizer["MovimientoSavedUnsuccessfully"];
-                logger.LogError(ex.Message);
-            }
-
-            return new JsonResult(resp);
-        }
-
-        public async Task<JsonResult> GuardarMovimientosImportados([FromBody] List<ERPSEI.Data.Entities.Conciliaciones.MovimientoBancario> movimientos)
-        {
-            ServerResponse resp = new(true, "Movimientos guardados sin éxito.");
-
-            try
-            {
-                if (movimientos == null || movimientos.Count == 0)
-                {
-                    resp.Mensaje = "No se recibieron movimientos para guardar.";
-                    return new JsonResult(resp);
-                }
-
-                foreach (var movimiento in movimientos)
-                {
-                    movimiento.Conciliado = false; // Ajuste necesario si aplica
-                    db.MovimientosBancarios.Add(movimiento); // Agregar cada movimiento a la base de datos
-                }
-
-                await db.SaveChangesAsync();
-
-                resp.TieneError = false;
-                resp.Mensaje = "Movimientos guardados exitosamente.";
-            }
-            catch (Exception ex)
-            {
-                resp.Mensaje = "Ocurrió un error al guardar los movimientos.";
-                logger.LogError(ex, "Error al guardar movimientos importados.");
-            }
-
-            return new JsonResult(resp);
-        }*/
 
         public async Task<JsonResult> OnPostFiltrarComprobantesFechas()
         {

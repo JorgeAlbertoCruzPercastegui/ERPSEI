@@ -199,10 +199,108 @@ window.operateEvents = {
         $('#tableResult').bootstrapTable('load', []);
     },
     'click .export': function (e, value, row, index) {
-        const cliente = row.Cliente || row.Empresa || 'Sin cliente';
+        /*const cliente = row.Cliente || row.Empresa || 'Sin cliente';
         const totalComprobante = row.Total || 0; // Obtener el total del comprobante
-        exportarAExcelConFormato(cliente, totalComprobante);
+
+        let totalMovimiento = 0;
+
+        // Verificar si el comprobante tiene movimientos conciliados
+        if (row.movimientosConciliados && row.movimientosConciliados.length > 0) {
+            // Tomar el cargo del primer movimiento asociado (conciliado)
+            totalMovimiento = row.movimientosConciliados.reduce((acc, mov) => acc + parseFloat(mov.Cargos || 0), 0);
+        } else {
+            // Si no hay movimientos conciliados, buscar manualmente en `tableCardMovimientos`
+            let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
+            let comprobanteId = row.id;
+
+            movimientosData.forEach((mov) => {
+                if (mov.comprobantesConciliados && mov.comprobantesConciliados.some(comp => comp.Id === comprobanteId)) {
+                    totalMovimiento = parseFloat(mov.Cargos || 0);
+                }
+            });
+        }
+        exportarAExcelConFormato(cliente, totalComprobante, totalMovimiento);
+        */
+
+        console.log("Contenido del objeto row:", row);
+        
+        const conciliacionId = parseInt(row.id, 10) || 0;
+        console.log("ID de conciliación seleccionado (convertido a entero):", conciliacionId);
+
+        if (conciliacionId === 0) {
+            showError("Exportación Fallida", "ID de conciliación no válido.");
+            return;
+        }
+
+        // Llamar a la función para exportar a Excel
+        exportarAExcelNPOI(conciliacionId);
     }
+}
+
+async function exportarAExcelNPOI(conciliacionId) {
+    let oParams = { id: conciliacionId };
+    $.extend(postOptions, { type: 'GET' });
+
+    doAjax(
+        "/ERP/Conciliaciones/ExportarExcelNPOI",
+        oParams,
+        async function (resp) {
+            if (resp.tieneError) {
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+
+            const ExcelJS = window.ExcelJS;
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Conciliación');
+
+            // Definir las columnas del Excel
+            worksheet.columns = [
+                { header: 'Cliente', key: 'cliente', width: 30 },
+                { header: 'Comprobante ID', key: 'comprobanteId', width: 15 },
+                { header: 'Serie', key: 'serie', width: 10 },
+                { header: 'Folio', key: 'folio', width: 10 },
+                { header: 'Total', key: 'total', width: 15 },
+                { header: 'Movimiento ID', key: 'movimientoId', width: 15 },
+                { header: 'Descripción Movimiento', key: 'descripcionMovimiento', width: 30 },
+                { header: 'Cargos', key: 'cargos', width: 15 }
+            ];
+
+            // Validar si hay datos para exportar
+            const datos = Array.isArray(resp.datos) ? resp.datos : [];
+            if (datos.length === 0) {
+                showError("Exportación Fallida", "No se encontraron datos para exportar.");
+                return;
+            }
+
+            // Agregar los datos al Excel
+            datos.forEach((dato, index) => {
+                worksheet.addRow({
+                    cliente: dato.cliente,
+                    comprobanteId: dato.comprobanteId,
+                    serie: dato.serie,
+                    folio: dato.folio,
+                    total: dato.total,
+                    movimientoId: dato.movimientoId,
+                    descripcionMovimiento: dato.descripcionMovimiento,
+                    cargos: dato.cargos
+                });
+            });
+
+            // Crear el archivo Excel y descargarlo
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Conciliacion_${conciliacionId}.xlsx`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+        },
+        function (error) {
+            showError("Error", "No se pudo exportar a Excel.");
+        },
+        postOptions
+    );
 }
 
 function onAgregarClick() {
@@ -212,6 +310,7 @@ function onAgregarClick() {
     $('#tableCardMovimientos').bootstrapTable('load', []);
     $('#tableResult').bootstrapTable('load', []);
 }
+
 
 /*function exportarAExcel(row) {
     //Crear un libro de Excel usando SheetJS
@@ -229,7 +328,7 @@ function onAgregarClick() {
     XLSX.writeFile(wb, `Export_${row.id}.xlsx`);
 }*/
 
-async function exportarAExcelConFormato(cliente, totalComprobante) {
+async function exportarAExcelConFormato(cliente, totalComprobante, totalMovimiento) {
     const ExcelJS = window.ExcelJS;
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('POLIZA COMPLETA');
@@ -240,7 +339,7 @@ async function exportarAExcelConFormato(cliente, totalComprobante) {
         { header: '', width: 10 },  // Columna con el número
         { header: '', width: 40 },  // Columna para el cliente/empresa
         { header: '', width: 25 },  // Columna de descripción
-        { header: '', width: 5 }
+        { header: '', width: 2 }
     ];
 
     // Fila vacía inicial (sin encabezados)
@@ -274,11 +373,15 @@ async function exportarAExcelConFormato(cliente, totalComprobante) {
     // Colocar el total del comprobante en la celda F4 y limitar a dos decimales
     const formattedTotal = parseFloat(totalComprobante).toFixed(2);
 
+    // Colocar el total del comprobante en la celda F4 y limitar a dos decimales
+    const formattedTotalMov = parseFloat(totalMovimiento).toFixed(2);
+
     // Filas de partidas con valores enteros y centrados
     const partidas = [
         { numero: 1120, descripcion: 'Descripción 1', cargo: parseFloat(formattedTotal), abono: 0 },
         { numero: 1121, descripcion: 'Descripción 2', cargo: 0, abono: 0 },
-        { numero: 1122, descripcion: 'Descripción 3', cargo: 0, abono: 0 }
+        { numero: 1122, descripcion: 'Descripción 3', cargo: 0, abono: 0 },
+        { numero: 1123, descripcion: 'Descripción 4', cargo: 0, abono: parseFloat(formattedTotalMov) }
     ];
 
     partidas.forEach((partida, index) => {
@@ -295,6 +398,16 @@ async function exportarAExcelConFormato(cliente, totalComprobante) {
     // Fila de fin de partidas sin negritas
     const finPartidasRow = worksheet.addRow(['', 'FIN_PARTIDAS', '', '', '', '', '']);
     finPartidasRow.font = { bold: false };
+
+    // Ajustar el ancho de las columnas automáticamente
+    worksheet.columns.forEach(column => {
+        let maxLength = 10;
+        column.eachCell({ includeEmpty: true }, cell => {
+            const cellLength = cell.value ? cell.value.toString().length : 10;
+            maxLength = Math.max(maxLength, cellLength);
+        });
+        column.width = maxLength + 2; // Añadir un margen adicional
+    });
 
     // Guardar el archivo Excel
     const buffer = await workbook.xlsx.writeBuffer();
@@ -433,6 +546,42 @@ function initTable() {
         });
     })
 }
+
+function onCerrarConciliacionClick() {
+    const conciliacionId = document.getElementById("inpConciliacionId").value;
+
+    if (!conciliacionId) {
+        showError(dlgFinishConTitle, "No se pudo obtener el ID de la conciliación.");
+        return;
+    }
+
+    // Parámetros para la solicitud AJAX
+    const oParams = { conciliacionId };
+
+    // Realizar la solicitud AJAX para finalizar la conciliación
+    doAjax(
+        "/ERP/Conciliaciones/finalizarConciliacion",
+        oParams,
+        function (resp) {
+            // Manejo de errores
+            if (resp.tieneError) {
+                const summary = Array.isArray(resp.errores) && resp.errores.length > 0
+                    ? `<ul>${resp.errores.map(error => `<li>${error}</li>`).join('')}</ul>`
+                    : "Ocurrió un error desconocido.";
+
+                showError(dlgTitle.innerHTML, summary);
+                return;
+            }
+            // Mostrar mensaje de éxito
+            showSuccess(dlgFinishConTitle, resp.mensaje);
+        },
+        function (error) {
+            showError(dlgFinishConTitle, error);
+        },
+        postOptions
+    );
+}
+
 
 let cachedData = $('#tableCardComprobantes').bootstrapTable('getData');
 function initTableComprobantes() {
@@ -1887,9 +2036,6 @@ function obtenerRegistrosConciliados(conciliacionId) {
             $('#tableCardComprobantes').bootstrapTable('load', comprobantes);
             $('#tableCardMovimientos').bootstrapTable('load', movimientos);
             $('#tableResult').bootstrapTable('load', conciliaciones);
-
-            //console.log("Comprobantes cargados:", comprobantes);
-            //console.log("Movimientos cargados:", movimientos);
 
         }, function (error) {
             showError("Error", error);

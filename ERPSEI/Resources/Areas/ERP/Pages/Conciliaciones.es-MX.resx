@@ -258,6 +258,9 @@
   <data name="FinalizeConciliation" xml:space="preserve">
     <value>Finalizar Conciliación</value>
   </data>
+  <data name="FinishConDialogTitle" xml:space="preserve">
+    <value>Finalizar Conciliación</value>
+  </data>
   <data name="GetButtonTitle" xml:space="preserve">
     <value>Consultar</value>
   </data>
@@ -278,6 +281,9 @@
   </data>
   <data name="ImportButtonTitle" xml:space="preserve">
     <value>Importar</value>
+  </data>
+  <data name="MessageFinishConDialogTitle" xml:space="preserve">
+    <value>¿Estás seguro de que deseas finalizar la conciliación?</value>
   </data>
   <data name="MovimientoSavedSuccessfully" xml:space="preserve">
     <value>Movimientos importados exitosamente</value>
