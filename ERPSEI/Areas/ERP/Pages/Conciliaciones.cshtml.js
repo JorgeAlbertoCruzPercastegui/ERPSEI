@@ -236,16 +236,30 @@ async function exportarAExcel(conciliacionId) {
             worksheet.getCell('A3').font = { bold: true };
             worksheet.getCell('B3').value = 1;
             worksheet.getCell('B3').font = { bold: true };
-            worksheet.getCell('C3').value = resp.datos.length > 0
-                ? `${resp.datos[0].cliente} ${resp.datos[0].serie}-F-${resp.datos[0].folio}`
-                : 'Sin Cliente';
-            worksheet.getCell('C3').font = { bold: true };
 
             // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
             const fechaEmisor = resp.datos.length > 0 ? resp.datos[0].fecha : 'N/A';
             const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
             worksheet.getCell('D3').value = dia;
             worksheet.getCell('D3').font = { bold: true };
+
+            // Obtener el nombre del receptor, serie y folio
+            const nombreReceptor = resp.datos.length > 0 ? resp.datos[0].nombreReceptor : 'N/A';
+            const serie = resp.datos.length > 0 ? resp.datos[0].serie : 'N/A';
+            const folio = resp.datos.length > 0 ? resp.datos[0].folio : 'N/A';
+
+            // Concatenar el nombre del receptor con la serie y el folio
+            const nombreCompleto = `${nombreReceptor} ${serie}-F-${folio}`;
+
+            // Asignar el nombre concatenado a las celdas D4, D5, D6 y D7
+            ['D4', 'D5', 'D6', 'D7'].forEach(cell => {
+                worksheet.getCell(cell).value = nombreCompleto;
+            });
+
+            // Concatenar "INGRESOS" con el nombre del receptor, la serie y el folio
+            const ingresosTexto = `INGRESOS ${nombreReceptor} ${serie}-F-${folio}`;
+            worksheet.getCell('C3').value = ingresosTexto;
+            worksheet.getCell('C3').font = { bold: true };
 
             // Aplicar color azul claro a las celdas A3 y B3
             const lightBlue = 'CCECFF';
@@ -263,6 +277,7 @@ async function exportarAExcel(conciliacionId) {
             // Colocar texto en las celdas B5 y B6
             worksheet.getCell('B5').value = '2180-001-000';
             worksheet.getCell('B6').value = '2181-001-000';
+            worksheet.getCell('B8').value = 'FIN_PARTIDAS';
 
             // Colocar el número 0 en las celdas C4, C5, C6 y C7, centrado
             ['C4', 'C5', 'C6', 'C7'].forEach(cell => {
@@ -301,7 +316,7 @@ async function exportarAExcel(conciliacionId) {
             worksheet.columns = [
                 { header: '', key: 'cliente', width: 5 },
                 { header: '', key: 'comprobanteId', width: 15 },
-                { header: '', key: 'serie', width: 38 },
+                { header: '', key: 'serie', width: 50 },
                 { header: '', key: 'folio', width: 38 },
                 { header: '', key: 'total', width: 3 },
                 { header: '', key: 'movimientoId', width: 15 },

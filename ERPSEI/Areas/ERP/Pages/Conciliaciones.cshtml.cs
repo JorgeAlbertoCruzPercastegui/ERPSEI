@@ -240,6 +240,10 @@ namespace ERPSEI.Areas.ERP.Pages
                         // Obtener el TotalImpuestosTrasladados del comprobante
                         var totalImpuestosTrasladados = await conciliacionManager.GetTotalImpuestosTrasladadosAsync(comprobante.Comprobante?.Impuestos?.Id);
 
+                        // Obtener los datos del receptor
+                        var rfcReceptor = comprobante.Comprobante?.Receptor?.Rfc ?? "N/A";
+                        var nombreReceptor = comprobante.Comprobante?.Receptor?.Nombre ?? "N/A";
+
                         foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                         {
                             datosExcel.Add(new
@@ -254,7 +258,9 @@ namespace ERPSEI.Areas.ERP.Pages
                                 Cargos = movimiento.MovimientoBancario?.Importe ?? 0,
                                 Fecha = comprobante.Comprobante?.Fecha ?? "N/A",
                                 //Subtotal = comprobante.Comprobante?.SubTotal ?? 0,
-                                TotalImpuestosTrasladados = totalImpuestosTrasladados
+                                TotalImpuestosTrasladados = totalImpuestosTrasladados,
+                                RfcReceptor = rfcReceptor,
+                                NombreReceptor = nombreReceptor
                             });
                         }
                     }
