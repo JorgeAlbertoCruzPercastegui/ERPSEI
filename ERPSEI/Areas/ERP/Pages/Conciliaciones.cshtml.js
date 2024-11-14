@@ -199,28 +199,6 @@ window.operateEvents = {
         $('#tableResult').bootstrapTable('load', []);
     },
     'click .export': function (e, value, row, index) {
-        /*const cliente = row.Cliente || row.Empresa || 'Sin cliente';
-        const totalComprobante = row.Total || 0; // Obtener el total del comprobante
-
-        let totalMovimiento = 0;
-
-        // Verificar si el comprobante tiene movimientos conciliados
-        if (row.movimientosConciliados && row.movimientosConciliados.length > 0) {
-            // Tomar el cargo del primer movimiento asociado (conciliado)
-            totalMovimiento = row.movimientosConciliados.reduce((acc, mov) => acc + parseFloat(mov.Cargos || 0), 0);
-        } else {
-            // Si no hay movimientos conciliados, buscar manualmente en `tableCardMovimientos`
-            let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
-            let comprobanteId = row.id;
-
-            movimientosData.forEach((mov) => {
-                if (mov.comprobantesConciliados && mov.comprobantesConciliados.some(comp => comp.Id === comprobanteId)) {
-                    totalMovimiento = parseFloat(mov.Cargos || 0);
-                }
-            });
-        }
-        exportarAExcelConFormato(cliente, totalComprobante, totalMovimiento);
-        */
 
         console.log("Contenido del objeto row:", row);
         
@@ -232,7 +210,6 @@ window.operateEvents = {
             return;
         }
 
-        // Llamar a la función para exportar a Excel
         exportarAExcel(conciliacionId);
     }
 }
@@ -356,7 +333,6 @@ async function exportarAExcel(conciliacionId) {
 }
 
 
-
 function onAgregarClick() {
     initConciliacionDialog(NUEVO, { id: "Nuevo", nombre: "" });
 
@@ -365,114 +341,6 @@ function onAgregarClick() {
     $('#tableResult').bootstrapTable('load', []);
 }
 
-
-/*function exportarAExcel(row) {
-    //Crear un libro de Excel usando SheetJS
-    const wb = XLSX.utils.book_new();
-    const wsData = [
-        ["Id", "Fecha", "Total", "Descripción"],
-        [row.id, row.Fecha, row.Total, row.Descripcion || "Sin descripción"]
-    ];
-
-    //Crear la hoja de Excel
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, "Datos");
-
-    //Descargar el archivo Excel
-    XLSX.writeFile(wb, `Export_${row.id}.xlsx`);
-}*/
-
-async function exportarAExcelConFormato(cliente, totalComprobante, totalMovimiento) {
-    const ExcelJS = window.ExcelJS;
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('POLIZA COMPLETA');
-
-    // Configuración de las columnas
-    worksheet.columns = [
-        { header: '', width: 5 },   // Columna de 'lg'
-        { header: '', width: 10 },  // Columna con el número
-        { header: '', width: 40 },  // Columna para el cliente/empresa
-        { header: '', width: 25 },  // Columna de descripción
-        { header: '', width: 2 }
-    ];
-
-    // Fila vacía inicial (sin encabezados)
-    worksheet.addRow([]);
-
-    // Fila del título con el número y cliente/empresa
-    const titleRow = worksheet.addRow(['lg', 1, cliente || 'Sin cliente', '', '', 'CARGO', 'ABONO']);
-    titleRow.font = { bold: true, color: { argb: 'FFFFFF' } };
-
-    // Aplicar color azul solo a las primeras dos columnas
-    titleRow.getCell(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: '0070C0' }
-    };
-    titleRow.getCell(2).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: '0070C0' }
-    };
-
-    // Ajustar el color del cliente a negro
-    titleRow.getCell(3).font = { bold: true, color: { argb: '000000' } };
-
-    // Añadir títulos de "CARGOS" y "ABONOS" en negritas
-    worksheet.getCell('F3').value = 'CARGO';
-    worksheet.getCell('F3').font = { bold: true };
-    worksheet.getCell('G3').value = 'ABONO';
-    worksheet.getCell('G3').font = { bold: true };
-
-    // Colocar el total del comprobante en la celda F4 y limitar a dos decimales
-    const formattedTotal = parseFloat(totalComprobante).toFixed(2);
-
-    // Colocar el total del comprobante en la celda F4 y limitar a dos decimales
-    const formattedTotalMov = parseFloat(totalMovimiento).toFixed(2);
-
-    // Filas de partidas con valores enteros y centrados
-    const partidas = [
-        { numero: 1120, descripcion: 'Descripción 1', cargo: parseFloat(formattedTotal), abono: 0 },
-        { numero: 1121, descripcion: 'Descripción 2', cargo: 0, abono: 0 },
-        { numero: 1122, descripcion: 'Descripción 3', cargo: 0, abono: 0 },
-        { numero: 1123, descripcion: 'Descripción 4', cargo: 0, abono: parseFloat(formattedTotalMov) }
-    ];
-
-    partidas.forEach((partida, index) => {
-        let partidaRow = worksheet.addRow(['', partida.numero, 0, partida.descripcion, '', partida.cargo, partida.abono]);
-        partidaRow.getCell(2).numFmt = '0'; // Asegura que sea un entero
-        partidaRow.getCell(6).numFmt = '#,##0.00'; // Formato de moneda para CARGO
-        partidaRow.getCell(7).numFmt = '#,##0.00'; // Formato de moneda para ABONO
-        partidaRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-        partidaRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
-        partidaRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
-        partidaRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
-    });
-
-    // Fila de fin de partidas sin negritas
-    const finPartidasRow = worksheet.addRow(['', 'FIN_PARTIDAS', '', '', '', '', '']);
-    finPartidasRow.font = { bold: false };
-
-    // Ajustar el ancho de las columnas automáticamente
-    worksheet.columns.forEach(column => {
-        let maxLength = 10;
-        column.eachCell({ includeEmpty: true }, cell => {
-            const cellLength = cell.value ? cell.value.toString().length : 10;
-            maxLength = Math.max(maxLength, cellLength);
-        });
-        column.width = maxLength + 2; // Añadir un margen adicional
-    });
-
-    // Guardar el archivo Excel
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Poliza_Completa_Con_Formato.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
-}
 
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({

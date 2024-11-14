@@ -247,7 +247,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                 MovimientoId = movimiento.MovimientoBancario?.Id ?? 0,
                                 DescripcionMovimiento = movimiento.MovimientoBancario?.Descripcion ?? "N/A",
                                 Cargos = movimiento.MovimientoBancario?.Importe ?? 0,
-                                Emisor = comprobante.Comprobante?.Fecha ?? "N/A"
+                                Fecha = comprobante.Comprobante?.Fecha ?? "N/A"
                             });
                         }
                     }
