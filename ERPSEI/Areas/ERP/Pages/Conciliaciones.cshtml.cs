@@ -20,6 +20,8 @@ using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using SixLabors.ImageSharp.PixelFormats;
 using iText.Commons.Actions.Contexts;
+using ERPSEI.Data.Entities.Cuentas;
+using ERPSEI.Data.Managers.Cuentas;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -209,7 +211,7 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 resp.Datos = await GetExportarExcel(id);
                 resp.TieneError = false;
-                resp.Mensaje = localizer["finalizarConciliacionSuccessfully"];
+                resp.Mensaje = localizer["ExportExcelSuccessfully"];
             }
             catch (Exception ex)
             {
@@ -235,6 +237,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     foreach (var comprobante in detalle.ConciliacionesDetallesComprobantes)
                     {
+                        // Obtener el TotalImpuestosTrasladados del comprobante
+                        var totalImpuestosTrasladados = await conciliacionManager.GetTotalImpuestosTrasladadosAsync(comprobante.Comprobante?.Impuestos?.Id);
+
                         foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                         {
                             datosExcel.Add(new
@@ -247,7 +252,9 @@ namespace ERPSEI.Areas.ERP.Pages
                                 MovimientoId = movimiento.MovimientoBancario?.Id ?? 0,
                                 DescripcionMovimiento = movimiento.MovimientoBancario?.Descripcion ?? "N/A",
                                 Cargos = movimiento.MovimientoBancario?.Importe ?? 0,
-                                Fecha = comprobante.Comprobante?.Fecha ?? "N/A"
+                                Fecha = comprobante.Comprobante?.Fecha ?? "N/A",
+                                //Subtotal = comprobante.Comprobante?.SubTotal ?? 0,
+                                TotalImpuestosTrasladados = totalImpuestosTrasladados
                             });
                         }
                     }
@@ -313,7 +320,7 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonResponse);
         }
 
-        public async Task<JsonResult> OnPostfinalizarConciliacion(int id)
+        public async Task<JsonResult> OnGetfinalizarConciliacion(int id)
         {
             ServerResponse resp = new(true, localizer["finalizarConciliacionUnsuccessfully"]);
             try

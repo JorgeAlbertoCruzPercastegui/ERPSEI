@@ -14,5 +14,7 @@ namespace ERPSEI.Data.Managers.Conciliaciones
             DateTime? fechaElaboracionFin = null,
             bool deshabilitado = false
         );
+
+        public Task<decimal> GetTotalImpuestosTrasladadosAsync(int? impuestosId);
     }
 }

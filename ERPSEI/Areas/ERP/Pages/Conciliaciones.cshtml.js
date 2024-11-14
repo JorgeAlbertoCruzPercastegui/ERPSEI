@@ -242,7 +242,7 @@ async function exportarAExcel(conciliacionId) {
             worksheet.getCell('C3').font = { bold: true };
 
             // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
-            const fechaEmisor = resp.datos.length > 0 ? resp.datos[0].emisor : 'N/A';
+            const fechaEmisor = resp.datos.length > 0 ? resp.datos[0].fecha : 'N/A';
             const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
             worksheet.getCell('D3').value = dia;
             worksheet.getCell('D3').font = { bold: true };
@@ -280,7 +280,14 @@ async function exportarAExcel(conciliacionId) {
             const datos = Array.isArray(resp.datos) ? resp.datos : [];
             const totalCargos = datos.reduce((sum, dato) => sum + (dato.cargos || 0), 0);
             worksheet.getCell('F4').value = totalCargos;
+            
+            // Obtener el TotalImpuestosTrasladados desde los datos del modelo
+            const totalImpuestosTrasladados = resp.datos.length > 0 ? resp.datos[0].totalImpuestosTrasladados : 0;
 
+            // Asignar el valor de TotalImpuestosTrasladados en las celdas G5 y F6
+            worksheet.getCell('G5').value = totalImpuestosTrasladados;
+            worksheet.getCell('F6').value = totalImpuestosTrasladados;
+            
             // Colocar el cargo del movimiento en la celda G7
             worksheet.getCell('G7').value = datos.length > 0 ? datos[0].cargos : 0;
 
@@ -476,31 +483,33 @@ function onCerrarConciliacionClick() {
         showError(dlgFinishConTitle, "No se pudo obtener el ID de la conciliación.");
         return;
     }
+    
+    askConfirmation(
+        dlgFinishConTitle,
+        dlgMessageFinishConTitle,
+        function () {
+            let oParams = { idConciliacion: conciliacionId };
+            
+            doAjax(
+                "/ERP/Conciliaciones/finalizarConciliacion",
+                oParams,
+                function (resp) {
+                    if (resp.tieneError) {
+                        showError(dlgFinishConTitle, resp.mensaje);
+                        return;
+                    }
 
-    // Parámetros para la solicitud AJAX
-    const oParams = { conciliacionId };
-
-    // Realizar la solicitud AJAX para finalizar la conciliación
-    doAjax(
-        "/ERP/Conciliaciones/finalizarConciliacion",
-        oParams,
-        function (resp) {
-            // Manejo de errores
-            if (resp.tieneError) {
-                const summary = Array.isArray(resp.errores) && resp.errores.length > 0
-                    ? `<ul>${resp.errores.map(error => `<li>${error}</li>`).join('')}</ul>`
-                    : "Ocurrió un error desconocido.";
-
-                showError(dlgTitle.innerHTML, summary);
-                return;
-            }
-            // Mostrar mensaje de éxito
-            showSuccess(dlgFinishConTitle, resp.mensaje);
+                    showSuccess(dlgFinishConTitle, resp.mensaje);
+                    document.querySelector("[name='refresh']").click();
+                },
+                function (error) {
+                    showError(dlgFinishConTitle, error);
+                }
+            );
         },
-        function (error) {
-            showError(dlgFinishConTitle, error);
-        },
-        postOptions
+        function () {
+            showInfo(dlgFinishConTitle, "La acción de cerrar conciliación ha sido cancelada.");
+        }
     );
 }
 

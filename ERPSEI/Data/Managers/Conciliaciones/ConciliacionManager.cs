@@ -119,7 +119,7 @@ namespace ERPSEI.Data.Managers.Conciliaciones
         {
             return await db.Conciliaciones
                 .Where(p => p.Id == id)
-                .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante)
+                .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante).ThenInclude(p => p.Impuestos)
                 .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesMovimientos).ThenInclude(p => p.MovimientoBancario)
                 .FirstOrDefaultAsync();
         }
@@ -128,5 +128,18 @@ namespace ERPSEI.Data.Managers.Conciliaciones
         {
             return await db.Conciliaciones.Where(a => a.Descripcion.ToLower() == desc.ToLower()).FirstOrDefaultAsync();
         }
+
+        public async Task<decimal> GetTotalImpuestosTrasladadosAsync(int? impuestosId)
+        {
+            if (impuestosId == null)
+                return 0;
+
+            // Obtener el TotalImpuestosTrasladados de la tabla ComprobantesImpuestos
+            return await db.ComprobantesImpuestos
+                .Where(ci => ci.Id == impuestosId)
+                .Select(ci => ci.TotalImpuestosTrasladados)
+                .FirstOrDefaultAsync();
+        }
+
     }
 }
