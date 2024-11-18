@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Conciliaciones;
+using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Reportes;
 using Microsoft.EntityFrameworkCore;
@@ -122,6 +123,7 @@ namespace ERPSEI.Data.Managers.Conciliaciones
                 .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante).ThenInclude(p => p.Impuestos)
                 .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante).ThenInclude(c => c.Receptor)
                 .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesMovimientos).ThenInclude(p => p.MovimientoBancario)
+                .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante).ThenInclude(p => p.Complemento).ThenInclude(p => p.TimbreFiscalDigital) // Incluye TimbreFiscalDigital
                 .FirstOrDefaultAsync();
         }
 

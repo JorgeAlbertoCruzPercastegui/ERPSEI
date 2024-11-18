@@ -495,39 +495,71 @@ function onCerrarConciliacionClick() {
     const conciliacionId = document.getElementById("inpConciliacionId").value;
 
     if (!conciliacionId) {
+        showError("Error", "Debe seleccionar una conciliación.");
+        return;
+    }
+
+    let oParams = { ids: [parseInt(conciliacionId)] };
+
+    askConfirmation("Cerrar Conciliación", "¿Está seguro de que desea cerrar esta conciliación?", function () {
+        doAjax(
+            "/ERP/Conciliaciones/FinalizarConciliaciones",
+            oParams,
+            function (resp) {
+                if (resp.tieneError) {
+                    showError("Error", resp.mensaje);
+                    return;
+                }
+
+                // Actualizar la tabla y mostrar mensaje de éxito
+                table.bootstrapTable('updateByUniqueId', {
+                    id: parseInt(conciliacionId),
+                    row: { Finalizada: true }
+                });
+
+                showSuccess("Conciliación Cerrada", resp.mensaje);
+            },
+            function (error) {
+                showError("Error", error);
+            },
+            postOptions
+        );
+    });
+}
+
+
+/*function onCerrarConciliacionClick() {
+    $.extend(postOptions, { type: 'POST', contentType: 'application/json' });
+
+    const conciliacionId = document.getElementById("inpConciliacionId").value;
+
+    if (!conciliacionId) {
         showError(dlgFinishConTitle, "No se pudo obtener el ID de la conciliación.");
         return;
     }
-    
-    askConfirmation(
-        dlgFinishConTitle,
-        dlgMessageFinishConTitle,
-        function () {
-            let oParams = { idConciliacion: conciliacionId };
-            
-            doAjax(
-                "/ERP/Conciliaciones/finalizarConciliacion",
-                oParams,
-                function (resp) {
-                    if (resp.tieneError) {
-                        showError(dlgFinishConTitle, resp.mensaje);
-                        return;
-                    }
 
-                    showSuccess(dlgFinishConTitle, resp.mensaje);
-                    document.querySelector("[name='refresh']").click();
-                },
-                function (error) {
-                    showError(dlgFinishConTitle, error);
-                }
-            );
+    // Crear un objeto con la clave `id`
+    let oParams = { id: parseInt(conciliacionId) };
+
+    console.log("Enviando oParams:", oParams);
+
+    doAjax(
+        "/ERP/Conciliaciones/finalizarConciliacion",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                showError(dlgFinishConTitle, resp.mensaje);
+                return;
+            }
+
+            showSuccess(dlgFinishConTitle, resp.mensaje);
+            document.querySelector("[name='refresh']").click();
         },
-        function () {
-            showInfo(dlgFinishConTitle, "La acción de cerrar conciliación ha sido cancelada.");
+        function (error) {
+            showError(dlgFinishConTitle, error.responseText || error.statusText);
         }
     );
-}
-
+}*/
 
 let cachedData = $('#tableCardComprobantes').bootstrapTable('getData');
 function initTableComprobantes() {
@@ -1960,7 +1992,7 @@ function obtenerRegistrosConciliados(conciliacionId) {
     $.extend(postOptions, { type: 'GET' });
 
     doAjax(
-        "/ERP/Conciliaciones/ComprobantesMovimientosList",
+        "/ERP/Conciliaciones/ProcessedConciliacionList",
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -1976,7 +2008,8 @@ function obtenerRegistrosConciliados(conciliacionId) {
 
             // Procesar los datos y extraer los arreglos de comprobantes, movimientos y conciliados
             //const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
-            const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
+            //const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
+            const { comprobantes, movimientos, conciliaciones } = JSON.parse(resp.datos);
 
             // Cargar los datos en las tablas correspondientes
             $('#tableCardComprobantes').bootstrapTable('load', comprobantes);

@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Conciliaciones;
+using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.Reportes;
 
 namespace ERPSEI.Data.Managers.Conciliaciones

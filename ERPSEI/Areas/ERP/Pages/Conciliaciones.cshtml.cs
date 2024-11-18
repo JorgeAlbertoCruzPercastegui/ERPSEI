@@ -22,6 +22,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using iText.Commons.Actions.Contexts;
 using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Managers.Cuentas;
+using Newtonsoft.Json;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -326,49 +327,46 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonResponse);
         }
 
-        public async Task<JsonResult> OnGetfinalizarConciliacion(int id)
+        public async Task<JsonResult> OnPostFinalizarConciliaciones(string[] ids)
         {
-            ServerResponse resp = new(true, localizer["finalizarConciliacionUnsuccessfully"]);
+            ServerResponse resp = new(true, stringLocalizer["ConciliacionesFinalizadasUnsuccessfully"]);
             try
             {
-                resp.Datos = await UpdatefinalizarConciliacion(id);
+                await db.Database.BeginTransactionAsync();
+
+                // Obtener las conciliaciones que coinciden con los ids proporcionados
+                foreach (string id in ids)
+                {
+                    if (!int.TryParse(id, out int sid)) { sid = 0; }
+                    Conciliacion? conciliacion = await conciliacionManager.GetByIdAsync(sid);
+
+                    // Verificar si la conciliación es nula
+                    if (conciliacion == null)
+                    {
+                        resp.TieneError = true;
+                        resp.Mensaje = $"Conciliación con ID {sid} no encontrada.";
+                        break;
+                    }
+
+                    // Marcar la conciliación como finalizada
+                    conciliacion.Finalizada = true;
+                    await conciliacionManager.UpdateAsync(conciliacion);
+                }
+
+                await db.Database.CommitTransactionAsync();
                 resp.TieneError = false;
-                resp.Mensaje = localizer["finalizarConciliacionSuccessfully"];
+                resp.Mensaje = stringLocalizer["ConciliacionesFinalizadasSuccessfully"];
             }
             catch (Exception ex)
             {
-                logger.LogError("{message}", ex.Message);
-                resp.Mensaje = ex.Message;
+                await db.Database.RollbackTransactionAsync();
+                logger.LogError(ex.Message);
+                resp.TieneError = true;
+                resp.Mensaje = "Ocurrió un error al procesar la solicitud.";
             }
 
             return new JsonResult(resp);
         }
-
-        public async Task<Conciliacion?> UpdatefinalizarConciliacion(int id)
-        {
-            // Buscar la conciliación en la base de datos
-            var conciliacion = await db.Conciliaciones.FindAsync(id);
-            if (conciliacion == null)
-            {
-                return null;
-            }
-
-            // Verificar si ya está finalizada
-            if (conciliacion.Finalizada)
-            {
-                return null;
-            }
-
-            // Actualizar el estado de la conciliación
-            conciliacion.Finalizada = true;
-            //conciliacion.UsuarioModificadorId = GetCurrentUserId();
-
-            // Guardar cambios
-            await db.SaveChangesAsync();
-
-            return conciliacion;
-        }
-
 
         public async Task<JsonResult> OnGetComprobantesList()
         {
@@ -591,6 +589,102 @@ namespace ERPSEI.Areas.ERP.Pages
             jsonResponse = $"[{string.Join(",", jsonDetalles)}]";
 
             return jsonResponse;
+        }
+
+        public async Task<JsonResult> OnGetProcessedConciliacionList(int id)
+        {
+            ServerResponse resp = new(true, stringLocalizer["ComprobantesFiltradosUnsuccessfully"]);
+            try
+            {
+                Conciliacion? c = await conciliacionManager.GetByIdAsync(id);
+                if (c == null)
+                {
+                    resp.Mensaje = stringLocalizer["ConciliacionSuccessfully"];
+                    return new JsonResult(resp);
+                }
+
+                List<object> comprobantes = new();
+                List<object> movimientos = new();
+                List<object> conciliaciones = new();
+                HashSet<int> idsConciliados = new();
+                Dictionary<int, object> mapaMovimientos = new();
+
+                // Procesar detalles de movimientos
+                foreach (var detalle in c.DetallesConciliacion)
+                {
+                    foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
+                    {
+                        var movimientoData = new
+                        {
+                            Id = movimiento.Id,
+                            Fecha = movimiento.MovimientoBancario.Fecha?.ToString("yyyy-MM-dd"),
+                            Descripcion = movimiento.MovimientoBancario.Descripcion ?? "Sin descripción",
+                            Cargos = movimiento.MovimientoBancario.Importe ?? 0,
+                            Abonos = 0,
+                            Banco = movimiento.MovimientoBancarioId,
+                            bloqueado = true
+                        };
+                        mapaMovimientos[movimiento.Id] = movimientoData;
+                        movimientos.Add(movimientoData);
+                    }
+                }
+
+                // Procesar detalles de comprobantes y asociar movimientos
+                foreach (var detalle in c.DetallesConciliacion)
+                {
+                    foreach (var comprobante in detalle.ConciliacionesDetallesComprobantes)
+                    {
+                        if (idsConciliados.Contains(comprobante.Id)) continue;
+                        idsConciliados.Add(comprobante.Id);
+
+                        // Buscar movimientos asociados
+                        List<object> movimientosConciliados = new();
+                        foreach (var mov in detalle.ConciliacionesDetallesMovimientos)
+                        {
+                            if (mapaMovimientos.ContainsKey(mov.Id))
+                            {
+                                movimientosConciliados.Add(mapaMovimientos[mov.Id]);
+                            }
+                        }
+
+                        // Crear objeto de comprobante
+                        var comprobanteData = new
+                        {
+                            Id = comprobante.Id,
+                            Serie = comprobante.Comprobante.Serie,
+                            Folio = comprobante.Comprobante.Folio,
+                            Fecha = comprobante.Comprobante.Fecha?.ToString(),
+                            UUID = comprobante.Comprobante.Complemento?.TimbreFiscalDigital?.UUID ?? "UUID no disponible",
+                            Total = comprobante.Comprobante.Total,
+                            movimientosConciliados,
+                            bloqueado = true
+                        };
+                        comprobantes.Add(comprobanteData);
+
+                        // Agregar a conciliaciones para tableResult
+                        conciliaciones.Add(comprobanteData);
+                    }
+                }
+
+                // Preparar la respuesta
+                var resultData = new
+                {
+                    comprobantes,
+                    movimientos,
+                    conciliaciones
+                };
+
+                resp.Mensaje = stringLocalizer["ComprobantesFiltradosSuccessfully"];
+                resp.Datos = JsonConvert.SerializeObject(resultData);
+                resp.TieneError = false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{message}", ex.Message);
+                resp.Mensaje = ex.Message;
+            }
+
+            return new JsonResult(resp);
         }
 
 
