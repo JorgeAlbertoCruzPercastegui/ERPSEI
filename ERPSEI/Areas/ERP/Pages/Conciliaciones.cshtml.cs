@@ -614,6 +614,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                     {
+                        // Extraer el Banco desde la tabla Conciliaciones
+                        string? banco = detalle.Conciliacion?.Banco?.Nombre ?? "Banco no especificado";
+
                         var movimientoData = new
                         {
                             Id = movimiento.Id,
@@ -621,7 +624,7 @@ namespace ERPSEI.Areas.ERP.Pages
                             Descripcion = movimiento.MovimientoBancario.Descripcion ?? "Sin descripción",
                             Cargos = movimiento.MovimientoBancario.Importe ?? 0,
                             Abonos = 0,
-                            Banco = movimiento.MovimientoBancarioId,
+                            Banco = banco,
                             bloqueado = true
                         };
                         mapaMovimientos[movimiento.Id] = movimientoData;
@@ -647,6 +650,8 @@ namespace ERPSEI.Areas.ERP.Pages
                             }
                         }
 
+                        string? banco = detalle.Conciliacion?.Banco?.Nombre ?? "Banco no especificado";
+
                         // Crear objeto de comprobante
                         var comprobanteData = new
                         {
@@ -654,7 +659,9 @@ namespace ERPSEI.Areas.ERP.Pages
                             Serie = comprobante.Comprobante.Serie,
                             Folio = comprobante.Comprobante.Folio,
                             Fecha = comprobante.Comprobante.Fecha?.ToString(),
+                            Banco = banco,
                             UUID = comprobante.Comprobante.Complemento?.TimbreFiscalDigital?.UUID ?? "UUID no disponible",
+                            Receptor = comprobante.Comprobante.Receptor?.Nombre ?? "Receptor no especificado",
                             Total = comprobante.Comprobante.Total,
                             movimientosConciliados,
                             bloqueado = true

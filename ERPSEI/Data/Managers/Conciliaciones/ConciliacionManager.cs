@@ -120,6 +120,7 @@ namespace ERPSEI.Data.Managers.Conciliaciones
         {
             return await db.Conciliaciones
                 .Where(p => p.Id == id)
+                .Include(p => p.Banco)
                 .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante).ThenInclude(p => p.Impuestos)
                 .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesComprobantes).ThenInclude(p => p.Comprobante).ThenInclude(c => c.Receptor)
                 .Include(p => p.DetallesConciliacion).ThenInclude(p => p.ConciliacionesDetallesMovimientos).ThenInclude(p => p.MovimientoBancario)

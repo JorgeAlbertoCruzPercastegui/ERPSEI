@@ -842,13 +842,14 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 
     if (selectedMovimientos.length > 0) {
         $('#tableResult').bootstrapTable('append', {
-            id: comprobanteSeleccionado.Id,
+            Id: comprobanteSeleccionado.Id,
             //idComprobante: comprobanteSeleccionado.Id,  // Guardar el idComprobante original
             Serie: comprobanteSeleccionado.Serie,
             Folio: comprobanteSeleccionado.Folio,
             Fecha: comprobanteSeleccionado.Fecha,
             Banco: selectedMovimientos[0].Banco,
-            Descripción: selectedMovimientos[0].Descripcion,
+            UUID: comprobanteSeleccionado.UUID,
+            //Receptor: comprobanteSeleccionado.Receptor ?? "Receptor no especificado",
             Total: parseFloat(comprobanteSeleccionado.Total).toFixed(2),
             UUID: uuid,
             movimientosConciliados: selectedMovimientos
@@ -891,7 +892,7 @@ function desconciliarFormatter(value, row, index) {
     let disabled = row.bloqueado ? 'disabled' : '';
 
     return `
-        <center><button class="btn btn-danger btn-sm" onclick="desconciliar(${row.id}, '${row.Fecha}', '${row.Total}')" ${disabled}>
+        <center><button class="btn btn-danger btn-sm" onclick="desconciliar(${row.Id}, '${row.Fecha}', '${row.Total}')" ${disabled}>
             <i class=""></i> Desconciliar
         </button></center>
     `;
@@ -899,31 +900,31 @@ function desconciliarFormatter(value, row, index) {
 
 
 //Desconciliar comprobante con movimientos y movimiento con comprobantes(unión de desconciliarMov y desconciliarComp)
-function desconciliar(id, fechaMovimiento, totalMovimiento) {
+function desconciliar(Id, fechaMovimiento, totalMovimiento) {
     // Obtener los datos actuales de `tableResult`
     let resultData = $('#tableResult').bootstrapTable('getData');
-    let itemEnResultado = resultData.find(row => row.id === String(id) || row.id === Number(id));
+    let itemEnResultado = resultData.find(row => row.Id === String(Id) || row.Id === Number(Id));
 
     // Obtener los datos de las tablas de movimientos y comprobantes
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
 
     // Verificar si el ID es de un movimiento
-    let movimiento = movimientosData.find(mov => mov.Id == id);
+    let movimiento = movimientosData.find(mov => mov.Id == Id);
     if (movimiento) {
         // Lógica de desconciliación para movimientos
         movimiento.conciliado = false;
         movimiento.coincidencia = false;
         $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
-            id: movimiento.Id,
+            Id: movimiento.Id,
             row: movimiento
         });
         $(`#tableCardMovimientos tr[data-uniqueid="${movimiento.Id}"]`).removeClass("table-success");
 
         if (itemEnResultado) {
             $('#tableResult').bootstrapTable('remove', {
-                field: 'id',
-                values: [Number(id)]
+                field: 'Id',
+                values: [Number(Id)]
             });
             console.log("Movimiento eliminado de tableResult.");
             $('#tableResult').bootstrapTable('refresh');
@@ -937,7 +938,7 @@ function desconciliar(id, fechaMovimiento, totalMovimiento) {
                     comprobanteEncontrado.conciliado = false;
                     comprobanteEncontrado.coincidencia = false;
                     $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
-                        id: comprobanteEncontrado.Id,
+                        Id: comprobanteEncontrado.Id,
                         row: comprobanteEncontrado
                     });
                     $(`#tableCardComprobantes tr[data-uniqueid="${comprobanteEncontrado.Id}"]`).removeClass("table-success");
@@ -949,21 +950,21 @@ function desconciliar(id, fechaMovimiento, totalMovimiento) {
     }
 
     // Verificar si el ID es de un comprobante
-    let comprobante = comprobantesData.find(comp => comp.Id == id);
+    let comprobante = comprobantesData.find(comp => comp.Id == Id);
     if (comprobante) {
         // Lógica de desconciliación para comprobantes
         comprobante.conciliado = false;
         comprobante.coincidencia = false;
         $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
-            id: comprobante.Id,
+            Id: comprobante.Id,
             row: comprobante
         });
         $(`#tableCardComprobantes tr[data-uniqueid="${comprobante.Id}"]`).removeClass("table-success");
 
         if (itemEnResultado) {
             $('#tableResult').bootstrapTable('remove', {
-                field: 'id',
-                values: [String(id)]
+                field: 'Id',
+                values: [String(Id)]
             });
             console.log("Comprobante eliminado de tableResult.");
             $('#tableResult').bootstrapTable('refresh');
@@ -977,7 +978,7 @@ function desconciliar(id, fechaMovimiento, totalMovimiento) {
                     movimientoEncontrado.conciliado = false;
                     movimientoEncontrado.coincidencia = false;
                     $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
-                        id: movimientoEncontrado.Id,
+                        Id: movimientoEncontrado.Id,
                         row: movimientoEncontrado
                     });
                     $(`#tableCardMovimientos tr[data-uniqueid="${movimientoEncontrado.Id}"]`).removeClass("table-success");
