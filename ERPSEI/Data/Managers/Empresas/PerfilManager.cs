@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.Empresas
 {
-    public class PerfilManager : IRWCatalogoManager<Perfil>
+    public class PerfilManager : IPerfilManager
     {
         ApplicationDbContext db { get; set; }
 
