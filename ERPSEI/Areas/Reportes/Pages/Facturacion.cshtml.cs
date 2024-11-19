@@ -19,8 +19,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 			IEmpresaManager empresaManager,
 			IComprobanteManager comprobanteManager,
 			IStringLocalizer<FacturacionModel> localizer,
-			ILogger<FacturacionModel> logger,
-			IEncriptacionAES encriptacionAES
+			ILogger<FacturacionModel> logger
 		) : ERPPageModel
 	{
 
@@ -52,39 +51,9 @@ namespace ERPSEI.Areas.Reportes.Pages
 
 			foreach (Comprobante c in comprobantes)
 			{
-				DateTime? fecha = c.Fecha == DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss") || string.IsNullOrEmpty(c.Fecha) ? null : DateTime.ParseExact(c.Fecha, "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-
-				AppUser? usr = userManager.GetUserAsync(User).Result;
-				string safeL = string.Empty;
-				if (usr != null)
-				{
-					safeL = $"userId={usr.Id}&id={c.Id}&module=administradordecomprobantes";
-					safeL = encriptacionAES.PlainTextToBase64AES(safeL);
-				}
-
 				jsonComprobantes.Add(
 					"{" +
 						$"\"id\": {c.Id}," +
-						$"\"safeL\": \"{safeL}\"," +
-						$"\"serie\": \"{c.Serie ?? "F"}\", " +
-						$"\"folio\": \"{c.Folio ?? "0"}\", " +
-						$"\"fecha\": \"{fecha:dd/MM/yyyy HH:mm:ss}\", " +
-						$"\"fechaJS\": \"{fecha:yyyy-MM-dd HH:mm:ss}\", " +
-						$"\"uuid\": \"{c.Complemento?.TimbreFiscalDigital?.UUID}\", " +
-						$"\"formaPago\": \"{c.FormaPago}\", " +
-						$"\"subtotal\": \"{c.SubTotal}\", " +
-						$"\"descuento\": \"{c.Descuento}\", " +
-						$"\"moneda\": \"{c.Moneda}\", " +
-						$"\"tipoCambio\": {c.TipoCambio}, " +
-						$"\"total\": \"{c.Total}\", " +
-						$"\"tipoComprobante\": \"{c.TipoDeComprobante}\", " +
-						$"\"metodoPago\": \"{c.MetodoPago}\", " +
-						$"\"lugarExpedicion\": \"{c.LugarExpedicion}\", " +
-						$"\"emisor\": \"{c.Emisor?.Rfc}\", " +
-						$"\"receptor\": \"{c.Receptor?.Rfc}\", " +
-						$"\"usoCFDI\": \"{c.Receptor?.UsoCFDI}\", " +
-						$"\"cancelado\": \"{(c.Cancelado ?? false ? 1 : 0)}\", " +
-						$"\"valido\": \"{(c.Valido ?? false ? 1 : 0)}\", " +
 						$"\"contabilizado\": \"{(c.Contabilizado ?? false ? 1 : 0)}\"" +
 				"}"
 				);
@@ -127,16 +96,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 			comprobantes = await comprobanteManager.GetAllAsync(
 				filtro?.EmpresaRFC,
 				filtro?.Anio,
-				filtro?.Mes,
-				filtro?.EstatusId,
-				filtro?.TipoId,
-				filtro?.EstatusContableId,
-				filtro?.TipoComprobanteClave,
-				filtro?.FormaPagoClave,
-				filtro?.MetodoPagoClave,
-				filtro?.UsoCFDIClave,
-				filtro?.EmisorRFC,
-				filtro?.ReceptorRFC
+				filtro?.Mes
 			);
 
 			jsonResponse = CreateJsonComprobantes(comprobantes);
