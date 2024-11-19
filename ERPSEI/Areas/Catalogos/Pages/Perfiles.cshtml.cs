@@ -18,7 +18,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
     {
 		private readonly IProductoServicioManager _productosServiciosManager;
 		private readonly IProductoServicioPerfilManager _productosServiciosPerfilManager;
-		private readonly IRWCatalogoManager<Perfil> _catalogoManager;
+		private readonly IPerfilManager _catalogoManager;
 		private readonly IStringLocalizer<PerfilesModel> _strLocalizer;
 		private readonly ILogger<PerfilesModel> _logger;
 		private readonly ApplicationDbContext _db;
@@ -47,7 +47,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			IEmpresaManager empresaManager,
 			IProductoServicioManager productosServiciosManager,
 			IProductoServicioPerfilManager productosServiciosPerfilManager,
-			IRWCatalogoManager<Perfil> catalogoManager,
+			IPerfilManager catalogoManager,
 			IStringLocalizer<PerfilesModel> stringLocalizer,
 			ILogger<PerfilesModel> logger,
 			ApplicationDbContext db
