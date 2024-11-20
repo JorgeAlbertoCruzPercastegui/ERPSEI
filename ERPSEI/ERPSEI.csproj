@@ -23,14 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Remove="wwwroot\js\autocompletarModal.js" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="wwwroot\js\autocompletarModal.js" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="EPPlus" Version="7.3.2" />
     <PackageReference Include="ExcelDataReader" Version="3.7.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
@@ -60,10 +52,6 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\templates\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="wwwroot\js\autocompletarModal.js" />
   </ItemGroup>
 
   <ItemGroup>
@@ -111,6 +99,18 @@
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources\Areas\Identity\Pages\Account\PendingUserAuthorization.en-US.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Areas\Reportes\Pages\Facturacion.en-US.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Areas\Reportes\Pages\Facturacion.es-MX.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Areas\Reportes\Pages\FacturacionModel.en-US.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Areas\Reportes\Pages\FacturacionModel.es-MX.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources\Areas\Reportes\Pages\Asistencia.en-US.resx">
