@@ -327,7 +327,7 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonResponse);
         }
 
-        public async Task<JsonResult> OnGetFinalizarConciliaciones(int id)
+        public async Task<JsonResult> OnPutFinalizarConciliaciones(int id)
         {
             ServerResponse resp = new(true, stringLocalizer["ConciliacionFinalizadaUnsuccessfully"]);
             try

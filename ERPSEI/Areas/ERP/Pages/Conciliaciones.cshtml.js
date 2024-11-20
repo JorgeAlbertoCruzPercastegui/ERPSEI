@@ -14,8 +14,18 @@ const oneMegabyteSizeInBytes = 1048576; // 1mb = (1 * 1024) * 1024
 const postOptions = {
     headers: {
         "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
-    }
+    },
+    type: 'POST'
 };
+const getOptions = {
+    headers: postOptions.headers,
+    type: 'GET'
+};
+const putOptions = {
+    headers: postOptions.headers,
+    type: 'PUT'
+};
+
 document.addEventListener("DOMContentLoaded", function (event) {
     numFormatter = new Intl.NumberFormat(cultureName);
     table = $("#table");
@@ -497,6 +507,7 @@ function initTable() {
 }
 
 function onCerrarConciliacionClick() {
+
     // Muestra la confirmación antes de proceder
     askConfirmation(
         dlgFinishConTitle,
@@ -551,7 +562,7 @@ function onCerrarConciliacionClick() {
                 }, function (error) {
                     showError("Error", error);
                 },
-                postOptions
+                putOptions
             );
         },
         function () {
