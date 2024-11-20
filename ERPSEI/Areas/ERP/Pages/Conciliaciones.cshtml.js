@@ -294,6 +294,11 @@ async function exportarAExcel(conciliacionId) {
             worksheet.getCell('B6').value = '2181-001-000';
             worksheet.getCell('B8').value = 'FIN_PARTIDAS';
 
+            // Colocar el valor de CuentaContable en la celda B4
+            const cuentaContable = resp.datos.length > 0 ? resp.datos[0].cuentaContable : 'N/A';
+            worksheet.getCell('B4').value = cuentaContable; // Asignar valor al Excel
+
+
             // Colocar el número 0 en las celdas C4, C5, C6 y C7, centrado
             ['C4', 'C5', 'C6', 'C7'].forEach(cell => {
                 worksheet.getCell(cell).value = 0;

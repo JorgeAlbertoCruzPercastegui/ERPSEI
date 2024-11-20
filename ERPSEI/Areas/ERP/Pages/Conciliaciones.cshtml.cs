@@ -33,6 +33,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly ILogger<ConciliacionesModel> logger;
         private readonly IBancoManager bancoManager;
         private readonly IConciliacionManager conciliacionManager;
+        private readonly ICuentaContableManager cuentaContableManager;
         private readonly IConciliacionDetalleManager conciliacionDetalleManager;
         private readonly IConciliacionDetalleComprobanteManager conciliacionDetalleComprobanteManager;
         private readonly IConciliacionDetalleMovimientoManager conciliacionDetalleMovimientoManager;
@@ -173,6 +174,7 @@ namespace ERPSEI.Areas.ERP.Pages
             ILogger<ConciliacionesModel> _logger,
             IBancoManager _bancoManager,
             IConciliacionManager _conciliacionManager,
+            ICuentaContableManager _cuentaContableManager,
             IConciliacionDetalleManager _conciliacionDetalleManager,
             IConciliacionDetalleComprobanteManager _conciliacionDetalleComprobanteManager,
             IConciliacionDetalleMovimientoManager _conciliacionDetalleMovimientoManager,
@@ -188,6 +190,7 @@ namespace ERPSEI.Areas.ERP.Pages
             logger = _logger;
             bancoManager = _bancoManager;
             conciliacionManager = _conciliacionManager;
+            cuentaContableManager = _cuentaContableManager;
             conciliacionDetalleManager = _conciliacionDetalleManager;
             conciliacionDetalleComprobanteManager = _conciliacionDetalleComprobanteManager;
             conciliacionDetalleMovimientoManager = _conciliacionDetalleMovimientoManager;
@@ -228,7 +231,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             try
             {
-                // Obtener la conciliación por ID
+                // Obtener la conciliación por ID 
                 var conciliacion = await conciliacionManager.GetByIdAsync(conciliacionId);
 
                 // Crear una lista para almacenar los datos del Excel
@@ -244,26 +247,33 @@ namespace ERPSEI.Areas.ERP.Pages
 
                         // Obtener los datos del receptor
                         var rfcReceptor = comprobante.Comprobante?.Receptor?.Rfc ?? "N/A";
+                        var rfcEmisor = comprobante.Comprobante?.Emisor?.Rfc ?? "N/A";
                         var nombreReceptor = comprobante.Comprobante?.Receptor?.Nombre ?? "N/A";
+                        
+                        var EmisorId = comprobante.Comprobante.Emisor.Id;
+                        var empresas = await empresaManager.GetByRFCAsync(rfcEmisor);
+                        //var cuentasContables = await cuentaContableManager.GetByIdAsync(1708);
+                        var cuentasContables = await cuentaContableManager.GetFilteredAsync(empresas.Id, 1, 2, rfcReceptor);
+
 
                         foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                         {
-                            datosExcel.Add(new
-                            {
-                                Cliente = conciliacion.Cliente?.RazonSocial ?? "Sin Cliente",
-                                ComprobanteId = comprobante.Comprobante?.Id ?? 0,
-                                Serie = comprobante.Comprobante?.Serie ?? "N/A",
-                                Folio = comprobante.Comprobante?.Folio ?? "N/A",
-                                Total = comprobante.Comprobante?.Total ?? 0,
-                                MovimientoId = movimiento.MovimientoBancario?.Id ?? 0,
-                                DescripcionMovimiento = movimiento.MovimientoBancario?.Descripcion ?? "N/A",
-                                Cargos = movimiento.MovimientoBancario?.Importe ?? 0,
-                                Fecha = comprobante.Comprobante?.Fecha ?? "N/A",
-                                //Subtotal = comprobante.Comprobante?.SubTotal ?? 0,
-                                TotalImpuestosTrasladados = totalImpuestosTrasladados,
-                                RfcReceptor = rfcReceptor,
-                                NombreReceptor = nombreReceptor
-                            });
+                                    datosExcel.Add(new
+                                    {
+                                        Cliente = conciliacion.Cliente?.RazonSocial ?? "Sin Cliente",
+                                        ComprobanteId = comprobante.Comprobante?.Id ?? 0,
+                                        Serie = comprobante.Comprobante?.Serie ?? "N/A",
+                                        Folio = comprobante.Comprobante?.Folio ?? "N/A",
+                                        Total = comprobante.Comprobante?.Total ?? 0,
+                                        MovimientoId = movimiento.MovimientoBancario?.Id ?? 0,
+                                        DescripcionMovimiento = movimiento.MovimientoBancario?.Descripcion ?? "N/A",
+                                        Cargos = movimiento.MovimientoBancario?.Importe ?? 0,
+                                        Fecha = comprobante.Comprobante?.Fecha ?? "N/A",
+                                        TotalImpuestosTrasladados = totalImpuestosTrasladados,
+                                        CuentaContable = string.Join(", ", cuentasContables),
+                                        RfcReceptor = rfcReceptor,
+                                        NombreReceptor = nombreReceptor
+                                    });
                         }
                     }
                 }

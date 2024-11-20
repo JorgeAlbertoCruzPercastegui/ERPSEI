@@ -6,5 +6,7 @@ namespace ERPSEI.Data.Managers.Cuentas
 		public Task<List<CuentaContable>> GetByIdEmpresaAsync(int id);
 
 		public Task<List<CuentaContable>> SearchCuentas(string text, string receptorRFC, int tipoCuentaId, int subtipoCuentaId);
-	}
+        public Task<List<string>> GetFilteredAsync(int empresaId, int subtipoId, int tipoId, string rfc);
+
+    }
 }
