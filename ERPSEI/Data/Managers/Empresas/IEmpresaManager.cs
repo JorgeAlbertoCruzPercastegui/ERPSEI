@@ -20,5 +20,7 @@ namespace ERPSEI.Data.Managers.Empresas
 
         public Task<List<EmpresaBuscada>> SearchEmpresas(string texto);
 
+        public Task<List<Empresa>> GetAllWithPerfil();
+
 	}
 }

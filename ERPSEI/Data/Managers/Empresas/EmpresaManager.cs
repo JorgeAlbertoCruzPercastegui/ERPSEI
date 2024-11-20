@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.Empresas
 {
-    public class EmpresaManager : IEmpresaManager
+	public class EmpresaManager : IEmpresaManager
     {
         ApplicationDbContext db { get; set; }
 
@@ -176,6 +176,11 @@ namespace ERPSEI.Data.Managers.Empresas
 			List<EmpresaBuscada> emp = await db.Database.SqlQueryRaw<EmpresaBuscada>(sql).ToListAsync();
 
 			return emp;
+		}
+
+        public async Task<List<Empresa>> GetAllWithPerfil() 
+        {
+			return await db.Empresas.Include(e => e.Perfil).ToListAsync();
 		}
 
 	}
