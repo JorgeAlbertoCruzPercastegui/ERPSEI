@@ -1,4 +1,6 @@
 ﻿var numFormatter = null;
+var firstChart = null;
+var secondChart = null;
 
 const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
@@ -20,15 +22,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    CreateFirstChart();
+    autoCompletar("#inpFiltroEmpresaRFC", {
+        change: function (element, item) {
+            clearGraphics();
+            if (!item) { $('#inpFiltroEmpresaRFC').data('rfc', null); }
+        }
+    });
 
-    CreateSecondChart();
+    //CreateFirstChart();
+
+    //CreateSecondChart();
 
     //CreateThirdChart();
 
     //CreateFourthChart();
 });
 
+////////////////////////////////
+//Funcionalidad Filtrar
+////////////////////////////////
+//Función para limpiar la tabla de resultados
+function clearGraphics() {
+    if (firstChart) { firstChart.destroy(); }
+    if (secondChart) { secondChart.destroy(); }
+}
 //Función para convertir una cadena JSON a un objeto JSON
 function responseHandler(res) {
     if (typeof res == "string" && res.length >= 1) {
@@ -38,17 +55,7 @@ function responseHandler(res) {
     return res
 }
 
-function CreateFirstChart() {
-    let xValues = [
-        "Administración, Asesoría, Auditoría, Consultoría Y R.H",
-        "Comercializadora",
-        "Constructora",
-        "Hotelería",
-        "Logística y Transportes",
-        "Publicidad y Mercadotecnia",
-        "SAPI",
-        "Sistemas y Tecnología"
-    ];
+function CreateFirstChart(labelValues, pueValues, ppdValues, prefacturadoValues, disponibleValues) {
     let barColors = [
         'rgba(255, 99, 132, 0.5)', //0 - RED
         'rgba(255, 159, 64, 0.5)', //1 -ORANGE
@@ -69,69 +76,6 @@ function CreateFirstChart() {
         'rgb(120, 230, 11)',//6 -LIGHT GREEN
         'rgb(201, 203, 207)'//7 -GRAY
     ];
-
-    let LIMITE_FACTURACION = 1000000
-
-    let pueValues = [
-        300000,
-        100000,
-        400000,
-        900000,
-        200000,
-        500000,
-        800000,
-        600000
-    ];
-    let ppdValues = [
-        200000,
-        600000,
-        300000,
-        100000,
-        600000,
-        400000,
-        100000,
-        200000
-    ];
-    let prefacturadoValues = [
-        100000,
-        100000,
-        100000,
-        10000,
-        50000,
-        1000,
-        500,
-        20000
-    ];
-    let facturadoValues = [
-        pueValues[0] + ppdValues[0] + prefacturadoValues[0],
-        pueValues[1] + ppdValues[1] + prefacturadoValues[1],
-        pueValues[2] + ppdValues[2] + prefacturadoValues[2],
-        pueValues[3] + ppdValues[3] + prefacturadoValues[3],
-        pueValues[4] + ppdValues[4] + prefacturadoValues[4],
-        pueValues[5] + ppdValues[5] + prefacturadoValues[5],
-        pueValues[6] + ppdValues[6] + prefacturadoValues[6],
-        pueValues[7] + ppdValues[7] + prefacturadoValues[7]
-    ];
-    let disponibleValues = [
-        (facturadoValues[0] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[0] : 0),
-        (facturadoValues[1] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[1] : 0),
-        (facturadoValues[2] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[2] : 0),
-        (facturadoValues[3] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[3] : 0),
-        (facturadoValues[4] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[4] : 0),
-        (facturadoValues[5] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[5] : 0),
-        (facturadoValues[6] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[6] : 0),
-        (facturadoValues[7] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[7] : 0)
-    ];
-    //let excesoValues = [
-    //    (facturadoValues[0] >= LIMITE_FACTURACION ? facturadoValues[0] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[1] >= LIMITE_FACTURACION ? facturadoValues[1] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[2] >= LIMITE_FACTURACION ? facturadoValues[2] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[3] >= LIMITE_FACTURACION ? facturadoValues[3] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[4] >= LIMITE_FACTURACION ? facturadoValues[4] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[5] >= LIMITE_FACTURACION ? facturadoValues[5] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[6] >= LIMITE_FACTURACION ? facturadoValues[6] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[7] >= LIMITE_FACTURACION ? facturadoValues[7] - LIMITE_FACTURACION : 0)
-    //];
 
     let datasets = [
         {
@@ -177,7 +121,7 @@ function CreateFirstChart() {
     ];
 
     let data = {
-        labels: xValues,
+        labels: labelValues,
         datasets: datasets
     };
 
@@ -214,39 +158,10 @@ function CreateFirstChart() {
         options: options
     }
 
-    new Chart("myChartA", config);
+    firstChart = new Chart("chartPerfiles", config);
 }
 
-function CreateSecondChart() {
-    let yValues = [
-        "Publicidad y Mercadotecnia", //2
-        "Servicios de Consultoría", //4
-        "Sistemas y Tecnología", //2
-        "Comercializadora", //1
-        "Renta de Mobiliario de Oficina y Cómputo",//1
-        "Logística y Transporte",//2
-        "Renta de Computadoras y Regalías",//1
-        "Servicios Médicos",//1
-        "Constructoras"//2
-    ];
-    let y2Values = [
-        "Atlantic",
-        "Newgen",
-        "Finance",
-        "Ducuart",
-        "NRD",
-        "Week",
-        "Cyber",
-        "J&R",
-        "Montena",
-        "Creativity",
-        "DOR",
-        "Ocean",
-        "HV",
-        "Pharmex",
-        "Reciza",
-        "Newgen Construcciones",
-    ]
+function CreateSecondChart(labelValues, pueValues, ppdValues, prefacturadoValues, disponibleValues) {
     let barColors = [
         'rgba(255, 99, 132, 1)', //0 - RED
         'rgba(255, 159, 64, 1)', //1 -ORANGE
@@ -268,70 +183,7 @@ function CreateSecondChart() {
         'rgb(201, 203, 207)'//7 -GRAY
     ];
 
-    let LIMITE_FACTURACION = 10;
-
-    let pueValues = [
-        3,
-        1,
-        4,
-        9,
-        2,
-        5,
-        8,
-        6
-    ];
-    let ppdValues = [
-        2,
-        6,
-        3,
-        1,
-        6,
-        4,
-        1,
-        2
-    ];
-    let prefacturadoValues = [
-        1,
-        1,
-        1,
-        0.1,
-        0.5,
-        0.01,
-        0.05,
-        0.2
-    ];
-    let facturadoValues = [
-        pueValues[0] + ppdValues[0] + prefacturadoValues[0],
-        pueValues[1] + ppdValues[1] + prefacturadoValues[1],
-        pueValues[2] + ppdValues[2] + prefacturadoValues[2],
-        pueValues[3] + ppdValues[3] + prefacturadoValues[3],
-        pueValues[4] + ppdValues[4] + prefacturadoValues[4],
-        pueValues[5] + ppdValues[5] + prefacturadoValues[5],
-        pueValues[6] + ppdValues[6] + prefacturadoValues[6],
-        pueValues[7] + ppdValues[7] + prefacturadoValues[7]
-    ];
-    let disponibleValues = [
-        (facturadoValues[0] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[0] : 0),
-        (facturadoValues[1] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[1] : 0),
-        (facturadoValues[2] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[2] : 0),
-        (facturadoValues[3] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[3] : 0),
-        (facturadoValues[4] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[4] : 0),
-        (facturadoValues[5] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[5] : 0),
-        (facturadoValues[6] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[6] : 0),
-        (facturadoValues[7] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[7] : 0)
-    ];
-    //let excesoValues = [
-    //    (facturadoValues[0] >= LIMITE_FACTURACION ? facturadoValues[0] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[1] >= LIMITE_FACTURACION ? facturadoValues[1] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[2] >= LIMITE_FACTURACION ? facturadoValues[2] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[3] >= LIMITE_FACTURACION ? facturadoValues[3] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[4] >= LIMITE_FACTURACION ? facturadoValues[4] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[5] >= LIMITE_FACTURACION ? facturadoValues[5] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[6] >= LIMITE_FACTURACION ? facturadoValues[6] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[7] >= LIMITE_FACTURACION ? facturadoValues[7] - LIMITE_FACTURACION : 0)
-    //];
-
-    let datasetsAgrupacionA = [
+    let datasets = [
         {
             label: 'PUE',
             data: pueValues,
@@ -363,8 +215,8 @@ function CreateSecondChart() {
     ];
 
     let data = {
-        labels: y2Values,
-        datasets: datasetsAgrupacionA
+        labels: labelValues,
+        datasets: datasets
     };
 
     let options = {
@@ -397,7 +249,7 @@ function CreateSecondChart() {
         options: options
     }
 
-    new Chart("myChartB", config);
+    secondChart = new Chart("chartEmpresas", config);
 }
 
 function CreateThirdChart() {
@@ -1331,9 +1183,10 @@ function CreateFourthChart() {
 ////////////////////////////////
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
-    clearTable();
+    clearGraphics();
 
     let oParams = {
+        PerfilId: $("#selFiltroPerfil").val() == 0 ? null : $("#selFiltroPerfil").val(),
         EmpresaRFC: ($("#inpFiltroEmpresaRFC").data("rfc") || "") == "" ? null : $("#inpFiltroEmpresaRFC").data("rfc"),
         Anio: $("#selFiltroAnio").val(),
         Mes: $("#selFiltroMes").val() == 0 ? null : $("#selFiltroMes").val()
@@ -1356,6 +1209,22 @@ function onBuscarClick() {
 
             //Se convierte la cadena JSON a objeto JSON
             resp.datos = responseHandler(resp.datos);
+
+            CreateFirstChart(
+                resp.datos.Perfiles.LabelValues,
+                resp.datos.Perfiles.PUEValues,
+                resp.datos.Perfiles.PPDValues,
+                resp.datos.Perfiles.PrefacturadoValues,
+                resp.datos.Perfiles.DisponibleValues
+            );
+
+            CreateSecondChart(
+                resp.datos.Empresas.LabelValues,
+                resp.datos.Empresas.PUEValues,
+                resp.datos.Empresas.PPDValues,
+                resp.datos.Empresas.PrefacturadoValues,
+                resp.datos.Empresas.DisponibleValues
+            );
 
         }, function (error) {
             showError("Error", error);

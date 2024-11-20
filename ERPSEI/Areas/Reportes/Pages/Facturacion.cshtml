@@ -2,12 +2,13 @@
 @using Microsoft.AspNetCore.Localization;
 @using Microsoft.AspNetCore.Mvc.Localization;
 @using ERPSEI.Data.Managers.Empresas;
+@using ERPSEI.Data.Entities.Empresas;
 
 @model ERPSEI.Areas.Reportes.Pages.FacturacionModel
-@inject IViewLocalizer Localizer;
-@inject IPerfilManager;
+@inject IViewLocalizer localizer;
+@inject IPerfilManager perfilManager;
 @{
-	ViewData["Title"] = Localizer["Title"];
+	ViewData["Title"] = localizer["Title"];
 
 	// Retrieves the requested culture
 	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -22,6 +23,8 @@
 	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+
+	List<Perfil> perfiles = await perfilManager.GetAllAsync();
 }
 <h3 id="hTitle" class="title mb-3">@ViewData["Title"]</h3>
 
@@ -31,7 +34,7 @@
 	<div class="accordion-item">
 		<h2 class="accordion-header" id="headingOne">
 			<button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-				<h6>@Localizer["FilterTitle"]</h6>
+				<h6>@localizer["FilterTitle"]</h6>
 			</button>
 		</h2>
 		<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
@@ -40,14 +43,23 @@
 					<div class="row">
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@Localizer["EmpresaPlaceholder"]" idselected='' area="ERP" module="AdministradorDeComprobantes" source="GetEmpresaSuggestion" />
+								<select id="selFiltroPerfil" asp-for="InputFiltro.PerfilId" class="form-select" placeholder="@localizer["PerfilPlaceholder"]" onchange="clearGraphics();">
+									<option selected value="0">@localizer["EmptySelectItemText"]</option>
+									@{ foreach(Perfil perfil in perfiles){ <option value='@perfil.Id'>@perfil.Nombre</option> } }
+								</select>
+								<label for="selFiltroPerfil" asp-for="InputFiltro.PerfilId" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" idselected='' area="ERP" module="Facturacion" source="GetEmpresaSuggestion" />
 								<label for="inpFiltroEmpresaRFC" asp-for="InputFiltro.EmpresaRFC" class="form-label"></label>
 								<span asp-validation-for="InputFiltro.EmpresaRFC" class="text-danger"></span>
 							</div>
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@Localizer["AnioPlaceholder"]" onchange="clearTable();">
+								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@localizer["AnioPlaceholder"]" onchange="clearGraphics();">
 									@{
 										for (int i = DateTime.Today.Year - 5; i <= DateTime.Today.Year; i++)
 										{
@@ -61,8 +73,8 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroMes" asp-for="InputFiltro.Mes" class="form-select" placeholder="@Localizer["MesPlaceholder"]" onchange="clearTable();">
-									<option selected value="0">@Localizer["EmptySelectItemText"]</option>
+								<select id="selFiltroMes" asp-for="InputFiltro.Mes" class="form-select" placeholder="@localizer["MesPlaceholder"]" onchange="clearGraphics();">
+									<option selected value="0">@localizer["EmptySelectItemText"]</option>
 									@{
 										for(int j = 1; j <= 12; j++)
 										{
@@ -80,12 +92,12 @@
 						</div>
 					</div>
 				</form>
-				@if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar)
+				@if (puedeTodo || puedeConsultar)
 				{
 					<div class="row text-end">
 						<div class="col-12">
 							<button id="btnBuscar" class="btn btn-primary" onclick="onBuscarClick();">
-								<i class="bi bi-search"></i> @Localizer["SearchButton"]
+								<i class="bi bi-search"></i> @localizer["SearchButton"]
 							</button>
 						</div>
 					</div>
@@ -97,16 +109,16 @@
 <!-- --------------------------- -->
 <!-- --------------------------- -->
 
-<canvas id="myChartA" style="width:100%;"></canvas>
+<canvas id="chartPerfiles" style="width:100%;"></canvas>
 
-<canvas id="myChartB" style="width:100%;"></canvas>
+<canvas id="chartEmpresas" style="width:100%;"></canvas>
 
-<canvas id="myChartC" style="width:100%;"></canvas>
+@* <canvas id="myChartC" style="width:100%;"></canvas>
 
-<canvas id="myChartD" style="width:100%;"></canvas>
+<canvas id="myChartD" style="width:100%;"></canvas> *@
 
 @section Scripts
-{	
+{
 	<!-- Librería autocompletar y dependencias -->
 	<link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
 	<script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
@@ -119,7 +131,7 @@
 	<script src="~/../Areas/Reportes/Pages/Facturacion.cshtml.js"></script>
 	<script type="text/javascript">
 		var cultureName = "@cultureName";
-		var title = '@Localizer["Title"]';
+		var title = '@localizer["Title"]';
 
 		var puedeTodo = '@puedeTodo' == 'True';
 		var puedeConsultar = '@puedeConsultar' == 'True';
