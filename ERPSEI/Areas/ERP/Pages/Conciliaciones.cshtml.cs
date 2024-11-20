@@ -277,7 +277,6 @@ namespace ERPSEI.Areas.ERP.Pages
             }
         }
 
-
         public async Task<JsonResult> OnGetConciliacionesList()
         {
             List<string> jsonConciliaciones = new List<string>();
@@ -333,14 +332,6 @@ namespace ERPSEI.Areas.ERP.Pages
             ServerResponse resp = new(true, stringLocalizer["ConciliacionFinalizadaUnsuccessfully"]);
             try
             {
-                // Validar el ID proporcionado
-                if (id <= 0)
-                {
-                    resp.TieneError = true;
-                    resp.Mensaje = "ID proporcionado no es válido.";
-                    return new JsonResult(resp);
-                }
-
                 await db.Database.BeginTransactionAsync();
 
                 // Obtener la conciliación por ID
@@ -366,9 +357,9 @@ namespace ERPSEI.Areas.ERP.Pages
             catch (Exception ex)
             {
                 await db.Database.RollbackTransactionAsync();
-                logger.LogError(ex, "Error finalizando conciliación");
+                logger.LogError(ex, stringLocalizer["ConciliacionErrorfinalizando"]);
                 resp.TieneError = true;
-                resp.Mensaje = "Ocurrió un error al procesar la solicitud.";
+                resp.Mensaje = ex.Message;
             }
 
             return new JsonResult(resp);
@@ -671,6 +662,108 @@ namespace ERPSEI.Areas.ERP.Pages
                             Total = comprobante.Comprobante.Total,
                             movimientosConciliados,
                             bloqueado = true
+                        };
+                        comprobantes.Add(comprobanteData);
+
+                        // Agregar a conciliaciones para tableResult
+                        conciliaciones.Add(comprobanteData);
+                    }
+                }
+
+                // Preparar la respuesta
+                var resultData = new
+                {
+                    comprobantes,
+                    movimientos,
+                    conciliaciones
+                };
+
+                resp.Mensaje = stringLocalizer["ComprobantesFiltradosSuccessfully"];
+                resp.Datos = JsonConvert.SerializeObject(resultData);
+                resp.TieneError = false;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{message}", ex.Message);
+                resp.Mensaje = ex.Message;
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> OnGetProcessedConciliacionEditList(int id)
+        {
+            ServerResponse resp = new(true, stringLocalizer["ConciliacionFiltradosUnsuccessfully"]);
+            try
+            {
+                Conciliacion? c = await conciliacionManager.GetByIdAsync(id);
+                if (c == null)
+                {
+                    resp.Mensaje = stringLocalizer["ConciliacionSuccessfully"];
+                    return new JsonResult(resp);
+                }
+
+                List<object> comprobantes = new();
+                List<object> movimientos = new();
+                List<object> conciliaciones = new();
+                HashSet<int> idsConciliados = new();
+                Dictionary<int, object> mapaMovimientos = new();
+
+                // Procesar detalles de movimientos
+                foreach (var detalle in c.DetallesConciliacion)
+                {
+                    foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
+                    {
+                        // Extraer el Banco desde la tabla Conciliaciones
+                        string? banco = detalle.Conciliacion?.Banco?.Nombre ?? "Banco no especificado";
+
+                        var movimientoData = new
+                        {
+                            Id = movimiento.Id,
+                            Fecha = movimiento.MovimientoBancario.Fecha?.ToString("yyyy-MM-dd"),
+                            Descripcion = movimiento.MovimientoBancario.Descripcion ?? "Sin descripción",
+                            Cargos = movimiento.MovimientoBancario.Importe ?? 0,
+                            Abonos = 0,
+                            Banco = banco,
+                            bloqueado = true
+                        };
+                        mapaMovimientos[movimiento.Id] = movimientoData;
+                        movimientos.Add(movimientoData);
+                    }
+                }
+
+                // Procesar detalles de comprobantes y asociar movimientos
+                foreach (var detalle in c.DetallesConciliacion)
+                {
+                    foreach (var comprobante in detalle.ConciliacionesDetallesComprobantes)
+                    {
+                        if (idsConciliados.Contains(comprobante.Id)) continue;
+                        idsConciliados.Add(comprobante.Id);
+
+                        // Buscar movimientos asociados
+                        List<object> movimientosConciliados = new();
+                        foreach (var mov in detalle.ConciliacionesDetallesMovimientos)
+                        {
+                            if (mapaMovimientos.ContainsKey(mov.Id))
+                            {
+                                movimientosConciliados.Add(mapaMovimientos[mov.Id]);
+                            }
+                        }
+
+                        string? banco = detalle.Conciliacion?.Banco?.Nombre ?? "Banco no especificado";
+
+                        // Crear objeto de comprobante
+                        var comprobanteData = new
+                        {
+                            Id = comprobante.Id,
+                            Serie = comprobante.Comprobante.Serie,
+                            Folio = comprobante.Comprobante.Folio,
+                            Fecha = comprobante.Comprobante.Fecha?.ToString(),
+                            Banco = banco,
+                            UUID = comprobante.Comprobante.Complemento?.TimbreFiscalDigital?.UUID ?? "UUID no disponible",
+                            Receptor = comprobante.Comprobante.Receptor?.Nombre ?? "Receptor no especificado",
+                            Total = comprobante.Comprobante.Total,
+                            movimientosConciliados
                         };
                         comprobantes.Add(comprobanteData);
 

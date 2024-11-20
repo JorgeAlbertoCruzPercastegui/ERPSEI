@@ -2060,102 +2060,6 @@ function obtenerRegistrosConciliados(conciliacionId) {
         postOptions
     );
 }
-
-function procesarDatosConciliados(datos) {
-    let parsedData;
-    try {
-        parsedData = JSON.parse(datos.value.datos);
-    } catch (error) {
-        console.error("Error al parsear los datos:", error);
-        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
-    }
-
-    let detalles = parsedData.detalles;
-
-    if (!Array.isArray(detalles)) {
-        console.error("La propiedad 'detalles' no existe o no es un arreglo.");
-        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
-    }
-
-    let comprobantes = [];
-    let movimientos = [];
-    let conciliaciones = [];
-    let idsConciliados = new Set();
-    let mapaMovimientos = {};
-
-    // Procesar detallesMovimientos y llenar el mapa de movimientos
-    detalles.forEach(detalle => {
-        if (Array.isArray(detalle.detallesMovimientos)) {
-            detalle.detallesMovimientos.forEach(movimiento => {
-                mapaMovimientos[movimiento.Id] = movimiento;
-
-                movimientos.push({
-                    Id: movimiento.Id,
-                    Fecha: movimiento.Fecha,
-                    Descripcion: movimiento.Descripción || "Sin descripción",
-                    Cargos: parseFloat(movimiento.Cargos) || 0,
-                    Abonos: parseFloat(movimiento.Abonos) || 0,
-                    Banco: movimiento.BancoId || "No especificado 1",
-                    bloqueado: true
-                });
-            });
-        }
-    });
-
-    // Procesar detallesComprobantes y asociar movimientos conciliados
-    detalles.forEach(detalle => {
-        if (Array.isArray(detalle.detallesComprobantes)) {
-            detalle.detallesComprobantes.forEach(comprobante => {
-                if (idsConciliados.has(comprobante.Id)) return;
-                idsConciliados.add(comprobante.Id);
-
-                // Buscar movimientos asociados a este comprobante
-                let movimientosConciliados = [];
-                if (Array.isArray(detalle.detallesMovimientos)) {
-                    detalle.detallesMovimientos.forEach(mov => {
-                        if (mov.Id) {
-                            movimientosConciliados.push({
-                                Id: mov.Id,
-                                Fecha: mov.Fecha,
-                                Banco: mov.BancoId || "No especificado 2",
-                                Descripcion: mov.Descripción || "Sin descripción",
-                                Cargos: parseFloat(mov.Cargos) || 0,
-                                Abonos: parseFloat(mov.Abonos) || 0,
-                                bloqueado: true // Marcar como bloqueado
-                            });
-                        }
-                    });
-                }
-
-                // Agregar comprobante con movimientos conciliados
-                comprobantes.push({
-                    Id: comprobante.Id,
-                    Serie: comprobante.Serie,
-                    Folio: comprobante.Folio,
-                    Fecha: comprobante.Fecha,
-                    UUID: comprobante?.Complemento?.TimbreFiscalDigital?.UUID || "UUID no disponible",
-                    Total: parseFloat(comprobante.Total) || 0,
-                    movimientosConciliados: movimientosConciliados,
-                    bloqueado: true // Marcar como bloqueado
-                });
-
-                // Añadir a conciliaciones para tableResult
-                conciliaciones.push({
-                    id: comprobante.Id,
-                    Serie: comprobante.Serie,
-                    Folio: comprobante.Folio,
-                    Fecha: comprobante.Fecha,
-                    Total: parseFloat(comprobante.Total) || 0,
-                    movimientosConciliados: movimientosConciliados,
-                    bloqueado: true // Marcar como bloqueado
-                });
-            });
-        }
-    });
-
-    return { comprobantes, movimientos, conciliaciones };
-}
-
 function obtenerRegistrosConciliadosEdit(conciliacionId) {
 
     // Limpiar las tablas antes de cargar nuevos datos
@@ -2167,7 +2071,7 @@ function obtenerRegistrosConciliadosEdit(conciliacionId) {
     $.extend(postOptions, { type: 'GET' });
 
     doAjax(
-        "/ERP/Conciliaciones/ComprobantesMovimientosList",
+        "/ERP/Conciliaciones/ProcessedConciliacionEditList",
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -2183,15 +2087,13 @@ function obtenerRegistrosConciliadosEdit(conciliacionId) {
 
             // Procesar los datos y extraer los arreglos de comprobantes, movimientos y conciliados
             //const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
-            const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliadosEdit(resp.datos);
+            //const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
+            const { comprobantes, movimientos, conciliaciones } = JSON.parse(resp.datos);
 
             // Cargar los datos en las tablas correspondientes
             $('#tableCardComprobantes').bootstrapTable('load', comprobantes);
             $('#tableCardMovimientos').bootstrapTable('load', movimientos);
             $('#tableResult').bootstrapTable('load', conciliaciones);
-
-            //console.log("Comprobantes cargados:", comprobantes);
-            //console.log("Movimientos cargados:", movimientos);
 
         }, function (error) {
             showError("Error", error);

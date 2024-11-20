@@ -189,8 +189,14 @@
   <data name="colTotalHeaderD" xml:space="preserve">
     <value>Total</value>
   </data>
+  <data name="ComprobantesFiltradosSuccessfully" xml:space="preserve">
+    <value>Conciliación filtrados exitosamente</value>
+  </data>
   <data name="ConciliacionCreatedSuccessfully" xml:space="preserve">
     <value>Conciliación creada exitosamente</value>
+  </data>
+  <data name="ConciliacionErrorfinalizando" xml:space="preserve">
+    <value>Error finalizando conciliación</value>
   </data>
   <data name="ConciliacionesDeletedSuccessfully" xml:space="preserve">
     <value>Conciliación eliminada exitosamente</value>
@@ -198,8 +204,20 @@
   <data name="ConciliacionesDeletedUnsuccessfully" xml:space="preserve">
     <value>Error al eliminar la conciliación</value>
   </data>
+  <data name="ConciliacionFiltradosUnsuccessfully" xml:space="preserve">
+    <value>Conciliación filtrados fallida</value>
+  </data>
+  <data name="ConciliacionFinalizadaSuccessfully" xml:space="preserve">
+    <value>Conciliación finalizada exitosamente</value>
+  </data>
+  <data name="ConciliacionFinalizadaUnSuccessfully" xml:space="preserve">
+    <value>Conciliación fallida, favor de verificar</value>
+  </data>
   <data name="ConciliacionSavedUnsuccessfully" xml:space="preserve">
     <value>Error al guardar la conciliación</value>
+  </data>
+  <data name="ConciliacionSuccessfully" xml:space="preserve">
+    <value>Conciliación exitosa</value>
   </data>
   <data name="ConsultaDeComprobantesPlaceholder" xml:space="preserve">
     <value>Consulta de Comprobantes</value>
