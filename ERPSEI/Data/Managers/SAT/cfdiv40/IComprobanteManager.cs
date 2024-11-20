@@ -35,5 +35,11 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
 		public Task<Comprobante?> GetByIdWithDescripcionesAsync(int id);
 
+		public Task<List<Comprobante>> GetComprobantesGraficas(
+			string? empresaRFC = null,
+			string? anio = null,
+			string? mes = null
+		);
+
 	}
 }
