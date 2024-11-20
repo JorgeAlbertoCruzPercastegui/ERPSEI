@@ -40,7 +40,7 @@ namespace ERPSEI.Areas.ERP.Pages
 			ApplicationDbContext db,
 			IAutorizacionesPrefactura autorizacionesPrefacturaManager,
 			AppUserManager userManager,
-			IRWCatalogoManager<Perfil> perfilManager,
+			IPerfilManager perfilManager,
 			IUnidadMedidaManager unidadMedidaManager,
 			IProductoServicioManager productosServiciosManager,
 			IEmpresaManager empresaManager,

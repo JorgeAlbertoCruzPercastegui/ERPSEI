@@ -26,7 +26,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			IEmpresaManager _empresaManager,
 			IBancoEmpresaManager _bancoEmpresaManager,
 			IArchivoEmpresaManager _archivoEmpresaManager,
-			IRWCatalogoManager<Perfil> _perfilManager,
+			IPerfilManager _perfilManager,
 			IRWCatalogoManager<Origen> _origenManager,
 			IRWCatalogoManager<Nivel> _nivelManager,
 			IActividadEconomicaEmpresaManager _actividadesEconomicasEmpresaManager,

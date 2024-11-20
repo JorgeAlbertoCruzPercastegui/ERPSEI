@@ -8,9 +8,10 @@
 @using ERPSEI.Data.Entities.SAT.Catalogos;
 @using ERPSEI.Data.Managers.Usuarios;
 @using ERPSEI.Data.Entities.Usuarios;
+@using ERPSEI.Data.Managers.Empresas;
 @model EmpresasModel
 @inject IViewLocalizer Localizer;
-@inject IRWCatalogoManager<Perfil> PerfilesManager;
+@inject IPerfilManager PerfilesManager;
 @inject IRWCatalogoManager<Origen> OrigenesManager;
 @inject IRWCatalogoManager<Nivel> NivelesManager;
 @inject IRWCatalogoManager<ActividadEconomica> ActividadesEconomicasManager;
