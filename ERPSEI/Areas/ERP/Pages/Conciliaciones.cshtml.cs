@@ -23,6 +23,7 @@ using iText.Commons.Actions.Contexts;
 using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Managers.Cuentas;
 using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -327,40 +328,45 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonResponse);
         }
 
-        public async Task<JsonResult> OnPostFinalizarConciliaciones(string[] ids)
+        public async Task<JsonResult> OnGetFinalizarConciliaciones(int id)
         {
-            ServerResponse resp = new(true, stringLocalizer["ConciliacionesFinalizadasUnsuccessfully"]);
+            ServerResponse resp = new(true, stringLocalizer["ConciliacionFinalizadaUnsuccessfully"]);
             try
             {
-                await db.Database.BeginTransactionAsync();
-
-                // Obtener las conciliaciones que coinciden con los ids proporcionados
-                foreach (string id in ids)
+                // Validar el ID proporcionado
+                if (id <= 0)
                 {
-                    if (!int.TryParse(id, out int sid)) { sid = 0; }
-                    Conciliacion? conciliacion = await conciliacionManager.GetByIdAsync(sid);
-
-                    // Verificar si la conciliación es nula
-                    if (conciliacion == null)
-                    {
-                        resp.TieneError = true;
-                        resp.Mensaje = $"Conciliación con ID {sid} no encontrada.";
-                        break;
-                    }
-
-                    // Marcar la conciliación como finalizada
-                    conciliacion.Finalizada = true;
-                    await conciliacionManager.UpdateAsync(conciliacion);
+                    resp.TieneError = true;
+                    resp.Mensaje = "ID proporcionado no es válido.";
+                    return new JsonResult(resp);
                 }
 
+                await db.Database.BeginTransactionAsync();
+
+                // Obtener la conciliación por ID
+                Conciliacion? conciliacion = await conciliacionManager.GetByIdAsync(id);
+
+                // Verificar si la conciliación es nula
+                if (conciliacion == null)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = stringLocalizer["ConciliacionFinalizadaUnSuccessfully"];
+                    return new JsonResult(resp);
+                }
+
+                // Marcar la conciliación como finalizada
+                conciliacion.Finalizada = true;
+                await conciliacionManager.UpdateAsync(conciliacion);
+
                 await db.Database.CommitTransactionAsync();
+
                 resp.TieneError = false;
-                resp.Mensaje = stringLocalizer["ConciliacionesFinalizadasSuccessfully"];
+                resp.Mensaje = stringLocalizer["ConciliacionFinalizadaSuccessfully"];
             }
             catch (Exception ex)
             {
                 await db.Database.RollbackTransactionAsync();
-                logger.LogError(ex.Message);
+                logger.LogError(ex, "Error finalizando conciliación");
                 resp.TieneError = true;
                 resp.Mensaje = "Ocurrió un error al procesar la solicitud.";
             }

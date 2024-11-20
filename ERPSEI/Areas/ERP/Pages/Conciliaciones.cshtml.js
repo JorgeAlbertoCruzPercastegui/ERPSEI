@@ -174,8 +174,12 @@ function operateFormatter(value, row, index) {
 
     // Icono Ver
     icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
-    // Icono Editar
-    icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
+
+    // Icono Editar (habilitado solo si el Estatus es diferente de "Finalizada")
+    if (row.Finalizada == "En progreso") {
+        icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
+    }
+
     // Icono Exportar a Excel
     icons.push(`<li><a class="dropdown-item export" href="#" title="Exportar a Excel"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</a></li>`);
 
@@ -186,6 +190,7 @@ function operateFormatter(value, row, index) {
               <ul class="dropdown-menu">${icons.join("")}</ul>
             </div>`;
 }
+
 
 window.operateEvents = {
     'click .see': function (e, value, row, index) {
@@ -492,39 +497,68 @@ function initTable() {
 }
 
 function onCerrarConciliacionClick() {
-    const conciliacionId = document.getElementById("inpConciliacionId").value;
+    // Muestra la confirmación antes de proceder
+    askConfirmation(
+        dlgFinishConTitle,
+        dlgMessageFinishConTitle,
+        function () {
+            // Ejecuta la validación
+            $("#theFormT").validate();
+            let valid = $("#theFormT").valid();
+            if (!valid) { return; }
 
-    if (!conciliacionId) {
-        showError("Error", "Debe seleccionar una conciliación.");
-        return;
-    }
+            // Obtén el valor del campo
+            let conciliacionId = document.getElementById("inpConciliacionId").value;
+            let dlgTitle = document.getElementById("dlgConciliacionTitle");
+            let summaryContainer = document.getElementById("saveValidationSummary");
+            summaryContainer.innerHTML = "";
 
-    let oParams = { ids: [parseInt(conciliacionId)] };
+            // Configuración de los parámetros
+            let oParams = {
+                id: conciliacionId,
+                Finalizada: 1
+            };
 
-    askConfirmation("Cerrar Conciliación", "¿Está seguro de que desea cerrar esta conciliación?", function () {
-        doAjax(
-            "/ERP/Conciliaciones/FinalizarConciliaciones",
-            oParams,
-            function (resp) {
-                if (resp.tieneError) {
-                    showError("Error", resp.mensaje);
-                    return;
-                }
+            doAjax(
+                "/ERP/Conciliaciones/FinalizarConciliaciones",
+                oParams,
+                function (resp) {
+                    if (resp.tieneError) {
+                        if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                            let summary = ``;
+                            resp.errores.forEach(function (error) {
+                                summary += `<li>${error}</li>`;
+                            });
+                            summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                            console.log("Respuesta:", resp);
+                        }
+                        showError(dlgTitle.innerHTML, resp.mensaje);
+                        return;
+                    }
 
-                // Actualizar la tabla y mostrar mensaje de éxito
-                table.bootstrapTable('updateByUniqueId', {
-                    id: parseInt(conciliacionId),
-                    row: { Finalizada: true }
-                });
+                    // Cierra el modal de conciliación
+                    let conciliacionModal = document.getElementById("dlgConciliacion");
+                    if (conciliacionModal) {
+                        let bootstrapModal = bootstrap.Modal.getInstance(conciliacionModal);
+                        if (bootstrapModal) {
+                            bootstrapModal.hide();
+                        }
+                    }
+                    
+                    initTable();
 
-                showSuccess("Conciliación Cerrada", resp.mensaje);
-            },
-            function (error) {
-                showError("Error", error);
-            },
-            postOptions
-        );
-    });
+                    showSuccess(dlgTitle.innerHTML, resp.mensaje);
+                }, function (error) {
+                    showError("Error", error);
+                },
+                postOptions
+            );
+        },
+        function () {
+            // Acción cancelada, puedes manejarlo si es necesario
+            console.log("Acción cancelada por el usuario.");
+        }
+    );
 }
 
 
@@ -1882,6 +1916,7 @@ function initConciliacionDialog(action, row) {
     let botonConsultarComprobantes = document.getElementById("dlgConciliacionBtnFechas");
     let botonConsultarMovimientos = document.getElementById("dlgConciliacionBtnMovimientos");
     let botonConciliacionAsistida = document.getElementById("dlgConciliacionAsistidaBtn");
+    let botonFinalizarConciliacion = document.getElementById("dlgConciliacionBtnCerrar");
     let saveValidationSummary = document.getElementById("saveValidationSummary");
     saveValidationSummary.innerHTML = "";
 
@@ -1922,6 +1957,7 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.removeAttribute("disabled");
             botonConsultarMovimientos.removeAttribute("disabled");
             botonConciliacionAsistida.removeAttribute("disabled");
+            botonFinalizarConciliacion.removeAttribute("disabled");
 
             // Cargar comprobantes y movimientos solo en modo EDITAR
             obtenerRegistrosConciliadosEdit(row.id);
@@ -1936,6 +1972,7 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.setAttribute("disabled", true);
             botonConsultarMovimientos.setAttribute("disabled", true);
             botonConciliacionAsistida.setAttribute("disabled", true);
+            botonFinalizarConciliacion.setAttribute("disabled", true);
 
             // Verificar si la tabla ya tiene datos antes de recargar
             obtenerRegistrosConciliados(row.id);
