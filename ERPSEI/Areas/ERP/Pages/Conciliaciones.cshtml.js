@@ -214,18 +214,28 @@ window.operateEvents = {
         $('#tableResult').bootstrapTable('load', []);
     },
     'click .export': function (e, value, row, index) {
-
-        console.log("Contenido del objeto row:", row);
         
         const conciliacionId = parseInt(row.id, 10) || 0;
-        console.log("ID de conciliación seleccionado (convertido a entero):", conciliacionId);
 
         if (conciliacionId === 0) {
             showError("Exportación Fallida", "ID de conciliación no válido.");
             return;
         }
 
-        exportarAExcel(conciliacionId);
+        // Mostrar el modal y cargar datos dinámicamente
+        $('#modalAsignacionCuentas').modal('show');
+
+        // Limpiar la tabla antes de cargar nuevos datos
+        $('#modalAsignacionCuentasBody').empty();
+
+        // Asigna dinámicamente el ID al botón
+        const botonGenerarPoliza = document.getElementById('btnGenerarPoliza');
+        botonGenerarPoliza.setAttribute('data-id', conciliacionId);
+
+        //exportarAExcel(conciliacionId);
+
+        // Llamar a la función para obtener los datos del cliente
+        ObtenerDatosClienteRFC(conciliacionId);
     }
 }
 
@@ -373,6 +383,84 @@ async function exportarAExcel(conciliacionId) {
         postOptions
     );
 }
+
+/*async function ObtenerDatosCliente() {
+    const conciliacionId = document.getElementById('btnGenerarPoliza').getAttribute('data-id');
+
+    if (!conciliacionId) {
+        showError("Exportación Fallida", "ID de conciliación no válido.");
+        return;
+    }
+
+    let oParams = { id: conciliacionId };
+    $.extend(getOptions, { type: 'GET' });
+
+    doAjax(
+        "/ERP/Conciliaciones/obtenerDatosCliente",
+        oParams,
+        async function (resp) {
+            if (resp.tieneError) {
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+            if (resp.datos && resp.datos.length > 0) {
+                const htmlRows = resp.datos.map(row => `
+        <tr>
+            <td>${row.cliente || 'N/A'}</td>
+            <td>${row.rfc || 'N/A'}</td>
+            <td>
+                <a href="#" class="text-danger" onclick="editarCuentaContable(event, this)">Seleccione...</a>
+            </td>
+        </tr>
+    `).join('');
+                $('#modalAsignacionCuentasBody').html(htmlRows);
+            } else {
+                $('#modalAsignacionCuentasBody').html('<tr><td colspan="3">No hay datos disponibles</td></tr>');
+            }
+        },
+        function (error) {
+            showError("Error", "No se pudo obtener el registro.");
+        },
+        getOptions
+    );
+}*/
+
+async function ObtenerDatosClienteRFC(conciliacionId) {
+    let oParams = { id: conciliacionId };
+
+    doAjax(
+        "/ERP/Conciliaciones/ExportarExcel",
+        oParams,
+        async function (resp) {
+            if (resp.tieneError) {
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+
+            // Aquí podrías manejar la respuesta si es necesario
+            //console.log("Datos obtenidos exitosamente", resp);
+            if (resp.datos && resp.datos.length > 0) {
+                const htmlRows = resp.datos.map(row => `
+        <tr>
+            <td>${row.nombreEmisor || 'N/A'}</td>
+            <td>${row.rfcEmisor || 'N/A'}</td>
+            <td>
+                <a href="#" class="text-danger" onclick="editarCuentaContable(event, this)">Seleccione...</a>
+            </td>
+        </tr>
+            `).join('');
+                $('#modalAsignacionCuentasBody').html(htmlRows);
+            } else {
+                $('#modalAsignacionCuentasBody').html('<tr><td colspan="3">No hay datos disponibles</td></tr>');
+            }
+        },
+        function (error) {
+            showError("Error", "No se pudo obtener la informaci{on del cliente}.");
+        },
+        getOptions
+    );
+}
+
 
 
 function onAgregarClick() {

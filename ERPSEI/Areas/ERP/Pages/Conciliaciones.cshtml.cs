@@ -248,6 +248,7 @@ namespace ERPSEI.Areas.ERP.Pages
                         // Obtener los datos del receptor
                         var rfcReceptor = comprobante.Comprobante?.Receptor?.Rfc ?? "N/A";
                         var rfcEmisor = comprobante.Comprobante?.Emisor?.Rfc ?? "N/A";
+                        var nombreEmisor = comprobante.Comprobante?.Emisor?.Nombre ?? "N/A";
                         var nombreReceptor = comprobante.Comprobante?.Receptor?.Nombre ?? "N/A";
                         
                         var EmisorId = comprobante.Comprobante.Emisor.Id;
@@ -272,7 +273,9 @@ namespace ERPSEI.Areas.ERP.Pages
                                         TotalImpuestosTrasladados = totalImpuestosTrasladados,
                                         CuentaContable = string.Join(", ", cuentasContables),
                                         RfcReceptor = rfcReceptor,
-                                        NombreReceptor = nombreReceptor
+                                        NombreReceptor = nombreReceptor,
+                                        RfcEmisor = rfcEmisor,
+                                        NombreEmisor = nombreEmisor
                                     });
                         }
                     }
@@ -286,6 +289,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 return null;
             }
         }
+
 
         public async Task<JsonResult> OnGetConciliacionesList()
         {

@@ -466,6 +466,46 @@
     </div>
 </div>
 
+<!--Modal para bancos-->
+<div class="modal fade" id="modalAsignacionCuentas" tabindex="-1" aria-labelledby="modalAsignacionCuentasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAsignacionCuentasLabel">Selección de cuenta bancaria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" role="alert">
+                    Para poder generar el Excel, es necesario que asigne una cuenta bancaria a cada elemento del listado.
+                    Edite la cuenta bancaria haciendo clic sobre la celda correspondiente e introduzca un valor para buscar la cuenta.
+                </div>
+                <!-- Contenedor con scroll para la tabla -->
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <!--<th><input type="checkbox" id="selectAll"></th>-->
+                                <th>Cliente</th>
+                                <th>RFC</th>
+                                <th>Cuenta Bancaria</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalAsignacionCuentasBody">
+                            <!--Aquí se se asignan los registros desde la bd-->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGenerarPoliza" onclick="exportarAExcel(this.getAttribute('data-id'))">Exportar excel</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 
 <!-- Modal para consulta por fechas -->
