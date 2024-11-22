@@ -262,6 +262,16 @@ async function exportarAExcel(conciliacionId) {
             worksheet.getCell('B3').value = 1;
             worksheet.getCell('B3').font = { bold: true };
 
+            // Recopila las cuentas contables ingresadas
+            const cuentasContables = obtenerCuentasContables(); // Asegúrate de que esta función capture los valores correctamente
+            console.log("Cuentas a exportar:", cuentasContables);
+
+            // Genera el Excel usando las cuentas contables
+            cuentasContables.forEach((cuenta, index) => {
+                const row = 7 + index; // Empieza en la fila 7
+                worksheet.getCell(`B${row}`).value = cuenta; // Coloca la cuenta en la columna B
+            });
+
             // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
             const fechaEmisor = resp.datos.length > 0 ? resp.datos[0].fecha : 'N/A';
             const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
@@ -383,6 +393,15 @@ async function exportarAExcel(conciliacionId) {
         postOptions
     );
 }
+function obtenerCuentasContables() {
+    const cuentas = [];
+    $('#modalAsignacionCuentasBody').find('tr').each(function () {
+        // Busca la celda de "Cuenta Bancaria"
+        const cuenta = $(this).find('td:nth-child(3)').text().trim(); // Toma el texto de la tercera columna
+        cuentas.push(cuenta || 'N/A'); // Agrega el valor o 'N/A' si está vacío
+    });
+    return cuentas;
+}
 
 /*async function ObtenerDatosCliente() {
     const conciliacionId = document.getElementById('btnGenerarPoliza').getAttribute('data-id');
@@ -437,31 +456,125 @@ async function ObtenerDatosClienteRFC(conciliacionId) {
                 return;
             }
 
-            // Aquí podrías manejar la respuesta si es necesario
-            //console.log("Datos obtenidos exitosamente", resp);
             if (resp.datos && resp.datos.length > 0) {
                 const htmlRows = resp.datos.map(row => `
-        <tr>
-            <td>${row.nombreEmisor || 'N/A'}</td>
-            <td>${row.rfcEmisor || 'N/A'}</td>
-            <td>
-                <a href="#" class="text-danger" onclick="editarCuentaContable(event, this)">Seleccione...</a>
-            </td>
-        </tr>
-            `).join('');
+                    <tr>
+                        <td class="align-middle">${row.nombreEmisor || 'N/A'}</td>
+                        <td class="align-middle">${row.rfcEmisor || 'N/A'}</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control form-control-sm me-2" placeholder="Ingrese la cuenta">
+                                <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
                 $('#modalAsignacionCuentasBody').html(htmlRows);
             } else {
-                $('#modalAsignacionCuentasBody').html('<tr><td colspan="3">No hay datos disponibles</td></tr>');
+                $('#modalAsignacionCuentasBody').html(`
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No hay datos disponibles</td>
+                    </tr>
+                `);
             }
         },
         function (error) {
-            showError("Error", "No se pudo obtener la informaci{on del cliente}.");
+            showError("Error", "No se pudo obtener la información del cliente.");
         },
         getOptions
     );
 }
 
+function guardarCuentaContable(boton) {
+    const td = boton.parentElement.parentElement; // Obtén el <td> contenedor
+    const input = td.querySelector('input'); // Obtén el input
+    const valorCuenta = input.value.trim(); // Obtén el valor del input
 
+    if (valorCuenta) {
+        // Reemplaza el contenido del <td> con un enlace que permite editar
+        td.innerHTML = `
+            <a href="#" class="text-success fw-bold" onclick="editarCuentaDesdeLink(event, this)">${valorCuenta}</a>
+        `;
+    } else {
+        alert("Debe ingresar una cuenta válida antes de confirmar.");
+    }
+}
+
+function editarCuentaDesdeLink(event, link) {
+    event.preventDefault(); // Evita el comportamiento predeterminado del enlace
+    const td = link.parentElement; // Obtén el <td> contenedor
+    const valorActual = link.textContent.trim(); // Obtén el texto actual del enlace
+
+    // Si el mensaje es "No se seleccionó una cuenta bancaria", el input estará vacío
+    const inputValue = valorActual === "No se seleccionó una cuenta bancaria" ? "" : valorActual;
+
+    // Reemplaza el contenido del <td> con un input y botones
+    td.innerHTML = `
+        <div class="d-flex align-items-center">
+            <input type="text" class="form-control form-control-sm me-2" placeholder="Ingrese una cuenta bancaria" value="${inputValue}">
+            <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
+                <i class="bi bi-check-circle"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this, '${valorActual}')">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    `;
+}
+
+
+function actualizarCuenta(span) {
+    const nuevoValor = span.textContent.trim(); // Obtén el texto editado
+
+    if (!nuevoValor) {
+        // Si el campo queda vacío, muestra un mensaje predeterminado
+        span.textContent = "No se seleccionó una cuenta bancaria";
+        span.classList.add("text-muted");
+        span.classList.remove("text-success");
+    } else {
+        // Si hay un valor válido, asegúrate de que se mantenga el estilo
+        span.classList.remove("text-muted");
+        span.classList.add("text-success");
+    }
+}
+
+
+function editarCuentaContable(boton) {
+    const td = boton.parentElement; // Obtén el <td> contenedor
+    const valorActual = td.querySelector('span').textContent.trim(); // Obtén el valor actual
+
+    // Reemplaza el contenido con un input vacío y el valor actual como placeholder
+    td.innerHTML = `
+        <div class="d-flex align-items-center">
+            <input type="text" class="form-control form-control-sm me-2" placeholder="${valorActual}" value="">
+            <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
+                <i class="bi bi-check-circle"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this, '${valorActual}')">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    `;
+}
+
+function cancelarEdicionCuentaContable(boton, valorAnterior) {
+    const td = boton.parentElement.parentElement; // Obtén el <td> contenedor
+
+    // Si no hay un valor definido, asigna un mensaje predeterminado
+    const mensaje = valorAnterior && valorAnterior.trim() !== ""
+        ? valorAnterior
+        : "No se seleccionó una cuenta bancaria";
+
+    // Restaura el contenido con un enlace para volver a editar
+    td.innerHTML = `
+        <a href="#" class="text-success fw-bold" onclick="editarCuentaDesdeLink(event, this)">${mensaje}</a>
+    `;
+}
 
 function onAgregarClick() {
     initConciliacionDialog(NUEVO, { id: "Nuevo", nombre: "" });
@@ -470,7 +583,6 @@ function onAgregarClick() {
     $('#tableCardMovimientos').bootstrapTable('load', []);
     $('#tableResult').bootstrapTable('load', []);
 }
-
 
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
