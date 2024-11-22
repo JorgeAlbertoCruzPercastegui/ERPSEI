@@ -5,6 +5,7 @@ var selections = [];
 var dlgConciliacion = null;
 var dlgConciliacionModal = null;
 var numFormatter = null;
+var tableCuentasContables;
 
 const NUEVO = 0;
 const EDITAR = 1;
@@ -29,6 +30,7 @@ const putOptions = {
 document.addEventListener("DOMContentLoaded", function (event) {
     numFormatter = new Intl.NumberFormat(cultureName);
     table = $("#table");
+    tableCuentasContables = $("#tableCuentasContables");
     buttonRemove = $("#remove");
     dlgConciliacion = document.getElementById('dlgConciliacion');
     dlgConciliacionModal = new bootstrap.Modal(dlgConciliacion, {});
@@ -243,6 +245,10 @@ async function exportarAExcel(conciliacionId) {
     let oParams = { id: conciliacionId };
     $.extend(postOptions, { type: 'GET' });
 
+    let dlgTitle = "Resultado de exportación de excel";
+    let saveValidationSummary = document.getElementById("saveValidationSummary");
+    saveValidationSummary.innerHTML = "";
+
     doAjax(
         "/ERP/Conciliaciones/ExportarExcel",
         oParams,
@@ -269,7 +275,7 @@ async function exportarAExcel(conciliacionId) {
             // Genera el Excel usando las cuentas contables
             cuentasContables.forEach((cuenta, index) => {
                 const row = 7 + index; // Empieza en la fila 7
-                worksheet.getCell(`B${row}`).value = cuenta; // Coloca la cuenta en la columna B
+                worksheet.getCell(`B${row}`).value = cuenta.substring(0, 12);; // Coloca la cuenta en la columna B
             });
 
             // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
@@ -386,6 +392,15 @@ async function exportarAExcel(conciliacionId) {
             link.download = `Conciliacion_${conciliacionId}.xlsx`;
             link.click();
             URL.revokeObjectURL(link.href);
+
+            // Cerrar el modal de selección de cuenta bancaria
+            $('#modalAsignacionCuentas').modal('hide');
+
+            // Mostrar el modal de confirmación con el mensaje
+            //$('#modalConciliacionMensaje').text('El archivo Excel se exportó correctamente.');
+            //$('#modalConciliacion').modal('show');
+            showSuccess(dlgTitle, resp.mensaje);
+
         },
         function (error) {
             showError("Error", "No se pudo exportar a Excel.");
@@ -398,7 +413,7 @@ function obtenerCuentasContables() {
     $('#modalAsignacionCuentasBody').find('tr').each(function () {
         // Busca la celda de "Cuenta Bancaria"
         const cuenta = $(this).find('td:nth-child(3)').text().trim(); // Toma el texto de la tercera columna
-        cuentas.push(cuenta || 'N/A'); // Agrega el valor o 'N/A' si está vacío
+        cuentas.push(cuenta || '0000-000-000'); // Agrega el valor o 'N/A' si está vacío
     });
     return cuentas;
 }
@@ -457,13 +472,24 @@ async function ObtenerDatosClienteRFC(conciliacionId) {
             }
 
             if (resp.datos && resp.datos.length > 0) {
-                const htmlRows = resp.datos.map(row => `
+                // Generar datalists únicos por row para las sugerencias
+                const datalistHtml = resp.datos.map((row, index) => `
+                    <datalist id="cuentasDatalist${index}">
+                        ${row.cuentaBancariaOption.split(', ').map(option => `
+                            <option value="${option}"></option>
+                        `).join('')}
+                    </datalist>
+                `).join('');
+
+                // Generar las filas de la tabla
+                const htmlRows = resp.datos.map((row, index) => `
                     <tr>
                         <td class="align-middle">${row.nombreEmisor || 'N/A'}</td>
                         <td class="align-middle">${row.rfcEmisor || 'N/A'}</td>
                         <td class="align-middle">
                             <div class="d-flex align-items-center">
-                                <input type="text" class="form-control form-control-sm me-2" placeholder="Ingrese la cuenta">
+                                <input type="text" class="form-control form-control-sm me-2" 
+                                    placeholder="Ingrese la cuenta" list="cuentasDatalist${index}">
                                 <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
                                     <i class="bi bi-check-circle"></i>
                                 </button>
@@ -474,7 +500,9 @@ async function ObtenerDatosClienteRFC(conciliacionId) {
                         </td>
                     </tr>
                 `).join('');
-                $('#modalAsignacionCuentasBody').html(htmlRows);
+
+                // Insertar los datalists y las filas en el modal
+                $('#modalAsignacionCuentasBody').html(datalistHtml + htmlRows);
             } else {
                 $('#modalAsignacionCuentasBody').html(`
                     <tr>
@@ -489,6 +517,7 @@ async function ObtenerDatosClienteRFC(conciliacionId) {
         getOptions
     );
 }
+
 
 function guardarCuentaContable(boton) {
     const td = boton.parentElement.parentElement; // Obtén el <td> contenedor
@@ -505,7 +534,7 @@ function guardarCuentaContable(boton) {
     }
 }
 
-function editarCuentaDesdeLink(event, link) {
+function editarCuentaDesdeLink(event, link, conciliacionId) {
     event.preventDefault(); // Evita el comportamiento predeterminado del enlace
     const td = link.parentElement; // Obtén el <td> contenedor
     const valorActual = link.textContent.trim(); // Obtén el texto actual del enlace
@@ -517,6 +546,25 @@ function editarCuentaDesdeLink(event, link) {
     td.innerHTML = `
         <div class="d-flex align-items-center">
             <input type="text" class="form-control form-control-sm me-2" placeholder="Ingrese una cuenta bancaria" value="${inputValue}">
+            <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
+                <i class="bi bi-check-circle"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this, '${valorActual}')">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    `;
+}
+
+
+function editarCuentaContable(boton) {
+    const td = boton.parentElement; // Obtén el <td> contenedor
+    const valorActual = td.querySelector('span').textContent.trim(); // Obtén el valor actual
+
+    // Reemplaza el contenido con un input vacío y el valor actual como placeholder
+    td.innerHTML = `
+        <div class="d-flex align-items-center">
+            <input type="text" class="form-control form-control-sm me-2" placeholder="${valorActual}" value="">
             <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
                 <i class="bi bi-check-circle"></i>
             </button>
@@ -541,25 +589,6 @@ function actualizarCuenta(span) {
         span.classList.remove("text-muted");
         span.classList.add("text-success");
     }
-}
-
-
-function editarCuentaContable(boton) {
-    const td = boton.parentElement; // Obtén el <td> contenedor
-    const valorActual = td.querySelector('span').textContent.trim(); // Obtén el valor actual
-
-    // Reemplaza el contenido con un input vacío y el valor actual como placeholder
-    td.innerHTML = `
-        <div class="d-flex align-items-center">
-            <input type="text" class="form-control form-control-sm me-2" placeholder="${valorActual}" value="">
-            <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
-                <i class="bi bi-check-circle"></i>
-            </button>
-            <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this, '${valorActual}')">
-                <i class="bi bi-x-circle"></i>
-            </button>
-        </div>
-    `;
 }
 
 function cancelarEdicionCuentaContable(boton, valorAnterior) {

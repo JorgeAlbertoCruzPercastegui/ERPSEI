@@ -237,6 +237,9 @@
   <data name="DescripcionPlaceholder" xml:space="preserve">
     <value>Descripción</value>
   </data>
+  <data name="dlgConciliacionTitle" xml:space="preserve">
+    <value>Conciliación</value>
+  </data>
   <data name="EditButtonTitle" xml:space="preserve">
     <value>Editar</value>
   </data>

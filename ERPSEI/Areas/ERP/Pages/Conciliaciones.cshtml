@@ -502,8 +502,23 @@
     </div>
 </div>
 
-
-
+<!--Modal para exportar excel exitosamente-->
+<div class="modal fade" id="modalConciliacion" tabindex="-1" aria-labelledby="modalConciliacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConciliacionLabel">Resultado de exportación de excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalConciliacionMensaje">
+                <!-- Mensaje dinámico será colocado aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <!-- Modal para consulta por fechas -->
@@ -669,6 +684,7 @@
         var dlgDeleteQuestion = '@Localizer["DeleteDialogQuestion"]';
         var dlgFinishConTitle = '@Localizer["FinishConDialogTitle"]';
         var dlgMessageFinishConTitle = '@Localizer["MessageFinishConDialogTitle"]';
+        var dlgConciliacionTitle = '@Localizer["dlgConciliacionTitle"]';
 
         /*Tabla de resultados*/
         var colIdHeader = '@Localizer["colIdHeader"]';

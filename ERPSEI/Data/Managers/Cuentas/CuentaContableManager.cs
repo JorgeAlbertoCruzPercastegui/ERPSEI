@@ -86,7 +86,7 @@ namespace ERPSEI.Data.Managers.Cuentas
 			return Task.FromResult(cuentas);
         }
 
-        public async Task<List<string>> GetFilteredAsync(int empresaId, int subtipoId, int tipoId, string rfc)
+        public async Task<List<string?>> GetFilteredAsync(int empresaId, int subtipoId, int tipoId, string rfc)
         {
             return await db.CuentasContables
                 .Where(c => c.EmpresaId == empresaId &&

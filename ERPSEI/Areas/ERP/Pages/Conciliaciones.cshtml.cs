@@ -34,6 +34,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly IBancoManager bancoManager;
         private readonly IConciliacionManager conciliacionManager;
         private readonly ICuentaContableManager cuentaContableManager;
+        private readonly ICuentaContableManager cuentaContableSubtipoManager;
         private readonly IConciliacionDetalleManager conciliacionDetalleManager;
         private readonly IConciliacionDetalleComprobanteManager conciliacionDetalleComprobanteManager;
         private readonly IConciliacionDetalleMovimientoManager conciliacionDetalleMovimientoManager;
@@ -256,6 +257,12 @@ namespace ERPSEI.Areas.ERP.Pages
                         //var cuentasContables = await cuentaContableManager.GetByIdAsync(1708);
                         var cuentasContables = await cuentaContableManager.GetFilteredAsync(empresas.Id, 1, 2, rfcReceptor);
 
+                        //Obtener cuentas bancarias
+                        List<CuentaContable>? cuentasContablesBanc = await cuentaContableManager.GetByIdEmpresaAsync(empresas?.Id ?? 0);
+                        cuentasContablesBanc = cuentasContablesBanc.Where(c => c.TipoId == 3).ToList();
+
+                        CuentaContable? cuentaBancaria = cuentasContablesBanc.Where(cuenta => cuenta.TipoId == 3 && cuenta.SubtipoId == 19).FirstOrDefault();
+
 
                         foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                         {
@@ -275,7 +282,11 @@ namespace ERPSEI.Areas.ERP.Pages
                                         RfcReceptor = rfcReceptor,
                                         NombreReceptor = nombreReceptor,
                                         RfcEmisor = rfcEmisor,
-                                        NombreEmisor = nombreEmisor
+                                        NombreEmisor = nombreEmisor,
+                                        CuentaBancariaOption = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
+                                        CuentaBancariaVista = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
+                                        CuentaBancariaExcel = string.Join(", ", cuentasContablesBanc.Select(c => c.Cuenta))
+
                                     });
                         }
                     }
@@ -289,7 +300,6 @@ namespace ERPSEI.Areas.ERP.Pages
                 return null;
             }
         }
-
 
         public async Task<JsonResult> OnGetConciliacionesList()
         {
