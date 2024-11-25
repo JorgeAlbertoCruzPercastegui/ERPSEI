@@ -22,8 +22,8 @@ function initTable() {
         locale: cultureName,
         exportDataType: 'all',
         exportTypes: ['excel'],
-        toolbar: '#toolbar', // Asegúrate de que este ID coincida con el elemento HTML donde quieres que aparezcan los botones
-        showColumns: true, // Habilita la opción de mostrar/ocultar columnas
+        toolbar: '#toolbar',
+        showColumns: true,
         columns: [
             {
                 title: colFechaMovimientoHeader,
@@ -121,15 +121,13 @@ function onImportarMovimientosBancariosClick() {
     var selectedBankId = $('#selFiltroBanco').val();
 
     if (fileUpload.files.length === 0) {
-        const mensajeModal = `Por favor selecciona un archivo.`;
-        // Llamar a la función para mostrar el mensaje en el modal
+        const mensajeModal = `Por favor selecciona al menos un archivo.`;
         mostrarMensajeModal(mensajeModal);
         return;
     }
 
     if (selectedBankId === '0') {
         const mensajeModal = `Por favor selecciona un banco.`;
-        // Llamar a la función para mostrar el mensaje en el modal
         mostrarMensajeModal(mensajeModal);
         return;
     }
@@ -137,75 +135,104 @@ function onImportarMovimientosBancariosClick() {
     // Almacena el ID del banco seleccionado en el campo oculto para enviarlo con el formulario
     $('#BancoSeleccionado').val(selectedBankId);
 
-    var fileType = fileUpload.files[0].name.split('.').pop().toLowerCase();
+    // Arreglo para acumular los datos de todos los PDFs
+    let registros = [];
 
-    if (fileType === 'pdf') {
-        importarMovimientosDesdePDF(fileUpload.files[0], selectedBankId);
-    } else {
-        alert('Por favor selecciona un archivo PDF.');
+    // Iterar sobre todos los archivos seleccionados
+    for (let i = 0; i < fileUpload.files.length; i++) {
+        const file = fileUpload.files[i];
+        const fileType = file.name.split('.').pop().toLowerCase();
+
+        if (fileType === 'pdf') {
+            try {
+                // Procesar cada archivo PDF y agregar los registros a la tabla
+                importarMovimientosDesdePDF(file, selectedBankId).then(data => {
+                    registros = registros.concat(data); // Acumular los datos extraídos
+                    if (i === fileUpload.files.length - 1) {
+                        // Una vez procesados todos los archivos, cargar los datos en la tabla
+                        cargarDatosExtraidosPDF(registros);
+                    }
+                });
+            } catch (error) {
+                console.error(`Error al procesar el archivo ${file.name}:`, error);
+            }
+        } else {
+            const mensajeModal = `El archivo "${file.name}" no es un archivo PDF válido.`;
+            mostrarMensajeModal(mensajeModal);
+        }
     }
 }
+
 function importarMovimientosDesdePDF(file, selectedBank) {
     var reader = new FileReader();
 
-    reader.onload = function (e) {
-        var typedArray = new Uint8Array(e.target.result);
+    return new Promise((resolve, reject) => {
+        reader.onload = function (e) {
+            var typedArray = new Uint8Array(e.target.result);
 
-        pdfjsLib.getDocument(typedArray).promise.then(function (pdf) {
-            var numPages = pdf.numPages;
-            var extractedText = '';
-            var promises = [];
+            pdfjsLib.getDocument(typedArray).promise.then(function (pdf) {
+                var numPages = pdf.numPages;
+                var extractedText = '';
+                var promises = [];
 
-            for (var i = 1; i <= numPages; i++) {
-                promises.push(pdf.getPage(i).then(function (page) {
-                    return page.getTextContent().then(function (textContent) {
-                        textContent.items.forEach(function (item) {
-                            extractedText += item.str + ' ';
+                for (var i = 1; i <= numPages; i++) {
+                    promises.push(pdf.getPage(i).then(function (page) {
+                        return page.getTextContent().then(function (textContent) {
+                            textContent.items.forEach(function (item) {
+                                extractedText += item.str + ' ';
+                            });
                         });
-                    });
-                }));
-            }
+                    }));
+                }
 
-            Promise.all(promises).then(function () {
-                var bancoDetectado = detectarBanco(extractedText);
+                Promise.all(promises).then(function () {
+                    var bancoDetectado = detectarBanco(extractedText);
 
-                // Obtener el nombre del banco seleccionado desde el select
-                var nombreBancoSeleccionado = $('#selFiltroBanco option:selected').text().trim();
+                    // Obtener el nombre del banco seleccionado desde el select
+                    var nombreBancoSeleccionado = $('#selFiltroBanco option:selected').text().trim();
 
-                if (bancoDetectado.toLowerCase() === nombreBancoSeleccionado.toLowerCase()) {
-                    // Crear el mensaje del modal
-                    const mensajeModal = `Banco detectado correctamente: ${bancoDetectado}`;
+                    if (bancoDetectado.toLowerCase() === nombreBancoSeleccionado.toLowerCase()) {
+                        // Crear el mensaje del modal
+                        const mensajeModal = `Banco detectado correctamente: ${bancoDetectado}`;
 
-                    // Llamar a la función para mostrar el mensaje en el modal
-                    mostrarMensajeModal(mensajeModal);
+                        // Llamar a la función para mostrar el mensaje en el modal
+                        mostrarMensajeModal(mensajeModal);
 
-                    // Llamar a la función para extraer los datos específicos
-                    const datos = extraerDatosEspecificos(extractedText);
+                        // Llamar a la función para extraer los datos específicos
+                        const datos = extraerDatosEspecificos(extractedText);
 
-                    if (datos) {
-                        //console.log("Datos extraídos:", datos);
-
-                        // Convertir los datos en un arreglo para la tabla
-                        const datosTabla = [datos]; // En este caso, es un solo movimiento
-
-                        // Inicializar la tabla con los datos
-                        cargarDatosExtraidosPDF(datosTabla);
+                        if (datos) {
+                            // Retornar los datos extraídos para el archivo procesado
+                            resolve([datos]); // Los datos se convierten en un arreglo
+                        } else {
+                            console.log("No se pudieron extraer los datos específicos.");
+                            resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                        }
                     } else {
-                        console.log("No se pudieron extraer los datos específicos.");
+                        const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
+
+                        // Llamar a la función para mostrar el mensaje en el modal
+                        mostrarMensajeModal(mensajeModal);
+                        resolve([]); // Retorna un arreglo vacío si el banco no coincide
                     }
 
-                } else {
-                    const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
-
-                    // Llamar a la función para mostrar el mensaje en el modal
-                    mostrarMensajeModal(mensajeModal);
-                }
-                console.log('Texto extraído del PDF:', extractedText);
+                    console.log('Texto extraído del PDF:', extractedText);
+                }).catch(error => {
+                    console.error("Error al procesar las páginas del PDF:", error);
+                    reject(error);
+                });
+            }).catch(error => {
+                console.error("Error al cargar el documento PDF:", error);
+                reject(error);
             });
-        });
-    };
+        };
 
-    reader.readAsArrayBuffer(file);
+        reader.onerror = function (e) {
+            reject(e);
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
 }
 
 function detectarBanco(extractedText) {
