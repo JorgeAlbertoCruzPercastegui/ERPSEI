@@ -60,7 +60,7 @@
 						<!-- Botón en la parte inferior derecha -->
 						<div class="row">
 							<div class="col-12 d-flex justify-content-end">
-								<button id="dlgImportarBtnGuardar" type="submit" class="btn btn-primary">
+								<button id="dlgImportarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onImportarMovimientosBancariosClick();">
 									@Localizer["ImportButtonTitle"]
 								</button>
 							</div>
@@ -113,6 +113,7 @@
 	<script src="~/lib/bootstrap-table/extensions/export/xlsx.full.min.js"></script>
 	<script src="~/lib/bootstrap-table/extensions/export/exceljs.min.js"></script>
 	<script src="~/lib/bootstrap-table/extensions/export/FileSaver.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 	<link rel="stylesheet" href="~/css/Asistencia.css" />
 	<script src="~/../Areas/Reportes/Pages/ConvertidorBancario.cshtml.js"></script>
