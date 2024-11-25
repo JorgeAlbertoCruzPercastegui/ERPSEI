@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 });
 
 function initTable() {
-    table.bootstrapTable('destroy').bootstrapTable({
+    $('#table').bootstrapTable('destroy').bootstrapTable({
         height: 550,
         locale: cultureName,
         exportDataType: 'all',
@@ -40,7 +40,7 @@ function initTable() {
             },
             {
                 title: colReferenciaHeader,
-                field: "Referencia",
+                field: "NumeroReferencia",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -76,6 +76,12 @@ function initTable() {
         ]
     });
 }
+
+function cargarDatosExtraidosPDF(datos) {
+    // Inicializa o actualiza la tabla con los datos extraídos
+    $('#table').bootstrapTable('load', datos);
+}
+
 async function onImportarMovimientosBancariosClick(event) {
     const file = event.target.files[0];
     if (file) {
@@ -150,16 +156,24 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 
                 if (bancoDetectado.toLowerCase() === nombreBancoSeleccionado.toLowerCase()) {
                     alert(`Banco detectado correctamente: ${bancoDetectado}`);
-                    // Llamar a la función de procesamiento para la tabla de "Movimientos Realizados"
-                    const movimientos = procesarTablaMovimientosBancariosBankaool(extractedText);
-                    // Aquí puedes hacer algo con los movimientos procesados (guardar, exportar, etc.)
-                    console.log("Movimientos extraídos:", movimientos);
+
+                    // Llamar a la función para extraer los datos específicos
+                    const datos = extraerDatosEspecificos(extractedText);
+
+                    if (datos) {
+                        //console.log("Datos extraídos:", datos);
+
+                        // Convertir los datos en un arreglo para la tabla
+                        const datosTabla = [datos]; // En este caso, es un solo movimiento
+
+                        // Inicializar la tabla con los datos
+                        cargarDatosExtraidosPDF(datosTabla);
+                    } else {
+                        console.log("No se pudieron extraer los datos específicos.");
+                    }
+
                 } else {
                     alert(`Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`);
-                    // Llamar a la función de procesamiento para la tabla de "Movimientos Realizados"
-                    const movimientos = procesarTablaMovimientosBancariosBankaool(extractedText);
-                    // Aquí puedes hacer algo con los movimientos procesados (guardar, exportar, etc.)
-                    console.log("Movimientos extraídos:", movimientos);
                 }
                 console.log('Texto extraído del PDF:', extractedText);
             });
@@ -189,42 +203,47 @@ function detectarBanco(extractedText) {
         }
     }
 
-    return "Banco no identificado"; // Retorna esto si no se detecta ningún banco
+    return "Banco no identificado";
 }
 
-function procesarTablaMovimientosBancariosBankaool(textoExtraido) {
-    // Expresión regular para encontrar el bloque de la tabla de Movimientos Realizados
-    const regexTabla = /Movimientos Realizados([\s\S]*?)Totales \$ \d+\.\d{2} \$ \d+\.\d{2}/;
-    const match = regexTabla.exec(textoExtraido);
+function extraerDatosEspecificos(textoExtraido) {
+    // Expresión regular para capturar las fechas, el número de 7 dígitos, el texto y los valores con $
+    const regex = /(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{7})\s+([\s\S]*?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})/;
+    const match = regex.exec(textoExtraido);
 
     if (!match) {
-        console.error("No se encontró la tabla de 'Movimientos Realizados'.");
-        return [];
+        console.error("No se encontraron los datos específicos.");
+        return null;
     }
 
-    const bloqueTabla = match[1]; // Extrae el bloque de texto relevante
-    const lineas = bloqueTabla.split(/\r?\n/).map(linea => linea.trim()).filter(linea => linea !== "");
+    // Extraer los datos capturados por la expresión regular
+    const fechaMovimiento = match[1];
+    const fechaAplicacion = match[2];
+    const numeroReferencia = match[3];
+    const descripcion = match[4].replace(/\s{2,}/g, " ").trim(); // Reemplaza espacios múltiples por uno solo
+    let cargo = match[5];
+    let abono = match[6];
+    let saldo = match[6]; // Por defecto, el saldo será igual al último valor extraído
 
-    // Procesar cada línea de la tabla
-    const movimientos = [];
-    for (const linea of lineas) {
-        const columnas = linea.split(/\s{2,}/); // Dividir por espacios múltiples
-
-        // Validar que la línea tenga suficientes columnas para un movimiento
-        if (columnas.length >= 7) {
-            movimientos.push({
-                FechaMovimiento: columnas[0],
-                FechaAplicacion: columnas[1],
-                Referencia: columnas[2],
-                TransaccionDescripcion: columnas.slice(3, columnas.length - 3).join(" "), // Combina texto intermedio
-                Cargo: columnas[columnas.length - 3] || null,
-                Abono: columnas[columnas.length - 2] || null,
-                Saldo: columnas[columnas.length - 1] || null
-            });
-        }
+    // Validar si la descripción contiene "Abono" o "ABONO"
+    if (/abono/i.test(descripcion)) {
+        cargo = "$ 0.00"; // Asignar $ 0.00 en lugar de dejar vacío
+        abono = match[5]; // Mover el valor de cargo a abono
+        saldo = match[6]; // Mantener el saldo igual al último valor capturado
+    } else {
+        cargo = match[5]; // Mantener el valor del cargo original
+        abono = "$ 0.00"; // Dejar el abono en $ 0.00
+        saldo = match[6]; // Mantener el saldo igual al segundo valor
     }
 
-    console.log("Movimientos procesados:", movimientos);
-    return movimientos;
+    // Retornar los datos extraídos en un objeto
+    return {
+        FechaMovimiento: fechaMovimiento,
+        FechaAplicacion: fechaAplicacion,
+        NumeroReferencia: numeroReferencia,
+        Descripcion: descripcion,
+        Cargo: cargo || "$ 0.00", // Si Cargo está vacío, asignar $ 0.00
+        Abono: abono,
+        Saldo: saldo,
+    };
 }
-
