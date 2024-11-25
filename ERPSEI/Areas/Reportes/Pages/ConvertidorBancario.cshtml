@@ -99,6 +99,26 @@
 	</thead>
 </table>
 
+<!--Modal para mensaje-->
+<div class="modal fade" id="mensajeModal" tabindex="-1" role="dialog" aria-labelledby="mensajeModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="mensajeModalLabel">Mensaje</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="cerrarModal()">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body" id="modalMensajeBody">
+				<!-- El mensaje se insertará aquí -->
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" data-dismiss="modal" onclick="cerrarModal()">Cerrar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 
 @section Scripts {
 	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">

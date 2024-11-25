@@ -23,6 +23,7 @@ function initTable() {
         exportDataType: 'all',
         exportTypes: ['excel'],
         toolbar: '#toolbar', // Asegúrate de que este ID coincida con el elemento HTML donde quieres que aparezcan los botones
+        showColumns: true, // Habilita la opción de mostrar/ocultar columnas
         columns: [
             {
                 title: colFechaMovimientoHeader,
@@ -82,6 +83,19 @@ function cargarDatosExtraidosPDF(datos) {
     $('#table').bootstrapTable('load', datos);
 }
 
+function mostrarMensajeModal(mensaje) {
+    // Insertar el mensaje en el cuerpo del modal
+    document.getElementById('modalMensajeBody').innerText = mensaje;
+
+    // Mostrar el modal
+    $('#mensajeModal').modal('show');
+}
+
+function cerrarModal() {
+    // Usar jQuery para ocultar el modal
+    $('#mensajeModal').modal('hide');
+}
+
 async function onImportarMovimientosBancariosClick(event) {
     const file = event.target.files[0];
     if (file) {
@@ -107,12 +121,16 @@ function onImportarMovimientosBancariosClick() {
     var selectedBankId = $('#selFiltroBanco').val();
 
     if (fileUpload.files.length === 0) {
-        alert('Por favor selecciona un archivo.');
+        const mensajeModal = `Por favor selecciona un archivo.`;
+        // Llamar a la función para mostrar el mensaje en el modal
+        mostrarMensajeModal(mensajeModal);
         return;
     }
 
     if (selectedBankId === '0') {
-        alert('Por favor selecciona un banco.');
+        const mensajeModal = `Por favor selecciona un banco.`;
+        // Llamar a la función para mostrar el mensaje en el modal
+        mostrarMensajeModal(mensajeModal);
         return;
     }
 
@@ -155,7 +173,11 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                 var nombreBancoSeleccionado = $('#selFiltroBanco option:selected').text().trim();
 
                 if (bancoDetectado.toLowerCase() === nombreBancoSeleccionado.toLowerCase()) {
-                    alert(`Banco detectado correctamente: ${bancoDetectado}`);
+                    // Crear el mensaje del modal
+                    const mensajeModal = `Banco detectado correctamente: ${bancoDetectado}`;
+
+                    // Llamar a la función para mostrar el mensaje en el modal
+                    mostrarMensajeModal(mensajeModal);
 
                     // Llamar a la función para extraer los datos específicos
                     const datos = extraerDatosEspecificos(extractedText);
@@ -173,7 +195,10 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     }
 
                 } else {
-                    alert(`Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`);
+                    const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
+
+                    // Llamar a la función para mostrar el mensaje en el modal
+                    mostrarMensajeModal(mensajeModal);
                 }
                 console.log('Texto extraído del PDF:', extractedText);
             });
