@@ -529,11 +529,11 @@ function prepareForm(action) {
         case NUEVO:
         case EDITAR:
             if (action == NUEVO) {
-                btnDesactivar.hidden = true;
+                if (btnDesactivar) { btnDesactivar.hidden = true; }
                 dlgTitle.innerHTML = dlgNuevoTitle;
             }
             else {
-                btnDesactivar.hidden = false;
+                if (btnDesactivar) { btnDesactivar.hidden = false; }
                 dlgTitle.innerHTML = dlgEditarTitle;
             }
 
