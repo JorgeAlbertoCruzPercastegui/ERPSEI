@@ -297,9 +297,6 @@
   <data name="ColReceptorHeader" xml:space="preserve">
     <value>Receptor</value>
   </data>
-  <data name="MixedItemsMessage" xml:space="preserve">
-    <value>La selección contiene elementos que ya fueron contabilizados, cancelados o que no cuentan con una validación. Dichos elementos se ignorarán para la elaboración de la póliza actual.</value>
-  </data>
   <data name="PolizaEgresoButtonTitle" xml:space="preserve">
     <value>Generar póliza de egresos</value>
   </data>
@@ -317,6 +314,9 @@
   </data>
   <data name="EmpresaPlaceholder" xml:space="preserve">
     <value>Empresa</value>
+  </data>
+  <data name="MixedItemsMessage" xml:space="preserve">
+    <value>La selección contiene elementos que ya fueron contabilizados, cancelados o que no cuentan con una validación. Dichos elementos se ignorarán para la elaboración de la póliza actual.</value>
   </data>
   <data name="NoItemSelectedMessage" xml:space="preserve">
     <value>No se seleccionaron elementos válidos y no contabilizados para generar la póliza</value>
@@ -371,5 +371,14 @@
   </data>
   <data name="NoCuentaContableAsignadaMessage" xml:space="preserve">
     <value>Para generar la póliza, se requiere que todos los comprobantes tengan cuenta contable asignada. Actualmente existen elementos sin cuenta contable, por favor verifique.</value>
+  </data>
+  <data name="AskForAddCuentasContablesFaltantesMessage" xml:space="preserve">
+    <value>¿Desea agregar las cuentas contables faltantes? Los datos que ingrese serán guardados en la base de datos para que la cuenta quede ligada al cliente.</value>
+  </data>
+  <data name="ClienteSinCuentaContableAsignadaMessage" xml:space="preserve">
+    <value>Para generar la póliza, se requiere que todos clientes tengan cuenta contable asignada. Actualmente existen clientes sin cuenta contable, por favor verifique.</value>
+  </data>
+  <data name="DlgCuentasPolizaIngresosMessage" xml:space="preserve">
+    <value>Para poder generar la póliza de ingresos, es necesario que asigne una cuenta contable a cada cliente del listado. Edite la cuenta contable haciendo clic sobre la celda correspondiente e introduzca un valor.</value>
   </data>
 </root>

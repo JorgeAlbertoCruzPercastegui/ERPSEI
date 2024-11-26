@@ -159,8 +159,8 @@
   <data name="PolizaNoCreada" xml:space="preserve">
     <value>The policy could not be generated.</value>
   </data>
-  <data name="SinCuentaContableCliente" xml:space="preserve">
-    <value>Customer's accounting account was not found</value>
+  <data name="ComprobantesSinCuentaContable" xml:space="preserve">
+    <value>Accounting account for {0} customer(s) not found (Customer(s): {1}).</value>
   </data>
   <data name="SinCuentaContableGasto" xml:space="preserve">
     <value>Expense accounting account not found</value>
@@ -179,5 +179,23 @@
   </data>
   <data name="SinCuentasContablesVentas" xml:space="preserve">
     <value>No sales accounting accounts were found.</value>
+  </data>
+  <data name="NoWorkbookCreated" xml:space="preserve">
+    <value>No excel workbook created</value>
+  </data>
+  <data name="ComprobantesContabilizados" xml:space="preserve">
+    <value>There are {0} accounted voucher(s) (Ids: {1}).</value>
+  </data>
+  <data name="ComprobantesNoEncontrados" xml:space="preserve">
+    <value>There are {0} voucher(s) not found (Ids: {1}).</value>
+  </data>
+  <data name="ErrorBuscandoComprobantes" xml:space="preserve">
+    <value>Error searching for invoice(s).</value>
+  </data>
+  <data name="ComprobantesCancelados" xml:space="preserve">
+    <value>There are {0} cancelled voucher(s) (Ids: {1}).</value>
+  </data>
+  <data name="ComprobantesInvalidos" xml:space="preserve">
+    <value>There are {0} invalid voucher(s) (Ids: {1}).</value>
   </data>
 </root>

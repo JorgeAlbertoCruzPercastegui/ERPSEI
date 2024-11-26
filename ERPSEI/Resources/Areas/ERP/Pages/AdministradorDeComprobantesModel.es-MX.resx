@@ -159,8 +159,8 @@
   <data name="PolizaNoCreada" xml:space="preserve">
     <value>No se pudo generar la póliza.</value>
   </data>
-  <data name="SinCuentaContableCliente" xml:space="preserve">
-    <value>No se encontró la cuenta contable del cliente</value>
+  <data name="ComprobantesSinCuentaContable" xml:space="preserve">
+    <value>No se encontró la cuenta contable de {0} cliente(s) (Cliente(s): {1}).</value>
   </data>
   <data name="SinCuentaContableGasto" xml:space="preserve">
     <value>No se encontró la cuenta contable del gasto</value>
@@ -179,5 +179,23 @@
   </data>
   <data name="SinCuentasContablesVentas" xml:space="preserve">
     <value>No se encontraron cuentas contables de ventas.</value>
+  </data>
+  <data name="NoWorkbookCreated" xml:space="preserve">
+    <value>No se creó el libro de trabajo excel</value>
+  </data>
+  <data name="ComprobantesContabilizados" xml:space="preserve">
+    <value>Hay {0} comprobante(s) contabilizado(s) (Ids: {1}).</value>
+  </data>
+  <data name="ComprobantesNoEncontrados" xml:space="preserve">
+    <value>Hay {0} comprobante(s) no encontrado(s) (Ids: {1}).</value>
+  </data>
+  <data name="ErrorBuscandoComprobantes" xml:space="preserve">
+    <value>Error al buscar el(los) comprobante(s).</value>
+  </data>
+  <data name="ComprobantesCancelados" xml:space="preserve">
+    <value>Hay {0} comprobante(s) cancelado(s) (Ids: {1}).</value>
+  </data>
+  <data name="ComprobantesInvalidos" xml:space="preserve">
+    <value>Hay {0} comprobante(s) inválido(s) (Ids: {1}).</value>
   </data>
 </root>
