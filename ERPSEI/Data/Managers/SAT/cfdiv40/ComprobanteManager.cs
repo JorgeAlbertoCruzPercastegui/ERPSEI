@@ -282,7 +282,18 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 			return c;
 		}
 
-        public async Task<List<Comprobante>> GetByRFCAsync(string rfc)
+		public async Task<Comprobante?> GetWithReceptorByIdAsync(int id)
+		{
+			Comprobante? c = await _db.Comprobantes
+				.Where(e => e.Id == id)
+				.Include(e => e.Receptor)
+				.FirstOrDefaultAsync();
+
+			return c;
+		}
+
+
+		public async Task<List<Comprobante>> GetByRFCAsync(string rfc)
         {
             return await _db.Comprobantes
                 //.Include(c => c.Receptor)

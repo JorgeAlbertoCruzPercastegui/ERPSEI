@@ -372,4 +372,13 @@
   <data name="NoCuentaContableAsignadaMessage" xml:space="preserve">
     <value>To generate the policy, all invoices must have an assigned accounting account. Currently there are items without an accounting account, please verify.</value>
   </data>
+  <data name="AskForAddCuentasContablesFaltantesMessage" xml:space="preserve">
+    <value>Would you like to add missing accounting accounts? The data you enter will be saved in the database so that the account is linked to the client.</value>
+  </data>
+  <data name="ClienteSinCuentaContableAsignadaMessage" xml:space="preserve">
+    <value>To generate the policy, all customers must have an assigned accounting account. Currently there are customers without an accounting account, please verify.</value>
+  </data>
+  <data name="DlgCuentasPolizaIngresosMessage" xml:space="preserve">
+    <value>In order to generate the revenue policy, you need to assign an accounting account to each client on the list. Edit the accounting account by clicking on the corresponding cell and entering a value.</value>
+  </data>
 </root>

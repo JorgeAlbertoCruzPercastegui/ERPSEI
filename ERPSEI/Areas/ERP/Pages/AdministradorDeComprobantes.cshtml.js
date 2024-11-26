@@ -376,57 +376,107 @@ function onComprobanteSelectionChanged() {
     }
 }
 
+//Función para obtener las columnas de la tabla cuentas contables egreso.
+function getColumnsCuentasContablesEgreso() {
+    return [
+        {
+            field: "state",
+            checkbox: true,
+            align: "center",
+            valign: "middle"
+        },
+        {
+            title: colSerieHeader + ' ' + colFolioHeader,
+            field: "serieFolio",
+            align: "center",
+            valign: "middle",
+            sortable: true
+        },
+        {
+            title: colEmisorHeader,
+            field: "razonSocialEmisor",
+            align: "center",
+            valign: "middle",
+            sortable: true
+        },
+        {
+            title: colTotalHeader,
+            field: "total",
+            align: "center",
+            valign: "middle",
+            sortable: true,
+            formatter: currencyFormatter
+        },
+        {
+            title: colCuentaContableHeader,
+            field: "cuentaContable",
+            align: "center",
+            valign: "middle",
+            sortable: true,
+            clickToSelect: false,
+            editable: true
+        }
+    ];
+}
+
+//Función para obtener las columnas de la tabla cuentas contables ingreso.
+function getColumnsCuentasContablesIngeso() {
+    return [
+        {
+            title: colReceptorHeader,
+            field: "receptor",
+            align: "center",
+            valign: "middle",
+            sortable: true
+        },
+        {
+            title: colCuentaContableHeader,
+            field: "cuentaContable",
+            align: "center",
+            valign: "middle",
+            sortable: true,
+            clickToSelect: false,
+            editable: true
+        }
+    ];
+}
+
 //Función para inicializar la tabla de cuentas contables
-function initTableCuentasContables() {
-    tableCuentasContables.bootstrapTable('destroy').bootstrapTable({
-        locale: cultureName,
-        columns: [
-            {
-                field: "state",
-                checkbox: true,
-                align: "center",
-                valign: "middle"
-            },
-            {
-                title: colSerieHeader + ' ' + colFolioHeader,
-                field: "serieFolio",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: colEmisorHeader,
-                field: "razonSocialEmisor",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: colTotalHeader,
-                field: "total",
-                align: "center",
-                valign: "middle",
-                sortable: true,
-                formatter: currencyFormatter
-            },
-            {
-                title: colCuentaContableHeader,
-                field: "cuentaContable",
-                align: "center",
-                valign: "middle",
-                sortable: true,
-                clickToSelect: false,
-                editable: true
-            }
-        ]
-    })
-    tableCuentasContables.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
-        if (buttonAccionesCuentas) { buttonAccionesCuentas.prop('disabled', !tableCuentasContables.bootstrapTable('getSelections').length) }
-        cuentasSelected = getIdSelections(tableCuentasContables);
-    });
+function initTableCuentasContables(tipoExportado) {
+    if (tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) {
+        tableCuentasContables.bootstrapTable('destroy').bootstrapTable({
+            locale: cultureName,
+            columns: getColumnsCuentasContablesEgreso()
+        });
+
+        tableCuentasContables.on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table', function () {
+            if (buttonAccionesCuentas) { buttonAccionesCuentas.prop('disabled', !tableCuentasContables.bootstrapTable('getSelections').length) }
+            cuentasSelected = getIdSelections(tableCuentasContables);
+        });
+
+        if (buttonAccionesCuentas) { $(buttonAccionesCuentas).show(); }
+
+        $("#dlgBtnAgregarIngresos").hide();
+        $("#dlgBtnAgregar").show();
+
+        $("#dlgCuentasMessage").html(dlgCuentasPolizaEgresosMessage);
+    }
+    else if(tipoExportado == TIPO_EXPORTADO_POLIZA_INGRESO){
+        tableCuentasContables.bootstrapTable('destroy').bootstrapTable({
+            locale: cultureName,
+            columns: getColumnsCuentasContablesIngeso()
+        });
+
+        if (buttonAccionesCuentas) { $(buttonAccionesCuentas).hide(); }
+
+        $("#dlgBtnAgregar").hide();
+        $("#dlgBtnAgregarIngresos").show();
+
+        $("#dlgCuentasMessage").html(dlgCuentasPolizaIngresosMessage);
+    }
 
     tableCuentasContables.on('editable-shown.bs.table', function (field, row, $el) {
-        if (row == 'cuentaContable') {
+        if (row == 'cuentaContable' && tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) {
             let strElement = "#tableCuentasContables .editable-input input";
             $(strElement).attr({ idselected: '', area: 'ERP', module: 'AdministradorDeComprobantes', source: 'GetCuentasContablesSuggestion', filtro: 'rfcreceptor' });
             $(strElement).data('rfcreceptor', $el.rfcReceptor);
@@ -435,7 +485,7 @@ function initTableCuentasContables() {
     });
 
     tableCuentasContables.on('editable-save.bs.table', function (field, row, $el) {
-        if (row == 'cuentaContable') {
+        if (row == 'cuentaContable' && tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) {
             let idselected = parseInt($("#tableCuentasContables .editable-input input").attr('idselected') || '0');
             if (idselected <= 0) {
                 $el.cuentaContable = '';
@@ -529,7 +579,7 @@ function onShowPolizaEgresoClick() {
                 return;
             }
 
-            initTableCuentasContables();
+            initTableCuentasContables(TIPO_EXPORTADO_POLIZA_EGRESO);
             tableCuentasContables.bootstrapTable('load', responseHandler(resp.datos));
             tableCuentasContables.bootstrapTable('uncheckAll');
             if (buttonAccionesCuentas) { buttonAccionesCuentas.prop('disabled', true) }
@@ -542,7 +592,8 @@ function onShowPolizaEgresoClick() {
     );
 }
 //Función para mostrar comprobantes en diferentes formatos
-function onShowCFDIs(tipoExportado) {
+function onShowCFDIs(tipoExportado, elementoOrigen = null) {
+    let cuentasClientesGuardables = null;
     switch (tipoExportado) {
         case TIPO_EXPORTADO_PDF:
             break;
@@ -565,19 +616,28 @@ function onShowCFDIs(tipoExportado) {
                 return;
             }
 
-            if (tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) {
+            if (tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO || $(elementoOrigen).attr("id") == "dlgBtnAgregarIngresos") {
                 let comprobantesCuentasSelections = tableCuentasContables.bootstrapTable('getData') || [];
 
-                //Se valida que todos los comprobantes seleccionados para la póliza de egreso tengan cuenta contable asignada.
-                let match = comprobantesCuentasSelections.find(cc => (cc.cuentaContableId || 0) <= 0);
+                let match = false;
+                if (tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) {
+                    //Se valida que todos los comprobantes seleccionados para la póliza de egreso tengan cuenta contable asignada.
+                    match = comprobantesCuentasSelections.find(cc => (cc.cuentaContableId || 0) <= 0);
+                }
+                else {
+                    //Se valida que todos los clientes de los comprobantes seleccionados para la póliza de ingreso tengan cuenta contable asignada.
+                    match = comprobantesCuentasSelections.find(cc => (cc.cuentaContable || "").length <= 0);
+                }
 
                 if (match) {
                     //Si se encontró algún comprobante sin cuenta contable asignada, entonces se notifica el error al usuario.
-                    showError(dlgExportTitle, NoCuentaContableAsignadaMessage);
+                    showError(dlgExportTitle, tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO ? NoCuentaContableAsignadaMessage : ClienteSinCuentaContableAsignadaMessage);
                     return;
                 }
 
-                unaccounted = $.map(comprobantesCuentasSelections, function (row) { return `{"Id": "${row.id}", "CuentaId": "${row.cuentaContableId}"}` }) || [];
+                if (tipoExportado == TIPO_EXPORTADO_POLIZA_INGRESO) { cuentasClientesGuardables = $.map(comprobantesCuentasSelections, function (row) { return `{ "Nombre": "${row.razonSocialReceptor}", "RFC": "${row.rfcReceptor}", "Cuenta": "${row.cuentaContable}" }`; }) || []; }
+
+                if(tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) { unaccounted = $.map(comprobantesCuentasSelections, function (row) { return `{ "Id": "${row.id}", "CuentaId": "${row.cuentaContableId}" }` }) || []; }
             }
 
             let accounted = [];
@@ -590,9 +650,13 @@ function onShowCFDIs(tipoExportado) {
             //Obtiene todos los comprobantes que se encuentren sin validación de estatus
             unvalidated = $.map(selections, function (row) { if (row.valido == 0 && row.cancelado == 0) { return row.id } }) || [];
 
+            let oParams = { ids: unaccounted, tipoExportado: tipoExportado };
+
+            if ((cuentasClientesGuardables || []).length >= 1) { oParams.cuentasClientesGuardables = cuentasClientesGuardables; }
+
             if (accounted <= 0 && cancelled <= 0 && unvalidated <= 0) {
                 //Si dentro de la selección del usuario, no hay elementos contabilizados y no hay elementos cancelados y no hay elementos sin validación, entonces procede a generar la póliza directamente.
-                ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
+                ajaxExportCFDIS(oParams);
             }
             else {
                 //Se le notifica al usuario que hay elementos ya contabilizados, cancelados o sin validación y que serán ignorados y solo se tomarán en cuenta los no contabilizados vigentes una vez que confirme la acción.
@@ -601,7 +665,9 @@ function onShowCFDIs(tipoExportado) {
                 let strUnvalidated = unvalidated.length >= 1 ? `<br>${UnvalidatedMessage}: ${unvalidated.length}` : "";
                 let wholeMessage = `${MixedItemsMessage}<br> ${strAccounted} ${strCancelled} ${strUnvalidated} <br><br>${QuestionToContinueExport}`;
                 askConfirmation(dlgExportTitle, wholeMessage, function () {
-                    ajaxExportCFDIS({ ids: unaccounted, tipoExportado: tipoExportado })
+                    table.bootstrapTable('uncheckBy', { field: 'id', values: accounted.concat(cancelled).concat(unvalidated) });
+
+                    ajaxExportCFDIS(oParams);
                 });
             }
             break;
@@ -615,7 +681,12 @@ function ajaxExportCFDIS(oParams) {
         oParams,
         function (resp) {
             if (resp.tieneError) {
-                showError(dlgExportTitle, resp.mensaje);
+                showError(dlgExportTitle, resp.mensaje, function () {
+                    if (oParams.tipoExportado == TIPO_EXPORTADO_POLIZA_INGRESO && resp.codigoError == 1) {
+                        preguntarCuentasFaltantesClientes();
+                    }
+                });
+
                 return;
             }
 
@@ -633,7 +704,7 @@ function ajaxExportCFDIS(oParams) {
                     fileLink.setAttribute("href", `/ERP/AdministradorDeComprobantes/DownloadExcel?nombreArchivo=${resp.datos}`)
                     fileLink.click();
 
-                    if (oParams.tipoExportado == TIPO_EXPORTADO_POLIZA_EGRESO) { $("#dlgBtnCancelar").click(); }
+                    $("#dlgBtnCancelar").click();
 
                     break;
                 default:
@@ -645,6 +716,32 @@ function ajaxExportCFDIS(oParams) {
         },
         postOptions
     );
+}
+//Función para agregar cuentas contables de clientes en la póliza de ingresos
+function preguntarCuentasFaltantesClientes() {
+    //Pregunta al usuario si desea agregar las cuentas que faltan.
+    askConfirmation(dlgExportTitle, AskForAddCuentasContablesFaltantesMessage, function () {
+        let oParams = { ids: getIdSelections(table) }
+        doAjax(
+            `/ERP/AdministradorDeComprobantes/ComprobantesWithReceptores`,
+            oParams,
+            function (resp) {
+                if (resp.tieneError) {
+                    showError(dlgExportTitle, resp.mensaje);
+                    return;
+                }
+
+                initTableCuentasContables(TIPO_EXPORTADO_POLIZA_INGRESO);
+                tableCuentasContables.bootstrapTable('load', responseHandler(resp.datos));
+                tableCuentasContables.bootstrapTable('uncheckAll');
+                dlgCuentasPolizaEgresosModal.toggle();
+
+            }, function (error) {
+                showError(dlgExportTitle, error);
+            },
+            postOptions
+        );
+    });
 }
 
 //Función para validar comprobantes
