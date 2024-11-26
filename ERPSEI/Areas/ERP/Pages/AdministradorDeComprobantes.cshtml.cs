@@ -38,11 +38,31 @@ namespace ERPSEI.Areas.ERP.Pages
 			IEncriptacionAES encriptacionAES
 		) : ERPPageModel
 	{
+		public class SinCuentasException : Exception
+		{
+			public SinCuentasException(string? message) : base(message)
+			{
+			}
+		}
 
-		public class ComprobanteYCuenta
+		public class RFCCuenta
+		{
+			public string Nombre { get; set; } = string.Empty;
+			public string RFC { get; set; } = string.Empty;
+			public string Cuenta { get; set; } = string.Empty;
+		}
+
+		public class ComprobanteIdCuentaId
 		{
 			public int Id { get; set; } 
 			public int CuentaId { get; set; }
+		}
+
+		public class ComprobantesYCuentasPoliza
+		{
+			public Dictionary<Comprobante, CuentaContable> ComprobantesYCuentas { get; set; } = [];
+
+			public Dictionary<string, CuentaContable> CuentasAuxiliares { get; set; } = [];
 		}
 
 		public enum TipoExportacion
@@ -423,7 +443,7 @@ namespace ERPSEI.Areas.ERP.Pages
 			return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t").Replace("\"", "\\\"");
 		}
 
-		public async Task<ActionResult> OnPostExportCFDIS(string[] ids, int tipoExportado)
+		public async Task<ActionResult> OnPostExportCFDIS(string[] ids, int tipoExportado, string[]? cuentasClientesGuardables)
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesExportedUnsuccessfully"]);
 			if (PuedeTodo || PuedeConsultar || PuedeEditar)
@@ -447,7 +467,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						case (int)TipoExportacion.PolizaIngresos:
 							if(PuedeTodo || PuedeEditar)
 							{
-								resp.Datos = await CreateWorkbookIngresos(ids);
+								resp.Datos = await CreateExcelPolizaIngresos(ids, cuentasClientesGuardables);
 								resp.TieneError = false;
 								resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							}
@@ -459,7 +479,7 @@ namespace ERPSEI.Areas.ERP.Pages
 						case (int)TipoExportacion.PolizaEgresos:
 							if (PuedeTodo || PuedeEditar)
 							{
-								resp.Datos = await CreateWorkbookEgresos(ids);
+								resp.Datos = await CreateExcelPolizaEgresos(ids);
 								resp.TieneError = false;
 								resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							}
@@ -471,6 +491,11 @@ namespace ERPSEI.Areas.ERP.Pages
 						default:
 							break;
 					}
+				}
+				catch (SinCuentasException sinCuentasException)
+				{
+					resp.Mensaje = sinCuentasException.Message;
+					resp.CodigoError = 1;
 				}
 				catch (Exception ex)
 				{
@@ -486,37 +511,26 @@ namespace ERPSEI.Areas.ERP.Pages
 			return new JsonResult(resp);
 		}
 
-		private async Task<string> CreateWorkbookEgresos(string[] ids)
+		private static Task<string> CreateExcel() { return Task.FromResult(string.Empty); }
+		private async Task<string> CreateExcelPolizaEgresos(string[] ids)
 		{
 			int rowIndex = 2;
 			string? strTipoPoliza = "GASTOS";
-			XSSFWorkbook? wb = null;
 			string? nombreArchivo = string.Empty;
-			wb = await CreateExcelPolizaEgresos();
-			if (wb == null) { throw new Exception("No workbook created"); }
-
+			XSSFWorkbook? wb = (await CreateWorkbookEgresos()) ?? throw new Exception(localizer["NoWorkbookCreated"]);
 			using (wb)
 			{
-				//Obtiene la primer hoja del archivo
-				ISheet sheet = wb.GetSheetAt(0);
-				sheet.SetColumnWidth(1, 20 * 256);
-				sheet.SetColumnWidth(2, 70 * 256);
-				sheet.SetColumnWidth(3, 70 * 256);
-				sheet.SetColumnWidth(4, 10 * 256);
-				sheet.SetColumnWidth(5, 10 * 256);
+				//Configura la primer hoja del archivo
+				ISheet sheet = ConfigureFirstSheetPolizas(wb);
 
 				//Crea el estilo de las celdas.
-				XSSFCellStyle cellStyle = (XSSFCellStyle)wb.CreateCellStyle();
-				XSSFFont myFont = (XSSFFont)wb.CreateFont();
-				myFont.FontHeightInPoints = 11;
-				myFont.FontName = "Calibri";
-				cellStyle.SetFont(myFont);
+				XSSFCellStyle cellStyle = CreateCellStylePolizas(wb);
 
 				Empresa? empresaReceptora = null;
 
 				Dictionary<Comprobante, int> comprobantes = [];
-				List<ComprobanteYCuenta>? elements = JsonConvert.DeserializeObject<List<ComprobanteYCuenta>>($"[{string.Join(",", ids)}]") ?? [];
-				foreach (ComprobanteYCuenta cyc in elements)
+				List<ComprobanteIdCuentaId>? elements = JsonConvert.DeserializeObject<List<ComprobanteIdCuentaId>>($"[{string.Join(",", ids)}]") ?? [];
+				foreach (ComprobanteIdCuentaId cyc in elements)
 				{
 					Comprobante? comprobante = await comprobanteManager.GetByIdAsync(cyc.Id);
 					if (comprobante != null)
@@ -626,74 +640,31 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return nombreArchivo;
 		}
-		private async Task<string> CreateWorkbookIngresos(string[] ids)
+		private async Task<string> CreateExcelPolizaIngresos(string[] ids, string[]? cuentasClientesGuardables)
 		{
 			int rowIndex = 2;
 			string? strTipoPoliza = "VENTA";
-			XSSFWorkbook? wb = null;
 			string? nombreArchivo = string.Empty;
-			wb = await CreateExcelPolizaIngresos();
-			if (wb == null) { throw new Exception("No workbook created"); }
-
+			XSSFWorkbook? wb = (wb = await CreateWorkbookIngresos()) ?? throw new Exception(localizer["NoWorkbookCreated"]);
 			using (wb)
 			{
-				//Obtiene la primer hoja del archivo
-				ISheet sheet = wb.GetSheetAt(0);
-				sheet.SetColumnWidth(1, 20 * 256);
-				sheet.SetColumnWidth(2, 70 * 256);
-				sheet.SetColumnWidth(3, 70 * 256);
-				sheet.SetColumnWidth(4, 10 * 256);
-				sheet.SetColumnWidth(5, 10 * 256);
+				//Configura la primer hoja del archivo
+				ISheet sheet = ConfigureFirstSheetPolizas(wb);
 
 				//Crea el estilo de las celdas.
-				XSSFCellStyle cellStyle = (XSSFCellStyle)wb.CreateCellStyle();
-				XSSFFont myFont = (XSSFFont)wb.CreateFont();
-				myFont.FontHeightInPoints = 11;
-				myFont.FontName = "Calibri";
-				cellStyle.SetFont(myFont);
+				XSSFCellStyle cellStyle = CreateCellStylePolizas(wb);
 
-				Empresa? empresaEmisora = null;
-				List<Comprobante> comprobantes = [];
-                foreach (string id in ids)
-                {
-					int intId = Convert.ToInt32(id);
-					Comprobante? comprobante = await comprobanteManager.GetByIdAsync(intId);
-					if (comprobante != null) 
-					{
-						empresaEmisora ??= await empresaManager.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
-						comprobante.FechaNET = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
-						comprobantes.Add(comprobante);
-					}
-				}
-
-				comprobantes = [..comprobantes.OrderBy(c => c.FechaNET)];
-
-				List<CuentaContable>? cuentasContables = await cuentaContableManager.GetByIdEmpresaAsync(empresaEmisora?.Id ?? 0);
-				cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
-				if (cuentasContables == null || cuentasContables.Count <= 0) { throw new Exception($"{localizer["SinCuentasContables"]} {localizer["PolizaNoCreada"]}"); }
-
-				CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
-				CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
-				CuentaContable? cuentaVentasExentas = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 6).FirstOrDefault();
-				if (cuentaVentas16 == null || cuentaVentas0 == null || cuentaVentasExentas == null) { throw new Exception($"{localizer["SinCuentasContablesVentas"]} {localizer["PolizaNoCreada"]}"); }
-
-				CuentaContable? cuentaIVANoCobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 7).FirstOrDefault();
-				CuentaContable? cuentaIVACobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 8).FirstOrDefault();
-				if (cuentaIVANoCobrado == null || cuentaIVACobrado == null) { throw new Exception($"{localizer["SinCuentasContablesIVAIngreso"]} {localizer["PolizaNoCreada"]}"); }
-
-				CuentaContable? cuentaCliente = null;
-				CuentaContable? cuentaVenta = null;
+				//Obtiene los comprobantes seleccionados
+				ComprobantesYCuentasPoliza ccp = await GetComprobantesYCuentasByIdForPolizaIngresos(ids, cuentasClientesGuardables);
 
 				string conceptoString = string.Empty;
-				foreach (Comprobante comprobante in comprobantes)
+				CuentaContable? cuentaVenta = null;
+				foreach (KeyValuePair<Comprobante, CuentaContable> comprobanteYCuenta in ccp.ComprobantesYCuentas)
 				{
-					cuentaCliente = cuentasContables.Where(cuenta => cuenta.RFC == comprobante.Receptor?.Rfc).FirstOrDefault();
-					if (cuentaCliente == null) { throw new Exception($"{localizer["SinCuentaContableCliente"]} {comprobante.Receptor?.Nombre}. {localizer["PolizaNoCreada"]}"); }
-
-					conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobante.Receptor?.Nombre}' {comprobante.Serie ?? "F"}-{comprobante.Folio}";
-					if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.16m) ?? false)) { cuentaVenta = cuentaVentas16; }
-					else if (comprobante.Impuestos != null && (comprobante.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.0m) ?? false)) { cuentaVenta = cuentaVentas0; }
-					else if (comprobante.Impuestos == null) { cuentaVenta = cuentaVentasExentas; }
+					conceptoString = $"PROVISION DE {strTipoPoliza} '{comprobanteYCuenta.Key.Receptor?.Nombre}' {comprobanteYCuenta.Key.Serie ?? "F"}-{comprobanteYCuenta.Key.Folio}";
+					if (comprobanteYCuenta.Key.Impuestos != null && (comprobanteYCuenta.Key.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.16m) ?? false)) { cuentaVenta = ccp.CuentasAuxiliares["Ventas16"]; }
+					else if (comprobanteYCuenta.Key.Impuestos != null && (comprobanteYCuenta.Key.Impuestos.Traslados?.Any(t => t.TasaOCuota == 0.0m) ?? false)) { cuentaVenta = ccp.CuentasAuxiliares["Ventas0"]; }
+					else if (comprobanteYCuenta.Key.Impuestos == null) { cuentaVenta = ccp.CuentasAuxiliares["VentasExentas"]; }
 
 					//Crea el row de encabezado de CFDI
 					IRow hRow = sheet.CreateRow(rowIndex);
@@ -704,12 +675,12 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Concepto póliza
 					CreateCell(hRow, 2, conceptoString, cellStyle);
 					//Día fecha
-					CreateCell(hRow, 3, comprobante.FechaNET.Day, cellStyle);
+					CreateCell(hRow, 3, comprobanteYCuenta.Key.FechaNET.Day, cellStyle);
 
 					//Crea el row del total de la factura
 					IRow dRow = sheet.CreateRow(rowIndex + 1);
 					//No. Cuenta
-					CreateCell(dRow, 1, cuentaCliente?.Cuenta ?? "0000-000-000", cellStyle);
+					CreateCell(dRow, 1, comprobanteYCuenta.Value?.Cuenta ?? "0000-000-000", cellStyle);
 					//Depto.
 					CreateCell(dRow, 2, 0, cellStyle);
 					//Concepto
@@ -717,7 +688,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Placeholder
 					CreateCell(dRow, 4, string.Empty, cellStyle);
 					//Total
-					CreateCell(dRow, 5, (double)comprobante.Total, cellStyle);
+					CreateCell(dRow, 5, (double)comprobanteYCuenta.Key.Total, cellStyle);
 
 					//Crea el row del subtotal de la factura de CFDI
 					IRow g1Row = sheet.CreateRow(rowIndex + 2);
@@ -732,13 +703,13 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Debe
 					CreateCell(g1Row, 5, "", cellStyle);
 					//Haber
-					CreateCell(g1Row, 6, (double)comprobante.SubTotal, cellStyle);
+					CreateCell(g1Row, 6, (double)comprobanteYCuenta.Key.SubTotal, cellStyle);
 
 
 					//Crea el row del IVA
 					IRow g2Row = sheet.CreateRow(rowIndex + 3);
 					//No. Cuenta
-					CreateCell(g2Row, 1, cuentaIVANoCobrado?.Cuenta ?? "0000-000-000", cellStyle);
+					CreateCell(g2Row, 1, ccp.CuentasAuxiliares["IVANoCobrado"]?.Cuenta ?? "0000-000-000", cellStyle);
 					//Depto.
 					CreateCell(g2Row, 2, 0, cellStyle);
 					//Concepto
@@ -748,7 +719,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Debe
 					CreateCell(g2Row, 5, "", cellStyle);
 					//Haber
-					CreateCell(g2Row, 6, (double)(comprobante.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
+					CreateCell(g2Row, 6, (double)(comprobanteYCuenta.Key.Impuestos?.TotalImpuestosTrasladados ?? 0), cellStyle);
 
 					//Crea el row de fin de partida
 					IRow fRow = sheet.CreateRow(rowIndex + 4);
@@ -758,7 +729,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					//Avanza 5 lineas para poder iniciar una nueva póliza.
 					rowIndex += 5;
 
-					comprobante.Contabilizado = true;
+					comprobanteYCuenta.Key.Contabilizado = true;
 				}
 
 				//Crea el archivo excel y lo exporta al usuario.
@@ -767,14 +738,13 @@ namespace ERPSEI.Areas.ERP.Pages
 				wb.Close();
 
 				//Actualiza los comprobantes para que queden marcados con el flag "Contabilizado = true"
-				await comprobanteManager.UpdateMultipleAsync(comprobantes);
+				await comprobanteManager.UpdateMultipleAsync([..ccp.ComprobantesYCuentas.Keys]);
 			}
 
 			return nombreArchivo;
 		}
 
-		private static Task<XSSFWorkbook> CreateExcel()
-		{
+		private static Task<XSSFWorkbook> CreateWorkbookExcel() {
 			XSSFWorkbook workbook = new();
 			XSSFFont myFont = (XSSFFont)workbook.CreateFont();
 			myFont.FontHeightInPoints = 11;
@@ -828,7 +798,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return Task.FromResult(workbook);
 		}
-		private static Task<XSSFWorkbook> CreateExcelPolizaIngresos()
+		private static Task<XSSFWorkbook> CreateWorkbookIngresos()
 		{
 			XSSFWorkbook workbook = new();
 			XSSFFont myFont = (XSSFFont)workbook.CreateFont();
@@ -895,7 +865,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return Task.FromResult(workbook);
 		}
-		private static Task<XSSFWorkbook> CreateExcelPolizaEgresos()
+		private static Task<XSSFWorkbook> CreateWorkbookEgresos()
 		{
 			XSSFWorkbook workbook = new();
 			XSSFFont myFont = (XSSFFont)workbook.CreateFont();
@@ -961,6 +931,129 @@ namespace ERPSEI.Areas.ERP.Pages
 			Sheet.AddMergedRegion(regionC);
 
 			return Task.FromResult(workbook);
+		}
+
+		private Dictionary<string, CuentaContable> GetCuentasContablesEmisor(List<CuentaContable> cuentasContables)
+		{
+			CuentaContable? cuentaVentas16 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 3).FirstOrDefault();
+			CuentaContable? cuentaVentas0 = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 5).FirstOrDefault();
+			CuentaContable? cuentaVentasExentas = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 6).FirstOrDefault();
+			if (cuentaVentas16 == null || cuentaVentas0 == null || cuentaVentasExentas == null) { throw new Exception($"{localizer["SinCuentasContablesVentas"]} {localizer["PolizaNoCreada"]}"); }
+
+			CuentaContable? cuentaIVANoCobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 7).FirstOrDefault();
+			CuentaContable? cuentaIVACobrado = cuentasContables.Where(cuenta => cuenta.TipoId == 2 && cuenta.SubtipoId == 8).FirstOrDefault();
+			if (cuentaIVANoCobrado == null || cuentaIVACobrado == null) { throw new Exception($"{localizer["SinCuentasContablesIVAIngreso"]} {localizer["PolizaNoCreada"]}"); }
+
+			return new Dictionary<string, CuentaContable>([
+				new KeyValuePair<string, CuentaContable>("Ventas16", cuentaVentas16),
+				new KeyValuePair<string, CuentaContable>("Ventas0", cuentaVentas0),
+				new KeyValuePair<string, CuentaContable>("VentasExentas", cuentaVentasExentas),
+				new KeyValuePair<string, CuentaContable>("IVACobrado", cuentaIVACobrado),
+				new KeyValuePair<string, CuentaContable>("IVANoCobrado", cuentaIVANoCobrado)
+			]);
+		}
+		private async Task<ComprobantesYCuentasPoliza> GetComprobantesYCuentasByIdForPolizaIngresos(string[] ids, string[]? cuentasClientesGuardables)
+		{
+			List<string> errores = [];
+			List<string> invalidos = [];
+			List<string> cancelados = [];
+			List<string> contabilizados = [];
+			List<string> noEncontrados = [];
+			List<string> sinCuenta = [];
+
+			Dictionary<Comprobante, CuentaContable> comprobantesYCuentas = [];
+			Dictionary<string, CuentaContable> cuentasAuxiliares = [];
+
+			Empresa? empresaEmisora = null;
+
+			List<CuentaContable>? cuentasContables = [];
+
+			foreach (string id in ids)
+			{
+				int intId = Convert.ToInt32(id);
+				Comprobante? comprobante = await comprobanteManager.GetByIdAsync(intId);
+				if (comprobante != null)
+				{
+					if (empresaEmisora == null) 
+					{
+						//Se obtiene la empresa emisora con el primer comprobante. Todos los comprobantes son del mismo emisor.
+						empresaEmisora = await empresaManager.GetByRFCAsync(comprobante.Emisor?.Rfc ?? string.Empty);
+
+						//Si el usuario asigno cuentas contables para los clientes que no tenían, entonces primero guarda las cuentas ligadas a los clientes.
+						if (cuentasClientesGuardables != null && cuentasClientesGuardables.Length >= 1)
+						{
+							List<RFCCuenta>? elements = JsonConvert.DeserializeObject<List<RFCCuenta>>($"[{string.Join(",", cuentasClientesGuardables)}]") ?? [];
+							foreach (RFCCuenta rc in elements) { await cuentaContableManager.CreateAsync(new() { Cuenta = rc.Cuenta, Nombre = rc.Nombre, RFC = rc.RFC, EmpresaId = empresaEmisora?.Id, TipoId = 2, SubtipoId = 1 }); }
+						}
+
+						//Se obtienen las cuentas contables del emisor
+						cuentasContables = await cuentaContableManager.GetByIdEmpresaAsync(empresaEmisora?.Id ?? 0);
+						cuentasContables = cuentasContables.Where(c => c.TipoId == 2).ToList();
+						if (cuentasContables == null || cuentasContables.Count <= 0) { throw new Exception($"{localizer["SinCuentasContables"]} {localizer["PolizaNoCreada"]}"); }
+
+						//Se obtienen las cuentas contables del emisor de los comprobantes.
+						cuentasAuxiliares = GetCuentasContablesEmisor(cuentasContables);
+					}
+
+					if (comprobante.Contabilizado ?? false) { contabilizados.Add(id); }
+					if (comprobante.Cancelado ?? false) { cancelados.Add(id); }
+					if (comprobante.Valido == false && comprobante.Cancelado == false) { invalidos.Add(id); }
+
+					comprobante.FechaNET = DateTime.ParseExact(comprobante.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", System.Globalization.CultureInfo.InvariantCulture);
+
+					CuentaContable? cuentaCliente = cuentasContables.Where(cuenta => cuenta.SubtipoId == 1 && cuenta.RFC == comprobante.Receptor?.Rfc).FirstOrDefault();
+					if (cuentaCliente == null)
+					{
+						if (!sinCuenta.Contains(comprobante.Receptor?.Nombre ?? string.Empty)) { sinCuenta.Add(comprobante.Receptor?.Nombre ?? string.Empty); }
+					}
+					else
+					{
+						comprobantesYCuentas.Add(comprobante, cuentaCliente);
+					}
+				}
+				else
+				{
+					noEncontrados.Add(id);
+				}
+			}
+
+			if (contabilizados.Count >= 1) { errores.Add(localizer["ComprobantesContabilizados", [contabilizados.Count, string.Join(", ", contabilizados)]]); }
+
+			if (cancelados.Count >= 1) { errores.Add(localizer["ComprobantesCancelados", [contabilizados.Count, string.Join(", ", contabilizados)]]); }
+
+			if (invalidos.Count >= 1) { errores.Add(localizer["ComprobantesInvalidos", [contabilizados.Count, string.Join(", ", contabilizados)]]); }
+
+			if (noEncontrados.Count >= 1) { errores.Add(localizer["ComprobantesNoEncontrados", [noEncontrados.Count, string.Join(", ", noEncontrados)]]); }
+
+			if (errores.Count >= 1) { throw new Exception(localizer["ErrorBuscandoComprobantes", [$" {string.Join(" ", errores)}"]]); }
+
+
+			if (sinCuenta.Count >= 1) { throw new SinCuentasException(localizer["ComprobantesSinCuentaContable", [sinCuenta.Count, string.Join(", ", sinCuenta)]]); }
+
+			comprobantesYCuentas = comprobantesYCuentas.OrderBy(c => c.Key.FechaNET).ToDictionary();
+
+			return new() { ComprobantesYCuentas = comprobantesYCuentas, CuentasAuxiliares = cuentasAuxiliares };
+		}
+		private static ISheet ConfigureFirstSheetPolizas(XSSFWorkbook wb)
+		{
+			ISheet sheet = wb.GetSheetAt(0);
+			sheet.SetColumnWidth(1, 20 * 256);
+			sheet.SetColumnWidth(2, 70 * 256);
+			sheet.SetColumnWidth(3, 70 * 256);
+			sheet.SetColumnWidth(4, 10 * 256);
+			sheet.SetColumnWidth(5, 10 * 256);
+
+			return sheet;
+		}
+		private static XSSFCellStyle CreateCellStylePolizas(XSSFWorkbook wb)
+		{
+			XSSFCellStyle cellStyle = (XSSFCellStyle)wb.CreateCellStyle();
+			XSSFFont myFont = (XSSFFont)wb.CreateFont();
+			myFont.FontHeightInPoints = 11;
+			myFont.FontName = "Calibri";
+			cellStyle.SetFont(myFont);
+
+			return cellStyle;
 		}
 
 		private static void CreateCell(IRow CurrentRow, int CellIndex, string Value, XSSFCellStyle Style)
@@ -1244,6 +1337,67 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return jsonResponse;
 
+		}
+
+		public async Task<JsonResult> OnPostComprobantesWithReceptores(string[] ids)
+		{
+			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+			if (PuedeTodo || PuedeConsultar)
+			{
+				try
+				{
+					resp.Datos = await CreateJsonComprobantesWithReceptores(ids);
+					resp.TieneError = false;
+					resp.Mensaje = localizer["ConsultadoSuccessfully"];
+				}
+				catch (Exception ex)
+				{
+					logger.LogError("{message}", ex.Message);
+					resp.Mensaje = ex.Message;
+				}
+			}
+			else
+			{
+				resp.Mensaje = localizer["AccesoDenegado"];
+			}
+
+			return new JsonResult(resp);
+		}
+		private async Task<string> CreateJsonComprobantesWithReceptores(string[] ids)
+		{
+			List<string> jsonReceptores = [];
+			List<string> receptores = [];
+
+			string jsonResponse;
+
+			foreach (string id in ids)
+			{
+				_ = int.TryParse(id, out int idComprobante);
+
+				//Se obtiene el comprobante con sus conceptos
+				if (idComprobante >= 1)
+				{
+					//Obtiene los datos del comprobante
+					Comprobante? c = await comprobanteManager.GetWithReceptorByIdAsync(idComprobante);
+
+					if (c != null && !string.IsNullOrEmpty(c.Receptor?.Rfc) && !receptores.Contains(c.Receptor.Rfc))
+					{
+						receptores.Add(c.Receptor.Rfc);
+						jsonReceptores.Add(
+							"{" +
+								$"\"id\": {c.Receptor.Id}," +
+								$"\"rfcReceptor\": \"{c.Receptor.Rfc}\", " +
+								$"\"razonSocialReceptor\": \"{c.Receptor.Nombre}\", " +
+								$"\"receptor\": \"{c.Receptor.Rfc} - {c.Receptor.Nombre}\"" +
+							"}"
+						);
+					}
+				}
+			}
+
+			jsonResponse = $"[{string.Join(",", jsonReceptores)}]";
+
+			return jsonResponse;
 		}
 	}
 }
