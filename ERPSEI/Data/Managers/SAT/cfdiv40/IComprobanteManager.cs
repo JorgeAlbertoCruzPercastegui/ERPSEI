@@ -33,6 +33,8 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
 
 		public Task<Comprobante?> GetWithConceptosByIdAsync(int id);
 
+		public Task<Comprobante?> GetWithReceptorByIdAsync(int id);
+
 		public Task<Comprobante?> GetByIdWithDescripcionesAsync(int id);
 
 	}
