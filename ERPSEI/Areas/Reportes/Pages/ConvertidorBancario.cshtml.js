@@ -334,7 +334,7 @@ function extraerDatosEspecificosEplata(textoExtraido) {
     const textoFiltrado = textoExtraido.substring(inicio, fin).trim();
     console.log("Texto del pdf: ", textoExtraido);
 
-    // Expresión regular para capturar el texto desde "periodo" hasta un año en formato de 4 dígitos
+    // Expresión regular para capturar el texto desde "PERIODO" hasta un año en formato de 4 dígitos
     const regexPeriodo = /PERIODO[\s\S]*?\b(\d{4})\b/i;
     const matchPeriodo = textoExtraido.match(regexPeriodo);
 
@@ -348,12 +348,21 @@ function extraerDatosEspecificosEplata(textoExtraido) {
 
     console.log("Texto filtrado para análisis:", textoFiltrado);
 
-    // Extraer todas las fechas específicas "DD MMM" con "OCT", "NOV", "DIC"
-    const regexFechas = /\b(\d{2})\s(OCT|NOV|DIC)\b/g;
+    // Extraer todas las fechas específicas "DD MMM"
+    const regexFechas = /\b(\d{2})\s(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\b/g;
     const fechasEncontradas = [];
     let matchFecha;
 
     const monthMap = {
+        ENE: "01",
+        FEB: "02",
+        MAR: "03",
+        ABR: "04",
+        MAY: "05",
+        JUN: "06",
+        JUL: "07",
+        AGO: "08",
+        SEP: "09",
         OCT: "10",
         NOV: "11",
         DIC: "12"
@@ -377,7 +386,13 @@ function extraerDatosEspecificosEplata(textoExtraido) {
     let matchMovimiento;
 
     while ((matchMovimiento = regexMovimientos.exec(textoFiltrado)) !== null) {
-        const descripcion = matchMovimiento[0].trim();
+        let descripcion = matchMovimiento[0].trim();
+
+        // Eliminar solo las cantidades que comienzan con $
+        descripcion = descripcion
+            .replace(/\$\d{1,3}(?:,\d{3})*\.\d{2}/g, '') // Eliminar cualquier cantidad que inicie con $
+            .trim(); // Quitar espacios sobrantes
+
         const cantidad1 = matchMovimiento[1]; // Primer número
         const cantidad2 = matchMovimiento[2]; // Segundo número (Saldo)
 
@@ -391,7 +406,7 @@ function extraerDatosEspecificosEplata(textoExtraido) {
         }
 
         registrosMovimiento.push({
-            Descripcion: descripcion, // Capturar toda la descripción del PAGO
+            Descripcion: descripcion, // Capturar la descripción del PAGO sin las cantidades
             Cargo: cargo,
             Abono: abono,
             Saldo: cantidad2, // El segundo número siempre es el Saldo
