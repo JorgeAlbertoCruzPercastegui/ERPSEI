@@ -197,16 +197,29 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 
                         // Llamar a la función para mostrar el mensaje en el modal
                         mostrarMensajeModal(mensajeModal);
+                        if (bancoDetectado == "Bankaool" || bancoDetectado == "bankaool")
+                        {
+                            const datos = extraerDatosEspecificos(extractedText);
 
-                        // Llamar a la función para extraer los datos específicos
-                        const datos = extraerDatosEspecificos(extractedText);
+                            if (datos) {
+                                // Retornar los datos extraídos para el archivo procesado
+                                resolve([datos]); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        if (bancoDetectado == "Eplata" || bancoDetectado == "EPlata")
+                        {
+                            const datos = extraerDatosEspecificosEplata(extractedText);
 
-                        if (datos) {
-                            // Retornar los datos extraídos para el archivo procesado
-                            resolve([datos]); // Los datos se convierten en un arreglo
-                        } else {
-                            console.log("No se pudieron extraer los datos específicos.");
-                            resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            if (datos) {
+                                // Retornar los datos extraídos para el archivo procesado
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
                         }
                     } else {
                         const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
@@ -216,7 +229,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                         resolve([]); // Retorna un arreglo vacío si el banco no coincide
                     }
 
-                    console.log('Texto extraído del PDF:', extractedText);
+                    //console.log('Texto extraído del PDF:', extractedText);
                 }).catch(error => {
                     console.error("Error al procesar las páginas del PDF:", error);
                     reject(error);
@@ -241,7 +254,8 @@ function detectarBanco(extractedText) {
         "Banregio": ["BANREGIO", "BANCO REGIONAL", "Banregio"],
         "BBVA": ["BBVA", "BANCO BBVA"],
         "Alquimia": ["Alquimia", "ALQUIMIA", "Alquimia Digital", "alquimiapay"],
-        "Bankaool": ["Bankaool", "BANKAOOL"]
+        "Bankaool": ["Bankaool", "BANKAOOL"],
+        "Eplata": ["Eplata", "EPlata", "EPLATA"]
     };
 
     // Recorrer cada banco y sus palabras clave
@@ -298,4 +312,116 @@ function extraerDatosEspecificos(textoExtraido) {
         Abono: abono,
         Saldo: saldo,
     };
+}
+
+function extraerDatosEspecificosEplata(textoExtraido) {
+    // Limitar el texto al contenido entre "DETALLE DE MOVIMIENTOS" e "Incumplir tus obligaciones"
+    const inicio = textoExtraido.indexOf("DETALLE DE MOVIMIENTOS");
+    const fin = textoExtraido.indexOf("Incumplir tus obligaciones");
+
+    if (inicio === -1 || fin === -1 || inicio >= fin) {
+        console.error("No se encontró el rango de texto esperado.");
+        return [{
+            FechaMovimiento: null,
+            Concepto: null,
+            Cargo: null,
+            Abono: null,
+            Saldo: null,
+            Descripcion: null,
+        }];
+    }
+
+    const textoFiltrado = textoExtraido.substring(inicio, fin).trim();
+    console.log("Texto del pdf: ", textoExtraido);
+
+    // Expresión regular para capturar el texto desde "periodo" hasta un año en formato de 4 dígitos
+    const regexPeriodo = /PERIODO[\s\S]*?\b(\d{4})\b/i;
+    const matchPeriodo = textoExtraido.match(regexPeriodo);
+
+    if (!matchPeriodo) {
+        console.error("No se encontró el período en el texto.");
+        return [];
+    }
+
+    const year = matchPeriodo[1]; // Captura el año del período
+    console.log("Año del período:", year);
+
+    console.log("Texto filtrado para análisis:", textoFiltrado);
+
+    // Extraer todas las fechas específicas "DD MMM" con "OCT", "NOV", "DIC"
+    const regexFechas = /\b(\d{2})\s(OCT|NOV|DIC)\b/g;
+    const fechasEncontradas = [];
+    let matchFecha;
+
+    const monthMap = {
+        OCT: "10",
+        NOV: "11",
+        DIC: "12"
+    };
+
+    while ((matchFecha = regexFechas.exec(textoFiltrado)) !== null) {
+        const day = matchFecha[1]; // Captura el día
+        const month = monthMap[matchFecha[2]]; // Mapea el mes al número correspondiente
+        fechasEncontradas.push(`${day}/${month}/${year}`); // Formato DD/MM/YYYY
+    }
+
+    if (fechasEncontradas.length === 0) {
+        console.warn("No se encontraron fechas específicas en el texto.");
+    }
+
+    console.log("Fechas específicas encontradas (formato DD/MM/YYYY):", fechasEncontradas);
+
+    // Extraer registros de PAGO y cantidades (Cargos y Saldos)
+    const regexMovimientos = /PAGO[\s\S]*?\|\d{18}\s+\$(\d{1,3}(?:,\d{3})*\.\d{2})\s+\$(\d{1,3}(?:,\d{3})*\.\d{2})/g;
+    const registrosMovimiento = [];
+    let matchMovimiento;
+
+    while ((matchMovimiento = regexMovimientos.exec(textoFiltrado)) !== null) {
+        const descripcion = matchMovimiento[0].trim();
+        const cantidad1 = matchMovimiento[1]; // Primer número
+        const cantidad2 = matchMovimiento[2]; // Segundo número (Saldo)
+
+        // Lógica para determinar si la cantidad1 es Cargo o Abono
+        let cargo = "$0.00";
+        let abono = "$0.00";
+        if (descripcion.startsWith("PAGO FACTURA")) {
+            cargo = cantidad1; // Si es PAGO FACTURA, se asigna a Cargo
+        } else if (/^PAGO\s\d+/.test(descripcion)) {
+            abono = cantidad1; // Si es PAGO seguido de un número, se asigna a Abono
+        }
+
+        registrosMovimiento.push({
+            Descripcion: descripcion, // Capturar toda la descripción del PAGO
+            Cargo: cargo,
+            Abono: abono,
+            Saldo: cantidad2, // El segundo número siempre es el Saldo
+        });
+    }
+
+    if (registrosMovimiento.length === 0) {
+        console.warn("No se encontraron registros de movimientos con cargos y saldos.");
+    }
+
+    console.log("Registros de movimientos encontrados:", registrosMovimiento);
+
+    // Alinear fechas, descripciones, cargos, abonos y saldos
+    const maxLength = Math.max(fechasEncontradas.length, registrosMovimiento.length);
+    const resultadoFinal = [];
+
+    for (let i = 0; i < maxLength; i++) {
+        const movimiento = registrosMovimiento[i] || { Descripcion: null, Cargo: "$0.00", Abono: "$0.00", Saldo: null };
+
+        resultadoFinal.push({
+            FechaMovimiento: fechasEncontradas[i] || null, // Si no hay más fechas, rellenar con null
+            Concepto: null,
+            Cargo: movimiento.Cargo,
+            Abono: movimiento.Abono,
+            Saldo: movimiento.Saldo,
+            Descripcion: movimiento.Descripcion,
+        });
+    }
+
+    console.log("Resultado final alineado:", resultadoFinal);
+
+    return resultadoFinal;
 }
