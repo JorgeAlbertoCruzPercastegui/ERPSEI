@@ -221,6 +221,17 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
+                        if (bancoDetectado == "Banbajio" || bancoDetectado == "BANBAJIO" || bancoDetectado == "Banbajío") {
+                            const datos = extraerDatosEspecificosBanbajio(extractedText);
+
+                            if (datos) {
+                                // Retornar los datos extraídos para el archivo procesado
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
                     } else {
                         const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
 
@@ -251,6 +262,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 function detectarBanco(extractedText) {
     // Diccionario de bancos y sus palabras clave
     var bancoKeywords = {
+        "Banbajio": ["Banbajio", "banbajio", "Banbajío", "CUENTA CONECTA BANBAJIO"],
         "Banregio": ["BANREGIO", "BANCO REGIONAL", "Banregio"],
         "BBVA": ["BBVA", "BANCO BBVA"],
         "Alquimia": ["Alquimia", "ALQUIMIA", "Alquimia Digital", "alquimiapay"],
@@ -439,4 +451,58 @@ function extraerDatosEspecificosEplata(textoExtraido) {
     console.log("Resultado final alineado:", resultadoFinal);
 
     return resultadoFinal;
+}
+
+function extraerDatosEspecificosBanbajio(textoExtraido) {
+    // Limitar el texto al contenido de "DETALLE DE LA CUENTA"
+    const inicio = textoExtraido.indexOf("DETALLE DE LA CUENTA");
+    const fin = textoExtraido.lastIndexOf("CONTINUA EN LA SIGUIENTE PAGINA");
+
+    if (inicio === -1 || fin === -1 || inicio >= fin) {
+        console.error("No se encontró el rango de texto esperado.");
+        return [];
+    }
+
+    const textoFiltrado = textoExtraido.substring(inicio, fin).trim();
+    console.log("Texto filtrado para análisis:", textoFiltrado);
+
+    // Expresión regular para capturar fechas
+    const regexFechas = /\b\d{1,2}\s\w{3}\b/g;
+    const fechasEncontradas = [];
+
+    let matchFecha;
+    while ((matchFecha = regexFechas.exec(textoFiltrado)) !== null) {
+        fechasEncontradas.push({ FechaMovimiento: matchFecha[0] });
+    }
+
+    // Expresión regular para capturar registros completos
+    const regexRegistros = /(\d{1,2}\s\w{3})\s.*?((DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS).*?(?=\d{1,2}\s\w{3}|$))/gs;
+    const registrosEncontrados = [];
+
+    let matchRegistro;
+    while ((matchRegistro = regexRegistros.exec(textoFiltrado)) !== null) {
+        const detalle = matchRegistro[3].replace(/\s+/g, ' ').trim(); // Detalles del registro en una sola línea
+        registrosEncontrados.push({ Descripcion: detalle });
+    }
+
+    if (fechasEncontradas.length === 0) {
+        console.warn("No se encontraron fechas en el texto.");
+    }
+
+    if (registrosEncontrados.length === 0) {
+        console.warn("No se encontraron registros.");
+    }
+
+    console.log("Registros encontrados:", registrosEncontrados);
+    console.log("Fechas encontradas:", fechasEncontradas);
+
+    // Combinar fechas y registros en un solo array
+    const datosCombinados = fechasEncontradas.map((fecha, index) => {
+        return {
+            FechaMovimiento: fecha.FechaMovimiento,
+            Descripcion: registrosEncontrados[index]?.Descripcion || "Sin descripción"
+        };
+    });
+
+    return datosCombinados;
 }
