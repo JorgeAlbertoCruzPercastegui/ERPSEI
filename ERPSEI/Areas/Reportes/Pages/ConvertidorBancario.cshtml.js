@@ -475,14 +475,47 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
         fechasEncontradas.push({ FechaMovimiento: matchFecha[0] });
     }
 
-    // Expresión regular para capturar registros completos
-    const regexRegistros = /(\d{1,2}\s\w{3})\s.*?((DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS).*?(?=\d{1,2}\s\w{3}|$))/gs;
+    // Expresión regular para identificar registros completos por encabezado válido
+    const regexRegistros = /(DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS).*?(?=(DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS|$))/gs;
     const registrosEncontrados = [];
 
     let matchRegistro;
     while ((matchRegistro = regexRegistros.exec(textoFiltrado)) !== null) {
-        const detalle = matchRegistro[3].replace(/\s+/g, ' ').trim(); // Detalles del registro en una sola línea
-        registrosEncontrados.push({ Descripcion: detalle });
+        let detalle = matchRegistro[0].replace(/\s+/g, ' ').trim();
+
+        // Extraer montos con la expresión regular
+        const regexMontos = /\$\s*[\d,]+\.\d{2}/g;
+        const montos = detalle.match(regexMontos);
+
+        // Determinar valores para Cargo, Abono, y Saldo
+        let cargo = "$0.00";
+        let abono = "$0.00";
+        let saldo = "-";
+
+        if (montos && montos.length >= 2) {
+            saldo = montos[1].trim(); // El segundo monto es el Saldo
+            if (detalle.startsWith("DEPÓSITO SPEI:")) {
+                cargo = montos[0].trim(); // El primer monto es el Cargo
+            } else if (detalle.startsWith("ENVÍO SPEI:")) {
+                abono = montos[0].trim(); // El primer monto es el Abono
+            }
+            // Eliminar los montos del detalle del registro
+            detalle = detalle.replace(montos[0], "").replace(montos[1], "").trim();
+        }
+
+        // Limpiar la descripción para que termine únicamente con "CLAVE DE RASTREO:"
+        const regexClaveRastreo = /(CLAVE DE RASTREO:[A-Z0-9]{1,24}).*/;
+        const matchClave = detalle.match(regexClaveRastreo);
+        if (matchClave) {
+            detalle = detalle.substring(0, detalle.indexOf(matchClave[1]) + matchClave[1].length);
+        }
+
+        registrosEncontrados.push({
+            Descripcion: detalle,
+            Cargo: cargo,
+            Abono: abono,
+            Saldo: saldo
+        });
     }
 
     if (fechasEncontradas.length === 0) {
@@ -496,11 +529,15 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
     console.log("Registros encontrados:", registrosEncontrados);
     console.log("Fechas encontradas:", fechasEncontradas);
 
-    // Combinar fechas y registros en un solo array
+    // Combinar fechas, descripciones, y montos en un solo array
     const datosCombinados = fechasEncontradas.map((fecha, index) => {
+        const registro = registrosEncontrados[index] || {};
         return {
             FechaMovimiento: fecha.FechaMovimiento,
-            Descripcion: registrosEncontrados[index]?.Descripcion || "Sin descripción"
+            Descripcion: registro.Descripcion || "Sin descripción",
+            Saldo: registro.Saldo || "-", // Segundo monto como Saldo
+            Cargo: registro.Cargo || "$0.00", // Cargo asignado según la lógica
+            Abono: registro.Abono || "$0.00"  // Abono asignado según la lógica
         };
     });
 
