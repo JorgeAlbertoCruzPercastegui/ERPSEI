@@ -463,8 +463,10 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
         return [];
     }
 
-    const textoFiltrado = textoExtraido.substring(inicio, fin).trim();
-    console.log("Texto filtrado para análisis:", textoFiltrado);
+    // Recortar el texto inicial
+    let textoFiltrado = textoExtraido.substring(inicio, fin).trim();
+
+    console.log("Texto original filtrado:", textoFiltrado);
 
     // Expresión regular para capturar fechas
     const regexFechas = /\b\d{1,2}\s\w{3}\b/g;
@@ -475,6 +477,10 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
         fechasEncontradas.push({ FechaMovimiento: matchFecha[0] });
     }
 
+    if (fechasEncontradas.length === 0) {
+        console.warn("No se encontraron fechas en el texto.");
+    }
+
     // Expresión regular para identificar registros completos por encabezado válido
     const regexRegistros = /(DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS).*?(?=(DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS|$))/gs;
     const registrosEncontrados = [];
@@ -482,6 +488,31 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
     let matchRegistro;
     while ((matchRegistro = regexRegistros.exec(textoFiltrado)) !== null) {
         let detalle = matchRegistro[0].replace(/\s+/g, ' ').trim();
+
+        // Si el registro contiene "BENEFICIARIO:" o "ORDENANTE:", eliminar todo desde "ESTADO DE CUENTA" hacia adelante
+        if (detalle.includes("BENEFICIARIO:") || detalle.includes("ORDENANTE:")) {
+            const indexEstadoCuenta = detalle.indexOf("ESTADO DE CUENTA");
+            const indexSaldoTotal = detalle.indexOf("SALDO TOTAL*");
+            if (indexEstadoCuenta !== -1) {
+                detalle = detalle.substring(0, indexEstadoCuenta).trim();
+            }
+            if (indexSaldoTotal !== -1) {
+                detalle = detalle.substring(0, indexSaldoTotal).trim();
+            }
+        }
+
+        // Limpiar el texto no deseado de la descripción
+        const textosNoDeseados = [
+            "LA REPRODUCCION NO AUTORIZADA DE ESTE COMPROBANTE CONSTITUYE UN DELITO EN LOS TERMINOS DE LAS DISPOSICIONES FISCALES.",
+            "CONTRIBUYENTE AUTORIZADO PARA IMPRIMIR SUS PROPIOS COMPROBANTES FISCALES.",
+            "BANCO DEL BAJÍO, S.A., INSTITUCIÓN DE BANCA MÚLTIPLE RECIBE LAS CONSULTAS, RECLAMACIONES O ACLARACIONES EN SU UNIDAD ESPECIALIZADA DE ATENCIÓN A USUARIOS UBICADA EN BLVD. MANUEL J. CLOUTHIER 402, COL. JARDINES DEL CAMPESTRE, LEÓN, GTO. CP 37128 Y POR CORREO ELECTRÓNICO Y TELÉFONO 477 740 7875, ASÍ COMO CUALQUIERA DE SUS UNE@BB.COM.MX SUCURSALES U OFICINAS.",
+            "EN EL CASO DE NO OBTENER UNA RESPUESTA SATISFACTORIA, PODRÁ ACUDIR A LA COMISIÓN NACIONAL PARA LA PROTECCIÓN Y DEFENSA DE LOS USUARIOS DE SERVICIOS FINANCIEROS EN SU PÁGINA DE INTERNET WWW.CONDUSEF.GOB.MX O EN SU CENTRO DE ATENCIÓN TELEFÓNICA EN EL D.F. Y ÁREA METROPOLITANA AL 5340-0999 Y EL RESTO DE LA REPÚBLICA MEXICANA AL 800 999 80 80.",
+            "SI AL REVISAR SU"
+        ];
+
+        textosNoDeseados.forEach((texto) => {
+            detalle = detalle.replace(texto, "").trim();
+        });
 
         // Extraer montos con la expresión regular
         const regexMontos = /\$\s*[\d,]+\.\d{2}/g;
@@ -498,6 +529,12 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
                 cargo = montos[0].trim(); // El primer monto es el Cargo
             } else if (detalle.startsWith("ENVÍO SPEI:")) {
                 abono = montos[0].trim(); // El primer monto es el Abono
+            } else if (detalle.startsWith("TEF RECIBIDO:")) {
+                cargo = montos[0].trim();
+            } else if (detalle.includes("BENEFICIARIO:")) {
+                abono = montos[0].trim();
+            } else if (detalle.includes("ORDENANTE:")) {
+                cargo = montos[0].trim();
             }
             // Eliminar los montos del detalle del registro
             detalle = detalle.replace(montos[0], "").replace(montos[1], "").trim();
@@ -518,16 +555,11 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
         });
     }
 
-    if (fechasEncontradas.length === 0) {
-        console.warn("No se encontraron fechas en el texto.");
-    }
-
     if (registrosEncontrados.length === 0) {
         console.warn("No se encontraron registros.");
     }
 
     console.log("Registros encontrados:", registrosEncontrados);
-    console.log("Fechas encontradas:", fechasEncontradas);
 
     // Combinar fechas, descripciones, y montos en un solo array
     const datosCombinados = fechasEncontradas.map((fecha, index) => {
