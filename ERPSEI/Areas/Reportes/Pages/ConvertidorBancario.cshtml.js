@@ -468,6 +468,17 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
 
     console.log("Texto original filtrado:", textoFiltrado);
 
+    // Expresión regular para capturar las referencias numéricas de 7 dígitos
+    const regexReferencias = /\b\d{7}\b/g;
+    const referencias = [];
+
+    let match;
+    while ((match = regexReferencias.exec(textoFiltrado)) !== null) {
+        referencias.push(match[0]); // Agregar la referencia encontrada
+    }
+
+    console.log("Referencias encontradas:", referencias);
+
     // Expresión regular para capturar fechas
     const regexFechas = /\b\d{1,2}\s\w{3}\b/g;
     const fechasEncontradas = [];
@@ -561,11 +572,12 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
 
     console.log("Registros encontrados:", registrosEncontrados);
 
-    // Combinar fechas, descripciones, y montos en un solo array
+    // Combinar fechas, descripciones, montos, y referencias en un solo array
     const datosCombinados = fechasEncontradas.map((fecha, index) => {
         const registro = registrosEncontrados[index] || {};
         return {
             FechaMovimiento: fecha.FechaMovimiento,
+            NumeroReferencia: referencias[index] || "Sin referencia", // Agregar la referencia correspondiente
             Descripcion: registro.Descripcion || "Sin descripción",
             Saldo: registro.Saldo || "-", // Segundo monto como Saldo
             Cargo: registro.Cargo || "$0.00", // Cargo asignado según la lógica
