@@ -626,6 +626,7 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
     // Dividir el texto por páginas
     const paginas = textoExtraido.split(/Page\s+\d+\s+of\s+\d+/i); // Ajustar si el separador es diferente
     const resultadosPorPagina = [];
+    const datosTabla = []; // Almacena los datos para la tabla
 
     paginas.forEach((pagina, index) => {
         // Extraer el número de página actual
@@ -679,6 +680,20 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
                     asimiladosEncontrado = true;
                 }
             }
+
+            // Agregar los días encontrados al campo FechaMovimiento en el formato DD/MM/YYYY
+            dias.forEach((dia) => {
+                const fechaMovimiento = `${dia.padStart(2, "0")}/06/2024`; // Formato DD/MM/YYYY, ajusta el mes y año según sea necesario
+                datosTabla.push({
+                    FechaMovimiento: fechaMovimiento,
+                    FechaAplicacion: "", // Puedes rellenar según el caso
+                    NumeroReferencia: "", // Puedes rellenar según el caso
+                    Descripcion: `Día encontrado: ${dia}`,
+                    Cargo: "$ 0.00", // Valores por defecto o según tu lógica
+                    Abono: "$ 0.00", // Valores por defecto o según tu lógica
+                    Saldo: "$ 0.00", // Valores por defecto o según tu lógica
+                });
+            });
         }
 
         // Solo agregar páginas con días encontrados
@@ -705,5 +720,9 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
         console.log("==============================\n");
     });
 
-    return resultadosPorPagina;
+    // Mostrar datos para la tabla
+    console.log("Datos para la tabla:\n", datosTabla);
+
+    return datosTabla; // Devuelve los datos estructurados para la tabla
 }
+
