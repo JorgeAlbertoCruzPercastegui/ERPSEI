@@ -585,5 +585,22 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
         };
     });
 
+    // Llamar a la función para ajustar referencias si contienen (BI- )
+    return procesarRegistrosConBI(datosCombinados);
+}
+
+function procesarRegistrosConBI(datosCombinados) {
+    // Iterar sobre los registros para ajustar referencias si contienen (BI- )
+    for (let i = 0; i < datosCombinados.length; i++) {
+        // Verificar si la descripción contiene (BI- )
+        if (datosCombinados[i].Descripcion.includes("(BI- )")) {
+            // Si no es la última fila, mover la referencia a la siguiente fila
+            if (i + 1 < datosCombinados.length) {
+                datosCombinados[i + 1].NumeroReferencia = datosCombinados[i].NumeroReferencia;
+            }
+            // Vaciar la referencia de la fila actual
+            datosCombinados[i].NumeroReferencia = "";
+        }
+    }
     return datosCombinados;
 }
