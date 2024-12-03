@@ -625,7 +625,6 @@ function extraerDatosEspecificosBBVA(textoExtraido)
 function extraerDatosEspecificosBanregio(textoExtraido) {
     // Dividir el texto por páginas
     const paginas = textoExtraido.split(/Page\s+\d+\s+of\s+\d+/i); // Ajustar si el separador es diferente
-    const resultadosPorPagina = [];
     const datosTabla = []; // Almacena los datos para la tabla
 
     paginas.forEach((pagina, index) => {
@@ -637,7 +636,7 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
         const indexConcepto = pagina.indexOf("CONCEPTO");
         let textoDesdeConcepto = "";
         let dias = [];
-        let asimiladosEncontrado = false;
+        let descripciones = [];
 
         if (indexConcepto !== -1) {
             // Extraer el texto desde "CONCEPTO"
@@ -645,78 +644,52 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
 
             // Verificar si la página contiene "CERTIFICADO SAT FOLIO FISCAL"
             if (/CERTIFICADO\s+SAT\s+FOLIO\s+FISCAL/i.test(textoDesdeConcepto)) {
-                // Si contiene "ASIMILADOS" seguido de dos dígitos, conservar ese registro
-                const asimiladosMatch = textoDesdeConcepto.match(/ASIMILADOS\s+\d{2}/i);
-                if (asimiladosMatch) {
-                    const asimiladosIndex = textoDesdeConcepto.indexOf(asimiladosMatch[0]) + asimiladosMatch[0].length;
-                    const textoAsimilados = textoDesdeConcepto.substring(0, asimiladosIndex).trim();
-
-                    // Transferir "ASIMILADOS" y los días asociados a la página anterior si existe
-                    if (resultadosPorPagina.length > 0) {
-                        resultadosPorPagina[resultadosPorPagina.length - 1].texto += `\n${textoAsimilados}`;
-                        resultadosPorPagina[resultadosPorPagina.length - 1].dias.push(
-                            ...textoAsimilados.match(/\d{2}/g)
-                        );
-                    }
-                }
                 return; // Omitir esta página del procesamiento principal
             }
 
-            // Buscar días con un espacio antes y un espacio después
-            const diasConEspacios = textoDesdeConcepto.match(/(?<=\s)\d{2}(?=\s)/g) || [];
+            // Expresión regular para encontrar registros que inicien con TRA, DOC o INT
+            const regexRegistros = /\b(TRA|TRA-IVA|TRA-|TRA-Comision|DOC|INT)[\s\S]*?(?=\s\d{2}\s|$)/g; // Captura hasta un día o el final de la línea
+            let match;
 
-            // Buscar días al final de una fila con un espacio antes y sin caracteres después
-            const diasFinales = textoDesdeConcepto.match(/(?<=\s)\d{2}(?=$)/gm) || [];
-
-            // Combinar ambas listas de días
-            dias = [...diasConEspacios, ...diasFinales];
-
-            // Si hay 1 o 2 días encontrados, truncar el texto después de "ASIMILADOS" seguido de dos dígitos
-            if (dias.length === 1 || dias.length === 2) {
-                const asimiladosMatch = textoDesdeConcepto.match(/ASIMILADOS\s+\d{2}/i);
-                if (asimiladosMatch) {
-                    const asimiladosIndex = textoDesdeConcepto.indexOf(asimiladosMatch[0]) + asimiladosMatch[0].length;
-                    textoDesdeConcepto = textoDesdeConcepto.substring(0, asimiladosIndex).trim();
-                    asimiladosEncontrado = true;
-                }
+            while ((match = regexRegistros.exec(textoDesdeConcepto)) !== null) {
+                descripciones.push(match[0].trim());
             }
 
-            // Agregar los días encontrados al campo FechaMovimiento en el formato DD/MM/YYYY
-            dias.forEach((dia) => {
-                const fechaMovimiento = `${dia.padStart(2, "0")}/06/2024`; // Formato DD/MM/YYYY, ajusta el mes y año según sea necesario
+            // Buscar días con un espacio antes y un espacio después
+            const regexDias = /(?<=\s)\d{2}(?=\s)|(?<=\s)\d{2}(?=$)/g;
+            dias = textoDesdeConcepto.match(regexDias) || [];
+
+            // Generar datos para la tabla
+            const maxLongitud = Math.max(dias.length, descripciones.length);
+            for (let i = 0; i < maxLongitud; i++) {
+                const fechaMovimiento = dias[i]
+                    ? `${dias[i].padStart(2, "0")}/06/2024` // Formato DD/MM/YYYY
+                    : ""; // Dejar vacío si no hay más días
+
+                const descripcion = descripciones[i] || "Descripción no encontrada"; // Manejo de descripciones faltantes
+
                 datosTabla.push({
                     FechaMovimiento: fechaMovimiento,
                     FechaAplicacion: "", // Puedes rellenar según el caso
                     NumeroReferencia: "", // Puedes rellenar según el caso
-                    Descripcion: `Día encontrado: ${dia}`,
+                    Descripcion: descripcion, // Texto extraído
                     Cargo: "$ 0.00", // Valores por defecto o según tu lógica
                     Abono: "$ 0.00", // Valores por defecto o según tu lógica
                     Saldo: "$ 0.00", // Valores por defecto o según tu lógica
                 });
-            });
+            }
         }
 
-        // Solo agregar páginas con días encontrados
-        if (dias.length > 0 || asimiladosEncontrado) {
-            resultadosPorPagina.push({
-                pagina: numeroPagina,
-                texto: textoDesdeConcepto,
-                dias: dias,
-            });
+        // Log completo de la información extraída por página
+        console.log(`=== Página ${numeroPagina} ===`);
+        console.log("Información extraída (alineada):");
+        for (let i = 0; i < Math.max(descripciones.length, dias.length); i++) {
+            const fechaMovimiento = dias[i]
+                ? `${dias[i].padStart(2, "0")}/06/2024`
+                : "Sin Fecha";
+            const descripcion = descripciones[i] || "Descripción no encontrada";
+            console.log(`Registro ${i + 1}: FechaMovimiento: ${fechaMovimiento}, Descripcion: ${descripcion}`);
         }
-    });
-
-    // Ordenar los resultados por número de página
-    resultadosPorPagina.sort((a, b) => a.pagina - b.pagina);
-
-    // Mostrar los resultados ordenados por página
-    console.log("Texto extraído por página a partir de 'CONCEPTO' y días encontrados:\n");
-    resultadosPorPagina.forEach((resultado) => {
-        console.log(`=== Página ${resultado.pagina} ===`);
-        console.log("Texto desde 'CONCEPTO':");
-        console.log(resultado.texto);
-        console.log("Días encontrados:");
-        console.log(resultado.dias.join(", "));
         console.log("==============================\n");
     });
 
@@ -726,3 +699,7 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
     return datosTabla; // Devuelve los datos estructurados para la tabla
 }
 
+
+
+
+const regexRegistros = /\b(TRA|TRA-IVA|TRA-|TRA-Comision|DOC|INT)\s[\s\S]*?(?=\s\d{2}\s)/g;
