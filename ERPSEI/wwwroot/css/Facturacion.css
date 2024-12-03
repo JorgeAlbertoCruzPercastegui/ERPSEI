@@ -1,4 +1,14 @@
-﻿.empty-image-placeholder {
+﻿#divCharts {
+    text-align: center;
+    min-height: 480px;
+}
+
+.empty-image-placeholder {
     max-width: 600px;
     width: 70%;
+}
+
+.indeximage {
+    max-width: 600px;
+    width: 100%;
 }
