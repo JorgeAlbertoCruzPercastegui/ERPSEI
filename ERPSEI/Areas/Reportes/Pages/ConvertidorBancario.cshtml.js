@@ -221,8 +221,20 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
-                        if (bancoDetectado == "Banbajio" || bancoDetectado == "BANBAJIO" || bancoDetectado == "Banbajío") {
+                        if (bancoDetectado == "Banbajio" || bancoDetectado == "BANBAJIO" || bancoDetectado == "Banbajío")
+                        {
                             const datos = extraerDatosEspecificosBanbajio(extractedText);
+
+                            if (datos) {
+                                // Retornar los datos extraídos para el archivo procesado
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        if (bancoDetectado == "Banregio" || bancoDetectado == "BANCO Regional" || bancoDetectado == "Banregio") {
+                            const datos = extraerDatosEspecificosBanregio(extractedText);
 
                             if (datos) {
                                 // Retornar los datos extraídos para el archivo procesado
@@ -603,4 +615,95 @@ function procesarRegistrosConBI(datosCombinados) {
         }
     }
     return datosCombinados;
+}
+
+function extraerDatosEspecificosBBVA(textoExtraido)
+{
+
+}
+
+function extraerDatosEspecificosBanregio(textoExtraido) {
+    // Dividir el texto por páginas
+    const paginas = textoExtraido.split(/Page\s+\d+\s+of\s+\d+/i); // Ajustar si el separador es diferente
+    const resultadosPorPagina = [];
+
+    paginas.forEach((pagina, index) => {
+        // Extraer el número de página actual
+        const matchPagina = pagina.match(/Page\s+(\d+)\s+of\s+\d+/i);
+        const numeroPagina = matchPagina ? parseInt(matchPagina[1]) : index + 1;
+
+        // Buscar la palabra "CONCEPTO" en cada página
+        const indexConcepto = pagina.indexOf("CONCEPTO");
+        let textoDesdeConcepto = "";
+        let dias = [];
+        let asimiladosEncontrado = false;
+
+        if (indexConcepto !== -1) {
+            // Extraer el texto desde "CONCEPTO"
+            textoDesdeConcepto = pagina.substring(indexConcepto).trim();
+
+            // Verificar si la página contiene "CERTIFICADO SAT FOLIO FISCAL"
+            if (/CERTIFICADO\s+SAT\s+FOLIO\s+FISCAL/i.test(textoDesdeConcepto)) {
+                // Si contiene "ASIMILADOS" seguido de dos dígitos, conservar ese registro
+                const asimiladosMatch = textoDesdeConcepto.match(/ASIMILADOS\s+\d{2}/i);
+                if (asimiladosMatch) {
+                    const asimiladosIndex = textoDesdeConcepto.indexOf(asimiladosMatch[0]) + asimiladosMatch[0].length;
+                    const textoAsimilados = textoDesdeConcepto.substring(0, asimiladosIndex).trim();
+
+                    // Transferir "ASIMILADOS" y los días asociados a la página anterior si existe
+                    if (resultadosPorPagina.length > 0) {
+                        resultadosPorPagina[resultadosPorPagina.length - 1].texto += `\n${textoAsimilados}`;
+                        resultadosPorPagina[resultadosPorPagina.length - 1].dias.push(
+                            ...textoAsimilados.match(/\d{2}/g)
+                        );
+                    }
+                }
+                return; // Omitir esta página del procesamiento principal
+            }
+
+            // Buscar días con un espacio antes y un espacio después
+            const diasConEspacios = textoDesdeConcepto.match(/(?<=\s)\d{2}(?=\s)/g) || [];
+
+            // Buscar días al final de una fila con un espacio antes y sin caracteres después
+            const diasFinales = textoDesdeConcepto.match(/(?<=\s)\d{2}(?=$)/gm) || [];
+
+            // Combinar ambas listas de días
+            dias = [...diasConEspacios, ...diasFinales];
+
+            // Si hay 1 o 2 días encontrados, truncar el texto después de "ASIMILADOS" seguido de dos dígitos
+            if (dias.length === 1 || dias.length === 2) {
+                const asimiladosMatch = textoDesdeConcepto.match(/ASIMILADOS\s+\d{2}/i);
+                if (asimiladosMatch) {
+                    const asimiladosIndex = textoDesdeConcepto.indexOf(asimiladosMatch[0]) + asimiladosMatch[0].length;
+                    textoDesdeConcepto = textoDesdeConcepto.substring(0, asimiladosIndex).trim();
+                    asimiladosEncontrado = true;
+                }
+            }
+        }
+
+        // Solo agregar páginas con días encontrados
+        if (dias.length > 0 || asimiladosEncontrado) {
+            resultadosPorPagina.push({
+                pagina: numeroPagina,
+                texto: textoDesdeConcepto,
+                dias: dias,
+            });
+        }
+    });
+
+    // Ordenar los resultados por número de página
+    resultadosPorPagina.sort((a, b) => a.pagina - b.pagina);
+
+    // Mostrar los resultados ordenados por página
+    console.log("Texto extraído por página a partir de 'CONCEPTO' y días encontrados:\n");
+    resultadosPorPagina.forEach((resultado) => {
+        console.log(`=== Página ${resultado.pagina} ===`);
+        console.log("Texto desde 'CONCEPTO':");
+        console.log(resultado.texto);
+        console.log("Días encontrados:");
+        console.log(resultado.dias.join(", "));
+        console.log("==============================\n");
+    });
+
+    return resultadosPorPagina;
 }
