@@ -1,6 +1,8 @@
 ﻿using ERPSEI.Data.Entities.SAT.cfdiv40;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace ERPSEI.Data.Managers.SAT.cfdiv40
 {
@@ -305,20 +307,18 @@ namespace ERPSEI.Data.Managers.SAT.cfdiv40
         }
 
 		public async Task<List<Comprobante>> GetComprobantesGraficas(
-			string? empresaRFC = null,
 			string? anio = null,
 			string? mes = null
 		)
 		{
 			List<Comprobante> lc = await _db.Comprobantes.Where(c => c.TipoDeComprobante == "I").Include(c => c.Emisor).ToListAsync();
 
-			if (empresaRFC != null) { lc = [.. from Comprobante c in lc where c.Emisor?.Rfc == empresaRFC select c]; }
-
 			if (anio != null) { lc = [.. from Comprobante c in lc where DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("yyyy") == anio select c]; }
 
 			if (mes != null) { lc = [.. from Comprobante c in lc where DateTime.ParseExact(c.Fecha ?? DateTime.MinValue.ToString("yyyy-MM-ddTHH:mm:ss"), "yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture).ToString("MM") == mes select c]; }
 
 			return lc;
+
 		}
 
 	}
