@@ -138,4 +138,10 @@
   <data name="MesPlaceholder" xml:space="preserve">
     <value>Month</value>
   </data>
+  <data name="EmptyGraphicsInstructions" xml:space="preserve">
+    <value>Search something to start</value>
+  </data>
+  <data name="FilterTitle" xml:space="preserve">
+    <value>Search Filters</value>
+  </data>
 </root>
