@@ -1,6 +1,32 @@
 ﻿var numFormatter = null;
-var firstChart = null;
+var chartPerfilesBarras = null;
+var chartPerfilesPie = null;
 var secondChart = null;
+var chartsEmpresas = [];
+
+const CHART_TYPE_BAR = "bar";
+const CHART_TYPE_PIE = "pie";
+
+let barColors = [
+    'rgba(255, 99, 132, 0.5)', //0 - RED
+    'rgba(255, 159, 64, 0.5)', //1 -ORANGE
+    'rgba(255, 205, 86, 0.5)', //2 -YELLOW
+    'rgba(75, 192, 192, 0.5)', //3 -GREEN
+    'rgba(54, 162, 235, 0.5)', //4 -BLUE
+    'rgba(153, 102, 255, 0.5)', //5 -PURPLE
+    'rgba(120, 230, 11, 0.5)', //6 -LIGHT GREEN
+    'rgba(201, 203, 207, 0.5)' //7 -GRAY
+];
+let barBorderColors = [
+    'rgb(255, 99, 132)',//0 - RED
+    'rgb(255, 159, 64)',//1 -ORANGE
+    'rgb(255, 205, 86)',//2 -YELLOW
+    'rgb(75, 192, 192)',//3 -GREEN
+    'rgb(54, 162, 235)',//4 -BLUE
+    'rgb(153, 102, 255)',//5 -PURPLE
+    'rgb(120, 230, 11)',//6 -LIGHT GREEN
+    'rgb(201, 203, 207)'//7 -GRAY
+];
 
 const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
@@ -28,14 +54,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!item) { $('#inpFiltroEmpresaRFC').data('rfc', null); }
         }
     });
-
-    //CreateFirstChart();
-
-    //CreateSecondChart();
-
-    //CreateThirdChart();
-
-    //CreateFourthChart();
 });
 
 ////////////////////////////////
@@ -43,7 +61,17 @@ document.addEventListener('DOMContentLoaded', function () {
 ////////////////////////////////
 //Función para limpiar la tabla de resultados
 function clearGraphics() {
-    if (firstChart) { firstChart.destroy(); }
+    $("#divCharts").html(`
+        <div class="col-12 opacity-25">
+		    <img class="indeximage" src="${emptyGraphicsURL}" />
+            <div class="col-12 h2">
+			    <span>${emptyGrapicsInstructions}</span>
+		    </div>
+	    </div>`
+    );
+
+    if (chartPerfilesBarras) { chartPerfilesBarras.destroy(); }
+    if (chartPerfilesPie) { chartPerfilesPie.destroy(); }
     if (secondChart) { secondChart.destroy(); }
 }
 //Función para convertir una cadena JSON a un objeto JSON
@@ -54,28 +82,57 @@ function responseHandler(res) {
 
     return res
 }
+//Función para crear una gráfica de perfiles tipo Pie
+function CreatePerfilesPieChart(labelValues, pueValues, ppdValues, prefacturadoValues, disponibleValues) {
+    $("#chartPerfilesPie").parent().show();
+    $("#accordionEmpresas").parent().show();
 
-function CreateFirstChart(labelValues, pueValues, ppdValues, prefacturadoValues, disponibleValues) {
-    let barColors = [
-        'rgba(255, 99, 132, 0.5)', //0 - RED
-        'rgba(255, 159, 64, 0.5)', //1 -ORANGE
-        'rgba(255, 205, 86, 0.5)', //2 -YELLOW
-        'rgba(75, 192, 192, 0.5)', //3 -GREEN
-        'rgba(54, 162, 235, 0.5)', //4 -BLUE
-        'rgba(153, 102, 255, 0.5)', //5 -PURPLE
-        'rgba(120, 230, 11, 0.5)', //6 -LIGHT GREEN
-        'rgba(201, 203, 207, 0.5)' //7 -GRAY
-    ];
-    let barBorderColors = [
-        'rgb(255, 99, 132)',//0 - RED
-        'rgb(255, 159, 64)',//1 -ORANGE
-        'rgb(255, 205, 86)',//2 -YELLOW
-        'rgb(75, 192, 192)',//3 -GREEN
-        'rgb(54, 162, 235)',//4 -BLUE
-        'rgb(153, 102, 255)',//5 -PURPLE
-        'rgb(120, 230, 11)',//6 -LIGHT GREEN
-        'rgb(201, 203, 207)'//7 -GRAY
-    ];
+    let data = {
+        labels: labelValues,
+        datasets: [
+            {
+                data: [
+                    pueValues[0],
+                    ppdValues[0],
+                    prefacturadoValues[0],
+                    disponibleValues[0]
+                ],
+                backgroundColor: [
+                    barColors[4],
+                    barColors[5],
+                    barColors[2],
+                    barColors[3]
+                ],
+                borderColor: [
+                    barBorderColors[4],
+                    barBorderColors[5],
+                    barBorderColors[2],
+                    barBorderColors[3]
+                ]
+            }
+        ]
+    };
+
+    let options = {
+        plugins: {
+            title: {
+                display: true,
+                text: `Facturación del Perfil ${$("#selFiltroPerfil option:selected").text()}`
+            },
+        }
+    };
+
+    let config = {
+        type: 'pie',
+        data: data,
+        options: options
+    }
+
+    chartPerfilesPie = new Chart("chartPerfilesPie", config);
+}
+//Función para crear una gráfica de perfiles tipo barras
+function CreatePerfilesBarChart(labelValues, pueValues, ppdValues, prefacturadoValues, disponibleValues, chartType) {
+    $("#chartPerfilesBarras").parent().show();
 
     let datasets = [
         {
@@ -153,35 +210,16 @@ function CreateFirstChart(labelValues, pueValues, ppdValues, prefacturadoValues,
     };
 
     let config = {
-        type: 'bar',
+        type: chartType,
         data: data,
         options: options
     }
 
-    firstChart = new Chart("chartPerfiles", config);
+    chartPerfilesBarras = new Chart("chartPerfilesBarras", config);
 }
-
+//Función para crear una gráfica de empresas tipo barras
 function CreateSecondChart(labelValues, pueValues, ppdValues, prefacturadoValues, disponibleValues) {
-    let barColors = [
-        'rgba(255, 99, 132, 1)', //0 - RED
-        'rgba(255, 159, 64, 1)', //1 -ORANGE
-        'rgba(255, 205, 86, 1)', //2 -YELLOW
-        'rgba(75, 192, 192, 1)', //3 -GREEN
-        'rgba(54, 162, 235, 1)', //4 -BLUE
-        'rgba(153, 102, 255, 1)', //5 -PURPLE
-        'rgba(120, 230, 11, 1)', //6 -LIGHT GREEN
-        'rgba(201, 203, 207, 0.5)' //7 -GRAY
-    ];
-    let barBorderColors = [
-        'rgb(255, 99, 132)',//0 - RED
-        'rgb(255, 159, 64)',//1 -ORANGE
-        'rgb(255, 205, 86)',//2 -YELLOW
-        'rgb(75, 192, 192)',//3 -GREEN
-        'rgb(54, 162, 235)',//4 -BLUE
-        'rgb(153, 102, 255)',//5 -PURPLE
-        'rgb(120, 230, 11)',//6 -LIGHT GREEN
-        'rgb(201, 203, 207)'//7 -GRAY
-    ];
+    $("#chartEmpresas").parent().show();
 
     let datasets = [
         {
@@ -251,936 +289,6 @@ function CreateSecondChart(labelValues, pueValues, ppdValues, prefacturadoValues
 
     secondChart = new Chart("chartEmpresas", config);
 }
-
-function CreateThirdChart() {
-    let yValues = [
-        "Publicidad y Mercadotecnia", //2
-        "Servicios de Consultoría", //4
-        "Sistemas y Tecnología", //2
-        "Comercializadora", //1
-        "Renta de Mobiliario de Oficina y Cómputo",//1
-        "Logística y Transporte",//2
-        "Renta de Computadoras y Regalías",//1
-        "Servicios Médicos",//1
-        "Constructoras"//2
-    ];
-    let y2Values = [
-        "Atlantic",
-        "Newgen",
-        "Finance",
-        "Ducuart",
-        "NRD",
-        "Week",
-        "Cyber",
-        "J&R",
-        "Montena",
-        "Creativity",
-        "DOR",
-        "Ocean",
-        "HV",
-        "Pharmex",
-        "Reciza",
-        "Newgen Construcciones",
-    ]
-    let barColors = [
-        'rgba(255, 99, 132, 1)', //0 - RED
-        'rgba(255, 159, 64, 1)', //1 -ORANGE
-        'rgba(255, 205, 86, 1)', //2 -YELLOW
-        'rgba(75, 192, 192, 1)', //3 -GREEN
-        'rgba(54, 162, 235, 1)', //4 -BLUE
-        'rgba(153, 102, 255, 1)', //5 -PURPLE
-        'rgba(120, 230, 11, 1)', //6 -LIGHT GREEN
-        'rgba(201, 203, 207, 0.5)' //7 -GRAY
-    ];
-    let barBorderColors = [
-        'rgb(255, 99, 132)',//0 - RED
-        'rgb(255, 159, 64)',//1 -ORANGE
-        'rgb(255, 205, 86)',//2 -YELLOW
-        'rgb(75, 192, 192)',//3 -GREEN
-        'rgb(54, 162, 235)',//4 -BLUE
-        'rgb(153, 102, 255)',//5 -PURPLE
-        'rgb(120, 230, 11)',//6 -LIGHT GREEN
-        'rgb(201, 203, 207)'//7 -GRAY
-    ];
-
-    let LIMITE_FACTURACION = 10;
-
-    let pueValues = [
-        3,
-        1,
-        4,
-        9,
-        2,
-        5,
-        8,
-        6
-    ];
-    let ppdValues = [
-        2,
-        6,
-        3,
-        1,
-        6,
-        4,
-        1,
-        2
-    ];
-    let prefacturadoValues = [
-        1,
-        1,
-        1,
-        0.1,
-        0.5,
-        0.01,
-        0.05,
-        0.2
-    ];
-    let facturadoValues = [
-        pueValues[0] + ppdValues[0] + prefacturadoValues[0],
-        pueValues[1] + ppdValues[1] + prefacturadoValues[1],
-        pueValues[2] + ppdValues[2] + prefacturadoValues[2],
-        pueValues[3] + ppdValues[3] + prefacturadoValues[3],
-        pueValues[4] + ppdValues[4] + prefacturadoValues[4],
-        pueValues[5] + ppdValues[5] + prefacturadoValues[5],
-        pueValues[6] + ppdValues[6] + prefacturadoValues[6],
-        pueValues[7] + ppdValues[7] + prefacturadoValues[7]
-    ];
-    let disponibleValues = [
-        (facturadoValues[0] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[0] : 0),
-        (facturadoValues[1] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[1] : 0),
-        (facturadoValues[2] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[2] : 0),
-        (facturadoValues[3] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[3] : 0),
-        (facturadoValues[4] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[4] : 0),
-        (facturadoValues[5] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[5] : 0),
-        (facturadoValues[6] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[6] : 0),
-        (facturadoValues[7] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[7] : 0)
-    ];
-    //let excesoValues = [
-    //    (facturadoValues[0] >= LIMITE_FACTURACION ? facturadoValues[0] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[1] >= LIMITE_FACTURACION ? facturadoValues[1] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[2] >= LIMITE_FACTURACION ? facturadoValues[2] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[3] >= LIMITE_FACTURACION ? facturadoValues[3] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[4] >= LIMITE_FACTURACION ? facturadoValues[4] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[5] >= LIMITE_FACTURACION ? facturadoValues[5] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[6] >= LIMITE_FACTURACION ? facturadoValues[6] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[7] >= LIMITE_FACTURACION ? facturadoValues[7] - LIMITE_FACTURACION : 0)
-    //];
-
-    let catPer = 0.6
-    let datasetsAgrupacionA = [
-        //{
-        //    label: 'Full',
-        //    data: [12],
-        //    backgroundColor: barColors[7],
-        //    borderColor: barBorderColors[7],
-        //    borderWidth: 1,
-        //    grouped: false,
-        //    stack: 1,
-        //    categoryPercentage: 1,
-        //    order: 1
-        //},
-        {
-            label: 'PUE',
-            data: [1],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD',
-            data: [1],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado',
-            data: [1],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible',
-            data: [1],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 2',
-            data: [2],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 2',
-            data: [2],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 2',
-            data: [2],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 2',
-            data: [2],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        }
-    ];
-    let datasetsB = [
-        {
-            label: 'PUE 3',
-            data: [null, 3],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 3',
-            data: [null, 3],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 3',
-            data: [null, 3],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 3',
-            data: [null, 3],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 4',
-            data: [null, 11],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 4',
-            data: [null, 11],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 4',
-            data: [null, 11],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 4',
-            data: [null, 11],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 5',
-            data: [null, 6],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 5',
-            data: [null, 6],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 5',
-            data: [null, 6],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 5',
-            data: [null, 6],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 6',
-            data: [null, 3],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 6',
-            data: [null, 3],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 6',
-            data: [null, 3],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 6 ',
-            data: [null, 3],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        }
-    ];
-
-    let dsA = [
-        {
-            label: 'PUE 3',
-            data: pueValues,
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true,
-            yAxisID: 'y2'
-        },
-        {
-            label: 'PPD 3',
-            data: ppdValues,
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true,
-            yAxisID: 'y2'
-        },
-        {
-            label: 'Prefacturado 3',
-            data: prefacturadoValues,
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true,
-            yAxisID: 'y2'
-        },
-        {
-            label: 'Disponible 3',
-            data: disponibleValues,
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true,
-            yAxisID: 'y2'
-        }
-    ];
-
-    let data = {
-        labels: yValues,
-        datasets: dsA
-    };
-
-    let options = {
-        indexAxis: 'y',
-        plugins: {
-            title: {
-                display: true,
-                text: 'Facturación por Empresa'
-            }
-        },
-        responsive: true,
-        interaction: {
-            intersect: false,
-        },
-        scales: {
-            x: {
-                stacked: true
-                //ticks: {
-                //    callback: (value, index, values) => {
-                //        return '$' + Chart.Ticks.formatters.numeric.apply(this, [value, index, ticks]);
-                //    }
-                //}
-            },
-            y: {
-                stacked: true,
-                grid: {
-                    drawOnChartArea: false
-                }
-            },
-            y2: {
-                labels: y2Values,
-            }
-        }
-    };
-
-    let config = {
-        type: 'bar',
-        data: data,
-        options: options
-    }
-
-    new Chart("myChartC", config);
-}
-
-function CreateFourthChart() {
-    let yValues = [
-        "Publicidad y Mercadotecnia", //2
-        "Servicios de Consultoría", //4
-        "Sistemas y Tecnología", //2
-        "Comercializadora", //1
-        "Renta de Mobiliario de Oficina y Cómputo",//1
-        "Logística y Transporte",//2
-        "Renta de Computadoras y Regalías",//1
-        "Servicios Médicos",//1
-        "Constructoras"//2
-    ];
-    let y2Values = [
-        "Atlantic",
-        "Newgen",
-        "Finance",
-        "Ducuart",
-        "NRD",
-        "Week",
-        "Cyber",
-        "J&R",
-        "Montena",
-        "Creativity",
-        "DOR",
-        "Ocean",
-        "HV",
-        "Pharmex",
-        "Reciza",
-        "Newgen Construcciones",
-    ]
-    let barColors = [
-        'rgba(255, 99, 132, 1)', //0 - RED
-        'rgba(255, 159, 64, 1)', //1 -ORANGE
-        'rgba(255, 205, 86, 1)', //2 -YELLOW
-        'rgba(75, 192, 192, 1)', //3 -GREEN
-        'rgba(54, 162, 235, 1)', //4 -BLUE
-        'rgba(153, 102, 255, 1)', //5 -PURPLE
-        'rgba(120, 230, 11, 1)', //6 -LIGHT GREEN
-        'rgba(201, 203, 207, 0.5)' //7 -GRAY
-    ];
-    let barBorderColors = [
-        'rgb(255, 99, 132)',//0 - RED
-        'rgb(255, 159, 64)',//1 -ORANGE
-        'rgb(255, 205, 86)',//2 -YELLOW
-        'rgb(75, 192, 192)',//3 -GREEN
-        'rgb(54, 162, 235)',//4 -BLUE
-        'rgb(153, 102, 255)',//5 -PURPLE
-        'rgb(120, 230, 11)',//6 -LIGHT GREEN
-        'rgb(201, 203, 207)'//7 -GRAY
-    ];
-
-    let LIMITE_FACTURACION = 10;
-
-    let pueValues = [
-        3,
-        1,
-        4,
-        9,
-        2,
-        5,
-        8,
-        6
-    ];
-    let ppdValues = [
-        2,
-        6,
-        3,
-        1,
-        6,
-        4,
-        1,
-        2
-    ];
-    let prefacturadoValues = [
-        1,
-        1,
-        1,
-        0.1,
-        0.5,
-        0.01,
-        0.05,
-        0.2
-    ];
-    let facturadoValues = [
-        pueValues[0] + ppdValues[0] + prefacturadoValues[0],
-        pueValues[1] + ppdValues[1] + prefacturadoValues[1],
-        pueValues[2] + ppdValues[2] + prefacturadoValues[2],
-        pueValues[3] + ppdValues[3] + prefacturadoValues[3],
-        pueValues[4] + ppdValues[4] + prefacturadoValues[4],
-        pueValues[5] + ppdValues[5] + prefacturadoValues[5],
-        pueValues[6] + ppdValues[6] + prefacturadoValues[6],
-        pueValues[7] + ppdValues[7] + prefacturadoValues[7]
-    ];
-    let disponibleValues = [
-        (facturadoValues[0] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[0] : 0),
-        (facturadoValues[1] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[1] : 0),
-        (facturadoValues[2] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[2] : 0),
-        (facturadoValues[3] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[3] : 0),
-        (facturadoValues[4] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[4] : 0),
-        (facturadoValues[5] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[5] : 0),
-        (facturadoValues[6] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[6] : 0),
-        (facturadoValues[7] < LIMITE_FACTURACION ? LIMITE_FACTURACION - facturadoValues[7] : 0)
-    ];
-    //let excesoValues = [
-    //    (facturadoValues[0] >= LIMITE_FACTURACION ? facturadoValues[0] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[1] >= LIMITE_FACTURACION ? facturadoValues[1] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[2] >= LIMITE_FACTURACION ? facturadoValues[2] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[3] >= LIMITE_FACTURACION ? facturadoValues[3] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[4] >= LIMITE_FACTURACION ? facturadoValues[4] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[5] >= LIMITE_FACTURACION ? facturadoValues[5] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[6] >= LIMITE_FACTURACION ? facturadoValues[6] - LIMITE_FACTURACION : 0),
-    //    (facturadoValues[7] >= LIMITE_FACTURACION ? facturadoValues[7] - LIMITE_FACTURACION : 0)
-    //];
-
-    let catPer = 0.6
-    let datasetsAgrupacionA = [
-        //{
-        //    label: 'Full',
-        //    data: [12],
-        //    backgroundColor: barColors[7],
-        //    borderColor: barBorderColors[7],
-        //    borderWidth: 1,
-        //    grouped: false,
-        //    stack: 1,
-        //    categoryPercentage: 1,
-        //    order: 1
-        //},
-        {
-            label: 'PUE',
-            data: [1],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD',
-            data: [1],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado',
-            data: [1],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible',
-            data: [1],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 2,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 2',
-            data: [2],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 2',
-            data: [2],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 2',
-            data: [2],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 2',
-            data: [2],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        }
-    ];
-    let datasetsB = [
-        {
-            label: 'PUE 3',
-            data: [null, 3],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 3',
-            data: [null, 3],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 3',
-            data: [null, 3],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 3',
-            data: [null, 3],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 3,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 4',
-            data: [null, 11],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 4',
-            data: [null, 11],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 4',
-            data: [null, 11],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 4',
-            data: [null, 11],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 4,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 5',
-            data: [null, 6],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 5',
-            data: [null, 6],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 5',
-            data: [null, 6],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 5',
-            data: [null, 6],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 5,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PUE 6',
-            data: [null, 3],
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 6',
-            data: [null, 3],
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 6',
-            data: [null, 3],
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 6 ',
-            data: [null, 3],
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 6,
-            order: 0,
-            skipNull: true
-        }
-    ];
-
-    let dsA = [
-        {
-            label: 'PUE 3',
-            data: pueValues,
-            backgroundColor: barColors[4],
-            borderColor: barBorderColors[4],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'PPD 3',
-            data: ppdValues,
-            backgroundColor: barColors[5],
-            borderColor: barBorderColors[5],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Prefacturado 3',
-            data: prefacturadoValues,
-            backgroundColor: barColors[2],
-            borderColor: barBorderColors[2],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true
-        },
-        {
-            label: 'Disponible 3',
-            data: disponibleValues,
-            backgroundColor: barColors[3],
-            borderColor: barBorderColors[3],
-            borderWidth: 1,
-            stack: 0,
-            order: 0,
-            skipNull: true
-        }
-    ];
-
-    let data = {
-        labels: yValues,
-        datasets: dsA
-    };
-
-    let options = {
-        indexAxis: 'y',
-        plugins: {
-            title: {
-                display: true,
-                text: 'Facturación por Empresa'
-            }
-        },
-        responsive: true,
-        interaction: {
-            intersect: false,
-        },
-        scales: {
-            x: {
-                stacked: true
-                //ticks: {
-                //    callback: (value, index, values) => {
-                //        return '$' + Chart.Ticks.formatters.numeric.apply(this, [value, index, ticks]);
-                //    }
-                //}
-            },
-            y: {
-                stacked: true,
-                grid: {
-                    drawOnChartArea: false
-                }
-            },
-            y2: {
-                labels: y2Values,
-            }
-        }
-    };
-
-    let config = {
-        type: 'bar',
-        data: data,
-        options: options
-    }
-
-    new Chart("myChartD", config);
-}
-
-////////////////////////////////
-//Funcionalidad Filtrar
-////////////////////////////////
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
     clearGraphics();
@@ -1188,9 +296,12 @@ function onBuscarClick() {
     let oParams = {
         PerfilId: $("#selFiltroPerfil").val() == 0 ? null : $("#selFiltroPerfil").val(),
         EmpresaRFC: ($("#inpFiltroEmpresaRFC").data("rfc") || "") == "" ? null : $("#inpFiltroEmpresaRFC").data("rfc"),
-        Anio: $("#selFiltroAnio").val(),
+        NivelId: $("#selFiltroNivel").val() == 0 ? null : $("#selFiltroNivel").val(),
+        Anio: $("#selFiltroAnio").val() == 0 ? null : $("#selFiltroAnio").val(),
         Mes: $("#selFiltroMes").val() == 0 ? null : $("#selFiltroMes").val()
     };
+
+    let perfilSelected = parseInt(oParams.PerfilId || "0") >= 1;
 
     doAjax(
         "/Reportes/Facturacion/Filtrar",
@@ -1210,21 +321,122 @@ function onBuscarClick() {
             //Se convierte la cadena JSON a objeto JSON
             resp.datos = responseHandler(resp.datos);
 
-            CreateFirstChart(
-                resp.datos.Perfiles.LabelValues,
-                resp.datos.Perfiles.PUEValues,
-                resp.datos.Perfiles.PPDValues,
-                resp.datos.Perfiles.PrefacturadoValues,
-                resp.datos.Perfiles.DisponibleValues
-            );
+            $("#divCharts").html(`
+                <div class="container-fluid">
+	                <div class="row">
+		                <div class="col-12" style="display: none;">
+			                <canvas id="chartPerfilesBarras"></canvas>
+		                </div>
+		                <div class="col-12 col-lg-6" style="display: none;">
+			                <canvas id="chartPerfilesPie"></canvas>
+		                </div>
+		                <div class="col-12 col-lg-6" style="display: none;">
+			                <canvas id="chartEmpresas"></canvas>
+		                </div>
+                        <div class="col-12 col-lg-6" style="display: none;">
+			                <div class="accordion" id="accordionEmpresas">
+                            </div>
+		                </div>
+	                </div>
+                </div>
+            `);
 
-            CreateSecondChart(
-                resp.datos.Empresas.LabelValues,
-                resp.datos.Empresas.PUEValues,
-                resp.datos.Empresas.PPDValues,
-                resp.datos.Empresas.PrefacturadoValues,
-                resp.datos.Empresas.DisponibleValues
-            );
+            let chartType = CHART_TYPE_BAR;
+            if (perfilSelected) {
+                chartType = CHART_TYPE_PIE;
+
+                CreatePerfilesPieChart(
+                    ["PUE", "PPD", "Prefacturado", "Disponible"],
+                    resp.datos.Perfiles.PUEValues,
+                    resp.datos.Perfiles.PPDValues,
+                    resp.datos.Perfiles.PrefacturadoValues,
+                    resp.datos.Perfiles.DisponibleValues
+                );
+
+                resp.datos.Empresas.LabelValues.forEach(function (e, i) {
+                    let showClass = 'show';
+                    let ariaExpanded = 'true';
+                    let collapsedClass = '';
+                    if (i >= 1) { showClass = ''; ariaExpanded = 'false'; collapsedClass = 'collapsed'; }
+
+                    $("#accordionEmpresas").append(`
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button ${collapsedClass}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${i}" aria-expanded="${ariaExpanded}" aria-controls="collapse${i}">
+                                    ${resp.datos.Empresas.PorcentajeDisponible[i]}% - ${e}
+                                </button>
+                            </h2>
+                            <div id="collapse${i}" class="accordion-collapse collapse ${showClass}">
+                                <div class="accordion-body">
+                                    <canvas id="chartEmpresa${i}"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+
+                    let data = {
+                        labels: ["PUE", "PPD", "Prefacturado", "Disponible"],
+                        datasets: [
+                            {
+                                data: [
+                                    resp.datos.Empresas.PUEValues[i],
+                                    resp.datos.Empresas.PPDValues[i],
+                                    resp.datos.Empresas.PrefacturadoValues[i],
+                                    resp.datos.Empresas.DisponibleValues[i]
+                                ],
+                                backgroundColor: [
+                                    barColors[4],
+                                    barColors[5],
+                                    barColors[2],
+                                    barColors[3]
+                                ],
+                                borderColor: [
+                                    barBorderColors[4],
+                                    barBorderColors[5],
+                                    barBorderColors[2],
+                                    barBorderColors[3]
+                                ]
+                            }
+                        ]
+                    };
+
+                    let options = {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Facturación de ${e}`
+                            },
+                        }
+                    };
+
+                    let config = {
+                        type: 'bar',
+                        data: data,
+                        options: options
+                    }
+
+                    chartsEmpresas[i] = new Chart(`chartEmpresa${i}`, config);
+
+                });
+
+                //CreateSecondChart(
+                //    resp.datos.Empresas.LabelValues,
+                //    resp.datos.Empresas.PUEValues,
+                //    resp.datos.Empresas.PPDValues,
+                //    resp.datos.Empresas.PrefacturadoValues,
+                //    resp.datos.Empresas.DisponibleValues
+                //);
+            }
+            else {
+                CreatePerfilesBarChart(
+                    resp.datos.Perfiles.LabelValues,
+                    resp.datos.Perfiles.PUEValues,
+                    resp.datos.Perfiles.PPDValues,
+                    resp.datos.Perfiles.PrefacturadoValues,
+                    resp.datos.Perfiles.DisponibleValues,
+                    chartType
+                );
+            }
 
         }, function (error) {
             showError("Error", error);

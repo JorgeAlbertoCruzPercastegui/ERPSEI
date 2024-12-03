@@ -30,6 +30,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 			public List<decimal> FacturadoValues { get; set; } = [];
 			public List<decimal> DisponibleValues { get; set; } = [];
 			public List<decimal> ExcedenteValues { get; set; } = [];
+			public List<decimal> PorcentajeDisponible { get; set; } = [];
 		}
 
 		[BindProperty]
@@ -42,6 +43,9 @@ namespace ERPSEI.Areas.Reportes.Pages
 
 			[Display(Name = "EmpresaField")]
 			public string? EmpresaRFC { get; set; }
+
+			[Display(Name = "NivelField")]
+			public int? NivelId { get; set; }
 
 			[Display(Name = "AnioField")]
 			public string? Anio { get; set; }
@@ -88,30 +92,28 @@ namespace ERPSEI.Areas.Reportes.Pages
 			List<Empresa> empresasFinales = [];
 			Dictionary<Perfil, Dictionary<Empresa, List<Comprobante>>> perfilesEmpresasComprobantes = [];
 
+			empresas = await empresaManager.GetAllWithPerfil();
+			if (filtro?.PerfilId != null) { empresas = [.. empresas.Where(e => e.PerfilId == filtro?.PerfilId)]; }
+			if (filtro?.EmpresaRFC != null) { empresas = [.. empresas.Where(e => e.RFC == filtro?.EmpresaRFC)]; }
+			if (filtro?.NivelId != null) { empresas = [.. empresas.Where(e => e.NivelId == filtro?.NivelId)]; }
+
 			perfiles = await perfilManager.GetAllAsync();
 			if (filtro?.PerfilId != null) { perfiles = [.. perfiles.Where(p => p.Id == filtro.PerfilId)]; }
-
-			empresas = await empresaManager.GetAllWithPerfil();
-			if (filtro?.EmpresaRFC != null) { empresasFinales = [.. empresas.Where(e => e.RFC == filtro.EmpresaRFC)]; }
 
 			foreach (Perfil p in perfiles)
 			{
 				empresasFinales.AddRange([.. empresas.Where(e => e.PerfilId == p.Id)]);
 			}
 
-            foreach (Empresa e in empresasFinales)
-            {
-				comprobantes = await comprobanteManager.GetComprobantesGraficas(
-					e.RFC,
-					filtro?.Anio,
-					filtro?.Mes
-				);
+			comprobantes = await comprobanteManager.GetComprobantesGraficas(filtro?.Anio, filtro?.Mes);
 
+			foreach (Empresa e in empresasFinales)
+            {
 				if (e.Perfil != null) {
 					if (!perfilesEmpresasComprobantes.ContainsKey(e.Perfil)) { perfilesEmpresasComprobantes.Add(e.Perfil, []); }
 					if (!perfilesEmpresasComprobantes[e.Perfil].ContainsKey(e)) { perfilesEmpresasComprobantes[e.Perfil].Add(e, []); }
 
-					perfilesEmpresasComprobantes[e.Perfil][e] = comprobantes; 
+					perfilesEmpresasComprobantes[e.Perfil][e] = [.. from Comprobante c in comprobantes where c.Emisor?.Rfc == e.RFC select c]; 
 				}
 			}
 
@@ -124,7 +126,8 @@ namespace ERPSEI.Areas.Reportes.Pages
 			List<string> jsonComprobantes = [];
 			string jsonResponse;
 
-			decimal LIMITE_FACTURACION = 300000000;
+			decimal LIMITE_FACTURACION_PERFIL = 300000000;
+			decimal LIMITE_FACTURACION_EMPRESA = 200000000;
 			GraphicDataModel datosPorPerfil = new();
 			GraphicDataModel datosPorEmpresa = new();
 
@@ -136,17 +139,38 @@ namespace ERPSEI.Areas.Reportes.Pages
 				decimal acumuladoPUEEmpresas = 0m;
 				decimal acumuladoPPDEmpresas = 0m;
 				decimal acumuladoPrefacturadoEmpresas = 0m;
+				decimal disponible = 0m;
 
-				//Se ordenan las empresas de manera ascendente por Id
-				var empresasOrdenadas = perfil.Value.OrderBy(p => p.Key.Id);
+				List<KeyValuePair<int, decimal>> empresasIdTotales = [];
+
+                //Se ordenan las empresas de manera ascendente por Disponibilidad
+                foreach (KeyValuePair<Empresa, List<Comprobante>> empresa in perfil.Value)
+                {
+					decimal acumuladoComprobantes = 0m;
+					decimal disp = 0m;
+
+					foreach (Comprobante comprobante in empresa.Value)
+					{
+						acumuladoComprobantes += comprobante.Total;
+					}
+					disp = acumuladoComprobantes < LIMITE_FACTURACION_EMPRESA ? LIMITE_FACTURACION_EMPRESA - acumuladoComprobantes : 0;
+					disp = (disp * 100) / LIMITE_FACTURACION_EMPRESA;
+					empresasIdTotales.Add(new(empresa.Key.Id, disp));
+				}
+
+				empresasIdTotales = [..empresasIdTotales.OrderByDescending(e => e.Value)];
+
+                //var empresasOrdenadas = perfil.Value.OrderBy(p => p.Key.Id);
 
 				datosPorPerfil.LabelValues.Add(perfil.Key.Nombre);
 
-				foreach (KeyValuePair<Empresa, List<Comprobante>> empresa in empresasOrdenadas)
+				foreach (KeyValuePair<int, decimal> emp in empresasIdTotales)
                 {
 					decimal acumuladoPUEComprobantes = 0m;
 					decimal acumuladoPPDComprobantes = 0m;
 					decimal acumuladoPrefacturadoComprobantes = 0m;
+
+					KeyValuePair<Empresa,List<Comprobante>> empresa = perfil.Value.Where(e => e.Key.Id == emp.Key).First();
 
 					datosPorEmpresa.LabelValues.Add(empresa.Key.RazonSocial);
 
@@ -171,16 +195,20 @@ namespace ERPSEI.Areas.Reportes.Pages
 					datosPorEmpresa.PPDValues.Add(acumuladoPPDComprobantes);
 					datosPorEmpresa.PrefacturadoValues.Add(acumuladoPrefacturadoComprobantes);
 					datosPorEmpresa.FacturadoValues.Add(acumuladoPUEComprobantes + acumuladoPPDComprobantes + acumuladoPrefacturadoComprobantes);
-					datosPorEmpresa.DisponibleValues.Add(datosPorEmpresa.FacturadoValues.Last() < LIMITE_FACTURACION ? LIMITE_FACTURACION - datosPorEmpresa.FacturadoValues.Last() : 0);
-					datosPorEmpresa.ExcedenteValues.Add(datosPorEmpresa.FacturadoValues.Last() >= LIMITE_FACTURACION ? datosPorEmpresa.FacturadoValues.Last() - LIMITE_FACTURACION : 0);
+					disponible = datosPorEmpresa.FacturadoValues.Last() < LIMITE_FACTURACION_EMPRESA ? LIMITE_FACTURACION_EMPRESA - datosPorEmpresa.FacturadoValues.Last() : 0;
+					datosPorEmpresa.DisponibleValues.Add(disponible);
+					datosPorEmpresa.PorcentajeDisponible.Add(Math.Round((disponible * 100) / LIMITE_FACTURACION_EMPRESA, 0));
+					datosPorEmpresa.ExcedenteValues.Add(datosPorEmpresa.FacturadoValues.Last() >= LIMITE_FACTURACION_EMPRESA ? datosPorEmpresa.FacturadoValues.Last() - LIMITE_FACTURACION_EMPRESA : 0);
 				}
 
 				datosPorPerfil.PUEValues.Add(acumuladoPUEEmpresas);
 				datosPorPerfil.PPDValues.Add(acumuladoPPDEmpresas);
 				datosPorPerfil.PrefacturadoValues.Add(acumuladoPrefacturadoEmpresas);
 				datosPorPerfil.FacturadoValues.Add(acumuladoPUEEmpresas + acumuladoPPDEmpresas + acumuladoPrefacturadoEmpresas);
-				datosPorPerfil.DisponibleValues.Add(datosPorPerfil.FacturadoValues.Last() < LIMITE_FACTURACION ? LIMITE_FACTURACION - datosPorPerfil.FacturadoValues.Last() : 0);
-				datosPorPerfil.ExcedenteValues.Add(datosPorPerfil.FacturadoValues.Last() >= LIMITE_FACTURACION ? datosPorPerfil.FacturadoValues.Last() - LIMITE_FACTURACION : 0);
+				disponible = datosPorPerfil.FacturadoValues.Last() < LIMITE_FACTURACION_PERFIL ? LIMITE_FACTURACION_PERFIL - datosPorPerfil.FacturadoValues.Last() : 0;
+				datosPorPerfil.DisponibleValues.Add(disponible);
+				datosPorPerfil.PorcentajeDisponible.Add(Math.Round((disponible * 100) / LIMITE_FACTURACION_PERFIL, 0));
+				datosPorPerfil.ExcedenteValues.Add(datosPorPerfil.FacturadoValues.Last() >= LIMITE_FACTURACION_PERFIL ? datosPorPerfil.FacturadoValues.Last() - LIMITE_FACTURACION_PERFIL : 0);
 			}
 
 			jsonResponse = $"{{" +

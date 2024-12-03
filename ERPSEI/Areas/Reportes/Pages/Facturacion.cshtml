@@ -3,10 +3,12 @@
 @using Microsoft.AspNetCore.Mvc.Localization;
 @using ERPSEI.Data.Managers.Empresas;
 @using ERPSEI.Data.Entities.Empresas;
+@using ERPSEI.Data.Managers;
 
 @model ERPSEI.Areas.Reportes.Pages.FacturacionModel
 @inject IViewLocalizer localizer;
 @inject IPerfilManager perfilManager;
+@inject IRWCatalogoManager<Nivel> NivelesManager;
 @{
 	ViewData["Title"] = localizer["Title"];
 
@@ -25,6 +27,7 @@
 	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 
 	List<Perfil> perfiles = await perfilManager.GetAllAsync();
+	List<Nivel> niveles = await NivelesManager.GetAllAsync();
 }
 <h3 id="hTitle" class="title mb-3">@ViewData["Title"]</h3>
 
@@ -33,11 +36,11 @@
 <div class="accordion shadow mb-5" id="accordionFiltros">
 	<div class="accordion-item">
 		<h2 class="accordion-header" id="headingOne">
-			<button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+			<button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFiltros" aria-expanded="true" aria-controls="collapseFiltros">
 				<h6>@localizer["FilterTitle"]</h6>
 			</button>
 		</h2>
-		<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+		<div id="collapseFiltros" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
 			<div class="accordion-body">
 				<form id="filtros" method="post">
 					<div class="row">
@@ -54,12 +57,33 @@
 							<div class="form-floating mb-3">
 								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" idselected='' area="ERP" module="Facturacion" source="GetEmpresaSuggestion" />
 								<label for="inpFiltroEmpresaRFC" asp-for="InputFiltro.EmpresaRFC" class="form-label"></label>
-								<span asp-validation-for="InputFiltro.EmpresaRFC" class="text-danger"></span>
 							</div>
 						</div>
-						<div class="col-sm-6 col-md-6 col-lg-3">
+						<div class="col-sm-6 col-md-6 col-lg-2">
+							<div class="form-floating mb-3">
+								<select id="selFiltroNivel" asp-for="InputFiltro.NivelId" class="form-select" placeholder="@localizer["NivelPlaceholder"]">
+									<option value="0">Seleccione...</option>
+									@{
+										foreach (Nivel nivel in niveles)
+										{
+											if(nivel.Id == 1)
+											{
+												<option selected value='@nivel.Id'>@nivel.Nombre</option>
+											}
+											else
+											{
+												<option value='@nivel.Id'>@nivel.Nombre</option>
+											}
+										}
+									}
+								</select>
+								<label for="inpFiltroNivel" asp-for="InputFiltro.NivelId" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-2">
 							<div class="form-floating mb-3">
 								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@localizer["AnioPlaceholder"]" onchange="clearGraphics();">
+									<option value="0">@localizer["EmptySelectItemText"]</option>
 									@{
 										for (int i = DateTime.Today.Year - 5; i <= DateTime.Today.Year; i++)
 										{
@@ -71,7 +95,7 @@
 								<label for="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-label"></label>
 							</div>
 						</div>
-						<div class="col-sm-6 col-md-6 col-lg-3">
+						<div class="col-sm-6 col-md-6 col-lg-2">
 							<div class="form-floating mb-3">
 								<select id="selFiltroMes" asp-for="InputFiltro.Mes" class="form-select" placeholder="@localizer["MesPlaceholder"]" onchange="clearGraphics();">
 									<option selected value="0">@localizer["EmptySelectItemText"]</option>
@@ -83,7 +107,14 @@
 											description = string.Concat(description[0].ToString().ToUpper(), description.AsSpan(1));
 											string value = f.ToString("MM");
 
-											<option value='@value'>@description</option>
+											if (value == DateTime.Now.ToString("MM"))
+											{
+												<option selected value='@value'>@description</option>
+											}
+											else
+											{
+												<option value='@value'>@description</option>
+											}
 										}
 									}
 								</select>
@@ -109,9 +140,14 @@
 <!-- --------------------------- -->
 <!-- --------------------------- -->
 
-<canvas id="chartPerfiles" style="width:100%;"></canvas>
-
-<canvas id="chartEmpresas" style="width:100%;"></canvas>
+<div id="divCharts" class="row">
+	<div class="col-12 opacity-25">
+		<img class="indeximage" src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/empty_graphics.jpg" />
+		<div class="col-12 h2">
+			<span>@localizer["EmptyGraphicsInstructions"]</span>
+		</div>
+	</div>
+</div>
 
 @* <canvas id="myChartC" style="width:100%;"></canvas>
 
@@ -132,6 +168,9 @@
 	<script type="text/javascript">
 		var cultureName = "@cultureName";
 		var title = '@localizer["Title"]';
+
+		var emptyGraphicsURL = '@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/empty_graphics.jpg';
+		var emptyGrapicsInstructions = '@localizer["EmptyGraphicsInstructions"]';
 
 		var puedeTodo = '@puedeTodo' == 'True';
 		var puedeConsultar = '@puedeConsultar' == 'True';
