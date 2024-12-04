@@ -694,24 +694,51 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
             }
 
             // Generar datos para la tabla
-            const maxLongitud = Math.max(dias.length, descripciones.length);
-            for (let i = 0; i < maxLongitud; i++) {
+            registrosLog.forEach((registro, i) => {
                 const fechaMovimiento = dias[i]
                     ? `${dias[i].padStart(2, "0")}/06/2024` // Formato DD/MM/YYYY
                     : ""; // Dejar vacío si no hay más días
 
                 const descripcion = descripciones[i] || "Descripción no encontrada"; // Manejo de descripciones faltantes
+                const saldo = registro.valores[1] || "$ 0.00"; // El segundo número capturado como saldo
+
+                // Lógica para determinar Cargo o Abono basado en la descripción
+                const descripcionLower = descripcion.toLowerCase();
+                let cargo = "$ 0.00";
+                let abono = "$ 0.00";
+
+                if (descripcionLower.endsWith("disp de rec") ||
+                    descripcionLower.endsWith("prestamo") ||
+                    descripcionLower.endsWith("traspaso entre cuentas") ||
+                    descripcionLower.endsWith("deposito en efectivo") ||
+                    descripcionLower.endsWith("traspaso") ||
+                    (/DISP DE REC\s+\d{2}$/i.test(descripcionLower))
+                ) {
+                    abono = registro.valores[0] || "$ 0.00";
+                } else if (
+                    descripcionLower.endsWith("asimilado") ||
+                    descripcionLower.endsWith("asimilados") ||
+                    descripcionLower.endsWith("cuenta") ||
+                    descripcionLower.endsWith("token") ||
+                    descripcionLower.endsWith("1/12") ||
+                    descripcionLower.endsWith("2/12") ||
+                    descripcionLower.endsWith("traspasos") && descripcionLower.includes("transfer") || 
+                    (/cuenta\s+\d{2}$/i.test(descripcionLower)) ||
+                    (/ASIMILADOS\s+\d{2}$/i.test(descripcionLower))
+                ) {
+                    cargo = registro.valores[0] || "$ 0.00";
+                }
 
                 datosTabla.push({
                     FechaMovimiento: fechaMovimiento,
                     FechaAplicacion: "", // Puedes rellenar según el caso
                     NumeroReferencia: "", // Puedes rellenar según el caso
                     Descripcion: descripcion, // Manteniendo intacta la lógica original
-                    Cargo: "$ 0.00", // Valores por defecto o según tu lógica
-                    Abono: "$ 0.00", // Valores por defecto o según tu lógica
-                    Saldo: "$ 0.00", // Valores por defecto o según tu lógica
+                    Cargo: cargo, // Asignar al campo Cargo
+                    Abono: abono, // Asignar al campo Abono
+                    Saldo: saldo, // El segundo número capturado
                 });
-            }
+            });
         }
     });
 
@@ -720,3 +747,4 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
 
     return datosTabla; // Devuelve los datos estructurados para la tabla
 }
+
