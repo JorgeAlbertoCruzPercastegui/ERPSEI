@@ -378,54 +378,68 @@ function onBuscarClick() {
                         labels: ["PUE", "PPD", "Prefacturado", "Disponible"],
                         datasets: [
                             {
-                                data: [
-                                    resp.datos.Empresas.PUEValues[i],
-                                    resp.datos.Empresas.PPDValues[i],
-                                    resp.datos.Empresas.PrefacturadoValues[i],
-                                    resp.datos.Empresas.DisponibleValues[i]
-                                ],
-                                backgroundColor: [
-                                    barColors[4],
-                                    barColors[5],
-                                    barColors[2],
-                                    barColors[3]
-                                ],
-                                borderColor: [
-                                    barBorderColors[4],
-                                    barBorderColors[5],
-                                    barBorderColors[2],
-                                    barBorderColors[3]
-                                ]
+                                label: `PUE: $${numFormatter.format(resp.datos.Empresas.PUEValues[i])}`,
+                                data: [resp.datos.Empresas.PUEValues[i], 0, 0, 0],
+                                backgroundColor: [barColors[4]],
+                                borderColor: [barBorderColors[4]],
+                                skipNull: true,
+                                stack: "0"
+                            },
+                            {
+                                label: `PPD: $${numFormatter.format(resp.datos.Empresas.PPDValues[i])}`,
+                                data: [0, resp.datos.Empresas.PPDValues[i], 0, 0],
+                                backgroundColor: [barColors[5]],
+                                borderColor: [barBorderColors[5]],
+                                skipNull: true,
+                                stack: "0"
+                            },
+                            {
+                                label: `Prefacturado: $${numFormatter.format(resp.datos.Empresas.PrefacturadoValues[i])}`,
+                                data: [ 0, 0, resp.datos.Empresas.PrefacturadoValues[i], 0],
+                                backgroundColor: [barColors[2]],
+                                borderColor: [barBorderColors[2]],
+                                skipNull: true,
+                                stack: "0"
+                            },
+                            {
+                                label: `Disponible: $${numFormatter.format(resp.datos.Empresas.DisponibleValues[i])}`,
+                                data: [0, 0, 0, resp.datos.Empresas.DisponibleValues[i]],
+                                backgroundColor: [barColors[3]],
+                                borderColor: [barBorderColors[3]],
+                                skipNull: true,
+                                stack: "0"
                             }
                         ]
-                    };
-
-                    let options = {
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: `Facturación de ${e}`
-                            },
-                        }
                     };
 
                     let config = {
                         type: 'bar',
                         data: data,
-                        options: options
+                        options: {
+                            plugins: {
+                                tooltip: {
+                                    position: "nearest",
+                                    callbacks: {
+                                        label: function (context) {
+                                            return `$${context.formattedValue}`;
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                            },
+                            y: {
+                                stacked: true
+                            }
+                        }
                     }
 
                     chartsEmpresas[i] = new Chart(`chartEmpresa${i}`, config);
 
                 });
-
-                //CreateSecondChart(
-                //    resp.datos.Empresas.LabelValues,
-                //    resp.datos.Empresas.PUEValues,
-                //    resp.datos.Empresas.PPDValues,
-                //    resp.datos.Empresas.PrefacturadoValues,
-                //    resp.datos.Empresas.DisponibleValues
-                //);
             }
             else {
                 CreatePerfilesBarChart(
