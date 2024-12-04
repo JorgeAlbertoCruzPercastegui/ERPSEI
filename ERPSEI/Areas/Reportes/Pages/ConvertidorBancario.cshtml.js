@@ -623,6 +623,29 @@ function extraerDatosEspecificosBBVA(textoExtraido)
 }
 
 function extraerDatosEspecificosBanregio(textoExtraido) {
+    // Lista de meses en español con sus correspondientes números
+    const meses = {
+        "ENERO": "01", "FEBRERO": "02", "MARZO": "03", "ABRIL": "04",
+        "MAYO": "05", "JUNIO": "06", "JULIO": "07", "AGOSTO": "08",
+        "SEPTIEMBRE": "09", "OCTUBRE": "10", "NOVIEMBRE": "11", "DICIEMBRE": "12"
+    };
+
+    // Expresión regular para detectar un mes seguido de un espacio y un año específico (2023, 2024, 2025)
+    const regexFecha = new RegExp(`\\b(${Object.keys(meses).join("|")})\\s+(2023|2024|2025)\\b`, "i");
+
+    // Buscar el mes y el año en el texto
+    const matchFecha = textoExtraido.match(regexFecha);
+    let mes = "MES NO ENCONTRADO"; // Valor por defecto si no se encuentra un mes
+    let año = "AÑO NO ENCONTRADO"; // Valor por defecto si no se encuentra un año
+
+    if (matchFecha) {
+        mes = meses[matchFecha[1].toUpperCase()] || "MES NO ENCONTRADO"; // Convertir mes a su número
+        año = matchFecha[2]; // Captura el año
+    }
+
+    // Mostrar el mes y el año extraídos en el log
+    console.log(`Mes extraído: ${mes}, Año extraído: ${año}`);
+
     // Dividir el texto por páginas
     const paginas = textoExtraido.split(/Page\s+\d+\s+of\s+\d+/i); // Ajustar si el separador es diferente
     const datosTabla = []; // Almacena los datos para la tabla
@@ -687,7 +710,7 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
             // Mantener la lógica de descripción intacta
             const regexDias = /(?<=\s)\d{2}(?=\s)|(?<=\s)\d{2}(?=$)/g;
             dias = textoDesdeConcepto.match(regexDias) || [];
-            const regexRegistros = /\b(TRA|TRA-IVA|TRA-|TRA-Comision|DOC|INT)[\s\S]*?(?=\s\d{2}\s|$)/g;
+            const regexRegistros = /\b(TRA|TRA-IVA|TRA-|TRA-Comision|TRA IVA|TRA COM.|TRA SPEI|DOC|INT)[\s\S]*?(?=\s\d{2}\s|$)/g;
             let matchDescripcion;
             while ((matchDescripcion = regexRegistros.exec(textoDesdeConcepto)) !== null) {
                 descripciones.push(matchDescripcion[0].trim());
@@ -696,7 +719,7 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
             // Generar datos para la tabla
             registrosLog.forEach((registro, i) => {
                 const fechaMovimiento = dias[i]
-                    ? `${dias[i].padStart(2, "0")}/06/2024` // Formato DD/MM/YYYY
+                    ? `${dias[i].padStart(2, "0")}/${mes}/${año}` // Usar mes y año extraídos
                     : ""; // Dejar vacío si no hay más días
 
                 const descripcion = descripciones[i] || "Descripción no encontrada"; // Manejo de descripciones faltantes
@@ -722,9 +745,12 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
                     descripcionLower.endsWith("token") ||
                     descripcionLower.endsWith("1/12") ||
                     descripcionLower.endsWith("2/12") ||
-                    descripcionLower.endsWith("traspasos") && descripcionLower.includes("transfer") || 
+                    descripcionLower.endsWith(", PPP") ||
+                    descripcionLower.endsWith("S.A. DE C.V.") ||
+                    descripcionLower.endsWith("traspasos") && descripcionLower.includes("transfer") ||
                     (/cuenta\s+\d{2}$/i.test(descripcionLower)) ||
-                    (/ASIMILADOS\s+\d{2}$/i.test(descripcionLower))
+                    (/ASIMILADOS\s+\d{2}$/i.test(descripcionLower)) ||
+                    (/S.A. DE C.V.\s+\d{2}$/i.test(descripcionLower))
                 ) {
                     cargo = registro.valores[0] || "$ 0.00";
                 }
@@ -742,9 +768,15 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
         }
     });
 
+    // Eliminar el último registro si existe
+    if (datosTabla.length > 0) {
+        datosTabla.pop();
+    }
+
     // Mostrar datos para la tabla
     console.log("Datos para la tabla:\n", datosTabla);
 
     return datosTabla; // Devuelve los datos estructurados para la tabla
 }
+
 
