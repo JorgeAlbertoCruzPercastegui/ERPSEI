@@ -244,6 +244,17 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
+                        if (bancoDetectado == "BBVA" || bancoDetectado == "BANCO BBVA" || bancoDetectado == "bbva" || bancoDetectado == "bancomer") {
+                            const datos = extraerDatosEspecificosBBVA(extractedText);
+
+                            if (datos) {
+                                // Retornar los datos extraídos para el archivo procesado
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
                     } else {
                         const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
 
@@ -275,8 +286,8 @@ function detectarBanco(extractedText) {
     // Diccionario de bancos y sus palabras clave
     var bancoKeywords = {
         "Banbajio": ["Banbajio", "banbajio", "Banbajío", "CUENTA CONECTA BANBAJIO"],
+        "BBVA": ["BBVA", "BANCO BBVA", "bbva"],
         "Banregio": ["BANREGIO", "BANCO REGIONAL", "Banregio"],
-        "BBVA": ["BBVA", "BANCO BBVA"],
         "Alquimia": ["Alquimia", "ALQUIMIA", "Alquimia Digital", "alquimiapay"],
         "Bankaool": ["Bankaool", "BANKAOOL"],
         "Eplata": ["Eplata", "EPlata", "EPLATA"]
@@ -452,6 +463,8 @@ function extraerDatosEspecificosEplata(textoExtraido) {
 
         resultadoFinal.push({
             FechaMovimiento: fechasEncontradas[i] || null, // Si no hay más fechas, rellenar con null
+            FechaAplicacion: "",
+            NumeroReferencia: "",
             Concepto: null,
             Cargo: movimiento.Cargo,
             Abono: movimiento.Abono,
@@ -617,10 +630,111 @@ function procesarRegistrosConBI(datosCombinados) {
     return datosCombinados;
 }
 
-function extraerDatosEspecificosBBVA(textoExtraido)
-{
+function extraerDatosEspecificosBBVA(textoExtraido) {
+    console.log("Texto Extraído:", textoExtraido);
 
+    // Obtener el año actual
+    const anio = new Date().getFullYear();
+
+    // Diccionario de meses para conversión
+    const meses = {
+        ENE: "01",
+        FEB: "02",
+        MAR: "03",
+        ABR: "04",
+        MAY: "05",
+        JUN: "06",
+        JUL: "07",
+        AGO: "08",
+        SEP: "09",
+        OCT: "10",
+        NOV: "11",
+        DIC: "12",
+    };
+
+    // Dividir el texto por páginas utilizando el marcador "PAGINA X / Y"
+    const paginas = textoExtraido.split(/PAGINA\s+\d+\s*\/\s*\d+/);
+
+    // Procesar cada página
+    let datosPorPagina = paginas.map((pagina, index) => {
+        // Buscar todas las fechas en el formato XX/XXX
+        const fechas = [...pagina.matchAll(/\b(\d{2})\/([A-Z]{3})\b/g)].map(match => {
+            const dia = match[1];
+            const mes = meses[match[2]] || "00"; // Mes numérico o 00 si no está en el diccionario
+            return `${dia}/${mes}/${anio}`;
+        });
+
+        // Buscar registros en COD. DESCRIPCIÓN
+        const codDescripcion = [...pagina.matchAll(/(Y\d{2}|T\d{2}|N\d{2})\s+(SPEI RECIBIDO|PAGO CUENTA DE TERCERO|SPEI ENVIADO).*?Ref\.\s+(\d{10}(?:\s+\d{4})?)/g)].map(match => ({
+            codigo: match[1],
+            descripcion: match[2],
+            referencia: match[3],
+        }));
+
+        // Buscar movimientos
+        const movimientos = [...pagina.matchAll(/(\d{2}\/[A-Z]{3})\s+(\d{2}\/[A-Z]{3}).*?(\d+,\d+\.\d+).*?Ref\.\s+([A-Z0-9]+)/g)];
+        const resumenMovimientos = movimientos.map((mov, idx) => ({
+            fechaOperacion: mov[1],
+            fechaLiquidacion: mov[2],
+            monto: mov[3],
+            referencia: mov[4],
+            codigo: codDescripcion[idx]?.codigo || "No disponible",
+            descripcion: codDescripcion[idx]?.descripcion || "No disponible",
+            referenciaCompleta: codDescripcion[idx]?.referencia || "No disponible",
+        }));
+
+        return {
+            pagina: index + 1,
+            fechas,
+            codDescripcion,
+            movimientos: resumenMovimientos,
+        };
+    });
+
+    // Filtrar páginas sin fechas
+    datosPorPagina = datosPorPagina.filter(pagina => pagina.fechas.length > 0);
+
+    // Mover datos de la última página a la primera
+    if (datosPorPagina.length > 1) {
+        const ultimaPagina = datosPorPagina[datosPorPagina.length - 1];
+        const primeraPagina = datosPorPagina[0];
+
+        // Combinar datos de la última página con la primera
+        primeraPagina.fechas = [...ultimaPagina.fechas, ...primeraPagina.fechas];
+        primeraPagina.movimientos = [...ultimaPagina.movimientos, ...primeraPagina.movimientos];
+        primeraPagina.codDescripcion = [...ultimaPagina.codDescripcion, ...primeraPagina.codDescripcion];
+
+        // Eliminar la última página
+        datosPorPagina.pop();
+    }
+
+    // Crear lista de pares de fechas
+    const listaFechas = [];
+    datosPorPagina.forEach(pagina => {
+        for (let i = 0; i < pagina.fechas.length; i += 2) {
+            const fechaMovimiento = pagina.fechas[i];
+            const fechaAplicacion = pagina.fechas[i + 1] || "Sin fecha";
+            listaFechas.push({ FechaMovimiento: fechaMovimiento, FechaAplicacion: fechaAplicacion });
+        }
+    });
+
+    console.log("Lista de fechas agrupadas por pares:");
+    console.table(listaFechas);
+
+    return listaFechas;
 }
+
+// Uso de la función
+const textoExtraido = `...`; // Inserta aquí tu texto completo
+const resultado = extraerDatosEspecificosBBVA(textoExtraido);
+
+
+
+
+
+
+
+
 
 function extraerDatosEspecificosBanregio(textoExtraido) {
     // Lista de meses en español con sus correspondientes números
