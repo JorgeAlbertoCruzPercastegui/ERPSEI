@@ -83,7 +83,6 @@
 						<div class="col-sm-6 col-md-6 col-lg-2">
 							<div class="form-floating mb-3">
 								<select id="selFiltroAnio" asp-for="InputFiltro.Anio" class="form-select" placeholder="@localizer["AnioPlaceholder"]" onchange="clearGraphics();">
-									<option value="0">@localizer["EmptySelectItemText"]</option>
 									@{
 										for (int i = DateTime.Today.Year - 5; i <= DateTime.Today.Year; i++)
 										{
