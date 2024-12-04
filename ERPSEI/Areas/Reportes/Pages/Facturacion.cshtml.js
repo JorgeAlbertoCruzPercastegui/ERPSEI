@@ -51,7 +51,13 @@ document.addEventListener('DOMContentLoaded', function () {
     autoCompletar("#inpFiltroEmpresaRFC", {
         change: function (element, item) {
             clearGraphics();
-            if (!item) { $('#inpFiltroEmpresaRFC').data('rfc', null); }
+            if (!item) {
+                $('#inpFiltroEmpresaRFC').data('rfc', null);
+            }
+            else {
+                $("#selFiltroPerfil").val(0);
+                $("#selFiltroNivel").val(0);
+            }
         }
     });
 });
@@ -59,6 +65,11 @@ document.addEventListener('DOMContentLoaded', function () {
 ////////////////////////////////
 //Funcionalidad Filtrar
 ////////////////////////////////
+//Función para detectar el cambio de valor de los campos perfil y nivel
+function onPerfilOrNivelChanged() {
+    clearGraphics();
+    $("#inpFiltroEmpresaRFC").attr("idselected", "").data('rfc', null).val('');
+}
 //Función para limpiar la tabla de resultados
 function clearGraphics() {
     $("#divCharts").html(`
@@ -302,6 +313,7 @@ function onBuscarClick() {
     };
 
     let perfilSelected = parseInt(oParams.PerfilId || "0") >= 1;
+    let empresaSelected = (oParams.EmpresaRFC || "").length >= 1;
 
     doAjax(
         "/Reportes/Facturacion/Filtrar",
@@ -342,7 +354,7 @@ function onBuscarClick() {
             `);
 
             let chartType = CHART_TYPE_BAR;
-            if (perfilSelected) {
+            if (perfilSelected || empresaSelected) {
                 chartType = CHART_TYPE_PIE;
 
                 CreatePerfilesPieChart(
@@ -421,7 +433,7 @@ function onBuscarClick() {
                                     position: "nearest",
                                     callbacks: {
                                         label: function (context) {
-                                            return `$${context.formattedValue}`;
+                                            return `$${numFormatter.format(context.raw)}`;
                                         }
                                     }
                                 }

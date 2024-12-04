@@ -46,7 +46,7 @@
 					<div class="row">
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<select id="selFiltroPerfil" asp-for="InputFiltro.PerfilId" class="form-select" placeholder="@localizer["PerfilPlaceholder"]" onchange="clearGraphics();">
+								<select id="selFiltroPerfil" asp-for="InputFiltro.PerfilId" class="form-select" placeholder="@localizer["PerfilPlaceholder"]" onchange="onPerfilOrNivelChanged();">
 									<option selected value="0">@localizer["EmptySelectItemText"]</option>
 									@{ foreach(Perfil perfil in perfiles){ <option value='@perfil.Id'>@perfil.Nombre</option> } }
 								</select>
@@ -55,13 +55,13 @@
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-3">
 							<div class="form-floating mb-3">
-								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" idselected='' area="ERP" module="Facturacion" source="GetEmpresaSuggestion" />
+								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" idselected='' area="Reportes" module="Facturacion" source="GetEmpresaSuggestion" />
 								<label for="inpFiltroEmpresaRFC" asp-for="InputFiltro.EmpresaRFC" class="form-label"></label>
 							</div>
 						</div>
 						<div class="col-sm-6 col-md-6 col-lg-2">
 							<div class="form-floating mb-3">
-								<select id="selFiltroNivel" asp-for="InputFiltro.NivelId" class="form-select" placeholder="@localizer["NivelPlaceholder"]">
+								<select id="selFiltroNivel" asp-for="InputFiltro.NivelId" class="form-select" placeholder="@localizer["NivelPlaceholder"]" onchange="onPerfilOrNivelChanged();">
 									<option value="0">Seleccione...</option>
 									@{
 										foreach (Nivel nivel in niveles)

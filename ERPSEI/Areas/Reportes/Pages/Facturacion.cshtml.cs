@@ -230,7 +230,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 			return jsonResponse;
 		}
 
-		public async Task<JsonResult> OnGetEmpresaSuggestion(string texto)
+		public async Task<JsonResult> OnPostGetEmpresaSuggestion(string texto)
 		{
 			ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 			try
