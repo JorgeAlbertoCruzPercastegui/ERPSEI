@@ -664,30 +664,23 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
             return `${dia}/${mes}/${anio}`;
         });
 
-        // Buscar registros en COD. DESCRIPCIÓN
-        const codDescripcion = [...pagina.matchAll(/(Y\d{2}|T\d{2}|N\d{2})\s+(SPEI RECIBIDO|PAGO CUENTA DE TERCERO|SPEI ENVIADO).*?Ref\.\s+(\d{10}(?:\s+\d{4})?)/g)].map(match => ({
-            codigo: match[1],
-            descripcion: match[2],
-            referencia: match[3],
+        // Buscar registros en COD. DESCRIPCIÓN que incluyen YXX, TXX, NXX, y referencias
+        const codDescripcion = [...pagina.matchAll(/(Y\d{2}|T\d{2}|N\d{2})\s+([A-Z\s]+)(.*?)(\d{1,3}(,\d{3})*(\.\d{2})?)?\s*(.*?)(Ref\.\s+((COMP SPEI)|(\d{10}(?:\s+\d{3})?)))/g)].map(match => ({
+            codigo: match[1], // Código (por ejemplo, N06, T20)
+            descripcion: match[2].trim(), // Descripción (por ejemplo, PAGO CUENTA DE TERCERO, SPEI RECIBIDO)
+            textoAdicional: match[7]?.trim() || "", // Texto adicional antes de Ref.
+            montoAntesDeRef: match[4]?.replace(/,/g, "") || "0.00", // Monto extraído antes de Ref., sin comas
+            referencia: match[9]?.trim(), // Referencia completa (COMP SPEI o números)
         }));
 
-        // Buscar movimientos
-        const movimientos = [...pagina.matchAll(/(\d{2}\/[A-Z]{3})\s+(\d{2}\/[A-Z]{3}).*?(\d+,\d+\.\d+).*?Ref\.\s+([A-Z0-9]+)/g)];
-        const resumenMovimientos = movimientos.map((mov, idx) => ({
-            fechaOperacion: mov[1],
-            fechaLiquidacion: mov[2],
-            monto: mov[3],
-            referencia: mov[4],
-            codigo: codDescripcion[idx]?.codigo || "No disponible",
-            descripcion: codDescripcion[idx]?.descripcion || "No disponible",
-            referenciaCompleta: codDescripcion[idx]?.referencia || "No disponible",
-        }));
+        // Mostrar en el log las descripciones extraídas de esta página
+        console.log(`Descripciones en la página ${index + 1}:`);
+        codDescripcion.forEach(desc => console.log(`${desc.codigo} - ${desc.descripcion} ${desc.textoAdicional} (Ref: ${desc.referencia})`));
 
         return {
             pagina: index + 1,
             fechas,
             codDescripcion,
-            movimientos: resumenMovimientos,
         };
     });
 
@@ -701,20 +694,49 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 
         // Combinar datos de la última página con la primera
         primeraPagina.fechas = [...ultimaPagina.fechas, ...primeraPagina.fechas];
-        primeraPagina.movimientos = [...ultimaPagina.movimientos, ...primeraPagina.movimientos];
         primeraPagina.codDescripcion = [...ultimaPagina.codDescripcion, ...primeraPagina.codDescripcion];
 
         // Eliminar la última página
         datosPorPagina.pop();
     }
 
-    // Crear lista de pares de fechas
+    // Crear lista de pares de fechas con descripción, cargos, abonos y referencia
     const listaFechas = [];
     datosPorPagina.forEach(pagina => {
         for (let i = 0; i < pagina.fechas.length; i += 2) {
             const fechaMovimiento = pagina.fechas[i];
             const fechaAplicacion = pagina.fechas[i + 1] || "Sin fecha";
-            listaFechas.push({ FechaMovimiento: fechaMovimiento, FechaAplicacion: fechaAplicacion });
+            const descripcionData = pagina.codDescripcion[i / 2];
+
+            let cargo = "0.00"; // Valor inicial para Cargo
+            let abono = "0.00"; // Valor inicial para Abono
+            let descripcion = "No disponible";
+
+            if (descripcionData) {
+                // Asignar valores dependiendo de la descripción
+                if (
+                    descripcionData.descripcion.includes("SPEI RECIBIDO") ||
+                    descripcionData.descripcion.includes("COMPENSACION POR RETRASO")
+                ) {
+                    abono = descripcionData.montoAntesDeRef; // Monto antes de Ref.
+                } else if (
+                    descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") ||
+                    descripcionData.descripcion.includes("SPEI ENVIADO")
+                ) {
+                    cargo = descripcionData.montoAntesDeRef; // Monto antes de Ref.
+                }
+
+                // Construir la descripción incluyendo el texto antes de "Ref."
+                descripcion = `${descripcionData.codigo} - ${descripcionData.descripcion} ${descripcionData.textoAdicional} (Ref: ${descripcionData.referencia})`;
+            }
+
+            listaFechas.push({
+                FechaMovimiento: fechaMovimiento,
+                FechaAplicacion: fechaAplicacion,
+                Descripcion: descripcion,
+                Cargo: cargo,
+                Abono: abono,
+            });
         }
     });
 
