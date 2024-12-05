@@ -504,18 +504,49 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
 
     console.log("Referencias encontradas:", referencias);
 
+    // Extraer el año del texto (cuatro dígitos)
+    const anoActual = new Date().getFullYear().toString(); // Año actual
+    const regexAno = /\b\d{4}\b/;
+    const matchAno = textoExtraido.match(regexAno);
+    const ano = matchAno ? matchAno[0] : "0000"; // Valor predeterminado si no se encuentra el año
+
+    console.log("Año encontrado:", ano);
+
+    // Mapeo de meses abreviados a números
+    const meses = {
+        ENE: "01",
+        FEB: "02",
+        MAR: "03",
+        ABR: "04",
+        MAY: "05",
+        JUN: "06",
+        JUL: "07",
+        AGO: "08",
+        SEP: "09",
+        OCT: "10",
+        NOV: "11",
+        DIC: "12"
+    };
+
     // Expresión regular para capturar fechas
     const regexFechas = /\b\d{1,2}\s\w{3}\b/g;
     const fechasEncontradas = [];
 
     let matchFecha;
     while ((matchFecha = regexFechas.exec(textoFiltrado)) !== null) {
-        fechasEncontradas.push({ FechaMovimiento: matchFecha[0] });
+        const partesFecha = matchFecha[0].split(" ");
+        const dia = partesFecha[0].padStart(2, "0"); // Asegurar que el día tenga dos dígitos
+        const mes = meses[partesFecha[1].toUpperCase()] || "00"; // Convertir el mes a número
+        const fechaFormateada = `${dia}/${mes}/${anoActual}`;
+
+        fechasEncontradas.push({ FechaMovimiento: fechaFormateada });
     }
 
     if (fechasEncontradas.length === 0) {
         console.warn("No se encontraron fechas en el texto.");
     }
+
+    console.log("Fechas encontradas y formateadas:", fechasEncontradas);
 
     // Expresión regular para identificar registros completos por encabezado válido
     const regexRegistros = /(DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS).*?(?=(DEPÓSITO SPEI:|ENVÍO SPEI:|DEVOLUCIÓN DE SPEI:|TEF RECIBIDO:|TRASPASO DE RECURSOS|$))/gs;
@@ -602,6 +633,7 @@ function extraerDatosEspecificosBanbajio(textoExtraido) {
         const registro = registrosEncontrados[index] || {};
         return {
             FechaMovimiento: fecha.FechaMovimiento,
+            FechaAplicacion: "",
             NumeroReferencia: referencias[index] || "Sin referencia", // Agregar la referencia correspondiente
             Descripcion: registro.Descripcion || "Sin descripción",
             Saldo: registro.Saldo || "-", // Segundo monto como Saldo
@@ -618,7 +650,7 @@ function procesarRegistrosConBI(datosCombinados) {
     // Iterar sobre los registros para ajustar referencias si contienen (BI- )
     for (let i = 0; i < datosCombinados.length; i++) {
         // Verificar si la descripción contiene (BI- )
-        if (datosCombinados[i].Descripcion.includes("(BI- )")) {
+        if (datosCombinados[i].Descripcion.includes("")) {
             // Si no es la última fila, mover la referencia a la siguiente fila
             if (i + 1 < datosCombinados.length) {
                 datosCombinados[i + 1].NumeroReferencia = datosCombinados[i].NumeroReferencia;
