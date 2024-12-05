@@ -287,7 +287,7 @@ function detectarBanco(extractedText) {
     var bancoKeywords = {
         "Banbajio": ["Banbajio", "banbajio", "Banbajío", "CUENTA CONECTA BANBAJIO"],
         "BBVA": ["BBVA", "BANCO BBVA", "bbva"],
-        "Banregio": ["BANREGIO", "BANCO REGIONAL", "Banregio"],
+        "Banregio": ["BANREGIO", "BANCO REGIONAL", "Banregio", "COMERCIO LOGCAL FORTUNA"],
         "Alquimia": ["Alquimia", "ALQUIMIA", "Alquimia Digital", "alquimiapay"],
         "Bankaool": ["Bankaool", "BANKAOOL"],
         "Eplata": ["Eplata", "EPlata", "EPLATA"]
@@ -799,6 +799,7 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
             listaFechas.push({
                 FechaMovimiento: fechaMovimiento,
                 FechaAplicacion: fechaAplicacion,
+                NumeroReferencia: "",
                 Descripcion: descripcion,
                 Cargo: cargo,
                 Abono: abono,
