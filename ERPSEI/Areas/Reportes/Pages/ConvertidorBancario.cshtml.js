@@ -669,8 +669,8 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
             codigo: match[1], // Código (por ejemplo, N06, T20)
             descripcion: match[2].trim(), // Descripción (por ejemplo, PAGO CUENTA DE TERCERO, SPEI RECIBIDO)
             textoAdicional: match[7]?.trim() || "", // Texto adicional antes de Ref.
-            montoAntesDeRef: match[4]?.replace(/,/g, "") || "0.00", // Monto extraído antes de Ref., sin comas
             referencia: match[9]?.trim(), // Referencia completa (COMP SPEI o números)
+            descripcionCompleta: match[0]?.trim() || "", // Descripción completa para análisis
         }));
 
         // Mostrar en el log las descripciones extraídas de esta página
@@ -700,7 +700,7 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
         datosPorPagina.pop();
     }
 
-    // Crear lista de pares de fechas con descripción, cargos, abonos y referencia
+    // Crear lista de pares de fechas con descripción, cargos, abonos, saldo y referencia
     const listaFechas = [];
     datosPorPagina.forEach(pagina => {
         for (let i = 0; i < pagina.fechas.length; i += 2) {
@@ -710,20 +710,30 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 
             let cargo = "0.00"; // Valor inicial para Cargo
             let abono = "0.00"; // Valor inicial para Abono
+            let saldo = "0.00"; // Valor inicial para Saldo
             let descripcion = "No disponible";
 
             if (descripcionData) {
-                // Asignar valores dependiendo de la descripción
-                if (
-                    descripcionData.descripcion.includes("SPEI RECIBIDO") ||
-                    descripcionData.descripcion.includes("COMPENSACION POR RETRASO")
-                ) {
-                    abono = descripcionData.montoAntesDeRef; // Monto antes de Ref.
-                } else if (
-                    descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") ||
-                    descripcionData.descripcion.includes("SPEI ENVIADO")
-                ) {
-                    cargo = descripcionData.montoAntesDeRef; // Monto antes de Ref.
+                // Extraer todos los montos presentes en la descripción completa
+                const montos = descripcionData.descripcionCompleta.match(/\b\d{1,3}(,\d{3})*(\.\d{2})?\b/g) || [];
+
+                // Si hay dos montos y la descripción contiene "PAGO CUENTA DE TERCERO"
+                if (descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") && montos.length >= 2) {
+                    cargo = montos[0].replace(/,/g, ""); // Primer monto como Cargo
+                    saldo = montos[1].replace(/,/g, ""); // Segundo monto como Saldo
+                } else {
+                    // Asignar valores dependiendo de la descripción
+                    if (
+                        descripcionData.descripcion.includes("SPEI RECIBIDO") ||
+                        descripcionData.descripcion.includes("COMPENSACION POR RETRASO")
+                    ) {
+                        abono = montos[0]?.replace(/,/g, "") || "0.00"; // Primer monto como Abono
+                    } else if (
+                        descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") ||
+                        descripcionData.descripcion.includes("SPEI ENVIADO")
+                    ) {
+                        cargo = montos[0]?.replace(/,/g, "") || "0.00"; // Primer monto como Cargo
+                    }
                 }
 
                 // Construir la descripción incluyendo el texto antes de "Ref."
@@ -736,6 +746,7 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
                 Descripcion: descripcion,
                 Cargo: cargo,
                 Abono: abono,
+                Saldo: saldo,
             });
         }
     });
@@ -749,13 +760,6 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 // Uso de la función
 const textoExtraido = `...`; // Inserta aquí tu texto completo
 const resultado = extraerDatosEspecificosBBVA(textoExtraido);
-
-
-
-
-
-
-
 
 
 function extraerDatosEspecificosBanregio(textoExtraido) {
