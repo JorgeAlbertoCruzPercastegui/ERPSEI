@@ -689,15 +689,12 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 
     // Mover datos de la última página a la primera
     if (datosPorPagina.length > 1) {
-        const ultimaPagina = datosPorPagina[datosPorPagina.length - 1];
+        const ultimaPagina = datosPorPagina.pop();
         const primeraPagina = datosPorPagina[0];
 
         // Combinar datos de la última página con la primera
         primeraPagina.fechas = [...ultimaPagina.fechas, ...primeraPagina.fechas];
         primeraPagina.codDescripcion = [...ultimaPagina.codDescripcion, ...primeraPagina.codDescripcion];
-
-        // Eliminar la última página
-        datosPorPagina.pop();
     }
 
     // Crear lista de pares de fechas con descripción, cargos, abonos, saldo y referencia
@@ -718,9 +715,31 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
                 const montos = descripcionData.descripcionCompleta.match(/\b\d{1,3}(,\d{3})*(\.\d{2})?\b/g) || [];
 
                 // Si hay dos montos y la descripción contiene "PAGO CUENTA DE TERCERO"
-                if (descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") && montos.length >= 2) {
-                    cargo = montos[0].replace(/,/g, ""); // Primer monto como Cargo
-                    saldo = montos[1].replace(/,/g, ""); // Segundo monto como Saldo
+                if (
+                    (descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") ||
+                        descripcionData.descripcion.includes("COMPENSACION POR RETRASO") ||
+                        descripcionData.descripcion.includes("SPEI ENVIADO"))
+                    && montos.length >= 2
+                ) {
+                    if (descripcionData.descripcion.includes("COMPENSACION POR RETRASO")) {
+                        abono = montos[0]?.replace(/,/g, ""); // Primer monto como Abono
+
+                        // No asignar saldo si el segundo monto es de 3 dígitos
+                        if (!/^\d{3}$/.test(montos[1]?.replace(/,/g, ""))) {
+                            saldo = montos[1]?.replace(/,/g, ""); // Segundo monto como Saldo
+                        } else {
+                            saldo = "0.00"; // No asignar saldo para números de 3 dígitos
+                        }
+                    } else {
+                        cargo = montos[0]?.replace(/,/g, ""); // Primer monto como Cargo
+
+                        // No asignar saldo si el segundo monto es de 3 dígitos
+                        if (!/^\d{3}$/.test(montos[1]?.replace(/,/g, ""))) {
+                            saldo = montos[1]?.replace(/,/g, ""); // Segundo monto como Saldo
+                        } else {
+                            saldo = "0.00"; // No asignar saldo para números de 3 dígitos
+                        }
+                    }
                 } else {
                     // Asignar valores dependiendo de la descripción
                     if (
@@ -734,6 +753,11 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
                     ) {
                         cargo = montos[0]?.replace(/,/g, "") || "0.00"; // Primer monto como Cargo
                     }
+                }
+
+                // Mostrar montos solo para COMPENSACION POR RETRASO
+                if (descripcionData.descripcion.includes("COMPENSACION POR RETRASO")) {
+                    console.log(`Montos encontrados para Y45 - COMPENSACION POR RETRASO: ${montos}`);
                 }
 
                 // Construir la descripción incluyendo el texto antes de "Ref."
