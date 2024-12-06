@@ -250,6 +250,8 @@ namespace ERPSEI.Data
 			b.Entity<Empresa>().HasMany(e => e.ActividadesEconomicasEmpresa).WithOne(a => a.Empresa).OnDelete(DeleteBehavior.NoAction);
 			b.Entity<Empresa>().HasOne(e => e.RegimenFiscal).WithMany(f => f.Empresas).OnDelete(DeleteBehavior.NoAction);
 
+			b.Entity<BancoEmpresa>().Property(b => b.Limite).HasPrecision(18, 2);
+
 			b.Entity<ActividadEconomica>().HasMany(a => a.ActividadesEconomicasEmpresa).WithOne(a => a.ActividadEconomica).OnDelete(DeleteBehavior.NoAction);
 
 			b.Entity<ArchivoEmpresa>().HasOne(a => a.TipoArchivo).WithMany(ta => ta.ArchivosEmpresa).OnDelete(DeleteBehavior.NoAction);
