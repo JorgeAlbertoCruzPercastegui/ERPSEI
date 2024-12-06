@@ -162,10 +162,13 @@
   <data name="RFC" xml:space="preserve">
     <value>RFC</value>
   </data>
-	<data name="NuevoPasswordSATNoCoincide" xml:space="preserve">
+  <data name="NuevoPasswordSATNoCoincide" xml:space="preserve">
     <value>La contraseña nueva de la firma electrónica de la empresa no es igual a la confirmación de contraseña nueva</value>
   </data>
-	<data name="AnteriorPasswordSATNoCoincide" xml:space="preserve">
+  <data name="AnteriorPasswordSATNoCoincide" xml:space="preserve">
     <value>La contraseña anterior de la firma electrónica de la empresa no coincide con la contraseña anterior introducida por el usuario</value>
+  </data>
+  <data name="LimiteNoPuedeSerCero" xml:space="preserve">
+    <value>Dado que el nivel seleccionado '{0}' puede facturar, los límites transaccionales de cada banco deben ser mayores a cero. Por favor verifique.</value>
   </data>
 </root>

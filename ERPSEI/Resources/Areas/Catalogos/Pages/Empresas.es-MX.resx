@@ -360,6 +360,9 @@
   <data name="SinActividad" xml:space="preserve">
     <value>No se ha seleccionado una actividad económica para agregar</value>
   </data>
+  <data name="SubareaPlaceholder" xml:space="preserve">
+    <value>Subarea</value>
+  </data>
   <data name="TelefonoPlaceholder" xml:space="preserve">
     <value>Teléfono</value>
   </data>
@@ -374,5 +377,8 @@
   </data>
   <data name="HojaMembretada" xml:space="preserve">
     <value>Hoja Membretada</value>
+  </data>
+  <data name="LimitePlaceholder" xml:space="preserve">
+    <value>Límite Transaccional</value>
   </data>
 </root>

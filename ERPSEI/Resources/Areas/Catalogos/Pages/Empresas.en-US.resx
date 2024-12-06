@@ -378,4 +378,7 @@
   <data name="HojaMembretada" xml:space="preserve">
     <value>Headed Sheet</value>
   </data>
+  <data name="LimitePlaceholder" xml:space="preserve">
+    <value>Transactional Limit</value>
+  </data>
 </root>
