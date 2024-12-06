@@ -139,13 +139,13 @@ namespace ERPSEI.Pages
 			}
 		}
 
-        public ActionResult OnGetDownloadFile(string id, string module)
+        public ActionResult OnGetDownloadFile(string fileId, string moduleName)
         {
 			FileToRender? ftr = null;
-            switch (module)
+            switch (moduleName)
 			{
 				case "empresas":
-					ftr = GetArchivoEmpresaB64(id);
+					ftr = GetArchivoEmpresaB64(fileId);
 					break;
 				default:
 					break;
