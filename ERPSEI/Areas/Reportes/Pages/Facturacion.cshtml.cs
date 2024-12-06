@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace ERPSEI.Areas.Reportes.Pages
 {
@@ -18,6 +17,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 			IEmpresaManager empresaManager,
 			IComprobanteManager comprobanteManager,
 			IPerfilManager perfilManager,
+			IBancoEmpresaManager bancoEmpresaManager,
 			IStringLocalizer<FacturacionModel> localizer,
 			ILogger<FacturacionModel> logger
 		) : ERPPageModel
@@ -129,11 +129,11 @@ namespace ERPSEI.Areas.Reportes.Pages
 				
 			}
 
-			jsonResponse = CreateJsonComprobantes(perfilesEmpresasComprobantes, filtro?.Mes == null ? 12 : 1);
+			jsonResponse = await CreateJsonComprobantes(perfilesEmpresasComprobantes, filtro?.Mes == null ? 12 : 1);
 
 			return jsonResponse;
 		}
-		private static string CreateJsonComprobantes(Dictionary<Perfil, Dictionary<Empresa, List<Comprobante>>> comprobantes, int countMeses)
+		private async Task<string> CreateJsonComprobantes(Dictionary<Perfil, Dictionary<Empresa, List<Comprobante>>> comprobantes, int countMeses)
 		{
 			List<string> jsonComprobantes = [];
 			string jsonResponse;
@@ -155,27 +155,45 @@ namespace ERPSEI.Areas.Reportes.Pages
 
 				List<KeyValuePair<int, decimal>> empresasIdTotales = [];
 
-                //Se ordenan las empresas de manera ascendente por Disponibilidad
+				LIMITE_FACTURACION_PERFIL = 0m;
+
+                //Se obtiene el limite de facturación del perfil.
                 foreach (KeyValuePair<Empresa, List<Comprobante>> empresa in perfil.Value)
                 {
 					decimal acumuladoComprobantes = 0m;
+					LIMITE_FACTURACION_EMPRESA = 0m;
+
+					foreach (Comprobante comprobante in empresa.Value){ acumuladoComprobantes += comprobante.Total; }
+
+					//El límite de facturación mensual de la empresa será la sumatoria del límite de facturación mensual de todos sus bancos
+					foreach(BancoEmpresa b in await bancoEmpresaManager.GetBancosByEmpresaIdAsync(empresa.Key.Id)){ LIMITE_FACTURACION_EMPRESA += b.Limite; }
+
+					//Se multiplica el límite de facturación mensual por la cantidad de meses seleccionada dentro del rango del reporte.
+					LIMITE_FACTURACION_EMPRESA = LIMITE_FACTURACION_EMPRESA * countMeses;
+
+					LIMITE_FACTURACION_PERFIL += LIMITE_FACTURACION_EMPRESA;
+				}
+
+				//Se obtiene el porcentaje de disponibilidad para cada empresa.
+				foreach (KeyValuePair<Empresa, List<Comprobante>> empresa in perfil.Value)
+				{
+                    decimal acumuladoComprobantes = 0m;
 					decimal disp = 0m;
+					LIMITE_FACTURACION_EMPRESA = 0m;
 
-					foreach (Comprobante comprobante in empresa.Value)
-					{
-						acumuladoComprobantes += comprobante.Total;
-					}
+					foreach (Comprobante comprobante in empresa.Value){ acumuladoComprobantes += comprobante.Total; }
 
-					//El límite de facturación de la empresa será la sumatoria del límite de facturación de todos sus bancos
-					//TODO: Traer la sumatoria del límite de facturación de los bancos de una empresa
-					LIMITE_FACTURACION_EMPRESA = 150000000 * countMeses;
+					//El límite de facturación mensual de la empresa será la sumatoria del límite de facturación mensual de todos sus bancos
+					foreach(BancoEmpresa b in await bancoEmpresaManager.GetBancosByEmpresaIdAsync(empresa.Key.Id)){ LIMITE_FACTURACION_EMPRESA += b.Limite; }
 
-					disp = acumuladoComprobantes < LIMITE_FACTURACION_EMPRESA ? LIMITE_FACTURACION_EMPRESA - acumuladoComprobantes : 0;
-					disp = (disp * 100) / LIMITE_FACTURACION_EMPRESA;
+					//Se multiplica el límite de facturación mensual por la cantidad de meses seleccionada dentro del rango del reporte.
+					LIMITE_FACTURACION_EMPRESA = LIMITE_FACTURACION_EMPRESA * countMeses;
+
+					disp = (LIMITE_FACTURACION_EMPRESA * 100) / (LIMITE_FACTURACION_PERFIL <= 0 ? 1 : LIMITE_FACTURACION_PERFIL);
 					empresasIdTotales.Add(new(empresa.Key.Id, disp));
 				}
 
-				empresasIdTotales = [..empresasIdTotales.OrderByDescending(e => e.Value)];
+                empresasIdTotales = [..empresasIdTotales.OrderByDescending(e => e.Value)];
 
 				datosPorPerfil.LabelValues.Add(perfil.Key.Nombre);
 
@@ -184,6 +202,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 					decimal acumuladoPUEComprobantes = 0m;
 					decimal acumuladoPPDComprobantes = 0m;
 					decimal acumuladoPrefacturadoComprobantes = 0m;
+					LIMITE_FACTURACION_EMPRESA = 0m;
 
 					KeyValuePair<Empresa,List<Comprobante>> empresa = perfil.Value.Where(e => e.Key.Id == emp.Key).First();
 
@@ -202,9 +221,11 @@ namespace ERPSEI.Areas.Reportes.Pages
 						}
                     }
 
-					//El límite de facturación de la empresa será la sumatoria del límite de facturación de todos sus bancos.
-					//TODO: Traer la sumatoria del límite de facturación de los bancos de una empresa
-					LIMITE_FACTURACION_EMPRESA = 150000000 * countMeses;
+					//El límite de facturación mensual de la empresa será la sumatoria del límite de facturación mensual de todos sus bancos
+					foreach (BancoEmpresa b in await bancoEmpresaManager.GetBancosByEmpresaIdAsync(empresa.Key.Id)) { LIMITE_FACTURACION_EMPRESA += b.Limite; }
+
+					//Se multiplica el límite de facturación mensual por la cantidad de meses seleccionada dentro del rango del reporte.
+					LIMITE_FACTURACION_EMPRESA = LIMITE_FACTURACION_EMPRESA * countMeses;
 
 					acumuladoPUEEmpresas += acumuladoPUEComprobantes;
 					acumuladoPPDEmpresas += acumuladoPPDComprobantes;
@@ -217,10 +238,8 @@ namespace ERPSEI.Areas.Reportes.Pages
 					datosPorEmpresa.FacturadoValues.Add(acumuladoPUEComprobantes + acumuladoPPDComprobantes + acumuladoPrefacturadoComprobantes);
 					disponible = datosPorEmpresa.FacturadoValues.Last() < LIMITE_FACTURACION_EMPRESA ? LIMITE_FACTURACION_EMPRESA - datosPorEmpresa.FacturadoValues.Last() : 0;
 					datosPorEmpresa.DisponibleValues.Add(disponible);
-					datosPorEmpresa.PorcentajeDisponible.Add(Math.Round((disponible * 100) / LIMITE_FACTURACION_EMPRESA, 0));
+					datosPorEmpresa.PorcentajeDisponible.Add(Math.Round((LIMITE_FACTURACION_EMPRESA * 100) / (LIMITE_FACTURACION_PERFIL <= 0 ? 1 : LIMITE_FACTURACION_PERFIL)));
 					datosPorEmpresa.ExcedenteValues.Add(datosPorEmpresa.FacturadoValues.Last() >= LIMITE_FACTURACION_EMPRESA ? datosPorEmpresa.FacturadoValues.Last() - LIMITE_FACTURACION_EMPRESA : 0);
-
-					LIMITE_FACTURACION_PERFIL += LIMITE_FACTURACION_EMPRESA;
 				}
 
 				datosPorPerfil.PUEValues.Add(acumuladoPUEEmpresas);
@@ -229,7 +248,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 				datosPorPerfil.FacturadoValues.Add(acumuladoPUEEmpresas + acumuladoPPDEmpresas + acumuladoPrefacturadoEmpresas);
 				disponible = datosPorPerfil.FacturadoValues.Last() < LIMITE_FACTURACION_PERFIL ? LIMITE_FACTURACION_PERFIL - datosPorPerfil.FacturadoValues.Last() : 0;
 				datosPorPerfil.DisponibleValues.Add(disponible);
-				datosPorPerfil.PorcentajeDisponible.Add(Math.Round((disponible * 100) / LIMITE_FACTURACION_PERFIL, 0));
+				datosPorPerfil.PorcentajeDisponible.Add(Math.Round((disponible * 100) / (LIMITE_FACTURACION_PERFIL <= 0 ? 1 : LIMITE_FACTURACION_PERFIL), 0));
 				datosPorPerfil.ExcedenteValues.Add(datosPorPerfil.FacturadoValues.Last() >= LIMITE_FACTURACION_PERFIL ? datosPorPerfil.FacturadoValues.Last() - LIMITE_FACTURACION_PERFIL : 0);
 			}
 
