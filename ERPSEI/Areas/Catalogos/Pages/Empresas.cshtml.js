@@ -1,4 +1,5 @@
 ﻿var table;
+var numFormatter = null;
 var buttonRemove;
 var tableActividad;
 var selections = [];
@@ -16,6 +17,8 @@ const postOptions = { headers: { "RequestVerificationToken": $('input[name="__Re
 
 //Función para inicializar el módulo.
 document.addEventListener("DOMContentLoaded", function (event) {
+    numFormatter = new Intl.NumberFormat(cultureName);
+
     table = $("#table");
     buttonRemove = $("#remove");
     tableActividad = $("#tableActividades");
@@ -565,6 +568,7 @@ function establecerDatosAdicionales(row, action) {
     $("#bodyBancos").html("");
     row.bancos = row.bancos || [];
     row.bancos.forEach(function (b) { onAgregarBancoClick(b) });
+    onLimiteBancoChanged();
 
     //Se establecen los archivos.
     $("#bodyArchivos, #bodyArchivosSAT").html("");
@@ -627,9 +631,9 @@ function establecerDatosAdicionales(row, action) {
             allowedExtensions = ".key";
         }
         else {
-            mimeTypes = "image/png, image/jpeg, application/pdf"
+            mimeTypes = "image/png, image/jpeg, application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword"
             containerName = "#bodyArchivos";
-            allowedExtensions = ".png, .jpg, .jpeg, .pdf";
+            allowedExtensions = ".png, .jpg, .jpeg, .pdf, .doc, .docx";
         }
 
         $(containerName).append(
@@ -721,7 +725,7 @@ function onDeleteClick(button) {
     initializeDisableableButtons();
 }
 //Función para capturar el clic en el botón agregar banco, que añade un item de banco para capturar datos.
-function onAgregarBancoClick(row = {banco: "", responsable: "", firmante: ""}) {
+function onAgregarBancoClick(row = {banco: "", responsable: "", firmante: "", limite: ""}) {
     let btnAgregarBanco = document.getElementById("dlgEmpresaBtnAgregarBanco");
     let currentRows = document.querySelectorAll(".rowBancos").length;
 
@@ -732,38 +736,53 @@ function onAgregarBancoClick(row = {banco: "", responsable: "", firmante: ""}) {
 
     currentRows += 1;
     
-    $("#bodyBancos").append(`<div class="card mb-3 shadow">
-                                <span class="text-end mt-2" data-effect="fadeOut">
-                                    <button type="button" class="btn-close formButton" onclick="onEliminarBancoClick(this);"></button>
-                                </span>
-                                <div rownumber="${currentRows}" class="col-sm-12 col-md-12 col-lg-12 rowBancos">
-								    <div class="row">
-									    <h6 class="col-12"><i>${empresaBancoTitle} ${currentRows}</i></h6>
-                                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4">
-										    <div class="form-floating mb-3">
-											    <input id="inpEmpresaBancoNombre${currentRows}" type="text" class="form-control formInput" placeholder="${bancoNombrePlaceholder}" value="${row.banco}" maxlength="40" />
-											    <label for="inpEmpresaBancoNombre${currentRows}" class="form-label">${bancoNombrePlaceholder}</label>
-										    </div>
-									    </div>
-                                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4">
-										    <div class="form-floating mb-3">
-											    <input id="inpEmpresaBancoResponsable${currentRows}" type="text" class="form-control formInput" placeholder="${responsablePlaceholder}" value="${row.responsable}" maxlength="40" />
-											    <label for="inpEmpresaBancoResponsable${currentRows}" class="form-label">${responsablePlaceholder}</label>
-										    </div>
-									    </div>
-									    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4">
-										    <div class="form-floating mb-3">
-											    <input id="inpEmpresaBancoFirmante${currentRows}" type="text" class="form-control formInput" placeholder="${firmantePlaceholder}" value="${row.firmante}" maxlength="40" />
-											    <label for="inpEmpresaBancoFirmante${currentRows}" class="form-label">${firmantePlaceholder}</label>
-										    </div>
-									    </div>
-								    </div>
-							    </div>
-                            </div>`);
+    $("#bodyBancos").append(`
+        <div class="card mb-3 shadow">    
+            <span class="text-end mt-2" data-effect="fadeOut">
+                <button type="button" class="btn-close formButton" onclick="onEliminarBancoClick(this);"></button>
+            </span>
+            <div rownumber="${currentRows}" class="col-sm-12 col-md-12 col-lg-12 rowBancos">
+				<div class="row">
+					<h6 class="col-12"><i>${empresaBancoTitle} ${currentRows}</i></h6>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-3">
+						<div class="form-floating mb-3">
+							<input id="inpEmpresaBancoNombre${currentRows}" type="text" class="form-control formInput" placeholder="${bancoNombrePlaceholder}" value="${row.banco}" maxlength="40" />
+							<label for="inpEmpresaBancoNombre${currentRows}" class="form-label">${bancoNombrePlaceholder}</label>
+						</div>
+					</div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-3">
+						<div class="form-floating mb-3">
+							<input id="inpEmpresaBancoLimite${currentRows}" type="number" class="form-control formInput limiteTransaccionalField" placeholder="${limitePlaceholder}" value="${row.limite}" min="0" max="999999999999" step="0.01" onchange="onLimiteBancoChanged();" />
+							<label for="inpEmpresaBancoLimite${currentRows}" class="form-label">${limitePlaceholder}</label>
+						</div>
+					</div>
+                    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
+						<div class="form-floating mb-3">
+							<input id="inpEmpresaBancoResponsable${currentRows}" type="text" class="form-control formInput" placeholder="${responsablePlaceholder}" value="${row.responsable}" maxlength="40" />
+							<label for="inpEmpresaBancoResponsable${currentRows}" class="form-label">${responsablePlaceholder}</label>
+						</div>
+					</div>
+					<div class="col-xs-12 col-sm-12 col-md-12 col-lg-6">
+						<div class="form-floating mb-3">
+							<input id="inpEmpresaBancoFirmante${currentRows}" type="text" class="form-control formInput" placeholder="${firmantePlaceholder}" value="${row.firmante}" maxlength="40" />
+							<label for="inpEmpresaBancoFirmante${currentRows}" class="form-label">${firmantePlaceholder}</label>
+						</div>
+					</div>
+				</div>
+			</div>
+        </div>
+    `);
+}
+//Función para capturar el cambio de valor en uno de los campos de límite transaccional bancario.
+function onLimiteBancoChanged() {
+    let total = 0;
+    $(".limiteTransaccionalField").each(function (i, e) { total += parseFloat(e.value||"0"); });
+    $("#spanTotalTransaccional").text(`$${numFormatter.format(total.toFixed(2))}`);
 }
 //Función para capturar el clic en el botón eliminar banco, que elimina un item de banco del listado.
 function onEliminarBancoClick(button) {
     $(button).closest('.card').remove();
+    onLimiteBancoChanged();
 }
 //Función para mostrar cualquiera de los documentos seleccionados.
 function onDocumentSelectorChanged(input, allowedExtensions) {
@@ -774,6 +793,7 @@ function onDocumentSelectorChanged(input, allowedExtensions) {
         let fExt = docParts.length >= 2 ? docParts[docParts.length - 1] || "" : "";
         let isImg = docType == "image/png" || docType == "image/jpg" || docType == "image/jpeg";
         let isPDF = docType == "application/pdf";
+        let isDOCX = docType == "application/msword" || docType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         let isCER = docType == "application/x-x509-ca-cert";
         let isKEY = fExt == "key";
         let containerName = input.getAttribute("containerName");
@@ -783,8 +803,8 @@ function onDocumentSelectorChanged(input, allowedExtensions) {
         let fileIcon = document.getElementById(fileIconName);
         let fileName = document.getElementById(fileNameName);
 
-        if (isImg || isPDF || isCER || isKEY) {
-            if ((isImg || isPDF) && input.files[0].size >= maxFileSizeInBytes) {
+        if (isImg || isPDF || isDOCX || isCER || isKEY) {
+            if ((isImg || isPDF || isDOCX) && input.files[0].size >= maxFileSizeInBytes) {
                 input.value = null;
                 showAlert(maxFileSizeTitle, `${maxFileSizeMessage} ${maxFileSizeInBytes / oneMegabyteSizeInBytes}Mb`);
                 return;
@@ -893,11 +913,13 @@ function onGuardarClick() {
         let bancoNombreField = document.getElementById(`inpEmpresaBancoNombre${row}`);
         let bancoResponsableField = document.getElementById(`inpEmpresaBancoResponsable${row}`);
         let bancoFirmanteField = document.getElementById(`inpEmpresaBancoFirmante${row}`);
+        let bancoLimiteField = document.getElementById(`inpEmpresaBancoLimite${row}`);
         
         banks.push({
             banco: bancoNombreField.value.trim(),
             responsable: bancoResponsableField.value.trim(),
             firmante: bancoFirmanteField.value.trim(),
+            limite: bancoLimiteField.value.trim()
         });
     });
 

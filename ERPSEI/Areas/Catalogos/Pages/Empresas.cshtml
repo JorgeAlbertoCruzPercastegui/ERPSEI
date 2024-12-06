@@ -208,7 +208,7 @@
 															}
 														}
 													</select>
-													<label for="selEmpresaPerfil" asp-for="InputEmpresa.PerfilId" class="form-label"></label>
+													<label for="selEmpresaPerfil" asp-for="InputEmpresa.PerfilId" class="form-label required"></label>
 													<span asp-validation-for="InputEmpresa.PerfilId" class="text-danger"></span>
 												</div>
 											</div>
@@ -259,7 +259,7 @@
 															}
 														}
 													</select>
-													<label for="selEmpresaNivel" asp-for="InputEmpresa.NivelId" class="form-label"></label>
+													<label for="selEmpresaNivel" asp-for="InputEmpresa.NivelId" class="form-label required"></label>
 													<span asp-validation-for="InputEmpresa.NivelId" class="text-danger"></span>
 												</div>
 											</div>
@@ -452,6 +452,7 @@
 								<div id="collapseSectionTwo" class="accordion-collapse collapse show" aria-labelledby="segundaSeccion" data-bs-parent="#accordionTwo">
 									<div class="accordion-body">
 										<div class="col-12 text-end mb-3">
+											<span class="me-5"><b>Total transaccional:</b> <span id="spanTotalTransaccional">$0.00</span></span>
 											@if (puedeTodo || puedeEditar)
 											{
 												<button id="dlgEmpresaBtnAgregarBanco" type="button" class="btn btn-primary formButton" onclick="onAgregarBancoClick();">
@@ -662,6 +663,7 @@
 		var bancoNombrePlaceholder = '@Localizer["BancoNombrePlaceholder"]';
 		var responsablePlaceholder = '@Localizer["ResponsablePlaceholder"]';
 		var firmantePlaceholder = '@Localizer["FirmantePlaceholder"]';
+		var limitePlaceholder = '@Localizer["LimitePlaceholder"]';
 		var msgAgregarActividad = '@Localizer["AgregarActividad"]';
 		var sinActividad = '@Localizer["SinActividad"]';
 		var actividadRepetida = '@Localizer["ActividadRepetida"]';

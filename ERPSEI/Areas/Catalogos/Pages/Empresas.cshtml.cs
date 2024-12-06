@@ -74,6 +74,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			[Display(Name = "OrigenField")]
 			public int? OrigenId { get; set; }
 
+			[Required(ErrorMessage = "Required")]
 			[Display(Name = "NivelField")]
 			public int? NivelId { get; set; }
 
@@ -146,6 +147,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			[Display(Name = "PhoneNumberField")]
 			public string? Telefono { get; set; } = string.Empty;
 
+			[Required(ErrorMessage = "Required")]
 			[Display(Name = "PerfilField")]
 			public int? PerfilId { get; set; }
 
@@ -180,6 +182,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
             public string? Banco { get; set; } = string.Empty;
             public string? Responsable { get; set; } = string.Empty;
             public string? Firmante { get; set; } = string.Empty;
+			public decimal? Limite { get; set; } = 0m;
         }
 
 		public class ArchivoModel
@@ -332,8 +335,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
                             $"\"id\": \"{b.Id}\"," +
                             $"\"banco\": \"{b.Banco}\"," +
                             $"\"responsable\": \"{b.Responsable}\"," +
-                            $"\"firmante\": \"{b.Firmante}\"" +
-                        "}"
+                            $"\"firmante\": \"{b.Firmante}\", " +
+							$"\"limite\": \"{b.Limite}\"" +
+						"}"
                     );
                 }
             }
@@ -441,14 +445,14 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
         public async Task<JsonResult> OnPostDatosAdicionalesEmpresa(int idEmpresa)
         {
-            ServerResponse resp = new(true, _strLocalizer["EmpresaConsultadaUnsuccessfully"]);
+            ServerResponse resp = new(true, _strLocalizer["ConsultadoUnsuccessfully"]);
 			try
 			{
 				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
 				{
 					resp.Datos = await GetDatosAdicionalesEmpresa(idEmpresa);
 					resp.TieneError = false;
-					resp.Mensaje = _strLocalizer["EmpresaConsultadaSuccessfully"];
+					resp.Mensaje = _strLocalizer["ConsultadoSuccessfully"];
 				}
 				else
 				{
@@ -533,6 +537,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					resp.Errores = ModelState.Keys.SelectMany(k => ModelState[k]?.Errors ?? []).Select(m => m.ErrorMessage).ToArray();
 					return new JsonResult(resp);
 				}
+
 				try
 				{
 					//Valida que no exista una empresa registrada con los mismos datos. En caso de haber, se deja el mensaje en resp.Mensajes para ser mostrado al usuario.
@@ -609,7 +614,23 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 				//Si se encontró empresa, obtiene su Id del registro existente. 
 				if (empresa != null) { 
-					idEmpresa = empresa.Id; 
+					idEmpresa = empresa.Id;
+
+					//Valida la información de bancos
+					foreach (BancoModel? b in e.Bancos)
+					{
+						if (b != null && InputEmpresa.NivelId != null)
+						{
+							//Obtiene la información del Nivel
+							Nivel? n = await _nivelManager.GetByIdAsync(InputEmpresa.NivelId ?? 0);
+
+							//Si el nivel puede facturar, entonces valida que el límite de todos los bancos sea mayor a cero.
+							if (n != null && n.PuedeFacturar && b.Limite <= 0)
+							{
+								return _strLocalizer["LimiteNoPuedeSerCero", n.Nombre];
+							}
+						}
+					}
 				}
 				else
 				{
@@ -638,8 +659,6 @@ namespace ERPSEI.Areas.Catalogos.Pages
                         empresa.PFESAT = _encriptacionAES.PlainTextToBase64AES(e.ArchivosSATNewPassword ?? string.Empty);
                     }
                 }
-
-				
 
 				//Llena los datos de la empresa.
 				empresa.RazonSocial = e.RazonSocial;
@@ -698,7 +717,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					if(b != null)
 					{
 						await _bancoEmpresaManager.CreateAsync(
-							new BancoEmpresa() { Banco = b.Banco??string.Empty, Responsable = b.Responsable??string.Empty, Firmante = b.Firmante??string.Empty, EmpresaId = idEmpresa }
+							new BancoEmpresa() { Banco = b.Banco??string.Empty, Responsable = b.Responsable??string.Empty, Firmante = b.Firmante??string.Empty, Limite = b.Limite??0m, EmpresaId = idEmpresa }
 						);
 					}
 				}
