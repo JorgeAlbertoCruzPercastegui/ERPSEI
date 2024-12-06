@@ -13,6 +13,8 @@ namespace ERPSEI.Data.Entities.Empresas
 
         public string Firmante { get; set; } = string.Empty;
 
+        public decimal Limite { get; set; } = 0m;
+
 		public int? EmpresaId { get; set; }
 		public Empresa? Empresa { get; set; }
 	}
