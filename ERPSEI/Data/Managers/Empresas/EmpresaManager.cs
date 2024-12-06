@@ -178,9 +178,9 @@ namespace ERPSEI.Data.Managers.Empresas
 			return emp;
 		}
 
-        public async Task<List<Empresa>> GetAllWithPerfil() 
+        public async Task<List<Empresa>> GetAllWithPerfilAndNivel() 
         {
-			return await db.Empresas.Include(e => e.Perfil).ToListAsync();
+			return await db.Empresas.Include(e => e.Perfil).Include(e => e.Nivel).ToListAsync();
 		}
 
 	}
