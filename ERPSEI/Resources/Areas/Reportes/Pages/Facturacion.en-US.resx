@@ -144,4 +144,13 @@
   <data name="FilterTitle" xml:space="preserve">
     <value>Search Filters</value>
   </data>
+  <data name="SinPerfilSelectItemText" xml:space="preserve">
+    <value>No profile assigned</value>
+  </data>
+  <data name="NoInfoMessage" xml:space="preserve">
+    <value>No information found</value>
+  </data>
+  <data name="SinNivelSelectItemText" xml:space="preserve">
+    <value>No level assigned</value>
+  </data>
 </root>

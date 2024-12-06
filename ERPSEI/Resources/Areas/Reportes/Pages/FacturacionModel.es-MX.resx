@@ -126,4 +126,7 @@
   <data name="ConsultadoUnsuccessfully" xml:space="preserve">
     <value>Error al consultar la información</value>
   </data>
+  <data name="SinPerfilAsignado" xml:space="preserve">
+    <value>Sin perfil asignado</value>
+  </data>
 </root>

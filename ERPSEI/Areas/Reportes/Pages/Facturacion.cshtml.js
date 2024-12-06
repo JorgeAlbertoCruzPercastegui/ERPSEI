@@ -49,14 +49,24 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     autoCompletar("#inpFiltroEmpresaRFC", {
-        change: function (element, item) {
-            clearGraphics();
-            if (!item) {
-                $('#inpFiltroEmpresaRFC').data('rfc', null);
+        select: function (element, item) {
+            if (item) {
+                clearGraphics();
+                if (item.perfil) {
+                    let perfilId = $(`#selFiltroPerfil option:contains(${item.perfil})`).val() || "0";
+                    $("#selFiltroPerfil").val(perfilId);
+                }
+
+                if (item.nivel) {
+                    let nivelId = $(`#selFiltroNivel option:contains(${item.nivel})`).val() || "0";
+                    $("#selFiltroNivel").val(nivelId);
+                }
             }
-            else {
-                $("#selFiltroPerfil").val(0);
-                $("#selFiltroNivel").val(0);
+        },
+        change: function (element, item) {
+            if (!item) {
+                clearGraphics();
+                $('#inpFiltroEmpresaRFC').data({ rfc: null, Perfil: null, Nivel: null });
             }
         }
     });
@@ -312,7 +322,7 @@ function onBuscarClick() {
         Mes: $("#selFiltroMes").val() == 0 ? null : $("#selFiltroMes").val()
     };
 
-    let perfilSelected = parseInt(oParams.PerfilId || "0") >= 1;
+    let perfilSelected = parseInt(oParams.PerfilId || "0") >= 1 || parseInt(oParams.PerfilId || "0") == -1;
     let empresaSelected = (oParams.EmpresaRFC || "").length >= 1;
 
     doAjax(
@@ -332,6 +342,30 @@ function onBuscarClick() {
 
             //Se convierte la cadena JSON a objeto JSON
             resp.datos = responseHandler(resp.datos);
+
+            if (resp.datos == null && resp.datos.Perfiles == null) {
+                showInfo($("#btnBuscar").text(), noInfoMessage);
+                return;
+            }
+
+            if (
+                (resp.datos.Perfiles.PUEValues || []).length <= 0 &&
+                (resp.datos.Perfiles.PPDValues || []).length <= 0 &&
+                (resp.datos.Perfiles.PrefacturadoValues || []).length <= 0 &&
+                (resp.datos.Perfiles.DisponibleValues || []).length <= 0)
+            {
+                showInfo($("#btnBuscar").text(), noInfoMessage);
+                return;
+            }
+
+            if (
+                (resp.datos.Empresas.PUEValues || []).length <= 0 &&
+                (resp.datos.Empresas.PPDValues || []).length <= 0 &&
+                (resp.datos.Empresas.PrefacturadoValues || []).length <= 0 &&
+                (resp.datos.Empresas.DisponibleValues || []).length <= 0) {
+                showInfo($("#btnBuscar").text(), noInfoMessage);
+                return;
+            }
 
             $("#divCharts").html(`
                 <div class="container-fluid">
@@ -424,6 +458,12 @@ function onBuscarClick() {
                         ]
                     };
 
+                    let titles = [];
+                    let perfilSelected = ($("#selFiltroPerfil").val() || 0) >= 1 ? $("#selFiltroPerfil option:selected").text() || sinPerfilSelectItemText : "";
+                    let nivelSelected = resp.datos.Empresas.NivelesValues[i] || sinNivelSelectItemText;
+                    if ((perfilSelected).length >= 1) { titles.push(`Perfil: ${perfilSelected}`); }
+                    if ((nivelSelected).length >= 1) { titles.push(`Nivel: ${nivelSelected}`); }
+
                     let config = {
                         type: 'bar',
                         data: data,
@@ -436,6 +476,10 @@ function onBuscarClick() {
                                             return `$${numFormatter.format(context.raw)}`;
                                         }
                                     }
+                                },
+                                title: {
+                                    display: true,
+                                    text: titles.join("    ")
                                 }
                             }
                         },

@@ -48,6 +48,7 @@
 							<div class="form-floating mb-3">
 								<select id="selFiltroPerfil" asp-for="InputFiltro.PerfilId" class="form-select" placeholder="@localizer["PerfilPlaceholder"]" onchange="onPerfilOrNivelChanged();">
 									<option selected value="0">@localizer["EmptySelectItemText"]</option>
+									<option value="-1">@localizer["SinPerfilSelectItemText"]</option>
 									@{ foreach(Perfil perfil in perfiles){ <option value='@perfil.Id'>@perfil.Nombre</option> } }
 								</select>
 								<label for="selFiltroPerfil" asp-for="InputFiltro.PerfilId" class="form-label"></label>
@@ -170,6 +171,9 @@
 
 		var emptyGraphicsURL = '@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/empty_graphics.jpg';
 		var emptyGrapicsInstructions = '@localizer["EmptyGraphicsInstructions"]';
+		var noInfoMessage = '@localizer["NoInfoMessage"]';
+		var sinPerfilSelectItemText = '@localizer["SinPerfilSelectItemText"]';
+		var sinNivelSelectItemText = '@localizer["SinNivelSelectItemText"]';
 
 		var puedeTodo = '@puedeTodo' == 'True';
 		var puedeConsultar = '@puedeConsultar' == 'True';

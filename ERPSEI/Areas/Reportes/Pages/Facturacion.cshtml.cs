@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace ERPSEI.Areas.Reportes.Pages
 {
@@ -31,6 +32,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 			public List<decimal> DisponibleValues { get; set; } = [];
 			public List<decimal> ExcedenteValues { get; set; } = [];
 			public List<decimal> PorcentajeDisponible { get; set; } = [];
+			public List<string> NivelesValues { get; set; } = [];
 		}
 
 		[BindProperty]
@@ -89,32 +91,42 @@ namespace ERPSEI.Areas.Reportes.Pages
 			List<Comprobante> comprobantes = [];
 			List<Perfil> perfiles;
 			List<Empresa> empresas;
-			List<Empresa> empresasFinales = [];
 			Dictionary<Perfil, Dictionary<Empresa, List<Comprobante>>> perfilesEmpresasComprobantes = [];
+			Perfil emptyPerfil = new() { Nombre = localizer["SinPerfilAsignado"] };
 
-			empresas = await empresaManager.GetAllWithPerfil();
-			if (filtro?.PerfilId != null) { empresas = [.. empresas.Where(e => e.PerfilId == filtro?.PerfilId)]; }
+			perfiles = await perfilManager.GetAllAsync();
+			empresas = await empresaManager.GetAllWithPerfilAndNivel();
+			if (filtro?.PerfilId != null && filtro?.PerfilId >= 1) {
+				empresas = [.. empresas.Where(e => e.PerfilId == filtro?.PerfilId)];
+				perfiles = [.. perfiles.Where(p => p.Id == filtro.PerfilId)];
+			}
+			else if(filtro?.PerfilId == -1) { empresas = [.. empresas.Where(e => e.Perfil == null)]; }
+			else
+			{
+				List<int> perfilesIds = [..perfiles.Select(p => p.Id)];
+				empresas = [.. empresas.Where(e => perfilesIds.Contains(e.PerfilId??0))];
+			}
 			if (filtro?.EmpresaRFC != null) { empresas = [.. empresas.Where(e => e.RFC == filtro?.EmpresaRFC)]; }
 			if (filtro?.NivelId != null) { empresas = [.. empresas.Where(e => e.NivelId == filtro?.NivelId)]; }
 
-			perfiles = await perfilManager.GetAllAsync();
-			if (filtro?.PerfilId != null) { perfiles = [.. perfiles.Where(p => p.Id == filtro.PerfilId)]; }
-
-			foreach (Perfil p in perfiles)
-			{
-				empresasFinales.AddRange([.. empresas.Where(e => e.PerfilId == p.Id)]);
+			if (empresas.Count <= 0) {
+				return $"{{" +
+					$"\"Perfiles\":" +
+						$"{JsonConvert.SerializeObject(new GraphicDataModel())}," +
+					$"\"Empresas\":" +
+						$"{JsonConvert.SerializeObject(new GraphicDataModel())}" +
+				$"}}";
 			}
 
 			comprobantes = await comprobanteManager.GetComprobantesGraficas(filtro?.Anio, filtro?.Mes);
 
-			foreach (Empresa e in empresasFinales)
+			foreach (Empresa e in empresas)
             {
-				if (e.Perfil != null) {
-					if (!perfilesEmpresasComprobantes.ContainsKey(e.Perfil)) { perfilesEmpresasComprobantes.Add(e.Perfil, []); }
-					if (!perfilesEmpresasComprobantes[e.Perfil].ContainsKey(e)) { perfilesEmpresasComprobantes[e.Perfil].Add(e, []); }
+				if (!perfilesEmpresasComprobantes.ContainsKey(e.Perfil ?? emptyPerfil)) { perfilesEmpresasComprobantes.Add(e.Perfil ?? emptyPerfil, []); }
+				if (!perfilesEmpresasComprobantes[e.Perfil ?? emptyPerfil].ContainsKey(e)) { perfilesEmpresasComprobantes[e.Perfil ?? emptyPerfil].Add(e, []); }
 
-					perfilesEmpresasComprobantes[e.Perfil][e] = [.. from Comprobante c in comprobantes where c.Emisor?.Rfc == e.RFC select c]; 
-				}
+				perfilesEmpresasComprobantes[e.Perfil ?? emptyPerfil][e] = [.. from Comprobante c in comprobantes where c.Emisor?.Rfc == e.RFC select c]; 
+				
 			}
 
 			jsonResponse = CreateJsonComprobantes(perfilesEmpresasComprobantes, filtro?.Mes == null ? 12 : 1);
@@ -198,6 +210,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 					acumuladoPPDEmpresas += acumuladoPPDComprobantes;
 					acumuladoPrefacturadoEmpresas += acumuladoPrefacturadoComprobantes;
 
+					datosPorEmpresa.NivelesValues.Add(empresa.Key.Nivel?.Nombre ?? string.Empty);
 					datosPorEmpresa.PUEValues.Add(acumuladoPUEComprobantes);
 					datosPorEmpresa.PPDValues.Add(acumuladoPPDComprobantes);
 					datosPorEmpresa.PrefacturadoValues.Add(acumuladoPrefacturadoComprobantes);
@@ -270,7 +283,9 @@ namespace ERPSEI.Areas.Reportes.Pages
 										$"\"id\": {e.Id}, " +
 										$"\"value\": \"{e.RazonSocial}\", " +
 										$"\"label\": \"{e.RFC} - {e.RazonSocial}\", " +
-										$"\"rfc\": \"{e.RFC}\"" +
+										$"\"rfc\": \"{e.RFC}\", " +
+										$"\"perfil\": \"{e.Perfil}\", " +
+										$"\"nivel\": \"{e.Nivel}\"" +
 									$"}}");
 				}
 			}
