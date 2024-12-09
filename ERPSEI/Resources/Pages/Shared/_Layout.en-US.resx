@@ -210,4 +210,7 @@
   <data name="BillingReportMenu" xml:space="preserve">
     <value>Billing</value>
   </data>
+  <data name="BankConverterMenu" xml:space="preserve">
+    <value>Bank Converter</value>
+  </data>
 </root>

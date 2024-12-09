@@ -107,6 +107,9 @@ namespace ERPSEI.Pages.Shared
         #region Facturacion
         public static string Facturacion => "Facturacion";
         public static string FacturacionNavClass(ViewContext viewContext) => PageNavClass(viewContext, Facturacion);
+
+        public static string ConvertidorBancario => "ConvertidorBancario";
+        public static string ConvertidorBancarioNavClass(ViewContext viewContext) => PageNavClass(viewContext, ConvertidorBancario);
         #endregion
 
         #endregion
