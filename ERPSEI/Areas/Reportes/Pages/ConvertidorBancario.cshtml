@@ -1,0 +1,173 @@
+﻿@page "{handler?}"
+@using ERPSEI.Areas.Reportes.Pages;
+@using ERPSEI.Data.Entities.Conciliaciones
+@using ERPSEI.Data.Managers.Conciliaciones
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@model ConvertidorBancarioModel
+@inject IBancoManager BancoManager;
+@inject IViewLocalizer Localizer;
+@{
+	ViewData["Title"] = Localizer["Title"];
+
+	// Retrieves the requested culture
+	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+
+	// Culture contains the information of the requested culture
+	System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+
+	string cultureName = culture.Name;
+
+	List<Banco> banco = await BancoManager.GetAllAsync();
+}
+
+<h3 class="title mb-3">@ViewData["Title"]</h3>
+
+<div class="accordion shadow mb-5" id="accordionFiltros">
+	<div class="accordion-item">
+		<h2 class="accordion-header" id="headingOne">
+			<button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+				<h6>@Localizer["FilterTitle"]</h6>
+			</button>
+		</h2>
+		<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+			<div class="accordion-body">
+				<form id="theForm" method="post">
+					<!-- Contenedor para mensajes de error de validación -->
+					<div id="importValidationSummary" class="alert alert-danger" style="display: none;"></div>
+
+					<!-- Contenido del formulario -->
+					<div class="container mt-4">
+						<div class="row mb-3">
+							<!-- Input file -->
+							<div class="col-md-6">
+								<label for="fileUpload" class="form-label">@Localizer["FileUploadLabel"]</label>
+								<input type="file" id="fileUpload" name="fileUpload" class="form-control" accept=".pdf" multiple />
+							</div>
+							<!-- Combobox -->
+							<div class="col-md-6">
+								<label for="selFiltroBanco" asp-for="BancoList.Id" class="form-label">@Localizer["BancoLabel"]</label>
+								<select id="selFiltroBanco" class="form-select">
+									<option value="0">Seleccione...</option>
+									@foreach (Banco bancos in banco)
+									{
+										<option value="@bancos.Id">@bancos.Nombre</option>
+									}
+								</select>
+								<input type="hidden" asp-for="InputFiltroModalAgregar.BancoId" id="BancoSeleccionado" />
+							</div>
+						</div>
+						<!-- Botón en la parte inferior derecha -->
+						<div class="row">
+							<div class="col-12 d-flex justify-content-end">
+								<button id="dlgImportarBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onImportarMovimientosBancariosClick();">
+									@Localizer["ImportButtonTitle"]
+								</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<table id="table" class="table-sm"
+	   data-unique-id="id"
+	   data-toolbar="#toolbar"
+	   data-search="true"
+	   data-show-refresh="true"
+	   data-show-toggle="true"
+	   data-show-fullscreen="true"
+	   data-show-columns="true"
+	   data-show-columns-toggle-all="true"
+	   data-show-export="true"
+	   data-click-to-select="true"
+	   data-minimum-count-columns="2"
+	   data-show-pagination-switch="true"
+	   data-pagination="true"
+	   data-id-field="id"
+	   data-page-list="[10, 25, 50, 100, all]"
+	   data-show-footer="false"
+	   data-side-pagination="client"
+	   data-response-handler="responseHandler"
+	   data-buttons-class="primary">
+	<thead>
+		<tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+		</tr>
+	</thead>
+</table>
+
+<!--Modal para mensaje-->
+<div class="modal fade" id="mensajeModal" tabindex="-1" role="dialog" aria-labelledby="mensajeModalLabel" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="mensajeModalLabel">Mensaje</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="cerrarModal()">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body" id="modalMensajeBody">
+				<!-- El mensaje se insertará aquí -->
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-primary" data-dismiss="modal" onclick="cerrarModal()">Cerrar</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+@section Scripts {
+	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+	<link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+	<script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+
+	<script src="~/lib/bootstrap-table/extensions/export/tableExport.min.js"></script>
+	<script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>+
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
+	<script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
+	<script src="~/lib/bootstrap-table/extensions/export/xlsx.full.min.js"></script>
+	<script src="~/lib/bootstrap-table/extensions/export/exceljs.min.js"></script>
+	<script src="~/lib/bootstrap-table/extensions/export/FileSaver.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+	<link rel="stylesheet" href="~/css/Asistencia.css" />
+	<script src="~/../Areas/Reportes/Pages/ConvertidorBancario.cshtml.js"></script>
+
+	<script type="text/javascript">
+		var cultureName = "@cultureName";
+		var btnImportarText = '@Localizer["ImportButtonText"]';
+		var btnImportarTitle = '@Localizer["ImportButtonTitle"]';
+		var btnInvitarTitle = '@Localizer["InviteButtonTitle"]';
+		var btnVerTitle = '@Localizer["SeeButtonTitle"]';
+		var btnEditarTitle = '@Localizer["EditButtonTitle"]';
+		var btnEliminarTitle = '@Localizer["DeleteButton"]';
+		var dlgEditarTitle = '@Localizer["EditDialogTitle"]';
+		var dlgVerTitle = '@Localizer["SeeDialogTitle"]';
+		var dlgNuevoTitle = '@Localizer["NewDialogTitle"]';
+		var dlgDeleteTitle = '@Localizer["DeleteEmpleadoDialogTitle"]';
+		var dlgDeleteQuestion = '@Localizer["DeleteEmpleadoDialogQuestion"]';
+		var dlgDeleteTitle = '@Localizer["DeletePositionDialogTitle"]';
+		var dlgDeleteQuestion = '@Localizer["DeletePositionDialogQuestion"]';
+		var colFechaMovimientoHeader = '@Localizer["ColDateMovHeader"]';
+		var colFechaAplicacionHeader = '@Localizer["ColDateAppHeader"]';
+		var colReferenciaHeader = '@Localizer["ColRefHeader"]';
+		var colDescripcionHeader = '@Localizer["ColDescHeader"]';
+		var colCargoHeader = '@Localizer["ColCarHeader"]';
+		var colAbonoHeader = '@Localizer["ColAboHeader"]';
+		var colSaldoHeader = '@Localizer["ColSalHeader"]';
+
+		var invalidFormatTitle = '@Localizer["InvalidFormatTitle"]';
+		var invalidFormatMsg = '@Localizer["InvalidFormatMsg"]';
+		var fileFormatTitle = '@Localizer["FileFormatTitle"]';
+		var fileFormatMessage = '@Localizer["FileFormatMessage"]';
+		var maxFileSizeTitle = '@Localizer["MaxFileSizeTitle"]';
+		var maxFileSizeMessage = '@Localizer["MaxFileSizeMessage"]';
+	</script>
+
+	<partial name="_ValidationScriptsPartial" />
+}

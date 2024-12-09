@@ -1,5 +1,6 @@
 ﻿using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
+using MathNet.Numerics.RootFinding;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.Cuentas
@@ -83,6 +84,18 @@ namespace ERPSEI.Data.Managers.Cuentas
 			List<CuentaContable> cuentas = [..db.CuentasContables.Include(cc => cc.Empresa).ToList().Where(cc => cc.Empresa.RFC == receptorRFC).Where(cc => cc.TipoId == tipoCuentaId).Where(cc => cc.SubtipoId == subtipoCuentaId).Where(c => c.Cuenta.Contains(text, StringComparison.InvariantCultureIgnoreCase) || c.Nombre.Contains(text, StringComparison.InvariantCultureIgnoreCase)).Take(20)];
 
 			return Task.FromResult(cuentas);
-		}
-	}
+        }
+
+        public async Task<List<string?>> GetFilteredAsync(int empresaId, int subtipoId, int tipoId, string rfc)
+        {
+            return await db.CuentasContables
+                .Where(c => c.EmpresaId == empresaId &&
+                            c.SubtipoId == subtipoId &&
+                            c.TipoId == tipoId &&
+                            c.RFC == rfc)
+                .Select(c => c.Cuenta) // Selecciona únicamente la propiedad 'Cuenta'
+                .ToListAsync();
+        }
+
+    }
 }

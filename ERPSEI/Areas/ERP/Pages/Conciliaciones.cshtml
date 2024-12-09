@@ -319,19 +319,19 @@
                                            data-row-style="rowStyle">
                                         <thead>
                                             <tr>
-                                                <th data-field="id">Id</th>
+                                                <th data-field="Id">Id</th>
                                                 <th data-field="Serie">Serie</th>
                                                 <th data-field="Folio">Folio</th>
                                                 <th data-field="Fecha">Fecha</th>
                                                 <th data-field="Banco">Banco</th>
-                                                <th data-field="Descripción">Descripción</th>
+                                                <th data-field="UUID">UUID</th>
+                                                <th data-field="Receptor">Receptor</th>
                                                 <th data-field="Total" data-formatter="currencyFormatter">Total</th>
                                                 <th data-field="Desconciliar" data-formatter="desconciliarFormatter">Desconciliar</th>
                                             </tr>
                                         </thead>
                                     </table>
                                 </div>
-
                             </div>
                         </div> 
                     </div>
@@ -466,6 +466,59 @@
     </div>
 </div>
 
+<!--Modal para bancos-->
+<div class="modal fade" id="modalAsignacionCuentas" tabindex="-1" aria-labelledby="modalAsignacionCuentasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAsignacionCuentasLabel">Selección de cuenta bancaria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info" role="alert">
+                    Para poder generar el Excel, es necesario que asigne una cuenta bancaria a cada elemento del listado.
+                    Edite la cuenta bancaria haciendo clic sobre la celda correspondiente e introduzca un valor para buscar la cuenta.
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-striped table-hover table-bordered">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Cliente</th>
+                                <th>RFC</th>
+                                <th>Cuenta Bancaria</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalAsignacionCuentasBody">
+                            <!-- Filas dinámicas se agregarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnGenerarPoliza" onclick="exportarAExcel(this.getAttribute('data-id'))">Exportar excel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Modal para exportar excel exitosamente-->
+<div class="modal fade" id="modalConciliacion" tabindex="-1" aria-labelledby="modalConciliacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConciliacionLabel">Resultado de exportación de excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalConciliacionMensaje">
+                <!-- Mensaje dinámico será colocado aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <!-- Modal para consulta por fechas -->
@@ -611,6 +664,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
 
     <link rel="stylesheet" href="~/css/Conciliaciones.css" />
     <link rel="stylesheet" href="~/css/ConciliacionesDes.css" />
@@ -627,6 +682,9 @@
         var dlgNuevoTitle = '@Localizer["NewDialogTitle"]';
         var dlgDeleteTitle = '@Localizer["DeleteDialogTitle"]';
         var dlgDeleteQuestion = '@Localizer["DeleteDialogQuestion"]';
+        var dlgFinishConTitle = '@Localizer["FinishConDialogTitle"]';
+        var dlgMessageFinishConTitle = '@Localizer["MessageFinishConDialogTitle"]';
+        var dlgConciliacionTitle = '@Localizer["dlgConciliacionTitle"]';
 
         /*Tabla de resultados*/
         var colIdHeader = '@Localizer["colIdHeader"]';
@@ -636,6 +694,7 @@
         var colTotalHeader = '@Localizer["ColTotalHeader"]';
         var colUsuarioCreadorHeader = '@Localizer["ColCreatedUserHeader"]';
         var colUsuarioModificoHeader = '@Localizer["ColModifyUserHeader"]';
+        var colFinalizadaHeader = '@Localizer["ColStatushHeader"]';
         var colAccionesHeader = '@Localizer["ColActionsHeader"]';
 
         /*Tabla de resultados Detalles*/

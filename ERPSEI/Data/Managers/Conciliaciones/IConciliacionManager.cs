@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Conciliaciones;
+using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.Reportes;
 
 namespace ERPSEI.Data.Managers.Conciliaciones
@@ -14,5 +15,7 @@ namespace ERPSEI.Data.Managers.Conciliaciones
             DateTime? fechaElaboracionFin = null,
             bool deshabilitado = false
         );
+
+        public Task<decimal> GetTotalImpuestosTrasladadosAsync(int? impuestosId);
     }
 }

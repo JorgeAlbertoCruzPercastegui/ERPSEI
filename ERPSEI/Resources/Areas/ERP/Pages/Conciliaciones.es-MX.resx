@@ -180,14 +180,23 @@
   <data name="colSerieHeaderD" xml:space="preserve">
     <value>Serie</value>
   </data>
+  <data name="ColStatushHeader" xml:space="preserve">
+    <value>Estatus</value>
+  </data>
   <data name="ColTotalHeader" xml:space="preserve">
     <value>Total</value>
   </data>
   <data name="colTotalHeaderD" xml:space="preserve">
     <value>Total</value>
   </data>
+  <data name="ComprobantesFiltradosSuccessfully" xml:space="preserve">
+    <value>Conciliación filtrados exitosamente</value>
+  </data>
   <data name="ConciliacionCreatedSuccessfully" xml:space="preserve">
     <value>Conciliación creada exitosamente</value>
+  </data>
+  <data name="ConciliacionErrorfinalizando" xml:space="preserve">
+    <value>Error finalizando conciliación</value>
   </data>
   <data name="ConciliacionesDeletedSuccessfully" xml:space="preserve">
     <value>Conciliación eliminada exitosamente</value>
@@ -195,8 +204,20 @@
   <data name="ConciliacionesDeletedUnsuccessfully" xml:space="preserve">
     <value>Error al eliminar la conciliación</value>
   </data>
+  <data name="ConciliacionFiltradosUnsuccessfully" xml:space="preserve">
+    <value>Conciliación filtrados fallida</value>
+  </data>
+  <data name="ConciliacionFinalizadaSuccessfully" xml:space="preserve">
+    <value>Conciliación finalizada exitosamente</value>
+  </data>
+  <data name="ConciliacionFinalizadaUnSuccessfully" xml:space="preserve">
+    <value>Conciliación fallida, favor de verificar</value>
+  </data>
   <data name="ConciliacionSavedUnsuccessfully" xml:space="preserve">
     <value>Error al guardar la conciliación</value>
+  </data>
+  <data name="ConciliacionSuccessfully" xml:space="preserve">
+    <value>Conciliación exitosa</value>
   </data>
   <data name="ConsultaDeComprobantesPlaceholder" xml:space="preserve">
     <value>Consulta de Comprobantes</value>
@@ -215,6 +236,9 @@
   </data>
   <data name="DescripcionPlaceholder" xml:space="preserve">
     <value>Descripción</value>
+  </data>
+  <data name="dlgConciliacionTitle" xml:space="preserve">
+    <value>Conciliación</value>
   </data>
   <data name="EditButtonTitle" xml:space="preserve">
     <value>Editar</value>
@@ -255,6 +279,9 @@
   <data name="FinalizeConciliation" xml:space="preserve">
     <value>Finalizar Conciliación</value>
   </data>
+  <data name="FinishConDialogTitle" xml:space="preserve">
+    <value>Finalizar Conciliación</value>
+  </data>
   <data name="GetButtonTitle" xml:space="preserve">
     <value>Consultar</value>
   </data>
@@ -275,6 +302,9 @@
   </data>
   <data name="ImportButtonTitle" xml:space="preserve">
     <value>Importar</value>
+  </data>
+  <data name="MessageFinishConDialogTitle" xml:space="preserve">
+    <value>¿Estás seguro de que deseas finalizar la conciliación?</value>
   </data>
   <data name="MovimientoSavedSuccessfully" xml:space="preserve">
     <value>Movimientos importados exitosamente</value>
