@@ -663,26 +663,45 @@ function procesarRegistrosConBI(datosCombinados) {
 }
 
 function extraerDatosEspecificosBBVA(textoExtraido) {
-    console.log("Texto Extraído:", textoExtraido);
+    console.log("Texto Extraído Completo:", textoExtraido);
 
     // Obtener el año actual
     const anio = new Date().getFullYear();
 
     // Diccionario de meses para conversión
     const meses = {
-        ENE: "01",
-        FEB: "02",
-        MAR: "03",
-        ABR: "04",
-        MAY: "05",
-        JUN: "06",
-        JUL: "07",
-        AGO: "08",
-        SEP: "09",
-        OCT: "10",
-        NOV: "11",
-        DIC: "12",
+        ENE: "01", FEB: "02", MAR: "03", ABR: "04",
+        MAY: "05", JUN: "06", JUL: "07", AGO: "08",
+        SEP: "09", OCT: "10", NOV: "11", DIC: "12",
     };
+
+    // Lista de frases a eliminar
+    const frasesEliminar = [
+        "Información Financiera MONEDA NACIONAL",
+        "La GAT Real es el rendimiento que obtendrá después de descontar la inflación estimada",
+        "No. Cuenta 0123110826",
+        "No. Cliente D8937257 Estado de Cuenta",
+        "BBVA MEXICO, S.A., INSTITUCION DE BANCA MULTIPLE, GRUPO FINANCIERO BBVA MEXICO",
+        "Av. Paseo de la Reforma 510, Col. Juárez, Alcaldía Cuauhtémoc, C.P. 06600, Ciudad de México.",
+        "R.F.C. BBA830831LJ2",
+        "Total de Movimientos TOTAL"
+    ];
+
+    // Función para limpiar solo la descripción
+    function limpiarDescripcion(texto) {
+        let textoLimpio = texto;
+
+        // Eliminar frases específicas
+        frasesEliminar.forEach(frase => {
+            const regex = new RegExp(frase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            textoLimpio = textoLimpio.replace(regex, '').trim();
+        });
+
+        // Eliminar contenido después de "COMP SPEI"
+        textoLimpio = textoLimpio.replace(/COMP SPEI.*/g, 'COMP SPEI').trim();
+
+        return textoLimpio;
+    }
 
     // Dividir el texto por páginas utilizando el marcador "PAGINA X / Y"
     const paginas = textoExtraido.split(/PAGINA\s+\d+\s*\/\s*\d+/);
@@ -692,22 +711,17 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
         // Buscar todas las fechas en el formato XX/XXX
         const fechas = [...pagina.matchAll(/\b(\d{2})\/([A-Z]{3})\b/g)].map(match => {
             const dia = match[1];
-            const mes = meses[match[2]] || "00"; // Mes numérico o 00 si no está en el diccionario
+            const mes = meses[match[2]] || "00";
             return `${dia}/${mes}/${anio}`;
         });
 
-        // Buscar registros en COD. DESCRIPCIÓN que incluyen YXX, TXX, NXX, y referencias
-        const codDescripcion = [...pagina.matchAll(/(Y\d{2}|T\d{2}|N\d{2})\s+([A-Z\s]+)(.*?)(\d{1,3}(,\d{3})*(\.\d{2})?)?\s*(.*?)(Ref\.\s+((COMP SPEI)|(\d{10}(?:\s+\d{3})?)))/g)].map(match => ({
-            codigo: match[1], // Código (por ejemplo, N06, T20)
-            descripcion: match[2].trim(), // Descripción (por ejemplo, PAGO CUENTA DE TERCERO, SPEI RECIBIDO)
-            textoAdicional: match[7]?.trim() || "", // Texto adicional antes de Ref.
-            referencia: match[9]?.trim(), // Referencia completa (COMP SPEI o números)
-            descripcionCompleta: match[0]?.trim() || "", // Descripción completa para análisis
+        // Buscar registros en COD. DESCRIPCIÓN que incluyen YXX, TXX, NXX, referencias y todo el texto hasta una nueva fecha o el final del texto
+        const codDescripcion = [...pagina.matchAll(
+            /(Y\d{2}|T\d{2}|N\d{2})\s+.*?Ref\.\s+(\d{10,13}|COMP SPEI).*?(?=\b\d{2}\/[A-Z]{3}\b|$)/gs
+        )].map(match => ({
+            codigo: match[1],
+            descripcionCompleta: limpiarDescripcion(match[0]?.trim() || "")
         }));
-
-        // Mostrar en el log las descripciones extraídas de esta página
-        console.log(`Descripciones en la página ${index + 1}:`);
-        codDescripcion.forEach(desc => console.log(`${desc.codigo} - ${desc.descripcion} ${desc.textoAdicional} (Ref: ${desc.referencia})`));
 
         return {
             pagina: index + 1,
@@ -737,63 +751,42 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
             const fechaAplicacion = pagina.fechas[i + 1] || "Sin fecha";
             const descripcionData = pagina.codDescripcion[i / 2];
 
-            let cargo = "0.00"; // Valor inicial para Cargo
-            let abono = "0.00"; // Valor inicial para Abono
-            let saldo = "0.00"; // Valor inicial para Saldo
+            let cargo = "0.00";
+            let abono = "0.00";
+            let saldo = "0.00";
             let descripcion = "No disponible";
 
             if (descripcionData) {
-                // Extraer todos los montos presentes en la descripción completa
+                descripcion = descripcionData.descripcionCompleta;
+
                 const montos = descripcionData.descripcionCompleta.match(/\b\d{1,3}(,\d{3})*(\.\d{2})?\b/g) || [];
 
-                // Si hay dos montos y la descripción contiene "PAGO CUENTA DE TERCERO"
                 if (
-                    (descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") ||
-                        descripcionData.descripcion.includes("COMPENSACION POR RETRASO") ||
-                        descripcionData.descripcion.includes("SPEI ENVIADO"))
-                    && montos.length >= 2
+                    (descripcionData.descripcionCompleta.includes("PAGO CUENTA DE TERCERO") ||
+                        descripcionData.descripcionCompleta.includes("COMPENSACION POR RETRASO") ||
+                        descripcionData.descripcionCompleta.includes("SPEI ENVIADO")) &&
+                    montos.length >= 2
                 ) {
-                    if (descripcionData.descripcion.includes("COMPENSACION POR RETRASO")) {
-                        abono = montos[0]?.replace(/,/g, ""); // Primer monto como Abono
-
-                        // No asignar saldo si el segundo monto es de 3 dígitos
+                    if (descripcionData.descripcionCompleta.includes("COMPENSACION POR RETRASO")) {
+                        abono = montos[0]?.replace(/,/g, "");
                         if (!/^\d{3}$/.test(montos[1]?.replace(/,/g, ""))) {
-                            saldo = montos[1]?.replace(/,/g, ""); // Segundo monto como Saldo
-                        } else {
-                            saldo = "0.00"; // No asignar saldo para números de 3 dígitos
+                            saldo = montos[1]?.replace(/,/g, "");
                         }
                     } else {
-                        cargo = montos[0]?.replace(/,/g, ""); // Primer monto como Cargo
-
-                        // No asignar saldo si el segundo monto es de 3 dígitos
+                        cargo = montos[0]?.replace(/,/g, "");
                         if (!/^\d{3}$/.test(montos[1]?.replace(/,/g, ""))) {
-                            saldo = montos[1]?.replace(/,/g, ""); // Segundo monto como Saldo
-                        } else {
-                            saldo = "0.00"; // No asignar saldo para números de 3 dígitos
+                            saldo = montos[1]?.replace(/,/g, "");
                         }
                     }
                 } else {
-                    // Asignar valores dependiendo de la descripción
-                    if (
-                        descripcionData.descripcion.includes("SPEI RECIBIDO") ||
-                        descripcionData.descripcion.includes("COMPENSACION POR RETRASO")
-                    ) {
-                        abono = montos[0]?.replace(/,/g, "") || "0.00"; // Primer monto como Abono
-                    } else if (
-                        descripcionData.descripcion.includes("PAGO CUENTA DE TERCERO") ||
-                        descripcionData.descripcion.includes("SPEI ENVIADO")
-                    ) {
-                        cargo = montos[0]?.replace(/,/g, "") || "0.00"; // Primer monto como Cargo
+                    if (descripcionData.descripcionCompleta.includes("SPEI RECIBIDO") ||
+                        descripcionData.descripcionCompleta.includes("COMPENSACION POR RETRASO")) {
+                        abono = montos[0]?.replace(/,/g, "") || "0.00";
+                    } else if (descripcionData.descripcionCompleta.includes("PAGO CUENTA DE TERCERO") ||
+                        descripcionData.descripcionCompleta.includes("SPEI ENVIADO")) {
+                        cargo = montos[0]?.replace(/,/g, "") || "0.00";
                     }
                 }
-
-                // Mostrar montos solo para COMPENSACION POR RETRASO
-                if (descripcionData.descripcion.includes("COMPENSACION POR RETRASO")) {
-                    console.log(`Montos encontrados para Y45 - COMPENSACION POR RETRASO: ${montos}`);
-                }
-
-                // Construir la descripción incluyendo el texto antes de "Ref."
-                descripcion = `${descripcionData.codigo} - ${descripcionData.descripcion} ${descripcionData.textoAdicional} (Ref: ${descripcionData.referencia})`;
             }
 
             listaFechas.push({
@@ -817,6 +810,11 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 // Uso de la función
 const textoExtraido = `...`; // Inserta aquí tu texto completo
 const resultado = extraerDatosEspecificosBBVA(textoExtraido);
+
+
+
+
+
 
 
 function extraerDatosEspecificosBanregio(textoExtraido) {
