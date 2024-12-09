@@ -716,8 +716,12 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
         });
 
         // Buscar registros en COD. DESCRIPCIÓN que incluyen YXX, TXX, NXX, referencias y todo el texto hasta una nueva fecha o el final del texto
-        const codDescripcion = [...pagina.matchAll(
-            /(Y\d{2}|T\d{2}|N\d{2})\s+.*?Ref\.\s+(\d{10,13}|COMP SPEI).*?(?=\b\d{2}\/[A-Z]{3}\b|$)/gs
+        const codDescripcion = [
+            ...pagina.matchAll(
+                /(Y\d{2}|T\d{2}|N\d{2})\s+.*?Ref\.\s+(\d{10,13}|COMP SPEI).*?(?=\b\d{2}\/[A-Z]{3}\b|$)/gs
+            ),
+            ...pagina.matchAll(
+                /(W02 DEPOSITO DE TERCERO)\s+.*?Ref\.\s+(\d{10,13}).*?(?=\b\d{2}\/[A-Z]{3}\b|$)/gs
         )].map(match => ({
             codigo: match[1],
             descripcionCompleta: limpiarDescripcion(match[0]?.trim() || "")
@@ -732,16 +736,6 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 
     // Filtrar páginas sin fechas
     datosPorPagina = datosPorPagina.filter(pagina => pagina.fechas.length > 0);
-
-    // Mover datos de la última página a la primera
-    if (datosPorPagina.length > 1) {
-        const ultimaPagina = datosPorPagina.pop();
-        const primeraPagina = datosPorPagina[0];
-
-        // Combinar datos de la última página con la primera
-        primeraPagina.fechas = [...ultimaPagina.fechas, ...primeraPagina.fechas];
-        primeraPagina.codDescripcion = [...ultimaPagina.codDescripcion, ...primeraPagina.codDescripcion];
-    }
 
     // Crear lista de pares de fechas con descripción, cargos, abonos, saldo y referencia
     const listaFechas = [];
@@ -761,30 +755,22 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 
                 const montos = descripcionData.descripcionCompleta.match(/\b\d{1,3}(,\d{3})*(\.\d{2})?\b/g) || [];
 
-                if (
-                    (descripcionData.descripcionCompleta.includes("PAGO CUENTA DE TERCERO") ||
-                        descripcionData.descripcionCompleta.includes("COMPENSACION POR RETRASO") ||
-                        descripcionData.descripcionCompleta.includes("SPEI ENVIADO")) &&
-                    montos.length >= 2
-                ) {
-                    if (descripcionData.descripcionCompleta.includes("COMPENSACION POR RETRASO")) {
-                        abono = montos[0]?.replace(/,/g, "");
-                        if (!/^\d{3}$/.test(montos[1]?.replace(/,/g, ""))) {
-                            saldo = montos[1]?.replace(/,/g, "");
-                        }
-                    } else {
+                if (montos.length >= 2) {
+                    if (descripcion.includes("SPEI ENVIADO") || descripcion.includes("PAGO CUENTA DE TERCERO")) {
                         cargo = montos[0]?.replace(/,/g, "");
-                        if (!/^\d{3}$/.test(montos[1]?.replace(/,/g, ""))) {
-                            saldo = montos[1]?.replace(/,/g, "");
-                        }
+                    } else if (descripcion.includes("SPEI RECIBIDO") || descripcion.includes("COMPENSACION POR RETRASO") || descripcion.includes("SPEI DEVUELTO") || descripcion.includes("CYBERPUERTA") || descripcion.includes("W02 DEPOSITO DE TERCERO")) {
+                        abono = montos[0]?.replace(/,/g, "");
                     }
-                } else {
-                    if (descripcionData.descripcionCompleta.includes("SPEI RECIBIDO") ||
-                        descripcionData.descripcionCompleta.includes("COMPENSACION POR RETRASO")) {
-                        abono = montos[0]?.replace(/,/g, "") || "0.00";
-                    } else if (descripcionData.descripcionCompleta.includes("PAGO CUENTA DE TERCERO") ||
-                        descripcionData.descripcionCompleta.includes("SPEI ENVIADO")) {
-                        cargo = montos[0]?.replace(/,/g, "") || "0.00";
+                    // Asignar el segundo monto a Saldo, asegurando que no sean dos o tres dígitos
+                    if (!/^\d{2,3}(\.\d{2})?$/.test(montos[1]?.replace(/,/g, ""))) {
+                        saldo = montos[1]?.replace(/,/g, "");
+                    }
+
+                } else if (montos.length === 1) {
+                    if (descripcion.includes("SPEI ENVIADO") || descripcion.includes("PAGO CUENTA DE TERCERO")) {
+                        cargo = montos[0]?.replace(/,/g, "");
+                    } else if (descripcion.includes("SPEI RECIBIDO") || descripcion.includes("COMPENSACION POR RETRASO") || descripcion.includes("SPEI DEVUELTO") || descripcion.includes("CYBERPUERTA") || descripcion.includes("W02 DEPOSITO DE TERCERO")) {
+                        abono = montos[0]?.replace(/,/g, "");
                     }
                 }
             }
@@ -810,12 +796,6 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
 // Uso de la función
 const textoExtraido = `...`; // Inserta aquí tu texto completo
 const resultado = extraerDatosEspecificosBBVA(textoExtraido);
-
-
-
-
-
-
 
 function extraerDatosEspecificosBanregio(textoExtraido) {
     // Lista de meses en español con sus correspondientes números
