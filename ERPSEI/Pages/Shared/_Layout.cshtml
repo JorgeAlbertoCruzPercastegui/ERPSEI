@@ -85,7 +85,11 @@
             m.PuedeEliminar == 1 ||
             m.PuedeAutorizar == 1)
         ).Count >= 1;
-        tieneReportesEmpresas = false;
+        tieneReportesEmpresas = accesos.FindAll(m =>
+            (
+                m.Modulo?.NombreNormalizado == "facturacion"
+            )
+        ).Count >= 1;
 
         accedeCatalogos = tieneCatalogosRH || tieneCatalogosEmpresas;
         accedeERP = tieneERPRH || tieneERPEmpresas;
@@ -401,6 +405,19 @@
                                                 }
                                                 @if (tieneReportesEmpresas)
                                                 {
+                                                    <div class="@classDivReportes">
+                                                        <div class="list-group list-group-flush">
+                                                            <p class="mb-0 list-group-item text-uppercase text-center">
+                                                                <b>@Localizer["FacturacionMenu"]</b>
+                                                            </p>
+                                                            @if (permisos["facturacion"])
+                                                            {
+                                                                <a class="dropdown-item p-2 @_LayoutPages.OrganigramaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Facturacion">
+                                                                    <i class="bi bi-diagram-3-fill"></i> @Localizer["BillingReportMenu"]
+                                                                </a>
+                                                            }
+                                                        </div>
+                                                    </div>
                                                 }
                                             </div>
                                         </div>

@@ -207,4 +207,7 @@
   <data name="VacationMenu" xml:space="preserve">
     <value>Vacaciones</value>
   </data>
+  <data name="BillingReportMenu" xml:space="preserve">
+    <value>Facturación</value>
+  </data>
 </root>
