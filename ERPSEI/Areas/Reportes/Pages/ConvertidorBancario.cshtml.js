@@ -756,7 +756,7 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
                 const montos = descripcionData.descripcionCompleta.match(/\b\d{1,3}(,\d{3})*(\.\d{2})?\b/g) || [];
 
                 if (montos.length >= 2) {
-                    if (descripcion.includes("SPEI ENVIADO") || descripcion.includes("PAGO CUENTA DE TERCERO")) {
+                    if (descripcion.includes("SPEI ENVIADO") || descripcion.includes("PAGO CUENTA DE TERCERO") || descripcion.includes("SPEI ENVIADO BAJIO") || descripcion.includes("S39 SERV BANCA INTERNET") || descripcion.includes("N06 PAGO CUENTA DE TERCERO")) {
                         cargo = montos[0]?.replace(/,/g, "");
                     } else if (descripcion.includes("SPEI RECIBIDO") || descripcion.includes("COMPENSACION POR RETRASO") || descripcion.includes("SPEI DEVUELTO") || descripcion.includes("CYBERPUERTA") || descripcion.includes("W02 DEPOSITO DE TERCERO")) {
                         abono = montos[0]?.replace(/,/g, "");
@@ -767,7 +767,7 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
                     }
 
                 } else if (montos.length === 1) {
-                    if (descripcion.includes("SPEI ENVIADO") || descripcion.includes("PAGO CUENTA DE TERCERO")) {
+                    if (descripcion.includes("SPEI ENVIADO") || descripcion.includes("PAGO CUENTA DE TERCERO") || descripcion.includes("SPEI ENVIADO BAJIO") || descripcion.includes("S39 SERV BANCA INTERNET") || descripcion.includes("N06 PAGO CUENTA DE TERCERO")) {
                         cargo = montos[0]?.replace(/,/g, "");
                     } else if (descripcion.includes("SPEI RECIBIDO") || descripcion.includes("COMPENSACION POR RETRASO") || descripcion.includes("SPEI DEVUELTO") || descripcion.includes("CYBERPUERTA") || descripcion.includes("W02 DEPOSITO DE TERCERO")) {
                         abono = montos[0]?.replace(/,/g, "");
