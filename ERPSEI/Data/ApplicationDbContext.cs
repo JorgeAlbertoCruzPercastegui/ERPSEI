@@ -149,10 +149,10 @@ namespace ERPSEI.Data
 		public DbSet<CuentaContableProductoServicio> CuentaContableProductosServicios { get; set; }
 
 		//Administrador de polizas
-		public DbSet<GruposPolizas> GruposPolizas { get; set; }
-		public DbSet<VPolizas> VPolizas { get; set; }
-		public DbSet<PolizasDetalles> PolizasDetalles { get; set; }
-		public DbSet<PolizasTipos> PolizasTipos { get; set; }
+		public DbSet<GrupoPoliza> GruposPolizas { get; set; }
+		public DbSet<VPoliza> VPolizas { get; set; }
+		public DbSet<PolizaDetalle> PolizasDetalles { get; set; }
+		public DbSet<PolizaTipo> PolizasTipos { get; set; }
 
 
 		//Catálogos no administrables Usuarios
@@ -191,8 +191,23 @@ namespace ERPSEI.Data
 			BuildCuentasContables(modelBuilder);
 
 			//Polizas
-			
+			BuildPolizas(modelBuilder);
         }
+
+		private static void BuildPolizas(ModelBuilder b) 
+		{
+			b.Entity<GrupoPoliza>().HasMany(p => p.Polizas).WithOne(p => p.Grupo).OnDelete(DeleteBehavior.NoAction);
+			b.Entity<GrupoPoliza>().HasOne(p => p.UsuarioCreador).WithMany(p => p.GruposPolizasCreados).OnDelete(DeleteBehavior.NoAction);
+			b.Entity<GrupoPoliza>().HasOne(p => p.UsuarioModificador).WithMany(p => p.GruposPolizasModificados).OnDelete(DeleteBehavior.NoAction);
+
+			b.Entity<VPoliza>().HasOne(p => p.Tipo).WithMany(p => p.Polizas).OnDelete(DeleteBehavior.NoAction);
+			b.Entity<VPoliza>().HasMany(p => p.PolizasDetalles).WithOne(p => p.Poliza).OnDelete(DeleteBehavior.NoAction);
+
+			b.Entity<PolizaDetalle>().HasOne(p => p.Cuenta).WithMany(p => p.PolizasDetalles).OnDelete(DeleteBehavior.NoAction);
+
+			b.Entity<PolizaDetalle>().Property(t => t.Debe).HasPrecision(24, 6);
+			b.Entity<PolizaDetalle>().Property(t => t.Haber).HasPrecision(24, 6);
+		}
 
 		private static void BuildAsistencias(ModelBuilder b) 
 		{

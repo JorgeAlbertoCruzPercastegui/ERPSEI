@@ -8,15 +8,15 @@ namespace ERPSEI.Data.Managers.Polizas
 	{
 		private async Task<int> GetNextId()
 		{
-			List<VPolizas> polizas = await db.VPolizas.ToListAsync();
-			VPolizas? last = polizas.OrderByDescending(r => r.Id).FirstOrDefault();
+			List<VPoliza> polizas = await db.VPolizas.ToListAsync();
+			VPoliza? last = polizas.OrderByDescending(r => r.Id).FirstOrDefault();
 			int lastId = last != null ? last.Id : 0;
 			lastId += 1;
 
 			return lastId;
 		}
 
-		public async Task<int> CreateAsync(VPolizas polizas)
+		public async Task<int> CreateAsync(VPoliza polizas)
 		{
 			polizas.Id = await GetNextId();
 			db.VPolizas.Add(polizas);
@@ -24,9 +24,9 @@ namespace ERPSEI.Data.Managers.Polizas
 			return polizas.Id;
 		}
 
-		public async Task UpdateAsync(VPolizas polizas)
+		public async Task UpdateAsync(VPoliza polizas)
 		{
-			VPolizas? a = db.Find<VPolizas>(polizas.Id);
+			VPoliza? a = db.Find<VPoliza>(polizas.Id);
 			if (a != null)
 			{
 				a.GrupoId = polizas.GrupoId;
@@ -37,7 +37,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			}
 		}
 
-		public async Task DeleteAsync(VPolizas polizas)
+		public async Task DeleteAsync(VPoliza polizas)
 		{
 			db.VPolizas.Remove(polizas);
 			await db.SaveChangesAsync();
@@ -45,7 +45,7 @@ namespace ERPSEI.Data.Managers.Polizas
 
 		public async Task DeleteByIdAsync(int id)
 		{
-			VPolizas? polizas = await GetByIdAsync(id);
+			VPoliza? polizas = await GetByIdAsync(id);
 			if (polizas != null)
 			{
 				db.Remove(polizas);
@@ -61,7 +61,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			{
 				foreach (string id in ids)
 				{
-					VPolizas? polizas = await GetByIdAsync(int.Parse(id));
+					VPoliza? polizas = await GetByIdAsync(int.Parse(id));
 					if (polizas != null)
 					{
 						db.Remove(polizas);
@@ -79,12 +79,12 @@ namespace ERPSEI.Data.Managers.Polizas
 			}
 		}
 
-		public async Task<List<VPolizas>> GetAllAsync()
+		public async Task<List<VPoliza>> GetAllAsync()
 		{
 			return await GetAllAsync(null, null, null, null, null);
 		}
 
-		public async Task<List<VPolizas>> GetAllAsync(
+		public async Task<List<VPoliza>> GetAllAsync(
 		int? id = null,
 		int? grupoId = null,
 		int? tipoId = null,
@@ -103,7 +103,7 @@ namespace ERPSEI.Data.Managers.Polizas
 				.ToListAsync();
 		}
 
-		public async Task<VPolizas?> GetByIdAsync(int id)
+		public async Task<VPoliza?> GetByIdAsync(int id)
 		{
 			return await db.VPolizas
 				.Where(p => p.Id == id)
@@ -113,7 +113,7 @@ namespace ERPSEI.Data.Managers.Polizas
 				.FirstOrDefaultAsync();
 		}
 
-		public async Task<VPolizas?> GetByNameAsync(string desc)
+		public async Task<VPoliza?> GetByNameAsync(string desc)
 		{
 			return await db.VPolizas.Where(a => a.Concepto.ToLower() == desc.ToLower()).FirstOrDefaultAsync();
 		}

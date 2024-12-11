@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 namespace ERPSEI.Data.Entities.Polizas
 {
-	public class GruposPolizas
+	public class GrupoPoliza
 	{
 		[DatabaseGenerated(DatabaseGeneratedOption.None)]
 		public int Id { get; set; }
@@ -13,7 +13,7 @@ namespace ERPSEI.Data.Entities.Polizas
 		public DateTime? FechaHoraCreacion { get; set; }
 		public DateTime? FechaHoraModificacion { get; set; }
 		public int NumeroImpresion { get; set; }
-		public ICollection<VPolizas>? Polizas { get; set; } = new List<VPolizas>();
+		public ICollection<VPoliza>? Polizas { get; set; } = new List<VPoliza>();
 		public bool Deshabilitado { get; set; }
 	}
 }

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace ERPSEI.Data.Managers.AdministradorPolizas
 {
-	public interface IGruposPolizasManager : IRCatalogoManager<GruposPolizas>
+	public interface IGruposPolizasManager : IRCatalogoManager<GrupoPoliza>
 	{
-		Task<List<GruposPolizas>> GetAllAsync(
+		Task<List<GrupoPoliza>> GetAllAsync(
 			int? id = null,
 			string? usuarioCreador = null,
 			string? usuarioModificador = null,

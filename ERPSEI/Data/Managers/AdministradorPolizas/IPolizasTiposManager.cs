@@ -2,7 +2,7 @@
 
 namespace ERPSEI.Data.Managers.Polizas
 {
-	public interface IPolizasTipos : IRWCatalogoManager<PolizasTipos>
+	public interface IPolizasTipos : IRWCatalogoManager<PolizaTipo>
 	{
 	}
 }

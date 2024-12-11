@@ -10,14 +10,14 @@ namespace ERPSEI.Data.Managers.Polizas
 	{
 		private async Task<int> GetNextId()
 		{
-			List<GruposPolizas> gruposPolizas = await db.GruposPolizas.ToListAsync();
-			GruposPolizas? last = gruposPolizas.OrderByDescending(r => r.Id).FirstOrDefault();
+			List<GrupoPoliza> gruposPolizas = await db.GruposPolizas.ToListAsync();
+			GrupoPoliza? last = gruposPolizas.OrderByDescending(r => r.Id).FirstOrDefault();
 			int lastId = last != null ? last.Id : 0;
 			lastId += 1;
 
 			return lastId;
 		}
-		public async Task<int> CreateAsync(GruposPolizas gruposPolizas)
+		public async Task<int> CreateAsync(GrupoPoliza gruposPolizas)
 		{
 			gruposPolizas.Id = await GetNextId();
 			db.GruposPolizas.Add(gruposPolizas);
@@ -25,9 +25,9 @@ namespace ERPSEI.Data.Managers.Polizas
 			return gruposPolizas.Id;
 		}
 
-		public async Task UpdateAsync(GruposPolizas gruposPolizas)
+		public async Task UpdateAsync(GrupoPoliza gruposPolizas)
 		{
-			GruposPolizas? a = db.Find<GruposPolizas>(gruposPolizas.Id);
+			GrupoPoliza? a = db.Find<GrupoPoliza>(gruposPolizas.Id);
 			if (a != null)
 			{
 				a.UsuarioCreador = gruposPolizas.UsuarioCreador;
@@ -40,7 +40,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			}
 		}
 
-		public async Task DeleteAsync(GruposPolizas gruposPolizas)
+		public async Task DeleteAsync(GrupoPoliza gruposPolizas)
 		{
 			db.GruposPolizas.Remove(gruposPolizas);
 			await db.SaveChangesAsync();
@@ -48,7 +48,7 @@ namespace ERPSEI.Data.Managers.Polizas
 
 		public async Task DeleteByIdAsync(int id)
 		{
-			GruposPolizas? gruposPolizas = await GetByIdAsync(id);
+			GrupoPoliza? gruposPolizas = await GetByIdAsync(id);
 			if (gruposPolizas != null)
 			{
 				db.Remove(gruposPolizas);
@@ -64,7 +64,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			{
 				foreach (string id in ids)
 				{
-					GruposPolizas? gruposPolizas = await GetByIdAsync(int.Parse(id));
+					GrupoPoliza? gruposPolizas = await GetByIdAsync(int.Parse(id));
 					if (gruposPolizas != null)
 					{
 						db.Remove(gruposPolizas);
@@ -81,12 +81,12 @@ namespace ERPSEI.Data.Managers.Polizas
 
 			}
 		}
-		public async Task<List<GruposPolizas>> GetAllAsync()
+		public async Task<List<GrupoPoliza>> GetAllAsync()
 		{
 			return await GetAllAsync(null, null, null, null, null, null, false);
 		}
 
-		public async Task<List<GruposPolizas>> GetAllAsync(
+		public async Task<List<GrupoPoliza>> GetAllAsync(
 			int? id = null,
 			string? usuarioCreador = null,
 			string? usuarioModificador = null,
@@ -110,7 +110,7 @@ namespace ERPSEI.Data.Managers.Polizas
 				.ToListAsync();
 		}
 
-		public async Task<GruposPolizas?> GetByIdAsync(int id)
+		public async Task<GrupoPoliza?> GetByIdAsync(int id)
 		{
 			return await db.GruposPolizas
 				.Where(e => e.Id == id)
@@ -122,7 +122,7 @@ namespace ERPSEI.Data.Managers.Polizas
 		}
 
 		//Verificar este método
-		public async Task<GruposPolizas?> GetByNameAsync(string desc)
+		public async Task<GrupoPoliza?> GetByNameAsync(string desc)
 		{
 			return await db.GruposPolizas
 				.Where(e => e.Polizas.Any(p => p.Concepto.Contains(desc)))

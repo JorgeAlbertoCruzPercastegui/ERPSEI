@@ -8,15 +8,15 @@ namespace ERPSEI.Data.Managers.Polizas
 	{
 		private async Task<int> GetNextId()
 		{
-			List<PolizasTipos> polizasTipos = await db.PolizasTipos.ToListAsync();
-			PolizasTipos? last = polizasTipos.OrderByDescending(r => r.Id).FirstOrDefault();
+			List<PolizaTipo> polizasTipos = await db.PolizasTipos.ToListAsync();
+			PolizaTipo? last = polizasTipos.OrderByDescending(r => r.Id).FirstOrDefault();
 			int lastId = last != null ? last.Id : 0;
 			lastId += 1;
 
 			return lastId;
 		}
 
-		public async Task<int> CreateAsync(PolizasTipos polizasTipos)
+		public async Task<int> CreateAsync(PolizaTipo polizasTipos)
 		{
 			polizasTipos.Id = await GetNextId();
 			db.PolizasTipos.Add(polizasTipos);
@@ -24,9 +24,9 @@ namespace ERPSEI.Data.Managers.Polizas
 			return polizasTipos.Id;
 		}
 
-		public async Task UpdateAsync(PolizasTipos polizasTipos)
+		public async Task UpdateAsync(PolizaTipo polizasTipos)
 		{
-			PolizasTipos? a = db.Find<PolizasTipos>(polizasTipos.Id);
+			PolizaTipo? a = db.Find<PolizaTipo>(polizasTipos.Id);
 			if (a != null)
 			{
 				a.Id = polizasTipos.Id;
@@ -36,7 +36,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			}
 		}
 
-		public async Task DeleteAsync(PolizasTipos polizasTipos)
+		public async Task DeleteAsync(PolizaTipo polizasTipos)
 		{
 			db.PolizasTipos.Remove(polizasTipos);
 			await db.SaveChangesAsync();
@@ -44,7 +44,7 @@ namespace ERPSEI.Data.Managers.Polizas
 
 		public async Task DeleteByIdAsync(int id)
 		{
-			PolizasTipos? polizasTipos = await GetByIdAsync(id);
+			PolizaTipo? polizasTipos = await GetByIdAsync(id);
 			if (polizasTipos != null)
 			{
 				db.Remove(polizasTipos);
@@ -60,7 +60,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			{
 				foreach (string id in ids)
 				{
-					PolizasTipos? polizasTipos = await GetByIdAsync(int.Parse(id));
+					PolizaTipo? polizasTipos = await GetByIdAsync(int.Parse(id));
 					if (polizasTipos != null)
 					{
 						db.Remove(polizasTipos);
@@ -78,12 +78,12 @@ namespace ERPSEI.Data.Managers.Polizas
 			}
 		}
 
-		public async Task<List<PolizasTipos>> GetAllAsync()
+		public async Task<List<PolizaTipo>> GetAllAsync()
 		{
 			return await GetAllAsync(null, null, null);
 		}
 
-		public async Task<List<PolizasTipos>> GetAllAsync(
+		public async Task<List<PolizaTipo>> GetAllAsync(
 		int? id = null,
 		string? descripcion = null,
 		bool? deshabilitado = null)
@@ -95,14 +95,14 @@ namespace ERPSEI.Data.Managers.Polizas
 				.ToListAsync();
 		}
 
-		public async Task<PolizasTipos?> GetByIdAsync(int id)
+		public async Task<PolizaTipo?> GetByIdAsync(int id)
 		{
 			return await db.PolizasTipos
 				.Where(pt => pt.Id == id)
 				.FirstOrDefaultAsync();
 		}
 
-		public async Task<PolizasTipos?> GetByNameAsync(string desc)
+		public async Task<PolizaTipo?> GetByNameAsync(string desc)
 		{
 			return await db.PolizasTipos.Where(a => a.Descripcion.ToLower() == desc.ToLower()).FirstOrDefaultAsync();
 		}

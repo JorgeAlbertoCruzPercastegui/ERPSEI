@@ -2,7 +2,7 @@
 
 namespace ERPSEI.Data.Managers.AdministradorPolizas
 {
-	public interface IPolizasDetalles: IRWCatalogoManager<PolizasDetalles>
+	public interface IPolizasDetalles: IRWCatalogoManager<PolizaDetalle>
 	{
 	}
 }

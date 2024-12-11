@@ -107,7 +107,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 		private async Task<string> GetAdminPolizasList(FiltroModel? filtro = null)
 		{
 			List<object> jsonPolizas = new List<object>();
-			List<GruposPolizas> gruposPolizas;
+			List<GrupoPoliza> gruposPolizas;
 
 			// Aplicar los filtros a la llamada a GetAllAsync
 			if (filtro != null)
@@ -129,7 +129,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 			}
 
 			// Construir el JSON con objetos anónimos
-			foreach (GruposPolizas grupo in gruposPolizas)
+			foreach (GrupoPoliza grupo in gruposPolizas)
 			{
 				string usuarioCreador = grupo.UsuarioCreador?.Empleado?.NombreCompleto ?? grupo.UsuarioCreador?.UserName ?? "-";
 				string usuarioModificador = grupo.UsuarioModificador?.Empleado?.NombreCompleto ?? grupo.UsuarioModificador?.UserName ?? "-";

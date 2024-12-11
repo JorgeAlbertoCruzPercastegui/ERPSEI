@@ -9,15 +9,15 @@ namespace ERPSEI.Data.Managers.Polizas
 	{
 		private async Task<int> GetNextId()
 		{
-			List<PolizasDetalles> polizasDetalles = await db.PolizasDetalles.ToListAsync();
-			PolizasDetalles? last = polizasDetalles.OrderByDescending(r => r.Id).FirstOrDefault();
+			List<PolizaDetalle> polizasDetalles = await db.PolizasDetalles.ToListAsync();
+			PolizaDetalle? last = polizasDetalles.OrderByDescending(r => r.Id).FirstOrDefault();
 			int lastId = last != null ? last.Id : 0;
 			lastId += 1;
 
 			return lastId;
 		}
 
-		public async Task<int> CreateAsync(PolizasDetalles polizasDetalles)
+		public async Task<int> CreateAsync(PolizaDetalle polizasDetalles)
 		{
 			polizasDetalles.Id = await GetNextId();
 			db.PolizasDetalles.Add(polizasDetalles);
@@ -25,9 +25,9 @@ namespace ERPSEI.Data.Managers.Polizas
 			return polizasDetalles.Id;
 		}
 
-		public async Task UpdateAsync(PolizasDetalles polizasDetalles)
+		public async Task UpdateAsync(PolizaDetalle polizasDetalles)
 		{
-			PolizasDetalles? a = db.Find<PolizasDetalles>(polizasDetalles.Id);
+			PolizaDetalle? a = db.Find<PolizaDetalle>(polizasDetalles.Id);
 			if (a != null)
 			{
 				a.PolizaId = polizasDetalles.PolizaId;
@@ -39,7 +39,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			}
 		}
 
-		public async Task DeleteAsync(PolizasDetalles polizasDetalles)
+		public async Task DeleteAsync(PolizaDetalle polizasDetalles)
 		{
 			db.PolizasDetalles.Remove(polizasDetalles);
 			await db.SaveChangesAsync();
@@ -47,7 +47,7 @@ namespace ERPSEI.Data.Managers.Polizas
 
 		public async Task DeleteByIdAsync(int id)
 		{
-			PolizasDetalles? polizasDetalles = await GetByIdAsync(id);
+			PolizaDetalle? polizasDetalles = await GetByIdAsync(id);
 			if (polizasDetalles != null)
 			{
 				db.Remove(polizasDetalles);
@@ -63,7 +63,7 @@ namespace ERPSEI.Data.Managers.Polizas
 			{
 				foreach (string id in ids)
 				{
-					PolizasDetalles? polizasDetalles = await GetByIdAsync(int.Parse(id));
+					PolizaDetalle? polizasDetalles = await GetByIdAsync(int.Parse(id));
 					if (polizasDetalles != null)
 					{
 						db.Remove(polizasDetalles);
@@ -81,12 +81,12 @@ namespace ERPSEI.Data.Managers.Polizas
 			}
 		}
 
-		public async Task<List<PolizasDetalles>> GetAllAsync()
+		public async Task<List<PolizaDetalle>> GetAllAsync()
 		{
 			return await GetAllAsync(null, null, null, null, null, null);
 		}
 
-		public async Task<List<PolizasDetalles>> GetAllAsync(
+		public async Task<List<PolizaDetalle>> GetAllAsync(
 		int? id = null,
 		int? polizaId = null,
 		int? cuentaId = null,
@@ -107,7 +107,7 @@ namespace ERPSEI.Data.Managers.Polizas
 				.ToListAsync();
 		}
 
-		public async Task<PolizasDetalles?> GetByIdAsync(int id)
+		public async Task<PolizaDetalle?> GetByIdAsync(int id)
 		{
 			return await db.PolizasDetalles
 				.Where(pd => pd.Id == id)
@@ -117,7 +117,7 @@ namespace ERPSEI.Data.Managers.Polizas
 				.FirstOrDefaultAsync();
 		}
 
-		public async Task<PolizasDetalles?> GetByNameAsync(string desc)
+		public async Task<PolizaDetalle?> GetByNameAsync(string desc)
 		{
 			return await db.PolizasDetalles.Where(a => a.Concepto.ToLower() == desc.ToLower()).FirstOrDefaultAsync();
 		}
