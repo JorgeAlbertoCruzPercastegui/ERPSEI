@@ -13,6 +13,7 @@ using ERPSEI.Data.Entities.SAT.Nomina12;
 using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
 using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.SAT.Pagos20;
+using ERPSEI.Data.Entities.Polizas;
 
 namespace ERPSEI.Data
 {
@@ -147,9 +148,15 @@ namespace ERPSEI.Data
 		public DbSet<CuentaContableSubtipo> CuentaContableSubtipos { get; set; }
 		public DbSet<CuentaContableProductoServicio> CuentaContableProductosServicios { get; set; }
 
+		//Administrador de polizas
+		public DbSet<GruposPolizas> GruposPolizas { get; set; }
+		public DbSet<VPolizas> VPolizas { get; set; }
+		public DbSet<PolizasDetalles> PolizasDetalles { get; set; }
+		public DbSet<PolizasTipos> PolizasTipos { get; set; }
 
-        //Catálogos no administrables Usuarios
-        public DbSet<AccesoModulo> AccesosModulos { get; set; }
+
+		//Catálogos no administrables Usuarios
+		public DbSet<AccesoModulo> AccesosModulos { get; set; }
 		public DbSet<Modulo> Modulos { get; set; }
 
 		public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -182,6 +189,9 @@ namespace ERPSEI.Data
 
 			//Cuentas
 			BuildCuentasContables(modelBuilder);
+
+			//Polizas
+			
         }
 
 		private static void BuildAsistencias(ModelBuilder b) 

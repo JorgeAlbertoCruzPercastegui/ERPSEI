@@ -26,6 +26,8 @@ using System.Reflection;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
 using ERPSEI.Data.Managers.Clientes;
 using ERPSEI.Data.Managers.Cuentas;
+using ERPSEI.Data.Managers.AdministradorPolizas;
+using ERPSEI.Data.Managers.Polizas;
 
 namespace ERPSEI
 {
@@ -83,6 +85,8 @@ namespace ERPSEI
             ConfigureDIConciliaciones(_builder);
 
             ConfigureDICuentasContables(_builder);
+
+            ConfigureDIPolizas(_builder);
         }
         private static void ConfigureDIAsistencias(WebApplicationBuilder _builder) 
         {
@@ -102,6 +106,14 @@ namespace ERPSEI
             _builder.Services.AddScoped<IClienteManager, ClienteManager>();
             _builder.Services.AddScoped<IMovimientoBancarioManager, MovimientoBancarioManager>();
         }
+		private static void ConfigureDIPolizas(WebApplicationBuilder _builder)
+		{
+			//Polizas
+			_builder.Services.AddScoped<IGruposPolizasManager, GruposPolizasManager>();
+			_builder.Services.AddScoped<IPolizasManager, PolizasManager>();
+			_builder.Services.AddScoped<IPolizasDetalles, PolizasDetallesManager>();
+			_builder.Services.AddScoped<IPolizasTipos, PolizasTiposManager>();
+		}
 		private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)
 		{
 			//Cuentas Contables

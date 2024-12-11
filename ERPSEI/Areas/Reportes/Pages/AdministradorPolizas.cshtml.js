@@ -67,15 +67,15 @@ function initTable() {
                 sortable: true
             },
             {
-                title: colNombrePolizaHeader,
-                field: "NombrePoliza",
+                title: colFechaCreacionHeader,
+                field: "FechaCreacion",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
-                title: colFechaCreacionHeader,
-                field: "FechaCreacion",
+                title: colFechaModificacionHeader,
+                field: "FechaModificacion",
                 align: "center",
                 valign: "middle",
                 sortable: true

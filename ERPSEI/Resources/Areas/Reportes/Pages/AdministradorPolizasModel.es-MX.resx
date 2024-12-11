@@ -130,7 +130,7 @@
     <value>Id</value>
   </data>
   <data name="ColModifierDateHeader" xml:space="preserve">
-    <value>Fecha Modificación</value>
+    <value>Usuario Modificador</value>
   </data>
   <data name="ColModifierUserHeader" xml:space="preserve">
     <value>Usuario Modificador</value>
