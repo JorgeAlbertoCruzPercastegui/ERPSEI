@@ -148,9 +148,9 @@ function operateFormatter(value, row, index) {
     let icons = [];
 
     //Icono Ver
-    if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) { icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`); }
+    if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar || puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos || puedeEliminarBancos) { icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`); }
     //Icono Editar
-    if (puedeTodo || puedeEditar) { icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`); }
+    if (puedeTodo || puedeEditar || puedeTodoBancos || puedeEditarBancos) { icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`); }
 
     if (icons.length >= 1) {
 
@@ -436,29 +436,29 @@ function initEmpresaDialog(action, row) {
     dialogMode = action;
     idField.setAttribute("disabled", true);
     idField.value = row.id;
-    razonSocialField.value = row.razonSocial;
-    origenField.value = row.origenId;
-    nivelField.value = row.nivelId;
-    fechaConstitucionField.value = row.fechaConstitucionJS;
-    fechaInicioOperacionField.value = row.fechaInicioOperacionJS;
-    fechaInicioFacturacionField.value = row.fechaInicioFacturacionJS;
-    fechaInicioAsimiladosField.value = row.fechaInicioAsimiladosJS;
-    rfcField.value = row.rfc;
-    domicilioFiscalField.value = row.domicilioFiscal;
-    administradorField.value = row.administrador;
-    accionistaField.value = row.accionista;
-    correoGeneralField.value = row.correoGeneral;
-    correoBancosField.value = row.correoBancos;
-    correoFiscalField.value = row.correoFiscal;
-    correoFacturacionField.value = row.correoFacturacion;
-    telefonoField.value = row.telefono;
-    objetoSocialField.value = row.objetoSocial;
-    perfilField.value = row.perfilId;
-    oldPasswordField.value = "";
-    newPasswordField.value = "";
-    confirmNewPasswordField.value = "";
 
-    if (tieneAccesoEmpresas && !tieneAccesoBancos) {
+    if (tieneAccesoEmpresas) {
+        razonSocialField.value = row.razonSocial;
+        origenField.value = row.origenId;
+        nivelField.value = row.nivelId;
+        fechaConstitucionField.value = row.fechaConstitucionJS;
+        fechaInicioOperacionField.value = row.fechaInicioOperacionJS;
+        fechaInicioFacturacionField.value = row.fechaInicioFacturacionJS;
+        fechaInicioAsimiladosField.value = row.fechaInicioAsimiladosJS;
+        rfcField.value = row.rfc;
+        domicilioFiscalField.value = row.domicilioFiscal;
+        administradorField.value = row.administrador;
+        accionistaField.value = row.accionista;
+        correoGeneralField.value = row.correoGeneral;
+        correoBancosField.value = row.correoBancos;
+        correoFiscalField.value = row.correoFiscal;
+        correoFacturacionField.value = row.correoFacturacion;
+        telefonoField.value = row.telefono;
+        objetoSocialField.value = row.objetoSocial;
+        perfilField.value = row.perfilId;
+        oldPasswordField.value = "";
+        newPasswordField.value = "";
+        confirmNewPasswordField.value = "";
         if (row.hasPasswordSAT == "True") {
             $("#divChangePasswordSAT").show();
             $("#divPasswordSAT").hide();
@@ -558,7 +558,7 @@ function prepareForm(action) {
 //Función para establecer los datos adicionales de la empresa
 function establecerDatosAdicionales(row, action) {
     
-    if (tieneAccesoEmpresas && !tieneAccesoBancos) {
+    if (tieneAccesoEmpresas) {
         //Se establecen las actividades económicas
         let data = [];
         row.actividadesEconomicas = row.actividadesEconomicas || [];
@@ -651,11 +651,13 @@ function establecerDatosAdicionales(row, action) {
         });
     }
 
-    //Se establecen los bancos
-    $("#bodyBancos").html("");
-    row.bancos = row.bancos || [];
-    row.bancos.forEach(function (b) { onAgregarBancoClick(b) });
-    onLimiteBancoChanged();
+    if (tieneAccesoBancos) {
+        //Se establecen los bancos
+        $("#bodyBancos").html("");
+        row.bancos = row.bancos || [];
+        row.bancos.forEach(function (b) { onAgregarBancoClick(b) });
+        onLimiteBancoChanged();
+    }
 }
 //Función para habilitar/deshabilitar los botones de visualización en base a si existe contenido o no para visualizar.
 function initializeDisableableButtons(isConsulta = false) {
@@ -739,11 +741,16 @@ function onAgregarBancoClick(row = {banco: "", responsable: "", firmante: "", li
     }
 
     currentRows += 1;
+
+    let iconoEliminarItemHTML = ``;
+    if (puedeTodoBancos || puedeEliminarBancos) {
+        iconoEliminarItemHTML = `<button type="button" class="btn-close formButton" onclick="onEliminarBancoClick(this);"></button>`;
+    }
     
     $("#bodyBancos").append(`
         <div class="card mb-3 shadow">    
             <span class="text-end mt-2" data-effect="fadeOut">
-                <button type="button" class="btn-close formButton" onclick="onEliminarBancoClick(this);"></button>
+                ${iconoEliminarItemHTML}
             </span>
             <div rownumber="${currentRows}" class="col-sm-12 col-md-12 col-lg-12 rowBancos">
 				<div class="row">
@@ -871,106 +878,134 @@ function onCerrarClick() {
 }
 //Función para el guardado de información de la empresa
 function onGuardarClick() {
-    if (puedeEditar && puedeEditarBancos) { }
-
-    //Ejecuta la validación
-    $("#theForm").validate();
-    //Determina los errores
-    let valid = $("#theForm").valid();
-    //Si la forma no es válida, entonces finaliza.
-    if (!valid) { return; }
-
-    let btnClose = document.getElementById("dlgEmpresaBtnCancelar");
+    let oParams = {};
+    let postURL = "";
 
     let idField = document.getElementById("inpEmpresaId");
-    let razonSocialField = document.getElementById("inpEmpresaRazonSocial");
-    let origenField = document.getElementById("selEmpresaOrigen");
-    let nivelField = document.getElementById("selEmpresaNivel");
-    let fechaConstitucionField = document.getElementById("inpEmpresaFechaConstitucion");
-    let fechaInicioOperacionField = document.getElementById("inpEmpresaFechaInicioOperacion");
-    let fechaInicioFacturacionField = document.getElementById("inpEmpresaFechaInicioFacturacion");
-    let fechaInicioAsimiladosField = document.getElementById("inpEmpresaFechaInicioAsimilados");
-    let rfcField = document.getElementById("inpEmpresaRFC");
-    let domicilioFiscalField = document.getElementById("txtEmpresaDomicilioFiscal");
-    let administradorField = document.getElementById("inpEmpresaAdministrador");
-    let accionistaField = document.getElementById("inpEmpresaAccionista");
-    let correoGeneralField = document.getElementById("inpEmpresaCorreoGeneral");
-    let correoBancosField = document.getElementById("inpEmpresaCorreoBancos");
-    let correoFiscalField = document.getElementById("inpEmpresaCorreoFiscal");
-    let correoFacturacionField = document.getElementById("inpEmpresaCorreoFacturacion");
-    let telefonoField = document.getElementById("inpEmpresaTelefono");
-    let objetoSocialField = document.getElementById("txtEmpresaObjetoSocial");
-    let perfilField = document.getElementById("selEmpresaPerfil");
-    let oldPasswordField = document.getElementById("inpEmpresaArchivosSATOldPassword");
-    let newPasswordField = document.getElementById("inpEmpresaArchivosSATNewPassword");
-    let confirmNewPasswordField = document.getElementById("inpEmpresaArchivosSATConfirmNewPassword");
-
+    let btnClose = document.getElementById("dlgEmpresaBtnCancelar");
     let dlgTitle = document.getElementById("dlgEmpresaTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
-    let activities = [];
-    let data = tableActividad.bootstrapTable('getData');
-    data.forEach(function (e) { activities.push(e.id); });
+    if ((puedeEditar && puedeEditarBancos) || (puedeEditar && !puedeEditarBancos)) {
+        //Ejecuta la validación
+        $("#theForm").validate();
+        //Determina los errores
+        let valid = $("#theForm").valid();
+        //Si la forma no es válida, entonces finaliza.
+        if (!valid) { return; }
 
-    let banks = [];
-    $("#bodyBancos .rowBancos").each(function (i, b) {
-        let row = b.getAttribute("rownumber");
-        let bancoNombreField = document.getElementById(`inpEmpresaBancoNombre${row}`);
-        let bancoResponsableField = document.getElementById(`inpEmpresaBancoResponsable${row}`);
-        let bancoFirmanteField = document.getElementById(`inpEmpresaBancoFirmante${row}`);
-        let bancoLimiteField = document.getElementById(`inpEmpresaBancoLimite${row}`);
+        let razonSocialField = document.getElementById("inpEmpresaRazonSocial");
+        let origenField = document.getElementById("selEmpresaOrigen");
+        let nivelField = document.getElementById("selEmpresaNivel");
+        let fechaConstitucionField = document.getElementById("inpEmpresaFechaConstitucion");
+        let fechaInicioOperacionField = document.getElementById("inpEmpresaFechaInicioOperacion");
+        let fechaInicioFacturacionField = document.getElementById("inpEmpresaFechaInicioFacturacion");
+        let fechaInicioAsimiladosField = document.getElementById("inpEmpresaFechaInicioAsimilados");
+        let rfcField = document.getElementById("inpEmpresaRFC");
+        let domicilioFiscalField = document.getElementById("txtEmpresaDomicilioFiscal");
+        let administradorField = document.getElementById("inpEmpresaAdministrador");
+        let accionistaField = document.getElementById("inpEmpresaAccionista");
+        let correoGeneralField = document.getElementById("inpEmpresaCorreoGeneral");
+        let correoBancosField = document.getElementById("inpEmpresaCorreoBancos");
+        let correoFiscalField = document.getElementById("inpEmpresaCorreoFiscal");
+        let correoFacturacionField = document.getElementById("inpEmpresaCorreoFacturacion");
+        let telefonoField = document.getElementById("inpEmpresaTelefono");
+        let objetoSocialField = document.getElementById("txtEmpresaObjetoSocial");
+        let perfilField = document.getElementById("selEmpresaPerfil");
+        let oldPasswordField = document.getElementById("inpEmpresaArchivosSATOldPassword");
+        let newPasswordField = document.getElementById("inpEmpresaArchivosSATNewPassword");
+        let confirmNewPasswordField = document.getElementById("inpEmpresaArchivosSATConfirmNewPassword");
 
-        banks.push({
-            banco: bancoNombreField.value.trim(),
-            responsable: bancoResponsableField.value.trim(),
-            firmante: bancoFirmanteField.value.trim(),
-            limite: bancoLimiteField.value.trim()
+        let activities = [];
+        let data = tableActividad.bootstrapTable('getData');
+        data.forEach(function (e) { activities.push(e.id); });
+
+        let banks = [];
+        $("#bodyBancos .rowBancos").each(function (i, b) {
+            let row = b.getAttribute("rownumber");
+            let bancoNombreField = document.getElementById(`inpEmpresaBancoNombre${row}`);
+            let bancoResponsableField = document.getElementById(`inpEmpresaBancoResponsable${row}`);
+            let bancoFirmanteField = document.getElementById(`inpEmpresaBancoFirmante${row}`);
+            let bancoLimiteField = document.getElementById(`inpEmpresaBancoLimite${row}`);
+
+            banks.push({
+                banco: bancoNombreField.value.trim(),
+                responsable: bancoResponsableField.value.trim(),
+                firmante: bancoFirmanteField.value.trim(),
+                limite: bancoLimiteField.value.trim()
+            });
         });
-    });
 
-    let files = [];
-    $("#bodyArchivos input").each(function (i, a) {
-        let id = a.getAttribute("id");
-        let file = getFile(id);
-        if (file) { files.push(file); }
-    });
-    $("#bodyArchivosSAT input").each(function (i, a) {
-        let id = a.getAttribute("id");
-        let file = getFile(id);
-        if (file) { files.push(file); }
-    });
+        let files = [];
+        $("#bodyArchivos input").each(function (i, a) {
+            let id = a.getAttribute("id");
+            let file = getFile(id);
+            if (file) { files.push(file); }
+        });
+        $("#bodyArchivosSAT input").each(function (i, a) {
+            let id = a.getAttribute("id");
+            let file = getFile(id);
+            if (file) { files.push(file); }
+        });
 
-    let oParams = {
-        id: idField.value == nuevoRegistro ? 0 : idField.value,
-        razonSocial: razonSocialField.value.trim(),
-        origenId: origenField.value == 0 ? null : parseInt(origenField.value),
-        nivelId: nivelField.value == 0 ? null : parseInt(nivelField.value),
-        fechaConstitucion: fechaConstitucionField.value,
-        fechaInicioOperacion: fechaInicioOperacionField.value,
-        fechaInicioFacturacion: fechaInicioFacturacionField.value,
-        fechaInicioAsimilados: fechaInicioAsimiladosField.value,
-        rfc: rfcField.value.trim(),
-        domicilioFiscal: domicilioFiscalField.value.trim(),
-        administrador: administradorField.value.trim(),
-        accionista: accionistaField.value.trim(),
-        correoGeneral: correoGeneralField.value.trim(),
-        correoBancos: correoBancosField.value.trim(),
-        correoFiscal: correoFiscalField.value.trim(),
-        correoFacturacion: correoFacturacionField.value.trim(),
-        telefono: telefonoField.value.trim(),
-        actividadesEconomicas: activities,
-        objetoSocial: objetoSocialField.value.trim(),
-        perfilId: perfilField.value == 0 ? null : parseInt(perfilField.value),
-        bancos: banks,
-        archivosSATOldPassword: oldPasswordField.value,
-        archivosSATNewPassword: newPasswordField.value,
-        archivosSATConfirmNewPassword: confirmNewPasswordField.value,
-        archivos: files
-    };
+        oParams = {
+            id: idField.value == nuevoRegistro ? 0 : idField.value,
+            razonSocial: razonSocialField.value.trim(),
+            origenId: origenField.value == 0 ? null : parseInt(origenField.value),
+            nivelId: nivelField.value == 0 ? null : parseInt(nivelField.value),
+            fechaConstitucion: fechaConstitucionField.value,
+            fechaInicioOperacion: fechaInicioOperacionField.value,
+            fechaInicioFacturacion: fechaInicioFacturacionField.value,
+            fechaInicioAsimilados: fechaInicioAsimiladosField.value,
+            rfc: rfcField.value.trim(),
+            domicilioFiscal: domicilioFiscalField.value.trim(),
+            administrador: administradorField.value.trim(),
+            accionista: accionistaField.value.trim(),
+            correoGeneral: correoGeneralField.value.trim(),
+            correoBancos: correoBancosField.value.trim(),
+            correoFiscal: correoFiscalField.value.trim(),
+            correoFacturacion: correoFacturacionField.value.trim(),
+            telefono: telefonoField.value.trim(),
+            actividadesEconomicas: activities,
+            objetoSocial: objetoSocialField.value.trim(),
+            perfilId: perfilField.value == 0 ? null : parseInt(perfilField.value),
+            bancos: banks,
+            archivosSATOldPassword: oldPasswordField.value,
+            archivosSATNewPassword: newPasswordField.value,
+            archivosSATConfirmNewPassword: confirmNewPasswordField.value,
+            archivos: files
+        };
+
+        postURL = "/Catalogos/Empresas/SaveEmpresa";
+    }
+    else if (!puedeEditar && puedeEditarBancos) {
+        let banks = [];
+        $("#bodyBancos .rowBancos").each(function (i, b) {
+            let row = b.getAttribute("rownumber");
+            let bancoNombreField = document.getElementById(`inpEmpresaBancoNombre${row}`);
+            let bancoResponsableField = document.getElementById(`inpEmpresaBancoResponsable${row}`);
+            let bancoFirmanteField = document.getElementById(`inpEmpresaBancoFirmante${row}`);
+            let bancoLimiteField = document.getElementById(`inpEmpresaBancoLimite${row}`);
+
+            banks.push({
+                banco: bancoNombreField.value.trim(),
+                responsable: bancoResponsableField.value.trim(),
+                firmante: bancoFirmanteField.value.trim(),
+                limite: bancoLimiteField.value.trim()
+            });
+        });
+
+        oParams = {
+            id: idField.value,
+            bancos: banks
+        };
+
+        postURL = "/Catalogos/Empresas/SaveBancosEmpresa";
+    }
 
     doAjax(
-        "/Catalogos/Empresas/SaveEmpresa",
+        postURL,
         oParams,
         function (resp) {
             if (resp.tieneError) {

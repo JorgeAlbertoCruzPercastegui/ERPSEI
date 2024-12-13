@@ -17,11 +17,10 @@ using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Net.Mime;
-using System.Web;
 
 namespace ERPSEI.Areas.Catalogos.Pages
 {
-	[Authorize(Policy = "AccessPolicy")]
+    [Authorize(Policy = "EmpresasPolicy")]
 	public class EmpresasModel(
 			IEmpresaManager _empresaManager,
 			IBancoEmpresaManager _bancoEmpresaManager,
@@ -35,9 +34,16 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			ILogger<EmpresasModel> _logger,
 			ApplicationDbContext _db,
 			IEncriptacionAES _encriptacionAES,
-			AppUserManager _userManager
+			AppUserManager _userManager,
+			AppRoleManager _roleManager
 		) : ERPPageModel
 	{
+
+		protected bool PuedeTodoBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeTodoBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
+		protected bool PuedeConsultarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeConsultarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
+		protected bool PuedeEditarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeEditarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
+		protected bool PuedeEliminarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeEliminarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
+		protected bool PuedeAutorizarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeAutorizarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
 
 		[BindProperty]
 		public FiltroModel InputFiltro { get; set; } = new FiltroModel();
@@ -448,7 +454,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
             ServerResponse resp = new(true, _strLocalizer["ConsultadoUnsuccessfully"]);
 			try
 			{
-				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar || PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos)
 				{
 					resp.Datos = await GetDatosAdicionalesEmpresa(idEmpresa);
 					resp.TieneError = false;
@@ -471,7 +477,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			ServerResponse resp = new(true, _strLocalizer["EmpresasFiltradasUnsuccessfully"]);
 			try
 			{
-				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar || PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos)
 				{
 					resp.Datos = await GetListaEmpresas(InputFiltro);
 					resp.TieneError = false;
@@ -523,11 +529,64 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			return new JsonResult(resp);
 		}
 		
+		public async Task<JsonResult> OnPostSaveBancosEmpresa()
+		{
+			ServerResponse resp = new(true, _strLocalizer["EmpresaSavedUnsuccessfully"]);
+
+            AppUser? usr = await _userManager.GetUserAsync(User);
+            IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
+            List<AccesoModulo> accesos = [];
+            foreach (string rol in rolesUsuario)
+            {
+                AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
+                accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
+            }
+
+            bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
+            bool puedeConsultarBancos = accesos.Where(a => a.PuedeConsultar == 1).Count() >= 1;
+            bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
+
+            if (puedeTodoBancos || puedeEditarBancos)
+			{
+                //Procede a crear o actualizar la empresa.
+                string validacion = await CreateOrUpdateCompanyBanks(InputEmpresa);
+
+                if ((validacion ?? string.Empty).Length <= 0)
+                {
+                    resp.TieneError = false;
+                    resp.Mensaje = _strLocalizer["EmpresaSavedSuccessfully"];
+                }
+                else
+                {
+                    resp.Mensaje = validacion;
+                }
+            }
+            else
+            {
+                resp.Mensaje = _strLocalizer["AccesoDenegado"];
+            }
+
+            return new JsonResult(resp);
+        }
 		public async Task<JsonResult> OnPostSaveEmpresa()
 		{
 			ServerResponse resp = new(true, _strLocalizer["EmpresaSavedUnsuccessfully"]);
 
-			if (PuedeTodo || PuedeEditar)
+            AppUser? usr = await _userManager.GetUserAsync(User);
+            IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
+            List<AccesoModulo> accesos = [];
+            foreach (string rol in rolesUsuario)
+            {
+                AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
+                accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
+            }
+
+            bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
+            bool puedeConsultarBancos = accesos.Where(a => a.PuedeConsultar == 1).Count() >= 1;
+            bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
+			bool accesoBancos = puedeTodoBancos || puedeEditarBancos;
+
+            if (PuedeTodo || PuedeEditar || puedeTodoBancos || puedeEditarBancos)
 			{
 				//Se remueve el campo Plantilla para que no sea validado ya que no pertenece a este proceso.
 				ModelState.Remove("Plantilla");
@@ -547,7 +606,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					if ((validacion ?? string.Empty).Length <= 0)
 					{
 						//Procede a crear o actualizar la empresa.
-						validacion = await CreateOrUpdateCompany(InputEmpresa);
+						validacion = await CreateOrUpdateCompany(InputEmpresa, accesoBancos);
 
 						if ((validacion ?? string.Empty).Length <= 0)
 						{
@@ -601,7 +660,63 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return string.Empty;
 		}
-		private async Task<string> CreateOrUpdateCompany(EmpresaModel e)
+		private async Task<string> CreateOrUpdateCompanyBanks(EmpresaModel e)
+		{
+            try
+            {
+                await _db.Database.BeginTransactionAsync();
+
+                int idEmpresa = 0;
+
+                //Se busca empresa por id
+                Empresa? empresa = await _empresaManager.GetByIdAsync(e.Id);
+
+                //Si se encontró empresa, obtiene su Id del registro existente. 
+                if (empresa != null)
+                {
+                    idEmpresa = empresa.Id;
+
+                    //Valida la información de bancos
+                    foreach (BancoModel? b in e.Bancos)
+                    {
+                        if (b != null && e.NivelId != null)
+                        {
+                            //Obtiene la información del Nivel
+                            Nivel? n = await _nivelManager.GetByIdAsync(e.NivelId ?? 0);
+
+                            //Si el nivel puede facturar, entonces valida que el límite de todos los bancos sea mayor a cero.
+                            if (n != null && n.PuedeFacturar && b.Limite <= 0)
+                            {
+                                return _strLocalizer["LimiteNoPuedeSerCero", n.Nombre];
+                            }
+                        }
+                    }
+
+                    //Elimina los bancos de la empresa.
+                    await _bancoEmpresaManager.DeleteByEmpresaIdAsync(idEmpresa);
+
+                    //Crea los bancos de la empresa
+                    foreach (BancoModel? b in e.Bancos)
+                    {
+                        if (b != null)
+                        {
+                            await _bancoEmpresaManager.CreateAsync(
+                                new BancoEmpresa() { Banco = b.Banco ?? string.Empty, Responsable = b.Responsable ?? string.Empty, Firmante = b.Firmante ?? string.Empty, Limite = b.Limite ?? 0m, EmpresaId = idEmpresa }
+                            );
+                        }
+                    }
+                }
+
+                await _db.Database.CommitTransactionAsync();
+            }
+            catch (Exception)
+            {
+                await _db.Database.RollbackTransactionAsync();
+                throw;
+            }
+            return string.Empty;
+        }
+		private async Task<string> CreateOrUpdateCompany(EmpresaModel e, bool accesoBancos)
 		{
 			try
 			{
@@ -616,22 +731,25 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				if (empresa != null) { 
 					idEmpresa = empresa.Id;
 
-					//Valida la información de bancos
-					foreach (BancoModel? b in e.Bancos)
+					if (accesoBancos)
 					{
-						if (b != null && InputEmpresa.NivelId != null)
+						//Valida la información de bancos
+						foreach (BancoModel? b in e.Bancos)
 						{
-							//Obtiene la información del Nivel
-							Nivel? n = await _nivelManager.GetByIdAsync(InputEmpresa.NivelId ?? 0);
-
-							//Si el nivel puede facturar, entonces valida que el límite de todos los bancos sea mayor a cero.
-							if (n != null && n.PuedeFacturar && b.Limite <= 0)
+							if (b != null && InputEmpresa.NivelId != null)
 							{
-								return _strLocalizer["LimiteNoPuedeSerCero", n.Nombre];
+								//Obtiene la información del Nivel
+								Nivel? n = await _nivelManager.GetByIdAsync(InputEmpresa.NivelId ?? 0);
+
+								//Si el nivel puede facturar, entonces valida que el límite de todos los bancos sea mayor a cero.
+								if (n != null && n.PuedeFacturar && b.Limite <= 0)
+								{
+									return _strLocalizer["LimiteNoPuedeSerCero", n.Nombre];
+								}
 							}
 						}
-					}
-				}
+                    }
+                }
 				else
 				{
 					//De lo contrario, busca la empresa por RFC.
@@ -688,8 +806,11 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					//Elimina las actividades económicas de la empresa.
 					await _actividadesEconomicasEmpresaManager.DeleteByEmpresaIdAsync(idEmpresa);
 
-					//Elimina los bancos de la empresa.
-					await _bancoEmpresaManager.DeleteByEmpresaIdAsync(idEmpresa);
+					if (accesoBancos)
+					{
+						//Elimina los bancos de la empresa.
+						await _bancoEmpresaManager.DeleteByEmpresaIdAsync(idEmpresa);
+					}
 
                     //Elimina los archivos de la empresa que requieran actualizarse.
                     foreach (ArchivoModel? a in e.Archivos){ await _archivoEmpresaManager.DeleteByIdAsync(a?.Id ?? string.Empty); } 
@@ -711,14 +832,17 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					}
                 }
 
-                //Crea los bancos de la empresa
-                foreach (BancoModel? b in e.Bancos)
+				if(accesoBancos)
 				{
-					if(b != null)
+					//Crea los bancos de la empresa
+					foreach (BancoModel? b in e.Bancos)
 					{
-						await _bancoEmpresaManager.CreateAsync(
-							new BancoEmpresa() { Banco = b.Banco??string.Empty, Responsable = b.Responsable??string.Empty, Firmante = b.Firmante??string.Empty, Limite = b.Limite??0m, EmpresaId = idEmpresa }
-						);
+						if(b != null)
+						{
+							await _bancoEmpresaManager.CreateAsync(
+								new BancoEmpresa() { Banco = b.Banco??string.Empty, Responsable = b.Responsable??string.Empty, Firmante = b.Firmante??string.Empty, Limite = b.Limite??0m, EmpresaId = idEmpresa }
+							);
+						}
 					}
 				}
 
@@ -814,7 +938,19 @@ namespace ERPSEI.Areas.Catalogos.Pages
 		}
 		private async Task<string> CreateCompanyFromExcelRow(DataRow row)
         {
-			Perfil? perfil = await _perfilManager.GetByNameAsync(row[1].ToString()?.Trim() ?? string.Empty);
+            AppUser? usr = await _userManager.GetUserAsync(User);
+            IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
+            List<AccesoModulo> accesos = [];
+            foreach (string rol in rolesUsuario)
+            {
+                AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
+                accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
+            }
+
+            bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
+            bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
+
+            Perfil? perfil = await _perfilManager.GetByNameAsync(row[1].ToString()?.Trim() ?? string.Empty);
             Origen? origen = await _origenManager.GetByNameAsync(row[2].ToString()?.Trim() ?? string.Empty);
             Nivel? nivel = await _nivelManager.GetByNameAsync(row[3].ToString()?.Trim() ?? string.Empty);
 
@@ -859,19 +995,22 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			e.ObjetoSocial = JsonEscape(e.ObjetoSocial);
 
-			List<BancoModel> bancos = [];
-			//Si existe banco 1, agrega uno al listado.
-			if ((row[19].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[19].ToString()?.Trim() ?? string.Empty, Responsable = row[20].ToString()?.Trim() ?? string.Empty, Firmante = row[21].ToString()?.Trim() ?? string.Empty }); }
-			//Si existe banco 2, agrega uno al listado.
-			if ((row[22].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[22].ToString()?.Trim() ?? string.Empty, Responsable = row[23].ToString()?.Trim() ?? string.Empty, Firmante = row[24].ToString()?.Trim() ?? string.Empty }); }
-			//Si existe banco 3, agrega uno al listado.
-			if ((row[25].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[25].ToString()?.Trim() ?? string.Empty, Responsable = row[26].ToString()?.Trim() ?? string.Empty, Firmante = row[27].ToString()?.Trim() ?? string.Empty }); }
-			//Si existe banco 4, agrega uno al listado.
-			if ((row[28].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[28].ToString()?.Trim() ?? string.Empty, Responsable = row[29].ToString()?.Trim() ?? string.Empty, Firmante = row[30].ToString()?.Trim() ?? string.Empty }); }
-			//Si existe banco 5, agrega uno al listado.
-			if ((row[31].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[31].ToString()?.Trim() ?? string.Empty, Responsable = row[32].ToString()?.Trim() ?? string.Empty, Firmante = row[33].ToString()?.Trim() ?? string.Empty }); }
+			if(puedeTodoBancos || puedeEditarBancos)
+			{
+				List<BancoModel> bancos = [];
+				//Si existe banco 1, agrega uno al listado.
+				if ((row[19].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[19].ToString()?.Trim() ?? string.Empty, Responsable = row[20].ToString()?.Trim() ?? string.Empty, Firmante = row[21].ToString()?.Trim() ?? string.Empty }); }
+				//Si existe banco 2, agrega uno al listado.
+				if ((row[22].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[22].ToString()?.Trim() ?? string.Empty, Responsable = row[23].ToString()?.Trim() ?? string.Empty, Firmante = row[24].ToString()?.Trim() ?? string.Empty }); }
+				//Si existe banco 3, agrega uno al listado.
+				if ((row[25].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[25].ToString()?.Trim() ?? string.Empty, Responsable = row[26].ToString()?.Trim() ?? string.Empty, Firmante = row[27].ToString()?.Trim() ?? string.Empty }); }
+				//Si existe banco 4, agrega uno al listado.
+				if ((row[28].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[28].ToString()?.Trim() ?? string.Empty, Responsable = row[29].ToString()?.Trim() ?? string.Empty, Firmante = row[30].ToString()?.Trim() ?? string.Empty }); }
+				//Si existe banco 5, agrega uno al listado.
+				if ((row[31].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[31].ToString()?.Trim() ?? string.Empty, Responsable = row[32].ToString()?.Trim() ?? string.Empty, Firmante = row[33].ToString()?.Trim() ?? string.Empty }); }
 
-			e.Bancos = [.. bancos];
+				e.Bancos = [.. bancos];
+			}
 
 			List<ArchivoModel> archivos = [];
 			//Crea los archivos de la empresa.
@@ -889,7 +1028,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			if ((validationMsg ?? "").Length <= 0)
 			{
 				//Procede a crear o actualizar la empresa.
-				await CreateOrUpdateCompany(e);
+				await CreateOrUpdateCompany(e, puedeTodoBancos || puedeEditarBancos);
 			}
 
 			return validationMsg ?? "";

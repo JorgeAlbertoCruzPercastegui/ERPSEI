@@ -34,24 +34,17 @@
 	List<Nivel> niveles = await NivelesManager.GetAllAsync();
 	List<ActividadEconomica> actividadesEconomicas = await ActividadesEconomicasManager.GetAllAsync();
 
-	AppUser? usr = await UsuariosManager.GetUserAsync(User);
-	IList<string> rolesUsuario = usr != null ? await UsuariosManager.GetRolesAsync(usr) : [];
-	List<AccesoModulo> accesos = [];
-	foreach (string rol in rolesUsuario)
-	{
-		AppRole? foundRole = await RolesManager.GetByNameAsync(rol);
-		accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
-	}
-
-	bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
-	bool puedeConsultarBancos = accesos.Where(a => a.PuedeConsultar == 1).Count() >= 1;
-	bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
-
 	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+
+	bool puedeTodoBancos = User.Claims.Where(c => c.Type.Equals("PuedeTodoBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeConsultarBancos = User.Claims.Where(c => c.Type.Equals("PuedeConsultarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEditarBancos = User.Claims.Where(c => c.Type.Equals("PuedeEditarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEliminarBancos = User.Claims.Where(c => c.Type.Equals("PuedeEliminarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeAutorizarBancos = User.Claims.Where(c => c.Type.Equals("PuedeAutorizarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 
 	bool tieneAccesoEmpresas = puedeTodo || puedeConsultar || puedeEditar;
 	bool tieneAccesoBancos = puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
@@ -113,7 +106,7 @@
 						</div>
 					</div>
 				</form>
-				@if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar)
+				@if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar || puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos || puedeEliminarBancos)
 				{
 					<div class="row text-end">
 						<div class="col-12">
@@ -135,21 +128,15 @@
 <div id="toolbar" class="col-xl-12">
 	@if (puedeTodo || puedeEditar)
 	{
-		if(!tieneAccesoBancos)
-		{
-			<button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgEmpresa" onclick="onAgregarClick();">
-				<i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
-			</button>
-		}
+		<button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgEmpresa" onclick="onAgregarClick();">
+			<i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
+		</button>
 	}
 	@if (puedeTodo || puedeEliminar)
 	{
-		if (!tieneAccesoBancos)
-		{
-			<button id="remove" class="btn btn-danger" disabled>
-				<i class="bi bi-ban"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
-			</button>
-		}
+		<button id="remove" class="btn btn-danger" disabled>
+			<i class="bi bi-ban"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
+		</button>
 	}
 </div>
 <table id="table" class="table-sm"
@@ -203,7 +190,7 @@
 							</div>
 						</div>
 						<div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
-						@if (tieneAccesoEmpresas && !tieneAccesoBancos)
+						@if (tieneAccesoEmpresas)
 						{
 							<div class="accordion shadow-sm mb-5" id="accordionOne">
 								<div class="accordion-item">
@@ -467,32 +454,35 @@
 								</div>
 							</div>
 						}
-						
-						<div class="accordion shadow-sm mb-5" id="accordionTwo">
-							<div class="accordion-item">
-								<h2 class="accordion-header" id="segundaSeccion">
-									<button class="accordion-button p-2 bg-gradient bg-primary bg-opacity-10 text-black" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSectionTwo" aria-expanded="true" aria-controls="collapseSectionTwo">
-										<h5>@Localizer["EmpresaSegundaSeccionTitle"]</h5>
-									</button>
-								</h2>
-								<div id="collapseSectionTwo" class="accordion-collapse collapse show" aria-labelledby="segundaSeccion" data-bs-parent="#accordionTwo">
-									<div class="accordion-body">
-										<div class="col-12 text-end mb-3">
-											<span class="me-5"><b>Total transaccional:</b> <span id="spanTotalTransaccional">$0.00</span></span>
-											@if (puedeTodo || puedeEditar)
-											{
-												<button id="dlgEmpresaBtnAgregarBanco" type="button" class="btn btn-primary formButton" onclick="onAgregarBancoClick();">
-													<i class="bi bi-plus-lg"></i> @Localizer["AgregarBancoButtonText"]
-												</button>
-											}
+
+						@if (tieneAccesoBancos)
+						{
+							<div class="accordion shadow-sm mb-5" id="accordionTwo">
+								<div class="accordion-item">
+									<h2 class="accordion-header" id="segundaSeccion">
+										<button class="accordion-button p-2 bg-gradient bg-primary bg-opacity-10 text-black" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSectionTwo" aria-expanded="true" aria-controls="collapseSectionTwo">
+											<h5>@Localizer["EmpresaSegundaSeccionTitle"]</h5>
+										</button>
+									</h2>
+									<div id="collapseSectionTwo" class="accordion-collapse collapse show" aria-labelledby="segundaSeccion" data-bs-parent="#accordionTwo">
+										<div class="accordion-body">
+											<div class="col-12 text-end mb-3">
+												<span class="me-5"><b>Total transaccional:</b> <span id="spanTotalTransaccional">$0.00</span></span>
+												@if (puedeTodoBancos || puedeEditarBancos)
+												{
+													<button id="dlgEmpresaBtnAgregarBanco" type="button" class="btn btn-primary formButton" onclick="onAgregarBancoClick();">
+														<i class="bi bi-plus-lg"></i> @Localizer["AgregarBancoButtonText"]
+													</button>
+												}
+											</div>
+											<div id="bodyBancos" class="row"></div>
 										</div>
-										<div id="bodyBancos" class="row"></div>
 									</div>
 								</div>
 							</div>
-						</div>
+						}
 
-						@if (tieneAccesoEmpresas && !tieneAccesoBancos)
+						@if (tieneAccesoEmpresas)
 						{
 							<div class="accordion shadow-sm mb-5" id="accordionThree">
 								<div class="accordion-item">
@@ -523,12 +513,9 @@
 					<div class="col-5">
 						@if (puedeTodo || puedeEliminar)
 						{
-							if (!tieneAccesoBancos)
-							{
-								<button id="dlgEmpresaBtnDesactivar" type="button" class="btn btn-danger formButton" onclick="onDeleteEmpresaClick();" data-bs-dismiss="modal">
-									<i class="bi bi-ban"></i> @Localizer["DeactivateButton"]
-								</button>
-							}
+							<button id="dlgEmpresaBtnDesactivar" type="button" class="btn btn-danger formButton" onclick="onDeleteEmpresaClick();" data-bs-dismiss="modal">
+								<i class="bi bi-ban"></i> @Localizer["DeactivateButton"]
+							</button>
 						}
 					</div>
 					<div class="col-7 text-end">
@@ -723,6 +710,7 @@
 		var puedeTodoBancos = '@puedeTodoBancos' == 'True';
 		var puedeConsultarBancos = '@puedeConsultarBancos' == 'True';
 		var puedeEditarBancos = '@puedeEditarBancos' == 'True';
+		var puedeEliminarBancos = '@puedeEliminarBancos' == 'True';
 
 		var tieneAccesoEmpresas = puedeTodo || puedeConsultar || puedeEditar;
 		var tieneAccesoBancos = puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
