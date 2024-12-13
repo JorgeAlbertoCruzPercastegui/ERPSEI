@@ -2,6 +2,7 @@
 using ERPSEI.Data.Entities.SAT;
 using Microsoft.AspNetCore.Identity;
 using ERPSEI.Data.Entities.Conciliaciones;
+using ERPSEI.Data.Entities.Polizas;
 
 namespace ERPSEI.Data.Entities.Usuarios
 {
@@ -20,7 +21,8 @@ namespace ERPSEI.Data.Entities.Usuarios
         public ICollection<Prefactura> PrefacturasTimbradas { get; set; } = [];
         public ICollection<Conciliacion> ConciliacionesCreadas { get; set; } = [];
         public ICollection<Conciliacion> ConciliacionesModificadas { get; set; } = [];
+		public ICollection<GrupoPoliza> GruposPolizasCreados { get; set; } = [];
+		public ICollection<GrupoPoliza> GruposPolizasModificados { get; set; } = [];
 
-
-    }
+	}
 }

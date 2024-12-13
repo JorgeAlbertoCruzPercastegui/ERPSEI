@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Empresas;
+using ERPSEI.Data.Entities.Polizas;
 
 namespace ERPSEI.Data.Entities.Cuentas
 {
@@ -19,5 +20,6 @@ namespace ERPSEI.Data.Entities.Cuentas
 		public CuentaContableSubtipo? Subtipo { get; set; }
 
 		public ICollection<CuentaContableProductoServicio>? CuentasProductoServicio { get; set; } = [];
+		public ICollection<PolizaDetalle>? PolizasDetalles { get; set; } = [];
 	}
 }

@@ -1,0 +1,161 @@
+﻿@page "{handler?}"
+@using ERPSEI.Areas.Reportes.Pages;
+@using ERPSEI.Data.Entities.Conciliaciones
+@using ERPSEI.Data.Managers.Conciliaciones
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@model AdministradorPolizasModel
+@inject IBancoManager BancoManager;
+@inject IViewLocalizer Localizer;
+@{
+	ViewData["Title"] = Localizer["Title"];
+
+	// Retrieves the requested culture
+	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+
+	// Culture contains the information of the requested culture
+	System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+
+	string cultureName = culture.Name;
+
+	List<Banco> banco = await BancoManager.GetAllAsync();
+}
+
+<h3 class="title mb-3">@ViewData["Title"]</h3>
+
+<!-- Sección de filtros -------- -->
+<div class="accordion shadow mb-5" id="accordionFiltros">
+	<div class="accordion-item">
+		<h2 class="accordion-header" id="headingOne">
+			<button class="accordion-button p-2 bg-gradient bg-primary bg-opacity-10 text-black" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+				<h6>@Localizer["FilterTitle"]</h6>
+			</button>
+		</h2>
+		<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+			<div class="accordion-body">
+				<form id="filtros" method="post">
+					<div class="row">
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroId" type="text" asp-for="InputFiltro.Id" class="form-control" placeholder="@Localizer["PolizaIdField"]" />
+								<label for="inpFiltroId" asp-for="InputFiltro.Id" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroUsuarioCreador" type="text" asp-for="InputFiltro.UsuarioCreador" class="form-control" placeholder="@Localizer["CreateUserField"]" />
+								<label for="inpFiltroUsuarioCreador" asp-for="InputFiltro.UsuarioCreador" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroUsuarioModificador" type="text" asp-for="InputFiltro.UsuarioModificador" class="form-control" placeholder="@Localizer["ModifierUserField"]" />
+								<label for="inpFiltroUsuarioModificador" asp-for="InputFiltro.UsuarioModificador" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroFechaInicio" type="date" asp-for="InputFiltro.FechaInicio" class="form-control" placeholder="@Localizer["StartDateField"]" />
+								<label for="inpFiltroFechaInicio" asp-for="InputFiltro.FechaInicio" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroFechaFin" type="date" asp-for="InputFiltro.FechaFin" class="form-control" placeholder="@Localizer["EndDateField"]" />
+								<label for="inpFiltroFechaFin" asp-for="InputFiltro.FechaFin" class="form-label"></label>
+							</div>
+						</div>
+					</div>
+				</form>
+					<div class="row text-end">
+						<div class="col-12">
+							<button id="btnBuscar" class="btn btn-primary" onclick="onBuscarClick();">
+								<i class="bi bi-search"></i> @Localizer["SearchButton"]
+							</button>
+						</div>
+					</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<table id="table" class="table-sm"
+	   data-unique-id="id"
+	   data-toolbar="#toolbar"
+	   data-search="true"
+	   data-show-refresh="true"
+	   data-show-toggle="true"
+	   data-show-fullscreen="true"
+	   data-show-columns="true"
+	   data-show-columns-toggle-all="true"
+	   data-show-export="true"
+	   data-click-to-select="true"
+	   data-minimum-count-columns="2"
+	   data-show-pagination-switch="true"
+	   data-pagination="true"
+	   data-id-field="id"
+	   data-page-list="[10, 25, 50, 100, all]"
+	   data-show-footer="false"
+	   data-side-pagination="client"
+	   data-response-handler="responseHandler"
+	   data-buttons-class="primary">
+	<thead>
+		<tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+		</tr>
+	</thead>
+</table>
+</div>
+
+
+@section Scripts {
+	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+	<link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+	<script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+
+	<script src="~/lib/bootstrap-table/extensions/export/tableExport.min.js"></script>
+	<script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>+
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
+	<script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
+	<script src="~/lib/bootstrap-table/extensions/export/xlsx.full.min.js"></script>
+	<script src="~/lib/bootstrap-table/extensions/export/exceljs.min.js"></script>
+
+	<link rel="stylesheet" href="~/css/AdministradorPolizas.css" />
+	<script src="~/../Areas/Reportes/Pages/AdministradorPolizas.cshtml.js"></script>
+
+	<script type="text/javascript">
+		var cultureName = "@cultureName";
+		var btnImportarText = '@Localizer["ImportButtonText"]';
+		var btnImportarTitle = '@Localizer["ImportButtonTitle"]';
+		var btnInvitarTitle = '@Localizer["InviteButtonTitle"]';
+		var btnVerTitle = '@Localizer["SeeButtonTitle"]';
+		var btnEditarTitle = '@Localizer["EditButtonTitle"]';
+		var btnEliminarTitle = '@Localizer["DeleteButton"]';
+		var dlgEditarTitle = '@Localizer["EditDialogTitle"]';
+		var dlgVerTitle = '@Localizer["SeeDialogTitle"]';
+		var dlgNuevoTitle = '@Localizer["NewDialogTitle"]';
+		var dlgDeleteTitle = '@Localizer["DeleteEmpleadoDialogTitle"]';
+		var dlgDeleteQuestion = '@Localizer["DeleteEmpleadoDialogQuestion"]';
+		var dlgDeleteTitle = '@Localizer["DeletePositionDialogTitle"]';
+		var dlgDeleteQuestion = '@Localizer["DeletePositionDialogQuestion"]';
+
+		var colIdHeader = '@Localizer["ColIdHeader"]';
+		var colNombrePolizaHeader = '@Localizer["ColNamePolizaHeader"]';
+		var colFechaCreacionHeader = '@Localizer["ColCreateDateHeader"]';
+		var colFechaModificacionHeader = '@Localizer["ColModifierDateHeader"]';
+		var colUsuarioCreadorHeader = '@Localizer["ColCreateUserHeader"]';
+		var colUsuarioModificadorHeader = '@Localizer["ColModifierUserHeader"]';
+		var colPrintNumberHeader = '@Localizer["ColPrintNumberHeader"]';
+		var colAccionesHeader = '@Localizer["ColActionesHeader"]';
+
+		var invalidFormatTitle = '@Localizer["InvalidFormatTitle"]';
+		var invalidFormatMsg = '@Localizer["InvalidFormatMsg"]';
+		var fileFormatTitle = '@Localizer["FileFormatTitle"]';
+		var fileFormatMessage = '@Localizer["FileFormatMessage"]';
+		var maxFileSizeTitle = '@Localizer["MaxFileSizeTitle"]';
+		var maxFileSizeMessage = '@Localizer["MaxFileSizeMessage"]';
+	</script>
+
+	<partial name="_ValidationScriptsPartial" />
+}
