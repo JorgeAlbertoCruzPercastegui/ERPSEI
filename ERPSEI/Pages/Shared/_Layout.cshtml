@@ -68,7 +68,8 @@
             (m.Modulo?.NombreNormalizado == "empresas" ||
             m.Modulo?.NombreNormalizado == "origenes" ||
             m.Modulo?.NombreNormalizado == "niveles" ||
-            m.Modulo?.NombreNormalizado == "perfiles") &&
+            m.Modulo?.NombreNormalizado == "perfiles" ||
+            m.Modulo?.NombreNormalizado == "bancos") &&
             (m.PuedeTodo == 1 ||
             m.PuedeConsultar == 1 ||
             m.PuedeEditar == 1 ||
@@ -263,7 +264,7 @@
                                                             <p class="mb-0 list-group-item text-uppercase text-center">
                                                                 <b>@Localizer["FacturacionMenu"]</b>
                                                             </p>
-                                                            @if (permisos["empresas"])
+                                                            @if (permisos["empresas"] || permisos["bancos"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.CatalogoEmpresasNavClass(ViewContext)" asp-area="Catalogos" asp-page="/Empresas">
                                                                     <i class="bi bi-buildings"></i> @Localizer["EmpresasCatalogMenu"]

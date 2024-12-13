@@ -1,8 +1,6 @@
 ﻿using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
 namespace ERPSEI.Authorization
@@ -35,25 +33,31 @@ namespace ERPSEI.Authorization
             List<AccesoModulo> accesos = [];
             foreach (string rol in rolesUsuario)
             {
-                AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
-                accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == m?.NombreNormalizado && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
+				AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
+				accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == m?.NombreNormalizado && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
             }
 
             var identity = context.User.Identity as ClaimsIdentity;
 
-            //Elimina las claims de acceso que puedan existir de módulos visitados anteriormente.
-            List<Claim> claims = (from c in context.User.Claims
-                                  where
-                                  c.Type == "PuedeTodo" ||
-                                  c.Type == "PuedeConsultar" ||
-                                  c.Type == "PuedeEditar" ||
-                                  c.Type == "PuedeEliminar" ||
-                                  c.Type == "PuedeAutorizar"
-                                  select c).ToList();
-            foreach (Claim claim in claims) { identity?.RemoveClaim(claim); }
+			//Elimina las claims de acceso que puedan existir de módulos visitados anteriormente.
+			//Elimina las claims de acceso que puedan existir de otros módulos.
+			List<Claim> claims = (from c in context.User.Claims
+								  where
+								  c.Type == "PuedeTodo" ||
+								  c.Type == "PuedeConsultar" ||
+								  c.Type == "PuedeEditar" ||
+								  c.Type == "PuedeEliminar" ||
+								  c.Type == "PuedeAutorizar" ||
+								  c.Type == "PuedeTodoBancos" ||
+								  c.Type == "PuedeConsultarBancos" ||
+								  c.Type == "PuedeEditarBancos" ||
+								  c.Type == "PuedeEliminarBancos" ||
+								  c.Type == "PuedeAutorizarBancos"
+								  select c).ToList();
+			foreach (Claim claim in claims) { identity?.RemoveClaim(claim); }
 
-            //Si se encontraron accesos para el módulo visitado
-            if (accesos.Count >= 1)
+			//Si se encontraron accesos para el módulo visitado
+			if (accesos.Count >= 1)
 			{
                 //Crea un nuevo set de claims de acceso para el módulo.
                 claims = [
