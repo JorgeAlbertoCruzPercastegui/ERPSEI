@@ -67,7 +67,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			string jsonResponse;
 			List<string> jsonResultados = [];
 
-			foreach (AppUser u in _usuarioManager.Users)
+			foreach (AppUser u in _usuarioManager.Users.Where(u => !u.IsBanned))
 			{
 				if(await _usuarioManager.IsInRoleAsync(u, ServicesConfiguration.RolMaster)) { continue; }
 

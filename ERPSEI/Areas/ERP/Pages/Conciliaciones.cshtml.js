@@ -5,6 +5,7 @@ var selections = [];
 var dlgConciliacion = null;
 var dlgConciliacionModal = null;
 var numFormatter = null;
+var tableCuentasContables;
 
 const NUEVO = 0;
 const EDITAR = 1;
@@ -14,11 +15,22 @@ const oneMegabyteSizeInBytes = 1048576; // 1mb = (1 * 1024) * 1024
 const postOptions = {
     headers: {
         "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
-    }
+    },
+    type: 'POST'
 };
+const getOptions = {
+    headers: postOptions.headers,
+    type: 'GET'
+};
+const putOptions = {
+    headers: postOptions.headers,
+    type: 'PUT'
+};
+
 document.addEventListener("DOMContentLoaded", function (event) {
     numFormatter = new Intl.NumberFormat(cultureName);
     table = $("#table");
+    tableCuentasContables = $("#tableCuentasContables");
     buttonRemove = $("#remove");
     dlgConciliacion = document.getElementById('dlgConciliacion');
     dlgConciliacionModal = new bootstrap.Modal(dlgConciliacion, {});
@@ -174,8 +186,12 @@ function operateFormatter(value, row, index) {
 
     // Icono Ver
     icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
-    // Icono Editar
-    icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
+
+    // Icono Editar (habilitado solo si el Estatus es diferente de "Finalizada")
+    if (row.Finalizada == "En progreso") {
+        icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
+    }
+
     // Icono Exportar a Excel
     icons.push(`<li><a class="dropdown-item export" href="#" title="Exportar a Excel"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</a></li>`);
 
@@ -186,6 +202,7 @@ function operateFormatter(value, row, index) {
               <ul class="dropdown-menu">${icons.join("")}</ul>
             </div>`;
 }
+
 
 window.operateEvents = {
     'click .see': function (e, value, row, index) {
@@ -199,10 +216,393 @@ window.operateEvents = {
         $('#tableResult').bootstrapTable('load', []);
     },
     'click .export': function (e, value, row, index) {
-        const cliente = row.Cliente || row.Empresa || 'Sin cliente';
-        const totalComprobante = row.Total || 0; // Obtener el total del comprobante
-        exportarAExcelConFormato(cliente, totalComprobante);
+        
+        const conciliacionId = parseInt(row.id, 10) || 0;
+
+        if (conciliacionId === 0) {
+            showError("Exportación Fallida", "ID de conciliación no válido.");
+            return;
+        }
+
+        // Mostrar el modal y cargar datos dinámicamente
+        $('#modalAsignacionCuentas').modal('show');
+
+        // Limpiar la tabla antes de cargar nuevos datos
+        $('#modalAsignacionCuentasBody').empty();
+
+        // Asigna dinámicamente el ID al botón
+        const botonGenerarPoliza = document.getElementById('btnGenerarPoliza');
+        botonGenerarPoliza.setAttribute('data-id', conciliacionId);
+
+        //exportarAExcel(conciliacionId);
+
+        // Llamar a la función para obtener los datos del cliente
+        ObtenerDatosClienteRFC(conciliacionId);
     }
+}
+
+async function exportarAExcel(conciliacionId) {
+    let oParams = { id: conciliacionId };
+    $.extend(postOptions, { type: 'GET' });
+
+    let dlgTitle = "Resultado de exportación de excel";
+    let saveValidationSummary = document.getElementById("saveValidationSummary");
+    saveValidationSummary.innerHTML = "";
+
+    doAjax(
+        "/ERP/Conciliaciones/ExportarExcel",
+        oParams,
+        async function (resp) {
+            if (resp.tieneError) {
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+
+            const ExcelJS = window.ExcelJS;
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Conciliación');
+
+            // Ajustes en el diseño inicial
+            worksheet.getCell('A3').value = 'lg';
+            worksheet.getCell('A3').font = { bold: true };
+            worksheet.getCell('B3').value = 1;
+            worksheet.getCell('B3').font = { bold: true };
+
+            // Recopila las cuentas contables ingresadas
+            const cuentasContables = obtenerCuentasContables(); // Asegúrate de que esta función capture los valores correctamente
+            console.log("Cuentas a exportar:", cuentasContables);
+
+            // Genera el Excel usando las cuentas contables
+            cuentasContables.forEach((cuenta, index) => {
+                const row = 7 + index; // Empieza en la fila 7
+                worksheet.getCell(`B${row}`).value = cuenta.substring(0, 12);; // Coloca la cuenta en la columna B
+            });
+
+            // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
+            const fechaEmisor = resp.datos.length > 0 ? resp.datos[0].fecha : 'N/A';
+            const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
+            worksheet.getCell('D3').value = dia;
+            worksheet.getCell('D3').font = { bold: true };
+
+            // Obtener el nombre del receptor, serie y folio
+            const nombreReceptor = resp.datos.length > 0 ? resp.datos[0].nombreReceptor : 'N/A';
+            const serie = resp.datos.length > 0 ? resp.datos[0].serie : 'N/A';
+            const folio = resp.datos.length > 0 ? resp.datos[0].folio : 'N/A';
+
+            // Concatenar el nombre del receptor con la serie y el folio
+            const nombreCompleto = `${nombreReceptor} ${serie}-F-${folio}`;
+
+            // Asignar el nombre concatenado a las celdas D4, D5, D6 y D7
+            ['D4', 'D5', 'D6', 'D7'].forEach(cell => {
+                worksheet.getCell(cell).value = nombreCompleto;
+            });
+
+            // Concatenar "INGRESOS" con el nombre del receptor, la serie y el folio
+            const ingresosTexto = `INGRESOS ${nombreReceptor} ${serie}-F-${folio}`;
+            worksheet.getCell('C3').value = ingresosTexto;
+            worksheet.getCell('C3').font = { bold: true };
+
+            // Aplicar color azul claro a las celdas A3 y B3
+            const lightBlue = 'CCECFF';
+            worksheet.getCell('A3').fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF45C9ED' }
+            };
+            worksheet.getCell('B3').fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF45C9ED' }
+            };
+
+            // Colocar texto en las celdas B5 y B6
+            worksheet.getCell('B5').value = '2180-001-000';
+            worksheet.getCell('B6').value = '2181-001-000';
+            worksheet.getCell('B8').value = 'FIN_PARTIDAS';
+
+            // Colocar el valor de CuentaContable en la celda B4
+            const cuentaContable = resp.datos.length > 0 ? resp.datos[0].cuentaContable : 'N/A';
+            worksheet.getCell('B4').value = cuentaContable; // Asignar valor al Excel
+
+
+            // Colocar el número 0 en las celdas C4, C5, C6 y C7, centrado
+            ['C4', 'C5', 'C6', 'C7'].forEach(cell => {
+                worksheet.getCell(cell).value = 0;
+                worksheet.getCell(cell).alignment = { horizontal: 'center' };
+            });
+
+            // Texto "CARGO" y "ABONO" en negritas
+            worksheet.getCell('F3').value = 'CARGO';
+            worksheet.getCell('F3').font = { bold: true };
+            worksheet.getCell('G3').value = 'ABONO';
+            worksheet.getCell('G3').font = { bold: true };
+
+            // Calcular el total de los cargos y colocarlo en la celda F4
+            const datos = Array.isArray(resp.datos) ? resp.datos : [];
+            const totalCargos = datos.reduce((sum, dato) => sum + (dato.cargos || 0), 0);
+            worksheet.getCell('F4').value = totalCargos;
+            
+            // Obtener el TotalImpuestosTrasladados desde los datos del modelo
+            const totalImpuestosTrasladados = resp.datos.length > 0 ? resp.datos[0].totalImpuestosTrasladados : 0;
+
+            // Asignar el valor de TotalImpuestosTrasladados en las celdas G5 y F6
+            worksheet.getCell('G5').value = totalImpuestosTrasladados;
+            worksheet.getCell('F6').value = totalImpuestosTrasladados;
+            
+            // Colocar el cargo del movimiento en la celda G7
+            worksheet.getCell('G7').value = datos.length > 0 ? datos[0].cargos : 0;
+
+            // Validar si hay datos para exportar
+            if (datos.length === 0) {
+                showError("Exportación Fallida", "No se encontraron datos para exportar.");
+                return;
+            }
+
+            // Definir las columnas del Excel
+            worksheet.columns = [
+                { header: '', key: 'cliente', width: 5 },
+                { header: '', key: 'comprobanteId', width: 15 },
+                { header: '', key: 'serie', width: 50 },
+                { header: '', key: 'folio', width: 38 },
+                { header: '', key: 'total', width: 3 },
+                { header: '', key: 'movimientoId', width: 15 },
+                { header: '', key: 'descripcionMovimiento', width: 15 },
+                { header: '', key: 'cargos', width: 15 }
+            ];
+
+            // Agregar los datos al Excel
+            /*datos.forEach((dato) => {
+                worksheet.addRow({
+                    cliente: dato.cliente,
+                    comprobanteId: dato.comprobanteId,
+                    serie: dato.serie,
+                    folio: dato.folio,
+                    total: dato.total,
+                    movimientoId: dato.movimientoId,
+                    descripcionMovimiento: dato.descripcionMovimiento,
+                    cargos: dato.cargos
+                });
+            });*/
+
+            // Crear el archivo Excel y descargarlo
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Conciliacion_${conciliacionId}.xlsx`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+
+            // Cerrar el modal de selección de cuenta bancaria
+            $('#modalAsignacionCuentas').modal('hide');
+
+            // Mostrar el modal de confirmación con el mensaje
+            //$('#modalConciliacionMensaje').text('El archivo Excel se exportó correctamente.');
+            //$('#modalConciliacion').modal('show');
+            showSuccess(dlgTitle, resp.mensaje);
+
+        },
+        function (error) {
+            showError("Error", "No se pudo exportar a Excel.");
+        },
+        postOptions
+    );
+}
+function obtenerCuentasContables() {
+    const cuentas = [];
+    $('#modalAsignacionCuentasBody').find('tr').each(function () {
+        // Busca la celda de "Cuenta Bancaria"
+        const cuenta = $(this).find('td:nth-child(3)').text().trim(); // Toma el texto de la tercera columna
+        cuentas.push(cuenta || '0000-000-000'); // Agrega el valor o 'N/A' si está vacío
+    });
+    return cuentas;
+}
+
+/*async function ObtenerDatosCliente() {
+    const conciliacionId = document.getElementById('btnGenerarPoliza').getAttribute('data-id');
+
+    if (!conciliacionId) {
+        showError("Exportación Fallida", "ID de conciliación no válido.");
+        return;
+    }
+
+    let oParams = { id: conciliacionId };
+    $.extend(getOptions, { type: 'GET' });
+
+    doAjax(
+        "/ERP/Conciliaciones/obtenerDatosCliente",
+        oParams,
+        async function (resp) {
+            if (resp.tieneError) {
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+            if (resp.datos && resp.datos.length > 0) {
+                const htmlRows = resp.datos.map(row => `
+        <tr>
+            <td>${row.cliente || 'N/A'}</td>
+            <td>${row.rfc || 'N/A'}</td>
+            <td>
+                <a href="#" class="text-danger" onclick="editarCuentaContable(event, this)">Seleccione...</a>
+            </td>
+        </tr>
+    `).join('');
+                $('#modalAsignacionCuentasBody').html(htmlRows);
+            } else {
+                $('#modalAsignacionCuentasBody').html('<tr><td colspan="3">No hay datos disponibles</td></tr>');
+            }
+        },
+        function (error) {
+            showError("Error", "No se pudo obtener el registro.");
+        },
+        getOptions
+    );
+}*/
+
+async function ObtenerDatosClienteRFC(conciliacionId) {
+    let oParams = { id: conciliacionId };
+
+    doAjax(
+        "/ERP/Conciliaciones/ExportarExcel",
+        oParams,
+        async function (resp) {
+            if (resp.tieneError) {
+                showError("Error, favor de revisar", resp.mensaje);
+                return;
+            }
+
+            if (resp.datos && resp.datos.length > 0) {
+                // Generar datalists únicos por row para las sugerencias
+                const datalistHtml = resp.datos.map((row, index) => `
+                    <datalist id="cuentasDatalist${index}">
+                        ${row.cuentaBancariaOption.split(', ').map(option => `
+                            <option value="${option}"></option>
+                        `).join('')}
+                    </datalist>
+                `).join('');
+
+                // Generar las filas de la tabla
+                const htmlRows = resp.datos.map((row, index) => `
+                    <tr>
+                        <td class="align-middle">${row.nombreEmisor || 'N/A'}</td>
+                        <td class="align-middle">${row.rfcEmisor || 'N/A'}</td>
+                        <td class="align-middle">
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control form-control-sm me-2" 
+                                    placeholder="Ingrese la cuenta" list="cuentasDatalist${index}">
+                                <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this)">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Insertar los datalists y las filas en el modal
+                $('#modalAsignacionCuentasBody').html(datalistHtml + htmlRows);
+            } else {
+                $('#modalAsignacionCuentasBody').html(`
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">No hay datos disponibles</td>
+                    </tr>
+                `);
+            }
+        },
+        function (error) {
+            showError("Error", "No se pudo obtener la información del cliente.");
+        },
+        getOptions
+    );
+}
+
+
+function guardarCuentaContable(boton) {
+    const td = boton.parentElement.parentElement; // Obtén el <td> contenedor
+    const input = td.querySelector('input'); // Obtén el input
+    const valorCuenta = input.value.trim(); // Obtén el valor del input
+
+    if (valorCuenta) {
+        // Reemplaza el contenido del <td> con un enlace que permite editar
+        td.innerHTML = `
+            <a href="#" class="text-success fw-bold" onclick="editarCuentaDesdeLink(event, this)">${valorCuenta}</a>
+        `;
+    } else {
+        alert("Debe ingresar una cuenta válida antes de confirmar.");
+    }
+}
+
+function editarCuentaDesdeLink(event, link, conciliacionId) {
+    event.preventDefault(); // Evita el comportamiento predeterminado del enlace
+    const td = link.parentElement; // Obtén el <td> contenedor
+    const valorActual = link.textContent.trim(); // Obtén el texto actual del enlace
+
+    // Si el mensaje es "No se seleccionó una cuenta bancaria", el input estará vacío
+    const inputValue = valorActual === "No se seleccionó una cuenta bancaria" ? "" : valorActual;
+
+    // Reemplaza el contenido del <td> con un input y botones
+    td.innerHTML = `
+        <div class="d-flex align-items-center">
+            <input type="text" class="form-control form-control-sm me-2" placeholder="Ingrese una cuenta bancaria" value="${inputValue}">
+            <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
+                <i class="bi bi-check-circle"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this, '${valorActual}')">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    `;
+}
+
+
+function editarCuentaContable(boton) {
+    const td = boton.parentElement; // Obtén el <td> contenedor
+    const valorActual = td.querySelector('span').textContent.trim(); // Obtén el valor actual
+
+    // Reemplaza el contenido con un input vacío y el valor actual como placeholder
+    td.innerHTML = `
+        <div class="d-flex align-items-center">
+            <input type="text" class="form-control form-control-sm me-2" placeholder="${valorActual}" value="">
+            <button class="btn btn-sm btn-success me-1" type="button" onclick="guardarCuentaContable(this)">
+                <i class="bi bi-check-circle"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="cancelarEdicionCuentaContable(this, '${valorActual}')">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    `;
+}
+
+
+function actualizarCuenta(span) {
+    const nuevoValor = span.textContent.trim(); // Obtén el texto editado
+
+    if (!nuevoValor) {
+        // Si el campo queda vacío, muestra un mensaje predeterminado
+        span.textContent = "No se seleccionó una cuenta bancaria";
+        span.classList.add("text-muted");
+        span.classList.remove("text-success");
+    } else {
+        // Si hay un valor válido, asegúrate de que se mantenga el estilo
+        span.classList.remove("text-muted");
+        span.classList.add("text-success");
+    }
+}
+
+function cancelarEdicionCuentaContable(boton, valorAnterior) {
+    const td = boton.parentElement.parentElement; // Obtén el <td> contenedor
+
+    // Si no hay un valor definido, asigna un mensaje predeterminado
+    const mensaje = valorAnterior && valorAnterior.trim() !== ""
+        ? valorAnterior
+        : "No se seleccionó una cuenta bancaria";
+
+    // Restaura el contenido con un enlace para volver a editar
+    td.innerHTML = `
+        <a href="#" class="text-success fw-bold" onclick="editarCuentaDesdeLink(event, this)">${mensaje}</a>
+    `;
 }
 
 function onAgregarClick() {
@@ -211,100 +611,6 @@ function onAgregarClick() {
     $('#tableCardComprobantes').bootstrapTable('load', []);
     $('#tableCardMovimientos').bootstrapTable('load', []);
     $('#tableResult').bootstrapTable('load', []);
-}
-
-/*function exportarAExcel(row) {
-    //Crear un libro de Excel usando SheetJS
-    const wb = XLSX.utils.book_new();
-    const wsData = [
-        ["Id", "Fecha", "Total", "Descripción"],
-        [row.id, row.Fecha, row.Total, row.Descripcion || "Sin descripción"]
-    ];
-
-    //Crear la hoja de Excel
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, "Datos");
-
-    //Descargar el archivo Excel
-    XLSX.writeFile(wb, `Export_${row.id}.xlsx`);
-}*/
-
-async function exportarAExcelConFormato(cliente, totalComprobante) {
-    const ExcelJS = window.ExcelJS;
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('POLIZA COMPLETA');
-
-    // Configuración de las columnas
-    worksheet.columns = [
-        { header: '', width: 5 },   // Columna de 'lg'
-        { header: '', width: 10 },  // Columna con el número
-        { header: '', width: 40 },  // Columna para el cliente/empresa
-        { header: '', width: 25 },  // Columna de descripción
-        { header: '', width: 5 }
-    ];
-
-    // Fila vacía inicial (sin encabezados)
-    worksheet.addRow([]);
-
-    // Fila del título con el número y cliente/empresa
-    const titleRow = worksheet.addRow(['lg', 1, cliente || 'Sin cliente', '', '', 'CARGO', 'ABONO']);
-    titleRow.font = { bold: true, color: { argb: 'FFFFFF' } };
-
-    // Aplicar color azul solo a las primeras dos columnas
-    titleRow.getCell(1).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: '0070C0' }
-    };
-    titleRow.getCell(2).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: '0070C0' }
-    };
-
-    // Ajustar el color del cliente a negro
-    titleRow.getCell(3).font = { bold: true, color: { argb: '000000' } };
-
-    // Añadir títulos de "CARGOS" y "ABONOS" en negritas
-    worksheet.getCell('F3').value = 'CARGO';
-    worksheet.getCell('F3').font = { bold: true };
-    worksheet.getCell('G3').value = 'ABONO';
-    worksheet.getCell('G3').font = { bold: true };
-
-    // Colocar el total del comprobante en la celda F4 y limitar a dos decimales
-    const formattedTotal = parseFloat(totalComprobante).toFixed(2);
-
-    // Filas de partidas con valores enteros y centrados
-    const partidas = [
-        { numero: 1120, descripcion: 'Descripción 1', cargo: parseFloat(formattedTotal), abono: 0 },
-        { numero: 1121, descripcion: 'Descripción 2', cargo: 0, abono: 0 },
-        { numero: 1122, descripcion: 'Descripción 3', cargo: 0, abono: 0 }
-    ];
-
-    partidas.forEach((partida, index) => {
-        let partidaRow = worksheet.addRow(['', partida.numero, 0, partida.descripcion, '', partida.cargo, partida.abono]);
-        partidaRow.getCell(2).numFmt = '0'; // Asegura que sea un entero
-        partidaRow.getCell(6).numFmt = '#,##0.00'; // Formato de moneda para CARGO
-        partidaRow.getCell(7).numFmt = '#,##0.00'; // Formato de moneda para ABONO
-        partidaRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-        partidaRow.getCell(3).alignment = { horizontal: 'left', vertical: 'middle' };
-        partidaRow.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
-        partidaRow.getCell(7).alignment = { horizontal: 'center', vertical: 'middle' };
-    });
-
-    // Fila de fin de partidas sin negritas
-    const finPartidasRow = worksheet.addRow(['', 'FIN_PARTIDAS', '', '', '', '', '']);
-    finPartidasRow.font = { bold: false };
-
-    // Guardar el archivo Excel
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Poliza_Completa_Con_Formato.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
 }
 
 function initTable() {
@@ -372,8 +678,8 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "Estatus",
-                field: "Estatus",
+                title: colFinalizadaHeader,
+                field: "Finalizada",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -433,6 +739,106 @@ function initTable() {
         });
     })
 }
+
+function onCerrarConciliacionClick() {
+
+    // Muestra la confirmación antes de proceder
+    askConfirmation(
+        dlgFinishConTitle,
+        dlgMessageFinishConTitle,
+        function () {
+            // Ejecuta la validación
+            $("#theFormT").validate();
+            let valid = $("#theFormT").valid();
+            if (!valid) { return; }
+
+            // Obtén el valor del campo
+            let conciliacionId = document.getElementById("inpConciliacionId").value;
+            let dlgTitle = document.getElementById("dlgConciliacionTitle");
+            let summaryContainer = document.getElementById("saveValidationSummary");
+            summaryContainer.innerHTML = "";
+
+            // Configuración de los parámetros
+            let oParams = {
+                id: conciliacionId,
+                Finalizada: 1
+            };
+
+            doAjax(
+                "/ERP/Conciliaciones/FinalizarConciliaciones",
+                oParams,
+                function (resp) {
+                    if (resp.tieneError) {
+                        if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                            let summary = ``;
+                            resp.errores.forEach(function (error) {
+                                summary += `<li>${error}</li>`;
+                            });
+                            summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                            console.log("Respuesta:", resp);
+                        }
+                        showError(dlgTitle.innerHTML, resp.mensaje);
+                        return;
+                    }
+
+                    // Cierra el modal de conciliación
+                    let conciliacionModal = document.getElementById("dlgConciliacion");
+                    if (conciliacionModal) {
+                        let bootstrapModal = bootstrap.Modal.getInstance(conciliacionModal);
+                        if (bootstrapModal) {
+                            bootstrapModal.hide();
+                        }
+                    }
+                    
+                    initTable();
+
+                    showSuccess(dlgTitle.innerHTML, resp.mensaje);
+                }, function (error) {
+                    showError("Error", error);
+                },
+                putOptions
+            );
+        },
+        function () {
+            // Acción cancelada, puedes manejarlo si es necesario
+            console.log("Acción cancelada por el usuario.");
+        }
+    );
+}
+
+
+/*function onCerrarConciliacionClick() {
+    $.extend(postOptions, { type: 'POST', contentType: 'application/json' });
+
+    const conciliacionId = document.getElementById("inpConciliacionId").value;
+
+    if (!conciliacionId) {
+        showError(dlgFinishConTitle, "No se pudo obtener el ID de la conciliación.");
+        return;
+    }
+
+    // Crear un objeto con la clave `id`
+    let oParams = { id: parseInt(conciliacionId) };
+
+    console.log("Enviando oParams:", oParams);
+
+    doAjax(
+        "/ERP/Conciliaciones/finalizarConciliacion",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                showError(dlgFinishConTitle, resp.mensaje);
+                return;
+            }
+
+            showSuccess(dlgFinishConTitle, resp.mensaje);
+            document.querySelector("[name='refresh']").click();
+        },
+        function (error) {
+            showError(dlgFinishConTitle, error.responseText || error.statusText);
+        }
+    );
+}*/
 
 let cachedData = $('#tableCardComprobantes').bootstrapTable('getData');
 function initTableComprobantes() {
@@ -715,13 +1121,14 @@ function conciliarSeleccionadosComprobante(idComprobante, serie, folio, fechaCom
 
     if (selectedMovimientos.length > 0) {
         $('#tableResult').bootstrapTable('append', {
-            id: comprobanteSeleccionado.Id,
+            Id: comprobanteSeleccionado.Id,
             //idComprobante: comprobanteSeleccionado.Id,  // Guardar el idComprobante original
             Serie: comprobanteSeleccionado.Serie,
             Folio: comprobanteSeleccionado.Folio,
             Fecha: comprobanteSeleccionado.Fecha,
             Banco: selectedMovimientos[0].Banco,
-            Descripción: selectedMovimientos[0].Descripcion,
+            UUID: comprobanteSeleccionado.UUID,
+            //Receptor: comprobanteSeleccionado.Receptor ?? "Receptor no especificado",
             Total: parseFloat(comprobanteSeleccionado.Total).toFixed(2),
             UUID: uuid,
             movimientosConciliados: selectedMovimientos
@@ -764,7 +1171,7 @@ function desconciliarFormatter(value, row, index) {
     let disabled = row.bloqueado ? 'disabled' : '';
 
     return `
-        <center><button class="btn btn-danger btn-sm" onclick="desconciliar(${row.id}, '${row.Fecha}', '${row.Total}')" ${disabled}>
+        <center><button class="btn btn-danger btn-sm" onclick="desconciliar(${row.Id}, '${row.Fecha}', '${row.Total}')" ${disabled}>
             <i class=""></i> Desconciliar
         </button></center>
     `;
@@ -772,31 +1179,31 @@ function desconciliarFormatter(value, row, index) {
 
 
 //Desconciliar comprobante con movimientos y movimiento con comprobantes(unión de desconciliarMov y desconciliarComp)
-function desconciliar(id, fechaMovimiento, totalMovimiento) {
+function desconciliar(Id, fechaMovimiento, totalMovimiento) {
     // Obtener los datos actuales de `tableResult`
     let resultData = $('#tableResult').bootstrapTable('getData');
-    let itemEnResultado = resultData.find(row => row.id === String(id) || row.id === Number(id));
+    let itemEnResultado = resultData.find(row => row.Id === String(Id) || row.Id === Number(Id));
 
     // Obtener los datos de las tablas de movimientos y comprobantes
     let movimientosData = $('#tableCardMovimientos').bootstrapTable('getData');
     let comprobantesData = $('#tableCardComprobantes').bootstrapTable('getData');
 
     // Verificar si el ID es de un movimiento
-    let movimiento = movimientosData.find(mov => mov.Id == id);
+    let movimiento = movimientosData.find(mov => mov.Id == Id);
     if (movimiento) {
         // Lógica de desconciliación para movimientos
         movimiento.conciliado = false;
         movimiento.coincidencia = false;
         $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
-            id: movimiento.Id,
+            Id: movimiento.Id,
             row: movimiento
         });
         $(`#tableCardMovimientos tr[data-uniqueid="${movimiento.Id}"]`).removeClass("table-success");
 
         if (itemEnResultado) {
             $('#tableResult').bootstrapTable('remove', {
-                field: 'id',
-                values: [Number(id)]
+                field: 'Id',
+                values: [Number(Id)]
             });
             console.log("Movimiento eliminado de tableResult.");
             $('#tableResult').bootstrapTable('refresh');
@@ -810,7 +1217,7 @@ function desconciliar(id, fechaMovimiento, totalMovimiento) {
                     comprobanteEncontrado.conciliado = false;
                     comprobanteEncontrado.coincidencia = false;
                     $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
-                        id: comprobanteEncontrado.Id,
+                        Id: comprobanteEncontrado.Id,
                         row: comprobanteEncontrado
                     });
                     $(`#tableCardComprobantes tr[data-uniqueid="${comprobanteEncontrado.Id}"]`).removeClass("table-success");
@@ -822,21 +1229,21 @@ function desconciliar(id, fechaMovimiento, totalMovimiento) {
     }
 
     // Verificar si el ID es de un comprobante
-    let comprobante = comprobantesData.find(comp => comp.Id == id);
+    let comprobante = comprobantesData.find(comp => comp.Id == Id);
     if (comprobante) {
         // Lógica de desconciliación para comprobantes
         comprobante.conciliado = false;
         comprobante.coincidencia = false;
         $('#tableCardComprobantes').bootstrapTable('updateByUniqueId', {
-            id: comprobante.Id,
+            Id: comprobante.Id,
             row: comprobante
         });
         $(`#tableCardComprobantes tr[data-uniqueid="${comprobante.Id}"]`).removeClass("table-success");
 
         if (itemEnResultado) {
             $('#tableResult').bootstrapTable('remove', {
-                field: 'id',
-                values: [String(id)]
+                field: 'Id',
+                values: [String(Id)]
             });
             console.log("Comprobante eliminado de tableResult.");
             $('#tableResult').bootstrapTable('refresh');
@@ -850,7 +1257,7 @@ function desconciliar(id, fechaMovimiento, totalMovimiento) {
                     movimientoEncontrado.conciliado = false;
                     movimientoEncontrado.coincidencia = false;
                     $('#tableCardMovimientos').bootstrapTable('updateByUniqueId', {
-                        id: movimientoEncontrado.Id,
+                        Id: movimientoEncontrado.Id,
                         row: movimientoEncontrado
                     });
                     $(`#tableCardMovimientos tr[data-uniqueid="${movimientoEncontrado.Id}"]`).removeClass("table-success");
@@ -1754,6 +2161,7 @@ function initConciliacionDialog(action, row) {
     let botonConsultarComprobantes = document.getElementById("dlgConciliacionBtnFechas");
     let botonConsultarMovimientos = document.getElementById("dlgConciliacionBtnMovimientos");
     let botonConciliacionAsistida = document.getElementById("dlgConciliacionAsistidaBtn");
+    let botonFinalizarConciliacion = document.getElementById("dlgConciliacionBtnCerrar");
     let saveValidationSummary = document.getElementById("saveValidationSummary");
     saveValidationSummary.innerHTML = "";
 
@@ -1794,6 +2202,7 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.removeAttribute("disabled");
             botonConsultarMovimientos.removeAttribute("disabled");
             botonConciliacionAsistida.removeAttribute("disabled");
+            botonFinalizarConciliacion.removeAttribute("disabled");
 
             // Cargar comprobantes y movimientos solo en modo EDITAR
             obtenerRegistrosConciliadosEdit(row.id);
@@ -1808,6 +2217,7 @@ function initConciliacionDialog(action, row) {
             botonConsultarComprobantes.setAttribute("disabled", true);
             botonConsultarMovimientos.setAttribute("disabled", true);
             botonConciliacionAsistida.setAttribute("disabled", true);
+            botonFinalizarConciliacion.setAttribute("disabled", true);
 
             // Verificar si la tabla ya tiene datos antes de recargar
             obtenerRegistrosConciliados(row.id);
@@ -1865,7 +2275,7 @@ function obtenerRegistrosConciliados(conciliacionId) {
     $.extend(postOptions, { type: 'GET' });
 
     doAjax(
-        "/ERP/Conciliaciones/ComprobantesMovimientosList",
+        "/ERP/Conciliaciones/ProcessedConciliacionList",
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -1881,15 +2291,13 @@ function obtenerRegistrosConciliados(conciliacionId) {
 
             // Procesar los datos y extraer los arreglos de comprobantes, movimientos y conciliados
             //const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
-            const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
+            //const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
+            const { comprobantes, movimientos, conciliaciones } = JSON.parse(resp.datos);
 
             // Cargar los datos en las tablas correspondientes
             $('#tableCardComprobantes').bootstrapTable('load', comprobantes);
             $('#tableCardMovimientos').bootstrapTable('load', movimientos);
             $('#tableResult').bootstrapTable('load', conciliaciones);
-
-            //console.log("Comprobantes cargados:", comprobantes);
-            //console.log("Movimientos cargados:", movimientos);
 
         }, function (error) {
             showError("Error", error);
@@ -1897,102 +2305,6 @@ function obtenerRegistrosConciliados(conciliacionId) {
         postOptions
     );
 }
-
-function procesarDatosConciliados(datos) {
-    let parsedData;
-    try {
-        parsedData = JSON.parse(datos.value.datos);
-    } catch (error) {
-        console.error("Error al parsear los datos:", error);
-        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
-    }
-
-    let detalles = parsedData.detalles;
-
-    if (!Array.isArray(detalles)) {
-        console.error("La propiedad 'detalles' no existe o no es un arreglo.");
-        return { comprobantes: [], movimientos: [], resultados: [], conciliaciones: [] };
-    }
-
-    let comprobantes = [];
-    let movimientos = [];
-    let conciliaciones = [];
-    let idsConciliados = new Set();
-    let mapaMovimientos = {};
-
-    // Procesar detallesMovimientos y llenar el mapa de movimientos
-    detalles.forEach(detalle => {
-        if (Array.isArray(detalle.detallesMovimientos)) {
-            detalle.detallesMovimientos.forEach(movimiento => {
-                mapaMovimientos[movimiento.Id] = movimiento;
-
-                movimientos.push({
-                    Id: movimiento.Id,
-                    Fecha: movimiento.Fecha,
-                    Descripcion: movimiento.Descripción || "Sin descripción",
-                    Cargos: parseFloat(movimiento.Cargos) || 0,
-                    Abonos: parseFloat(movimiento.Abonos) || 0,
-                    Banco: movimiento.BancoId || "No especificado 1",
-                    bloqueado: true
-                });
-            });
-        }
-    });
-
-    // Procesar detallesComprobantes y asociar movimientos conciliados
-    detalles.forEach(detalle => {
-        if (Array.isArray(detalle.detallesComprobantes)) {
-            detalle.detallesComprobantes.forEach(comprobante => {
-                if (idsConciliados.has(comprobante.Id)) return;
-                idsConciliados.add(comprobante.Id);
-
-                // Buscar movimientos asociados a este comprobante
-                let movimientosConciliados = [];
-                if (Array.isArray(detalle.detallesMovimientos)) {
-                    detalle.detallesMovimientos.forEach(mov => {
-                        if (mov.Id) {
-                            movimientosConciliados.push({
-                                Id: mov.Id,
-                                Fecha: mov.Fecha,
-                                Banco: mov.BancoId || "No especificado 2",
-                                Descripcion: mov.Descripción || "Sin descripción",
-                                Cargos: parseFloat(mov.Cargos) || 0,
-                                Abonos: parseFloat(mov.Abonos) || 0,
-                                bloqueado: true // Marcar como bloqueado
-                            });
-                        }
-                    });
-                }
-
-                // Agregar comprobante con movimientos conciliados
-                comprobantes.push({
-                    Id: comprobante.Id,
-                    Serie: comprobante.Serie,
-                    Folio: comprobante.Folio,
-                    Fecha: comprobante.Fecha,
-                    UUID: comprobante?.Complemento?.TimbreFiscalDigital?.UUID || "UUID no disponible",
-                    Total: parseFloat(comprobante.Total) || 0,
-                    movimientosConciliados: movimientosConciliados,
-                    bloqueado: true // Marcar como bloqueado
-                });
-
-                // Añadir a conciliaciones para tableResult
-                conciliaciones.push({
-                    id: comprobante.Id,
-                    Serie: comprobante.Serie,
-                    Folio: comprobante.Folio,
-                    Fecha: comprobante.Fecha,
-                    Total: parseFloat(comprobante.Total) || 0,
-                    movimientosConciliados: movimientosConciliados,
-                    bloqueado: true // Marcar como bloqueado
-                });
-            });
-        }
-    });
-
-    return { comprobantes, movimientos, conciliaciones };
-}
-
 function obtenerRegistrosConciliadosEdit(conciliacionId) {
 
     // Limpiar las tablas antes de cargar nuevos datos
@@ -2004,7 +2316,7 @@ function obtenerRegistrosConciliadosEdit(conciliacionId) {
     $.extend(postOptions, { type: 'GET' });
 
     doAjax(
-        "/ERP/Conciliaciones/ComprobantesMovimientosList",
+        "/ERP/Conciliaciones/ProcessedConciliacionEditList",
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -2020,15 +2332,13 @@ function obtenerRegistrosConciliadosEdit(conciliacionId) {
 
             // Procesar los datos y extraer los arreglos de comprobantes, movimientos y conciliados
             //const { comprobantes, movimientos } = procesarDatosConciliados(resp.datos);
-            const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliadosEdit(resp.datos);
+            //const { comprobantes, movimientos, conciliaciones } = procesarDatosConciliados(resp.datos);
+            const { comprobantes, movimientos, conciliaciones } = JSON.parse(resp.datos);
 
             // Cargar los datos en las tablas correspondientes
             $('#tableCardComprobantes').bootstrapTable('load', comprobantes);
             $('#tableCardMovimientos').bootstrapTable('load', movimientos);
             $('#tableResult').bootstrapTable('load', conciliaciones);
-
-            //console.log("Comprobantes cargados:", comprobantes);
-            //console.log("Movimientos cargados:", movimientos);
 
         }, function (error) {
             showError("Error", error);
