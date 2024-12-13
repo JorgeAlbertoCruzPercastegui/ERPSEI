@@ -88,7 +88,8 @@
         ).Count >= 1;
         tieneReportesEmpresas = accesos.FindAll(m =>
             (
-                m.Modulo?.NombreNormalizado == "facturacion"
+                m.Modulo?.NombreNormalizado == "facturacion" ||
+                m.Modulo?.NombreNormalizado == "convertidorBancario"
             )
         ).Count >= 1;
 
@@ -414,7 +415,13 @@
                                                             @if (permisos["facturacion"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.OrganigramaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Facturacion">
-                                                                    <i class="bi bi-diagram-3-fill"></i> @Localizer["BillingReportMenu"]
+                                                                    <i class="bi bi-receipt"></i> @Localizer["BillingReportMenu"]
+                                                                </a>
+                                                            }
+                                                            @if (permisos["convertidorBancario"])
+                                                            {
+                                                                <a class="dropdown-item p-2 @_LayoutPages.OrganigramaNavClass(ViewContext)" asp-area="Reportes" asp-page="/ConvertidorBancario">
+                                                                    <i class="bi bi-piggy-bank"></i> @Localizer["BankConverterMenu"]
                                                                 </a>
                                                             }
                                                         </div>
