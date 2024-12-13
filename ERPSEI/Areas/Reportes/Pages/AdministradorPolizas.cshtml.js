@@ -11,10 +11,19 @@ const postOptions = {
     }
 };
 
-document.addEventListener("DOMContentLoaded", function (event) {
+document.addEventListener("DOMContentLoaded", function () {
     table = $("#table");
     initTable();
+
+    let btnBuscar = document.getElementById("btnBuscar");
+    if (btnBuscar) {
+        btnBuscar.addEventListener("click", onBuscarClick);
+        btnBuscar.click();
+    } else {
+        console.warn("El botón con id 'btnBuscar' no se encontró en el DOM.");
+    }
 });
+
 
 //Función para añadir botones a la cinta de botones de la tabla
 function additionalButtons() {
@@ -113,3 +122,47 @@ function initTable() {
         ]
     });
 }
+
+//Función para filtrar los datos de la tabla.
+function onBuscarClick() {
+    let btnBuscar = document.getElementById("btnBuscar");
+    let inpId = document.getElementById("inpFiltroId");
+    let inpUsuarioCreador = document.getElementById("inpFiltroUsuarioCreador");
+    let inpUsuarioModificador = document.getElementById("inpFiltroUsuarioModificador");
+    let inpFechaInicio = document.getElementById("inpFiltroFechaInicio");
+    let inpFechaFin = document.getElementById("inpFiltroFechaFin");
+
+    let oParams = {
+        Id: inpId.value ? parseInt(inpId.value) || null : null,
+        FechaCreacion: inpUsuarioCreador.value || null,
+        FechaModificacion: inpUsuarioModificador.value || null,
+        UsuarioCreador: inpFechaInicio.value || null,
+        UsuarioModificador: inpFechaFin.value || null
+    };
+
+    doAjax(
+        "/ERP/AdministradorPolizas/FiltrarPolizas",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError(btnBuscar.innerHTML, resp.mensaje);
+                return;
+            }
+
+            table.bootstrapTable('load', responseHandler(resp.datos));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+
+    // Resetea el valor de los filtros después de la solicitud.
+    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
+    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
+}
+
