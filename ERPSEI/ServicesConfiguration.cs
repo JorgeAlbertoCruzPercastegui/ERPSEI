@@ -191,12 +191,14 @@ namespace ERPSEI
 
         public static void ConfigureAuthorization(WebApplicationBuilder _builder) {
 			_builder.Services.AddAuthorizationBuilder()
-				.AddPolicy("AccessPolicy", policy => policy.Requirements.Add(new AccessRequirement()));
+				.AddPolicy("AccessPolicy", policy => policy.Requirements.Add(new AccessRequirement()))
+                .AddPolicy("EmpresasPolicy", policy => policy.Requirements.Add(new AccessRequirementEmpresas()));
 
-			_builder.Services.AddScoped<IAuthorizationHandler, AccessHandler>();
+            _builder.Services.AddScoped<IAuthorizationHandler, AccessHandler>();
+			_builder.Services.AddScoped<IAuthorizationHandler, AccessHandlerEmpresas>();
 		}
 
-        public static void ConfigurePagesAndLocalization(WebApplicationBuilder _builder)
+		public static void ConfigurePagesAndLocalization(WebApplicationBuilder _builder)
         {
             _builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
             _builder.Services.AddRazorPages()
