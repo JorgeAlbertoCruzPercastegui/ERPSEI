@@ -12,7 +12,7 @@ const EDITAR = 1;
 const VER = 2;
 const maxFileSizeInBytes = 5242880; //5mb = (5 * 1024) * 1024
 const oneMegabyteSizeInBytes = 1048576; // 1mb = (1 * 1024) * 1024
-const maxBanks = 5; // Máximo 5 registros de bancos.
+const maxBanks = 15; // Máximo 15 registros de bancos.
 const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
 //Función para inicializar el módulo.
