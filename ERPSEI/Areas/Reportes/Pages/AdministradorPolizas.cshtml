@@ -105,6 +105,76 @@
 	</thead>
 </table>
 
+<!-- Sección Ver Registro --- -->
+	<div id="dlgPoliza" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 id="dlgPolizaTitle" class="modal-title"></h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body align-items-center">
+					<div class="container-fluid">
+						<div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+						<div class="row">
+							<div class="col-3">
+								<div class="form-floating mb-3">
+									<input id="inpPolizaId" asp-for="InputFiltro.Id" type="text" class="form-control" />
+									<label asp-for="InputFiltro.Id" class="form-label"></label>
+									<span asp-validation-for="InputFiltro.Id" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-12">
+								<div class="form-floating mb-3">
+									<input id="inpPolizaUsuarioCreador" asp-for="InputFiltro.UsuarioCreador" type="text" class="form-control" placeholder="@Localizer["CreateUserField"]" />
+									<label asp-for="InputFiltro.UsuarioCreador" class="form-label required"></label>
+									<span asp-validation-for="InputFiltro.UsuarioCreador" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+					<div class="row">
+						<div class="col-12">
+							<div class="form-floating mb-3">
+								<input id="inpPolizaUsuarioModificador" asp-for="InputFiltro.UsuarioModificador" type="text" class="form-control" placeholder="@Localizer["ModifierUserField"]" />
+								<label asp-for="InputFiltro.UsuarioModificador" class="form-label required"></label>
+								<span asp-validation-for="InputFiltro.UsuarioModificador" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-12">
+							<div class="form-floating mb-3">
+								<input id="inpPolizaFechaCreacion" asp-for="InputFiltro.FechaInicio" type="text" class="form-control" placeholder="@Localizer["StartDateField"]" />
+								<label asp-for="InputFiltro.FechaInicio" class="form-label required"></label>
+								<span asp-validation-for="InputFiltro.FechaInicio" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-12">
+							<div class="form-floating mb-3">
+								<input id="inpPolizaFechaModificacion" asp-for="InputFiltro.FechaFin" type="text" class="form-control" placeholder="@Localizer["EndDateField"]" />
+								<label asp-for="InputFiltro.FechaFin" class="form-label required"></label>
+								<span asp-validation-for="InputFiltro.FechaFin" class="text-danger"></span>
+							</div>
+						</div>
+					</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button id="dlgPolizaBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+						<i class="bi bi-x-lg"></i> Cancelar
+					</button>
+					<button id="dlgPolizaBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+						<i class="bi bi-floppy"></i> Guardar
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 
 @section Scripts {
 	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">

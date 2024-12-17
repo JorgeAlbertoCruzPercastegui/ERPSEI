@@ -147,6 +147,12 @@
   <data name="CreateUserField" xml:space="preserve">
     <value>Usuario Creador</value>
   </data>
+  <data name="dlgPolizaBtnGuardar" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="dlgPolizaTitle" xml:space="preserve">
+    <value>Ver Registro</value>
+  </data>
   <data name="EndDateField" xml:space="preserve">
     <value>Fecha Fin</value>
   </data>
@@ -161,6 +167,12 @@
   </data>
   <data name="SearchButton" xml:space="preserve">
     <value>Buscar</value>
+  </data>
+  <data name="SeeButtonTitle" xml:space="preserve">
+    <value>Ver</value>
+  </data>
+  <data name="SeeDialogTitle" xml:space="preserve">
+    <value>Ver Registro</value>
   </data>
   <data name="StartDateField" xml:space="preserve">
     <value>Fecha Inicio</value>

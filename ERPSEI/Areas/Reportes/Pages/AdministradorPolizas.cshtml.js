@@ -26,6 +26,13 @@ const putOptions = {
 
 document.addEventListener("DOMContentLoaded", function () {
     table = $("#table");
+    dlg = document.getElementById('dlgPoliza');
+    dlgModal = new bootstrap.Modal(dlg, null);
+    //Función para limpiar el cuadro de diálogo cuando es cerrado
+    dlg.addEventListener('hidden.bs.modal', function (event) {
+        onCerrarClick();
+    });
+
     initTable();
     onObtenerRegistrosClick();
 });
@@ -65,8 +72,6 @@ function operateFormatter(value, row, index) {
 
     //Icono Ver
     icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
-    //Icono Editar
-    icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
 
     return `<div class="dropdown">
               <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -77,18 +82,10 @@ function operateFormatter(value, row, index) {
 }
 window.operateEvents = {
     'click .see': function (e, value, row, index) {
-        initPuestoDialog(VER, row);
-    },
-    'click .edit': function (e, value, row, index) {
-        initPuestoDialog(EDITAR, row);
-        //table.bootstrapTable('remove', {
-        //    field: 'id',
-        //    values: [row.id]
-        //})
+        initPolizaDialog(VER, row);
     }
 }
        
-
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
         height: 550,
@@ -228,6 +225,81 @@ function onObtenerRegistrosClick() {
         },
         getOptions
     );
+}
+
+//Funcionalidad Diálogo
+function initPolizaDialog(action, row) {
+    let polizaIdField = document.getElementById("inpPolizaId");
+    let polizaUsuarioCreadorField = document.getElementById("inpPolizaUsuarioCreador");
+    let polizaUsuarioModificadorField = document.getElementById("inpPolizaUsuarioModificador");
+    let polizaFechaCreacionField = document.getElementById("inpPolizaFechaCreacion");
+    let polizaFechaModificacionField = document.getElementById("inpPolizaFechaModificacion");
+    let btnGuardar = document.getElementById("dlgPolizaBtnGuardar");
+    let dlgTitle = document.getElementById("dlgPolizaTitle");
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    summaryContainer.innerHTML = "";
+
+    polizaIdField.setAttribute("disabled", true);
+    polizaUsuarioCreadorField.setAttribute("disabled", true);
+    polizaUsuarioModificadorField.setAttribute("disabled", true);
+    polizaFechaCreacionField.setAttribute("disabled", true);
+    polizaFechaModificacionField.setAttribute("disabled", true);
+
+    switch (action) {
+        case NUEVO:
+            dlgTitle.innerHTML = dlgNuevoTitle;
+
+            polizaUsuarioCreadorField.removeAttribute("disabled");
+            polizaUsuarioModificadorField.removeAttribute("disabled");
+            polizaFechaCreacionField.removeAttribute("disabled");
+            polizaFechaModificacionField.removeAttribute("disabled");
+            btnGuardar.removeAttribute("disabled");
+            break;
+        case EDITAR:
+            dlgTitle.innerHTML = dlgEditarTitle;
+
+            polizaUsuarioCreadorField.removeAttribute("disabled");
+            polizaUsuarioModificadorField.removeAttribute("disabled");
+            polizaFechaCreacionField.removeAttribute("disabled");
+            polizaFechaModificacionField.removeAttribute("disabled");
+            btnGuardar.removeAttribute("disabled");
+            break;
+        default:
+            dlgTitle.innerHTML = dlgVerTitle;
+
+            polizaUsuarioCreadorField.removeAttribute("disabled");
+            polizaUsuarioModificadorField.removeAttribute("disabled");
+            polizaFechaCreacionField.removeAttribute("disabled");
+            polizaFechaModificacionField.removeAttribute("disabled");
+
+            polizaUsuarioCreadorField.setAttribute("disabled", true);
+            polizaUsuarioModificadorField.setAttribute("disabled", true);
+            polizaFechaCreacionField.setAttribute("disabled", true);
+            polizaFechaModificacionField.setAttribute("disabled", true);
+            btnGuardar.setAttribute("disabled", true);
+            break;
+    }
+
+    polizaIdField.value = row.Id;
+    polizaUsuarioCreadorField.value = row.UsuarioCreador;
+    polizaUsuarioModificadorField.value = row.UsuarioModificador;
+    polizaFechaCreacionField.value = row.FechaHoraCreacion;
+    polizaFechaModificacionField.value = row.FechaHoraModificacion;
+
+    dlgModal.toggle();
+}
+function onCerrarClick() {
+    //Removes validation from input-fields
+    $('.input-validation-error').addClass('input-validation-valid');
+    $('.input-validation-error').removeClass('input-validation-error');
+    //Removes validation message after input-fields
+    $('.field-validation-error').addClass('field-validation-valid');
+    $('.field-validation-error').removeClass('field-validation-error');
+    //Removes validation summary 
+    $('.validation-summary-errors').addClass('validation-summary-valid');
+    $('.validation-summary-errors').removeClass('validation-summary-errors');
+    //Removes danger text from fields
+    $(".text-danger").children().remove()
 }
 
 
