@@ -1,4 +1,8 @@
 ﻿var table;
+var buttonRemove;
+var selections = [];
+var dlg = null;
+var dlgModal = null;
 
 const NUEVO = 0;
 const EDITAR = 1;
@@ -8,22 +12,36 @@ const oneMegabyteSizeInBytes = 1048576; // 1mb = (1 * 1024) * 1024
 const postOptions = {
     headers: {
         "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
-    }
+    },
+    type: 'POST'
+};
+const getOptions = {
+    headers: postOptions.headers,
+    type: 'GET'
+};
+const putOptions = {
+    headers: postOptions.headers,
+    type: 'PUT'
 };
 
 document.addEventListener("DOMContentLoaded", function () {
     table = $("#table");
     initTable();
-
-    let btnBuscar = document.getElementById("btnBuscar");
-    if (btnBuscar) {
-        btnBuscar.addEventListener("click", onBuscarClick);
-        btnBuscar.click();
-    } else {
-        console.warn("El botón con id 'btnBuscar' no se encontró en el DOM.");
-    }
+    onObtenerRegistrosClick();
 });
 
+//Función para procesar la respuesta del servidor al consultar datos
+function responseHandler(res) {
+    if (typeof res == "string" && res.length >= 1) {
+        res = JSON.parse(res);
+    }
+    $.each(res, function (i, row) {
+        row.state = $.inArray(row.id, selections) !== -1;
+
+    });
+
+    return res
+}
 
 //Función para añadir botones a la cinta de botones de la tabla
 function additionalButtons() {
@@ -41,12 +59,11 @@ function additionalButtons() {
     }
 }
 
-//Función para dar formato a los iconos de operación de los registros
 function operateFormatter(value, row, index) {
     let icons = [];
 
     //Icono Ver
-    //icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
+    icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
     //Icono Editar
     icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
 
@@ -56,6 +73,18 @@ function operateFormatter(value, row, index) {
               </button>
               <ul class="dropdown-menu">${icons.join("")}</ul>
             </div>`;
+}
+window.operateEvents = {
+    'click .see': function (e, value, row, index) {
+        initPuestoDialog(VER, row);
+    },
+    'click .edit': function (e, value, row, index) {
+        initPuestoDialog(EDITAR, row);
+        //table.bootstrapTable('remove', {
+        //    field: 'id',
+        //    values: [row.id]
+        //})
+    }
 }
        
 
@@ -134,14 +163,14 @@ function onBuscarClick() {
 
     let oParams = {
         Id: inpId.value ? parseInt(inpId.value) || null : null,
-        FechaCreacion: inpUsuarioCreador.value || null,
-        FechaModificacion: inpUsuarioModificador.value || null,
-        UsuarioCreador: inpFechaInicio.value || null,
-        UsuarioModificador: inpFechaFin.value || null
+        FechaCreacion: inpFechaInicio.value || null,
+        FechaModificacion: inpFechaFin.value || null,
+        UsuarioCreador: inpUsuarioCreador.value || null,
+        UsuarioModificador: inpUsuarioModificador.value || null
     };
 
     doAjax(
-        "/ERP/AdministradorPolizas/FiltrarPolizas",
+        "/Reportes/AdministradorPolizas/FiltrarPolizas",
         oParams,
         function (resp) {
             if (resp.tieneError) {
@@ -166,3 +195,24 @@ function onBuscarClick() {
     document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
 }
 
+function onObtenerRegistrosClick() {
+    doAjax(
+        "/Reportes/AdministradorPolizas/Polizas", // Endpoint para obtener los registros
+        null, // No se necesitan parámetros para obtener todos los registros
+        function (resp) {
+            console.log("Respuesta recibida:", resp);
+
+            if (resp.tieneError) {
+                showError("Error", resp.mensaje);
+                return;
+            }
+
+            // Cargar los datos en la tabla
+            table.bootstrapTable('load', responseHandler(resp.Datos));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        getOptions // Utiliza las opciones de tipo 'GET'
+    );
+}
