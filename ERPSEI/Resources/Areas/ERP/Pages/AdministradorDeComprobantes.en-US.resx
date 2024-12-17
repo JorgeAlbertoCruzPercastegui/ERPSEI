@@ -381,4 +381,13 @@
   <data name="DlgCuentasPolizaIngresosMessage" xml:space="preserve">
     <value>In order to generate the revenue policy, you need to assign an accounting account to each client on the list. Edit the accounting account by clicking on the corresponding cell and entering a value.</value>
   </data>
+  <data name="FooterShowing" xml:space="preserve">
+    <value>Showing</value>
+  </data>
+  <data name="FooterResults" xml:space="preserve">
+    <value>Result(s)</value>
+  </data>
+  <data name="FooterSelected" xml:space="preserve">
+    <value>Selected</value>
+  </data>
 </root>

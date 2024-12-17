@@ -364,6 +364,9 @@ function onComprobanteSelectionChanged() {
     if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
     selections = getIdSelections(table);
     let selectedRows = table.bootstrapTable('getSelections') || [];
+    let data = table.bootstrapTable('getData') || [];
+
+    $("#totalRowsInfo").text(`${footerShowing} ${data.length} ${footerResults} (${selectedRows.length} ${footerSelected})`);
 
     //Obtiene todos los comprobantes que no se han contabilizado
     unaccounted = $.map(selectedRows, function (row) { if (row.contabilizado == 0 && row.valido == 1 && row.cancelado == 0) { return row.id } }) || [];
@@ -846,6 +849,9 @@ function onBuscarClick() {
             }
 
             table.bootstrapTable('load', responseHandler(resp.datos));
+            let selectionsCount = table.bootstrapTable('getSelections').length;
+            let data = table.bootstrapTable('getData') || [];
+            $("#totalRowsInfo").text(`${footerShowing} ${data.length} ${footerResults} (${selectionsCount} ${footerSelected})`);
         }, function (error) {
             showError("Error", error);
         },
