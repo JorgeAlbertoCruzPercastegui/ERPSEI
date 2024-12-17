@@ -87,7 +87,6 @@ namespace ERPSEI.Areas.Reportes.Pages
 
 		public async Task<JsonResult> OnPostFiltrarPolizas()
 		{
-			// Inicializar la respuesta con mensaje de error por defecto
 			ServerResponse resp = new(true, stringLocalizer["PolizasFiltradosUnsuccessfully"]);
 
 			try
@@ -98,7 +97,6 @@ namespace ERPSEI.Areas.Reportes.Pages
 			}
 			catch (Exception ex)
 			{
-				// Registrar el error en el log
 				logger.LogError(ex.Message);
 			}
 
@@ -129,7 +127,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 				gruposPolizas = await _gruposPolizasManager.GetAllAsync();
 			}
 
-			// Construir el JSON con objetos anónimos
+			// Construir el JSON con objetos
 			foreach (GrupoPoliza grupo in gruposPolizas)
 			{
 				string usuarioCreador = grupo.UsuarioCreador?.Empleado?.NombreCompleto ?? grupo.UsuarioCreador?.UserName ?? "-";
@@ -137,10 +135,10 @@ namespace ERPSEI.Areas.Reportes.Pages
 
 				jsonPolizas.Add("{" +
 				$"\"Id\": \"{grupo.Id}\", " +
-				$"\"FechaCreacion\": \"{grupo.FechaHoraCreacion:dd/MM/yyyy HH:mm:ss}\", " +
-				$"\"FechaCreacionJS\": \"{grupo.FechaHoraCreacion:yyyy-MM-dd HH:mm:ss}\", " +
-				$"\"FechaModificacion\": \"{grupo.FechaHoraModificacion:dd/MM/yyyy HH:mm:ss}\", " +
-				$"\"FechaModificacionJS\": \"{grupo.FechaHoraModificacion:yyyy-MM-dd HH:mm:ss}\", " +
+				$"\"FechaHoraCreacion\": \"{grupo.FechaHoraCreacion:dd/MM/yyyy HH:mm:ss}\", " +
+				$"\"FechaHoraCreacionJS\": \"{grupo.FechaHoraCreacion:yyyy-MM-dd HH:mm:ss}\", " +
+				$"\"FechaHoraModificacion\": \"{grupo.FechaHoraModificacion:dd/MM/yyyy HH:mm:ss}\", " +
+				$"\"FechaHoraModificacionJS\": \"{grupo.FechaHoraModificacion:yyyy-MM-dd HH:mm:ss}\", " +
 				$"\"NumeroImpresion\": \"{grupo.NumeroImpresion}\", " +
 				$"\"UsuarioCreadorId\": \"{grupo.UsuarioCreadorId}\", " +
 				$"\"UsuarioCreador\": \"{usuarioCreador}\", " +
@@ -155,28 +153,25 @@ namespace ERPSEI.Areas.Reportes.Pages
 		}
 		public async Task<JsonResult> OnGetPolizas()
 		{
-			// Inicializar la respuesta con mensaje de error por defecto
 			ServerResponse resp = new(true, stringLocalizer["PolizasObtenidasUnsuccessfully"]);
 
 			try
 			{
-				var datos = await GetGrupoPolizasList();
-				resp.Datos = datos;
+				resp.Datos = await GetgrupoPolizasList();
 				resp.TieneError = false;
 				resp.Mensaje = stringLocalizer["PolizasObtenidasSuccessfully"];
 			}
 			catch (Exception ex)
 			{
-				// Registrar el error en el log
-				logger.LogError(ex, "Error al obtener las pólizas.");
+				logger.LogError(ex.Message);
 			}
 
 			return new JsonResult(resp);
 		}
 
-		public async Task<List<object>> GetGrupoPolizasList()
+		public async Task<JsonResult> GetgrupoPolizasList()
 		{
-			List<object> jsonGruposPolizas = new List<object>();
+			List<string> jsonGruposPolizas = new List<string>();
 			List<GrupoPoliza> gruposPolizas = await _gruposPolizasManager.GetAllAsync();
 
 			foreach (GrupoPoliza grupo in gruposPolizas)
@@ -184,26 +179,23 @@ namespace ERPSEI.Areas.Reportes.Pages
 				string usuarioCreador = grupo.UsuarioCreador?.Empleado?.NombreCompleto ?? grupo.UsuarioCreador?.UserName ?? "-";
 				string usuarioModificador = grupo.UsuarioModificador?.Empleado?.NombreCompleto ?? grupo.UsuarioModificador?.UserName ?? "-";
 
-				jsonGruposPolizas.Add(new
-				{
-					Id = grupo.Id,
-					FechaHoraCreacion = grupo.FechaHoraCreacion?.ToString("dd/MM/yyyy HH:mm:ss") ?? "-",
-					FechaHoraCreacionJS = grupo.FechaHoraCreacion?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-",
-					FechaHoraModificacion = grupo.FechaHoraModificacion?.ToString("dd/MM/yyyy HH:mm:ss") ?? "-",
-					FechaHoraModificacionJS = grupo.FechaHoraModificacion?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-",
-					NumeroImpresion = grupo.NumeroImpresion,
-					UsuarioCreadorId = grupo.UsuarioCreadorId,
-					UsuarioCreador = usuarioCreador,
-					UsuarioModificadorId = grupo.UsuarioModificadorId,
-					UsuarioModificador = usuarioModificador,
-					Deshabilitado = grupo.Deshabilitado
-				});
+				jsonGruposPolizas.Add("{" +
+				$"\"Id\": \"{grupo.Id}\", " +
+				$"\"FechaHoraCreacion\": \"{grupo.FechaHoraCreacion:dd/MM/yyyy HH:mm:ss}\", " +
+				$"\"FechaHoraCreacionJS\": \"{grupo.FechaHoraCreacion:yyyy-MM-dd HH:mm:ss}\", " +
+				$"\"FechaHoraModificacion\": \"{grupo.FechaHoraModificacion:dd/MM/yyyy HH:mm:ss}\", " +
+				$"\"FechaHoraModificacionJS\": \"{grupo.FechaHoraModificacion:yyyy-MM-dd HH:mm:ss}\", " +
+				$"\"NumeroImpresion\": \"{grupo.NumeroImpresion}\", " +
+				$"\"UsuarioCreadorId\": \"{grupo.UsuarioCreadorId}\", " +
+				$"\"UsuarioCreador\": \"{usuarioCreador}\", " +
+				$"\"UsuarioModificadorId\": \"{grupo.UsuarioModificadorId}\", " +
+				$"\"UsuarioModificador\": \"{usuarioModificador}\", " +
+				$"\"Deshabilitado\": \"{grupo.Deshabilitado}\"" +
+				"}");
 			}
 
-			return jsonGruposPolizas;
+			string jsonResponse = $"[{string.Join(",", jsonGruposPolizas)}]";
+			return new JsonResult(jsonResponse);
 		}
-
-
-
 	}
 }

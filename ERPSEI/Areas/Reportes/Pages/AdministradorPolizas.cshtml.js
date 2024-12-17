@@ -32,16 +32,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 //Función para procesar la respuesta del servidor al consultar datos
 function responseHandler(res) {
-    if (typeof res == "string" && res.length >= 1) {
+    if (typeof res === "string" && res.length >= 1) {
         res = JSON.parse(res);
     }
-    $.each(res, function (i, row) {
-        row.state = $.inArray(row.id, selections) !== -1;
 
+    $.each(res, function (i, row) {
+        row.state = $.inArray(row.Id, selections) !== -1;
     });
 
-    return res
+    return res;
 }
+
 
 //Función para añadir botones a la cinta de botones de la tabla
 function additionalButtons() {
@@ -89,7 +90,7 @@ window.operateEvents = {
        
 
 function initTable() {
-    $('#table').bootstrapTable('destroy').bootstrapTable({
+    table.bootstrapTable('destroy').bootstrapTable({
         height: 550,
         locale: cultureName,
         exportDataType: 'all',
@@ -106,14 +107,14 @@ function initTable() {
             },
             {
                 title: colFechaCreacionHeader,
-                field: "FechaCreacion",
+                field: "FechaHoraCreacion",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
                 title: colFechaModificacionHeader,
-                field: "FechaModificacion",
+                field: "FechaHoraModificacion",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -151,6 +152,7 @@ function initTable() {
         ]
     });
 }
+
 
 //Función para filtrar los datos de la tabla.
 function onBuscarClick() {
@@ -197,8 +199,8 @@ function onBuscarClick() {
 
 function onObtenerRegistrosClick() {
     doAjax(
-        "/Reportes/AdministradorPolizas/Polizas", // Endpoint para obtener los registros
-        null, // No se necesitan parámetros para obtener todos los registros
+        "/Reportes/AdministradorPolizas/Polizas",
+        null,
         function (resp) {
             console.log("Respuesta recibida:", resp);
 
@@ -207,12 +209,25 @@ function onObtenerRegistrosClick() {
                 return;
             }
 
-            // Cargar los datos en la tabla
-            table.bootstrapTable('load', responseHandler(resp.Datos));
+            // Extraer el valor de resp.datos
+            let datos = resp.datos && resp.datos.value ? resp.datos.value : [];
+
+            if (typeof datos === "string") {
+                datos = JSON.parse(datos);
+            }
+
+            // Asegúrate de que la tabla está inicializada antes de cargar los datos
+            if (!table.data('bootstrap.table')) {
+                table.bootstrapTable();
+            }
+
+            table.bootstrapTable('load', responseHandler(datos));
         },
         function (error) {
             showError("Error", error);
         },
-        getOptions // Utiliza las opciones de tipo 'GET'
+        getOptions
     );
 }
+
+
