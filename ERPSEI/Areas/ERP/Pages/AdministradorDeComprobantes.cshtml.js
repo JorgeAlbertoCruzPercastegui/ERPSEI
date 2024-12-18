@@ -755,18 +755,27 @@ function onValidarClick() {
         `/ERP/AdministradorDeComprobantes/ValidarComprobantes`,
         oParams,
         function (resp) {
-            if (resp.tieneError) {
-                showError(dlgExportTitle, resp.mensaje);
-                return;
-            }
-
             resp.datos = responseHandler(resp.datos)
 
-            resp.datos.forEach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: { valido: row.valido, cancelado: row.cancelado } }); });
+            if (resp.tieneError) {
+                if (resp.datos.length >= 1) {
+                    $.each(resp.datos, function (index, row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: { valido: row.valido, cancelado: row.cancelado } }); });
 
-            onComprobanteSelectionChanged();
+                    onComprobanteSelectionChanged();
 
-            showSuccess(dlgExportTitle, resp.mensaje);
+                    showAlert($("#btnBuscar").text(), resp.mensaje);
+                }
+                else {
+                    showError($("#btnBuscar").text(), resp.mensaje);
+                }
+            }
+            else {
+                $.each(resp.datos, function (index, row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: { valido: row.valido, cancelado: row.cancelado } }); });
+
+                onComprobanteSelectionChanged();
+
+                showSuccess(dlgExportTitle, resp.mensaje);
+            }
         }, function (error) {
             showError(dlgExportTitle, error);
         },

@@ -1170,38 +1170,64 @@ namespace ERPSEI.Areas.ERP.Pages
 			return resp;
 		}
 
-		public async Task<JsonResult> OnPostValidarComprobantes(string[] ids)
+		public async Task<JsonResult> OnPostValidarComprobantes(List<string> ids)
 		{
 			ServerResponse resp = new(true, localizer["ComprobantesValidatedUnsuccessfully"]);
 			List<Comprobante> comprobantes = [];
+			List<Task> tasks = [];
 			if (PuedeTodo || PuedeConsultar)
 			{
 				try
 				{
 					ConsultaCFDIServiceClient wsConsultaEstatus = new();
+
+					//Se obtienen los comprobantes de la base de datos.
 					foreach (string id in ids)
 					{
 						_ = int.TryParse(id, out int idComprobante);
 
-						//Se timbra la prefactura
-						ServerResponse respValidacion = new(true, localizer["ComprobanteValidatedUnsuccessfully"] + $" {idComprobante}");
 						if (idComprobante >= 1)
 						{
 							//Obtiene los datos del comprobante
 							Comprobante? c = await comprobanteManager.GetValidatableComprobanteByIdAsync(idComprobante);
 
-							if (c != null){ 
-								respValidacion = await ValidarComprobante(c, wsConsultaEstatus);
-								if (!respValidacion.TieneError) { comprobantes.Add(c); }
-							}
-
-							if (respValidacion.TieneError){ resp.Errores.AddRange(respValidacion.Errores); }
+							if (c != null){ comprobantes.Add(c); } else { resp.Errores = [.. resp.Errores.Append(localizer["ComprobanteNotFound", idComprobante])]; }
+						}
+						else
+						{
+							resp.Errores = [.. resp.Errores.Append(localizer["ComprobanteIdInvalid", idComprobante])];
 						}
 					}
 
-					resp.Datos = CreateJsonComprobantes(comprobantes);
-					resp.TieneError = false;
-					resp.Mensaje = localizer["ComprobantesValidatedSuccessfully"];
+					//Valida cada uno de los comprobantes en paralelo.
+					List<Comprobante> comprobantesCorrectos = [];
+					foreach (Comprobante c in comprobantes)
+					{
+						tasks.Add(
+							Task.Run(() => {
+								ServerResponse respValidacion = new(true, localizer["ComprobanteValidatedUnsuccessfully", $"Id: {c.Id}"]);
+								respValidacion = ValidarComprobante(c, wsConsultaEstatus);
+								if (respValidacion.TieneError) { resp.Errores = [.. resp.Errores.Append(respValidacion.Mensaje)]; } else { comprobantesCorrectos.Add(c); }
+							})
+						);
+					}
+
+					if (tasks.Count >= 1) { Task.WaitAll([..tasks]); }
+
+					//Actualiza estatus de comprobantes en base de datos.
+					//await comprobanteManager.UpdateMultipleAsync(comprobantes);
+
+					resp.Datos = CreateJsonComprobantes(comprobantesCorrectos);
+					resp.TieneError = resp.Errores.Length >= 1;
+					if(resp.Errores.Length >= 1)
+					{
+						resp.Mensaje = localizer["ComprobantesValidatedUnsuccessfully", $"<br><br><ul><li>{string.Join("</li><li>", resp.Errores)}</li></ul>"];
+						if(comprobantesCorrectos.Count >= 1) { resp.Mensaje += "<br></br>" + localizer["ComprobantesValidatedSuccessfully", comprobantesCorrectos.Count]; }
+					}
+					else
+					{
+						resp.Mensaje = localizer["ComprobantesValidatedSuccessfully", comprobantes.Count];
+					}
 				}
 				catch (Exception ex)
 				{
@@ -1217,35 +1243,31 @@ namespace ERPSEI.Areas.ERP.Pages
 
 			return new JsonResult(resp);
 		}
-		private async Task<ServerResponse> ValidarComprobante(Comprobante comprobante, ConsultaCFDIServiceClient wsConsultaEstatus)
+		private ServerResponse ValidarComprobante(Comprobante comprobante, ConsultaCFDIServiceClient wsConsultaEstatus)
 		{
-			ServerResponse resp = new(true, localizer["ComprobanteValidatedUnsuccessfully"]);
+			ServerResponse resp = new(true, localizer["ComprobanteValidatedUnsuccessfully", $"Id: {comprobante.Id}"]);
 			try
 			{
 				string peticion = $"?re={comprobante.Emisor?.Rfc?.ToUpper()}&rr={comprobante.Receptor?.Rfc?.ToUpper()}&tt={comprobante.Total}&id={comprobante.Complemento?.TimbreFiscalDigital?.UUID?.ToUpper()}&fe={comprobante.Sello}";
-				Acuse a = await wsConsultaEstatus.ConsultaAsync(peticion);
+				Acuse a = wsConsultaEstatus.ConsultaAsync(peticion).Result;
 				if(a.CodigoEstatus.Contains("Comprobante obtenido satisfactoriamente", StringComparison.InvariantCultureIgnoreCase))
 				{
 					comprobante.Cancelado = a.Estado == "Cancelado";
 					comprobante.Valido = a.Estado == "Vigente";
 
-					//Actualiza su estatus en base de datos.
-					await comprobanteManager.UpdateAsync(comprobante);
-
 					//Devuelve mensaje correcto de validación.
 					resp.TieneError = false;
-					resp.Errores = [];
 					resp.Mensaje = localizer["ComprobanteValidatedSuccessfully"];
 				}
 				else
 				{
-					resp.Mensaje = a.CodigoEstatus;
+					resp.Mensaje = localizer["ComprobanteValidatedUnsuccessfully", $"Id: {comprobante.Id}, CodStatus: {a.CodigoEstatus}, Status: {a.Estado}"];
 				}
 			}
 			catch (Exception ex)
 			{
-				//Devuelve el error en el timbrado.
-				resp.Errores = [.. resp.Errores.Append(ex.Message)];
+				//Devuelve el error en la validación.
+				resp.Mensaje = ex.Message;
 			}
 
 			return resp;

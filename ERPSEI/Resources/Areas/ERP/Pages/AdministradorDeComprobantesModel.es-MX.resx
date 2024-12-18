@@ -145,16 +145,16 @@
     <value>Error al exportar los comprobantes</value>
   </data>
   <data name="ComprobantesValidatedSuccessfully" xml:space="preserve">
-    <value>¡Comprobantes validados satisfactoriamente!</value>
+    <value>¡{0} Comprobantes validados satisfactoriamente!</value>
   </data>
   <data name="ComprobantesValidatedUnsuccessfully" xml:space="preserve">
-    <value>Error al validar los comprobantes</value>
+    <value>Error al validar los comprobantes. {0}</value>
   </data>
   <data name="ComprobanteValidatedSuccessfully" xml:space="preserve">
     <value>¡Comprobante validado satisfactoriamente!</value>
   </data>
   <data name="ComprobanteValidatedUnsuccessfully" xml:space="preserve">
-    <value>Error al validar el comprobante</value>
+    <value>Error al validar el comprobante. {0}</value>
   </data>
   <data name="PolizaNoCreada" xml:space="preserve">
     <value>No se pudo generar la póliza.</value>
@@ -197,5 +197,11 @@
   </data>
   <data name="ComprobantesInvalidos" xml:space="preserve">
     <value>Hay {0} comprobante(s) inválido(s) (Ids: {1}).</value>
+  </data>
+  <data name="ComprobanteNotFound" xml:space="preserve">
+    <value>No se encontró el comprobante Id {0} en la base de datos.</value>
+  </data>
+  <data name="ComprobanteIdInvalid" xml:space="preserve">
+    <value>El identificador de comprobante {0} es inválido.</value>
   </data>
 </root>
