@@ -1215,7 +1215,7 @@ namespace ERPSEI.Areas.ERP.Pages
 					if (tasks.Count >= 1) { Task.WaitAll([..tasks]); }
 
 					//Actualiza estatus de comprobantes en base de datos.
-					//await comprobanteManager.UpdateMultipleAsync(comprobantes);
+					await comprobanteManager.UpdateMultipleAsync(comprobantes);
 
 					resp.Datos = CreateJsonComprobantes(comprobantesCorrectos);
 					resp.TieneError = resp.Errores.Length >= 1;
