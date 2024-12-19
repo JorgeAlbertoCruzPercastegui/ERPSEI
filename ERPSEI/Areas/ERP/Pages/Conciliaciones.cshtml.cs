@@ -24,6 +24,9 @@ using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Managers.Cuentas;
 using Newtonsoft.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
+using ERPSEI.Data.Managers.Usuarios;
+using ERPSEI.Data.Entities.Polizas;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -41,6 +44,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly IMovimientoBancarioManager movimientoBancarioManager;
         private readonly IEmpresaManager empresaManager;
         private readonly IEmpleadoManager _empleadoManager;
+        private readonly AppUserManager appUserManager;
         private readonly IComprobanteManager comprobanteManager;
         private readonly IStringLocalizer<ConciliacionesModel> localizer;
 
@@ -182,6 +186,7 @@ namespace ERPSEI.Areas.ERP.Pages
             IMovimientoBancarioManager _movimientoBancarioManager,
             IEmpresaManager _empresaManager,
             IEmpleadoManager empleadoManager,
+            AppUserManager _appUserManager,
             IComprobanteManager _comprobanteManager,
             IStringLocalizer<ConciliacionesModel> _localizer,
             Data.ApplicationDbContext _db
@@ -198,6 +203,7 @@ namespace ERPSEI.Areas.ERP.Pages
             movimientoBancarioManager = _movimientoBancarioManager;
             empresaManager = _empresaManager;
             _empleadoManager = empleadoManager;
+            appUserManager = _appUserManager;
             comprobanteManager = _comprobanteManager;
             localizer = _localizer;
             db = _db;
@@ -215,7 +221,21 @@ namespace ERPSEI.Areas.ERP.Pages
             ServerResponse resp = new(true, localizer["ExportExcelUnsuccessfully"]);
             try
             {
-                resp.Datos = await GetExportarExcel(id);
+                var usuarioActual = HttpContext?.User.Identity?.Name;
+                var user = await appUserManager.FindByNameAsync(usuarioActual);
+                var nombreUsuario = user?.UserName ?? "Usuario Desconocido";
+                var idUser = user?.Id;
+
+                // Llamar a CrearGrupoPoliza solo una vez
+                var registroCreado = await CrearGrupoPoliza(idUser, nombreUsuario);
+
+                if (!registroCreado)
+                {
+                    resp.Mensaje = "Error al guardar la información en la base de datos.";
+                    return new JsonResult(resp);
+                }
+
+                resp.Datos = await GetExportarExcel(id, HttpContext);
                 resp.TieneError = false;
                 resp.Mensaje = localizer["ExportExcelSuccessfully"];
             }
@@ -228,7 +248,7 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<List<object>> GetExportarExcel(int conciliacionId)
+        public async Task<List<object>> GetExportarExcel(int conciliacionId, HttpContext httpContext)
         {
             try
             {
@@ -237,6 +257,12 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 // Crear una lista para almacenar los datos del Excel
                 var datosExcel = new List<object>();
+
+                // Obtener el nombre del usuario actual desde AspNetUsers
+                var usuarioActual = httpContext?.User.Identity?.Name;
+                var user = await appUserManager.FindByNameAsync(usuarioActual);
+                var nombreUsuario = user?.UserName ?? "Usuario Desconocido";
+                var idUser = user?.Id;
 
                 // Recorrer los detalles de la conciliación y preparar los datos
                 foreach (var detalle in conciliacion.DetallesConciliacion)
@@ -285,7 +311,17 @@ namespace ERPSEI.Areas.ERP.Pages
                                         NombreEmisor = nombreEmisor,
                                         CuentaBancariaOption = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
                                         CuentaBancariaVista = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
-                                        CuentaBancariaExcel = string.Join(", ", cuentasContablesBanc.Select(c => c.Cuenta))
+                                        CuentaBancariaExcel = string.Join(", ", cuentasContablesBanc.Select(c => c.Cuenta)),
+
+                                        // Información del usuario logueado para GrupoPoliza
+                                        UsuarioLogueado = nombreUsuario,
+                                        IdUsuarioCreador = idUser,
+                                        IdUsuarioModificador = idUser,
+                                        FechaHoraCreacion = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                                        FechaHoraModificacion = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                                        NumeroImpresion = 1,
+                                        Deshabilitado = 0
+
 
                                     });
                         }
@@ -299,6 +335,54 @@ namespace ERPSEI.Areas.ERP.Pages
                 logger.LogError("{message}", ex.Message);
                 return null;
             }
+        }
+
+        public async Task<bool> CrearGrupoPoliza(string usuarioId, string nombreUsuario)
+        {
+            try
+            {
+                // Verificar si ya existe un registro con el mismo UsuarioCreadorId y fecha actual
+                /*var hoy = DateTime.Now.Date;
+                var existePoliza = await db.GruposPolizas
+                    .AnyAsync(g => g.UsuarioCreadorId == usuarioId && g.FechaHoraCreacion.HasValue && g.FechaHoraCreacion.Value.Date == hoy);
+
+                if (existePoliza)
+                {
+                    logger.LogWarning("Ya existe un registro de GrupoPoliza para el usuario actual en la fecha de hoy.");
+                    return true; // Evitar duplicar el registro
+                }*/
+
+                // Crear una nueva instancia de GrupoPoliza
+                var grupoPoliza = new GrupoPoliza
+                {
+                    Id = await GenerarNuevoIdAsync(),
+                    UsuarioCreadorId = usuarioId,
+                    UsuarioModificadorId = usuarioId,
+                    FechaHoraCreacion = DateTime.Now,
+                    FechaHoraModificacion = DateTime.Now,
+                    NumeroImpresion = 1,
+                    Deshabilitado = false
+                };
+
+                // Agregar el nuevo registro al contexto
+                db.GruposPolizas.Add(grupoPoliza);
+
+                // Guardar los cambios en la base de datos
+                await db.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("{message}", ex.Message);
+                return false;
+            }
+        }
+
+        private async Task<int> GenerarNuevoIdAsync()
+        {
+            var maxId = await db.GruposPolizas.MaxAsync(g => (int?)g.Id) ?? 0;
+            return maxId + 1;
         }
 
         public async Task<JsonResult> OnGetConciliacionesList()

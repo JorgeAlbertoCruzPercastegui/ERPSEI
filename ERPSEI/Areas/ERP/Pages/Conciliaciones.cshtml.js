@@ -245,10 +245,11 @@ async function exportarAExcel(conciliacionId) {
     let oParams = { id: conciliacionId };
     $.extend(postOptions, { type: 'GET' });
 
-    let dlgTitle = "Resultado de exportación de excel";
+    let dlgTitle = "Resultado de exportación de Excel";
     let saveValidationSummary = document.getElementById("saveValidationSummary");
     saveValidationSummary.innerHTML = "";
 
+    // Realizar la llamada AJAX para almacenar la información en la base de datos
     doAjax(
         "/ERP/Conciliaciones/ExportarExcel",
         oParams,
@@ -257,150 +258,12 @@ async function exportarAExcel(conciliacionId) {
                 showError("Error, favor de revisar", resp.mensaje);
                 return;
             }
+            // Cerrar el modal
+            let modal = bootstrap.Modal.getInstance(document.getElementById('modalAsignacionCuentas'));
+            if (modal) modal.hide();
 
-            const ExcelJS = window.ExcelJS;
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Conciliación');
-
-            // Ajustes en el diseño inicial
-            worksheet.getCell('A3').value = 'lg';
-            worksheet.getCell('A3').font = { bold: true };
-            worksheet.getCell('B3').value = 1;
-            worksheet.getCell('B3').font = { bold: true };
-
-            // Recopila las cuentas contables ingresadas
-            const cuentasContables = obtenerCuentasContables(); // Asegúrate de que esta función capture los valores correctamente
-            console.log("Cuentas a exportar:", cuentasContables);
-
-            // Genera el Excel usando las cuentas contables
-            cuentasContables.forEach((cuenta, index) => {
-                const row = 7 + index; // Empieza en la fila 7
-                worksheet.getCell(`B${row}`).value = cuenta.substring(0, 12);; // Coloca la cuenta en la columna B
-            });
-
-            // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
-            const fechaEmisor = resp.datos.length > 0 ? resp.datos[0].fecha : 'N/A';
-            const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
-            worksheet.getCell('D3').value = dia;
-            worksheet.getCell('D3').font = { bold: true };
-
-            // Obtener el nombre del receptor, serie y folio
-            const nombreReceptor = resp.datos.length > 0 ? resp.datos[0].nombreReceptor : 'N/A';
-            const serie = resp.datos.length > 0 ? resp.datos[0].serie : 'N/A';
-            const folio = resp.datos.length > 0 ? resp.datos[0].folio : 'N/A';
-
-            // Concatenar el nombre del receptor con la serie y el folio
-            const nombreCompleto = `${nombreReceptor} ${serie}-F-${folio}`;
-
-            // Asignar el nombre concatenado a las celdas D4, D5, D6 y D7
-            ['D4', 'D5', 'D6', 'D7'].forEach(cell => {
-                worksheet.getCell(cell).value = nombreCompleto;
-            });
-
-            // Concatenar "INGRESOS" con el nombre del receptor, la serie y el folio
-            const ingresosTexto = `INGRESOS ${nombreReceptor} ${serie}-F-${folio}`;
-            worksheet.getCell('C3').value = ingresosTexto;
-            worksheet.getCell('C3').font = { bold: true };
-
-            // Aplicar color azul claro a las celdas A3 y B3
-            const lightBlue = 'CCECFF';
-            worksheet.getCell('A3').fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FF45C9ED' }
-            };
-            worksheet.getCell('B3').fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FF45C9ED' }
-            };
-
-            // Colocar texto en las celdas B5 y B6
-            worksheet.getCell('B5').value = '2180-001-000';
-            worksheet.getCell('B6').value = '2181-001-000';
-            worksheet.getCell('B8').value = 'FIN_PARTIDAS';
-
-            // Colocar el valor de CuentaContable en la celda B4
-            const cuentaContable = resp.datos.length > 0 ? resp.datos[0].cuentaContable : 'N/A';
-            worksheet.getCell('B4').value = cuentaContable; // Asignar valor al Excel
-
-
-            // Colocar el número 0 en las celdas C4, C5, C6 y C7, centrado
-            ['C4', 'C5', 'C6', 'C7'].forEach(cell => {
-                worksheet.getCell(cell).value = 0;
-                worksheet.getCell(cell).alignment = { horizontal: 'center' };
-            });
-
-            // Texto "CARGO" y "ABONO" en negritas
-            worksheet.getCell('F3').value = 'CARGO';
-            worksheet.getCell('F3').font = { bold: true };
-            worksheet.getCell('G3').value = 'ABONO';
-            worksheet.getCell('G3').font = { bold: true };
-
-            // Calcular el total de los cargos y colocarlo en la celda F4
-            const datos = Array.isArray(resp.datos) ? resp.datos : [];
-            const totalCargos = datos.reduce((sum, dato) => sum + (dato.cargos || 0), 0);
-            worksheet.getCell('F4').value = totalCargos;
-            
-            // Obtener el TotalImpuestosTrasladados desde los datos del modelo
-            const totalImpuestosTrasladados = resp.datos.length > 0 ? resp.datos[0].totalImpuestosTrasladados : 0;
-
-            // Asignar el valor de TotalImpuestosTrasladados en las celdas G5 y F6
-            worksheet.getCell('G5').value = totalImpuestosTrasladados;
-            worksheet.getCell('F6').value = totalImpuestosTrasladados;
-            
-            // Colocar el cargo del movimiento en la celda G7
-            worksheet.getCell('G7').value = datos.length > 0 ? datos[0].cargos : 0;
-
-            // Validar si hay datos para exportar
-            if (datos.length === 0) {
-                showError("Exportación Fallida", "No se encontraron datos para exportar.");
-                return;
-            }
-
-            // Definir las columnas del Excel
-            worksheet.columns = [
-                { header: '', key: 'cliente', width: 5 },
-                { header: '', key: 'comprobanteId', width: 15 },
-                { header: '', key: 'serie', width: 50 },
-                { header: '', key: 'folio', width: 38 },
-                { header: '', key: 'total', width: 3 },
-                { header: '', key: 'movimientoId', width: 15 },
-                { header: '', key: 'descripcionMovimiento', width: 15 },
-                { header: '', key: 'cargos', width: 15 }
-            ];
-
-            // Agregar los datos al Excel
-            /*datos.forEach((dato) => {
-                worksheet.addRow({
-                    cliente: dato.cliente,
-                    comprobanteId: dato.comprobanteId,
-                    serie: dato.serie,
-                    folio: dato.folio,
-                    total: dato.total,
-                    movimientoId: dato.movimientoId,
-                    descripcionMovimiento: dato.descripcionMovimiento,
-                    cargos: dato.cargos
-                });
-            });*/
-
-            // Crear el archivo Excel y descargarlo
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `Conciliacion_${conciliacionId}.xlsx`;
-            link.click();
-            URL.revokeObjectURL(link.href);
-
-            // Cerrar el modal de selección de cuenta bancaria
-            $('#modalAsignacionCuentas').modal('hide');
-
-            // Mostrar el modal de confirmación con el mensaje
-            //$('#modalConciliacionMensaje').text('El archivo Excel se exportó correctamente.');
-            //$('#modalConciliacion').modal('show');
-            showSuccess(dlgTitle, resp.mensaje);
-
+            // Llamar a la función para generar y descargar el Excel si el almacenamiento fue exitoso
+            await generarExcel(resp.datos, conciliacionId, dlgTitle, resp.mensaje);
         },
         function (error) {
             showError("Error", "No se pudo exportar a Excel.");
@@ -408,6 +271,127 @@ async function exportarAExcel(conciliacionId) {
         postOptions
     );
 }
+
+async function generarExcel(datos, conciliacionId, dlgTitle, mensaje) {
+    const ExcelJS = window.ExcelJS;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Conciliación');
+
+    // Ajustes en el diseño inicial
+    worksheet.getCell('A3').value = 'lg';
+    worksheet.getCell('A3').font = { bold: true };
+    worksheet.getCell('B3').value = 1;
+    worksheet.getCell('B3').font = { bold: true };
+
+    // Recopila las cuentas contables ingresadas
+    const cuentasContables = obtenerCuentasContables();
+    console.log("Cuentas a exportar:", cuentasContables);
+
+    // Genera el Excel usando las cuentas contables
+    cuentasContables.forEach((cuenta, index) => {
+        const row = 7 + index; // Empieza en la fila 7
+        worksheet.getCell(`B${row}`).value = cuenta.substring(0, 12);
+    });
+
+    // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
+    const fechaEmisor = datos.length > 0 ? datos[0].fecha : 'N/A';
+    const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
+    worksheet.getCell('D3').value = dia;
+    worksheet.getCell('D3').font = { bold: true };
+
+    // Obtener el nombre del receptor, serie y folio
+    const nombreReceptor = datos.length > 0 ? datos[0].nombreReceptor : 'N/A';
+    const serie = datos.length > 0 ? datos[0].serie : 'N/A';
+    const folio = datos.length > 0 ? datos[0].folio : 'N/A';
+
+    // Concatenar el nombre del receptor con la serie y el folio
+    const nombreCompleto = `${nombreReceptor} ${serie}-F-${folio}`;
+    ['D4', 'D5', 'D6', 'D7'].forEach(cell => {
+        worksheet.getCell(cell).value = nombreCompleto;
+    });
+
+    // Concatenar "INGRESOS" con el nombre del receptor, la serie y el folio
+    const ingresosTexto = `INGRESOS ${nombreReceptor} ${serie}-F-${folio}`;
+    worksheet.getCell('C3').value = ingresosTexto;
+    worksheet.getCell('C3').font = { bold: true };
+
+    // Aplicar color azul claro a las celdas A3 y B3
+    worksheet.getCell('A3').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF45C9ED' }
+    };
+    worksheet.getCell('B3').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF45C9ED' }
+    };
+
+    // Colocar texto en las celdas B5 y B6
+    worksheet.getCell('B5').value = '2180-001-000';
+    worksheet.getCell('B6').value = '2181-001-000';
+    worksheet.getCell('B8').value = 'FIN_PARTIDAS';
+
+    // Colocar el valor de CuentaContable en la celda B4
+    const cuentaContable = datos.length > 0 ? datos[0].cuentaContable : 'N/A';
+    worksheet.getCell('B4').value = cuentaContable;
+
+    // Colocar el número 0 en las celdas C4, C5, C6 y C7, centrado
+    ['C4', 'C5', 'C6', 'C7'].forEach(cell => {
+        worksheet.getCell(cell).value = 0;
+        worksheet.getCell(cell).alignment = { horizontal: 'center' };
+    });
+
+    // Texto "CARGO" y "ABONO" en negritas
+    worksheet.getCell('F3').value = 'CARGO';
+    worksheet.getCell('F3').font = { bold: true };
+    worksheet.getCell('G3').value = 'ABONO';
+    worksheet.getCell('G3').font = { bold: true };
+
+    // Calcular el total de los cargos y colocarlo en la celda F4
+    const totalCargos = datos.reduce((sum, dato) => sum + (dato.cargos || 0), 0);
+    worksheet.getCell('F4').value = totalCargos;
+
+    // Obtener el TotalImpuestosTrasladados desde los datos
+    const totalImpuestosTrasladados = datos.length > 0 ? datos[0].totalImpuestosTrasladados : 0;
+    worksheet.getCell('G5').value = totalImpuestosTrasladados;
+    worksheet.getCell('F6').value = totalImpuestosTrasladados;
+
+    // Colocar el cargo del movimiento en la celda G7
+    worksheet.getCell('G7').value = datos.length > 0 ? datos[0].cargos : 0;
+
+    // Validar si hay datos para exportar
+    if (datos.length === 0) {
+        showError("Exportación Fallida", "No se encontraron datos para exportar.");
+        return;
+    }
+
+    // Definir las columnas del Excel
+    worksheet.columns = [
+        { header: '', key: 'cliente', width: 5 },
+        { header: '', key: 'comprobanteId', width: 15 },
+        { header: '', key: 'serie', width: 50 },
+        { header: '', key: 'folio', width: 38 },
+        { header: '', key: 'total', width: 3 },
+        { header: '', key: 'movimientoId', width: 15 },
+        { header: '', key: 'descripcionMovimiento', width: 15 },
+        { header: '', key: 'cargos', width: 15 }
+    ];
+
+    // Crear el archivo Excel y descargarlo
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Conciliacion_${conciliacionId}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+
+    // Mostrar mensaje de éxito
+    showSuccess(dlgTitle, mensaje);
+}
+
+
 function obtenerCuentasContables() {
     const cuentas = [];
     $('#modalAsignacionCuentasBody').find('tr').each(function () {
@@ -417,47 +401,6 @@ function obtenerCuentasContables() {
     });
     return cuentas;
 }
-
-/*async function ObtenerDatosCliente() {
-    const conciliacionId = document.getElementById('btnGenerarPoliza').getAttribute('data-id');
-
-    if (!conciliacionId) {
-        showError("Exportación Fallida", "ID de conciliación no válido.");
-        return;
-    }
-
-    let oParams = { id: conciliacionId };
-    $.extend(getOptions, { type: 'GET' });
-
-    doAjax(
-        "/ERP/Conciliaciones/obtenerDatosCliente",
-        oParams,
-        async function (resp) {
-            if (resp.tieneError) {
-                showError("Error, favor de revisar", resp.mensaje);
-                return;
-            }
-            if (resp.datos && resp.datos.length > 0) {
-                const htmlRows = resp.datos.map(row => `
-        <tr>
-            <td>${row.cliente || 'N/A'}</td>
-            <td>${row.rfc || 'N/A'}</td>
-            <td>
-                <a href="#" class="text-danger" onclick="editarCuentaContable(event, this)">Seleccione...</a>
-            </td>
-        </tr>
-    `).join('');
-                $('#modalAsignacionCuentasBody').html(htmlRows);
-            } else {
-                $('#modalAsignacionCuentasBody').html('<tr><td colspan="3">No hay datos disponibles</td></tr>');
-            }
-        },
-        function (error) {
-            showError("Error", "No se pudo obtener el registro.");
-        },
-        getOptions
-    );
-}*/
 
 async function ObtenerDatosClienteRFC(conciliacionId) {
     let oParams = { id: conciliacionId };

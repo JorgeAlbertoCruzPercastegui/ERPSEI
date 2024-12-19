@@ -303,6 +303,10 @@
   <data name="ImportButtonTitle" xml:space="preserve">
     <value>Importar</value>
   </data>
+  <data name="MensajeBancos" xml:space="preserve">
+    <value>Para poder generar el Excel, es necesario que asigne una cuenta bancaria a cada elemento del listado.
+Edite la cuenta bancaria haciendo clic sobre la celda correspondiente e introduzca un valor para buscar la cuenta.</value>
+  </data>
   <data name="MessageFinishConDialogTitle" xml:space="preserve">
     <value>¿Estás seguro de que deseas finalizar la conciliación?</value>
   </data>

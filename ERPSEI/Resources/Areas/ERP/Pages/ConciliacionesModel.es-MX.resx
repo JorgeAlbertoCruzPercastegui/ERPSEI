@@ -126,4 +126,8 @@
   <data name="ExportExcelSuccessfully" xml:space="preserve">
     <value>Excel exportado exitosamente</value>
   </data>
+  <data name="MensajeBancos" xml:space="preserve">
+    <value>Para poder generar el Excel, es necesario que asigne una cuenta bancaria a cada elemento del listado.
+Edite la cuenta bancaria haciendo clic sobre la celda correspondiente e introduzca un valor para buscar la cuenta.</value>
+  </data>
 </root>
