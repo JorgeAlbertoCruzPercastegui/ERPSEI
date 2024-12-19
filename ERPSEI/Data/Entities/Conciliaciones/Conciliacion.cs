@@ -24,6 +24,7 @@ namespace ERPSEI.Data.Entities.Conciliaciones
         public string? UsuarioModificadorId { get; set; } = string.Empty;
         public AppUser? UsuarioModificador { get; set; }
         public bool Finalizada { get; set; }
+        public bool PolizaGenerada { get; set; }
         public ICollection<ConciliacionDetalle>? DetallesConciliacion { get; set; } = [];
         public bool Deshabilitado { get; set; }
     }
