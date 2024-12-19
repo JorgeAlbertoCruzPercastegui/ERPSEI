@@ -518,7 +518,6 @@ async function ObtenerDatosClienteRFC(conciliacionId) {
     );
 }
 
-
 function guardarCuentaContable(boton) {
     const td = boton.parentElement.parentElement; // Obtén el <td> contenedor
     const input = td.querySelector('input'); // Obtén el input
@@ -556,7 +555,6 @@ function editarCuentaDesdeLink(event, link, conciliacionId) {
     `;
 }
 
-
 function editarCuentaContable(boton) {
     const td = boton.parentElement; // Obtén el <td> contenedor
     const valorActual = td.querySelector('span').textContent.trim(); // Obtén el valor actual
@@ -574,7 +572,6 @@ function editarCuentaContable(boton) {
         </div>
     `;
 }
-
 
 function actualizarCuenta(span) {
     const nuevoValor = span.textContent.trim(); // Obtén el texto editado
@@ -805,40 +802,6 @@ function onCerrarConciliacionClick() {
         }
     );
 }
-
-
-/*function onCerrarConciliacionClick() {
-    $.extend(postOptions, { type: 'POST', contentType: 'application/json' });
-
-    const conciliacionId = document.getElementById("inpConciliacionId").value;
-
-    if (!conciliacionId) {
-        showError(dlgFinishConTitle, "No se pudo obtener el ID de la conciliación.");
-        return;
-    }
-
-    // Crear un objeto con la clave `id`
-    let oParams = { id: parseInt(conciliacionId) };
-
-    console.log("Enviando oParams:", oParams);
-
-    doAjax(
-        "/ERP/Conciliaciones/finalizarConciliacion",
-        oParams,
-        function (resp) {
-            if (resp.tieneError) {
-                showError(dlgFinishConTitle, resp.mensaje);
-                return;
-            }
-
-            showSuccess(dlgFinishConTitle, resp.mensaje);
-            document.querySelector("[name='refresh']").click();
-        },
-        function (error) {
-            showError(dlgFinishConTitle, error.responseText || error.statusText);
-        }
-    );
-}*/
 
 let cachedData = $('#tableCardComprobantes').bootstrapTable('getData');
 function initTableComprobantes() {
@@ -1176,7 +1139,6 @@ function desconciliarFormatter(value, row, index) {
         </button></center>
     `;
 }
-
 
 //Desconciliar comprobante con movimientos y movimiento con comprobantes(unión de desconciliarMov y desconciliarComp)
 function desconciliar(Id, fechaMovimiento, totalMovimiento) {
@@ -2441,7 +2403,6 @@ function procesarDatosConciliadosEdit(datos) {
     return { comprobantes, movimientos, conciliaciones };
 }
 
-
 function onGuardarClick() {
     $("#theFormT").validate();
     let valid = $("#theFormT").valid();
@@ -2791,7 +2752,6 @@ function importarMovimientosDesdeExcel(file, selectedBank) {
     // Leer el archivo Excel
     reader.readAsArrayBuffer(file);
 }
-
 
 function importarMovimientosDesdePDF(file, selectedBank) {
     var reader = new FileReader();

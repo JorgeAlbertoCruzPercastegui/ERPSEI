@@ -3,6 +3,7 @@ using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
 using ERPSEI.Data.Entities.Usuarios;
+using ERPSEI.Data.Managers.AdministradorPolizas;
 using ERPSEI.Data.Managers.Cuentas;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Managers.SAT.cfdiv40;
@@ -21,6 +22,10 @@ using NuGet.Packaging;
 using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using WS_SAT_ConsultaEstatusCFDI;
+using ERPSEI.Data.Entities.Polizas;
+using ERPSEI.Data.Managers.Polizas;
+using ERPSEI.Data.Managers.AdministradorPolizas;
+using System.Text.RegularExpressions;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -33,6 +38,7 @@ namespace ERPSEI.Areas.ERP.Pages
 			IComprobanteReceptorManager comprobanteReceptorManager,
 			IComprobanteManager comprobanteManager,
 			ICuentaContableManager cuentaContableManager,
+			IGruposPolizasManager gruposPolizas,
 			IStringLocalizer<AdministradorDeComprobantesModel> localizer,
 			ILogger<AdministradorDeComprobantesModel> logger,
 			IEncriptacionAES encriptacionAES
@@ -438,6 +444,37 @@ namespace ERPSEI.Areas.ERP.Pages
 			return jsonResponse;
 		}
 
+		public async Task<JsonResult> OnPostSaveGrupoPoliza()
+		{
+			ServerResponse resp = new(true, localizer["PolicySavedUnsuccessfully"]);
+
+			try
+			{
+					// Crear una nueva instancia de GrupoPoliza con los GUID correctos
+					GrupoPoliza poliza = new GrupoPoliza
+					{
+						UsuarioCreadorId = Guid.Parse("d9cec426-9633-4319-8b97-e6d35fa2ac36").ToString(),
+						UsuarioModificadorId = Guid.Parse("84fc78bb-f3a7-4719-a289-07361651d85e").ToString(),
+						FechaHoraCreacion = DateTime.Now,
+						FechaHoraModificacion = DateTime.Now,
+						NumeroImpresion = 1,
+						Deshabilitado = false
+					};
+
+					await gruposPolizas.CreateAsync(poliza);
+
+					resp.TieneError = false;
+					resp.Mensaje = localizer["PolicySavedSuccessfully"];
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex.Message);
+				resp.Mensaje = localizer["AnErrorOccurred"];
+			}
+
+			return new JsonResult(resp);
+		}
+
 		private static string JsonEscape(string str)
 		{
 			return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t").Replace("\"", "\\\"");
@@ -465,17 +502,33 @@ namespace ERPSEI.Areas.ERP.Pages
 							resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
 							break;
 						case (int)TipoExportacion.PolizaIngresos:
-							if(PuedeTodo || PuedeEditar)
+							if (PuedeTodo || PuedeEditar)
 							{
-								resp.Datos = await CreateExcelPolizaIngresos(ids, cuentasClientesGuardables);
-								resp.TieneError = false;
-								resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
+								// Llamar al método OnPostSaveGrupoPoliza y esperar su resultado
+								var savePolizaResult = await OnPostSaveGrupoPoliza();
+
+								// Verificar si hubo errores al guardar la póliza
+								if (savePolizaResult.Value is ServerResponse savePolizaResp && !savePolizaResp.TieneError)
+								{
+									// Si guardar la póliza fue exitoso, proceder con la exportación
+									resp.Datos = await CreateExcelPolizaIngresos(ids, cuentasClientesGuardables);
+									resp.TieneError = false;
+									resp.Mensaje = localizer["ComprobantesExportedSuccessfully"];
+								}
+								else
+								{
+									// Si hubo un error al guardar la póliza, asignar el mensaje de error
+									//resp.Mensaje = savePolizaResp?.Mensaje ?? localizer["PolicySaveFailed"];
+									resp.TieneError = true;
+								}
 							}
 							else
 							{
 								resp.Mensaje = localizer["AccesoDenegado"];
+								resp.TieneError = true;
 							}
 							break;
+
 						case (int)TipoExportacion.PolizaEgresos:
 							if (PuedeTodo || PuedeEditar)
 							{
