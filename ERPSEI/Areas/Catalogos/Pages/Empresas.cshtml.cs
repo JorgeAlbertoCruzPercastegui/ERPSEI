@@ -45,6 +45,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 		protected bool PuedeEliminarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeEliminarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
 		protected bool PuedeAutorizarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeAutorizarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
 
+		private const int MAX_BANCOS = 15;
+
 		[BindProperty]
 		public FiltroModel InputFiltro { get; set; } = new FiltroModel();
 
@@ -676,6 +678,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 {
                     idEmpresa = empresa.Id;
 
+					//Se toma solo el número de bancos permitidos.
+					e.Bancos = [..e.Bancos.Take(MAX_BANCOS)];
+
                     //Valida la información de bancos
                     foreach (BancoModel? b in e.Bancos)
                     {
@@ -727,6 +732,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				//Se busca empresa por id
 				Empresa? empresa = await _empresaManager.GetByIdAsync(e.Id);
 
+				//Se toma solo el número de bancos permitidos.
+				if (e.Bancos != null && e.Bancos.Length >= 1) { e.Bancos = [.. e.Bancos.Take(MAX_BANCOS)]; }
+
 				//Si se encontró empresa, obtiene su Id del registro existente. 
 				if (empresa != null) { 
 					idEmpresa = empresa.Id;
@@ -734,7 +742,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					if (accesoBancos)
 					{
 						//Valida la información de bancos
-						foreach (BancoModel? b in e.Bancos)
+						foreach (BancoModel? b in e.Bancos ?? [])
 						{
 							if (b != null && InputEmpresa.NivelId != null)
 							{
@@ -835,7 +843,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				if(accesoBancos)
 				{
 					//Crea los bancos de la empresa
-					foreach (BancoModel? b in e.Bancos)
+					foreach (BancoModel? b in e.Bancos ?? [])
 					{
 						if(b != null)
 						{

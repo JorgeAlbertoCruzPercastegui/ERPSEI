@@ -28,6 +28,7 @@ using ERPSEI.Data.Managers.Clientes;
 using ERPSEI.Data.Managers.Cuentas;
 using ERPSEI.Data.Managers.AdministradorPolizas;
 using ERPSEI.Data.Managers.Polizas;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace ERPSEI
 {
@@ -262,6 +263,14 @@ namespace ERPSEI
                 options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("es-MX");
                 options.SupportedUICultures = supportedCultures;
                 options.SupportedCultures = supportedCultures;
+            });
+        }
+
+        public static void ConfigureFormOptions(WebApplicationBuilder _builder)
+        {
+            _builder.Services.Configure<FormOptions>(options =>
+            {
+                options.ValueCountLimit = 10000;
             });
         }
     }

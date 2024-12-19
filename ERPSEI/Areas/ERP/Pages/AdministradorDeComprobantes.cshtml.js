@@ -364,6 +364,9 @@ function onComprobanteSelectionChanged() {
     if (buttonAcciones) { buttonAcciones.prop('disabled', !table.bootstrapTable('getSelections').length) }
     selections = getIdSelections(table);
     let selectedRows = table.bootstrapTable('getSelections') || [];
+    let data = table.bootstrapTable('getData') || [];
+
+    $("#totalRowsInfo").text(`${footerShowing} ${data.length} ${footerResults} (${selectedRows.length} ${footerSelected})`);
 
     //Obtiene todos los comprobantes que no se han contabilizado
     unaccounted = $.map(selectedRows, function (row) { if (row.contabilizado == 0 && row.valido == 1 && row.cancelado == 0) { return row.id } }) || [];
@@ -752,18 +755,27 @@ function onValidarClick() {
         `/ERP/AdministradorDeComprobantes/ValidarComprobantes`,
         oParams,
         function (resp) {
-            if (resp.tieneError) {
-                showError(dlgExportTitle, resp.mensaje);
-                return;
-            }
-
             resp.datos = responseHandler(resp.datos)
 
-            resp.datos.forEach(function (row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: { valido: row.valido, cancelado: row.cancelado } }); });
+            if (resp.tieneError) {
+                if (resp.datos.length >= 1) {
+                    $.each(resp.datos, function (index, row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: { valido: row.valido, cancelado: row.cancelado } }); });
 
-            onComprobanteSelectionChanged();
+                    onComprobanteSelectionChanged();
 
-            showSuccess(dlgExportTitle, resp.mensaje);
+                    showAlert($("#btnBuscar").text(), resp.mensaje);
+                }
+                else {
+                    showError($("#btnBuscar").text(), resp.mensaje);
+                }
+            }
+            else {
+                $.each(resp.datos, function (index, row) { table.bootstrapTable('updateByUniqueId', { id: row.id, row: { valido: row.valido, cancelado: row.cancelado } }); });
+
+                onComprobanteSelectionChanged();
+
+                showSuccess(dlgExportTitle, resp.mensaje);
+            }
         }, function (error) {
             showError(dlgExportTitle, error);
         },
@@ -846,6 +858,9 @@ function onBuscarClick() {
             }
 
             table.bootstrapTable('load', responseHandler(resp.datos));
+            let selectionsCount = table.bootstrapTable('getSelections').length;
+            let data = table.bootstrapTable('getData') || [];
+            $("#totalRowsInfo").text(`${footerShowing} ${data.length} ${footerResults} (${selectionsCount} ${footerSelected})`);
         }, function (error) {
             showError("Error", error);
         },

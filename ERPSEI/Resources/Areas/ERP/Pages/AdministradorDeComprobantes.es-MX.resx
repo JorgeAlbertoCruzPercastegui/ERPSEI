@@ -381,4 +381,13 @@
   <data name="DlgCuentasPolizaIngresosMessage" xml:space="preserve">
     <value>Para poder generar la póliza de ingresos, es necesario que asigne una cuenta contable a cada cliente del listado. Edite la cuenta contable haciendo clic sobre la celda correspondiente e introduzca un valor.</value>
   </data>
+  <data name="FooterShowing" xml:space="preserve">
+    <value>Mostrando</value>
+  </data>
+  <data name="FooterResults" xml:space="preserve">
+    <value>Resultado(s)</value>
+  </data>
+  <data name="FooterSelected" xml:space="preserve">
+    <value>Seleccionado(s)</value>
+  </data>
 </root>

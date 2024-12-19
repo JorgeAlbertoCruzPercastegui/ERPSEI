@@ -118,87 +118,90 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AccesoDenegado" xml:space="preserve">
-    <value>Access denied</value>
+    <value />
   </data>
   <data name="ConsultadoSuccessfully" xml:space="preserve">
-    <value>Successful information query!</value>
+    <value />
   </data>
   <data name="ConsultadoUnsuccessfully" xml:space="preserve">
-    <value>Error querying information</value>
+    <value />
   </data>
   <data name="ComprobanteCancelledSuccessfully" xml:space="preserve">
-    <value>Invoice successfully cancelled!</value>
+    <value />
   </data>
   <data name="ComprobanteCancelledUnsuccessfully" xml:space="preserve">
-    <value>Error canceling invoice</value>
+    <value />
   </data>
   <data name="ComprobantesCancelledSuccessfully" xml:space="preserve">
-    <value>Invoices successfully cancelled!</value>
+    <value />
   </data>
   <data name="ComprobantesCancelledUnsuccessfully" xml:space="preserve">
-    <value>Error canceling invoices</value>
+    <value />
   </data>
   <data name="ComprobantesExportedSuccessfully" xml:space="preserve">
-    <value>Invoices successfully exported!</value>
+    <value />
   </data>
   <data name="ComprobantesExportedUnsuccessfully" xml:space="preserve">
-    <value>Error exporting invoices</value>
+    <value />
   </data>
   <data name="ComprobantesValidatedSuccessfully" xml:space="preserve">
-    <value>{0} Invoices successfully validated!</value>
+    <value />
   </data>
   <data name="ComprobantesValidatedUnsuccessfully" xml:space="preserve">
-    <value>Error validating invoices. {0}</value>
+    <value />
   </data>
   <data name="ComprobanteValidatedSuccessfully" xml:space="preserve">
-    <value>Invoice successfully validated!</value>
+    <value />
   </data>
   <data name="ComprobanteValidatedUnsuccessfully" xml:space="preserve">
-    <value>Error validating invoice. {0}</value>
+    <value />
   </data>
   <data name="PolizaNoCreada" xml:space="preserve">
-    <value>The policy could not be generated.</value>
+    <value />
   </data>
   <data name="ComprobantesSinCuentaContable" xml:space="preserve">
-    <value>Accounting account for {0} customer(s) not found (Customer(s): {1}).</value>
+    <value />
   </data>
   <data name="SinCuentaContableGasto" xml:space="preserve">
-    <value>Expense accounting account not found</value>
+    <value />
   </data>
   <data name="SinCuentaContableProveedor" xml:space="preserve">
-    <value>Supplier accounting account not found</value>
+    <value />
   </data>
   <data name="SinCuentasContables" xml:space="preserve">
-    <value>No accounting accounts were found.</value>
+    <value />
   </data>
   <data name="SinCuentasContablesIVAEgreso" xml:space="preserve">
-    <value>No IVA accounting accounts to be credited and IVA creditable were found.</value>
+    <value />
   </data>
   <data name="SinCuentasContablesIVAIngreso" xml:space="preserve">
-    <value>No accounting accounts were found for IVA Not Collected and IVA Collected.</value>
+    <value />
   </data>
   <data name="SinCuentasContablesVentas" xml:space="preserve">
-    <value>No sales accounting accounts were found.</value>
+    <value />
   </data>
   <data name="NoWorkbookCreated" xml:space="preserve">
-    <value>No excel workbook created</value>
+    <value />
   </data>
   <data name="ComprobantesContabilizados" xml:space="preserve">
-    <value>There are {0} accounted voucher(s) (Ids: {1}).</value>
+    <value />
   </data>
   <data name="ComprobantesNoEncontrados" xml:space="preserve">
-    <value>There are {0} voucher(s) not found (Ids: {1}).</value>
+    <value />
   </data>
   <data name="ErrorBuscandoComprobantes" xml:space="preserve">
-    <value>Error searching for invoice(s).</value>
+    <value />
   </data>
   <data name="ComprobantesCancelados" xml:space="preserve">
-    <value>There are {0} cancelled voucher(s) (Ids: {1}).</value>
+    <value />
   </data>
   <data name="ComprobantesInvalidos" xml:space="preserve">
-    <value>There are {0} invalid voucher(s) (Ids: {1}).</value>
+    <value />
   </data>
   <data name="ComprobanteNotFound" xml:space="preserve">
-    <value>The invoice Id {0} was not found in the database.</value>
+    <value />
+  </data>
+  <data name="ComprobanteIdInvalid" xml:space="preserve">
+    <value />
   </data>
 </root>

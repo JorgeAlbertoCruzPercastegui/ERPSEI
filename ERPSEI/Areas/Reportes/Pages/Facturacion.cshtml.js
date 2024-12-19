@@ -140,6 +140,14 @@ function CreatePerfilesPieChart(labelValues, pueValues, ppdValues, prefacturadoV
                 display: true,
                 text: `Facturación del Perfil ${$("#selFiltroPerfil option:selected").text()}`
             },
+            tooltip: {
+                position: "nearest",
+                callbacks: {
+                    label: function (context) {
+                        return `$${numFormatter.format(context.raw)}`;
+                    }
+                }
+            }
         }
     };
 
@@ -463,6 +471,7 @@ function onBuscarClick() {
                     let nivelSelected = resp.datos.Empresas.NivelesValues[i] || sinNivelSelectItemText;
                     if ((perfilSelected).length >= 1) { titles.push(`Perfil: ${perfilSelected}`); }
                     if ((nivelSelected).length >= 1) { titles.push(`Nivel: ${nivelSelected}`); }
+                    titles.push(`PUE + PPD: $${numFormatter.format(parseFloat(resp.datos.Empresas.PUEValues[i] || 0) + parseFloat(resp.datos.Empresas.PPDValues[i]||0))}`);
 
                     let config = {
                         type: 'bar',

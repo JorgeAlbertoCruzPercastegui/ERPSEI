@@ -313,12 +313,10 @@
 	   data-show-columns-toggle-all="true"
 	   data-click-to-select="true"
 	   data-minimum-count-columns="2"
-	   data-show-pagination-switch="true"
-	   data-pagination="true"
+	   data-show-pagination-switch="false"
+	   data-pagination="false"
 	   data-id-field="id"
-	   data-page-list="[10, 25, 50, 100, all]"
 	   data-show-footer="false"
-	   data-side-pagination="client"
 	   data-response-handler="responseHandler"
 	   data-buttons-class="primary"
 	   data-row-style="rowStyle">
@@ -327,6 +325,7 @@
 		</tr>
 	</thead>
 </table>
+<span id="totalRowsInfo">@Localizer["FooterShowing"] 0 @Localizer["FooterResults"] (0 @Localizer["FooterSelected"])</span>
 <!-- --------------------------- -->
 <!-- --------------------------- -->
 
@@ -400,6 +399,10 @@
 		var colClaveProdServHeader = '@Localizer["ColClaveProdServHeader"]';
 		var colDescripcionHeader = '@Localizer["ColDescripcionHeader"]';
 		var colImporteHeader = '@Localizer["ColImporteHeader"]';
+
+		var footerShowing = '@Localizer["FooterShowing"]';
+		var footerResults = '@Localizer["FooterResults"]';
+		var footerSelected = '@Localizer["FooterSelected"]';
 
 		var tooltipCancelado = '@Localizer["TooltipCancelado"]';
 		var tooltipValido = '@Localizer["TooltipValido"]';
