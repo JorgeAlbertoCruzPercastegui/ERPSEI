@@ -27,6 +27,8 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Data.Entities.Polizas;
+using ERPSEI.Data.Managers.Polizas;
+using ERPSEI.Data.Managers.AdministradorPolizas;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -45,6 +47,8 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly IEmpresaManager empresaManager;
         private readonly IEmpleadoManager _empleadoManager;
         private readonly AppUserManager appUserManager;
+        private readonly IPolizasTipos polizasTipos;
+        private readonly IPolizasManager polizasManager;
         private readonly IComprobanteManager comprobanteManager;
         private readonly IStringLocalizer<ConciliacionesModel> localizer;
 
@@ -187,6 +191,8 @@ namespace ERPSEI.Areas.ERP.Pages
             IEmpresaManager _empresaManager,
             IEmpleadoManager empleadoManager,
             AppUserManager _appUserManager,
+            IPolizasTipos _polizasTipos,
+            IPolizasManager _polizasManager,
             IComprobanteManager _comprobanteManager,
             IStringLocalizer<ConciliacionesModel> _localizer,
             Data.ApplicationDbContext _db
@@ -204,6 +210,8 @@ namespace ERPSEI.Areas.ERP.Pages
             empresaManager = _empresaManager;
             _empleadoManager = empleadoManager;
             appUserManager = _appUserManager;
+            polizasTipos = _polizasTipos;
+            polizasManager = _polizasManager;
             comprobanteManager = _comprobanteManager;
             localizer = _localizer;
             db = _db;
@@ -264,6 +272,18 @@ namespace ERPSEI.Areas.ERP.Pages
                 var nombreUsuario = user?.UserName ?? "Usuario Desconocido";
                 var idUser = user?.Id;
 
+                // Obtener la lista de PolizaTipos
+                var polizaTipos = await ObtenerPolizaTiposAsync();
+
+                // Crear el registro en GrupoPoliza y obtener su Id
+                var idGrupoPoliza = await ObtenerGrupoPolizaId(idUser);
+
+                // Verificar si se creó correctamente el registro
+                if (idGrupoPoliza == null)
+                {
+                    throw new Exception("No se pudo crear el registro de GrupoPoliza.");
+                }
+
                 // Recorrer los detalles de la conciliación y preparar los datos
                 foreach (var detalle in conciliacion.DetallesConciliacion)
                 {
@@ -271,6 +291,9 @@ namespace ERPSEI.Areas.ERP.Pages
                     {
                         // Obtener el TotalImpuestosTrasladados del comprobante
                         var totalImpuestosTrasladados = await conciliacionManager.GetTotalImpuestosTrasladadosAsync(comprobante.Comprobante?.Impuestos?.Id);
+
+                        // Obtener la lista de VPolizas
+                        var vPolizas = await ObtenerVPolizasAsync();
 
                         // Obtener los datos del receptor
                         var rfcReceptor = comprobante.Comprobante?.Receptor?.Rfc ?? "N/A";
@@ -312,16 +335,41 @@ namespace ERPSEI.Areas.ERP.Pages
                                         CuentaBancariaOption = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
                                         CuentaBancariaVista = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
                                         CuentaBancariaExcel = string.Join(", ", cuentasContablesBanc.Select(c => c.Cuenta)),
+                                        TipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A",
 
                                         // Información del usuario logueado para GrupoPoliza
+                                        IdGrupoPoliza = idGrupoPoliza,
                                         UsuarioLogueado = nombreUsuario,
                                         IdUsuarioCreador = idUser,
                                         IdUsuarioModificador = idUser,
                                         FechaHoraCreacion = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                                         FechaHoraModificacion = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                                         NumeroImpresion = 1,
-                                        Deshabilitado = 0
+                                        Deshabilitado = 0,
 
+                                        // Información de PolizaTipo
+                                        PolizaTipos = polizaTipos.Select(pt => new
+                                        {
+                                             pt.Id,
+                                             pt.Descripcion,
+                                             pt.Deshabilitado
+                                        }),
+                                        
+                                        //Informacion de la PolizaTipo del registro seleccionado
+
+                                        //Información Poliza
+                                        VPolizas = vPolizas.Select(vp => new
+                                        {
+                                            vp.Id,
+                                            vp.GrupoId,
+                                            vp.TipoId,
+                                            vp.FechaHora,
+                                            vp.Concepto
+                                        }),
+
+                                        //Informacion de la Poliza del registro seleccionado
+                                        PolizaGrupoId = idGrupoPoliza,
+                                        //PolizaTipoId = Aqui va a ir una comparacion del resultado de TipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A", contra el registro que coincida con PolizaTipo y tomar el ID, por ejemplo si es I, sera igual a Ingreso y se tomara el identidicador de ese Ingreso de la tabla.
 
                                     });
                         }
@@ -342,7 +390,7 @@ namespace ERPSEI.Areas.ERP.Pages
             try
             {
                 // Verificar si ya existe un registro con el mismo UsuarioCreadorId y fecha actual
-                /*var hoy = DateTime.Now.Date;
+                var hoy = DateTime.Now.Date;
                 var existePoliza = await db.GruposPolizas
                     .AnyAsync(g => g.UsuarioCreadorId == usuarioId && g.FechaHoraCreacion.HasValue && g.FechaHoraCreacion.Value.Date == hoy);
 
@@ -350,7 +398,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     logger.LogWarning("Ya existe un registro de GrupoPoliza para el usuario actual en la fecha de hoy.");
                     return true; // Evitar duplicar el registro
-                }*/
+                }
 
                 // Crear una nueva instancia de GrupoPoliza
                 var grupoPoliza = new GrupoPoliza
@@ -379,10 +427,78 @@ namespace ERPSEI.Areas.ERP.Pages
             }
         }
 
+        public async Task<int?> ObtenerGrupoPolizaId(string usuarioId)
+        {
+            try
+            {
+                // Verificar si ya existe un registro con el mismo UsuarioCreadorId y fecha actual
+                var hoy = DateTime.Now.Date;
+                var grupoPolizaExistente = await db.GruposPolizas
+                    .FirstOrDefaultAsync(g => g.UsuarioCreadorId == usuarioId && g.FechaHoraCreacion.HasValue && g.FechaHoraCreacion.Value.Date == hoy);
+
+                if (grupoPolizaExistente != null)
+                {
+                    logger.LogWarning("Ya existe un registro de GrupoPoliza para el usuario actual en la fecha de hoy.");
+                    return grupoPolizaExistente.Id; // Devolver el Id del registro existente
+                }
+
+                // Crear un nuevo registro de GrupoPoliza si no existe uno para hoy
+                var grupoPoliza = new GrupoPoliza
+                {
+                    Id = await GenerarNuevoIdAsync(),
+                    UsuarioCreadorId = usuarioId,
+                    UsuarioModificadorId = usuarioId,
+                    FechaHoraCreacion = DateTime.Now,
+                    FechaHoraModificacion = DateTime.Now,
+                    NumeroImpresion = 1,
+                    Deshabilitado = false
+                };
+
+                db.GruposPolizas.Add(grupoPoliza);
+                await db.SaveChangesAsync();
+
+                return grupoPoliza.Id; // Devolver el Id del registro creado
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error al crear GrupoPoliza: {message}", ex.Message);
+                return null;
+            }
+        }
+
+
         private async Task<int> GenerarNuevoIdAsync()
         {
             var maxId = await db.GruposPolizas.MaxAsync(g => (int?)g.Id) ?? 0;
             return maxId + 1;
+        }
+
+        public async Task<List<PolizaTipo>> ObtenerPolizaTiposAsync()
+        {
+            try
+            {
+                return await db.PolizasTipos.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error al obtener PolizaTipo: {message}", ex.Message);
+                return new List<PolizaTipo>();
+            }
+        }
+
+        public async Task<List<VPoliza>> ObtenerVPolizasAsync()
+        {
+            try
+            {
+                // Obtener todas las VPolizas de la base de datos
+                var vPolizas = await db.VPolizas.ToListAsync();
+                return vPolizas;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error al obtener VPolizas: {message}", ex.Message);
+                return new List<VPoliza>();
+            }
         }
 
         public async Task<JsonResult> OnGetConciliacionesList()
