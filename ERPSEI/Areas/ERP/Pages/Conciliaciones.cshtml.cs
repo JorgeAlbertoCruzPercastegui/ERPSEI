@@ -300,7 +300,21 @@ namespace ERPSEI.Areas.ERP.Pages
                         var rfcEmisor = comprobante.Comprobante?.Emisor?.Rfc ?? "N/A";
                         var nombreEmisor = comprobante.Comprobante?.Emisor?.Nombre ?? "N/A";
                         var nombreReceptor = comprobante.Comprobante?.Receptor?.Nombre ?? "N/A";
-                        
+                        var tipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A";
+
+                        // Mapear TipoDeComprobante a descripción de PolizaTipo
+                        string descripcionPolizaTipo = tipoDeComprobante switch
+                        {
+                            "I" => "Ingreso",
+                            "E" => "Egreso",
+                            "B" => "Bancos",
+                            _ => "N/A"
+                        };
+
+                        // Buscar el Id de PolizaTipo correspondiente a la descripción
+                        var polizaTipoId = polizaTipos
+                            .FirstOrDefault(pt => pt.Descripcion == descripcionPolizaTipo)?.Id ?? 0;
+
                         var EmisorId = comprobante.Comprobante.Emisor.Id;
                         var empresas = await empresaManager.GetByRFCAsync(rfcEmisor);
                         //var cuentasContables = await cuentaContableManager.GetByIdAsync(1708);
@@ -315,7 +329,23 @@ namespace ERPSEI.Areas.ERP.Pages
 
                         foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                         {
-                                    datosExcel.Add(new
+                            // Definir fecha y concepto para la póliza
+                            var fechaString = comprobante.Comprobante?.Fecha; // Suponiendo que este valor es un string
+                            DateTime fechaHora;
+
+                            // Intentar convertir el string a DateTime de manera segura
+                            if (!DateTime.TryParse(fechaString, out fechaHora))
+                            {
+                                // Si la conversión falla, asignar la fecha y hora actual como valor predeterminado
+                                fechaHora = DateTime.Now;
+                            }
+
+                            var concepto = $"INGRESOS {nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}";
+
+                            // Llamar al método para crear la póliza en la base de datos
+                            await CrearPoliza(idUser, idGrupoPoliza, polizaTipoId, fechaHora, concepto);
+
+                            datosExcel.Add(new
                                     {
                                         Cliente = conciliacion.Cliente?.RazonSocial ?? "Sin Cliente",
                                         ComprobanteId = comprobante.Comprobante?.Id ?? 0,
@@ -335,7 +365,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                         CuentaBancariaOption = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
                                         CuentaBancariaVista = string.Join(", ", cuentasContablesBanc.Select(c => $"{c.Cuenta} ({c.Nombre})")),
                                         CuentaBancariaExcel = string.Join(", ", cuentasContablesBanc.Select(c => c.Cuenta)),
-                                        TipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A",
+                                        
 
                                         // Información del usuario logueado para GrupoPoliza
                                         IdGrupoPoliza = idGrupoPoliza,
@@ -369,7 +399,20 @@ namespace ERPSEI.Areas.ERP.Pages
 
                                         //Informacion de la Poliza del registro seleccionado
                                         PolizaGrupoId = idGrupoPoliza,
-                                        //PolizaTipoId = Aqui va a ir una comparacion del resultado de TipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A", contra el registro que coincida con PolizaTipo y tomar el ID, por ejemplo si es I, sera igual a Ingreso y se tomara el identidicador de ese Ingreso de la tabla.
+                                        PolizaTipoId = polizaTipoId,
+                                        TipoDComprobante = tipoDeComprobante,
+                                        TipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A",
+                                        PolizaTipoDescripcion = polizaTipos.Select(ptd => new 
+                                        { 
+                                        ptd.Id,
+                                        ptd.Descripcion,
+                                        ptd.Deshabilitado
+                                        }),
+
+                                        GrupoId = idGrupoPoliza,
+                                        TipoId = polizaTipoId,
+                                        FechaHora = comprobante.Comprobante?.Fecha ?? "N/A",
+                                        Concepto = nombreReceptor + ' ' + comprobante.Comprobante?.Serie ?? "N/A" + ' ' + comprobante.Comprobante?.Folio ?? "N/A" 
 
                                     });
                         }
@@ -382,6 +425,48 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 logger.LogError("{message}", ex.Message);
                 return null;
+            }
+        }
+
+        public async Task<bool> CrearPoliza(string usuarioId, int? grupoId, int tipoId, DateTime fechaHora, string concepto)
+        {
+            try
+            {
+                // Verificar si ya existe una póliza con los mismos valores de GrupoId, TipoId, y FechaHora
+                var existePoliza = await db.VPolizas
+                    .AnyAsync(p => p.GrupoId == grupoId && p.TipoId == tipoId && p.FechaHora == fechaHora);
+
+                if (existePoliza)
+                {
+                    logger.LogWarning("Ya existe un registro de Poliza con el mismo GrupoId, TipoId y FechaHora.");
+                    return true; // Evitar duplicar el registro
+                }
+
+                // Generar un nuevo Id basado en el valor máximo actual en la tabla
+                var nuevoId = (await db.VPolizas.MaxAsync(p => (int?)p.Id) ?? 0) + 1;
+
+                // Crear una nueva instancia de Poliza
+                var poliza = new VPoliza
+                {
+                    Id = nuevoId,
+                    GrupoId = grupoId,
+                    TipoId = tipoId,
+                    FechaHora = fechaHora,
+                    Concepto = concepto
+                };
+
+                // Agregar el nuevo registro al contexto
+                db.VPolizas.Add(poliza);
+
+                // Guardar los cambios en la base de datos
+                await db.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error al crear Poliza: {message}", ex.Message);
+                return false;
             }
         }
 
@@ -466,12 +551,12 @@ namespace ERPSEI.Areas.ERP.Pages
             }
         }
 
-
         private async Task<int> GenerarNuevoIdAsync()
         {
             var maxId = await db.GruposPolizas.MaxAsync(g => (int?)g.Id) ?? 0;
             return maxId + 1;
         }
+
 
         public async Task<List<PolizaTipo>> ObtenerPolizaTiposAsync()
         {

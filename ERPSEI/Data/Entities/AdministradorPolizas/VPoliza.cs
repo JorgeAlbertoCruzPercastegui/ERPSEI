@@ -7,7 +7,7 @@ namespace ERPSEI.Data.Entities.Polizas
 	{
 		[DatabaseGenerated(DatabaseGeneratedOption.None)]
 		public int Id { get; set; }
-		public int GrupoId { get; set; }
+		public int? GrupoId { get; set; }
 		public GrupoPoliza? Grupo { get; set; }
 		public int TipoId { get; set; }
 		public PolizaTipo? Tipo{ get; set; }
