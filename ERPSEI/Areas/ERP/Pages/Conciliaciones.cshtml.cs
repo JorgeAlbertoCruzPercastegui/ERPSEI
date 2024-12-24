@@ -234,16 +234,16 @@ namespace ERPSEI.Areas.ERP.Pages
                 var nombreUsuario = user?.UserName ?? "Usuario Desconocido";
                 var idUser = user?.Id;
 
-                // Llamar a CrearGrupoPoliza solo una vez
-                var registroCreado = await CrearGrupoPoliza(idUser, nombreUsuario);
+                // Crear un nuevo registro de GrupoPoliza específicamente para la exportación
+                var idGrupoPoliza = await CrearGrupoPolizaParaExportacion(idUser, nombreUsuario);
 
-                if (!registroCreado)
+                if (idGrupoPoliza == null)
                 {
                     resp.Mensaje = "Error al guardar la información en la base de datos.";
                     return new JsonResult(resp);
                 }
 
-                // Pasar la cuenta bancaria seleccionada al método GetExportarExcel
+                // Obtener datos para la exportación y generar Excel
                 resp.Datos = await GetExportarExcel(id, HttpContext, cuentaBancariaSeleccionada);
                 resp.TieneError = false;
                 resp.Mensaje = localizer["ExportExcelSuccessfully"];
@@ -256,6 +256,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
 
         public async Task<List<object>> GetExportarExcel(int conciliacionId, HttpContext httpContext, string cuentaBancariaSeleccionada)
         {
@@ -494,6 +495,46 @@ namespace ERPSEI.Areas.ERP.Pages
             }
         }
 
+        private async Task<int?> CrearGrupoPolizaParaExportacion(string usuarioId, string nombreUsuario)
+        {
+            try
+            {
+                // Crear un nuevo registro de GrupoPoliza
+                var nuevoGrupoPoliza = new GrupoPoliza
+                {
+                    Id = await GenerarNuevoIdAsync(),
+                    UsuarioCreadorId = usuarioId,
+                    UsuarioModificadorId = usuarioId,
+                    FechaHoraCreacion = DateTime.Now,
+                    FechaHoraModificacion = DateTime.Now,
+                    NumeroImpresion = 1,
+                    Deshabilitado = false
+                };
+
+                db.GruposPolizas.Add(nuevoGrupoPoliza);
+                await db.SaveChangesAsync();
+
+                // Actualizar los registros con IDs pares
+                var registrosPares = await db.GruposPolizas
+                    .Where(g => g.Id % 2 == 0 && g.Deshabilitado == false)
+                    .ToListAsync();
+
+                foreach (var registro in registrosPares)
+                {
+                    registro.Deshabilitado = true;
+                }
+
+                await db.SaveChangesAsync();
+
+                return nuevoGrupoPoliza.Id;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error al crear o actualizar GrupoPoliza: {message}", ex.Message);
+                return null;
+            }
+        }
+
         public async Task<List<CuentaContable>> ObtenerTodasLasCuentasContablesAsync()
         {
             try
@@ -599,7 +640,7 @@ namespace ERPSEI.Areas.ERP.Pages
             try
             {
                 // Verificar si ya existe un registro con la fecha actual
-                var hoy = DateTime.Now.Date;
+                /*var hoy = DateTime.Now.Date;
                 var grupoPolizaExistente = await db.GruposPolizas
                     .FirstOrDefaultAsync(g => g.FechaHoraCreacion.HasValue && g.FechaHoraCreacion.Value.Date == hoy);
 
@@ -614,7 +655,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                     logger.LogInformation("Registro de GrupoPoliza existente actualizado con nueva FechaHoraModificacion.");
                     return true; // Registro existente actualizado
-                }
+                }*/
 
                 // Crear una nueva instancia de GrupoPoliza
                 var nuevoGrupoPoliza = new GrupoPoliza

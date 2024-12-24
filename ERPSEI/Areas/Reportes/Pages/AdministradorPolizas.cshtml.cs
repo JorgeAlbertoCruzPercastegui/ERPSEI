@@ -197,5 +197,199 @@ namespace ERPSEI.Areas.Reportes.Pages
 			string jsonResponse = $"[{string.Join(",", jsonGruposPolizas)}]";
 			return new JsonResult(jsonResponse);
 		}
-	}
+
+        public async Task<JsonResult> OnGetVPolizas()
+        {
+            ServerResponse resp = new(true, stringLocalizer["PolizasObtenidasUnsuccessfully"]);
+
+            try
+            {
+                resp.Datos = await GetVPolizasList();
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["PolizasObtenidasSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> GetVPolizasList()
+        {
+            List<string> jsonVPolizas = new List<string>();
+            List<VPoliza> vPolizas = await _polizasManager.GetAllAsync();
+
+            foreach (VPoliza vpoliza in vPolizas)
+            {
+
+                jsonVPolizas.Add("{" +
+                $"\"Id\": \"{vpoliza.Id}\", " +
+                $"\"GrupoId\": \"{vpoliza.GrupoId}\", " +
+                $"\"TipoId\": \"{vpoliza.TipoId}\", " +
+                $"\"FechaHora\": \"{vpoliza.FechaHora}\", " +
+                $"\"Concepto\": \"{vpoliza.Concepto}\"" +
+                "}");
+            }
+
+            string jsonResponse = $"[{string.Join(",", jsonVPolizas)}]";
+            return new JsonResult(jsonResponse);
+        }
+
+        public async Task<JsonResult> OnGetPolizasDetalles()
+        {
+            ServerResponse resp = new(true, stringLocalizer["PolizasObtenidasUnsuccessfully"]);
+
+            try
+            {
+                resp.Datos = await GetPolizasDetallesList();
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["PolizasObtenidasSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> GetPolizasDetallesList()
+        {
+            List<string> jsonPolizasDetalles = new List<string>();
+            List<PolizaDetalle> polizasDetalles = await _polizasDetallesManager.GetAllAsync();
+
+            foreach (PolizaDetalle polizadetalle in polizasDetalles)
+            {
+
+                jsonPolizasDetalles.Add("{" +
+                $"\"Id\": \"{polizadetalle.Id}\", " +
+                $"\"PolizaId\": \"{polizadetalle.PolizaId}\", " +
+                $"\"CuentaId\": \"{polizadetalle.CuentaId}\", " +
+                $"\"Concepto\": \"{polizadetalle.Concepto}\", " +
+                $"\"Debe\": \"{polizadetalle.Debe}\", " +
+                $"\"Haber\": \"{polizadetalle.Haber}\"" +
+                "}");
+            }
+
+            string jsonResponse = $"[{string.Join(",", jsonPolizasDetalles)}]";
+            return new JsonResult(jsonResponse);
+        }
+
+        public async Task<JsonResult> OnGetPolizasTipos()
+        {
+            ServerResponse resp = new(true, stringLocalizer["PolizasObtenidasUnsuccessfully"]);
+
+            try
+            {
+                resp.Datos = await GetPolizasTiposList();
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["PolizasObtenidasSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> GetPolizasTiposList()
+        {
+            List<string> jsonPolizasTipos = new List<string>();
+            List<PolizaTipo> polizasTipo = await _polizasTiposManager.GetAllAsync();
+
+            foreach (PolizaTipo polizatipo in polizasTipo)
+            {
+
+                jsonPolizasTipos.Add("{" +
+                $"\"Id\": \"{polizatipo.Id}\", " +
+                $"\"PolizaId\": \"{polizatipo.Descripcion}\", " +
+                $"\"Haber\": \"{polizatipo.Deshabilitado}\"" +
+                "}");
+            }
+
+            string jsonResponse = $"[{string.Join(",", jsonPolizasTipos)}]";
+            return new JsonResult(jsonResponse);
+        }
+
+        public async Task<JsonResult> OnGetPolizasConsolidado()
+        {
+            ServerResponse resp = new(true, stringLocalizer["PolizasObtenidasUnsuccessfully"]);
+
+            try
+            {
+                var result = new
+                {
+                    GrupoPolizas = await GetJsonList(
+                        _gruposPolizasManager.GetAllAsync(),
+                        grupo => new
+                        {
+                            grupo.Id,
+                            FechaHoraCreacion = grupo.FechaHoraCreacion,
+                            FechaHoraCreacionJS = grupo.FechaHoraCreacion,
+                            FechaHoraModificacion = grupo.FechaHoraModificacion,
+                            FechaHoraModificacionJS = grupo.FechaHoraModificacion,
+                            grupo.NumeroImpresion,
+                            grupo.UsuarioCreadorId,
+                            UsuarioCreador = grupo.UsuarioCreador?.Empleado?.NombreCompleto ?? grupo.UsuarioCreador?.UserName ?? "-",
+                            grupo.UsuarioModificadorId,
+                            UsuarioModificador = grupo.UsuarioModificador?.Empleado?.NombreCompleto ?? grupo.UsuarioModificador?.UserName ?? "-",
+                            grupo.Deshabilitado
+                        }),
+
+                    VPolizas = await GetJsonList(
+                        _polizasManager.GetAllAsync(),
+                        vpoliza => new
+                        {
+                            vpoliza.Id,
+                            vpoliza.GrupoId,
+                            vpoliza.TipoId,
+                            vpoliza.FechaHora,
+                            vpoliza.Concepto
+                        }),
+
+                    PolizasDetalles = await GetJsonList(
+                        _polizasDetallesManager.GetAllAsync(),
+                        detalle => new
+                        {
+                            detalle.Id,
+                            detalle.PolizaId,
+                            detalle.CuentaId,
+                            detalle.Concepto,
+                            detalle.Debe,
+                            detalle.Haber
+                        }),
+
+                    PolizasTipos = await GetJsonList(
+                        _polizasTiposManager.GetAllAsync(),
+                        tipo => new
+                        {
+                            tipo.Id,
+                            tipo.Descripcion,
+                            tipo.Deshabilitado
+                        })
+                };
+
+                resp.Datos = result;
+                resp.TieneError = false;
+                resp.Mensaje = stringLocalizer["PolizasObtenidasSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task<List<object>> GetJsonList<T>(Task<List<T>> fetchDataTask, Func<T, object> transform)
+        {
+            List<T> data = await fetchDataTask;
+            return data.Select(transform).ToList();
+        }
+
+    }
 }
+
