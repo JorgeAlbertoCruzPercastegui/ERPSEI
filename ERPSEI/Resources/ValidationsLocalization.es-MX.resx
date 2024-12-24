@@ -456,4 +456,10 @@
   <data name="EstatusContableField" xml:space="preserve">
     <value>Estatus Contable</value>
   </data>
+  <data name="ProveedorField" xml:space="preserve">
+    <value>Proveedor</value>
+  </data>
+  <data name="SubtipoField" xml:space="preserve">
+    <value>Subtipo</value>
+  </data>
 </root>

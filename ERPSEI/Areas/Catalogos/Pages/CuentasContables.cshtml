@@ -1,0 +1,244 @@
+﻿@page "{handler?}"
+@using Microsoft.AspNetCore.Localization;
+@using Microsoft.AspNetCore.Mvc.Localization;
+@using ERPSEI.Data.Entities.Cuentas;
+@using ERPSEI.Data.Managers.Cuentas;
+
+@model ERPSEI.Areas.Catalogos.Pages.CuentasContablesModel
+@inject IViewLocalizer localizer;
+@inject ICuentaContableTipoManager cuentaContableTiposManager;
+@inject ICuentaContableSubtipoManager cuentaContableSubtiposManager;
+@{
+	ViewData["Title"] = localizer["Title"];
+
+	// Retrieves the requested culture
+	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+
+	// Culture contains the information of the requested culture
+	System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+
+	string cultureName = culture.Name;
+
+	List<CuentaContableTipo> tiposCuentas = await cuentaContableTiposManager.GetAllAsync();
+	List<CuentaContableSubtipo> subtiposCuentas = await cuentaContableSubtiposManager.GetAllAsync();
+
+	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+}
+<h3 id="hTitle" class="title mb-3">@ViewData["Title"]</h3>
+
+<!-- --------------------------- -->
+<!-- Sección de filtros -------- -->
+<div class="accordion shadow mb-5" id="accordionFiltros">
+	<div class="accordion-item">
+		<h2 class="accordion-header" id="headingOne">
+			<button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFiltros" aria-expanded="true" aria-controls="collapseFiltros">
+				<h6>@localizer["FilterTitle"]</h6>
+			</button>
+		</h2>
+		<div id="collapseFiltros" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+			<div class="accordion-body">
+				<form id="filtros" method="post">
+					<div class="row">
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" idselected='' area="Catalogos" module="CuentasContables" source="GetEmpresaSuggestion" />
+								<label for="inpFiltroEmpresaRFC" asp-for="InputFiltro.EmpresaRFC" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroClienteRFC" type="search" asp-for="InputFiltro.ClienteRFC" class="form-control" placeholder="@localizer["ClientePlaceholder"]" idselected='' area="Catalogos" module="CuentasContables" source="GetClienteSuggestion" />
+								<label for="inpFiltroClienteRFC" asp-for="InputFiltro.ClienteRFC" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroProveedorRFC" type="search" asp-for="InputFiltro.ProveedorRFC" class="form-control" placeholder="@localizer["ProveedorPlaceholder"]" idselected='' area="Catalogos" module="CuentasContables" source="GetProveedorSuggestion" />
+								<label for="inpFiltroProveedorRFC" asp-for="InputFiltro.ProveedorRFC" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-select" placeholder="@localizer["TipoPlaceholder"]">
+									<option selected value='0'>@localizer["EmptySelectItemText"]</option>
+									@{
+										@foreach (CuentaContableTipo tipo in tiposCuentas)
+										{
+											<option value='@tipo.Clave'>@tipo.Clave - @tipo.Descripcion</option>
+										}
+									}
+								</select>
+								<label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroSubtipo" asp-for="InputFiltro.SubtipoId" class="form-select" placeholder="@localizer["SubtipoPlaceholder"]">
+									<option selected value='0'>@localizer["EmptySelectItemText"]</option>
+									@{
+										@foreach (CuentaContableSubtipo subtipo in subtiposCuentas)
+										{
+											<option value='@subtipo.Clave'>@subtipo.Clave - @subtipo.Descripcion</option>
+										}
+									}
+								</select>
+								<label for="selFiltroSubtipo" asp-for="InputFiltro.SubtipoId" class="form-label"></label>
+							</div>
+						</div>
+					</div>
+				</form>
+				@if (puedeTodo || puedeConsultar)
+				{
+					<div class="row text-end">
+						<div class="col-12">
+							<button id="btnBuscar" class="btn btn-primary" onclick="onBuscarClick();">
+								<i class="bi bi-search"></i> @localizer["SearchButton"]
+							</button>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+</div>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+<!-- --------------------------- -->
+<!-- Diálogo Cuenta Contable----- -->
+<form id="theform" method="post">
+	<div id="dlgCuentaContable" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered modal-xl">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 id="dlgTitle" class="modal-title">@localizer["DlgCuentasPolizaEgresosTitle"]</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body align-items-center ui-front">
+					<div class="container-fluid">
+						<div class="row">
+							<div class="alert alert-primary d-flex align-items-center mb-3" role="alert">
+								<i class="bi bi-info-circle-fill me-2" style="font-size: x-large"></i>
+								<div id="dlgCuentasMessage"></div>
+							</div>
+						</div>
+						<div class="row">
+							<table id="tableCuentasContables" class="table-sm"
+								   data-unique-id="id"
+								   data-undefined-text=""
+								   data-toolbar="#toolbarCuentasContables"
+								   data-search="true"
+								   data-show-fullscreen="false"
+								   data-show-columns="false"
+								   data-show-columns-toggle-all="false"
+								   data-click-to-select="true"
+								   data-minimum-count-columns="2"
+								   data-show-pagination-switch="false"
+								   data-pagination="true"
+								   data-id-field="id"
+								   data-page-list="[10, 25, 50, 100, all]"
+								   data-show-footer="false"
+								   data-side-pagination="client"
+								   data-response-handler="responseHandler"
+								   data-detail-view="true"
+								   data-detail-formatter="detailFormatter"
+								   data-buttons-class="primary">
+								<thead><tr align="center" valign="middle" class="bg-primary bg-opacity-10"></tr></thead>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button id="dlgBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+						<i class="bi bi-x-lg"></i> @localizer["CloseButtonTitle"]
+					</button>
+					@if (puedeTodo || puedeEditar)
+					{
+						<button id="dlgBtnAgregar" type="button" class="btn btn-primary formButton" onclick="onShowCFDIs(TIPO_EXPORTADO_POLIZA_EGRESO, this);">
+							<i class="bi bi-file-earmark-minus"></i> @localizer["PolizaEgresoButtonTitle"]
+						</button>
+
+						<button id="dlgBtnAgregarIngresos" type="button" class="btn btn-primary formButton" onclick="onShowCFDIs(TIPO_EXPORTADO_POLIZA_INGRESO, this);">
+							<i class="bi bi-file-earmark-plus"></i> @localizer["PolizaIngresoButtonTitle"]
+						</button>
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+</form>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+<!-- --------------------------- -->
+<!-- Sección tabla de resultados -->
+<div id="toolbar" class="col-xl-12">
+	@{
+		@if (puedeTodo || puedeEditar)
+		{
+			<button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgCuentasContables" onclick="onAgregarClick();">
+				<i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@localizer["AddButtonTitle"]</span>
+			</button>
+		}
+	}
+</div>
+<table id="table" class="table-sm"
+	   data-unique-id="id"
+	   data-toolbar="#toolbar"
+	   data-search="true"
+	   data-show-fullscreen="true"
+	   data-show-columns="true"
+	   data-show-columns-toggle-all="true"
+	   data-click-to-select="true"
+	   data-minimum-count-columns="2"
+	   data-show-pagination-switch="true"
+	   data-pagination="true"
+	   data-id-field="id"
+	   data-page-list="[10, 25, 50, 100, all]"
+	   data-show-footer="false"
+	   data-side-pagination="client"
+	   data-response-handler="responseHandler"
+	   data-buttons-class="primary">
+	<thead>
+		<tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+		</tr>
+	</thead>
+</table>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+@section Scripts
+{
+	<!-- Librería autocompletar y dependencias -->
+	<link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+	<script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+	<script src="~/js/autocompletar.js"></script>
+
+	<!-- Bootstrap table -->
+	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+	<script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
+
+	<!-- Scripts del módulo y dependencias -->
+	<link rel="stylesheet" href="~/css/CuentasContables.css" />
+	<script src="~/../Areas/Catalogos/Pages/CuentasContables.cshtml.js"></script>
+	<script type="text/javascript">
+		var cultureName = "@cultureName";
+		var title = '@localizer["Title"]';
+
+		var nuevoRegistro = '@localizer["NuevoRegistro"]';
+
+		var puedeTodo = '@puedeTodo' == 'True';
+		var puedeConsultar = '@puedeConsultar' == 'True';
+		var puedeEditar = '@puedeEditar' == 'True';
+		var puedeEliminar = '@puedeEliminar' == 'True';
+		var puedeAutorizar = '@puedeAutorizar' == 'True';
+	</script>
+
+	<partial name="_ValidationScriptsPartial" />
+}
