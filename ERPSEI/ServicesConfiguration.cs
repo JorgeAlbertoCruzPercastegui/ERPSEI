@@ -119,6 +119,8 @@ namespace ERPSEI
 		{
 			//Cuentas Contables
 			_builder.Services.AddScoped<ICuentaContableManager, CuentaContableManager>();
+			_builder.Services.AddScoped<ICuentaContableTipoManager, CuentaContableTipoManager>();
+			_builder.Services.AddScoped<ICuentaContableSubtipoManager, CuentaContableSubtipoManager>();
 		}
 
 		private static void ConfigureDIFacturacion(WebApplicationBuilder _builder)
