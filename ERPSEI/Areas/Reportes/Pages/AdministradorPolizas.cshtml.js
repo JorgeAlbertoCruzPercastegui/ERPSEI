@@ -70,8 +70,11 @@ function additionalButtons() {
 function operateFormatter(value, row, index) {
     let icons = [];
 
-    //Icono Ver
+    // Icono Ver
     icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
+
+    // Icono Exportar a Excel
+    icons.push(`<li><a class="dropdown-item export" href="#" title="Exportar a Excel"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</a></li>`);
 
     return `<div class="dropdown">
               <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -80,11 +83,16 @@ function operateFormatter(value, row, index) {
               <ul class="dropdown-menu">${icons.join("")}</ul>
             </div>`;
 }
+
 window.operateEvents = {
     'click .see': function (e, value, row, index) {
-        initPolizaDialog(VER, row);
+        initPolizaDialog(VER, row); // Lógica para "Ver"
+    },
+    'click .export': function (e, value, row, index) {
+        exportarExcel(row.Id); // Llama a la función para exportar a Excel
     }
-}
+};
+
        
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
