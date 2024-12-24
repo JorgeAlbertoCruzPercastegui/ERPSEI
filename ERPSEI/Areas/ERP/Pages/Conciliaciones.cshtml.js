@@ -242,7 +242,19 @@ window.operateEvents = {
 }
 
 async function exportarAExcel(conciliacionId) {
-    let oParams = { id: conciliacionId };
+    // Obtener el valor de la cuenta bancaria seleccionada
+    let cuentaBancariaSeleccionada = document.querySelector('#modalAsignacionCuentasBody td:nth-child(3)').textContent.trim();
+
+
+    if (!cuentaBancariaSeleccionada || cuentaBancariaSeleccionada.trim() === "") {
+        showError("Error", "Por favor, ingrese una cuenta bancaria antes de exportar.");
+        return;
+    }
+
+    let oParams = {
+        id: conciliacionId,
+        cuentaBancariaSeleccionada: cuentaBancariaSeleccionada // Agregar al payload
+    };
     $.extend(postOptions, { type: 'GET' });
 
     let dlgTitle = "Resultado de exportación de Excel";
@@ -271,6 +283,7 @@ async function exportarAExcel(conciliacionId) {
         postOptions
     );
 }
+
 
 async function generarExcel(datos, conciliacionId, dlgTitle, mensaje) {
     const ExcelJS = window.ExcelJS;

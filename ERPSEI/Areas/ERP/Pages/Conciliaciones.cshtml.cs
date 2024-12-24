@@ -224,7 +224,7 @@ namespace ERPSEI.Areas.ERP.Pages
             ConciliacionesList = new Conciliacion();
         }
 
-        public async Task<JsonResult> OnGetExportarExcel(int id)
+        public async Task<JsonResult> OnGetExportarExcel(int id, string cuentaBancariaSeleccionada)
         {
             ServerResponse resp = new(true, localizer["ExportExcelUnsuccessfully"]);
             try
@@ -243,7 +243,8 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                resp.Datos = await GetExportarExcel(id, HttpContext);
+                // Pasar la cuenta bancaria seleccionada al método GetExportarExcel
+                resp.Datos = await GetExportarExcel(id, HttpContext, cuentaBancariaSeleccionada);
                 resp.TieneError = false;
                 resp.Mensaje = localizer["ExportExcelSuccessfully"];
             }
@@ -256,7 +257,7 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<List<object>> GetExportarExcel(int conciliacionId, HttpContext httpContext)
+        public async Task<List<object>> GetExportarExcel(int conciliacionId, HttpContext httpContext, string cuentaBancariaSeleccionada)
         {
             try
             {
@@ -299,6 +300,10 @@ namespace ERPSEI.Areas.ERP.Pages
                         var rfcReceptor = comprobante.Comprobante?.Receptor?.Rfc ?? "N/A";
                         var rfcEmisor = comprobante.Comprobante?.Emisor?.Rfc ?? "N/A";
                         var nombreEmisor = comprobante.Comprobante?.Emisor?.Nombre ?? "N/A";
+
+                        // Capturar y utilizar la cuenta bancaria seleccionada
+                        var cuentaBancariaS = string.IsNullOrEmpty(cuentaBancariaSeleccionada) ? "Cuenta no asignada" : cuentaBancariaSeleccionada;
+
                         var nombreReceptor = comprobante.Comprobante?.Receptor?.Nombre ?? "N/A";
                         var tipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A";
 
@@ -345,12 +350,52 @@ namespace ERPSEI.Areas.ERP.Pages
                             // Llamar al método para crear la póliza en la base de datos
                             await CrearPoliza(idUser, idGrupoPoliza, polizaTipoId, fechaHora, concepto);
 
+                            // Obtener el ID de la póliza generada
+                            var polizaId = await db.VPolizas
+                                .Where(p => p.GrupoId == idGrupoPoliza && p.TipoId == polizaTipoId && p.FechaHora == fechaHora)
+                                .Select(p => p.Id)
+                                .FirstOrDefaultAsync();
+
+                            if (polizaId == 0)
+                            {
+                                throw new Exception("No se pudo obtener el ID de la póliza creada.");
+                            }
+
+                            // Concepto Detalle para las filas del Excel
+                            //var conceptoDetalle = $"{nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}";
+
+                            // Concepto Detalle para las filas del Excel repetido 4 veces, separado por espacios
+                            var conceptoDetalle = string.Join(" ", Enumerable.Repeat($"{nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}", 4));
+
+
+                            decimal debe = movimiento.MovimientoBancario?.Importe ?? 0;
+                            decimal debeImp = totalImpuestosTrasladados;
+                            decimal totalDebe = debe + debeImp;
+
+                            decimal haber = movimiento.MovimientoBancario?.Importe ?? 0;
+                            decimal haberImp = totalImpuestosTrasladados;
+                            decimal totalHaber = haber + haberImp;
+
+                            // Llamar al método CrearPolizaDetalle
+                            await CrearPolizaDetalle(
+                                polizaId,               // El ID de la póliza generada
+                                cuentaId: 2438,         // El ID de la cuenta (en este caso 2438 como mencionaste)
+                                concepto: conceptoDetalle,
+                                debe: totalDebe,
+                                haber: totalHaber
+                            );
+
                             datosExcel.Add(new
                                     {
                                         Cliente = conciliacion.Cliente?.RazonSocial ?? "Sin Cliente",
                                         ComprobanteId = comprobante.Comprobante?.Id ?? 0,
                                         Serie = comprobante.Comprobante?.Serie ?? "N/A",
                                         Folio = comprobante.Comprobante?.Folio ?? "N/A",
+                                        EmpresaID = empresas?.Id,
+                                        NombreEmpresa = empresas?.RazonSocial,
+                                        RFCEmpresa = empresas?.RFC,
+                                        CuentaBancariaSeleccionada = cuentaBancariaSeleccionada,
+                                        CBS = cuentaBancariaS,
                                         Total = comprobante.Comprobante?.Total ?? 0,
                                         MovimientoId = movimiento.MovimientoBancario?.Id ?? 0,
                                         DescripcionMovimiento = movimiento.MovimientoBancario?.Descripcion ?? "N/A",
@@ -427,6 +472,50 @@ namespace ERPSEI.Areas.ERP.Pages
                 return null;
             }
         }
+
+        public async Task<bool> CrearPolizaDetalle(int polizaId, int cuentaId, string concepto, decimal debe, decimal haber)
+        {
+            try
+            {
+                // Verificar si ya existe un registro similar en PolizaDetalle
+                var existeDetalle = await db.PolizasDetalles
+                    .AnyAsync(pd => pd.PolizaId == polizaId && pd.CuentaId == cuentaId && pd.Concepto == concepto);
+
+                if (existeDetalle)
+                {
+                    logger.LogWarning("Ya existe un registro de PolizaDetalle con el mismo PolizaId, CuentaId y Concepto.");
+                    return true; // Evitar duplicar el registro
+                }
+
+                // Generar un nuevo Id basado en el valor máximo actual
+                var nuevoId = (await db.PolizasDetalles.MaxAsync(pd => (int?)pd.Id) ?? 0) + 1;
+
+                // Crear una nueva instancia de PolizaDetalle
+                var polizaDetalle = new PolizaDetalle
+                {
+                    Id = nuevoId, // Asignar el nuevo ID generado
+                    PolizaId = polizaId,
+                    CuentaId = cuentaId,
+                    Concepto = concepto,
+                    Debe = debe,
+                    Haber = haber
+                };
+
+                // Agregar el nuevo registro al contexto
+                db.PolizasDetalles.Add(polizaDetalle);
+
+                // Guardar los cambios en la base de datos
+                await db.SaveChangesAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error al crear PolizaDetalle: {message}", ex.Message);
+                return false;
+            }
+        }
+
 
         public async Task<bool> CrearPoliza(string usuarioId, int? grupoId, int tipoId, DateTime fechaHora, string concepto)
         {
