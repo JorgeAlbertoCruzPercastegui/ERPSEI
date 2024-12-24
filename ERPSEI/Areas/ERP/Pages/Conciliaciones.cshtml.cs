@@ -267,6 +267,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 // Crear una lista para almacenar los datos del Excel
                 var datosExcel = new List<object>();
 
+                // Obtener todas las cuentas contables
+                var todasLasCuentasContables = await ObtenerTodasLasCuentasContablesAsync();
+
                 // Obtener el nombre del usuario actual desde AspNetUsers
                 var usuarioActual = httpContext?.User.Identity?.Name;
                 var user = await appUserManager.FindByNameAsync(usuarioActual);
@@ -334,6 +337,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                         foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                         {
+
                             // Definir fecha y concepto para la póliza
                             var fechaString = comprobante.Comprobante?.Fecha; // Suponiendo que este valor es un string
                             DateTime fechaHora;
@@ -361,29 +365,35 @@ namespace ERPSEI.Areas.ERP.Pages
                                 throw new Exception("No se pudo obtener el ID de la póliza creada.");
                             }
 
-                            // Concepto Detalle para las filas del Excel
-                            //var conceptoDetalle = $"{nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}";
+                            // Filtrar las cuentas contables según los criterios
+                            var cuentasFiltradas = todasLasCuentasContables
+                                .Where(cc =>
+                                    cc.Cuenta == cuentaBancariaSeleccionada &&
+                                    cc.Nombre == nombreEmisor &&
+                                    cc.RFC == rfcEmisor)
+                                .ToList();
 
-                            // Concepto Detalle para las filas del Excel repetido 4 veces, separado por espacios
-                            var conceptoDetalle = string.Join(" ", Enumerable.Repeat($"{nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}", 4));
+                            foreach (var cuentaFiltrada in cuentasFiltradas)
+                            {
+                                // Concepto Detalle para las filas del Excel repetido 4 veces, separado por espacios
+                                var conceptoDetalle = string.Join(" ", Enumerable.Repeat($"{nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}", 4));
+                                decimal debe = movimiento.MovimientoBancario?.Importe ?? 0;
+                                decimal debeImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
+                                decimal totalDebe = debe + debeImp;
 
+                                decimal haber = movimiento.MovimientoBancario?.Importe ?? 0;
+                                decimal haberImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
+                                decimal totalHaber = haber + haberImp;
 
-                            decimal debe = movimiento.MovimientoBancario?.Importe ?? 0;
-                            decimal debeImp = totalImpuestosTrasladados;
-                            decimal totalDebe = debe + debeImp;
-
-                            decimal haber = movimiento.MovimientoBancario?.Importe ?? 0;
-                            decimal haberImp = totalImpuestosTrasladados;
-                            decimal totalHaber = haber + haberImp;
-
-                            // Llamar al método CrearPolizaDetalle
-                            await CrearPolizaDetalle(
-                                polizaId,               // El ID de la póliza generada
-                                cuentaId: 2438,         // El ID de la cuenta (en este caso 2438 como mencionaste)
-                                concepto: conceptoDetalle,
-                                debe: totalDebe,
-                                haber: totalHaber
-                            );
+                                // Llamar al método CrearPolizaDetalle con cc.Id como cuentaId
+                                await CrearPolizaDetalle(
+                                    polizaId: polizaId, // Usar el ID de la póliza generada
+                                    cuentaId: cuentaFiltrada.Id,         // Usar el ID de la cuenta contable filtrada
+                                    concepto: conceptoDetalle,
+                                    debe: totalDebe,
+                                    haber: totalHaber
+                                );
+                            }
 
                             datosExcel.Add(new
                                     {
@@ -457,9 +467,20 @@ namespace ERPSEI.Areas.ERP.Pages
                                         GrupoId = idGrupoPoliza,
                                         TipoId = polizaTipoId,
                                         FechaHora = comprobante.Comprobante?.Fecha ?? "N/A",
-                                        Concepto = nombreReceptor + ' ' + comprobante.Comprobante?.Serie ?? "N/A" + ' ' + comprobante.Comprobante?.Folio ?? "N/A" 
+                                        Concepto = nombreReceptor + ' ' + comprobante.Comprobante?.Serie ?? "N/A" + ' ' + comprobante.Comprobante?.Folio ?? "N/A",
 
-                                    });
+                                        // Agregar las cuentas filtradas al resultado
+                                        CuentasFiltradas = cuentasFiltradas.Select(cc => new
+                                        {
+                                        cc.Id,
+                                        cc.Cuenta,
+                                        cc.Nombre,
+                                        cc.RFC,
+                                        cc.EmpresaId,
+                                        cc.TipoId,
+                                        cc.SubtipoId
+                                        })
+                            });
                         }
                     }
                 }
@@ -473,10 +494,39 @@ namespace ERPSEI.Areas.ERP.Pages
             }
         }
 
+        public async Task<List<CuentaContable>> ObtenerTodasLasCuentasContablesAsync()
+        {
+            try
+            {
+                // Recuperar todas las cuentas contables de la base de datos
+                var cuentasContables = await db.CuentasContables.ToListAsync();
+                return cuentasContables;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error al obtener las cuentas contables: {message}", ex.Message);
+                return new List<CuentaContable>(); // Retornar lista vacía en caso de error
+            }
+        }
+
         public async Task<bool> CrearPolizaDetalle(int polizaId, int cuentaId, string concepto, decimal debe, decimal haber)
         {
             try
             {
+                // Generar un nuevo Id basado en el valor máximo actual
+                var nuevoId = (await db.PolizasDetalles.MaxAsync(pd => (int?)pd.Id) ?? 0) + 1;
+
+                // Crear una nueva instancia de PolizaDetalle
+                var polizaDetalle = new PolizaDetalle
+                {
+                    Id = nuevoId,
+                    PolizaId = polizaId,
+                    CuentaId = cuentaId,
+                    Concepto = concepto,
+                    Debe = debe,
+                    Haber = haber
+                };
+
                 // Verificar si ya existe un registro similar en PolizaDetalle
                 var existeDetalle = await db.PolizasDetalles
                     .AnyAsync(pd => pd.PolizaId == polizaId && pd.CuentaId == cuentaId && pd.Concepto == concepto);
@@ -484,22 +534,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (existeDetalle)
                 {
                     logger.LogWarning("Ya existe un registro de PolizaDetalle con el mismo PolizaId, CuentaId y Concepto.");
-                    return true; // Evitar duplicar el registro
+                    return false; // Evitar duplicar el registro
                 }
-
-                // Generar un nuevo Id basado en el valor máximo actual
-                var nuevoId = (await db.PolizasDetalles.MaxAsync(pd => (int?)pd.Id) ?? 0) + 1;
-
-                // Crear una nueva instancia de PolizaDetalle
-                var polizaDetalle = new PolizaDetalle
-                {
-                    Id = nuevoId, // Asignar el nuevo ID generado
-                    PolizaId = polizaId,
-                    CuentaId = cuentaId,
-                    Concepto = concepto,
-                    Debe = debe,
-                    Haber = haber
-                };
 
                 // Agregar el nuevo registro al contexto
                 db.PolizasDetalles.Add(polizaDetalle);
@@ -515,7 +551,6 @@ namespace ERPSEI.Areas.ERP.Pages
                 return false;
             }
         }
-
 
         public async Task<bool> CrearPoliza(string usuarioId, int? grupoId, int tipoId, DateTime fechaHora, string concepto)
         {
