@@ -245,6 +245,8 @@ async function exportarAExcel(conciliacionId) {
     // Obtener el valor de la cuenta bancaria seleccionada
     let cuentaBancariaSeleccionada = document.querySelector('#modalAsignacionCuentasBody td:nth-child(3)').textContent.trim();
 
+    // Capturar solo los primeros 12 caracteres
+    cuentaBancariaSeleccionada = cuentaBancariaSeleccionada.substring(0, 12);
 
     if (!cuentaBancariaSeleccionada || cuentaBancariaSeleccionada.trim() === "") {
         showError("Error", "Por favor, ingrese una cuenta bancaria antes de exportar.");

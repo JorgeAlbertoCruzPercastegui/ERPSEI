@@ -378,12 +378,12 @@ namespace ERPSEI.Areas.ERP.Pages
                                 // Concepto Detalle para las filas del Excel repetido 4 veces, separado por espacios
                                 var conceptoDetalle = string.Join(" ", Enumerable.Repeat($"{nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}", 4));
                                 decimal debe = movimiento.MovimientoBancario?.Importe ?? 0;
-                                decimal debeImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
-                                decimal totalDebe = debe + debeImp;
+                                //decimal debeImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
+                                decimal totalDebe = debe;
 
                                 decimal haber = movimiento.MovimientoBancario?.Importe ?? 0;
-                                decimal haberImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
-                                decimal totalHaber = haber + haberImp;
+                                //decimal haberImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
+                                decimal totalHaber = haber;
 
                                 // Llamar al método CrearPolizaDetalle con cc.Id como cuentaId
                                 await CrearPolizaDetalle(
@@ -598,19 +598,26 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             try
             {
-                // Verificar si ya existe un registro con el mismo UsuarioCreadorId y fecha actual
+                // Verificar si ya existe un registro con la fecha actual
                 var hoy = DateTime.Now.Date;
-                var existePoliza = await db.GruposPolizas
-                    .AnyAsync(g => g.UsuarioCreadorId == usuarioId && g.FechaHoraCreacion.HasValue && g.FechaHoraCreacion.Value.Date == hoy);
+                var grupoPolizaExistente = await db.GruposPolizas
+                    .FirstOrDefaultAsync(g => g.FechaHoraCreacion.HasValue && g.FechaHoraCreacion.Value.Date == hoy);
 
-                if (existePoliza)
+                if (grupoPolizaExistente != null)
                 {
-                    logger.LogWarning("Ya existe un registro de GrupoPoliza para el usuario actual en la fecha de hoy.");
-                    return true; // Evitar duplicar el registro
+                    // Actualizar la FechaHoraModificacion y el UsuarioModificadorId
+                    grupoPolizaExistente.FechaHoraModificacion = DateTime.Now;
+                    grupoPolizaExistente.UsuarioModificadorId = usuarioId;
+
+                    // Guardar los cambios en la base de datos
+                    await db.SaveChangesAsync();
+
+                    logger.LogInformation("Registro de GrupoPoliza existente actualizado con nueva FechaHoraModificacion.");
+                    return true; // Registro existente actualizado
                 }
 
                 // Crear una nueva instancia de GrupoPoliza
-                var grupoPoliza = new GrupoPoliza
+                var nuevoGrupoPoliza = new GrupoPoliza
                 {
                     Id = await GenerarNuevoIdAsync(),
                     UsuarioCreadorId = usuarioId,
@@ -622,16 +629,17 @@ namespace ERPSEI.Areas.ERP.Pages
                 };
 
                 // Agregar el nuevo registro al contexto
-                db.GruposPolizas.Add(grupoPoliza);
+                db.GruposPolizas.Add(nuevoGrupoPoliza);
 
                 // Guardar los cambios en la base de datos
                 await db.SaveChangesAsync();
 
-                return true;
+                logger.LogInformation("Nuevo registro de GrupoPoliza creado.");
+                return true; // Nuevo registro creado
             }
             catch (Exception ex)
             {
-                logger.LogError("{message}", ex.Message);
+                logger.LogError("Error al crear o actualizar GrupoPoliza: {message}", ex.Message);
                 return false;
             }
         }
