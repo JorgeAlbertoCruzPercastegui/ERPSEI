@@ -213,4 +213,7 @@
   <data name="BankConverterMenu" xml:space="preserve">
     <value>Bank Converter</value>
   </data>
+  <data name="AccountingAccountsCatalogMenu" xml:space="preserve">
+    <value>Accounting Accounts</value>
+  </data>
 </root>

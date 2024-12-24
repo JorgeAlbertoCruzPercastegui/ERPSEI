@@ -213,4 +213,7 @@
   <data name="BankConverterMenu" xml:space="preserve">
     <value>Convertidor Bancario</value>
   </data>
+  <data name="AccountingAccountsCatalogMenu" xml:space="preserve">
+    <value>Cuentas Contables</value>
+  </data>
 </root>
