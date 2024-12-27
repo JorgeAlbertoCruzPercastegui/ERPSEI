@@ -506,7 +506,9 @@ namespace ERPSEI.Areas.Reportes.Pages
                         var content = stream.ToArray();
                         var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                         var fileName = "PolizasConsolidado.xlsx";
-                        return File(content, contentType, fileName);
+                        await IncrementarNumeroImpresion(grupoId);
+						TempData["SuccessMessage"] = "El Excel se exportó exitosamente.";
+						return File(content, contentType, fileName);
                     }
                 }
             }
@@ -525,12 +527,15 @@ namespace ERPSEI.Areas.Reportes.Pages
             return formattedValue.ToString("0.##"); // Formatear como string, mostrar dos decimales si es necesario
         }
 
-
-
-
-
-
-
+        private async Task IncrementarNumeroImpresion(int grupoId)
+        {
+            var grupo = await _gruposPolizasManager.GetByIdAsync(grupoId);
+            if (grupo != null)
+            {
+                grupo.NumeroImpresion += 1;
+                await _gruposPolizasManager.UpdateAsync(grupo);
+            }
+        }
 
 
     }

@@ -339,6 +339,9 @@ async function exportarAExcel(grupoId) {
         link.click();
         link.parentNode.removeChild(link);
         window.URL.revokeObjectURL(url);
+        // Actualiza la página después de descargar el archivo y muestra el modal
+        setTimeout(function () { location.reload(); }, 1000);
+        
 
         console.log("Archivo descargado exitosamente.");
     } catch (error) {
