@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ERPSEI.Areas.Reportes.Pages
 {
-	[Authorize(Policy = "AccessPolicy")]
+	///[Authorize(Policy = "AccessPolicy")]
 	public class ConvertidorBancarioModel : ERPPageModel
 	{
 		[BindProperty]

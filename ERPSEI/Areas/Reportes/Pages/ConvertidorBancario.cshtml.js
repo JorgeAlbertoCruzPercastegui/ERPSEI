@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     initTable();
 });
 
-function initTable() {
+function initTable(datos) {
     $('#table').bootstrapTable('destroy').bootstrapTable({
         height: 550,
         locale: cultureName,
@@ -74,7 +74,8 @@ function initTable() {
                 valign: "middle",
                 sortable: true
             }
-        ]
+        ],
+        data: datos // Agregar los datos extraídos
     });
 }
 
@@ -187,6 +188,8 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 
                 Promise.all(promises).then(function () {
                     var bancoDetectado = detectarBanco(extractedText);
+                    console.log('Texto extraído del PDF:', extractedText); // Procesar el texto extraído 
+                    var datosExtraidos = extraerDatosEspecificos(extractedText);
 
                     // Obtener el nombre del banco seleccionado desde el select
                     var nombreBancoSeleccionado = $('#selFiltroBanco option:selected').text().trim();
@@ -213,13 +216,21 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                             }
                         }
                         else if (bancoDetectado.toLowerCase() === "bankaool") {
-                            const datos = extraerDatosEspecificos(extractedText);
+                            //const datos = extraerDatosEspecificos(extractedText);
 
-                            if (datos) {
+                            /*if (datos) {
                                 resolve([datos]); // Los datos se convierten en un arreglo
                             } else {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }*/
+
+                            if (datosExtraidos) { // Inicializar la tabla con los datos extraídos 
+                                initTable(datosExtraidos);
+                                resolve(datosExtraidos);
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]);
                             }
                         }
                         else if (bancoDetectado.toLowerCase() === "eplata") {
@@ -305,36 +316,76 @@ function detectarBanco(extractedText) {
 }
 
 function extraerDatosEspecificos(textoExtraido) {
-    // Expresión regular para capturar las fechas, el número de 7 dígitos, el texto y los valores con $
-    const regex = /(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{7})\s+([\s\S]*?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})/;
-    const match = regex.exec(textoExtraido);
+    const regex = /(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{5,7})\s+([\s\S]*?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})/g;
+    let matches;
+    const resultados = [];
 
-    if (!match) {
+    while ((matches = regex.exec(textoExtraido)) !== null) {
+        const fechaMovimiento = matches[1];
+        const fechaAplicacion = matches[2];
+        const numeroReferencia = matches[3];
+        const descripcion = matches[4].replace(/\s{2,}/g, " ").trim();
+        let cargo = matches[5];
+        let abono = matches[6];
+        let saldo = matches[6];
+
+        if (/abono/i.test(descripcion)) {
+            cargo = "$ 0.00";
+            abono = matches[5];
+            saldo = matches[6];
+        } else {
+            cargo = matches[5];
+            abono = "$ 0.00";
+            saldo = matches[6];
+        }
+
+        resultados.push({
+            FechaMovimiento: fechaMovimiento,
+            FechaAplicacion: fechaAplicacion,
+            NumeroReferencia: numeroReferencia,
+            Descripcion: descripcion,
+            Cargo: cargo || "$ 0.00",
+            Abono: abono,
+            Saldo: saldo,
+        });
+    }
+
+    if (resultados.length === 0) {
         console.error("No se encontraron los datos específicos.");
         return null;
     }
 
+    console.log('Datos específicos extraídos:', resultados);
+    return resultados;
+}
+
+
+
+/*function extraerDatosEspecificos(textoExtraido) { // Expresión regular para capturar las fechas, el número de 7 dígitos, el texto y los valores con $ 
+    const regex = /(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{7})\s+([\s\S]*?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})/;
+    const match = regex.exec(textoExtraido);
+    if (!match) { console.error("No se encontraron los datos específicos."); return null; }
     // Extraer los datos capturados por la expresión regular
     const fechaMovimiento = match[1];
     const fechaAplicacion = match[2];
     const numeroReferencia = match[3];
-    const descripcion = match[4].replace(/\s{2,}/g, " ").trim(); // Reemplaza espacios múltiples por uno solo
+
+    const descripcion = match[4].replace(/\s{2,}/g, " ").trim();
+    // Reemplaza espacios múltiples por uno solo 
     let cargo = match[5];
     let abono = match[6];
-    let saldo = match[6]; // Por defecto, el saldo será igual al último valor extraído
-
-    // Validar si la descripción contiene "Abono" o "ABONO"
+    let saldo = match[6];
+    // Por defecto, el saldo será igual al último valor extraído
+    // Validar si la descripción contiene "Abono" o "ABONO" 
     if (/abono/i.test(descripcion)) {
-        cargo = "$ 0.00"; // Asignar $ 0.00 en lugar de dejar vacío
-        abono = match[5]; // Mover el valor de cargo a abono
-        saldo = match[6]; // Mantener el saldo igual al último valor capturado
+        cargo = "$ 0.00"; // Asignar $ 0.00 en lugar de dejar vacío 
+        abono = match[5]; // Mover el valor de cargo a abono 
+        saldo = match[6]; // Mantener el saldo igual al último valor capturado 
     } else {
-        cargo = match[5]; // Mantener el valor del cargo original
+        cargo = match[5]; // Mantener el valor del cargo original 
         abono = "$ 0.00"; // Dejar el abono en $ 0.00
-        saldo = match[6]; // Mantener el saldo igual al segundo valor
-    }
-
-    // Retornar los datos extraídos en un objeto
+        saldo = match[6]; // Mantener el saldo igual al segundo valor 
+    } // Retornar los datos extraídos en un objeto 
     return {
         FechaMovimiento: fechaMovimiento,
         FechaAplicacion: fechaAplicacion,
@@ -344,7 +395,7 @@ function extraerDatosEspecificos(textoExtraido) {
         Abono: abono,
         Saldo: saldo,
     };
-}
+}*/
 
 function extraerDatosEspecificosEplata(textoExtraido) {
     // Limitar el texto al contenido entre "DETALLE DE MOVIMIENTOS" e "Incumplir tus obligaciones"
