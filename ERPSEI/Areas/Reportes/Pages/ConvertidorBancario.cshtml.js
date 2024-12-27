@@ -191,64 +191,61 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     // Obtener el nombre del banco seleccionado desde el select
                     var nombreBancoSeleccionado = $('#selFiltroBanco option:selected').text().trim();
 
-                    if (bancoDetectado.toLowerCase() === nombreBancoSeleccionado.toLowerCase()) {
+                    // Modificación para verificar BBVA y Bancomer
+                    var esBBVA = bancoDetectado.toLowerCase() === "bbva" || bancoDetectado.toLowerCase() === "bancomer";
+                    var esBancoCorrecto = bancoDetectado.toLowerCase() === nombreBancoSeleccionado.toLowerCase() || (esBBVA && (nombreBancoSeleccionado.toLowerCase() === "bbva" || nombreBancoSeleccionado.toLowerCase() === "bancomer"));
+
+                    if (esBancoCorrecto) {
                         // Crear el mensaje del modal
                         const mensajeModal = `Banco detectado correctamente: ${bancoDetectado}`;
 
                         // Llamar a la función para mostrar el mensaje en el modal
                         mostrarMensajeModal(mensajeModal);
-                        if (bancoDetectado == "Bankaool" || bancoDetectado == "bankaool")
-                        {
+
+                        if (esBBVA) {
+                            const datos = extraerDatosEspecificosBBVA(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "bankaool") {
                             const datos = extraerDatosEspecificos(extractedText);
 
                             if (datos) {
-                                // Retornar los datos extraídos para el archivo procesado
                                 resolve([datos]); // Los datos se convierten en un arreglo
                             } else {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
-                        if (bancoDetectado == "Eplata" || bancoDetectado == "EPlata")
-                        {
+                        else if (bancoDetectado.toLowerCase() === "eplata") {
                             const datos = extraerDatosEspecificosEplata(extractedText);
 
                             if (datos) {
-                                // Retornar los datos extraídos para el archivo procesado
                                 resolve(datos); // Los datos se convierten en un arreglo
                             } else {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
-                        if (bancoDetectado == "Banbajio" || bancoDetectado == "BANBAJIO" || bancoDetectado == "Banbajío")
-                        {
+                        else if (bancoDetectado.toLowerCase() === "banbajio" || bancoDetectado.toLowerCase() === "banbajío") {
                             const datos = extraerDatosEspecificosBanbajio(extractedText);
 
                             if (datos) {
-                                // Retornar los datos extraídos para el archivo procesado
                                 resolve(datos); // Los datos se convierten en un arreglo
                             } else {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
-                        if (bancoDetectado == "Banregio" || bancoDetectado == "BANCO Regional" || bancoDetectado == "Banregio") {
+                        else if (bancoDetectado.toLowerCase() === "banregio" || bancoDetectado.toLowerCase() === "banco regional") {
                             const datos = extraerDatosEspecificosBanregio(extractedText);
 
                             if (datos) {
-                                // Retornar los datos extraídos para el archivo procesado
-                                resolve(datos); // Los datos se convierten en un arreglo
-                            } else {
-                                console.log("No se pudieron extraer los datos específicos.");
-                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
-                            }
-                        }
-                        if (bancoDetectado == "BBVA" || bancoDetectado == "BANCO BBVA" || bancoDetectado == "bbva" || bancoDetectado == "bancomer") {
-                            const datos = extraerDatosEspecificosBBVA(extractedText);
-
-                            if (datos) {
-                                // Retornar los datos extraídos para el archivo procesado
                                 resolve(datos); // Los datos se convierten en un arreglo
                             } else {
                                 console.log("No se pudieron extraer los datos específicos.");
@@ -263,7 +260,6 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                         resolve([]); // Retorna un arreglo vacío si el banco no coincide
                     }
 
-                    //console.log('Texto extraído del PDF:', extractedText);
                 }).catch(error => {
                     console.error("Error al procesar las páginas del PDF:", error);
                     reject(error);
@@ -281,6 +277,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
         reader.readAsArrayBuffer(file);
     });
 }
+
 
 function detectarBanco(extractedText) {
     // Diccionario de bancos y sus palabras clave
