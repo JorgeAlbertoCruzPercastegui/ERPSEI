@@ -1,5 +1,7 @@
 ﻿using ERPSEI.Data.Entities.Polizas;
 using ERPSEI.Data.Managers.AdministradorPolizas;
+using ERPSEI.Data.Migrations;
+using iText.Commons.Actions.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.Polizas
@@ -116,6 +118,8 @@ namespace ERPSEI.Data.Managers.Polizas
 		public async Task<VPoliza?> GetByNameAsync(string desc)
 		{
 			return await db.VPolizas.Where(a => a.Concepto.ToLower() == desc.ToLower()).FirstOrDefaultAsync();
-		}
-	}
+        }
+
+        public async Task<List<VPoliza>> GetByGrupoIdAsync(int grupoId) { return await db.VPolizas.Where(p => p.GrupoId == grupoId).ToListAsync(); }
+    }
 }

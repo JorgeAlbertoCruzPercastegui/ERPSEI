@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="7.3.2" />
+    <PackageReference Include="EPPlus" Version="7.5.2" />
     <PackageReference Include="ExcelDataReader" Version="3.7.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
     <PackageReference Include="itext.pdfhtml" Version="5.0.5" />
@@ -42,7 +42,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.3" />
-    <PackageReference Include="NPOI" Version="2.7.1" />
+    <PackageReference Include="NPOI" Version="2.7.2" />
     <PackageReference Include="System.ServiceModel.Duplex" Version="6.0.*" />
     <PackageReference Include="System.ServiceModel.Federation" Version="6.0.*" />
     <PackageReference Include="System.ServiceModel.Http" Version="6.0.*" />

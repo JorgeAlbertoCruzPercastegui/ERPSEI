@@ -310,33 +310,167 @@ function onCerrarClick() {
     $(".text-danger").children().remove()
 }
 
-async function exportarAExcel(conciliacionId) {
-    let oParams = {
-        id: conciliacionId
-    };
-    $.extend(postOptions, { type: 'GET' });
+$(document).ready(function () {
+    $('#tablaPolizas tr').on('click', function () {
+        var polizaId = $(this).find('td:first').text(); // Asume que la primera columna es el ID
+        exportarAExcel(polizaId);
+    });
+});
 
-    let dlgTitle = "Resultado de exportación de Excel";
-    let saveValidationSummary = document.getElementById("saveValidationSummary");
-    saveValidationSummary.innerHTML = "";
-
-    // Realizar la llamada AJAX para exportar el Excel
-    doAjax(
-        "/Reportes/AdministradorPolizas/PolizasConsolidado",
-        oParams,
-        async function (resp) {
-            if (resp.tieneError) {
-                showError("Error", "No se pudo exportar a Excel.");
-                return;
+async function exportarAExcel(grupoId) {
+    try {
+        const response = await fetch(`/Reportes/AdministradorPolizas/PolizasConsolidado?grupoId=${grupoId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
             }
-            // Llamar a la función para generar y descargar el Excel
-            await generarExcel(resp.datos, conciliacionId, dlgTitle, resp.mensaje);
-        },
-        function (error) {
-            showError("Error", "No se pudo exportar a Excel.");
-        },
-        postOptions
-    );
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'PolizasConsolidado.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        console.log("Archivo descargado exitosamente.");
+    } catch (error) {
+        console.error('Hubo un problema con la operación de descarga:', error);
+        showError("Error", "No se pudo descargar el archivo Excel.");
+    }
+}
+
+
+async function generarAExcel(datos, conciliacionId, dlgTitle, mensaje) {
+    const ExcelJS = window.ExcelJS;
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Conciliación');
+
+    // Ajustes en el diseño inicial
+    worksheet.getCell('A3').value = 'lg';
+    worksheet.getCell('A3').font = { bold: true };
+    worksheet.getCell('B3').value = 1;
+    worksheet.getCell('B3').font = { bold: true };
+
+    // Recopila las cuentas contables ingresadas
+    const cuentasContables = obtenerCuentasContables();
+    console.log("Cuentas a exportar:", cuentasContables);
+
+    // Genera el Excel usando las cuentas contables
+    cuentasContables.forEach((cuenta, index) => {
+        const row = 7 + index; // Empieza en la fila 7
+        worksheet.getCell(`B${row}`).value = cuenta.substring(0, 12);
+    });
+
+    // Validar si hay datos para exportar
+    if (!datos || !datos.Polizas || datos.Polizas.length === 0) {
+        showError("Exportación Fallida", "No se encontraron datos para exportar.");
+        return;
+    }
+
+    // Asumiendo que los datos tienen la estructura { GrupoPoliza, Polizas, PolizaDetalles, PolizaTipos }
+    const grupoPoliza = datos.GrupoPoliza;
+    const polizas = datos.Polizas;
+    const polizaDetalles = datos.PolizaDetalles;
+    const polizaTipos = datos.PolizaTipos;
+
+    // Extraer solo el día de la fecha y colocarlo en la celda D3 en negritas
+    const fechaEmisor = grupoPoliza ? grupoPoliza.FechaHoraCreacion : 'N/A';
+    const dia = fechaEmisor !== 'N/A' ? new Date(fechaEmisor).getDate() : 'N/A';
+    worksheet.getCell('D3').value = dia;
+    worksheet.getCell('D3').font = { bold: true };
+
+    // Obtener el nombre del receptor, serie y folio (adaptar a tus datos reales)
+    const nombreReceptor = grupoPoliza ? grupoPoliza.UsuarioCreador : 'N/A';
+    const serie = grupoPoliza ? grupoPoliza.NumeroImpresion : 'N/A';
+    const folio = polizas[0] ? polizas[0].Id : 'N/A';
+
+    // Concatenar el nombre del receptor con la serie y el folio
+    const nombreCompleto = `${nombreReceptor} ${serie}-F-${folio}`;
+    ['D4', 'D5', 'D6', 'D7'].forEach(cell => {
+        worksheet.getCell(cell).value = nombreCompleto;
+    });
+
+    // Concatenar "INGRESOS" con el nombre del receptor, la serie y el folio
+    const ingresosTexto = `INGRESOS ${nombreReceptor} ${serie}-F-${folio}`;
+    worksheet.getCell('C3').value = ingresosTexto;
+    worksheet.getCell('C3').font = { bold: true };
+
+    // Aplicar color azul claro a las celdas A3 y B3
+    worksheet.getCell('A3').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF45C9ED' }
+    };
+    worksheet.getCell('B3').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF45C9ED' }
+    };
+
+    // Colocar texto en las celdas B5 y B6
+    worksheet.getCell('B5').value = '2180-001-000';
+    worksheet.getCell('B6').value = '2181-001-000';
+    worksheet.getCell('B8').value = 'FIN_PARTIDAS';
+
+    // Colocar el valor de CuentaContable en la celda B4 (adaptar a tus datos reales)
+    const cuentaContable = polizaDetalles.length > 0 ? polizaDetalles[0].CuentaId : 'N/A';
+    worksheet.getCell('B4').value = cuentaContable;
+
+    // Colocar el número 0 en las celdas C4, C5, C6 y C7, centrado
+    ['C4', 'C5', 'C6', 'C7'].forEach(cell => {
+        worksheet.getCell(cell).value = 0;
+        worksheet.getCell(cell).alignment = { horizontal: 'center' };
+    });
+
+    // Texto "CARGO" y "ABONO" en negritas
+    worksheet.getCell('F3').value = 'CARGO';
+    worksheet.getCell('F3').font = { bold: true };
+    worksheet.getCell('G3').value = 'ABONO';
+    worksheet.getCell('G3').font = { bold: true };
+
+    // Calcular el total de los cargos y colocarlo en la celda F4
+    const totalCargos = polizaDetalles.reduce((sum, detalle) => sum + (detalle.Debe || 0), 0);
+    worksheet.getCell('F4').value = totalCargos;
+
+    // Obtener el TotalImpuestosTrasladados desde los datos (adaptar a tus datos reales)
+    const totalImpuestosTrasladados = grupoPoliza ? grupoPoliza.TotalImpuestosTrasladados : 0;
+    worksheet.getCell('G5').value = totalImpuestosTrasladados;
+    worksheet.getCell('F6').value = totalImpuestosTrasladados;
+
+    // Colocar el cargo del movimiento en la celda G7
+    worksheet.getCell('G7').value = polizaDetalles.length > 0 ? polizaDetalles[0].Debe : 0;
+
+    // Definir las columnas del Excel
+    worksheet.columns = [
+        { header: '', key: 'cliente', width: 5 },
+        { header: '', key: 'comprobanteId', width: 15 },
+        { header: '', key: 'serie', width: 50 },
+        { header: '', key: 'folio', width: 38 },
+        { header: '', key: 'total', width: 3 },
+        { header: '', key: 'movimientoId', width: 15 },
+        { header: '', key: 'descripcionMovimiento', width: 15 },
+        { header: '', key: 'cargos', width: 15 }
+    ];
+
+    // Crear el archivo Excel y descargarlo
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Conciliacion_${conciliacionId}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+
+    // Mostrar mensaje de éxito
+    showSuccess(dlgTitle, mensaje);
 }
 
 async function generarExcel(datos, conciliacionId, dlgTitle, mensaje) {
