@@ -170,6 +170,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
     return new Promise((resolve, reject) => {
         reader.onload = function (e) {
             var typedArray = new Uint8Array(e.target.result);
+            var fileName = file.name; // Obtiene el nombre del archivo
 
             pdfjsLib.getDocument(typedArray).promise.then(function (pdf) {
                 var numPages = pdf.numPages;
@@ -187,8 +188,8 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                 }
 
                 Promise.all(promises).then(function () {
-                    var bancoDetectado = detectarBanco(extractedText);
-                    console.log('Texto extraído del PDF:', extractedText); // Procesar el texto extraído 
+                    var bancoDetectado = detectarBanco(fileName); // Cambia el parámetro a fileName
+                    console.log('Texto extraído del PDF:', extractedText); // Procesar el texto extraído
                     var datosExtraidos = extraerDatosEspecificos(extractedText);
 
                     // Obtener el nombre del banco seleccionado desde el select
@@ -214,26 +215,15 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
-                        }
-                        else if (bancoDetectado.toLowerCase() === "bankaool") {
-                            //const datos = extraerDatosEspecificos(extractedText);
-
-                            /*if (datos) {
-                                resolve([datos]); // Los datos se convierten en un arreglo
-                            } else {
-                                console.log("No se pudieron extraer los datos específicos.");
-                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
-                            }*/
-
-                            if (datosExtraidos) { // Inicializar la tabla con los datos extraídos 
+                        } else if (bancoDetectado.toLowerCase() === "bankaool") {
+                            if (datosExtraidos) { // Inicializar la tabla con los datos extraídos
                                 initTable(datosExtraidos);
                                 resolve(datosExtraidos);
                             } else {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]);
                             }
-                        }
-                        else if (bancoDetectado.toLowerCase() === "eplata") {
+                        } else if (bancoDetectado.toLowerCase() === "eplata") {
                             const datos = extraerDatosEspecificosEplata(extractedText);
 
                             if (datos) {
@@ -242,8 +232,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
-                        }
-                        else if (bancoDetectado.toLowerCase() === "banbajio" || bancoDetectado.toLowerCase() === "banbajío") {
+                        } else if (bancoDetectado.toLowerCase() === "banbajio" || bancoDetectado.toLowerCase() === "banbajío") {
                             const datos = extraerDatosEspecificosBanbajio(extractedText);
 
                             if (datos) {
@@ -252,9 +241,17 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
-                        }
-                        else if (bancoDetectado.toLowerCase() === "banregio" || bancoDetectado.toLowerCase() === "banco regional") {
+                        } else if (bancoDetectado.toLowerCase() === "banregio" || bancoDetectado.toLowerCase() === "banco regional") {
                             const datos = extraerDatosEspecificosBanregio(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        } else if (bancoDetectado.toLowerCase() === "monex") {
+                            const datos = extraerDatosEspecificosMonex(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -290,23 +287,34 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 }
 
 
-function detectarBanco(extractedText) {
-    // Diccionario de bancos y sus palabras clave
+function detectarBanco(fileName) {
+    // Diccionario de bancos y sus palabras clave en nombres de archivos
     var bancoKeywords = {
-        "Banbajio": ["Banbajio", "banbajio", "Banbajío", "CUENTA CONECTA BANBAJIO"],
-        "BBVA": ["BBVA", "BANCO BBVA", "bbva"],
-        "Banregio": ["BANREGIO", "BANCO REGIONAL", "Banregio", "COMERCIO LOGCAL FORTUNA"],
+        "Afirme": ["AFIRME", "Afirme"],
         "Alquimia": ["Alquimia", "ALQUIMIA", "Alquimia Digital", "alquimiapay"],
+        "Autofin": ["Autofin", "AUTOFIN"],
+        "BBVA": ["BBVA", "BANCO BBVA", "bbva"],
+        "Banamex": ["Banamex", "BANAMEX"],
+        "Banbajio": ["Banbajio", "banbajio", "Banbajío", "CUENTA CONECTA BANBAJIO"],
         "Bankaool": ["Bankaool", "BANKAOOL"],
-        "Eplata": ["Eplata", "EPlata", "EPLATA"]
+        "Banorte": ["Banorte", "BANORTE"],
+        "Banregio": ["BANREGIO", "BANCO REGIONAL", "Banregio", "COMERCIO LOGCAL FORTUNA"],
+        "Eplata": ["Eplata", "EPlata", "EPLATA"],
+        "Inbursa": ["Inbursa", "INBURSA"],
+        "KLU": ["klu", "KLU"],
+        "Monex": ["Monex", "MONEX"],
+        "PayMax": ["PAYMAY", "PayMax"],
+        "Santander": ["Santander", "SANTANDER"],
+        "SantanderDig": ["SantanderDig", "SANTANDERDIG"],
+        "Scotiabank": ["Scotiabank", "SCOTIABANK"]
     };
 
-    // Recorrer cada banco y sus palabras clave
+    // Recorrer cada banco y sus palabras clave en nombres de archivos
     for (var banco in bancoKeywords) {
         var keywords = bancoKeywords[banco];
-        // Comprobar si alguna de las palabras clave está en el texto extraído
+        // Comprobar si alguna de las palabras clave está en el nombre del archivo
         for (var i = 0; i < keywords.length; i++) {
-            if (extractedText.toLowerCase().includes(keywords[i].toLowerCase())) {
+            if (fileName.toLowerCase().includes(keywords[i].toLowerCase())) {
                 return banco; // Retorna el banco detectado
             }
         }
@@ -314,6 +322,7 @@ function detectarBanco(extractedText) {
 
     return "Banco no identificado";
 }
+
 
 function extraerDatosEspecificos(textoExtraido) {
     const regex = /(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{5,7})\s+([\s\S]*?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})/g;
@@ -1001,5 +1010,7 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
 
     return datosTabla; // Devuelve los datos estructurados para la tabla
 }
+
+function extraerDatosEspecificosMonex(textoExtraido) { }
 
 
