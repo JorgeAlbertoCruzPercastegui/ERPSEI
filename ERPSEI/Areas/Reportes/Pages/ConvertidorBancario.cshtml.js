@@ -250,7 +250,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
-                        } else if (bancoDetectado.toLowerCase() === "monex") {
+                        } else if (bancoDetectado.toLowerCase() === "monex" || bancoDetectado.toLowerCase() === "Monex") {
                             const datos = extraerDatosEspecificosMonex(extractedText);
 
                             if (datos) {
@@ -807,7 +807,8 @@ function extraerDatosEspecificosBBVA(textoExtraido) {
             let saldo = "0.00";
             let descripcion = "No disponible";
 
-            if (descripcionData) {
+            if (descripcionData)
+            {
                 descripcion = descripcionData.descripcionCompleta;
 
                 const montos = descripcionData.descripcionCompleta.match(/\b\d{1,3}(,\d{3})*(\.\d{2})?\b/g) || [];
@@ -1011,6 +1012,47 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
     return datosTabla; // Devuelve los datos estructurados para la tabla
 }
 
-function extraerDatosEspecificosMonex(textoExtraido) { }
+function extraerDatosEspecificosMonex(textoExtraido) {
+    console.log("Texto Extraído Completo (Monex):", textoExtraido);
+
+    // Identificar el año en el rango de fechas
+    const regexRangoFechas = /Del \d{1,2} \w+ (\d{4}) al \d{1,2} \w+ \d{4} DIAS TRANSCURRIDOS/i;
+    const matchRango = textoExtraido.match(regexRangoFechas);
+    let anioActual = new Date().getFullYear();
+
+    if (matchRango) {
+        anioActual = parseInt(matchRango[1], 10);
+        console.log("Año identificado en el texto:", anioActual);
+    } else {
+        console.warn("No se identificó un rango de fechas en el texto. Usando el año actual.");
+    }
+
+    // Recortar texto hasta la sección relevante
+    const inicioMovimientos = textoExtraido.indexOf("Fechas  Liquidación (Pactada)");
+    if (inicioMovimientos !== -1) {
+        textoExtraido = textoExtraido.substring(inicioMovimientos);
+    } else {
+        console.warn("Sección 'Fechas  Liquidación (Pactada)' no encontrada.");
+        return [];
+    }
+
+    // Patrón para fechas en formato dd/mmm (donde mmm son las primeras tres letras del mes)
+    const regexFechas = /\b\d{2}\/[A-Z][a-z]{2}\b/g;
+
+    // Extraer todas las fechas que coincidan con el patrón
+    const fechasEncontradas = [];
+    const matchFechas = textoExtraido.matchAll(regexFechas);
+    for (const match of matchFechas) {
+        const [dia, mesTexto] = match[0].split('/');
+        const fechaEstandar = `${dia}/${mesTexto}/${anioActual}`; // Mantener las tres letras del mes
+        fechasEncontradas.push({ FechaMovimiento: fechaEstandar });
+    }
+
+    console.log("Lista de Fechas Monex (formato DD/mmm/YYYY):", fechasEncontradas);
+
+    // Retornar solo las fechas encontradas
+    return fechasEncontradas;
+}
 
 
+const regexFechas = /\b\d{2}\/[A-Z][a-z]{2}\b/g;
