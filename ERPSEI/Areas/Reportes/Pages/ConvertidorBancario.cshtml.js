@@ -1056,7 +1056,7 @@ function extraerDatosEspecificosMonex(textoExtraido) {
         return [];
     }
 
-    // Patrón para fechas en formato dd/mmm (donde mmm son las primeras tres letras del mes)
+    // Patrón para fechas en formato dd/mmm
     const regexFechas = /\b\d{2}\/[A-Z][a-z]{2}\b/g;
 
     // Extraer todas las fechas que coincidan con el patrón
@@ -1064,7 +1064,7 @@ function extraerDatosEspecificosMonex(textoExtraido) {
     const matchFechas = textoExtraido.matchAll(regexFechas);
     for (const match of matchFechas) {
         const [dia, mesTexto] = match[0].split('/');
-        const fechaEstandar = `${dia}/${mesTexto}/${anioActual}`; // Mantener las tres letras del mes
+        const fechaEstandar = `${dia}/${mesTexto}/${anioActual}`;
         fechasEncontradas.push({ FechaMovimiento: fechaEstandar });
     }
 
@@ -1082,12 +1082,11 @@ function extraerDatosEspecificosMonex(textoExtraido) {
         const ultimoRegistro = datosPorConcepto[datosPorConcepto.length - 1];
         const textoUltimoRegistro = ultimoRegistro.Contenido;
 
-        // Detectar y recortar texto adicional innecesario
         const regexUltimoRegistro = /(11\/[A-Z][a-z]{2}.*?76516779.*?2,995\.87)/;
         const matchUltimoRegistro = textoUltimoRegistro.match(regexUltimoRegistro);
 
         if (matchUltimoRegistro) {
-            ultimoRegistro.Contenido = matchUltimoRegistro[0]; // Actualiza el contenido al texto relevante
+            ultimoRegistro.Contenido = matchUltimoRegistro[0];
             console.log("Último registro ajustado:", ultimoRegistro);
         } else {
             console.warn("No se encontró texto relevante para el último registro.");
@@ -1103,25 +1102,60 @@ function extraerDatosEspecificosMonex(textoExtraido) {
         const numeroReferenciaMatch = concepto.Contenido.match(regexNumeroReferencia);
         const numeroReferencia = numeroReferenciaMatch ? numeroReferenciaMatch[0] : "Sin referencia";
 
+        let saldo = "Sin saldo";
+
+        // Verificar si el contenido tiene la palabra "Hoja"
+        if (concepto.Contenido.includes("Hoja")) {
+            // Dividir el contenido hasta la palabra "Hoja"
+            const contenidoAntesDeHoja = concepto.Contenido.split("Hoja")[0];
+
+            // Buscar los números en el texto antes de la palabra "Hoja"
+            const regexNumeros = /[\d,]+\.\d{2}/g; // Números con formato decimal
+            const numerosEncontrados = contenidoAntesDeHoja.match(regexNumeros) || [];
+
+            console.log("Números encontrados antes de 'Hoja':", numerosEncontrados);
+
+            // Verificar si hay al menos dos números
+            if (numerosEncontrados.length >= 2) {
+                // Tomar el segundo número antes de "Hoja"
+                saldo = numerosEncontrados[numerosEncontrados.length - 1];
+            }
+        } else {
+            // Lógica anterior: buscar duplicados en todo el contenido
+            const regexNumeros = /[\d,]+\.\d{2}/g; // Números con formato decimal
+            const numerosEncontrados = concepto.Contenido.match(regexNumeros) || [];
+
+            console.log("Números encontrados en el concepto:", numerosEncontrados);
+
+            if (numerosEncontrados.length >= 2) {
+                const penultimoNumero = numerosEncontrados[numerosEncontrados.length - 2].replace(/,/g, '');
+                const ultimoNumero = numerosEncontrados[numerosEncontrados.length - 1].replace(/,/g, '');
+                console.log(`Comparando: penúltimo=${penultimoNumero}, último=${ultimoNumero}`);
+
+                if (penultimoNumero === ultimoNumero) {
+                    saldo = numerosEncontrados[numerosEncontrados.length - 1]; // Mantener el formato con comas
+                }
+            }
+        }
+
         return {
             FechaMovimiento: fecha,
             Concepto: concepto.Concepto,
             Descripcion: `${concepto.Concepto} ${concepto.Contenido}`,
-            NumeroReferencia: numeroReferencia
+            NumeroReferencia: numeroReferencia,
+            Saldo: saldo // Colocar el saldo detectado
         };
     });
 
+
     console.log("Registros preparados para la tabla:", registros);
 
-    // Retornar los registros preparados
     return registros;
 }
-
 
 function extraerDatosPorConcepto(textoExtraido) {
     console.log("Texto Extraído Completo:", textoExtraido);
 
-    // Lista de conceptos clave que delimitan las secciones
     const conceptosClave = [
         "Depósito Emisor:",
         "Retiro por compra",
@@ -1132,28 +1166,20 @@ function extraerDatosPorConcepto(textoExtraido) {
         "Compra de divisas"
     ];
 
-    // Inicializar lista de resultados
     const datosExtraidos = [];
-
-    // Crear una expresión regular que identifique cada concepto clave
     const regexConceptos = new RegExp(`(${conceptosClave.join('|')})`, 'g');
-
-    // Dividir el texto en secciones basadas en los conceptos clave
     const secciones = textoExtraido.split(regexConceptos);
 
-    // Procesar cada sección para extraer el contenido
     for (let i = 1; i < secciones.length; i += 2) {
-        const concepto = secciones[i].trim(); // Concepto clave actual
-        let contenido = secciones[i + 1] ? secciones[i + 1].trim() : ""; // Contenido hasta el siguiente concepto
+        const concepto = secciones[i].trim();
+        let contenido = secciones[i + 1] ? secciones[i + 1].trim() : "";
 
-        // Si el contenido contiene "Saldo final:", recortar el texto
         const indiceSaldoFinal = contenido.indexOf("Saldo final:");
         if (indiceSaldoFinal !== -1) {
-            contenido = contenido.substring(0, indiceSaldoFinal).trim(); // Recortar a partir de "Saldo final:"
+            contenido = contenido.substring(0, indiceSaldoFinal).trim();
         }
 
         if (contenido) {
-            // Almacenar el concepto y su contenido asociado
             datosExtraidos.push({
                 Concepto: concepto,
                 Contenido: contenido
@@ -1163,18 +1189,15 @@ function extraerDatosPorConcepto(textoExtraido) {
 
     console.log("Datos Extraídos:", datosExtraidos);
 
-    // Retornar los datos extraídos
     return datosExtraidos;
 }
 
-
-// Integración de funciones y muestra de resultados
 async function procesarPDF(pdfArchivo) {
     const textoExtraido = await extraerTextoDesdePDF(pdfArchivo);
     const registros = extraerDatosEspecificosMonex(textoExtraido);
     console.log("Resultados finales del PDF:");
     registros.forEach((registro, index) => {
-        console.log(`Registro ${index + 1}: FechaMovimiento: ${registro.FechaMovimiento}, Concepto: ${registro.Concepto}, Descripcion: ${registro.Descripcion}`);
+        console.log(`Registro ${index + 1}: FechaMovimiento: ${registro.FechaMovimiento}, Concepto: ${registro.Concepto}, Descripcion: ${registro.Descripcion}, Saldo: ${registro.Saldo}`);
     });
 }
 
