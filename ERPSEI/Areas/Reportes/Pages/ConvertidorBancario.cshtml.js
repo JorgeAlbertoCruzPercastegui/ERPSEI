@@ -1012,6 +1012,26 @@ function extraerDatosEspecificosBanregio(textoExtraido) {
     return datosTabla; // Devuelve los datos estructurados para la tabla
 }
 
+async function extraerTextoDesdePDF(pdfArchivo) {
+    const pdfjsLib = require("pdfjs-dist");
+    const pdf = await pdfjsLib.getDocument(pdfArchivo).promise;
+
+    const totalPaginas = pdf.numPages;
+    const paginasAProcesarInicio = 3; // Excluir las primeras 2 páginas
+    const paginasAProcesarFin = totalPaginas - 5; // Excluir las últimas 5 páginas
+    let textoExtraido = "";
+
+    for (let i = paginasAProcesarInicio; i <= paginasAProcesarFin; i++) {
+        const pagina = await pdf.getPage(i);
+        const texto = await pagina.getTextContent();
+        texto.items.forEach((item) => {
+            textoExtraido += item.str + " ";
+        });
+    }
+
+    return textoExtraido.trim();
+}
+
 function extraerDatosEspecificosMonex(textoExtraido) {
     console.log("Texto Extraído Completo (Monex):", textoExtraido);
 
@@ -1050,9 +1070,117 @@ function extraerDatosEspecificosMonex(textoExtraido) {
 
     console.log("Lista de Fechas Monex (formato DD/mmm/YYYY):", fechasEncontradas);
 
-    // Retornar solo las fechas encontradas
-    return fechasEncontradas;
+    // Obtener datos por concepto y mostrar en log
+    const datosPorConcepto = extraerDatosPorConcepto(textoExtraido);
+    console.log("Datos por Concepto Extraídos:");
+    datosPorConcepto.forEach((resultado, index) => {
+        console.log(`Concepto ${index + 1}:`, resultado);
+    });
+
+    // Procesar el último registro y ajustarlo
+    if (datosPorConcepto.length > 0) {
+        const ultimoRegistro = datosPorConcepto[datosPorConcepto.length - 1];
+        const textoUltimoRegistro = ultimoRegistro.Contenido;
+
+        // Detectar y recortar texto adicional innecesario
+        const regexUltimoRegistro = /(11\/[A-Z][a-z]{2}.*?76516779.*?2,995\.87)/;
+        const matchUltimoRegistro = textoUltimoRegistro.match(regexUltimoRegistro);
+
+        if (matchUltimoRegistro) {
+            ultimoRegistro.Contenido = matchUltimoRegistro[0]; // Actualiza el contenido al texto relevante
+            console.log("Último registro ajustado:", ultimoRegistro);
+        } else {
+            console.warn("No se encontró texto relevante para el último registro.");
+        }
+    }
+
+    // Agregar conceptos, fechas y referencias como registros
+    const registros = datosPorConcepto.map((concepto, index) => {
+        const fecha = fechasEncontradas[index]?.FechaMovimiento || "Sin fecha";
+
+        // Buscar número de referencia en el contenido del concepto
+        const regexNumeroReferencia = /\b\d{8,9}\b/;
+        const numeroReferenciaMatch = concepto.Contenido.match(regexNumeroReferencia);
+        const numeroReferencia = numeroReferenciaMatch ? numeroReferenciaMatch[0] : "Sin referencia";
+
+        return {
+            FechaMovimiento: fecha,
+            Concepto: concepto.Concepto,
+            Descripcion: `${concepto.Concepto} ${concepto.Contenido}`,
+            NumeroReferencia: numeroReferencia
+        };
+    });
+
+    console.log("Registros preparados para la tabla:", registros);
+
+    // Retornar los registros preparados
+    return registros;
 }
+
+
+function extraerDatosPorConcepto(textoExtraido) {
+    console.log("Texto Extraído Completo:", textoExtraido);
+
+    // Lista de conceptos clave que delimitan las secciones
+    const conceptosClave = [
+        "Depósito Emisor:",
+        "Retiro por compra",
+        "Depósito En Cta De Captación",
+        "Comision Por Transferencia",
+        "RETIRO Nombre Receptor:",
+        "Depósito de intereses",
+        "Compra de divisas"
+    ];
+
+    // Inicializar lista de resultados
+    const datosExtraidos = [];
+
+    // Crear una expresión regular que identifique cada concepto clave
+    const regexConceptos = new RegExp(`(${conceptosClave.join('|')})`, 'g');
+
+    // Dividir el texto en secciones basadas en los conceptos clave
+    const secciones = textoExtraido.split(regexConceptos);
+
+    // Procesar cada sección para extraer el contenido
+    for (let i = 1; i < secciones.length; i += 2) {
+        const concepto = secciones[i].trim(); // Concepto clave actual
+        let contenido = secciones[i + 1] ? secciones[i + 1].trim() : ""; // Contenido hasta el siguiente concepto
+
+        // Si el contenido contiene "Saldo final:", recortar el texto
+        const indiceSaldoFinal = contenido.indexOf("Saldo final:");
+        if (indiceSaldoFinal !== -1) {
+            contenido = contenido.substring(0, indiceSaldoFinal).trim(); // Recortar a partir de "Saldo final:"
+        }
+
+        if (contenido) {
+            // Almacenar el concepto y su contenido asociado
+            datosExtraidos.push({
+                Concepto: concepto,
+                Contenido: contenido
+            });
+        }
+    }
+
+    console.log("Datos Extraídos:", datosExtraidos);
+
+    // Retornar los datos extraídos
+    return datosExtraidos;
+}
+
+
+// Integración de funciones y muestra de resultados
+async function procesarPDF(pdfArchivo) {
+    const textoExtraido = await extraerTextoDesdePDF(pdfArchivo);
+    const registros = extraerDatosEspecificosMonex(textoExtraido);
+    console.log("Resultados finales del PDF:");
+    registros.forEach((registro, index) => {
+        console.log(`Registro ${index + 1}: FechaMovimiento: ${registro.FechaMovimiento}, Concepto: ${registro.Concepto}, Descripcion: ${registro.Descripcion}`);
+    });
+}
+
+
+
+
 
 
 const regexFechas = /\b\d{2}\/[A-Z][a-z]{2}\b/g;
