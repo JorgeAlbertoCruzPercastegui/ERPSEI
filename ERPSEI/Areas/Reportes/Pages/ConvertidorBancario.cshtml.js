@@ -1138,20 +1138,37 @@ function extraerDatosEspecificosMonex(textoExtraido) {
             }
         }
 
+        // NUEVA LÓGICA PARA ABONO Y CARGO
+        let abono = "0.00";
+        let cargo = "0.00";
+        const regexNumeros = /[\d,]+\.\d{2}/g; // Números con formato decimal
+        const numerosEncontrados = concepto.Contenido.match(regexNumeros) || [];
+
+        if (numerosEncontrados.length >= 2) {
+            const [numero1, numero2] = numerosEncontrados.map(num => parseFloat(num.replace(/,/g, '')));
+            if (concepto.Concepto.startsWith("Depósito Emisor:") || concepto.Concepto.startsWith("Compra de divisas") || concepto.Concepto.startsWith("Depósito En Cta De Captación")) {
+                abono = numero1 !== 0.00 ? numero1.toFixed(2) : numero2.toFixed(2);
+            } else if (concepto.Concepto.startsWith("Retiro por compra") || concepto.Concepto.startsWith("RETIRO") || concepto.Concepto.startsWith("Comision Por Transferencia")) {
+                cargo = numero1 !== 0.00 ? numero1.toFixed(2) : numero2.toFixed(2);
+            }
+        }
+
         return {
             FechaMovimiento: fecha,
             Concepto: concepto.Concepto,
             Descripcion: `${concepto.Concepto} ${concepto.Contenido}`,
             NumeroReferencia: numeroReferencia,
-            Saldo: saldo // Colocar el saldo detectado
+            Saldo: saldo, // Mantener lógica original
+            Abono: abono, // Agregar campo adicional
+            Cargo: cargo  // Agregar campo adicional
         };
     });
-
 
     console.log("Registros preparados para la tabla:", registros);
 
     return registros;
 }
+
 
 function extraerDatosPorConcepto(textoExtraido) {
     console.log("Texto Extraído Completo:", textoExtraido);
