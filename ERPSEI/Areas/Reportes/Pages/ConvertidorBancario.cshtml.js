@@ -1246,7 +1246,7 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
     console.log("Fechas encontradas (formato dd-MMM-yy):", fechasEncontradas);
 
     // Registro de descripciones
-    const tabla = []; // Tabla para almacenar fechas y descripciones
+    const tabla = []; // Tabla para almacenar fechas, descripciones, saldos, cargos y abonos
     for (let i = 0; i < fechasEncontradas.length - 1; i++) {
         const fechaActual = fechasEncontradas[i];
         const fechaSiguiente = fechasEncontradas[i + 1];
@@ -1258,10 +1258,58 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
         ).trim();
 
         if (descripcion) {
-            // Agregar fecha actual y descripción a la tabla
+            // Buscar números al final de la descripción
+            const numeros = descripcion.match(/(\d[\d,]*\.\d{2})\s*(\d[\d,]*\.\d{2})?$/);
+
+            // Definir valores por defecto
+            let saldo = 0.0;
+            let cargo = 0.0;
+            let abono = 0.0;
+
+            if (numeros) {
+                if (numeros[2]) {
+                    // Si hay dos números al final, procesar según las reglas
+                    saldo = parseFloat(numeros[2].replace(/,/g, '')); // Último número como Saldo
+                    const primeraCantidad = parseFloat(numeros[1].replace(/,/g, ''));
+
+                    // Reglas de asignación basadas en el inicio del concepto
+                    if (descripcion.startsWith("COMPRA ORDEN")) {
+                        abono = primeraCantidad; // Primera cantidad al Abono
+                    } else if (descripcion.startsWith("DEPOSITO DE CUENTA")) {
+                        cargo = primeraCantidad; // Primera cantidad al Cargo
+                    } else if (
+                        descripcion.startsWith("SPEI") ||
+                        descripcion.startsWith("BNET") ||
+                        /^\d{3}-\d{2}\/\d{2}\/\d{4}\/\d{2}-[A-Z0-9]+/.test(descripcion)
+                    ) {
+                        cargo = primeraCantidad; // Formatos específicos como este asignan al Cargo
+                    } else if (
+                        descripcion.startsWith("002601") && descripcion.includes("SPEI RECIBIDO")
+                    ) {
+                        cargo = primeraCantidad; // Casos como este se asignan al Cargo
+                    } else if (
+                        descripcion.startsWith("CARGO POR PAGO") ||
+                        descripcion.startsWith("TRASPASO A CUENTA") ||
+                        descripcion.startsWith("PAGO DE LDC") ||
+                        descripcion.startsWith("PAGO REFERENCIADO")
+                    ) {
+                        abono = primeraCantidad; // Ciertas frases al Abono
+                    } else if (descripcion.length >= 24 && !descripcion.includes(" ")) {
+                        cargo = primeraCantidad; // Conceptos largos sin espacios al Cargo
+                    }
+                } else {
+                    // Si hay un solo número al final, asignarlo al Saldo
+                    saldo = parseFloat(numeros[1].replace(/,/g, ''));
+                }
+            }
+
+            // Agregar a la tabla con los valores procesados
             tabla.push({
                 FechaMovimiento: fechaActual.FechaMovimiento,
                 Descripcion: descripcion,
+                Saldo: saldo.toFixed(2),
+                Cargo: cargo.toFixed(2),
+                Abono: abono.toFixed(2),
             });
         }
     }
@@ -1272,13 +1320,20 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
         tabla.push({
             FechaMovimiento: ultimaFecha.FechaMovimiento,
             Descripcion: "Sin descripción específica",
+            Saldo: "0.00",
+            Cargo: "0.00",
+            Abono: "0.00",
         });
     }
 
-    console.log("Tabla generada con fechas y descripciones:", tabla);
+    console.log("Tabla generada con fechas, descripciones, saldos, cargos y abonos:", tabla);
 
     // Retorna la tabla generada
     return tabla;
 }
+
+
+
+
 
 
