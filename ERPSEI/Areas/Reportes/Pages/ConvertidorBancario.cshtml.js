@@ -250,6 +250,17 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "banorte") {
+                            console.log("Texto extraído antes de pasar a Banorte:", extractedText);
+                            const datos = extraerDatosEspecificosBanorte(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
                         } else if (bancoDetectado.toLowerCase() === "monex" || bancoDetectado.toLowerCase() === "Monex") {
                             const datos = extraerDatosEspecificosMonex(extractedText);
 
@@ -1218,9 +1229,23 @@ async function procesarPDF(pdfArchivo) {
     });
 }
 
+function extraerDatosEspecificosBanorte(textoExtraido) {
+    console.log("Texto extraído Banorte: ", textoExtraido);
 
+    // Patrón para fechas en formato dd-MMM-yy (ejemplo: 30-SEP-24)
+    const regexFechasFormatoEspecifico = /\b\d{2}-[A-Z]{3}-\d{2}\b/g;
 
+    // Extraer todas las fechas que coincidan con el patrón
+    const fechasEncontradas = [];
+    const matchFechas = textoExtraido.matchAll(regexFechasFormatoEspecifico);
 
+    for (const match of matchFechas) {
+        fechasEncontradas.push({ FechaMovimiento: match[0] });
+    }
 
+    console.log("Fechas encontradas (formato dd-MMM-yy):", fechasEncontradas);
 
-const regexFechas = /\b\d{2}\/[A-Z][a-z]{2}\b/g;
+    // Si deseas procesar las fechas o extraer información adicional, puedes hacerlo aquí
+
+    return fechasEncontradas; // Retorna el array de fechas encontradas
+}
