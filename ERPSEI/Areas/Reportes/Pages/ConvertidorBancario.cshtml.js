@@ -1240,12 +1240,45 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
     const matchFechas = textoExtraido.matchAll(regexFechasFormatoEspecifico);
 
     for (const match of matchFechas) {
-        fechasEncontradas.push({ FechaMovimiento: match[0] });
+        fechasEncontradas.push({ FechaMovimiento: match[0], Index: match.index });
     }
 
     console.log("Fechas encontradas (formato dd-MMM-yy):", fechasEncontradas);
 
-    // Si deseas procesar las fechas o extraer información adicional, puedes hacerlo aquí
+    // Registro de descripciones
+    const tabla = []; // Tabla para almacenar fechas y descripciones
+    for (let i = 0; i < fechasEncontradas.length - 1; i++) {
+        const fechaActual = fechasEncontradas[i];
+        const fechaSiguiente = fechasEncontradas[i + 1];
 
-    return fechasEncontradas; // Retorna el array de fechas encontradas
+        // Extraer el texto entre la fecha actual y la siguiente
+        const descripcion = textoExtraido.slice(
+            fechaActual.Index + fechaActual.FechaMovimiento.length,
+            fechaSiguiente.Index
+        ).trim();
+
+        if (descripcion) {
+            // Agregar fecha actual y descripción a la tabla
+            tabla.push({
+                FechaMovimiento: fechaActual.FechaMovimiento,
+                Descripcion: descripcion,
+            });
+        }
+    }
+
+    // Agregar la última fecha sin descripción si aplica
+    if (fechasEncontradas.length > 0) {
+        const ultimaFecha = fechasEncontradas[fechasEncontradas.length - 1];
+        tabla.push({
+            FechaMovimiento: ultimaFecha.FechaMovimiento,
+            Descripcion: "Sin descripción específica",
+        });
+    }
+
+    console.log("Tabla generada con fechas y descripciones:", tabla);
+
+    // Retorna la tabla generada
+    return tabla;
 }
+
+
