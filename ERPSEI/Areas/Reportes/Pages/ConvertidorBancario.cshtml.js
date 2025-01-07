@@ -1252,66 +1252,85 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
         const fechaSiguiente = fechasEncontradas[i + 1];
 
         // Extraer el texto entre la fecha actual y la siguiente
-        const descripcion = textoExtraido.slice(
+        let descripcion = textoExtraido.slice(
             fechaActual.Index + fechaActual.FechaMovimiento.length,
             fechaSiguiente.Index
         ).trim();
 
-        if (descripcion) {
-            // Buscar números al final de la descripción
-            const numeros = descripcion.match(/(\d[\d,]*\.\d{2})\s*(\d[\d,]*\.\d{2})?$/);
+        // Verificar si el concepto contiene "Línea Directa" o "INVERSION ENLACE NEGOCIOS"
+        const indiceLineaDirecta = descripcion.indexOf("Línea Directa");
+        const indiceInversionEnlace = descripcion.indexOf("INVERSION ENLACE NEGOCIOS");
 
-            // Definir valores por defecto
-            let saldo = 0.0;
-            let cargo = 0.0;
-            let abono = 0.0;
-
-            if (numeros) {
-                if (numeros[2]) {
-                    // Si hay dos números al final, procesar según las reglas
-                    saldo = parseFloat(numeros[2].replace(/,/g, '')); // Último número como Saldo
-                    const primeraCantidad = parseFloat(numeros[1].replace(/,/g, ''));
-
-                    // Reglas de asignación basadas en el inicio del concepto
-                    if (descripcion.startsWith("COMPRA ORDEN")) {
-                        abono = primeraCantidad; // Primera cantidad al Abono
-                    } else if (descripcion.startsWith("DEPOSITO DE CUENTA")) {
-                        cargo = primeraCantidad; // Primera cantidad al Cargo
-                    } else if (
-                        descripcion.startsWith("SPEI") ||
-                        descripcion.startsWith("BNET") ||
-                        /^\d{3}-\d{2}\/\d{2}\/\d{4}\/\d{2}-[A-Z0-9]+/.test(descripcion)
-                    ) {
-                        cargo = primeraCantidad; // Formatos específicos como este asignan al Cargo
-                    } else if (
-                        descripcion.startsWith("002601") && descripcion.includes("SPEI RECIBIDO")
-                    ) {
-                        cargo = primeraCantidad; // Casos como este se asignan al Cargo
-                    } else if (
-                        descripcion.startsWith("CARGO POR PAGO") ||
-                        descripcion.startsWith("TRASPASO A CUENTA") ||
-                        descripcion.startsWith("PAGO DE LDC") ||
-                        descripcion.startsWith("PAGO REFERENCIADO")
-                    ) {
-                        abono = primeraCantidad; // Ciertas frases al Abono
-                    } else if (descripcion.length >= 24 && !descripcion.includes(" ")) {
-                        cargo = primeraCantidad; // Conceptos largos sin espacios al Cargo
-                    }
-                } else {
-                    // Si hay un solo número al final, asignarlo al Saldo
-                    saldo = parseFloat(numeros[1].replace(/,/g, ''));
-                }
-            }
-
-            // Agregar a la tabla con los valores procesados
-            tabla.push({
-                FechaMovimiento: fechaActual.FechaMovimiento,
-                Descripcion: descripcion,
-                Saldo: saldo.toFixed(2),
-                Cargo: cargo.toFixed(2),
-                Abono: abono.toFixed(2),
-            });
+        // Cortar la descripción si contiene "Línea Directa"
+        if (indiceLineaDirecta !== -1) {
+            descripcion = descripcion.slice(0, indiceLineaDirecta).trim();
         }
+
+        // Cortar la descripción si contiene "INVERSION ENLACE NEGOCIOS"
+        if (indiceInversionEnlace !== -1) {
+            descripcion = descripcion.slice(0, indiceInversionEnlace).trim();
+        }
+
+        // Buscar las dos últimas cantidades en la descripción
+        const numeros = descripcion.match(/(\d[\d,]*\.\d{2})\s*(\d[\d,]*\.\d{2})?$/);
+
+        // Definir valores por defecto
+        let saldo = 0.0;
+        let cargo = 0.0;
+        let abono = 0.0;
+
+        if (numeros) {
+            if (numeros[2]) {
+                // Procesar las dos últimas cantidades
+                saldo = parseFloat(numeros[2].replace(/,/g, '')); // Último número como Saldo
+                const primeraCantidad = parseFloat(numeros[1].replace(/,/g, ''));
+
+                // Reglas de asignación basadas en el inicio del concepto
+                if (descripcion.startsWith("COMPRA ORDEN")) {
+                    abono = primeraCantidad; // Primera cantidad al Abono
+                } else if (descripcion.startsWith("DEPOSITO DE CUENTA")) {
+                    cargo = primeraCantidad; // Primera cantidad al Cargo
+                } else if (
+                    descripcion.startsWith("SPEI") ||
+                    descripcion.startsWith("BNET") ||
+                    /^\d{3}-\d{2}\/\d{2}\/\d{4}\/\d{2}-[A-Z0-9]+/.test(descripcion)
+                ) {
+                    cargo = primeraCantidad; // Formatos específicos como este asignan al Cargo
+                } else if (
+                    descripcion.startsWith("CARGO POR PAGO") ||
+                    descripcion.startsWith("TRASPASO A CUENTA") ||
+                    descripcion.startsWith("PAGO DE LDC") ||
+                    descripcion.startsWith("PAGO REFERENCIADO")
+                ) {
+                    abono = primeraCantidad; // Ciertas frases al Abono
+                } else if (descripcion.length >= 24) {
+                    // Si el concepto tiene 24 caracteres o más, asignar primera cantidad al Cargo
+                    cargo = primeraCantidad;
+                }
+
+                // Eliminar las cantidades detectadas del concepto
+                descripcion = descripcion.replace(numeros[1], '').replace(numeros[2], '').trim();
+            } else {
+                // Si hay un solo número al final, asignarlo al Saldo
+                saldo = parseFloat(numeros[1].replace(/,/g, ''));
+                // Eliminar la única cantidad del concepto
+                descripcion = descripcion.replace(numeros[1], '').trim();
+            }
+        } else if (descripcion.match(/^\d[\d,]*\.\d{2}$/)) {
+            // Si el concepto solo contiene un número, asignarlo al Saldo
+            saldo = parseFloat(descripcion.replace(/,/g, ''));
+            // Dejar la descripción vacía porque solo era el número
+            descripcion = '';
+        }
+
+        // Agregar a la tabla con los valores procesados
+        tabla.push({
+            FechaMovimiento: fechaActual.FechaMovimiento,
+            Descripcion: descripcion,
+            Saldo: saldo.toFixed(2),
+            Cargo: cargo.toFixed(2),
+            Abono: abono.toFixed(2),
+        });
     }
 
     // Agregar la última fecha sin descripción si aplica
@@ -1331,9 +1350,3 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
     // Retorna la tabla generada
     return tabla;
 }
-
-
-
-
-
-
