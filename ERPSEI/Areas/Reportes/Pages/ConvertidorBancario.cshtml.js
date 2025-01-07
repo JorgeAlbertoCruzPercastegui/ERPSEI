@@ -199,7 +199,8 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     var esBBVA = bancoDetectado.toLowerCase() === "bbva" || bancoDetectado.toLowerCase() === "bancomer";
                     var esBancoCorrecto = bancoDetectado.toLowerCase() === nombreBancoSeleccionado.toLowerCase() || (esBBVA && (nombreBancoSeleccionado.toLowerCase() === "bbva" || nombreBancoSeleccionado.toLowerCase() === "bancomer"));
 
-                    if (esBancoCorrecto) {
+                    if (esBancoCorrecto)
+                    {
                         // Crear el mensaje del modal
                         const mensajeModal = `Banco detectado correctamente: ${bancoDetectado}`;
 
@@ -261,8 +262,19 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
-                        } else if (bancoDetectado.toLowerCase() === "monex" || bancoDetectado.toLowerCase() === "Monex") {
+                        } else if (bancoDetectado.toLowerCase() === "monex" || bancoDetectado.toLowerCase() === "Monex")
+                        {
                             const datos = extraerDatosEspecificosMonex(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        } else if (bancoDetectado.toLowerCase() === "santander") {
+                            console.log("Condición para Santander detectada");
+                            const datos = extraerDatosEspecificosSantander(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -296,7 +308,6 @@ function importarMovimientosDesdePDF(file, selectedBank) {
         reader.readAsArrayBuffer(file);
     });
 }
-
 
 function detectarBanco(fileName) {
     // Diccionario de bancos y sus palabras clave en nombres de archivos
@@ -1349,4 +1360,40 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
 
     // Retorna la tabla generada
     return tabla;
+}
+
+function extraerDatosEspecificosSantander(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído Santander: ", textoExtraido);
+
+    // Expresión regular para fechas en formato DD-MMM-AAAA (02-SEP-2024)
+    const regexFechas = /\b\d{2}-[A-Z]{3}-\d{4}\b/g;
+
+    // Buscar todas las coincidencias de fechas
+    const fechasEncontradas = textoExtraido.match(regexFechas);
+
+    // Verificar si se encontraron fechas
+    if (fechasEncontradas && fechasEncontradas.length > 0) {
+        console.log("Fechas encontradas:", fechasEncontradas);
+    } else {
+        console.log("No se encontraron fechas en el texto extraído.");
+        return []; // Retorna un arreglo vacío si no hay fechas
+    }
+
+    // Crear un arreglo para almacenar las fechas como objetos para la tabla
+    const datosTabla = [];
+
+    fechasEncontradas.forEach(fecha => {
+        datosTabla.push({ FechaMovimiento: fecha });
+    });
+
+    // Mostrar los datos en la tabla de la vista (ajusta según tu implementación de tabla)
+    console.log("Datos para la tabla:", datosTabla);
+
+    // Retorna los datos procesados
+    return datosTabla;
 }
