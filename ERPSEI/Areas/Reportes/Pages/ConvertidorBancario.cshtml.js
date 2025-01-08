@@ -1421,11 +1421,16 @@ function extraerDatosEspecificosSantander(textoExtraido) {
                     const regexDescripcion = /\b(ABONO TRANSFERENCIA|PAGO TRANSFERENCIA|COBRO PRIMA|PAGO CHEQUE|COM MEMBRESIA|I V A POR COMISION|)\b.*/g;
                     const descripcion = bloque.match(regexDescripcion)?.[0] || "Descripción no encontrada";
 
+                    // Extraer los primeros 7 dígitos como Número de Referencia
+                    const regexNumeroReferencia = /\b\d{7}/;
+                    const numeroReferencia = bloque.match(regexNumeroReferencia)?.[0] || "Referencia no encontrada";
+
                     // Agregar datos al arreglo ordenado
                     datosOrdenadosPorPagina.push({
                         Pagina: numeroPagina,
                         FechaMovimiento: fecha,
-                        Descripcion: descripcion
+                        Descripcion: descripcion,
+                        NumeroReferencia: numeroReferencia
                     });
                 }
             }
@@ -1444,7 +1449,3 @@ function extraerDatosEspecificosSantander(textoExtraido) {
     // Retornar los datos procesados sin los primeros 5 y últimos 4 registros
     return datosFinales;
 }
-
-
-
-
