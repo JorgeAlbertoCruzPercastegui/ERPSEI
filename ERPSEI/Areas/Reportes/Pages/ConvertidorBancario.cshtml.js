@@ -1368,32 +1368,64 @@ function extraerDatosEspecificosSantander(textoExtraido) {
         return [];
     }
 
-    console.log("Texto extraído Santander: ", textoExtraido);
+    console.log("Texto extraído Santander:", textoExtraido);
 
-    // Expresión regular para fechas en formato DD-MMM-AAAA (02-SEP-2024)
-    const regexFechas = /\b\d{2}-[A-Z]{3}-\d{4}\b/g;
+    // Dividir el texto por páginas usando una expresión regular para identificar "Página X de Y"
+    const regexPaginas = /Página\s+(\d+)\s+de\s+\d+/g;
+    const paginas = textoExtraido.split(regexPaginas);
 
-    // Buscar todas las coincidencias de fechas
-    const fechasEncontradas = textoExtraido.match(regexFechas);
-
-    // Verificar si se encontraron fechas
-    if (fechasEncontradas && fechasEncontradas.length > 0) {
-        console.log("Fechas encontradas:", fechasEncontradas);
-    } else {
-        console.log("No se encontraron fechas en el texto extraído.");
-        return []; // Retorna un arreglo vacío si no hay fechas
+    if (paginas.length < 2) {
+        console.error("No se encontraron identificadores de páginas en el texto.");
+        return [];
     }
 
-    // Crear un arreglo para almacenar las fechas como objetos para la tabla
-    const datosTabla = [];
+    // Almacenar datos organizados por página
+    const datosOrdenadosPorPagina = [];
 
-    fechasEncontradas.forEach(fecha => {
-        datosTabla.push({ FechaMovimiento: fecha });
-    });
+    // Expresión regular para fechas en formato DD-MMM-AAAA
+    const regexFechas = /\b\d{2}-[A-Z]{3}-\d{4}\b/g;
 
-    // Mostrar los datos en la tabla de la vista (ajusta según tu implementación de tabla)
-    console.log("Datos para la tabla:", datosTabla);
+    // Expresión regular para omitir fechas del tipo "PERIODO DEL DD-MMM-AAAA AL DD-MMM-AAAA"
+    const regexPeriodo = /PERIODO\s+DEL\s+\d{2}-[A-Z]{3}-\d{4}\s+AL\s+\d{2}-[A-Z]{3}-\d{4}/;
 
-    // Retorna los datos procesados
-    return datosTabla;
+    // Expresión regular para omitir fechas del tipo "CORTE AL DD-MMM-AAAA"
+    const regexCorte = /CORTE\s+AL\s+\d{2}-[A-Z]{3}-\d{4}/;
+
+    // Recorrer las páginas y procesar la información en orden
+    for (let i = 1; i < paginas.length; i += 2) {
+        const numeroPagina = parseInt(paginas[i], 10);
+        const contenidoPagina = paginas[i + 1];
+
+        if (!contenidoPagina || isNaN(numeroPagina)) {
+            continue; // Ignorar si no hay contenido o el número de página no es válido
+        }
+
+        // Omitir las fechas asociadas a "PERIODO DEL ... AL ..." y "CORTE AL ..."
+        const contenidoFiltrado = contenidoPagina
+            .replace(regexPeriodo, "")
+            .replace(regexCorte, "");
+
+        // Buscar fechas en el contenido filtrado
+        const fechasEncontradas = contenidoFiltrado.match(regexFechas);
+
+        if (fechasEncontradas && fechasEncontradas.length > 0) {
+            fechasEncontradas.forEach(fecha => {
+                datosOrdenadosPorPagina.push({
+                    Pagina: numeroPagina,
+                    FechaMovimiento: fecha
+                });
+            });
+        }
+    }
+
+    // Ordenar los datos por número de página
+    datosOrdenadosPorPagina.sort((a, b) => a.Pagina - b.Pagina);
+
+    // Mostrar los datos procesados para la tabla
+    console.log("Datos para la tabla (ordenados):", datosOrdenadosPorPagina);
+
+    // Retornar los datos procesados
+    return datosOrdenadosPorPagina;
 }
+
+
