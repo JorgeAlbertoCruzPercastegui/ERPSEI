@@ -1362,6 +1362,7 @@ function extraerDatosEspecificosBanorte(textoExtraido) {
     return tabla;
 }
 
+const regexDescripcion = /\b(ABONO TRANSFERENCIA|PAGO TRANSFERENCIA|COBRO PRIMA|PAGO CHEQUE)\b.*/g;
 function extraerDatosEspecificosSantander(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
         console.error("El texto extraído está vacío o indefinido.");
@@ -1385,12 +1386,6 @@ function extraerDatosEspecificosSantander(textoExtraido) {
     // Expresión regular para fechas en formato DD-MMM-AAAA
     const regexFechas = /\b\d{2}-[A-Z]{3}-\d{4}\b/g;
 
-    // Expresión regular para omitir fechas del tipo "PERIODO DEL DD-MMM-AAAA AL DD-MMM-AAAA"
-    const regexPeriodo = /PERIODO\s+DEL\s+\d{2}-[A-Z]{3}-\d{4}\s+AL\s+\d{2}-[A-Z]{3}-\d{4}/;
-
-    // Expresión regular para omitir fechas del tipo "CORTE AL DD-MMM-AAAA"
-    const regexCorte = /CORTE\s+AL\s+\d{2}-[A-Z]{3}-\d{4}/;
-
     // Recorrer las páginas y procesar la información en orden
     for (let i = 1; i < paginas.length; i += 2) {
         const numeroPagina = parseInt(paginas[i], 10);
@@ -1400,21 +1395,40 @@ function extraerDatosEspecificosSantander(textoExtraido) {
             continue; // Ignorar si no hay contenido o el número de página no es válido
         }
 
-        // Omitir las fechas asociadas a "PERIODO DEL ... AL ..." y "CORTE AL ..."
-        const contenidoFiltrado = contenidoPagina
-            .replace(regexPeriodo, "")
-            .replace(regexCorte, "");
+        // Dividir contenido por fechas
+        const bloquesPorFecha = contenidoPagina.split(regexFechas);
 
-        // Buscar fechas en el contenido filtrado
-        const fechasEncontradas = contenidoFiltrado.match(regexFechas);
+        // Obtener las fechas correspondientes
+        const fechasEncontradas = contenidoPagina.match(regexFechas);
 
         if (fechasEncontradas && fechasEncontradas.length > 0) {
-            fechasEncontradas.forEach(fecha => {
-                datosOrdenadosPorPagina.push({
-                    Pagina: numeroPagina,
-                    FechaMovimiento: fecha
-                });
-            });
+            for (let j = 0; j < fechasEncontradas.length; j++) {
+                const fecha = fechasEncontradas[j];
+                let bloque = bloquesPorFecha[j + 1]?.trim(); // Obtener contenido asociado a la fecha
+
+                if (bloque) {
+                    // Cortar el bloque hasta las últimas dos cantidades
+                    const regexUltimasDosCantidades = /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)$/;
+                    const match = bloque.match(regexUltimasDosCantidades);
+
+                    if (match) {
+                        // Ajustar el bloque para que termine en las últimas dos cantidades
+                        bloque = bloque.substring(0, match.index + match[0].length);
+                    } else {
+                        console.warn("No se encontraron las últimas dos cantidades en el bloque.");
+                    }
+
+                    const regexDescripcion = /\b(ABONO TRANSFERENCIA|PAGO TRANSFERENCIA|COBRO PRIMA|PAGO CHEQUE|COM MEMBRESIA|I V A POR COMISION|)\b.*/g;
+                    const descripcion = bloque.match(regexDescripcion)?.[0] || "Descripción no encontrada";
+
+                    // Agregar datos al arreglo ordenado
+                    datosOrdenadosPorPagina.push({
+                        Pagina: numeroPagina,
+                        FechaMovimiento: fecha,
+                        Descripcion: descripcion
+                    });
+                }
+            }
         }
     }
 
@@ -1424,8 +1438,13 @@ function extraerDatosEspecificosSantander(textoExtraido) {
     // Mostrar los datos procesados para la tabla
     console.log("Datos para la tabla (ordenados):", datosOrdenadosPorPagina);
 
-    // Retornar los datos procesados
-    return datosOrdenadosPorPagina;
+    // Quitar los primeros 5 registros y los últimos 4 registros
+    const datosFinales = datosOrdenadosPorPagina.slice(5, datosOrdenadosPorPagina.length - 4);
+
+    // Retornar los datos procesados sin los primeros 5 y últimos 4 registros
+    return datosFinales;
 }
+
+
 
 
