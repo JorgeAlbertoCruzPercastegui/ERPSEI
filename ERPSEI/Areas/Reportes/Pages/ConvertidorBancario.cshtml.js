@@ -1371,7 +1371,6 @@ function extraerDatosEspecificosSantander(textoExtraido) {
 
     console.log("Texto extraído Santander:", textoExtraido);
 
-    // Dividir el texto por páginas usando una expresión regular para identificar "Página X de Y"
     const regexPaginas = /Página\s+(\d+)\s+de\s+\d+/g;
     const paginas = textoExtraido.split(regexPaginas);
 
@@ -1380,56 +1379,48 @@ function extraerDatosEspecificosSantander(textoExtraido) {
         return [];
     }
 
-    // Almacenar datos organizados por página
     const datosOrdenadosPorPagina = [];
-
-    // Expresión regular para fechas en formato DD-MMM-AAAA
     const regexFechas = /\b\d{2}-[A-Z]{3}-\d{4}\b/g;
 
-    // Recorrer las páginas y procesar la información en orden
     for (let i = 1; i < paginas.length; i += 2) {
         const numeroPagina = parseInt(paginas[i], 10);
         const contenidoPagina = paginas[i + 1];
 
         if (!contenidoPagina || isNaN(numeroPagina)) {
-            continue; // Ignorar si no hay contenido o el número de página no es válido
+            continue;
         }
 
-        // Dividir contenido por fechas
         const bloquesPorFecha = contenidoPagina.split(regexFechas);
-
-        // Obtener las fechas correspondientes
         const fechasEncontradas = contenidoPagina.match(regexFechas);
 
         if (fechasEncontradas && fechasEncontradas.length > 0) {
             for (let j = 0; j < fechasEncontradas.length; j++) {
                 const fecha = fechasEncontradas[j];
-                let bloque = bloquesPorFecha[j + 1]?.trim(); // Obtener contenido asociado a la fecha
+                let bloque = bloquesPorFecha[j + 1]?.trim();
 
                 if (bloque) {
-                    // Cortar el bloque hasta las últimas dos cantidades
-                    const regexUltimasDosCantidades = /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)$/;
-                    const match = bloque.match(regexUltimasDosCantidades);
+                    // Cortar el bloque si aparece la palabra "TOTAL"
+                    const indexTotal = bloque.indexOf("TOTAL");
+                    if (indexTotal !== -1) {
+                        bloque = bloque.substring(0, indexTotal).trim();
+                    }
 
-                    if (match) {
-                        // Ajustar el bloque para que termine en las últimas dos cantidades
-                        bloque = bloque.substring(0, match.index + match[0].length);
-                    } else {
-                        console.warn("No se encontraron las últimas dos cantidades en el bloque.");
+                    // Cortar el bloque si aparece la palabra "ESTADO DE CUENTA"
+                    const indexEstadoCuenta = bloque.indexOf("ESTADO DE CUENTA");
+                    if (indexEstadoCuenta !== -1) {
+                        bloque = bloque.substring(0, indexEstadoCuenta).trim();
                     }
 
                     const regexDescripcion = /\b(ABONO TRANSFERENCIA|PAGO TRANSFERENCIA|COBRO PRIMA|PAGO CHEQUE|COM MEMBRESIA|I V A POR COMISION|)\b.*/g;
                     const descripcion = bloque.match(regexDescripcion)?.[0] || "Descripción no encontrada";
 
-                    // Extraer los primeros 7 dígitos como Número de Referencia
                     const regexNumeroReferencia = /\b\d{7}/;
                     const numeroReferencia = bloque.match(regexNumeroReferencia)?.[0] || "Referencia no encontrada";
 
-                    // Agregar datos al arreglo ordenado
                     datosOrdenadosPorPagina.push({
                         Pagina: numeroPagina,
                         FechaMovimiento: fecha,
-                        Descripcion: descripcion,
+                        Descripcion: bloque, // Aquí queda el texto antes de "TOTAL" o "ESTADO DE CUENTA"
                         NumeroReferencia: numeroReferencia
                     });
                 }
@@ -1437,15 +1428,21 @@ function extraerDatosEspecificosSantander(textoExtraido) {
         }
     }
 
-    // Ordenar los datos por número de página
     datosOrdenadosPorPagina.sort((a, b) => a.Pagina - b.Pagina);
 
-    // Mostrar los datos procesados para la tabla
-    console.log("Datos para la tabla (ordenados):", datosOrdenadosPorPagina);
+    let datosFinales = datosOrdenadosPorPagina.slice(5, datosOrdenadosPorPagina.length - 4);
 
-    // Quitar los primeros 5 registros y los últimos 4 registros
-    const datosFinales = datosOrdenadosPorPagina.slice(5, datosOrdenadosPorPagina.length - 4);
+    // Filtrar registros no deseados
+    datosFinales = datosFinales.filter(
+        (registro) =>
+            registro.NumeroReferencia !== "Referencia no encontrada" &&
+            registro.Descripcion !== "AL"
+    );
 
-    // Retornar los datos procesados sin los primeros 5 y últimos 4 registros
+    console.log("Datos filtrados para la tabla:", datosFinales);
     return datosFinales;
 }
+
+
+
+
