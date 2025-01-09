@@ -1542,8 +1542,17 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
     // Crear el array de datos
     const datosOrdenadosPorFecha = [];
 
-    // Generar los datos en formato adecuado para la tabla
-    fechasEncontradas.forEach((fecha) => {
+    // Expresión regular para buscar fechas y los textos asociados
+    const regexFechasYTexto = /((JAN\.|FEB\.|MAR\.|APR\.|MAY\.|JUN\.|JUL\.|AUG\.|SEP\.|OCT\.|NOV\.|DEC\.) \d{2})(?:\s+(\d{10})|(?:\s+([A-Z\s]+)))/g;
+
+    let match;
+    while ((match = regexFechasYTexto.exec(textoExtraido)) !== null) {
+        const fecha = match[1]; // Fecha encontrada
+        const referencia = match[3] || ""; // Número de referencia (opcional, puede ser vacío)
+        const descripcion = match[4] ? match[4].trim() : ""; // Texto asociado como descripción (si existe)
+
+        console.log(`Fecha: ${fecha}, Número de Referencia: ${referencia || "N/A"}, Descripción: ${descripcion || "N/A"}`);
+
         const [mesAbreviado, dia] = fecha.split(" ");
         const mes = mesesMap[mesAbreviado];
         const fechaFormateada = `${dia.padStart(2, "0")}/${mes}/${anio}`;
@@ -1551,16 +1560,17 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
         datosOrdenadosPorFecha.push({
             FechaMovimiento: fechaFormateada,
             FechaAplicacion: "", // Inicializar vacío o según tu lógica
-            NumeroReferencia: "", // Ejemplo: Generar referencia ficticia
-            Descripcion: "", // Descripción ficticia
+            NumeroReferencia: referencia, // Se deja vacío si no hay número de referencia
+            Descripcion: descripcion || "", // Colocar texto como "BALANCE INICIAL"
             Cargo: "0.00", // Inicializar con valores predeterminados
             Abono: "0.00",
             Saldo: "0.00"
         });
-    });
+    }
 
     console.log("Datos generados para Inbursa:", datosOrdenadosPorFecha);
 
     // Retornar los datos ordenados por FechaMovimiento (opcional)
     return datosOrdenadosPorFecha.sort((a, b) => a.FechaMovimiento.localeCompare(b.FechaMovimiento));
 }
+
