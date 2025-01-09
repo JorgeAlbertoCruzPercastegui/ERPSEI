@@ -1411,17 +1411,44 @@ function extraerDatosEspecificosSantander(textoExtraido) {
                         bloque = bloque.substring(0, indexEstadoCuenta).trim();
                     }
 
-                    const regexDescripcion = /\b(ABONO TRANSFERENCIA|PAGO TRANSFERENCIA|COBRO PRIMA|PAGO CHEQUE|COM MEMBRESIA|I V A POR COMISION|)\b.*/g;
-                    const descripcion = bloque.match(regexDescripcion)?.[0] || "Descripción no encontrada";
+                    // Extraer las dos últimas cantidades
+                    const regexUltimasDosCantidades = /(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)$/;
+                    const match = bloque.match(regexUltimasDosCantidades);
 
+                    let saldo = "0.00";
+                    let abono = "0.00";
+                    let cargo = "0.00";
+
+                    if (match) {
+                        saldo = match[2]; // Segunda cantidad como saldo
+
+                        // Si la descripción comienza con "ABONO"
+                        if (bloque.startsWith("ABONO")) {
+                            abono = match[1]; // Primera cantidad como abono
+                        } else {
+                            cargo = match[1]; // Primera cantidad como cargo
+                        }
+
+                        // Mantener las cantidades en el concepto
+                        bloque = bloque.substring(0, match.index).trim() + ` ${match[1]} ${match[2]}`;
+                    }
+
+                    // Eliminar los primeros 7 dígitos del concepto
                     const regexNumeroReferencia = /\b\d{7}/;
                     const numeroReferencia = bloque.match(regexNumeroReferencia)?.[0] || "Referencia no encontrada";
+
+                    if (numeroReferencia !== "Referencia no encontrada") {
+                        bloque = bloque.replace(numeroReferencia, "").trim();
+                    }
 
                     datosOrdenadosPorPagina.push({
                         Pagina: numeroPagina,
                         FechaMovimiento: fecha,
-                        Descripcion: bloque, // Aquí queda el texto antes de "TOTAL" o "ESTADO DE CUENTA"
-                        NumeroReferencia: numeroReferencia
+                        Descripcion: bloque, // Concepto con las cantidades visibles
+                        NumeroReferencia: numeroReferencia,
+                        Saldo: saldo, // Segunda cantidad como saldo
+                        Abono: abono, // Primera cantidad como abono si el concepto inicia con "ABONO"
+                        Cargo: cargo // Primera cantidad como cargo si el concepto no inicia con "ABONO"
                     });
                 }
             }
@@ -1440,6 +1467,7 @@ function extraerDatosEspecificosSantander(textoExtraido) {
     );
 
     console.log("Datos filtrados para la tabla:", datosFinales);
+
     return datosFinales;
 }
 
