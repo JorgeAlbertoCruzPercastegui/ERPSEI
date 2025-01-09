@@ -191,6 +191,15 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     var bancoDetectado = detectarBanco(fileName); // Cambia el parámetro a fileName
                     console.log('Texto extraído del PDF:', extractedText); // Procesar el texto extraído
                     var datosExtraidos = extraerDatosEspecificos(extractedText);
+                    const datosExtraidoss = extraerDatosEspecificosInbursa(extractedText);
+
+                    if (datosExtraidoss.length > 0) {
+                        console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
+                        initTable(datosExtraidoss); // Inicializa la tabla con los datos extraídos
+                    } else {
+                        console.log("No hay datos para mostrar en la tabla.");
+                    }
+
 
                     // Obtener el nombre del banco seleccionado desde el select
                     var nombreBancoSeleccionado = $('#selFiltroBanco option:selected').text().trim();
@@ -272,9 +281,22 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 console.log("No se pudieron extraer los datos específicos.");
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
-                        } else if (bancoDetectado.toLowerCase() === "santander") {
+                        } else if (bancoDetectado.toLowerCase() === "santander"){
                             console.log("Condición para Santander detectada");
                             const datos = extraerDatosEspecificosSantander(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "Inbursa" || bancoDetectado.toLowerCase() === "INBURSA") {
+                            console.log("Condición para Inbursa detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosInbursa(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -1472,4 +1494,73 @@ function extraerDatosEspecificosSantander(textoExtraido) {
     console.log("Listado de descripciones (filtradas):", descripciones);
 
     return datosFinales;
+}
+function extraerDatosEspecificosInbursa(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído Inbursa:", textoExtraido);
+
+    // Expresión regular para fechas en formato MMM. DD
+    const regexFechas = /\b(JAN\.|FEB\.|MAR\.|APR\.|MAY\.|JUN\.|JUL\.|AUG\.|SEP\.|OCT\.|NOV\.|DEC\.) \d{2}\b/g;
+
+    // Buscar todas las fechas en el texto extraído
+    const fechasEncontradas = textoExtraido.match(regexFechas);
+
+    if (!fechasEncontradas || fechasEncontradas.length === 0) {
+        console.log("No se encontraron fechas con el formato esperado.");
+        return [];
+    }
+
+    console.log("Fechas encontradas Inbursa:", fechasEncontradas);
+
+    // Extraer el año del texto extraído (asumiendo que está presente en el texto)
+    const regexAnio = /\b\d{4}\b/;
+    const anioEncontrado = textoExtraido.match(regexAnio);
+    const anio = anioEncontrado ? anioEncontrado[0] : "2023"; // Asignar un año predeterminado si no se encuentra
+
+    console.log("Año encontrado:", anio);
+
+    // Mapa de meses abreviados a números
+    const mesesMap = {
+        "JAN.": "01",
+        "FEB.": "02",
+        "MAR.": "03",
+        "APR.": "04",
+        "MAY.": "05",
+        "JUN.": "06",
+        "JUL.": "07",
+        "AUG.": "08",
+        "SEP.": "09",
+        "OCT.": "10",
+        "NOV.": "11",
+        "DEC.": "12"
+    };
+
+    // Crear el array de datos
+    const datosOrdenadosPorFecha = [];
+
+    // Generar los datos en formato adecuado para la tabla
+    fechasEncontradas.forEach((fecha) => {
+        const [mesAbreviado, dia] = fecha.split(" ");
+        const mes = mesesMap[mesAbreviado];
+        const fechaFormateada = `${dia.padStart(2, "0")}/${mes}/${anio}`;
+
+        datosOrdenadosPorFecha.push({
+            FechaMovimiento: fechaFormateada,
+            FechaAplicacion: "", // Inicializar vacío o según tu lógica
+            NumeroReferencia: "", // Ejemplo: Generar referencia ficticia
+            Descripcion: "", // Descripción ficticia
+            Cargo: "0.00", // Inicializar con valores predeterminados
+            Abono: "0.00",
+            Saldo: "0.00"
+        });
+    });
+
+    console.log("Datos generados para Inbursa:", datosOrdenadosPorFecha);
+
+    // Retornar los datos ordenados por FechaMovimiento (opcional)
+    return datosOrdenadosPorFecha.sort((a, b) => a.FechaMovimiento.localeCompare(b.FechaMovimiento));
 }
