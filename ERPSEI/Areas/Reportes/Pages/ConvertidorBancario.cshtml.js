@@ -1422,33 +1422,34 @@ function extraerDatosEspecificosSantander(textoExtraido) {
                     if (match) {
                         saldo = match[2]; // Segunda cantidad como saldo
 
-                        // Si la descripción comienza con "ABONO"
-                        if (bloque.startsWith("ABONO")) {
+                        // Verificar si la descripción comienza con 7 dígitos, un espacio y "ABONO"
+                        const regexAbonoInicio = /^\d{7} ABONO/;
+                        if (regexAbonoInicio.test(bloque)) {
                             abono = match[1]; // Primera cantidad como abono
                         } else {
                             cargo = match[1]; // Primera cantidad como cargo
                         }
 
-                        // Mantener las cantidades en el concepto
-                        bloque = bloque.substring(0, match.index).trim() + ` ${match[1]} ${match[2]}`;
+                        // Eliminar las dos últimas cantidades de la descripción
+                        bloque = bloque.substring(0, match.index).trim();
                     }
 
                     // Eliminar los primeros 7 dígitos del concepto
-                    const regexNumeroReferencia = /\b\d{7}/;
+                    const regexNumeroReferencia = /^\d{7}/;
                     const numeroReferencia = bloque.match(regexNumeroReferencia)?.[0] || "Referencia no encontrada";
 
                     if (numeroReferencia !== "Referencia no encontrada") {
-                        bloque = bloque.replace(numeroReferencia, "").trim();
+                        bloque = bloque.replace(regexNumeroReferencia, "").trim();
                     }
 
                     datosOrdenadosPorPagina.push({
                         Pagina: numeroPagina,
                         FechaMovimiento: fecha,
-                        Descripcion: bloque, // Concepto con las cantidades visibles
+                        Descripcion: bloque, // Concepto sin las cantidades visibles
                         NumeroReferencia: numeroReferencia,
-                        Saldo: saldo, // Segunda cantidad como saldo
-                        Abono: abono, // Primera cantidad como abono si el concepto inicia con "ABONO"
-                        Cargo: cargo // Primera cantidad como cargo si el concepto no inicia con "ABONO"
+                        Cargo: cargo, // Primera cantidad como cargo si no coincide con el patrón de ABONO
+                        Abono: abono, // Primera cantidad como abono si coincide con el patrón de ABONO
+                        Saldo: saldo // Segunda cantidad como saldo
                     });
                 }
             }
@@ -1466,11 +1467,9 @@ function extraerDatosEspecificosSantander(textoExtraido) {
             registro.Descripcion !== "AL"
     );
 
-    console.log("Datos filtrados para la tabla:", datosFinales);
+    // Extraer y mostrar las descripciones
+    const descripciones = datosFinales.map((registro) => registro.Descripcion);
+    console.log("Listado de descripciones (filtradas):", descripciones);
 
     return datosFinales;
 }
-
-
-
-
