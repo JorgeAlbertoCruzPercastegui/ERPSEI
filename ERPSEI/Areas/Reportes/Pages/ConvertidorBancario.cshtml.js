@@ -1591,6 +1591,21 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
             } else {
                 saldo = primeraCantidad; // Si hay solo una cantidad, usarla como saldo
             }
+
+            // Ajustar Cargo o Abono según el texto inicial del concepto
+            if (/^\d{10}\s+DEPOSITO SPEI|^DEPOSITO SPEI/.test(bloqueTexto)) {
+                abono = primeraCantidad; // Usar la primera cantidad como Abono
+                cargo = "0.00"; // Asegurar que Cargo sea cero
+            } else if (/^\d{10}\s+TRASPASO SPEI|^TRASPASO SPEI/.test(bloqueTexto)) {
+                cargo = primeraCantidad; // Usar la primera cantidad como Cargo
+                abono = "0.00"; // Asegurar que Abono sea cero
+            } else if (/^(COMISION|IVA COMISION|INTERESES|ISR RETENIDO)/.test(bloqueTexto)) {
+                cargo = primeraCantidad; // Usar la primera cantidad como Cargo
+                abono = "0.00"; // Asegurar que Abono sea cero
+            }
+
+            // Eliminar las cantidades del concepto después de asignarlas
+            bloqueTexto = bloqueTexto.replace(regexCantidades, "").trim();
         }
 
         // Formatear la fecha
@@ -1603,9 +1618,9 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
             FechaMovimiento: fechaFormateada,
             FechaAplicacion: "", // Inicializar vacío o según tu lógica
             NumeroReferencia: numeroReferencia, // Los 10 dígitos extraídos
-            Descripcion: bloqueTexto, // Concepto limpio
-            Cargo: cargo, // Cargo calculado
-            Abono: abono, // Abono calculado
+            Descripcion: bloqueTexto, // Concepto limpio sin cantidades
+            Cargo: cargo, // Cargo ajustado
+            Abono: abono, // Abono ajustado
             Saldo: saldo // Saldo calculado
         });
     }
@@ -1615,8 +1630,3 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
     // Retornar los datos ordenados por FechaMovimiento
     return datosOrdenadosPorFecha.sort((a, b) => a.FechaMovimiento.localeCompare(b.FechaMovimiento));
 }
-
-
-
-
-
