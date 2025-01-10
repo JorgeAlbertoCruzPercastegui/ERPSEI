@@ -192,6 +192,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     console.log('Texto extraído del PDF:', extractedText); // Procesar el texto extraído
                     var datosExtraidos = extraerDatosEspecificos(extractedText);
                     const datosExtraidoss = extraerDatosEspecificosInbursa(extractedText);
+                    extraerDatosEspecificosAfirme(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -199,6 +200,13 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     } else {
                         console.log("No hay datos para mostrar en la tabla.");
                     }
+
+                    /*if (datosExtraidosss.length > 0) {
+                        console.log("Inicializando tabla con datos extraídos:", datosExtraidosss);
+                        initTable(datosExtraidosss); // Inicializa la tabla con los datos extraídos
+                    } else {
+                        console.log("No hay datos para mostrar en la tabla.");
+                    }*/
 
 
                     // Obtener el nombre del banco seleccionado desde el select
@@ -292,11 +300,25 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
-                        else if (bancoDetectado.toLowerCase() === "Inbursa" || bancoDetectado.toLowerCase() === "INBURSA") {
+                        else if (bancoDetectado.toLowerCase() === "Inbursa" || bancoDetectado.toLowerCase() === "INBURSA")
+                        {
                             console.log("Condición para Inbursa detectada");
 
                             // Llama a la función y pasa el texto extraído
                             const datos = extraerDatosEspecificosInbursa(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "Afirme" || bancoDetectado.toLowerCase() === "AFIRME") {
+                            console.log("Condición para Afirme detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosAfirme(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -1629,4 +1651,56 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
 
     // Retornar los datos ordenados por FechaMovimiento
     return datosOrdenadosPorFecha.sort((a, b) => a.FechaMovimiento.localeCompare(b.FechaMovimiento));
+}
+
+function extraerDatosEspecificosAfirme(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído Afirme:", textoExtraido);
+
+    // Expresión regular para días (DD) seguidos de un signo $
+    const regexDias = /\b(\d{2})\b(?=\s*\$)/g;
+
+    // Expresión regular para capturar el período (mes y año) del formato "Período de 01 OCT 2024 AL 31 OCT 2024"
+    const regexPeriodo = /Per[íi]odo de \d{2} ([A-Z]{3}) (\d{4}) AL \d{2} [A-Z]{3} \d{4}/i;
+
+    // Expresión regular para capturar la fecha del formato "ESTADO DE CUENTA AL: 31 OCT 2024"
+    const regexEstadoCuenta = /ESTADO\s+DE\s+CUENTA\s+AL:\s+\d{2}\s+([A-Z]{3})\s+(\d{4})/i;
+
+    // Extraer días
+    const diasEncontrados = [];
+    let matchDia;
+    while ((matchDia = regexDias.exec(textoExtraido)) !== null) {
+        diasEncontrados.push(matchDia[1]);
+    }
+    console.log("Días encontrados:", diasEncontrados);
+
+    // Extraer mes y año del período
+    const periodoMatch = textoExtraido.match(regexPeriodo);
+    if (periodoMatch) {
+        console.log("Mes del período encontrado:", periodoMatch[1]);
+        console.log("Año del período encontrado:", periodoMatch[2]);
+    } else {
+        console.warn("No se encontró el período especificado en el texto.");
+    }
+
+    // Extraer mes y año del estado de cuenta
+    const estadoCuentaMatch = textoExtraido.match(regexEstadoCuenta);
+    if (estadoCuentaMatch) {
+        console.log("Mes del estado de cuenta encontrado:", estadoCuentaMatch[1]);
+        console.log("Año del estado de cuenta encontrado:", estadoCuentaMatch[2]);
+    } else {
+        console.warn("No se encontró el estado de cuenta en el texto.");
+    }
+
+    return {
+        dias: diasEncontrados,
+        mesPeriodo: periodoMatch ? periodoMatch[1] : null,
+        anioPeriodo: periodoMatch ? periodoMatch[2] : null,
+        mesEstadoCuenta: estadoCuentaMatch ? estadoCuentaMatch[1] : null,
+        anioEstadoCuenta: estadoCuentaMatch ? estadoCuentaMatch[2] : null
+    };
 }
