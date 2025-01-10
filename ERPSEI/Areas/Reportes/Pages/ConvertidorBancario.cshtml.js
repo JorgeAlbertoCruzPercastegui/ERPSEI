@@ -1506,17 +1506,17 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
     // Expresión regular para fechas en formato MMM. DD
     const regexFechas = /\b(JAN\.|FEB\.|MAR\.|APR\.|MAY\.|JUN\.|JUL\.|AUG\.|SEP\.|OCT\.|NOV\.|DEC\.) \d{2}\b/g;
 
-    // Buscar todas las fechas en el texto extraído
-    const fechasEncontradas = textoExtraido.match(regexFechas);
+    // Buscar todas las fechas y sus posiciones en el texto
+    const fechasEncontradas = Array.from(textoExtraido.matchAll(regexFechas));
 
     if (!fechasEncontradas || fechasEncontradas.length === 0) {
         console.log("No se encontraron fechas con el formato esperado.");
         return [];
     }
 
-    console.log("Fechas encontradas Inbursa:", fechasEncontradas);
+    console.log("Fechas encontradas Inbursa:", fechasEncontradas.map(f => f[0]));
 
-    // Extraer el año del texto extraído (asumiendo que está presente en el texto)
+    // Extraer el año del texto extraído
     const regexAnio = /\b\d{4}\b/;
     const anioEncontrado = textoExtraido.match(regexAnio);
     const anio = anioEncontrado ? anioEncontrado[0] : "2023"; // Asignar un año predeterminado si no se encuentra
@@ -1542,35 +1542,81 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
     // Crear el array de datos
     const datosOrdenadosPorFecha = [];
 
-    // Expresión regular para buscar fechas y los textos asociados
-    const regexFechasYTexto = /((JAN\.|FEB\.|MAR\.|APR\.|MAY\.|JUN\.|JUL\.|AUG\.|SEP\.|OCT\.|NOV\.|DEC\.) \d{2})(?:\s+(\d{10})|(?:\s+([A-Z\s]+)))/g;
+    // Iterar sobre las fechas encontradas y capturar los bloques de texto entre ellas
+    for (let i = 0; i < fechasEncontradas.length; i++) {
+        const fechaActual = fechasEncontradas[i][0];
+        const inicio = fechasEncontradas[i].index;
+        const fin = i + 1 < fechasEncontradas.length ? fechasEncontradas[i + 1].index : textoExtraido.length;
 
-    let match;
-    while ((match = regexFechasYTexto.exec(textoExtraido)) !== null) {
-        const fecha = match[1]; // Fecha encontrada
-        const referencia = match[3] || ""; // Número de referencia (opcional, puede ser vacío)
-        const descripcion = match[4] ? match[4].trim() : ""; // Texto asociado como descripción (si existe)
+        // Bloque de texto asociado a esta fecha
+        let bloqueTexto = textoExtraido.substring(inicio + fechaActual.length, fin).trim();
 
-        console.log(`Fecha: ${fecha}, Número de Referencia: ${referencia || "N/A"}, Descripción: ${descripcion || "N/A"}`);
+        // Si el bloque contiene "P á gina:", cortar el bloque después de las dos cantidades y antes de "P á gina:"
+        const regexPagina = /([\d,.]+\s+[\d,.]+)\s+P\s?á\s?gina:/;
+        const matchPagina = bloqueTexto.match(regexPagina);
+        if (matchPagina) {
+            bloqueTexto = bloqueTexto.substring(0, matchPagina.index + matchPagina[1].length).trim();
+        }
 
-        const [mesAbreviado, dia] = fecha.split(" ");
+        // Eliminar "Cliente Inbursa:" y el texto que le sigue
+        const regexClienteInbursa = /Cliente Inbursa:.*$/;
+        bloqueTexto = bloqueTexto.replace(regexClienteInbursa, "").trim();
+
+        // Eliminar "Si desea recibir pagos" y el texto que le sigue
+        const regexRecibirPagos = /Si desea recibir pagos.*$/;
+        bloqueTexto = bloqueTexto.replace(regexRecibirPagos, "").trim();
+
+        // Extraer referencia y eliminarla del concepto
+        const regexReferencia = /^(\d{10})\s+/;
+        let numeroReferencia = "";
+        const matchReferencia = bloqueTexto.match(regexReferencia);
+        if (matchReferencia) {
+            numeroReferencia = matchReferencia[1];
+            bloqueTexto = bloqueTexto.replace(regexReferencia, "").trim();
+        }
+
+        // Extraer cantidades y determinar los valores para Saldo, Cargo y Abono
+        const regexCantidades = /([\d,.]+)(?:\s+([\d,.]+))?$/;
+        const matchCantidades = bloqueTexto.match(regexCantidades);
+        let saldo = "";
+        let cargo = "0.00";
+        let abono = "0.00";
+
+        if (matchCantidades) {
+            const primeraCantidad = matchCantidades[1];
+            const segundaCantidad = matchCantidades[2];
+
+            if (segundaCantidad) {
+                saldo = segundaCantidad; // Si hay dos cantidades, usar la segunda como saldo
+            } else {
+                saldo = primeraCantidad; // Si hay solo una cantidad, usarla como saldo
+            }
+        }
+
+        // Formatear la fecha
+        const [mesAbreviado, dia] = fechaActual.split(" ");
         const mes = mesesMap[mesAbreviado];
         const fechaFormateada = `${dia.padStart(2, "0")}/${mes}/${anio}`;
 
+        // Agregar al array el registro con la fecha y el concepto
         datosOrdenadosPorFecha.push({
             FechaMovimiento: fechaFormateada,
             FechaAplicacion: "", // Inicializar vacío o según tu lógica
-            NumeroReferencia: referencia, // Se deja vacío si no hay número de referencia
-            Descripcion: descripcion || "", // Colocar texto como "BALANCE INICIAL"
-            Cargo: "0.00", // Inicializar con valores predeterminados
-            Abono: "0.00",
-            Saldo: "0.00"
+            NumeroReferencia: numeroReferencia, // Los 10 dígitos extraídos
+            Descripcion: bloqueTexto, // Concepto limpio
+            Cargo: cargo, // Cargo calculado
+            Abono: abono, // Abono calculado
+            Saldo: saldo // Saldo calculado
         });
     }
 
     console.log("Datos generados para Inbursa:", datosOrdenadosPorFecha);
 
-    // Retornar los datos ordenados por FechaMovimiento (opcional)
+    // Retornar los datos ordenados por FechaMovimiento
     return datosOrdenadosPorFecha.sort((a, b) => a.FechaMovimiento.localeCompare(b.FechaMovimiento));
 }
+
+
+
+
 
