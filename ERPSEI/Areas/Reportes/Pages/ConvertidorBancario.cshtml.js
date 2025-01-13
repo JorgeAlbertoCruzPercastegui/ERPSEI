@@ -192,7 +192,8 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     console.log('Texto extraído del PDF:', extractedText); // Procesar el texto extraído
                     var datosExtraidos = extraerDatosEspecificos(extractedText);
                     const datosExtraidoss = extraerDatosEspecificosInbursa(extractedText);
-                    extraerDatosEspecificosAfirme(extractedText);
+                    extraerDatosEspecificosAfirme(extractedText); 
+                    //extraerDatosEspecificosKLU(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -319,6 +320,19 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 
                             // Llama a la función y pasa el texto extraído
                             const datos = extraerDatosEspecificosAfirme(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "KLU" || bancoDetectado.toLowerCase() === "klu") {
+                            console.log("Condición para KLU detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosKLU(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -1759,6 +1773,47 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
     };
 }
 
+function extraerDatosEspecificosKLU(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
 
+    console.log("Texto extraído KLU:", textoExtraido);
+
+    // Eliminar el periodo "Periodo: DD/MM/AAAA - DD/MM/AAAA"
+    const textoSinPeriodo = textoExtraido.replace(/Periodo:\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}\s*-\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}/gi, "");
+
+    // Expresión regular para fechas con o sin espacios: DD/MM/AAAA o DD /MM/AAAA
+    const regexFechas = /\b(0[1-9]|[12][0-9]|3[01])\s*\/\s*(0[1-9]|1[0-2])\s*\/\s*\d{4}\b/g;
+
+    // Buscar todas las fechas encontradas después del periodo
+    const fechasEncontradas = Array.from(textoSinPeriodo.matchAll(regexFechas));
+
+    if (!fechasEncontradas || fechasEncontradas.length === 0) {
+        console.log("No se encontraron fechas con el formato esperado.");
+        return [];
+    }
+
+    console.log("Fechas encontradas KLU:", fechasEncontradas.map(f => f[0]));
+
+    // Crear el array de datos
+    const datosFechas = [];
+
+    // Iterar sobre las fechas encontradas y agregarlas al array
+    for (let i = 0; i < fechasEncontradas.length; i++) {
+        const fechaActual = fechasEncontradas[i][0].replace(/\s+/g, ''); // Eliminar espacios
+
+        // Agregar al array con el formato solicitado
+        datosFechas.push({
+            FechaMovimiento: fechaActual
+        });
+    }
+
+    console.log("Datos generados para KLU:", datosFechas);
+
+    // Retornar los datos encontrados
+    return datosFechas;
+}
 
 
