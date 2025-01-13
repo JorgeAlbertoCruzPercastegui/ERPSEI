@@ -1815,19 +1815,25 @@ function extraerDatosEspecificosKLU(textoExtraido) {
         // Eliminar el dígito sobrante (último dígito del año) si está al inicio seguido de un espacio
         conceptoCompleto = conceptoCompleto.replace(/^\d\s/, '');
 
-        // Capturar todo el concepto completo antes de las dos cantidades
-        const matchConcepto = conceptoCompleto.match(/^(.*?)(\$[\d,]+\.\d{2})\s*(\$[\d,]+\.\d{2})/);
+        // Expresión regular para detectar:
+        // 1. Dos cantidades separadas por espacio
+        // 2. Dos cantidades separadas por "--"
+        const matchConcepto = conceptoCompleto.match(/^(.*?)(\$[\d,]+\.\d{2})\s*(?:--\s*)?(\$[\d,]+\.\d{2})/);
+
+        let saldo = 0.00;
 
         if (matchConcepto) {
-            // Si se encuentran dos cantidades, se toma el contenido antes de ellas
+            // Si se encuentran dos cantidades, tomar la segunda (después de "--" o espacio) para el saldo
+            saldo = parseFloat(matchConcepto[3].replace(/[$,]/g, ''));
             conceptoCompleto = `${matchConcepto[1]} ${matchConcepto[2]} ${matchConcepto[3]}`.trim();
         }
 
-        // Guardar el registro con la fecha, el concepto ajustado y la descripción
+        // Guardar el registro con la fecha, el concepto ajustado, la descripción y el saldo
         conceptosPorFecha.push({
             FechaMovimiento: fechaActual,
             Concepto: conceptoCompleto,
-            Descripcion: conceptoCompleto
+            Descripcion: conceptoCompleto,
+            Saldo: saldo
         });
     }
 
@@ -1836,3 +1842,4 @@ function extraerDatosEspecificosKLU(textoExtraido) {
 
     return conceptosPorFecha;
 }
+
