@@ -1779,7 +1779,7 @@ function extraerDatosEspecificosKLU(textoExtraido) {
         return [];
     }
 
-    console.log("Texto extraído KLU:", textoExtraido);
+    console.log("Texto extraído:", textoExtraido);
 
     // Eliminar el periodo "Periodo: DD/MM/AAAA - DD/MM/AAAA"
     const textoSinPeriodo = textoExtraido.replace(/Periodo:\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}\s*-\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}/gi, "");
@@ -1787,33 +1787,52 @@ function extraerDatosEspecificosKLU(textoExtraido) {
     // Expresión regular para fechas con o sin espacios: DD/MM/AAAA o DD /MM/AAAA
     const regexFechas = /\b(0[1-9]|[12][0-9]|3[01])\s*\/\s*(0[1-9]|1[0-2])\s*\/\s*\d{4}\b/g;
 
-    // Buscar todas las fechas encontradas después del periodo
+    // Buscar todas las fechas y sus posiciones en el texto
     const fechasEncontradas = Array.from(textoSinPeriodo.matchAll(regexFechas));
 
-    if (!fechasEncontradas || fechasEncontradas.length === 0) {
+    if (fechasEncontradas.length === 0) {
         console.log("No se encontraron fechas con el formato esperado.");
         return [];
     }
 
-    console.log("Fechas encontradas KLU:", fechasEncontradas.map(f => f[0]));
+    console.log("Fechas encontradas:", fechasEncontradas.map(f => f[0]));
 
-    // Crear el array de datos
-    const datosFechas = [];
+    // Array para almacenar los conceptos extraídos
+    const conceptosPorFecha = [];
 
-    // Iterar sobre las fechas encontradas y agregarlas al array
+    // Iterar sobre las fechas encontradas y capturar los bloques de texto entre ellas
     for (let i = 0; i < fechasEncontradas.length; i++) {
-        const fechaActual = fechasEncontradas[i][0].replace(/\s+/g, ''); // Eliminar espacios
+        const fechaActual = fechasEncontradas[i][0].replace(/\s+/g, ''); // Limpiar espacios
+        const inicio = fechasEncontradas[i].index + fechaActual.length;
+        const fin = i + 1 < fechasEncontradas.length ? fechasEncontradas[i + 1].index : textoSinPeriodo.length;
 
-        // Agregar al array con el formato solicitado
-        datosFechas.push({
-            FechaMovimiento: fechaActual
+        // Extraer el concepto asociado a esta fecha
+        let conceptoCompleto = textoSinPeriodo.substring(inicio, fin).trim();
+
+        // Eliminar posibles saltos de línea y espacios extra
+        conceptoCompleto = conceptoCompleto.replace(/\s+/g, ' ');
+
+        // Eliminar el dígito sobrante (último dígito del año) si está al inicio seguido de un espacio
+        conceptoCompleto = conceptoCompleto.replace(/^\d\s/, '');
+
+        // Capturar todo el concepto completo antes de las dos cantidades
+        const matchConcepto = conceptoCompleto.match(/^(.*?)(\$[\d,]+\.\d{2})\s*(\$[\d,]+\.\d{2})/);
+
+        if (matchConcepto) {
+            // Si se encuentran dos cantidades, se toma el contenido antes de ellas
+            conceptoCompleto = `${matchConcepto[1]} ${matchConcepto[2]} ${matchConcepto[3]}`.trim();
+        }
+
+        // Guardar el registro con la fecha, el concepto ajustado y la descripción
+        conceptosPorFecha.push({
+            FechaMovimiento: fechaActual,
+            Concepto: conceptoCompleto,
+            Descripcion: conceptoCompleto
         });
     }
 
-    console.log("Datos generados para KLU:", datosFechas);
+    // Mostrar los conceptos extraídos en la consola
+    console.log("Conceptos extraídos:", conceptosPorFecha);
 
-    // Retornar los datos encontrados
-    return datosFechas;
+    return conceptosPorFecha;
 }
-
-
