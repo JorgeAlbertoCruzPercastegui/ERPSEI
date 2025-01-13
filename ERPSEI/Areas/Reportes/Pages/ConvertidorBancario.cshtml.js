@@ -1815,31 +1815,69 @@ function extraerDatosEspecificosKLU(textoExtraido) {
         // Eliminar el dígito sobrante (último dígito del año) si está al inicio seguido de un espacio
         conceptoCompleto = conceptoCompleto.replace(/^\d\s/, '');
 
-        // Expresión regular para detectar:
-        // 1. Dos cantidades separadas por espacio
-        // 2. Dos cantidades separadas por "--"
-        const matchConcepto = conceptoCompleto.match(/^(.*?)(\$[\d,]+\.\d{2})\s*(?:--\s*)?(\$[\d,]+\.\d{2})/);
+        // Omitir contenido después de "Página X de Y" o "Comisiones cobradas"
+        conceptoCompleto = conceptoCompleto.replace(/Página\s+\d+\s+de\s+\d+.*/gi, '').trim();
+        conceptoCompleto = conceptoCompleto.replace(/Comisiones cobradas.*/gi, '').trim();
 
-        let saldo = 0.00;
+        // Detectar patrones específicos: TRASPASO, PRESTAMO, DISP DE REC
+        const patronTraspaso = /^\d{5,6}-TRASPASO ENTRE CUENTAS-\d{3}-/i;
+        const patronPrestamo = /^\d{5,6}-PRESTAMO-\d{3}-/i;
+        const patronDispRec = /^\d{5,6}-DISP DE REC-\d{3}-/i;
 
-        if (matchConcepto) {
-            // Si se encuentran dos cantidades, tomar la segunda (después de "--" o espacio) para el saldo
-            saldo = parseFloat(matchConcepto[3].replace(/[$,]/g, ''));
-            conceptoCompleto = `${matchConcepto[1]} ${matchConcepto[2]} ${matchConcepto[3]}`.trim();
+        // Unir conceptos si cumplen con TRASPASO, PRESTAMO o DISP DE REC
+        if ((patronTraspaso.test(conceptoCompleto) || patronPrestamo.test(conceptoCompleto) || patronDispRec.test(conceptoCompleto)) && i + 1 < fechasEncontradas.length) {
+            const inicioSiguiente = fechasEncontradas[i + 1].index + fechasEncontradas[i + 1][0].length;
+            const finSiguiente = i + 2 < fechasEncontradas.length ? fechasEncontradas[i + 2].index : textoSinPeriodo.length;
+            let siguienteConcepto = textoSinPeriodo.substring(inicioSiguiente, finSiguiente).trim();
+
+            if (/^\/|\d{2}\/.*/.test(siguienteConcepto)) {
+                conceptoCompleto += " " + siguienteConcepto;
+                i++;  // Saltar el siguiente registro ya que fue unido
+            }
         }
 
-        // Guardar el registro con la fecha, el concepto ajustado, la descripción y el saldo
+        // Expresión regular para detectar las combinaciones de cantidades con "--"
+        const matchConcepto = conceptoCompleto.match(/^(.*?)(\$[\d,]+\.\d{2})\s*--\s*(\$[\d,]+\.\d{2})$/);
+
+        let saldo = 0.00;
+        let cargo = 0.00;
+        let abono = 0.00;
+
+        if (matchConcepto) {
+            // Si el patrón es "cantidad -- cantidad" al final del concepto
+            cargo = parseFloat(matchConcepto[2].replace(/[$,]/g, ''));
+            saldo = parseFloat(matchConcepto[3].replace(/[$,]/g, ''));
+        } else {
+            // Detectar "--" antes de las cantidades (para Abono)
+            const matchAbono = conceptoCompleto.match(/^(.*?)(--\s*)?(\$[\d,]+\.\d{2})\s*(\$[\d,]+\.\d{2})/);
+
+            if (matchAbono) {
+                if (matchAbono[2]) {
+                    abono = parseFloat(matchAbono[3].replace(/[$,]/g, ''));
+                    saldo = parseFloat(matchAbono[4].replace(/[$,]/g, ''));
+                } else {
+                    saldo = parseFloat(matchAbono[4].replace(/[$,]/g, ''));
+
+                    const inicioValido = conceptoCompleto.match(/^(\d{5,8}|\/)/);
+                    if (inicioValido) {
+                        cargo = parseFloat(matchAbono[3].replace(/[$,]/g, ''));
+                    }
+                }
+            }
+        }
+
+        // Guardar el registro con los campos
         conceptosPorFecha.push({
             FechaMovimiento: fechaActual,
             Concepto: conceptoCompleto,
             Descripcion: conceptoCompleto,
+            Cargo: cargo,
+            Abono: abono,
             Saldo: saldo
         });
     }
 
-    // Mostrar los conceptos extraídos en la consola
     console.log("Conceptos extraídos:", conceptosPorFecha);
 
     return conceptosPorFecha;
 }
-
