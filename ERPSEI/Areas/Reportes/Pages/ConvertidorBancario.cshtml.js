@@ -194,6 +194,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     const datosExtraidoss = extraerDatosEspecificosInbursa(extractedText);
                     extraerDatosEspecificosAfirme(extractedText); 
                     //extraerDatosEspecificosKLU(extractedText);
+                    extraerDatosEspecificosAutofin(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -333,6 +334,19 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 
                             // Llama a la función y pasa el texto extraído
                             const datos = extraerDatosEspecificosKLU(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "AUTOFIN" || bancoDetectado.toLowerCase() === "Autofin" || bancoDetectado.toLowerCase() === "Autofín") {
+                            console.log("Condición para Autofín detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosAutofin(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -1880,4 +1894,14 @@ function extraerDatosEspecificosKLU(textoExtraido) {
     console.log("Conceptos extraídos:", conceptosPorFecha);
 
     return conceptosPorFecha;
+}
+
+function extraerDatosEspecificosAutofin(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído Autofín:", textoExtraido);
+    return textoExtraido;
 }
