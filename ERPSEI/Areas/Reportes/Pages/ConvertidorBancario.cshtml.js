@@ -195,6 +195,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     extraerDatosEspecificosAfirme(extractedText); 
                     //extraerDatosEspecificosKLU(extractedText);
                     extraerDatosEspecificosAutofin(extractedText);
+                    //extraerDatosEspecificosPayMax(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -347,6 +348,19 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 
                             // Llama a la función y pasa el texto extraído
                             const datos = extraerDatosEspecificosAutofin(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "PayMax" || bancoDetectado.toLowerCase() === "PAYMAX" || bancoDetectado.toLowerCase() === "paymax") {
+                            console.log("Condición para PayMax detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosPayMax(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -1972,4 +1986,14 @@ function extraerDatosEspecificosAutofin(textoExtraido) {
     initTable(resultados);
 
     return resultados;
+}
+
+function extraerDatosEspecificosPayMax(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído PayMax:", textoExtraido);
+    return textoExtraido;
 }
