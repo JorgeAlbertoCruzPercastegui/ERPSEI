@@ -1919,21 +1919,42 @@ function extraerDatosEspecificosAutofin(textoExtraido) {
     // Expresión regular para capturar conceptos seguidos de fechas (DD-MMM-AAAA) y hasta tres cantidades
     const regexConceptos = /(.*?)(\d{2}-[A-Za-z]{3}-\d{4})([\s\S]*?)(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?).*?(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?).*?(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g;
 
-    // Crear un arreglo de objetos con los conceptos unificados
+    // Crear un arreglo de objetos con los conceptos unificados, número de referencia y montos
     const resultados = [];
 
     let coincidencia;
     while ((coincidencia = regexConceptos.exec(textoPosterior)) !== null) {
-        const conceptoCompleto = `${coincidencia[1].trim()} ${coincidencia[3].trim()} ${coincidencia[4]} ${coincidencia[5]} ${coincidencia[6]}`.trim();
+        const detalle = coincidencia[3].trim();
+        const conceptoCompleto = `${coincidencia[1].trim()} ${detalle} ${coincidencia[4]} ${coincidencia[5]} ${coincidencia[6]}`.trim();
         const fecha = coincidencia[2];
+
+        // Convertir las cantidades a números para comparación
+        const cantidad1 = parseFloat(coincidencia[4].replace(/[$,\s]/g, ''));
+        const cantidad2 = parseFloat(coincidencia[5].replace(/[$,\s]/g, ''));
+        const cantidad3 = coincidencia[6]; // Siempre será Saldo
+
+        let cargo = "$ 0.00";
+        let abono = "$ 0.00";
+
+        if (cantidad2 < 0) {
+            cargo = coincidencia[5];
+            abono = coincidencia[4];
+        } else if (cantidad1 > 0) {
+            abono = coincidencia[4];
+            cargo = coincidencia[5];
+        }
 
         resultados.push({
             FechaMovimiento: fecha,
-            Descripcion: conceptoCompleto
+            Concepto: conceptoCompleto,
+            NumeroReferencia: detalle,
+            Cargo: cargo,
+            Abono: abono,
+            Saldo: cantidad3
         });
     }
 
-    console.log("Resultados con concepto unificado y fechas:", resultados);
+    console.log("Resultados con concepto unificado, fechas, número de referencia y montos clasificados:", resultados);
 
     return resultados;
 }
