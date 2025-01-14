@@ -1903,5 +1903,37 @@ function extraerDatosEspecificosAutofin(textoExtraido) {
     }
 
     console.log("Texto extraído Autofín:", textoExtraido);
-    return textoExtraido;
+
+    // Expresión regular para localizar el bloque de texto después de la cabecera especificada
+    const regexBloque = /FECHA\s+CONCEPTO\s+ORIGEN Y REFERENCIA\s+DEPÓSITO\s+RETIRO\s+SALDO([\s\S]*)/i;
+
+    const bloqueCoincide = textoExtraido.match(regexBloque);
+    if (!bloqueCoincide) {
+        console.warn("No se encontró la sección especificada en el texto.");
+        return [];
+    }
+
+    // Extraer solo el contenido después de la cabecera
+    const textoPosterior = bloqueCoincide[1];
+
+    // Expresión regular para capturar conceptos seguidos de fechas (DD-MMM-AAAA) y hasta tres cantidades
+    const regexConceptos = /(.*?)(\d{2}-[A-Za-z]{3}-\d{4})([\s\S]*?)(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?).*?(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?).*?(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g;
+
+    // Crear un arreglo de objetos con los conceptos unificados
+    const resultados = [];
+
+    let coincidencia;
+    while ((coincidencia = regexConceptos.exec(textoPosterior)) !== null) {
+        const conceptoCompleto = `${coincidencia[1].trim()} ${coincidencia[3].trim()} ${coincidencia[4]} ${coincidencia[5]} ${coincidencia[6]}`.trim();
+        const fecha = coincidencia[2];
+
+        resultados.push({
+            FechaMovimiento: fecha,
+            Descripcion: conceptoCompleto
+        });
+    }
+
+    console.log("Resultados con concepto unificado y fechas:", resultados);
+
+    return resultados;
 }
