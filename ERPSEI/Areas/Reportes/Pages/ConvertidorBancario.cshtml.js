@@ -196,6 +196,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     //extraerDatosEspecificosKLU(extractedText);
                     extraerDatosEspecificosAutofin(extractedText);
                     //extraerDatosEspecificosPayMax(extractedText);
+                    extraerDatosEspecificosScotiabank(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -361,6 +362,19 @@ function importarMovimientosDesdePDF(file, selectedBank) {
 
                             // Llama a la función y pasa el texto extraído
                             const datos = extraerDatosEspecificosPayMax(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
+                        else if (bancoDetectado.toLowerCase() === "Scotiabank" || bancoDetectado.toLowerCase() === "SCOTIABANK") {
+                            console.log("Condición para Scotiabank detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosScotiabank(extractedText);
 
                             if (datos) {
                                 resolve(datos); // Los datos se convierten en un arreglo
@@ -2087,4 +2101,14 @@ function extraerDatosEspecificosPayMax(textoExtraido) {
     initTable(resultados);
 
     return resultados;
+}
+
+function extraerDatosEspecificosScotiabank(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído Scotiabank:", textoExtraido);
+    return textoExtraido;
 }
