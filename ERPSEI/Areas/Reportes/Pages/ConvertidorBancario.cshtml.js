@@ -1995,5 +1995,38 @@ function extraerDatosEspecificosPayMax(textoExtraido) {
     }
 
     console.log("Texto extraído PayMax:", textoExtraido);
-    return textoExtraido;
+
+    // Expresión regular para capturar fechas con formato YYYY-MM-DD HH:MM:SS
+    const regexFechaCompleta = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g;
+
+    // Buscar todas las fechas completas en el texto
+    const fechasCompletas = textoExtraido.match(regexFechaCompleta) || [];
+
+    // Extraer solo la parte de la fecha (YYYY-MM-DD)
+    const fechasSinHora = fechasCompletas.map(fecha => fecha.split(' ')[0]);
+
+    // Crear el arreglo de resultados
+    const resultados = [];
+
+    // Iterar sobre las fechas sin hora y agregar cada una al arreglo
+    fechasSinHora.forEach(fecha => {
+        resultados.push({
+            FechaMovimiento: fecha,
+            FechaAplicacion: "",  // Asumiendo que FechaAplicacion es igual a FechaMovimiento
+            NumeroReferencia: "",    // Vacío por ahora, ajustar según necesidad
+            Descripcion: "",  // Descripción general, ajustar si es necesario
+            Cargo: "$ 0.00",         // Valores por defecto
+            Abono: "$ 0.00",         // Valores por defecto
+            Saldo: "$ 0.00"          // Valores por defecto
+        });
+    });
+
+    console.log("Fechas completas encontradas:", fechasCompletas);
+    console.log("Fechas sin hora:", fechasSinHora);
+    console.log("Resultados generados:", resultados);
+
+    // Llamar a la función para inicializar la tabla con los datos
+    initTable(resultados);
+
+    return resultados;
 }
