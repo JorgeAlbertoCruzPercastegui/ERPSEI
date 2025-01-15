@@ -2007,22 +2007,53 @@ function extraerDatosEspecificosPayMax(textoExtraido) {
 
     // Crear el arreglo de resultados
     const resultados = [];
+    const conceptos = [];
 
-    // Iterar sobre las fechas sin hora y agregar cada una al arreglo
-    fechasSinHora.forEach(fecha => {
+    // Palabras clave que indican el fin del concepto
+    const patronesFinConcepto = [
+        "Estado de Cuenta",
+        "Cliente",
+        "RFC",
+        "Período Del",
+        "Información Financiera",
+        "Movimientos",
+        "FECHA MONTO CONCEPTO",
+        "DETALLE DE CARGOS",
+        "Comisiones Cobradas"
+    ];
+
+    // Crear una expresión regular para detectar cualquiera de esos patrones
+    const regexFinConcepto = new RegExp(patronesFinConcepto.join("|"), "i");
+
+    // Dividir el texto en secciones usando las fechas completas como separadores
+    const partesTexto = textoExtraido.split(regexFechaCompleta);
+
+    // Iterar sobre las fechas y extraer conceptos
+    fechasCompletas.forEach((fechaCompleta, index) => {
+        let conceptoBruto = partesTexto[index + 1] ? partesTexto[index + 1].trim() : "";
+
+        // Eliminar cualquier contenido después de los patrones definidos
+        const corte = conceptoBruto.search(regexFinConcepto);
+        if (corte !== -1) {
+            conceptoBruto = conceptoBruto.substring(0, corte).trim();
+        }
+
+        conceptos.push(conceptoBruto);
+
         resultados.push({
-            FechaMovimiento: fecha,
-            FechaAplicacion: "",  // Asumiendo que FechaAplicacion es igual a FechaMovimiento
-            NumeroReferencia: "",    // Vacío por ahora, ajustar según necesidad
-            Descripcion: "",  // Descripción general, ajustar si es necesario
-            Cargo: "$ 0.00",         // Valores por defecto
-            Abono: "$ 0.00",         // Valores por defecto
-            Saldo: "$ 0.00"          // Valores por defecto
+            FechaMovimiento: fechaCompleta.split(' ')[0], // Fecha sin hora
+            FechaAplicacion: fechaCompleta.split(' ')[0],
+            NumeroReferencia: "",    // Ajustar si es necesario
+            Descripcion: conceptoBruto,   // Concepto limpio
+            Cargo: "$ 0.00",
+            Abono: "$ 0.00",
+            Saldo: "$ 0.00"
         });
     });
 
     console.log("Fechas completas encontradas:", fechasCompletas);
     console.log("Fechas sin hora:", fechasSinHora);
+    console.log("Conceptos extraídos y limpios:", conceptos);
     console.log("Resultados generados:", resultados);
 
     // Llamar a la función para inicializar la tabla con los datos
@@ -2030,3 +2061,5 @@ function extraerDatosEspecificosPayMax(textoExtraido) {
 
     return resultados;
 }
+
+
