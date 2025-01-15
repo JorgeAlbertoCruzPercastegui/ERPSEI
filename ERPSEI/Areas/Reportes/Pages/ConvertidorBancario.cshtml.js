@@ -2038,16 +2038,43 @@ function extraerDatosEspecificosPayMax(textoExtraido) {
             conceptoBruto = conceptoBruto.substring(0, corte).trim();
         }
 
-        conceptos.push(conceptoBruto);
+        // Extraer todas las cantidades dentro del concepto
+        const regexCantidades = /(-?\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g;
+        const cantidadesCoinciden = conceptoBruto.match(regexCantidades) || [];
+
+        let cargo = "$ 0.00";
+        let abono = "$ 0.00";
+        let saldo = "$ 0.00";
+
+        // Asignar la primera cantidad a Cargo o Abono
+        if (cantidadesCoinciden[0]) {
+            const primeraCantidad = cantidadesCoinciden[0].replace(/[$,\s]/g, '');
+
+            if (parseFloat(primeraCantidad) < 0) {
+                cargo = cantidadesCoinciden[0];  // Si es negativa, va a Cargo
+            } else {
+                abono = cantidadesCoinciden[0];  // Si es positiva, va a Abono
+            }
+        }
+
+        // Asignar la segunda cantidad al campo Saldo
+        if (cantidadesCoinciden[1]) {
+            saldo = cantidadesCoinciden[1];
+        }
+
+        // Eliminar las cantidades del concepto para dejarlo limpio
+        let conceptoLimpio = conceptoBruto.replace(regexCantidades, '').replace(/\s+/g, ' ').trim();
+
+        conceptos.push(conceptoLimpio);
 
         resultados.push({
-            FechaMovimiento: fechaCompleta.split(' ')[0], // Fecha sin hora
-            FechaAplicacion: fechaCompleta.split(' ')[0],
+            FechaMovimiento: fechaCompleta.split(' ')[0],  // Fecha sin hora
+            FechaAplicacion: "",
             NumeroReferencia: "",    // Ajustar si es necesario
-            Descripcion: conceptoBruto,   // Concepto limpio
-            Cargo: "$ 0.00",
-            Abono: "$ 0.00",
-            Saldo: "$ 0.00"
+            Descripcion: conceptoLimpio,  // Concepto limpio sin cantidades
+            Cargo: cargo,
+            Abono: abono,
+            Saldo: saldo
         });
     });
 
@@ -2061,5 +2088,3 @@ function extraerDatosEspecificosPayMax(textoExtraido) {
 
     return resultados;
 }
-
-
