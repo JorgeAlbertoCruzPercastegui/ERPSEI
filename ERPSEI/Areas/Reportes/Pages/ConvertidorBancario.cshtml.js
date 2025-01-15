@@ -2110,5 +2110,54 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
     }
 
     console.log("Texto extraído Scotiabank:", textoExtraido);
-    return textoExtraido;
+
+    // Corregir posibles errores de OCR
+    textoExtraido = textoExtraido.replace(/pectane\s+de\s+tus\s+movimientos/i, "Detalle de tus movimientos");
+
+    // Buscar la sección después de "Detalle de tus movimientos"
+    const seccionMovimientos = textoExtraido.split(/Detalle\s+de\s+tus\s+movimientos/i)[1];
+
+    if (!seccionMovimientos) {
+        console.warn("No se encontró la sección 'Detalle de tus movimientos'.");
+        return [];
+    }
+
+    // Expresión regular para capturar fechas con formato DD MMM
+    const regexFechas = /\b\d{1,2}\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\b/gi;
+
+    // Extraer todas las fechas posibles
+    const fechasExtraidas = seccionMovimientos.match(regexFechas) || [];
+
+    // Validar meses correctos
+    const mesesValidos = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+        "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+    const fechasValidas = fechasExtraidas.filter(fecha => {
+        const partes = fecha.trim().split(/\s+/);
+        return partes.length === 2 && mesesValidos.includes(partes[1].toUpperCase());
+    });
+
+    // Inicializar el arreglo de resultados
+    const resultados = [];
+
+    // Iterar sobre las fechas válidas y agregarlas en el push
+    fechasValidas.forEach(fecha => {
+        resultados.push({
+            FechaMovimiento: fecha,  // Insertar la fecha extraída
+            FechaAplicacion: "",
+            NumeroReferencia: "",
+            Descripcion: "",  // Aquí podrías agregar la descripción si se requiere
+            Cargo: "$ 0.00",
+            Abono: "$ 0.00",
+            Saldo: "$ 0.00"
+        });
+    });
+
+    console.log("Fechas extraídas y asignadas a FechaMovimiento:", resultados);
+
+    // Llamar a la función para inicializar la tabla con los datos
+    initTable(resultados);
+
+    return resultados;
 }
+
