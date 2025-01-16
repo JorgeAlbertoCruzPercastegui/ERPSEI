@@ -2167,28 +2167,39 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
             saldo = cantidades[1][0];
         }
 
-        // Log para verificar las fechas y conceptos extraídos
-        console.log(`Fecha: ${fecha} | Concepto: ${concepto} | Saldo: ${saldo}`);
+        // Obtener la primera cantidad para el cargo si "FORMA DE PAGO 03", "RFC/CURP:" o "FOLIO DE RASTREO:" se encuentra en el concepto
+        let cargo = "$ 0.00";
+        if (
+            (concepto.includes("FORMA DE PAGO 03") || concepto.includes("RFC/CURP:") || concepto.includes("FOLIO DE RASTREO:")) &&
+            cantidades.length >= 1
+        ) {
+            cargo = cantidades[0][0];
+        }
 
-        // Agregar la fecha, el concepto y el saldo al arreglo de resultados
+        // Log para verificar las fechas, conceptos, cargos y saldos extraídos
+        console.log(`Fecha: ${fecha} | Concepto: ${concepto} | Cargo: ${cargo} | Saldo: ${saldo}`);
+
+        // Agregar la fecha, el concepto, el cargo y el saldo al arreglo de resultados
         resultados.push({
             FechaMovimiento: fecha,
             FechaAplicacion: "",
             NumeroReferencia: "",
             Descripcion: concepto,
-            Cargo: "$ 0.00",
+            Cargo: cargo,
             Abono: "$ 0.00",
             Saldo: saldo
         });
     });
 
-    console.log("Fechas, conceptos y saldos extraídos:", resultados);
+    console.log("Fechas, conceptos, cargos y saldos extraídos:", resultados);
 
     // Inicializar la tabla con los resultados extraídos
     initTable(resultados);
 
     return resultados;
 }
+
+
 
 
 
