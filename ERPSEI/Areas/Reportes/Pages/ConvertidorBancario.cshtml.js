@@ -2112,7 +2112,8 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
     console.log("Texto extraído Scotiabank:", textoExtraido);
 
     // Corregir posibles errores de OCR
-    textoExtraido = textoExtraido.replace(/pectane\s+de\s+tus\s+movimientos/i, "Detalle de tus movimientos");
+    textoExtraido = textoExtraido.replace(/COsRANZA/gi, "COBRANZA")
+        .replace(/DOMICILTADA/gi, "DOMICILIADA");
 
     // Buscar la sección después de "Detalle de tus movimientos"
     const seccionMovimientos = textoExtraido.split(/Detalle\s+de\s+tus\s+movimientos/i)[1];
@@ -2125,37 +2126,44 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
     // Expresión regular para capturar fechas con formato DD MMM
     const regexFechas = /\b\d{1,2}\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\b/gi;
 
-    // Extraer todas las fechas posibles
-    const fechasExtraidas = seccionMovimientos.match(regexFechas) || [];
-
-    // Validar meses correctos
-    const mesesValidos = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-        "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-
-    const fechasValidas = fechasExtraidas.filter(fecha => {
-        const partes = fecha.trim().split(/\s+/);
-        return partes.length === 2 && mesesValidos.includes(partes[1].toUpperCase());
-    });
+    // Encontrar todas las fechas con sus posiciones en el texto
+    const fechasEnTexto = [...seccionMovimientos.matchAll(regexFechas)];
 
     // Inicializar el arreglo de resultados
     const resultados = [];
 
-    // Iterar sobre las fechas válidas y agregarlas en el push
-    fechasValidas.forEach(fecha => {
+    // Iterar sobre cada fecha encontrada para extraer su concepto
+    fechasEnTexto.forEach((match, index) => {
+        const fecha = match[0];
+        const inicioConcepto = match.index + match[0].length;
+
+        // Determinar el final del concepto (antes de la siguiente fecha o al final del texto)
+        const finConcepto = index + 1 < fechasEnTexto.length ? fechasEnTexto[index + 1].index : seccionMovimientos.length;
+
+        // Extraer el concepto asociado a la fecha
+        let concepto = seccionMovimientos.substring(inicioConcepto, finConcepto).trim();
+
+        // Limpiar el concepto de caracteres no deseados
+        concepto = concepto.replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+        // Log para verificar las fechas y conceptos extraídos
+        console.log(`Fecha: ${fecha} | Concepto: ${concepto}`);
+
+        // Agregar la fecha y el concepto al arreglo de resultados
         resultados.push({
-            FechaMovimiento: fecha,  // Insertar la fecha extraída
+            FechaMovimiento: fecha,
             FechaAplicacion: "",
             NumeroReferencia: "",
-            Descripcion: "",  // Aquí podrías agregar la descripción si se requiere
+            Descripcion: concepto,
             Cargo: "$ 0.00",
             Abono: "$ 0.00",
             Saldo: "$ 0.00"
         });
     });
 
-    console.log("Fechas extraídas y asignadas a FechaMovimiento:", resultados);
+    console.log("Fechas y conceptos extraídos:", resultados);
 
-    // Llamar a la función para inicializar la tabla con los datos
+    // Inicializar la tabla con los resultados extraídos
     initTable(resultados);
 
     return resultados;
