@@ -383,6 +383,19 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
+                        else if (bancoDetectado.toLowerCase() === "SANTANDERDIG" || bancoDetectado.toLowerCase() === "SantanderDig" || bancoDetectado.toLowerCase() === "Santander") {
+                            console.log("Condición para SantanderDig detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosSantanderDig(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
                     } else {
                         const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
 
@@ -426,8 +439,8 @@ function detectarBanco(fileName) {
         "KLU": ["klu", "KLU"],
         "Monex": ["Monex", "MONEX"],
         "PayMax": ["PAYMAY", "PayMax"],
-        "Santander": ["Santander", "SANTANDER"],
         "SantanderDig": ["SantanderDig", "SANTANDERDIG"],
+        "Santander": ["Santander", "SANTANDER"],
         "Scotiabank": ["Scotiabank", "SCOTIABANK"]
     };
 
@@ -444,7 +457,6 @@ function detectarBanco(fileName) {
 
     return "Banco no identificado";
 }
-
 
 function extraerDatosEspecificos(textoExtraido) {
     const regex = /(\d{2}\/\d{2}\/\d{4})\s+(\d{2}\/\d{2}\/\d{4})\s+(\d{5,7})\s+([\s\S]*?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})/g;
@@ -2223,4 +2235,14 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
     initTable(resultados);
 
     return resultados;
+}
+
+function extraerDatosEspecificosSantanderDig(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído SantanderDig:", textoExtraido);
+    return textoExtraido;
 }
