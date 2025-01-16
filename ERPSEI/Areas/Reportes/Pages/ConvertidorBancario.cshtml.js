@@ -2132,6 +2132,12 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
     // Inicializar el arreglo de resultados
     const resultados = [];
 
+    // Expresión regular para truncar el concepto en el punto deseado
+    const regexTruncarConcepto = /(IVA POR COMISIONES.*FORMA DE PAGO \d{2})/;
+
+    // Expresión regular para encontrar las cantidades en el concepto
+    const regexCantidades = /\$\d{1,3}(,\d{3})*(\.\d{2})?/g;
+
     // Iterar sobre cada fecha encontrada para extraer su concepto
     fechasEnTexto.forEach((match, index) => {
         const fecha = match[0];
@@ -2146,10 +2152,25 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
         // Limpiar el concepto de caracteres no deseados
         concepto = concepto.replace(/[\n\r]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-        // Log para verificar las fechas y conceptos extraídos
-        console.log(`Fecha: ${fecha} | Concepto: ${concepto}`);
+        // Truncar el concepto si coincide con el patrón
+        const truncarConceptoMatch = concepto.match(regexTruncarConcepto);
+        if (truncarConceptoMatch) {
+            concepto = truncarConceptoMatch[0];
+        }
 
-        // Agregar la fecha y el concepto al arreglo de resultados
+        // Encontrar las cantidades en el concepto
+        const cantidades = [...concepto.matchAll(regexCantidades)];
+
+        // Obtener la segunda cantidad para el saldo si existe
+        let saldo = "$ 0.00";
+        if (cantidades.length >= 2) {
+            saldo = cantidades[1][0];
+        }
+
+        // Log para verificar las fechas y conceptos extraídos
+        console.log(`Fecha: ${fecha} | Concepto: ${concepto} | Saldo: ${saldo}`);
+
+        // Agregar la fecha, el concepto y el saldo al arreglo de resultados
         resultados.push({
             FechaMovimiento: fecha,
             FechaAplicacion: "",
@@ -2157,15 +2178,17 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
             Descripcion: concepto,
             Cargo: "$ 0.00",
             Abono: "$ 0.00",
-            Saldo: "$ 0.00"
+            Saldo: saldo
         });
     });
 
-    console.log("Fechas y conceptos extraídos:", resultados);
+    console.log("Fechas, conceptos y saldos extraídos:", resultados);
 
     // Inicializar la tabla con los resultados extraídos
     initTable(resultados);
 
     return resultados;
 }
+
+
 
