@@ -197,6 +197,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     extraerDatosEspecificosAutofin(extractedText);
                     //extraerDatosEspecificosPayMax(extractedText);
                     extraerDatosEspecificosScotiabank(extractedText);
+                    extraerDatosEspecificosSantanderDig(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -2244,5 +2245,31 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
     }
 
     console.log("Texto extraído SantanderDig:", textoExtraido);
-    return textoExtraido;
+    const fechas = [];
+    const detalleInicio = "DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES";
+    const indiceInicio = textoExtraido.indexOf(detalleInicio);
+
+    if (indiceInicio !== -1) {
+        const textoDespuesDeDetalle = textoExtraido.slice(indiceInicio + detalleInicio.length);
+        const fechasRegex = /(\d{2}-[A-Z]{3}-\d{4})/g;
+        const matches = textoDespuesDeDetalle.match(fechasRegex);
+
+        if (matches) {
+            matches.forEach(fecha => {
+                console.log("Fecha encontrada:", fecha);
+                fechas.push({ FechaMovimiento: fecha });
+            });
+        } else {
+            console.error("No se encontraron fechas en el texto extraído.");
+        }
+    } else {
+        console.error("El texto extraído no contiene 'DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES'.");
+    }
+
+    // Inicializar la tabla con los resultados extraídos
+    initTable(fechas);
+
+    return fechas;
 }
+
+
