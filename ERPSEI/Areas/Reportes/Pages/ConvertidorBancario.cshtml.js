@@ -2138,6 +2138,9 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
     // Expresión regular para encontrar las cantidades en el concepto
     const regexCantidades = /\$\d{1,3}(,\d{3})*(\.\d{2})?/g;
 
+    // Expresión regular para encontrar el número de referencia (varios dígitos o porcentaje)
+    const regexNumeroReferencia = /\b\d{1,3}(,\d{3})*(\.\d{2})?|\d+\.\d{2}%\b/;
+
     // Iterar sobre cada fecha encontrada para extraer su concepto
     fechasEnTexto.forEach((match, index) => {
         const fecha = match[0];
@@ -2176,30 +2179,48 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
             cargo = cantidades[0][0];
         }
 
-        // Log para verificar las fechas, conceptos, cargos y saldos extraídos
-        console.log(`Fecha: ${fecha} | Concepto: ${concepto} | Cargo: ${cargo} | Saldo: ${saldo}`);
+        // Encontrar el número de referencia en el concepto antes de las dos cantidades
+        let numeroReferencia = "";
+        if (cantidades.length >= 2) {
+            const referenciaMatch = concepto.substring(0, concepto.indexOf(cantidades[0][0])).match(regexNumeroReferencia);
+            if (referenciaMatch) {
+                numeroReferencia = referenciaMatch[0];
+                concepto = concepto.replace(referenciaMatch[0], '').trim();
+            }
+        }
 
-        // Agregar la fecha, el concepto, el cargo y el saldo al arreglo de resultados
+        // Eliminar las cantidades del concepto
+        concepto = concepto.replace(regexCantidades, '').trim();
+
+        // Establecer Cargo o Abono en 0.00 según corresponda
+        let abono = "$ 0.00";
+        if (cargo !== "$ 0.00") {
+            abono = "$ 0.00";
+        } else if (saldo !== "$ 0.00") {
+            cargo = "$ 0.00";
+            abono = saldo;
+            saldo = "$ 0.00";
+        }
+
+        // Log para verificar las fechas, conceptos, números de referencia, cargos, abonos y saldos extraídos
+        console.log(`Fecha: ${fecha} | Concepto: ${concepto} | NumeroReferencia: ${numeroReferencia} | Cargo: ${cargo} | Abono: ${abono} | Saldo: ${saldo}`);
+
+        // Agregar la fecha, el concepto, el número de referencia, el cargo, el abono y el saldo al arreglo de resultados
         resultados.push({
             FechaMovimiento: fecha,
             FechaAplicacion: "",
             NumeroReferencia: "",
             Descripcion: concepto,
             Cargo: cargo,
-            Abono: "$ 0.00",
+            Abono: abono,
             Saldo: saldo
         });
     });
 
-    console.log("Fechas, conceptos, cargos y saldos extraídos:", resultados);
+    console.log("Fechas, conceptos, números de referencia, cargos, abonos y saldos extraídos:", resultados);
 
     // Inicializar la tabla con los resultados extraídos
     initTable(resultados);
 
     return resultados;
 }
-
-
-
-
-
