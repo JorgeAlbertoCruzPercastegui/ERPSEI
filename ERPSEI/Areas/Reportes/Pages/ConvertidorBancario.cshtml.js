@@ -198,6 +198,7 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     //extraerDatosEspecificosPayMax(extractedText);
                     extraerDatosEspecificosScotiabank(extractedText);
                     extraerDatosEspecificosSantanderDig(extractedText);
+                    extraerDatosEspecificosBanamex(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -397,6 +398,19 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                                 resolve([]); // Retorna un arreglo vacío si no se encuentran datos
                             }
                         }
+                        else if (bancoDetectado.toLowerCase() === "Banamex" || bancoDetectado.toLowerCase() === "BANAMEX" || bancoDetectado.toLowerCase() === "CITIBANAMEX") {
+                            console.log("Condición para Banamex detectada");
+
+                            // Llama a la función y pasa el texto extraído
+                            const datos = extraerDatosEspecificosBanamex(extractedText);
+
+                            if (datos) {
+                                resolve(datos); // Los datos se convierten en un arreglo
+                            } else {
+                                console.log("No se pudieron extraer los datos específicos.");
+                                resolve([]); // Retorna un arreglo vacío si no se encuentran datos
+                            }
+                        }
                     } else {
                         const mensajeModal = `Banco detectado: ${bancoDetectado}, pero seleccionaste: ${nombreBancoSeleccionado}. \nFavor de seleccionar el correcto.`;
 
@@ -430,7 +444,7 @@ function detectarBanco(fileName) {
         "Alquimia": ["Alquimia", "ALQUIMIA", "Alquimia Digital", "alquimiapay"],
         "Autofin": ["Autofin", "AUTOFIN"],
         "BBVA": ["BBVA", "BANCO BBVA", "bbva"],
-        "Banamex": ["Banamex", "BANAMEX"],
+        "Banamex": ["Banamex", "BANAMEX", "CitiBanamex","CITIBANAMEX"],
         "Banbajio": ["Banbajio", "banbajio", "Banbajío", "CUENTA CONECTA BANBAJIO"],
         "Bankaool": ["Bankaool", "BANKAOOL"],
         "Banorte": ["Banorte", "BANORTE"],
@@ -2245,7 +2259,7 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
     }
 
     console.log("Texto extraído SantanderDig:", textoExtraido);
-    const fechas = [];
+    const resultados = [];
     const detalleInicio = "DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES";
     const indiceInicio = textoExtraido.indexOf(detalleInicio);
 
@@ -2255,10 +2269,45 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
         const matches = textoDespuesDeDetalle.match(fechasRegex);
 
         if (matches) {
-            matches.forEach(fecha => {
-                console.log("Fecha encontrada:", fecha);
-                fechas.push({ FechaMovimiento: fecha });
-            });
+            // Expresión regular para encontrar montos (con comas y decimales)
+            const cantidadRegex = /\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g;
+            let conceptoCount = 1;
+
+            for (let i = 0; i < matches.length; i++) {
+                const fecha = matches[i];
+
+                // Si no es la última fecha, buscamos el concepto entre esta fecha y la siguiente
+                let start = textoDespuesDeDetalle.indexOf(fecha) + fecha.length;
+                let end = textoDespuesDeDetalle.indexOf(matches[i + 1]);
+
+                // Si es la última fecha, el concepto es todo lo que sigue hasta el final del texto
+                if (i === matches.length - 1) {
+                    end = textoDespuesDeDetalle.length;
+                }
+
+                // Extraemos el texto entre las fechas
+                let segmento = textoDespuesDeDetalle.slice(start, end).trim();
+
+                // Buscar las cantidades en el segmento extraído
+                let cantidades = segmento.match(cantidadRegex);
+
+                // Si encontramos cantidades, el concepto termina donde encontramos la primera cantidad
+                let concepto = '';
+                if (cantidades && cantidades.length >= 1) {
+                    const cantidadFinalIndex = segmento.indexOf(cantidades[0]) + cantidades[0].length;
+                    concepto = segmento.slice(0, cantidadFinalIndex).trim();
+                } else {
+                    // Si no hay cantidades, el concepto es todo el segmento entre las fechas
+                    concepto = segmento.trim();
+                }
+
+                // Imprimir el concepto en un log
+                console.log(`Concepto ${conceptoCount}:`, concepto);
+                conceptoCount++;
+
+                // Agregar la fecha y el concepto al arreglo de resultados
+                resultados.push({ FechaMovimiento: fecha, Concepto: concepto });
+            }
         } else {
             console.error("No se encontraron fechas en el texto extraído.");
         }
@@ -2267,9 +2316,19 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
     }
 
     // Inicializar la tabla con los resultados extraídos
-    initTable(fechas);
+    initTable(resultados);
 
-    return fechas;
+    return resultados;
+}
+
+function extraerDatosEspecificosBanamex(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído Banamex:", textoExtraido);
+    return textoExtraido;
 }
 
 
