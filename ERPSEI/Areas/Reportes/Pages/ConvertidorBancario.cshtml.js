@@ -2328,7 +2328,49 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
     }
 
     console.log("Texto extraído Banamex:", textoExtraido);
-    return textoExtraido;
+
+    const resultados = [];
+
+    // Encontrar el índice de la sección "DETALLE DE OPERACIONES"
+    const indiceDetalleOperaciones = textoExtraido.indexOf("DETALLE DE OPERACIONES");
+
+    if (indiceDetalleOperaciones === -1) {
+        console.error("No se encontró la sección 'DETALLE DE OPERACIONES'.");
+        return [];
+    }
+
+    // Obtener la porción del texto que sigue después de "DETALLE DE OPERACIONES"
+    const textoDesdeDetalle = textoExtraido.slice(indiceDetalleOperaciones);
+
+    // Expresión regular para encontrar las fechas en formato DD MMM
+    // Solo los meses permitidos: ENE, FEB, MAR, ABR, MAY, JUN, JUL, AGO, SEP, OCT, NOV, DIC
+    const regexFechas = /\b(\d{2})\s(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\b/g;
+
+    // Buscar las fechas
+    let coincidencia;
+
+    while ((coincidencia = regexFechas.exec(textoDesdeDetalle)) !== null) {
+        // La coincidencia[0] contiene la fecha completa (ej. "03 OCT")
+        const fecha = coincidencia[0];
+
+        // Crear un objeto con la fecha y agregarlo al arreglo de resultados
+        resultados.push({ FechaMovimiento: fecha });
+    }
+
+    // Imprimir las fechas encontradas en el log
+    if (resultados.length > 0) {
+        console.log("Fechas encontradas:", resultados);
+    } else {
+        console.log("No se encontraron fechas en el formato DD MMM.");
+    }
+
+    // Inicializar la tabla con los resultados extraídos
+    initTable(resultados);
+
+    // Devolver los resultados
+    return resultados;
 }
+
+
 
 
