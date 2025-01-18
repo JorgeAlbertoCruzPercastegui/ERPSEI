@@ -2323,54 +2323,128 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
 
 function extraerDatosEspecificosBanamex(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
-        console.error("El texto extraído está vacío o indefinido.");
+        console.error("El texto extraido está vacío o indefinido.");
         return [];
     }
 
-    console.log("Texto extraído Banamex:", textoExtraido);
+    console.log("Texto extraido Banamex:", textoExtraido);
 
     const resultados = [];
 
-    // Encontrar el índice de la sección "DETALLE DE OPERACIONES"
+    // Buscar la sección "DETALLE DE OPERACIONES"
     const indiceDetalleOperaciones = textoExtraido.indexOf("DETALLE DE OPERACIONES");
-
     if (indiceDetalleOperaciones === -1) {
         console.error("No se encontró la sección 'DETALLE DE OPERACIONES'.");
         return [];
     }
 
-    // Obtener la porción del texto que sigue después de "DETALLE DE OPERACIONES"
-    const textoDesdeDetalle = textoExtraido.slice(indiceDetalleOperaciones);
+    let textoDesdeDetalle = textoExtraido.slice(indiceDetalleOperaciones);
 
-    // Expresión regular para encontrar las fechas en formato DD MMM
-    // Solo los meses permitidos: ENE, FEB, MAR, ABR, MAY, JUN, JUL, AGO, SEP, OCT, NOV, DIC
-    const regexFechas = /\b(\d{2})\s(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\b/g;
+    // --------------------------------------------------------------
+    // 1️⃣ Agregar "SALDO ANTERIOR" al principio del arreglo
+    // --------------------------------------------------------------
+    const regexSaldoAnterior = /(SALDO ANTERIOR\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
 
-    // Buscar las fechas
-    let coincidencia;
-
-    while ((coincidencia = regexFechas.exec(textoDesdeDetalle)) !== null) {
-        // La coincidencia[0] contiene la fecha completa (ej. "03 OCT")
-        const fecha = coincidencia[0];
-
-        // Crear un objeto con la fecha y agregarlo al arreglo de resultados
-        resultados.push({ FechaMovimiento: fecha });
+    const matchSaldoAnterior = textoDesdeDetalle.match(regexSaldoAnterior);
+    if (matchSaldoAnterior) {
+        resultados.push({
+            FechaMovimiento: "",  // Fecha vacía
+            Descripcion: matchSaldoAnterior[1]  // El saldo anterior
+        });
     }
 
-    // Imprimir las fechas encontradas en el log
-    if (resultados.length > 0) {
-        console.log("Fechas encontradas:", resultados);
-    } else {
+    // --------------------------------------------------------------
+    // 2️⃣ Continuar con la extracción normal de conceptos
+    // --------------------------------------------------------------
+
+    // Expresión regular para fechas en formato "DD MMM"
+    const regexFechas = /\b(\d{2}\s(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC))\b/g;
+    let match;
+    const coincidencias = [];
+
+    while ((match = regexFechas.exec(textoDesdeDetalle)) !== null) {
+        coincidencias.push({
+            fecha: match[1],
+            index: match.index
+        });
+    }
+
+    if (coincidencias.length === 0) {
         console.log("No se encontraron fechas en el formato DD MMM.");
+        initTable([]);
+        return [];
     }
 
-    // Inicializar la tabla con los resultados extraídos
+    // Recorrer fechas para extraer conceptos
+    for (let i = 0; i < coincidencias.length; i++) {
+        const fechaActual = coincidencias[i].fecha;
+        const inicioConcepto = coincidencias[i].index + fechaActual.length;
+        const finConcepto = (i < coincidencias.length - 1)
+            ? coincidencias[i + 1].index
+            : textoDesdeDetalle.length;
+
+        let concepto = textoDesdeDetalle.slice(inicioConcepto, finConcepto).trim();
+
+        // ----------------------------------------------------------------
+        // 3️⃣ Eliminar "DETALLE DE OPERACIONES FECHA CONCEPTO RETIROS DEPOSITOS SALDO"
+        // ----------------------------------------------------------------
+        const regexDetalleCompleto = /DETALLE\s+DE\s+OPERACIONES\s+FECHA\s+CONCEPTO\s+RETIROS\s+DEPOSITOS\s+SALDO/gi;
+        concepto = concepto.replace(regexDetalleCompleto, "").trim();
+
+        // ----------------------------------------------------------------
+        // 4️⃣ Eliminar "FECHA CONCEPTO RETIROS DEPOSITOS SALDO"
+        // ----------------------------------------------------------------
+        const regexFechaConcepto = /FECHA\s+CONCEPTO\s+RETIROS\s+DEPOSITOS\s+SALDO/gi;
+        concepto = concepto.replace(regexFechaConcepto, "").trim();
+
+        // ----------------------------------------------------------------
+        // 5️⃣ Eliminar "ESTADO DE CUENTA AL [DÍA] DE [MES COMPLETO] DE [AÑO]"
+        // ----------------------------------------------------------------
+        const regexEstadoCuenta = /ESTADO DE CUENTA AL \d{1,2} DE (ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE) DE \d{4}/gi;
+        concepto = concepto.replace(regexEstadoCuenta, "").trim();
+
+        // ----------------------------------------------------------------
+        // 6️⃣ Eliminar todo después de "SALDO MINIMO REQUERIDO"
+        // ----------------------------------------------------------------
+        const indexSaldoMinimo = concepto.indexOf("SALDO MINIMO REQUERIDO");
+        if (indexSaldoMinimo !== -1) {
+            concepto = concepto.substring(0, indexSaldoMinimo).trim();
+        }
+
+        // ----------------------------------------------------------------
+        // 7️⃣ Eliminar "000180.B12CHDA012.OD.1031.01"
+        // ----------------------------------------------------------------
+        const regexCodigoInnecesario = /000180\.B12CHDA012\.OD\.1031\.01/gi;
+        concepto = concepto.replace(regexCodigoInnecesario, "").trim();
+
+        // ----------------------------------------------------------------
+        // 8️⃣ Eliminar "CLIENTE: [9 dígitos]"
+        // ----------------------------------------------------------------
+        const regexCliente = /CLIENTE:\s\d{9}/gi;
+        concepto = concepto.replace(regexCliente, "").trim();
+
+        // ----------------------------------------------------------------
+        // 9️⃣ Eliminar "Página: X de Y" (números de 1 o 2 dígitos)
+        // ----------------------------------------------------------------
+        const regexPagina = /Página:\s\d{1,2}\sde\s\d{1,2}/gi;
+        concepto = concepto.replace(regexPagina, "").trim();
+
+        // ----------------------------------------------------------------
+        // 🔟 Eliminar posibles espacios o saltos de línea extras
+        // ----------------------------------------------------------------
+        concepto = concepto.replace(/\s{2,}/g, ' ').trim();  // Quitar espacios duplicados
+
+        // ----------------------------------------------------------------
+        // 🔟 Guardar el resultado filtrado
+        // ----------------------------------------------------------------
+        resultados.push({
+            FechaMovimiento: fechaActual,
+            Descripcion: concepto
+        });
+    }
+
+    console.log("Resultados con fechas y conceptos Banamex:", resultados);
     initTable(resultados);
 
-    // Devolver los resultados
     return resultados;
 }
-
-
-
-
