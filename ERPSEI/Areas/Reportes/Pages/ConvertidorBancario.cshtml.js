@@ -2323,11 +2323,11 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
 
 function extraerDatosEspecificosBanamex(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
-        console.error("El texto extraido está vacío o indefinido.");
+        console.error("El texto extraído está vacío o indefinido.");
         return [];
     }
 
-    console.log("Texto extraido Banamex:", textoExtraido);
+    console.log("Texto extraído Banamex:", textoExtraido);
 
     const resultados = [];
 
@@ -2386,61 +2386,89 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
         let concepto = textoDesdeDetalle.slice(inicioConcepto, finConcepto).trim();
 
         // ----------------------------------------------------------------
-        // 3️⃣ Eliminar "DETALLE DE OPERACIONES FECHA CONCEPTO RETIROS DEPOSITOS SALDO"
+        // Limpieza de texto innecesario
         // ----------------------------------------------------------------
         const regexDetalleCompleto = /DETALLE\s+DE\s+OPERACIONES\s+FECHA\s+CONCEPTO\s+RETIROS\s+DEPOSITOS\s+SALDO/gi;
         concepto = concepto.replace(regexDetalleCompleto, "").trim();
 
-        // ----------------------------------------------------------------
-        // 4️⃣ Eliminar "FECHA CONCEPTO RETIROS DEPOSITOS SALDO"
-        // ----------------------------------------------------------------
         const regexFechaConcepto = /FECHA\s+CONCEPTO\s+RETIROS\s+DEPOSITOS\s+SALDO/gi;
         concepto = concepto.replace(regexFechaConcepto, "").trim();
 
-        // ----------------------------------------------------------------
-        // 5️⃣ Eliminar "ESTADO DE CUENTA AL [DÍA] DE [MES COMPLETO] DE [AÑO]"
-        // ----------------------------------------------------------------
         const regexEstadoCuenta = /ESTADO DE CUENTA AL \d{1,2} DE (ENERO|FEBRERO|MARZO|ABRIL|MAYO|JUNIO|JULIO|AGOSTO|SEPTIEMBRE|OCTUBRE|NOVIEMBRE|DICIEMBRE) DE \d{4}/gi;
         concepto = concepto.replace(regexEstadoCuenta, "").trim();
 
-        // ----------------------------------------------------------------
-        // 6️⃣ Eliminar todo después de "SALDO MINIMO REQUERIDO"
-        // ----------------------------------------------------------------
         const indexSaldoMinimo = concepto.indexOf("SALDO MINIMO REQUERIDO");
         if (indexSaldoMinimo !== -1) {
             concepto = concepto.substring(0, indexSaldoMinimo).trim();
         }
 
-        // ----------------------------------------------------------------
-        // 7️⃣ Eliminar "000180.B12CHDA012.OD.1031.01"
-        // ----------------------------------------------------------------
         const regexCodigoInnecesario = /000180\.B12CHDA012\.OD\.1031\.01/gi;
         concepto = concepto.replace(regexCodigoInnecesario, "").trim();
 
-        // ----------------------------------------------------------------
-        // 8️⃣ Eliminar "CLIENTE: [9 dígitos]"
-        // ----------------------------------------------------------------
         const regexCliente = /CLIENTE:\s\d{9}/gi;
         concepto = concepto.replace(regexCliente, "").trim();
 
-        // ----------------------------------------------------------------
-        // 9️⃣ Eliminar "Página: X de Y" (números de 1 o 2 dígitos)
-        // ----------------------------------------------------------------
         const regexPagina = /Página:\s\d{1,2}\sde\s\d{1,2}/gi;
         concepto = concepto.replace(regexPagina, "").trim();
 
-        // ----------------------------------------------------------------
-        // 🔟 Eliminar posibles espacios o saltos de línea extras
-        // ----------------------------------------------------------------
         concepto = concepto.replace(/\s{2,}/g, ' ').trim();  // Quitar espacios duplicados
 
         // ----------------------------------------------------------------
-        // 🔟 Guardar el resultado filtrado
+        // 1️⃣ Lógica para capturar cantidades después de "SUC XXXX"
         // ----------------------------------------------------------------
-        resultados.push({
-            FechaMovimiento: fechaActual,
-            Descripcion: concepto
-        });
+        const regexSUC = /SUC\s\d{4}.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)(?:.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?))?/;
+        const matchSUC = concepto.match(regexSUC);
+
+        // ----------------------------------------------------------------
+        // 2️⃣ Lógica: COMISION, IVA COMISION -> Cargo
+        // ----------------------------------------------------------------
+        const regexConceptoInicioCargo = /^(COMISION|IVA COMISION)/i;
+
+        // ----------------------------------------------------------------
+        // 3️⃣ Lógica: PAGO RECIBIDO o PAGO INTERBANCARIO -> Abono y Saldo
+        // ----------------------------------------------------------------
+        const regexPagoRecibidoOInterbancario = /^(PAGO RECIBIDO|PAGO INTERBANCARIO)/i;
+
+        if (regexConceptoInicioCargo.test(concepto) && matchSUC && matchSUC[1] && !matchSUC[2]) {
+            // Si inicia con COMISION o IVA COMISION y solo hay una cantidad
+            resultados.push({
+                FechaMovimiento: fechaActual,
+                Descripcion: concepto,
+                Cargo: matchSUC[1]  // La única cantidad se asigna a Cargo
+            });
+        } else if (regexPagoRecibidoOInterbancario.test(concepto) && matchSUC) {
+            if (matchSUC[1] && matchSUC[2]) {
+                // Si hay dos cantidades, la primera va a Abono y la segunda a Saldo
+                resultados.push({
+                    FechaMovimiento: fechaActual,
+                    Descripcion: concepto,
+                    Abono: matchSUC[1],
+                    Saldo: matchSUC[2]
+                });
+            } else if (matchSUC[1]) {
+                // Si solo hay una cantidad, va a Abono
+                resultados.push({
+                    FechaMovimiento: fechaActual,
+                    Descripcion: concepto,
+                    Abono: matchSUC[1]
+                });
+            }
+        } else if (matchSUC) {
+            // Si hay dos cantidades después de SUC, la segunda se asigna a Saldo
+            const segundaCantidad = matchSUC[2];
+
+            resultados.push({
+                FechaMovimiento: fechaActual,
+                Descripcion: concepto,
+                Saldo: segundaCantidad ? segundaCantidad : ""
+            });
+        } else {
+            // Si no hay coincidencias con SUC, guardar el concepto normalmente
+            resultados.push({
+                FechaMovimiento: fechaActual,
+                Descripcion: concepto
+            });
+        }
     }
 
     console.log("Resultados con fechas y conceptos Banamex:", resultados);
