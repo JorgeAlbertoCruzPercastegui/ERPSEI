@@ -2339,10 +2339,7 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
     }
 
     let textoDesdeDetalle = textoExtraido.slice(indiceDetalleOperaciones);
-
-    // --------------------------------------------------------------
-    // 1️⃣ Agregar "SALDO ANTERIOR" al principio del arreglo
-    // --------------------------------------------------------------
+    
     const regexSaldoAnterior = /(SALDO ANTERIOR\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
 
     const matchSaldoAnterior = textoDesdeDetalle.match(regexSaldoAnterior);
@@ -2352,10 +2349,6 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
             Descripcion: matchSaldoAnterior[1]  // El saldo anterior
         });
     }
-
-    // --------------------------------------------------------------
-    // 2️⃣ Continuar con la extracción normal de conceptos
-    // --------------------------------------------------------------
 
     // Expresión regular para fechas en formato "DD MMM"
     const regexFechas = /\b(\d{2}\s(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC))\b/g;
@@ -2384,10 +2377,7 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
             : textoDesdeDetalle.length;
 
         let concepto = textoDesdeDetalle.slice(inicioConcepto, finConcepto).trim();
-
-        // ----------------------------------------------------------------
-        // Limpieza de texto innecesario
-        // ----------------------------------------------------------------
+        
         const regexDetalleCompleto = /DETALLE\s+DE\s+OPERACIONES\s+FECHA\s+CONCEPTO\s+RETIROS\s+DEPOSITOS\s+SALDO/gi;
         concepto = concepto.replace(regexDetalleCompleto, "").trim();
 
@@ -2412,21 +2402,12 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
         concepto = concepto.replace(regexPagina, "").trim();
 
         concepto = concepto.replace(/\s{2,}/g, ' ').trim();  // Quitar espacios duplicados
-
-        // ----------------------------------------------------------------
-        // 1️⃣ Lógica para capturar cantidades después de "SUC XXXX"
-        // ----------------------------------------------------------------
+        
         const regexSUC = /SUC\s\d{4}.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)(?:.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?))?/;
         const matchSUC = concepto.match(regexSUC);
-
-        // ----------------------------------------------------------------
-        // 2️⃣ Lógica: COMISION, IVA COMISION -> Cargo
-        // ----------------------------------------------------------------
+        
         const regexConceptoInicioCargo = /^(COMISION|IVA COMISION)/i;
-
-        // ----------------------------------------------------------------
-        // 3️⃣ Lógica: PAGO RECIBIDO o PAGO INTERBANCARIO -> Abono y Saldo
-        // ----------------------------------------------------------------
+        
         const regexPagoRecibidoOInterbancario = /^(PAGO RECIBIDO|PAGO INTERBANCARIO)/i;
 
         if (regexConceptoInicioCargo.test(concepto) && matchSUC && matchSUC[1] && !matchSUC[2]) {
