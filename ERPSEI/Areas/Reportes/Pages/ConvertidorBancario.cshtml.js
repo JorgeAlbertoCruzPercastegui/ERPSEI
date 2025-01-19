@@ -192,13 +192,13 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     console.log('Texto extraído del PDF:', extractedText); // Procesar el texto extraído
                     var datosExtraidos = extraerDatosEspecificos(extractedText);
                     const datosExtraidoss = extraerDatosEspecificosInbursa(extractedText);
-                    extraerDatosEspecificosAfirme(extractedText); 
                     //extraerDatosEspecificosKLU(extractedText);
                     extraerDatosEspecificosAutofin(extractedText);
                     //extraerDatosEspecificosPayMax(extractedText);
                     extraerDatosEspecificosScotiabank(extractedText);
                     extraerDatosEspecificosSantanderDig(extractedText);
                     extraerDatosEspecificosBanamex(extractedText);
+                    extraerDatosEspecificosAfirme(extractedText); 
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -1736,112 +1736,6 @@ function extraerDatosEspecificosInbursa(textoExtraido) {
     return datosOrdenadosPorFecha.sort((a, b) => a.FechaMovimiento.localeCompare(b.FechaMovimiento));
 }
 
-function extraerDatosEspecificosAfirme(textoExtraido) {
-    if (!textoExtraido || textoExtraido.trim() === "") {
-        console.error("El texto extraído está vacío o indefinido.");
-        return [];
-    }
-
-    console.log("Texto extraído Afirme:", textoExtraido);
-
-    // Expresión regular para días (DD) seguidos de un signo $
-    const regexDias = /\b(\d{2})\b(?=\s*\$)/g;
-
-    // Expresión regular para capturar el período (mes y año) del formato "Período de 01 OCT 2024 AL 31 OCT 2024"
-    const regexPeriodo = /Per[íi]odo de \d{2} ([A-Z]{3}) (\d{4}) AL \d{2} [A-Z]{3} \d{4}/i;
-
-    // Expresión regular para capturar la fecha del formato "ESTADO DE CUENTA AL: 31 OCT 2024"
-    const regexEstadoCuenta = /ESTADO\s+DE\s+CUENTA\s+AL:\s+\d{2}\s+([A-Z]{3})\s+(\d{4})/i;
-
-    // Expresión regular para capturar cantidades antes y después del signo $
-    const regexCantidades = /([\d,\.]+)\s*\$\s*([\d,\.]+)/g;
-
-    // Expresión regular para capturar cantidades después del signo $ seguidas de dos dígitos (día)
-    const regexCantidadDia = /\$\s*([\d,\.]+)\s+(\d{2})/g;
-
-    // Expresión regular para capturar cantidades antes del signo $ y seguidas de la palabra Página
-    const regexCantidadAntesSignoPagina = /([\d,\.]+)\s*\$\s*[\d,\.]+\s+P[áa]gina/gi;
-
-    // Expresión regular para capturar descripciones entre palabras clave y el signo $
-    const regexDescripciones = /(SPEI RECIBIDO|ENVIO SPEI|COM MEMBRESIA|IVA POR COMISIONES)([\s\S]*?)(?=\$)/gi;
-
-    // Extraer días
-    const diasEncontrados = [];
-    let matchDia;
-    while ((matchDia = regexDias.exec(textoExtraido)) !== null) {
-        diasEncontrados.push(matchDia[1]);
-    }
-    console.log("Días encontrados:", diasEncontrados);
-
-    // Extraer mes y año del período
-    const periodoMatch = textoExtraido.match(regexPeriodo);
-    if (periodoMatch) {
-        console.log("Mes del período encontrado:", periodoMatch[1]);
-        console.log("Año del período encontrado:", periodoMatch[2]);
-    } else {
-        console.warn("No se encontró el período especificado en el texto.");
-    }
-
-    // Extraer mes y año del estado de cuenta
-    const estadoCuentaMatch = textoExtraido.match(regexEstadoCuenta);
-    if (estadoCuentaMatch) {
-        console.log("Mes del estado de cuenta encontrado:", estadoCuentaMatch[1]);
-        console.log("Año del estado de cuenta encontrado:", estadoCuentaMatch[2]);
-    } else {
-        console.warn("No se encontró el estado de cuenta en el texto.");
-    }
-
-    // Extraer cantidades antes y después del signo $
-    const cantidadesEncontradas = [];
-    let matchCantidad;
-    while ((matchCantidad = regexCantidades.exec(textoExtraido)) !== null) {
-        cantidadesEncontradas.push({
-            antesDelSigno: matchCantidad[1],
-            despuesDelSigno: matchCantidad[2]
-        });
-    }
-    console.log("Cantidades encontradas antes y después del signo $:", cantidadesEncontradas);
-
-    // Extraer cantidades seguidas de dos dígitos (día)
-    const cantidadesConDia = [];
-    let matchCantidadDia;
-    while ((matchCantidadDia = regexCantidadDia.exec(textoExtraido)) !== null) {
-        cantidadesConDia.push({
-            cantidad: matchCantidadDia[1],
-            dia: matchCantidadDia[2]
-        });
-    }
-    console.log("Cantidades seguidas de día:", cantidadesConDia);
-
-    // Extraer cantidades antes del signo $ seguidas de la palabra Página
-    const cantidadesAntesSignoPagina = [];
-    let matchCantidadAntesSignoPagina;
-    while ((matchCantidadAntesSignoPagina = regexCantidadAntesSignoPagina.exec(textoExtraido)) !== null) {
-        cantidadesAntesSignoPagina.push(matchCantidadAntesSignoPagina[1]);
-    }
-    console.log("Cantidades antes del signo $ y seguidas de la palabra 'Página':", cantidadesAntesSignoPagina);
-
-    // Extraer descripciones
-    const descripcionesEncontradas = [];
-    let matchDescripcion;
-    while ((matchDescripcion = regexDescripciones.exec(textoExtraido)) !== null) {
-        descripcionesEncontradas.push(matchDescripcion[1] + matchDescripcion[2].trim());
-    }
-    console.log("Descripciones encontradas:", descripcionesEncontradas);
-
-    return {
-        dias: diasEncontrados,
-        mesPeriodo: periodoMatch ? periodoMatch[1] : null,
-        anioPeriodo: periodoMatch ? periodoMatch[2] : null,
-        mesEstadoCuenta: estadoCuentaMatch ? estadoCuentaMatch[1] : null,
-        anioEstadoCuenta: estadoCuentaMatch ? estadoCuentaMatch[2] : null,
-        cantidades: cantidadesEncontradas,
-        cantidadesConDia: cantidadesConDia,
-        cantidadesAntesSignoPagina: cantidadesAntesSignoPagina,
-        descripciones: descripcionesEncontradas
-    };
-}
-
 function extraerDatosEspecificosKLU(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
         console.error("El texto extraído está vacío o indefinido.");
@@ -2457,3 +2351,78 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
 
     return resultados;
 }
+
+function extraerDatosEspecificosAfirme(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Procesando información de texto extraído...");
+
+    const resultados = []; // Arreglo para almacenar los resultados procesados
+
+    // Expresión regular extendida para capturar bloques con los conceptos deseados
+    const regex = /(SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES)[\s\S]*?(?=SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES|$)/g;
+    const matches = [];
+    let match;
+
+    while ((match = regex.exec(textoExtraido)) !== null) {
+        matches.push(match[0].trim());
+    }
+
+    // Si hay un primer registro con cantidad previa, no modificarla
+    if (matches.length > 0) {
+        const firstMatchIndex = textoExtraido.indexOf(matches[0]);
+        if (firstMatchIndex > 0) {
+            const textoAntes = textoExtraido.slice(0, firstMatchIndex).trim();
+            const cantidadRegex = /\$\s*[\d,]+\.\d{2}(?!.*\$)/; // Captura la última cantidad antes del primer fragmento
+            const cantidadMatch = textoAntes.match(cantidadRegex);
+            if (cantidadMatch) {
+                matches[0] = `${cantidadMatch[0]} ${matches[0]}`;
+            }
+        }
+    }
+
+    // Procesar para mover la última cantidad de un concepto al siguiente
+    for (let i = 0; i < matches.length; i++) {
+        let currentMatch = matches[i];
+
+        // Extraer las dos últimas cantidades al final del concepto
+        const cantidadRegex = /\$\s*[\d,]+\.\d{2}/g;
+        const cantidades = currentMatch.match(cantidadRegex);
+
+        if (cantidades && cantidades.length >= 2) {
+            const lastAmount = cantidades[cantidades.length - 1]; // Última cantidad
+            const newMatch = currentMatch.replace(lastAmount, "").trim(); // Eliminar última cantidad del actual
+
+            // Preservar el primer registro sin modificar su cantidad previa
+            if (i === 0) {
+                resultados.push({
+                    Descripcion: currentMatch // Agregar concepto completo al primer registro
+                });
+            } else {
+                resultados.push({
+                    Descripcion: newMatch // Agregar concepto sin la última cantidad
+                });
+            }
+
+            // Agregar la última cantidad al inicio del siguiente concepto si no es el último
+            if (i + 1 < matches.length) {
+                matches[i + 1] = `${lastAmount} ${matches[i + 1]}`;
+            }
+        } else {
+            resultados.push({
+                Descripcion: currentMatch // Si no hay dos cantidades, agregar concepto completo
+            });
+        }
+    }
+
+    console.log("Resultados procesados Afirme:", resultados);
+
+    // Inicializar la tabla con los resultados
+    initTable(resultados);
+
+    return resultados;
+}
+
