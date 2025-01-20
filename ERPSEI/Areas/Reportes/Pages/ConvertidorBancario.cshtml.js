@@ -2450,7 +2450,6 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
         const fechasRegex = /\d{2}-[A-Z]{3}-\d{4}/g;
         let match;
         let conceptosLista = [];
-        let lastIndex = 0;
 
         while ((match = fechasRegex.exec(textoDespuesDeDetalle)) !== null) {
             const fecha = match[0];
@@ -2462,19 +2461,56 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
 
             // Extraer el concepto entre las fechas
             let concepto = textoDespuesDeDetalle.slice(start, end).trim();
+            let numeroReferencia = "";
+
+            // Extraer los primeros 7 dígitos del concepto y eliminarlos
+            const referenciaRegex = /^\d{7}/;
+            const referenciaMatch = concepto.match(referenciaRegex);
+            if (referenciaMatch) {
+                numeroReferencia = referenciaMatch[0];
+                concepto = concepto.slice(7).trim();
+            }
+
+            // Omitir el texto entre 'ESTADO DE CUENTA' y 'F   E   C   H   A' si está presente
+            const estadoCuentaInicio = concepto.indexOf("ESTADO DE CUENTA");
+            const estadoCuentaFin = concepto.indexOf("F   E   C   H   A");
+
+            if (estadoCuentaInicio !== -1 && estadoCuentaFin !== -1 && estadoCuentaInicio < estadoCuentaFin) {
+                concepto = concepto.slice(0, estadoCuentaInicio).trim() +
+                    concepto.slice(estadoCuentaFin + fechaClave.length).trim();
+            }
+
+            // Omitir el texto 'DESCRIPCION   DEPOSITOS   RETIROS   SALDO' si está presente
+            const descripcionIndex = concepto.indexOf("DESCRIPCION   DEPOSITOS   RETIROS   SALDO");
+            if (descripcionIndex !== -1) {
+                concepto = concepto.slice(0, descripcionIndex).trim();
+            }
+
+            // Omitir el texto 'INFORMACION FISCAL' y todo lo que le sigue si está presente
+            const infoFiscalIndex = concepto.indexOf("INFORMACION FISCAL");
+            if (infoFiscalIndex !== -1) {
+                concepto = concepto.slice(0, infoFiscalIndex).trim();
+            }
+
+            // Omitir el texto 'TOTAL' seguido de una cantidad y todo lo que le sigue
+            const totalRegex = /TOTAL\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?/i;
+            const totalMatch = concepto.match(totalRegex);
+            if (totalMatch) {
+                concepto = concepto.slice(0, concepto.indexOf(totalMatch[0])).trim();
+            }
 
             // Guardar en la lista de conceptos
-            conceptosLista.push(`Concepto ${conceptosLista.length + 1}: ${concepto}`);
+            conceptosLista.push(`Concepto ${conceptosLista.length + 1}: ${concepto}, NumeroReferencia: ${numeroReferencia}`);
 
-            // Agregar la fecha y el concepto al arreglo de resultados
-            resultados.push({ FechaMovimiento: fecha, Descripcion: concepto });
+            // Agregar la fecha, la descripción limpia y el número de referencia al arreglo de resultados
+            resultados.push({ FechaMovimiento: fecha, Descripcion: concepto, NumeroReferencia: numeroReferencia });
 
             // Regresar el índice de la búsqueda al último punto para seguir capturando todas las fechas
             fechasRegex.lastIndex = end;
         }
 
-        // Mostrar la lista de conceptos en la consola
-        console.log("Lista de conceptos extraídos:");
+        // Mostrar la lista de descripciones en la consola
+        console.log("Lista de descripciones extraídas:");
         conceptosLista.forEach(concepto => console.log(concepto));
 
     } else {
@@ -2486,4 +2522,3 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
 
     return resultados;
 }
-
