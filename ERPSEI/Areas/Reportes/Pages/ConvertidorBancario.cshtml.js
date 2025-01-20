@@ -2388,32 +2388,39 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
     for (let i = 0; i < matches.length; i++) {
         let currentMatch = matches[i];
 
-        // Extraer las dos últimas cantidades al final del concepto
+        // Extraer todas las cantidades con el signo $
         const cantidadRegex = /\$\s*[\d,]+\.\d{2}/g;
-        const cantidades = currentMatch.match(cantidadRegex);
+        const cantidades = currentMatch.match(cantidadRegex) || [];
 
-        if (cantidades && cantidades.length >= 2) {
-            const lastAmount = cantidades[cantidades.length - 1]; // Última cantidad
-            const newMatch = currentMatch.replace(lastAmount, "").trim(); // Eliminar última cantidad del actual
+        // Mostrar las cantidades encontradas en la consola
+        console.log(`Concepto ${i + 1}:`, currentMatch);
+        console.log(`Cantidades encontradas:`, cantidades);
 
-            // Preservar el primer registro sin modificar su cantidad previa
-            if (i === 0) {
-                resultados.push({
-                    Descripcion: currentMatch // Agregar concepto completo al primer registro
-                });
-            } else {
-                resultados.push({
-                    Descripcion: newMatch // Agregar concepto sin la última cantidad
-                });
-            }
+        // Verificar si contiene "SPEI RECIBIDO"
+        if (currentMatch.includes("SPEI RECIBIDO") || currentMatch.includes("SPEI   RECIBIDO")) {
+            console.log(`Concepto ${i + 1}: Contiene 'SPEI RECIBIDO'`);
+        } else {
+            console.log(`Concepto ${i + 1}: NO contiene 'SPEI RECIBIDO'`);
+        }
+
+        if (cantidades.length > 0) {
+            const firstAmount = cantidades[0]; // Primera cantidad
+            const newMatch = currentMatch.replace(firstAmount, "").trim(); // Eliminar la primera cantidad del actual
+
+            resultados.push({
+                Descripcion: newMatch, // Agregar concepto sin la primera cantidad
+                Saldo: firstAmount      // Pasar la primera cantidad encontrada a Saldo
+            });
 
             // Agregar la última cantidad al inicio del siguiente concepto si no es el último
-            if (i + 1 < matches.length) {
+            if (cantidades.length > 1 && i + 1 < matches.length) {
+                const lastAmount = cantidades[cantidades.length - 1];
                 matches[i + 1] = `${lastAmount} ${matches[i + 1]}`;
             }
         } else {
             resultados.push({
-                Descripcion: currentMatch // Si no hay dos cantidades, agregar concepto completo
+                Descripcion: currentMatch, // Si no hay cantidades, agregar concepto completo
+                Saldo: "$0.00"             // Asignar un valor predeterminado si no se encuentra cantidad
             });
         }
     }
@@ -2425,4 +2432,7 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     return resultados;
 }
+
+
+
 
