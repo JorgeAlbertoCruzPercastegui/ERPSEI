@@ -2435,7 +2435,6 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
     if (indiceInicio !== -1) {
         const textoDespuesDeDetalle = textoExtraido.slice(indiceInicio + detalleInicio.length).trim();
 
-        // Buscar la cadena 'F   E   C   H   A' y extraer la información posterior
         const fechaClave = "F   E   C   H   A";
         const indiceFecha = textoDespuesDeDetalle.indexOf(fechaClave);
 
@@ -2446,7 +2445,6 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
             console.warn("No se encontró la palabra 'F   E   C   H   A' en el texto.");
         }
 
-        // Expresión regular para detectar todas las fechas en formato DD-MMM-YYYY (ej. 12-JAN-2024)
         const fechasRegex = /\d{2}-[A-Z]{3}-\d{4}/g;
         let match;
         let conceptosLista = [];
@@ -2454,16 +2452,12 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
         while ((match = fechasRegex.exec(textoDespuesDeDetalle)) !== null) {
             const fecha = match[0];
             const start = match.index + fecha.length;
-
-            // Encontrar la siguiente fecha para definir el final del concepto
             const nextMatch = fechasRegex.exec(textoDespuesDeDetalle);
             const end = nextMatch ? nextMatch.index : textoDespuesDeDetalle.length;
 
-            // Extraer el concepto entre las fechas
             let concepto = textoDespuesDeDetalle.slice(start, end).trim();
             let numeroReferencia = "";
 
-            // Extraer los primeros 7 dígitos del concepto y eliminarlos
             const referenciaRegex = /^\d{7}/;
             const referenciaMatch = concepto.match(referenciaRegex);
             if (referenciaMatch) {
@@ -2471,7 +2465,6 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                 concepto = concepto.slice(7).trim();
             }
 
-            // Omitir el texto entre 'ESTADO DE CUENTA' y 'F   E   C   H   A' si está presente
             const estadoCuentaInicio = concepto.indexOf("ESTADO DE CUENTA");
             const estadoCuentaFin = concepto.indexOf("F   E   C   H   A");
 
@@ -2480,36 +2473,120 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                     concepto.slice(estadoCuentaFin + fechaClave.length).trim();
             }
 
-            // Omitir el texto 'DESCRIPCION   DEPOSITOS   RETIROS   SALDO' si está presente
             const descripcionIndex = concepto.indexOf("DESCRIPCION   DEPOSITOS   RETIROS   SALDO");
             if (descripcionIndex !== -1) {
                 concepto = concepto.slice(0, descripcionIndex).trim();
             }
 
-            // Omitir el texto 'INFORMACION FISCAL' y todo lo que le sigue si está presente
             const infoFiscalIndex = concepto.indexOf("INFORMACION FISCAL");
             if (infoFiscalIndex !== -1) {
                 concepto = concepto.slice(0, infoFiscalIndex).trim();
             }
 
-            // Omitir el texto 'TOTAL' seguido de una cantidad y todo lo que le sigue
             const totalRegex = /TOTAL\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?/i;
             const totalMatch = concepto.match(totalRegex);
             if (totalMatch) {
                 concepto = concepto.slice(0, concepto.indexOf(totalMatch[0])).trim();
             }
 
-            // Guardar en la lista de conceptos
+            const cantidadRegex = /\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g;
+            const cantidades = concepto.match(cantidadRegex);
+
+            // Manejo de conceptos específicos
+            const conceptosEspecificos = [
+                "I   V   A   MEMBRESIA",
+                "COM   MEMBRESIA",
+                "PAGO   CHEQUE   EFECTIVO",
+                "ABONO   TRANSFERENCIA",
+                "CARGO   TRANSFERENCIA",
+                "RETENCION   I   S   R",
+                "ABO   POR   INTERESES",
+                "ABONO   POR   INTERESES",
+                "SALDO FINAL"
+            ];
+
+            // Procesamiento para conceptos específicos
+            if (concepto.startsWith("RETENCION   I   S   R") ||
+                concepto.startsWith("ABO   POR   INTERESES") ||
+                concepto.startsWith("ABONO   POR   INTERESES")) {
+                if (cantidades && cantidades.length >= 2) {
+                    const ultimasDosCantidades = cantidades.slice(-2);
+                    console.log(`Concepto: "${concepto}" - Cantidades después del filtro: ${ultimasDosCantidades[0]}, ${ultimasDosCantidades[1]}`);
+
+                    resultados.push({
+                        FechaMovimiento: fecha,
+                        Descripcion: concepto,
+                        NumeroReferencia: numeroReferencia,
+                        Cargo: concepto.startsWith("RETENCION   I   S   R") ? ultimasDosCantidades[0] : "0.00",
+                        Abono: (concepto.startsWith("ABO   POR   INTERESES") || concepto.startsWith("ABONO   POR   INTERESES")) ? ultimasDosCantidades[0] : "0.00",
+                        Saldo: ultimasDosCantidades[1]
+                    });
+
+                    fechasRegex.lastIndex = end;
+                    continue; // Evita duplicados en el push principal
+                }
+            } else if (concepto.startsWith("SALDO FINAL")) {
+                if (cantidades && cantidades.length === 1) {
+                    console.log(`Concepto: "${concepto}" - Saldo encontrado: ${cantidades[0]}`);
+
+                    resultados.push({
+                        FechaMovimiento: fecha,
+                        Descripcion: concepto,
+                        NumeroReferencia: numeroReferencia,
+                        Cargo: "0.00",
+                        Abono: "0.00",
+                        Saldo: cantidades[0]
+                    });
+
+                    fechasRegex.lastIndex = end;
+                    continue; // Evita duplicados en el push principal
+                }
+            } else if (conceptosEspecificos.some(keyword => concepto.includes(keyword))) {
+                if (cantidades && cantidades.length > 0) {
+                    console.log(`Concepto: "${concepto}" - Cantidades encontradas: ${cantidades.join(", ")}`);
+                }
+            }
+
+            // Procesamiento para PAGO   TRANSFERENCIA   SPEI
+            if (concepto.includes("PAGO   TRANSFERENCIA   SPEI")) {
+                const horaRegex = /HORA\s+\d{2}:\d{2}:\d{2}/;
+                const horaMatch = concepto.match(horaRegex);
+
+                if (horaMatch) {
+                    const horaIndex = horaMatch.index + horaMatch[0].length;
+                    const cantidadesDespuesDeHora = concepto.slice(horaIndex).match(cantidadRegex);
+
+                    if (cantidadesDespuesDeHora && cantidadesDespuesDeHora.length >= 2) {
+                        console.log(`Concepto: "${concepto}" - Cantidades después de la hora: ${cantidadesDespuesDeHora[0]}, ${cantidadesDespuesDeHora[1]}`);
+
+                        resultados.push({
+                            FechaMovimiento: fecha,
+                            Descripcion: concepto,
+                            NumeroReferencia: numeroReferencia,
+                            Cargo: cantidadesDespuesDeHora[0],
+                            Saldo: cantidadesDespuesDeHora[1]
+                        });
+
+                        fechasRegex.lastIndex = end;
+                        continue; // Evita duplicados en el push principal
+                    }
+                }
+            }
+
             conceptosLista.push(`Concepto ${conceptosLista.length + 1}: ${concepto}, NumeroReferencia: ${numeroReferencia}`);
 
-            // Agregar la fecha, la descripción limpia y el número de referencia al arreglo de resultados
-            resultados.push({ FechaMovimiento: fecha, Descripcion: concepto, NumeroReferencia: numeroReferencia });
+            resultados.push({
+                FechaMovimiento: fecha,
+                Descripcion: concepto,
+                NumeroReferencia: numeroReferencia,
+                Cargo: "0.00",
+                Abono: "0.00",
+                Saldo: "0.00"
+            });
 
-            // Regresar el índice de la búsqueda al último punto para seguir capturando todas las fechas
             fechasRegex.lastIndex = end;
         }
 
-        // Mostrar la lista de descripciones en la consola
         console.log("Lista de descripciones extraídas:");
         conceptosLista.forEach(concepto => console.log(concepto));
 
@@ -2517,7 +2594,6 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
         console.error("El texto extraído no contiene 'DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES'.");
     }
 
-    // Inicializar la tabla con los resultados extraídos
     initTable(resultados);
 
     return resultados;
