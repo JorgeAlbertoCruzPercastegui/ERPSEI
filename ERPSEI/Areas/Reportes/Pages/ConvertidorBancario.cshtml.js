@@ -196,9 +196,9 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     extraerDatosEspecificosAutofin(extractedText);
                     //extraerDatosEspecificosPayMax(extractedText);
                     extraerDatosEspecificosScotiabank(extractedText);
-                    extraerDatosEspecificosSantanderDig(extractedText);
                     extraerDatosEspecificosBanamex(extractedText);
-                    extraerDatosEspecificosAfirme(extractedText); 
+                    extraerDatosEspecificosAfirme(extractedText);
+                    extraerDatosEspecificosSantanderDig(extractedText);
 
                     if (datosExtraidoss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidoss);
@@ -2145,76 +2145,6 @@ function extraerDatosEspecificosScotiabank(textoExtraido) {
 
     return resultados;
 }
-
-function extraerDatosEspecificosSantanderDig(textoExtraido) {
-    if (!textoExtraido || textoExtraido.trim() === "") {
-        console.error("El texto extraído está vacío o indefinido.");
-        return [];
-    }
-
-    console.log("Texto extraído SantanderDig:", textoExtraido);
-    const resultados = [];
-    const detalleInicio = "DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES";
-    const indiceInicio = textoExtraido.indexOf(detalleInicio);
-
-    if (indiceInicio !== -1) {
-        const textoDespuesDeDetalle = textoExtraido.slice(indiceInicio + detalleInicio.length);
-        const fechasRegex = /(\d{2}-[A-Z]{3}-\d{4})/g;
-        const matches = textoDespuesDeDetalle.match(fechasRegex);
-
-        if (matches) {
-            // Expresión regular para encontrar montos (con comas y decimales)
-            const cantidadRegex = /\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g;
-            let conceptoCount = 1;
-
-            for (let i = 0; i < matches.length; i++) {
-                const fecha = matches[i];
-
-                // Si no es la última fecha, buscamos el concepto entre esta fecha y la siguiente
-                let start = textoDespuesDeDetalle.indexOf(fecha) + fecha.length;
-                let end = textoDespuesDeDetalle.indexOf(matches[i + 1]);
-
-                // Si es la última fecha, el concepto es todo lo que sigue hasta el final del texto
-                if (i === matches.length - 1) {
-                    end = textoDespuesDeDetalle.length;
-                }
-
-                // Extraemos el texto entre las fechas
-                let segmento = textoDespuesDeDetalle.slice(start, end).trim();
-
-                // Buscar las cantidades en el segmento extraído
-                let cantidades = segmento.match(cantidadRegex);
-
-                // Si encontramos cantidades, el concepto termina donde encontramos la primera cantidad
-                let concepto = '';
-                if (cantidades && cantidades.length >= 1) {
-                    const cantidadFinalIndex = segmento.indexOf(cantidades[0]) + cantidades[0].length;
-                    concepto = segmento.slice(0, cantidadFinalIndex).trim();
-                } else {
-                    // Si no hay cantidades, el concepto es todo el segmento entre las fechas
-                    concepto = segmento.trim();
-                }
-
-                // Imprimir el concepto en un log
-                console.log(`Concepto ${conceptoCount}:`, concepto);
-                conceptoCount++;
-
-                // Agregar la fecha y el concepto al arreglo de resultados
-                resultados.push({ FechaMovimiento: fecha, Concepto: concepto });
-            }
-        } else {
-            console.error("No se encontraron fechas en el texto extraído.");
-        }
-    } else {
-        console.error("El texto extraído no contiene 'DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES'.");
-    }
-
-    // Inicializar la tabla con los resultados extraídos
-    initTable(resultados);
-
-    return resultados;
-}
-
 function extraerDatosEspecificosBanamex(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
         console.error("El texto extraído está vacío o indefinido.");
@@ -2490,3 +2420,70 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     return resultados;
 }
+
+function extraerDatosEspecificosSantanderDig(textoExtraido) {
+    if (!textoExtraido || textoExtraido.trim() === "") {
+        console.error("El texto extraído está vacío o indefinido.");
+        return [];
+    }
+
+    console.log("Texto extraído SantanderDig:", textoExtraido);
+    const resultados = [];
+    const detalleInicio = "DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES";
+    const indiceInicio = textoExtraido.indexOf(detalleInicio);
+
+    if (indiceInicio !== -1) {
+        const textoDespuesDeDetalle = textoExtraido.slice(indiceInicio + detalleInicio.length).trim();
+
+        // Buscar la cadena 'F   E   C   H   A' y extraer la información posterior
+        const fechaClave = "F   E   C   H   A";
+        const indiceFecha = textoDespuesDeDetalle.indexOf(fechaClave);
+
+        if (indiceFecha !== -1) {
+            const textoDespuesDeFecha = textoDespuesDeDetalle.slice(indiceFecha + fechaClave.length).trim();
+            console.log("Texto después de 'F   E   C   H   A':", textoDespuesDeFecha);
+        } else {
+            console.warn("No se encontró la palabra 'F   E   C   H   A' en el texto.");
+        }
+
+        // Expresión regular para detectar todas las fechas en formato DD-MMM-YYYY (ej. 12-JAN-2024)
+        const fechasRegex = /\d{2}-[A-Z]{3}-\d{4}/g;
+        let match;
+        let conceptosLista = [];
+        let lastIndex = 0;
+
+        while ((match = fechasRegex.exec(textoDespuesDeDetalle)) !== null) {
+            const fecha = match[0];
+            const start = match.index + fecha.length;
+
+            // Encontrar la siguiente fecha para definir el final del concepto
+            const nextMatch = fechasRegex.exec(textoDespuesDeDetalle);
+            const end = nextMatch ? nextMatch.index : textoDespuesDeDetalle.length;
+
+            // Extraer el concepto entre las fechas
+            let concepto = textoDespuesDeDetalle.slice(start, end).trim();
+
+            // Guardar en la lista de conceptos
+            conceptosLista.push(`Concepto ${conceptosLista.length + 1}: ${concepto}`);
+
+            // Agregar la fecha y el concepto al arreglo de resultados
+            resultados.push({ FechaMovimiento: fecha, Descripcion: concepto });
+
+            // Regresar el índice de la búsqueda al último punto para seguir capturando todas las fechas
+            fechasRegex.lastIndex = end;
+        }
+
+        // Mostrar la lista de conceptos en la consola
+        console.log("Lista de conceptos extraídos:");
+        conceptosLista.forEach(concepto => console.log(concepto));
+
+    } else {
+        console.error("El texto extraído no contiene 'DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES'.");
+    }
+
+    // Inicializar la tabla con los resultados extraídos
+    initTable(resultados);
+
+    return resultados;
+}
+
