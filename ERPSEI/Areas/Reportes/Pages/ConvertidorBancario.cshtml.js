@@ -2392,9 +2392,15 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
         const cantidadRegex = /\$\s*[\d,]+\.\d{2}/g;
         const cantidades = currentMatch.match(cantidadRegex) || [];
 
+        // Extraer la fecha con el formato -DD/MM/AAAA
+        const fechaRegex = /-(\d{2}\/\d{2}\/\d{4})/;
+        const fechaMatch = currentMatch.match(fechaRegex);
+        const fechaMovimiento = fechaMatch ? fechaMatch[1] : null;
+
         // Mostrar las cantidades encontradas en la consola
         console.log(`Concepto ${i + 1}:`, currentMatch);
         console.log(`Cantidades encontradas:`, cantidades);
+        console.log(`Fecha encontrada:`, fechaMovimiento);
 
         let abono = "$0.00"; // Valor por defecto para Abono
         let cargo = "$0.00"; // Valor por defecto para Cargo
@@ -2427,10 +2433,11 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
             const newMatch = currentMatch.replace(firstAmount, "").trim(); // Eliminar la primera cantidad del actual
 
             resultados.push({
-                Descripcion: newMatch,  // Agregar concepto sin la primera cantidad
-                Saldo: firstAmount,     // Pasar la primera cantidad encontrada a Saldo
-                Abono: abono,           // Pasar la segunda cantidad a Abono si aplica
-                Cargo: cargo            // Pasar la segunda cantidad a Cargo si aplica
+                Descripcion: newMatch.replace(fechaRegex, "").trim(), // Eliminar la fecha del concepto
+                Saldo: firstAmount, // Pasar la primera cantidad encontrada a Saldo
+                Abono: abono, // Pasar la segunda cantidad a Abono si aplica
+                Cargo: cargo, // Pasar la segunda cantidad a Cargo si aplica
+                FechaMovimiento: fechaMovimiento || "", // Asignar la fecha si se encontró
             });
 
             // Agregar la última cantidad al inicio del siguiente concepto si no es el último
@@ -2440,10 +2447,11 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
             }
         } else {
             resultados.push({
-                Descripcion: currentMatch, // Si no hay cantidades, agregar concepto completo
-                Saldo: "$0.00",            // Asignar un valor predeterminado si no se encuentra cantidad
+                Descripcion: currentMatch.replace(fechaRegex, "").trim(), // Si no hay cantidades, agregar concepto sin fecha
+                Saldo: "$0.00", // Asignar un valor predeterminado si no se encuentra cantidad
                 Abono: abono,
-                Cargo: cargo
+                Cargo: cargo,
+                FechaMovimiento: fechaMovimiento || "", // Asignar la fecha si se encontró
             });
         }
     }
@@ -2455,6 +2463,7 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     return resultados;
 }
+
 
 
 
