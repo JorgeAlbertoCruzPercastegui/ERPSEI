@@ -2396,20 +2396,41 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
         console.log(`Concepto ${i + 1}:`, currentMatch);
         console.log(`Cantidades encontradas:`, cantidades);
 
+        let abono = "$0.00"; // Valor por defecto para Abono
+        let cargo = "$0.00"; // Valor por defecto para Cargo
+
         // Verificar si contiene "SPEI RECIBIDO"
         if (currentMatch.includes("SPEI RECIBIDO") || currentMatch.includes("SPEI   RECIBIDO")) {
             console.log(`Concepto ${i + 1}: Contiene 'SPEI RECIBIDO'`);
+            if (cantidades.length >= 2) {
+                abono = cantidades[1]; // Asignar la segunda cantidad a Abono
+                currentMatch = currentMatch.replace(abono, "").trim(); // Eliminar la cantidad de la descripción
+            }
+        }
+        // Verificar si contiene "COM MEMBRESIA", "ENVIO SPEI" o "IVA POR COMISIONES"
+        else if (
+            currentMatch.includes("COM   MEMBRESIA") ||
+            currentMatch.includes("ENVIO   SPEI") ||
+            currentMatch.includes("IVA   POR   COMISIONES")
+        ) {
+            console.log(`Concepto ${i + 1}: Contiene 'COM MEMBRESIA', 'ENVIO SPEI' o 'IVA POR COMISIONES'`);
+            if (cantidades.length >= 2) {
+                cargo = cantidades[1]; // Asignar la segunda cantidad a Cargo
+                currentMatch = currentMatch.replace(cargo, "").trim(); // Eliminar la cantidad de la descripción
+            }
         } else {
-            console.log(`Concepto ${i + 1}: NO contiene 'SPEI RECIBIDO'`);
+            console.log(`Concepto ${i + 1}: No contiene SPEI RECIBIDO, COM MEMBRESIA, ENVIO SPEI o IVA POR COMISIONES`);
         }
 
         if (cantidades.length > 0) {
-            const firstAmount = cantidades[0]; // Primera cantidad
+            const firstAmount = cantidades[0]; // Primera cantidad para el saldo
             const newMatch = currentMatch.replace(firstAmount, "").trim(); // Eliminar la primera cantidad del actual
 
             resultados.push({
-                Descripcion: newMatch, // Agregar concepto sin la primera cantidad
-                Saldo: firstAmount      // Pasar la primera cantidad encontrada a Saldo
+                Descripcion: newMatch,  // Agregar concepto sin la primera cantidad
+                Saldo: firstAmount,     // Pasar la primera cantidad encontrada a Saldo
+                Abono: abono,           // Pasar la segunda cantidad a Abono si aplica
+                Cargo: cargo            // Pasar la segunda cantidad a Cargo si aplica
             });
 
             // Agregar la última cantidad al inicio del siguiente concepto si no es el último
@@ -2420,7 +2441,9 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
         } else {
             resultados.push({
                 Descripcion: currentMatch, // Si no hay cantidades, agregar concepto completo
-                Saldo: "$0.00"             // Asignar un valor predeterminado si no se encuentra cantidad
+                Saldo: "$0.00",            // Asignar un valor predeterminado si no se encuentra cantidad
+                Abono: abono,
+                Cargo: cargo
             });
         }
     }
@@ -2432,6 +2455,8 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     return resultados;
 }
+
+
 
 
 
