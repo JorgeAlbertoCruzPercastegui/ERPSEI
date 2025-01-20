@@ -2363,6 +2363,16 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
     const resultados = [];
     let mesAnioReferencia = null;
 
+    // Eliminar el contenido entre "Sus ahorros" y "DETALLE DE OPERACIONES"
+    textoExtraido = textoExtraido.replace(/Sus\s+ahorros[\s\S]*?DETALLE\s+DE\s+OPERACIONES/g, "DETALLE DE OPERACIONES");
+
+    // Eliminar el contenido desde "Página X de Y" hasta "DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo"
+    textoExtraido = textoExtraido.replace(/Página\s+\d+\s+de\s+\d+[\s\S]*?DETALLE\s+DE\s+OPERACIONES\s+Día\s+Descripción\s+Referencia\s+Depósitos\s+Retiros\s+Saldo/g,
+        "DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo");
+
+    // Eliminar la frase "FACTURA DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo"
+    textoExtraido = textoExtraido.replace(/FACTURA\s+DETALLE\s+DE\s+OPERACIONES\s+Día\s+Descripción\s+Referencia\s+Depósitos\s+Retiros\s+Saldo/g, "");
+
     const regex = /(SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES)[\s\S]*?(?=SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES|$)/g;
     const matches = [];
     let match;
@@ -2422,7 +2432,6 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
             }
         }
 
-        // Nueva condición para extraer la fecha del concepto cuando termina en dos dígitos seguidos de una cantidad
         if (!fechaMovimiento) {
             const numeroCantidadRegex = /(\b\d{2}\b)\s+\$\s*[\d,]+\.\d{2}$/;
             const numeroCantidadMatch = currentMatch.match(numeroCantidadRegex);
@@ -2481,12 +2490,3 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     return resultados;
 }
-
-
-
-
-
-
-
-
-
