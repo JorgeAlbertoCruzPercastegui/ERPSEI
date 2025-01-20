@@ -2361,6 +2361,7 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
     console.log("Procesando información de texto extraído...");
 
     const resultados = []; // Arreglo para almacenar los resultados procesados
+    let mesAnioReferencia = null; // Variable para almacenar el mes y año de referencia
 
     // Expresión regular extendida para capturar bloques con los conceptos deseados
     const regex = /(SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES)[\s\S]*?(?=SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES|$)/g;
@@ -2394,8 +2395,50 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
         // Extraer la fecha con el formato -DD/MM/AAAA
         const fechaRegex = /-(\d{2}\/\d{2}\/\d{4})/;
-        const fechaMatch = currentMatch.match(fechaRegex);
-        const fechaMovimiento = fechaMatch ? fechaMatch[1] : null;
+        let fechaMatch = currentMatch.match(fechaRegex);
+        let fechaMovimiento = fechaMatch ? fechaMatch[1] : null;
+
+        // Actualizar mes y año de referencia si se encuentra una fecha completa
+        if (fechaMatch) {
+            mesAnioReferencia = fechaMatch[1].slice(3); // Tomar MM/AAAA de la fecha completa
+        }
+
+        // Verificar si contiene 'PAGO FACTURA' seguido de un número entre 2 y 31 si no se ha detectado fecha
+        if (!fechaMovimiento) {
+            const facturaRegex = /PAGO\s+FACTURA\s+(\b([2-9]|[12][0-9]|3[01])\b)/;
+            const facturaMatch = currentMatch.match(facturaRegex);
+            if (facturaMatch) {
+                fechaMovimiento = `${facturaMatch[1].padStart(2, '0')}/${mesAnioReferencia}`;
+            }
+        }
+
+        // Verificar si contiene 'CVE   RASTREO:' seguido de un número de 14 a 16 dígitos si no se ha detectado fecha
+        if (!fechaMovimiento) {
+            const cveRastreoRegex = /CVE\s+RASTREO:\s*(\d{14,16})/;
+            const cveMatch = currentMatch.match(cveRastreoRegex);
+            if (cveMatch && mesAnioReferencia) {
+                const dia = cveMatch[1].substring(0, 2); // Tomar los dos primeros dígitos como día
+                fechaMovimiento = `${dia}/${mesAnioReferencia}`;
+            }
+        }
+
+        // Verificar si el concepto termina en 'CON CEPTO:PAGO FACTURA' con dos cantidades y un número entre 2 y 31 en medio
+        if (!fechaMovimiento) {
+            const conceptoPagoFacturaRegex = /CON\s+CEPTO:PAGO\s+FACTURA\s+\$\s*[\d,]+\.\d{2}\s+(\b([2-9]|[12][0-9]|3[01])\b)\s+\$\s*[\d,]+\.\d{2}/;
+            const conceptoMatch = currentMatch.match(conceptoPagoFacturaRegex);
+            if (conceptoMatch && mesAnioReferencia) {
+                fechaMovimiento = `${conceptoMatch[1]}/${mesAnioReferencia}`;
+            }
+        }
+
+        // Verificar si el concepto termina en "XX $ X,XXX,XXX.XX" y extraer la fecha
+        if (!fechaMovimiento) {
+            const finalDateRegex = /\b([2-9]|[12][0-9]|3[01])\b\s+\$\s*[\d,]+\.\d{2}$/;
+            const finalDateMatch = currentMatch.match(finalDateRegex);
+            if (finalDateMatch && mesAnioReferencia) {
+                fechaMovimiento = `${finalDateMatch[1].padStart(2, '0')}/${mesAnioReferencia}`;
+            }
+        }
 
         // Mostrar las cantidades encontradas en la consola
         console.log(`Concepto ${i + 1}:`, currentMatch);
@@ -2413,31 +2456,17 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
                 currentMatch = currentMatch.replace(abono, "").trim(); // Eliminar la cantidad de la descripción
             }
         }
-        // Verificar si contiene "COM MEMBRESIA", "ENVIO SPEI" o "IVA POR COMISIONES"
-        else if (
-            currentMatch.includes("COM   MEMBRESIA") ||
-            currentMatch.includes("ENVIO   SPEI") ||
-            currentMatch.includes("IVA   POR   COMISIONES")
-        ) {
-            console.log(`Concepto ${i + 1}: Contiene 'COM MEMBRESIA', 'ENVIO SPEI' o 'IVA POR COMISIONES'`);
-            if (cantidades.length >= 2) {
-                cargo = cantidades[1]; // Asignar la segunda cantidad a Cargo
-                currentMatch = currentMatch.replace(cargo, "").trim(); // Eliminar la cantidad de la descripción
-            }
-        } else {
-            console.log(`Concepto ${i + 1}: No contiene SPEI RECIBIDO, COM MEMBRESIA, ENVIO SPEI o IVA POR COMISIONES`);
-        }
 
         if (cantidades.length > 0) {
             const firstAmount = cantidades[0]; // Primera cantidad para el saldo
             const newMatch = currentMatch.replace(firstAmount, "").trim(); // Eliminar la primera cantidad del actual
 
             resultados.push({
-                Descripcion: newMatch.replace(fechaRegex, "").trim(), // Eliminar la fecha del concepto
-                Saldo: firstAmount, // Pasar la primera cantidad encontrada a Saldo
-                Abono: abono, // Pasar la segunda cantidad a Abono si aplica
-                Cargo: cargo, // Pasar la segunda cantidad a Cargo si aplica
-                FechaMovimiento: fechaMovimiento || "", // Asignar la fecha si se encontró
+                Descripcion: newMatch.replace(fechaRegex, "").trim(),
+                Saldo: firstAmount,
+                Abono: abono,
+                Cargo: cargo,
+                FechaMovimiento: fechaMovimiento || "",
             });
 
             // Agregar la última cantidad al inicio del siguiente concepto si no es el último
@@ -2445,14 +2474,6 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
                 const lastAmount = cantidades[cantidades.length - 1];
                 matches[i + 1] = `${lastAmount} ${matches[i + 1]}`;
             }
-        } else {
-            resultados.push({
-                Descripcion: currentMatch.replace(fechaRegex, "").trim(), // Si no hay cantidades, agregar concepto sin fecha
-                Saldo: "$0.00", // Asignar un valor predeterminado si no se encuentra cantidad
-                Abono: abono,
-                Cargo: cargo,
-                FechaMovimiento: fechaMovimiento || "", // Asignar la fecha si se encontró
-            });
         }
     }
 
@@ -2463,6 +2484,8 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     return resultados;
 }
+
+
 
 
 
