@@ -2458,6 +2458,7 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
             let concepto = textoDespuesDeDetalle.slice(start, end).trim();
             let numeroReferencia = "";
 
+            // Extrae número de referencia si cumple la forma de 7 dígitos al inicio
             const referenciaRegex = /^\d{7}/;
             const referenciaMatch = concepto.match(referenciaRegex);
             if (referenciaMatch) {
@@ -2465,14 +2466,15 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                 concepto = concepto.slice(7).trim();
             }
 
+            // Elimina bloques como "ESTADO DE CUENTA ... F   E   C   H   A"
             const estadoCuentaInicio = concepto.indexOf("ESTADO DE CUENTA");
             const estadoCuentaFin = concepto.indexOf("F   E   C   H   A");
-
             if (estadoCuentaInicio !== -1 && estadoCuentaFin !== -1 && estadoCuentaInicio < estadoCuentaFin) {
                 concepto = concepto.slice(0, estadoCuentaInicio).trim() +
                     concepto.slice(estadoCuentaFin + fechaClave.length).trim();
             }
 
+            // Elimina encabezados innecesarios
             const descripcionIndex = concepto.indexOf("DESCRIPCION   DEPOSITOS   RETIROS   SALDO");
             if (descripcionIndex !== -1) {
                 concepto = concepto.slice(0, descripcionIndex).trim();
@@ -2483,12 +2485,14 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                 concepto = concepto.slice(0, infoFiscalIndex).trim();
             }
 
+            // Elimina totales si los encuentra
             const totalRegex = /TOTAL\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?/i;
             const totalMatch = concepto.match(totalRegex);
             if (totalMatch) {
                 concepto = concepto.slice(0, concepto.indexOf(totalMatch[0])).trim();
             }
 
+            // Buscar todas las cantidades (números con comas y posible decimal)
             const cantidadRegex = /\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g;
             const cantidades = concepto.match(cantidadRegex);
 
@@ -2505,10 +2509,11 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                 "SALDO FINAL"
             ];
 
-            // Procesamiento para conceptos específicos
+            // Casos especiales: RETENCION I S R, ABO POR INTERESES
             if (concepto.startsWith("RETENCION   I   S   R") ||
                 concepto.startsWith("ABO   POR   INTERESES") ||
-                concepto.startsWith("ABONO   POR   INTERESES")) {
+                concepto.startsWith("ABONO   POR   INTERESES")
+            ) {
                 if (cantidades && cantidades.length >= 2) {
                     const ultimasDosCantidades = cantidades.slice(-2);
                     console.log(`Concepto: "${concepto}" - Cantidades después del filtro: ${ultimasDosCantidades[0]}, ${ultimasDosCantidades[1]}`);
@@ -2525,7 +2530,9 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                     fechasRegex.lastIndex = end;
                     continue; // Evita duplicados en el push principal
                 }
-            } else if (concepto.startsWith("SALDO FINAL")) {
+            }
+            // Caso especial: SALDO FINAL
+            else if (concepto.startsWith("SALDO FINAL")) {
                 if (cantidades && cantidades.length === 1) {
                     console.log(`Concepto: "${concepto}" - Saldo encontrado: ${cantidades[0]}`);
 
@@ -2541,20 +2548,34 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                     fechasRegex.lastIndex = end;
                     continue; // Evita duplicados en el push principal
                 }
-            } else if (conceptosEspecificos.some(keyword => concepto.includes(keyword))) {
-                if (cantidades && cantidades.length > 0) {
-                    console.log(`Concepto: "${concepto}" - Cantidades encontradas: ${cantidades.join(", ")}`);
-                }
             }
+            // Caso especial: ABONO TRANSFERENCIA con al menos 2 cantidades
+            else if (concepto.startsWith("ABONO   TRANSFERENCIA") && cantidades && cantidades.length >= 2) {
+                const ultimasDosCantidades = cantidades.slice(-2);
+                console.log(`Concepto: "${concepto}" - Cantidades después del filtro: ${ultimasDosCantidades[0]}, ${ultimasDosCantidades[1]}`);
 
-            // Procesamiento para PAGO   TRANSFERENCIA   SPEI
-            if (concepto.includes("PAGO   TRANSFERENCIA   SPEI")) {
+                resultados.push({
+                    FechaMovimiento: fecha,
+                    Descripcion: concepto,
+                    NumeroReferencia: numeroReferencia,
+                    Cargo: "0.00",
+                    Abono: ultimasDosCantidades[0], // Abono es la primera cantidad
+                    Saldo: ultimasDosCantidades[1]  // Saldo es la segunda cantidad
+                });
+
+                fechasRegex.lastIndex = end;
+                continue; // Evita duplicados en el push principal
+            }
+            // Caso especial: PAGO TRANSFERENCIA SPEI
+            else if (concepto.includes("PAGO   TRANSFERENCIA   SPEI")) {
                 const horaRegex = /HORA\s+\d{2}:\d{2}:\d{2}/;
                 const horaMatch = concepto.match(horaRegex);
 
                 if (horaMatch) {
                     const horaIndex = horaMatch.index + horaMatch[0].length;
-                    const cantidadesDespuesDeHora = concepto.slice(horaIndex).match(cantidadRegex);
+                    const cantidadesDespuesDeHora = concepto
+                        .slice(horaIndex)
+                        .match(cantidadRegex);
 
                     if (cantidadesDespuesDeHora && cantidadesDespuesDeHora.length >= 2) {
                         console.log(`Concepto: "${concepto}" - Cantidades después de la hora: ${cantidadesDespuesDeHora[0]}, ${cantidadesDespuesDeHora[1]}`);
@@ -2565,6 +2586,8 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                             NumeroReferencia: numeroReferencia,
                             Cargo: cantidadesDespuesDeHora[0],
                             Saldo: cantidadesDespuesDeHora[1]
+                            // Abono se omite o se coloca en "0.00" según tu criterio
+                            // Abono: "0.00"
                         });
 
                         fechasRegex.lastIndex = end;
@@ -2573,7 +2596,35 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                 }
             }
 
-            conceptosLista.push(`Concepto ${conceptosLista.length + 1}: ${concepto}, NumeroReferencia: ${numeroReferencia}`);
+            // Si el concepto coincide con algunos de los específicos, solo mostramos log:
+            if (conceptosEspecificos.some(keyword => concepto.includes(keyword))) {
+                if (cantidades && cantidades.length > 0) {
+                    console.log(`Concepto: "${concepto}" - Cantidades encontradas: ${cantidades.join(", ")}`);
+                }
+            }
+
+            // -----------------------------------------
+            // NUEVO MANEJO:
+            // Si solo hay UNA cantidad en el texto, se asigna directamente a "Saldo"
+            // -----------------------------------------
+            if (cantidades && cantidades.length === 1) {
+                resultados.push({
+                    FechaMovimiento: fecha,
+                    Descripcion: concepto,
+                    NumeroReferencia: numeroReferencia,
+                    Cargo: "0.00",
+                    Abono: "0.00",
+                    Saldo: cantidades[0]
+                });
+
+                fechasRegex.lastIndex = end;
+                continue; // Evitamos el push "general" de más abajo
+            }
+
+            // Fallback/Push general (si no cayó en ningún caso especial)
+            conceptosLista.push(
+                `Concepto ${conceptosLista.length + 1}: ${concepto}, NumeroReferencia: ${numeroReferencia}`
+            );
 
             resultados.push({
                 FechaMovimiento: fecha,
@@ -2598,3 +2649,4 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
 
     return resultados;
 }
+
