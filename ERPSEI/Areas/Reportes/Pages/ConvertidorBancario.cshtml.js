@@ -2433,13 +2433,16 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
     const indiceInicio = textoExtraido.indexOf(detalleInicio);
 
     if (indiceInicio !== -1) {
-        const textoDespuesDeDetalle = textoExtraido.slice(indiceInicio + detalleInicio.length).trim();
+        const textoDespuesDeDetalle = textoExtraido.slice(
+            indiceInicio + detalleInicio.length
+        ).trim();
 
         const fechaClave = "F   E   C   H   A";
         const indiceFecha = textoDespuesDeDetalle.indexOf(fechaClave);
-
         if (indiceFecha !== -1) {
-            const textoDespuesDeFecha = textoDespuesDeDetalle.slice(indiceFecha + fechaClave.length).trim();
+            const textoDespuesDeFecha = textoDespuesDeDetalle.slice(
+                indiceFecha + fechaClave.length
+            ).trim();
             console.log("Texto después de 'F   E   C   H   A':", textoDespuesDeFecha);
         } else {
             console.warn("No se encontró la palabra 'F   E   C   H   A' en el texto.");
@@ -2469,13 +2472,20 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
             // Elimina bloques como "ESTADO DE CUENTA ... F   E   C   H   A"
             const estadoCuentaInicio = concepto.indexOf("ESTADO DE CUENTA");
             const estadoCuentaFin = concepto.indexOf("F   E   C   H   A");
-            if (estadoCuentaInicio !== -1 && estadoCuentaFin !== -1 && estadoCuentaInicio < estadoCuentaFin) {
-                concepto = concepto.slice(0, estadoCuentaInicio).trim() +
+            if (
+                estadoCuentaInicio !== -1 &&
+                estadoCuentaFin !== -1 &&
+                estadoCuentaInicio < estadoCuentaFin
+            ) {
+                concepto =
+                    concepto.slice(0, estadoCuentaInicio).trim() +
                     concepto.slice(estadoCuentaFin + fechaClave.length).trim();
             }
 
             // Elimina encabezados innecesarios
-            const descripcionIndex = concepto.indexOf("DESCRIPCION   DEPOSITOS   RETIROS   SALDO");
+            const descripcionIndex = concepto.indexOf(
+                "DESCRIPCION   DEPOSITOS   RETIROS   SALDO"
+            );
             if (descripcionIndex !== -1) {
                 concepto = concepto.slice(0, descripcionIndex).trim();
             }
@@ -2496,46 +2506,36 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
             const cantidadRegex = /\d{1,3}(?:,\d{3})*(?:\.\d{2})?/g;
             const cantidades = concepto.match(cantidadRegex);
 
-            // Manejo de conceptos específicos
-            const conceptosEspecificos = [
-                "I   V   A   MEMBRESIA",
-                "COM   MEMBRESIA",
-                "PAGO   CHEQUE   EFECTIVO",
-                "ABONO   TRANSFERENCIA",
-                "CARGO   TRANSFERENCIA",
-                "RETENCION   I   S   R",
-                "ABO   POR   INTERESES",
-                "ABONO   POR   INTERESES",
-                "SALDO FINAL"
-            ];
-
-            // Casos especiales: RETENCION I S R, ABO POR INTERESES
-            if (concepto.startsWith("RETENCION   I   S   R") ||
+            // -----------------------------------------
+            // Casos especiales que ya tenías
+            // -----------------------------------------
+            if (
+                concepto.startsWith("RETENCION   I   S   R") ||
                 concepto.startsWith("ABO   POR   INTERESES") ||
                 concepto.startsWith("ABONO   POR   INTERESES")
             ) {
                 if (cantidades && cantidades.length >= 2) {
                     const ultimasDosCantidades = cantidades.slice(-2);
-                    console.log(`Concepto: "${concepto}" - Cantidades después del filtro: ${ultimasDosCantidades[0]}, ${ultimasDosCantidades[1]}`);
-
                     resultados.push({
                         FechaMovimiento: fecha,
                         Descripcion: concepto,
                         NumeroReferencia: numeroReferencia,
-                        Cargo: concepto.startsWith("RETENCION   I   S   R") ? ultimasDosCantidades[0] : "0.00",
-                        Abono: (concepto.startsWith("ABO   POR   INTERESES") || concepto.startsWith("ABONO   POR   INTERESES")) ? ultimasDosCantidades[0] : "0.00",
+                        Cargo: concepto.startsWith("RETENCION   I   S   R")
+                            ? ultimasDosCantidades[0]
+                            : "0.00",
+                        Abono:
+                            concepto.startsWith("ABO   POR   INTERESES") ||
+                                concepto.startsWith("ABONO   POR   INTERESES")
+                                ? ultimasDosCantidades[0]
+                                : "0.00",
                         Saldo: ultimasDosCantidades[1]
                     });
 
                     fechasRegex.lastIndex = end;
-                    continue; // Evita duplicados en el push principal
+                    continue;
                 }
-            }
-            // Caso especial: SALDO FINAL
-            else if (concepto.startsWith("SALDO FINAL")) {
+            } else if (concepto.startsWith("SALDO FINAL")) {
                 if (cantidades && cantidades.length === 1) {
-                    console.log(`Concepto: "${concepto}" - Saldo encontrado: ${cantidades[0]}`);
-
                     resultados.push({
                         FechaMovimiento: fecha,
                         Descripcion: concepto,
@@ -2546,31 +2546,91 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                     });
 
                     fechasRegex.lastIndex = end;
-                    continue; // Evita duplicados en el push principal
+                    continue;
                 }
             }
-            // Caso especial: ABONO TRANSFERENCIA con al menos 2 cantidades
-            else if (concepto.startsWith("ABONO   TRANSFERENCIA") && cantidades && cantidades.length >= 2) {
-                const ultimasDosCantidades = cantidades.slice(-2);
-                console.log(`Concepto: "${concepto}" - Cantidades después del filtro: ${ultimasDosCantidades[0]}, ${ultimasDosCantidades[1]}`);
+            // ----------------------------------------------
+            // NUEVO BLOQUE: ABONO TRANSFERENCIA SPEI con HORA
+            // ----------------------------------------------
+            else if (concepto.includes("ABONO   TRANSFERENCIA   SPEI")) {
+                // Buscamos HORA HH:MM:SS
+                const horaRegex = /HORA\s+\d{2}:\d{2}:\d{2}/;
+                const horaMatch = concepto.match(horaRegex);
 
+                if (horaMatch) {
+                    // Obtenemos todo el texto que sigue a la HORA para buscar cantidades
+                    const horaIndex = horaMatch.index + horaMatch[0].length;
+                    const cantidadesDespuesDeHora = concepto
+                        .slice(horaIndex)
+                        .match(cantidadRegex);
+
+                    // Si hay al menos 2 cantidades, la primera -> Abono, la segunda -> Saldo
+                    if (cantidadesDespuesDeHora && cantidadesDespuesDeHora.length >= 2) {
+                        console.log(
+                            `ABONO SPEI: "${concepto}" => Abono: ${cantidadesDespuesDeHora[0]}, Saldo: ${cantidadesDespuesDeHora[1]}`
+                        );
+                        resultados.push({
+                            FechaMovimiento: fecha,
+                            Descripcion: concepto,
+                            NumeroReferencia: numeroReferencia,
+                            Cargo: "0.00",
+                            Abono: cantidadesDespuesDeHora[0],
+                            Saldo: cantidadesDespuesDeHora[1]
+                        });
+
+                        fechasRegex.lastIndex = end;
+                        continue;
+                    }
+                }
+            }
+            // ------------------------------------------------------------------
+            // Caso especial: ABONO   TRANSFERENCIA (sin SPEI o sin HORA)
+            // ------------------------------------------------------------------
+            else if (
+                concepto.startsWith("ABONO   TRANSFERENCIA") &&
+                cantidades &&
+                cantidades.length >= 2
+            ) {
+                const ultimasDosCantidades = cantidades.slice(-2);
                 resultados.push({
                     FechaMovimiento: fecha,
                     Descripcion: concepto,
                     NumeroReferencia: numeroReferencia,
                     Cargo: "0.00",
-                    Abono: ultimasDosCantidades[0], // Abono es la primera cantidad
-                    Saldo: ultimasDosCantidades[1]  // Saldo es la segunda cantidad
+                    Abono: ultimasDosCantidades[0],
+                    Saldo: ultimasDosCantidades[1]
                 });
 
                 fechasRegex.lastIndex = end;
-                continue; // Evita duplicados en el push principal
+                continue;
             }
-            // Caso especial: PAGO TRANSFERENCIA SPEI
+            // ------------------------------------------------------------------
+            // Caso especial: CARGO   TRANSFERENCIA
+            // ------------------------------------------------------------------
+            else if (
+                concepto.startsWith("CARGO   TRANSFERENCIA") &&
+                cantidades &&
+                cantidades.length >= 2
+            ) {
+                const ultimasDosCantidades = cantidades.slice(-2);
+                resultados.push({
+                    FechaMovimiento: fecha,
+                    Descripcion: concepto,
+                    NumeroReferencia: numeroReferencia,
+                    Cargo: ultimasDosCantidades[0],
+                    Abono: "0.00",
+                    Saldo: ultimasDosCantidades[1]
+                });
+
+                fechasRegex.lastIndex = end;
+                continue;
+            }
+            // ------------------------------------------------------------------
+            // Caso especial: PAGO   TRANSFERENCIA   SPEI
+            // ------------------------------------------------------------------
             else if (concepto.includes("PAGO   TRANSFERENCIA   SPEI")) {
                 const horaRegex = /HORA\s+\d{2}:\d{2}:\d{2}/;
                 const horaMatch = concepto.match(horaRegex);
-
                 if (horaMatch) {
                     const horaIndex = horaMatch.index + horaMatch[0].length;
                     const cantidadesDespuesDeHora = concepto
@@ -2578,35 +2638,76 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                         .match(cantidadRegex);
 
                     if (cantidadesDespuesDeHora && cantidadesDespuesDeHora.length >= 2) {
-                        console.log(`Concepto: "${concepto}" - Cantidades después de la hora: ${cantidadesDespuesDeHora[0]}, ${cantidadesDespuesDeHora[1]}`);
-
                         resultados.push({
                             FechaMovimiento: fecha,
                             Descripcion: concepto,
                             NumeroReferencia: numeroReferencia,
                             Cargo: cantidadesDespuesDeHora[0],
+                            Abono: "0.00",
                             Saldo: cantidadesDespuesDeHora[1]
-                            // Abono se omite o se coloca en "0.00" según tu criterio
-                            // Abono: "0.00"
                         });
 
                         fechasRegex.lastIndex = end;
-                        continue; // Evita duplicados en el push principal
+                        continue;
                     }
                 }
             }
 
-            // Si el concepto coincide con algunos de los específicos, solo mostramos log:
-            if (conceptosEspecificos.some(keyword => concepto.includes(keyword))) {
-                if (cantidades && cantidades.length > 0) {
-                    console.log(`Concepto: "${concepto}" - Cantidades encontradas: ${cantidades.join(", ")}`);
-                }
+            // PAGO CHEQUE, COM MEMBRESIA, I V A MEMBRESIA -> Cargo y Saldo
+            if (
+                (concepto.includes("PAGO   CHEQUE") ||
+                    concepto.includes("COM   MEMBRESIA") ||
+                    concepto.includes("I   V   A   MEMBRESIA")) &&
+                cantidades &&
+                cantidades.length === 2
+            ) {
+                resultados.push({
+                    FechaMovimiento: fecha,
+                    Descripcion: concepto,
+                    NumeroReferencia: numeroReferencia,
+                    Cargo: cantidades[0],
+                    Abono: "0.00",
+                    Saldo: cantidades[1]
+                });
+
+                fechasRegex.lastIndex = end;
+                continue;
             }
 
-            // -----------------------------------------
-            // NUEVO MANEJO:
-            // Si solo hay UNA cantidad en el texto, se asigna directamente a "Saldo"
-            // -----------------------------------------
+            // ------------------------------------------------------------------
+            // REEMBOLSO OTRAS COMISIONES + IVA POR COMISION (últimas 2 cantidades)
+            // ------------------------------------------------------------------
+            if (
+                (concepto.includes("REEMBOLSO   OTRAS   COMISIONES") ||
+                    concepto.includes("IVA   POR   COMISION")) &&
+                cantidades &&
+                cantidades.length >= 2
+            ) {
+                // Toma solo las 2 últimas cantidades
+                const ultimasDosCantidades = cantidades.slice(-2);
+
+                console.log(`
+----------------------------------------
+Concepto: ${concepto}
+NumeroReferencia: ${numeroReferencia}
+Cantidades: ${ultimasDosCantidades[0]}, ${ultimasDosCantidades[1]}
+----------------------------------------
+                `);
+
+                resultados.push({
+                    FechaMovimiento: fecha,
+                    Descripcion: concepto,
+                    NumeroReferencia: numeroReferencia,
+                    Cargo: "0.00",
+                    Abono: ultimasDosCantidades[0],
+                    Saldo: ultimasDosCantidades[1]
+                });
+
+                fechasRegex.lastIndex = end;
+                continue;
+            }
+
+            // Si solo hay UNA cantidad -> se asume que es Saldo
             if (cantidades && cantidades.length === 1) {
                 resultados.push({
                     FechaMovimiento: fecha,
@@ -2618,14 +2719,13 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
                 });
 
                 fechasRegex.lastIndex = end;
-                continue; // Evitamos el push "general" de más abajo
+                continue;
             }
 
-            // Fallback/Push general (si no cayó en ningún caso especial)
+            // Fallback general
             conceptosLista.push(
                 `Concepto ${conceptosLista.length + 1}: ${concepto}, NumeroReferencia: ${numeroReferencia}`
             );
-
             resultados.push({
                 FechaMovimiento: fecha,
                 Descripcion: concepto,
@@ -2640,13 +2740,13 @@ function extraerDatosEspecificosSantanderDig(textoExtraido) {
 
         console.log("Lista de descripciones extraídas:");
         conceptosLista.forEach(concepto => console.log(concepto));
-
     } else {
-        console.error("El texto extraído no contiene 'DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES'.");
+        console.error(
+            "El texto extraído no contiene 'DETALLE DE MOVIMIENTOS CUENTA DE CHEQUES'."
+        );
     }
 
     initTable(resultados);
 
     return resultados;
 }
-
