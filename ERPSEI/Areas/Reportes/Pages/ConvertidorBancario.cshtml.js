@@ -1772,7 +1772,10 @@ function extraerDatosEspecificosKLU(textoExtraido) {
     console.log("Texto extraído:", textoExtraido);
 
     // Eliminar el periodo "Periodo: DD/MM/AAAA - DD/MM/AAAA"
-    const textoSinPeriodo = textoExtraido.replace(/Periodo:\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}\s*-\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}/gi, "");
+    const textoSinPeriodo = textoExtraido.replace(
+        /Periodo:\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}\s*-\s*\d{2}\s*\/\s*\d{2}\s*\/\s*\d{4}/gi,
+        ""
+    );
 
     // Expresión regular para fechas con o sin espacios: DD/MM/AAAA o DD /MM/AAAA
     const regexFechas = /\b(0[1-9]|[12][0-9]|3[01])\s*\/\s*(0[1-9]|1[0-2])\s*\/\s*\d{4}\b/g;
@@ -1792,22 +1795,29 @@ function extraerDatosEspecificosKLU(textoExtraido) {
 
     // Iterar sobre las fechas encontradas y capturar los bloques de texto entre ellas
     for (let i = 0; i < fechasEncontradas.length; i++) {
-        const fechaActual = fechasEncontradas[i][0].replace(/\s+/g, ''); // Limpiar espacios
+        const fechaActual = fechasEncontradas[i][0].replace(/\s+/g, ""); // Limpiar espacios
         const inicio = fechasEncontradas[i].index + fechaActual.length;
-        const fin = i + 1 < fechasEncontradas.length ? fechasEncontradas[i + 1].index : textoSinPeriodo.length;
+        const fin =
+            i + 1 < fechasEncontradas.length
+                ? fechasEncontradas[i + 1].index
+                : textoSinPeriodo.length;
 
         // Extraer el concepto asociado a esta fecha
         let conceptoCompleto = textoSinPeriodo.substring(inicio, fin).trim();
 
         // Eliminar posibles saltos de línea y espacios extra
-        conceptoCompleto = conceptoCompleto.replace(/\s+/g, ' ');
+        conceptoCompleto = conceptoCompleto.replace(/\s+/g, " ");
 
         // Eliminar el dígito sobrante (último dígito del año) si está al inicio seguido de un espacio
-        conceptoCompleto = conceptoCompleto.replace(/^\d\s/, '');
+        conceptoCompleto = conceptoCompleto.replace(/^\d\s/, "");
 
         // Omitir contenido después de "Página X de Y" o "Comisiones cobradas"
-        conceptoCompleto = conceptoCompleto.replace(/Página\s+\d+\s+de\s+\d+.*/gi, '').trim();
-        conceptoCompleto = conceptoCompleto.replace(/Comisiones cobradas.*/gi, '').trim();
+        conceptoCompleto = conceptoCompleto
+            .replace(/Página\s+\d+\s+de\s+\d+.*/gi, "")
+            .trim();
+        conceptoCompleto = conceptoCompleto
+            .replace(/Comisiones cobradas.*/gi, "")
+            .trim();
 
         // Detectar patrones específicos: TRASPASO, PRESTAMO, DISP DE REC
         const patronTraspaso = /^\d{5,6}-TRASPASO ENTRE CUENTAS-\d{3}-/i;
@@ -1815,43 +1825,78 @@ function extraerDatosEspecificosKLU(textoExtraido) {
         const patronDispRec = /^\d{5,6}-DISP DE REC-\d{3}-/i;
 
         // Unir conceptos si cumplen con TRASPASO, PRESTAMO o DISP DE REC
-        if ((patronTraspaso.test(conceptoCompleto) || patronPrestamo.test(conceptoCompleto) || patronDispRec.test(conceptoCompleto)) && i + 1 < fechasEncontradas.length) {
-            const inicioSiguiente = fechasEncontradas[i + 1].index + fechasEncontradas[i + 1][0].length;
-            const finSiguiente = i + 2 < fechasEncontradas.length ? fechasEncontradas[i + 2].index : textoSinPeriodo.length;
-            let siguienteConcepto = textoSinPeriodo.substring(inicioSiguiente, finSiguiente).trim();
+        if (
+            (patronTraspaso.test(conceptoCompleto) ||
+                patronPrestamo.test(conceptoCompleto) ||
+                patronDispRec.test(conceptoCompleto)) &&
+            i + 1 < fechasEncontradas.length
+        ) {
+            const inicioSiguiente =
+                fechasEncontradas[i + 1].index + fechasEncontradas[i + 1][0].length;
+            const finSiguiente =
+                i + 2 < fechasEncontradas.length
+                    ? fechasEncontradas[i + 2].index
+                    : textoSinPeriodo.length;
+            let siguienteConcepto = textoSinPeriodo
+                .substring(inicioSiguiente, finSiguiente)
+                .trim();
 
             if (/^\/|\d{2}\/.*/.test(siguienteConcepto)) {
                 conceptoCompleto += " " + siguienteConcepto;
-                i++;  // Saltar el siguiente registro ya que fue unido
+                i++; // Saltar el siguiente registro ya que fue unido
             }
         }
 
-        // Expresión regular para detectar las combinaciones de cantidades con "--"
-        const matchConcepto = conceptoCompleto.match(/^(.*?)(\$[\d,]+\.\d{2})\s*--\s*(\$[\d,]+\.\d{2})$/);
+        // Expresiones regulares para separar Cargo/Abono/Saldo
+        const matchConcepto = conceptoCompleto.match(
+            // Caso 1: ...(texto)($xxx.xx) -- ($xxx.xx)
+            /^(.*?)(\$[\d,]+\.\d{2})\s*--\s*(\$[\d,]+\.\d{2})$/
+        );
 
-        let saldo = 0.00;
-        let cargo = 0.00;
-        let abono = 0.00;
+        let saldo = 0.0;
+        let cargo = 0.0;
+        let abono = 0.0;
 
         if (matchConcepto) {
-            // Si el patrón es "cantidad -- cantidad" al final del concepto
-            cargo = parseFloat(matchConcepto[2].replace(/[$,]/g, ''));
-            saldo = parseFloat(matchConcepto[3].replace(/[$,]/g, ''));
+            // matchConcepto: [0]: todo el string
+            // [1]: texto del concepto
+            // [2]: primera cantidad ($xxx.xx)
+            // [3]: segunda cantidad ($xxx.xx)
+            cargo = parseFloat(matchConcepto[2].replace(/[$,]/g, ""));
+            saldo = parseFloat(matchConcepto[3].replace(/[$,]/g, ""));
+
+            // Quitar las cantidades del concepto
+            conceptoCompleto = matchConcepto[1].trim();
         } else {
-            // Detectar "--" antes de las cantidades (para Abono)
-            const matchAbono = conceptoCompleto.match(/^(.*?)(--\s*)?(\$[\d,]+\.\d{2})\s*(\$[\d,]+\.\d{2})/);
+            // Caso 2: detectar "--" antes de las cantidades (para Abono)
+            // Ej: ...(texto)(-- )?($xxx.xx) ($xxx.xx)
+            const matchAbono = conceptoCompleto.match(
+                /^(.*?)(--\s*)?(\$[\d,]+\.\d{2})\s+(\$[\d,]+\.\d{2})/
+            );
 
             if (matchAbono) {
+                // matchAbono: [1]: texto del concepto
+                // [2]: podría ser "-- " o undefined
+                // [3]: primera cantidad ($xxx.xx)
+                // [4]: segunda cantidad ($xxx.xx)
                 if (matchAbono[2]) {
-                    abono = parseFloat(matchAbono[3].replace(/[$,]/g, ''));
-                    saldo = parseFloat(matchAbono[4].replace(/[$,]/g, ''));
+                    // Significa que [3] es Abono y [4] es Saldo
+                    abono = parseFloat(matchAbono[3].replace(/[$,]/g, ""));
+                    saldo = parseFloat(matchAbono[4].replace(/[$,]/g, ""));
+
+                    // Eliminamos las cantidades del concepto
+                    conceptoCompleto = matchAbono[1].trim();
                 } else {
-                    saldo = parseFloat(matchAbono[4].replace(/[$,]/g, ''));
+                    // Podría ser cargo y saldo
+                    saldo = parseFloat(matchAbono[4].replace(/[$,]/g, ""));
 
                     const inicioValido = conceptoCompleto.match(/^(\d{5,8}|\/)/);
                     if (inicioValido) {
-                        cargo = parseFloat(matchAbono[3].replace(/[$,]/g, ''));
+                        cargo = parseFloat(matchAbono[3].replace(/[$,]/g, ""));
                     }
+
+                    // Eliminamos las cantidades del concepto
+                    conceptoCompleto = matchAbono[1].trim();
                 }
             }
         }
@@ -1859,8 +1904,8 @@ function extraerDatosEspecificosKLU(textoExtraido) {
         // Guardar el registro con los campos
         conceptosPorFecha.push({
             FechaMovimiento: fechaActual,
-            Concepto: conceptoCompleto,
-            Descripcion: conceptoCompleto,
+            Concepto: conceptoCompleto,       // Versión "cruda" o final del concepto
+            Descripcion: conceptoCompleto,    // Puedes usar lo mismo o diferente
             Cargo: cargo,
             Abono: abono,
             Saldo: saldo
@@ -1868,9 +1913,9 @@ function extraerDatosEspecificosKLU(textoExtraido) {
     }
 
     console.log("Conceptos extraídos:", conceptosPorFecha);
-
     return conceptosPorFecha;
 }
+
 
 function extraerDatosEspecificosAutofin(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
@@ -2481,8 +2526,7 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     console.log("Resultados procesados Afirme:", resultados);
 
-     initTable(resultados); 
-    // (Descomenta esta línea si realmente llamas a tu función para inicializar la tabla)
+     initTable(resultados);
 
     return resultados;
 }
