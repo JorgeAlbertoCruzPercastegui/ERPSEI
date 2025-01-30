@@ -213,13 +213,6 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                         console.log("No hay datos para mostrar en la tabla.");
                     }
 
-                    if (datosExtraidosssss.length > 0) {
-                        console.log("Inicializando tabla con datos extraídos:", datosExtraidosssss);
-                        initTable(datosExtraidosssss); // Inicializa la tabla con los datos extraídos
-                    } else {
-                        console.log("No hay datos para mostrar en la tabla.");
-                    }
-
                     if (datosExtraidossssss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidossssss);
                         initTable(datosExtraidossssss); // Inicializa la tabla con los datos extraídos
@@ -237,6 +230,14 @@ function importarMovimientosDesdePDF(file, selectedBank) {
                     if (datosExtraidossssssss.length > 0) {
                         console.log("Inicializando tabla con datos extraídos:", datosExtraidossssssss);
                         initTable(datosExtraidossssssss); // Inicializa la tabla con los datos extraídos
+                    } else {
+                        console.log("No hay datos para mostrar en la tabla.");
+                    }
+
+
+                    if (datosExtraidosssss.length > 0) {
+                        console.log("Inicializando tabla con datos extraídos:", datosExtraidosssss);
+                        initTable(datosExtraidosssss); // Inicializa la tabla con los datos extraídos
                     } else {
                         console.log("No hay datos para mostrar en la tabla.");
                     }
@@ -2319,17 +2320,27 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
     const resultados = [];
     let mesAnioReferencia = null;
 
-    // Eliminar el contenido entre "Sus ahorros" y "DETALLE DE OPERACIONES"
-    textoExtraido = textoExtraido.replace(/Sus\s+ahorros[\s\S]*?DETALLE\s+DE\s+OPERACIONES/g, "DETALLE DE OPERACIONES");
+    // 1) Eliminamos el contenido entre "Sus ahorros" y "DETALLE DE OPERACIONES"
+    textoExtraido = textoExtraido.replace(
+        /Sus\s+ahorros[\s\S]*?DETALLE\s+DE\s+OPERACIONES/g,
+        "DETALLE DE OPERACIONES"
+    );
 
-    // Eliminar el contenido desde "Página X de Y" hasta "DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo"
-    textoExtraido = textoExtraido.replace(/Página\s+\d+\s+de\s+\d+[\s\S]*?DETALLE\s+DE\s+OPERACIONES\s+Día\s+Descripción\s+Referencia\s+Depósitos\s+Retiros\s+Saldo/g,
-        "DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo");
+    // 2) Eliminamos el contenido desde "Página X de Y" hasta "DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo"
+    textoExtraido = textoExtraido.replace(
+        /Página\s+\d+\s+de\s+\d+[\s\S]*?DETALLE\s+DE\s+OPERACIONES\s+Día\s+Descripción\s+Referencia\s+Depósitos\s+Retiros\s+Saldo/g,
+        "DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo"
+    );
 
-    // Eliminar la frase "FACTURA DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo"
-    textoExtraido = textoExtraido.replace(/FACTURA\s+DETALLE\s+DE\s+OPERACIONES\s+Día\s+Descripción\s+Referencia\s+Depósitos\s+Retiros\s+Saldo/g, "");
+    // 3) Eliminamos la frase "FACTURA DETALLE DE OPERACIONES Día Descripción Referencia Depósitos Retiros Saldo"
+    textoExtraido = textoExtraido.replace(
+        /FACTURA\s+DETALLE\s+DE\s+OPERACIONES\s+Día\s+Descripción\s+Referencia\s+Depósitos\s+Retiros\s+Saldo/g,
+        ""
+    );
 
-    const regex = /(SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES)[\s\S]*?(?=SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES|$)/g;
+    // 4) Regex principal para capturar bloques (SPEI RECIBIDO, ENVIO SPEI, etc.)
+    const regex =
+        /(SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES)[\s\S]*?(?=SPEI\s+RECIBIDO|ENVIO\s+SPEI|COM\s+MEMBRESIA|IVA\s+POR\s+COMISIONES|$)/g;
     const matches = [];
     let match;
 
@@ -2337,6 +2348,7 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
         matches.push(match[0].trim());
     }
 
+    // 5) Ajuste para que el primer match conserve la posible cantidad anterior
     if (matches.length > 0) {
         const firstMatchIndex = textoExtraido.indexOf(matches[0]);
         if (firstMatchIndex > 0) {
@@ -2349,28 +2361,34 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
         }
     }
 
+    // 6) Procesamos cada bloque encontrado
     for (let i = 0; i < matches.length; i++) {
         let currentMatch = matches[i];
 
+        // a) Buscamos todas las cantidades ($x.xx)
         const cantidadRegex = /\$\s*[\d,]+\.\d{2}/g;
         const cantidades = currentMatch.match(cantidadRegex) || [];
 
+        // b) Buscamos fecha con el patrón -(dd/mm/yyyy)
         const fechaRegex = /-(\d{2}\/\d{2}\/\d{4})/;
         let fechaMatch = currentMatch.match(fechaRegex);
         let fechaMovimiento = fechaMatch ? fechaMatch[1] : null;
 
+        // Guardamos el mes y año si encontramos fecha
         if (fechaMatch) {
-            mesAnioReferencia = fechaMatch[1].slice(3);
+            mesAnioReferencia = fechaMatch[1].slice(3); // "mm/yyyy"
         }
 
+        // c) Intenta deducir fecha si no está explícita
         if (!fechaMovimiento) {
             const facturaRegex = /PAGO\s+FACTURA\s+(\b([2-9]|[12][0-9]|3[01])\b)/;
             const facturaMatch = currentMatch.match(facturaRegex);
             if (facturaMatch) {
-                fechaMovimiento = `${facturaMatch[1].padStart(2, '0')}/${mesAnioReferencia}`;
+                fechaMovimiento = `${facturaMatch[1].padStart(2, "0")}/${mesAnioReferencia}`;
             }
         }
 
+        // d) Intenta deducir fecha a partir de CVE RASTREO
         if (!fechaMovimiento) {
             const cveRastreoRegex = /CVE\s+RASTREO:\s*(\d{14,16})/;
             const cveMatch = currentMatch.match(cveRastreoRegex);
@@ -2380,14 +2398,17 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
             }
         }
 
+        // e) Intenta deducir fecha a partir de CON CEPTO:PAGO FACTURA...
         if (!fechaMovimiento) {
-            const conceptoPagoFacturaRegex = /CON\s+CEPTO:PAGO\s+FACTURA\s+\$\s*[\d,]+\.\d{2}\s+(\b([2-9]|[12][0-9]|3[01])\b)\s+\$\s*[\d,]+\.\d{2}/;
+            const conceptoPagoFacturaRegex =
+                /CON\s+CEPTO:PAGO\s+FACTURA\s+\$\s*[\d,]+\.\d{2}\s+(\b([2-9]|[12][0-9]|3[01])\b)\s+\$\s*[\d,]+\.\d{2}/;
             const conceptoMatch = currentMatch.match(conceptoPagoFacturaRegex);
             if (conceptoMatch && mesAnioReferencia) {
                 fechaMovimiento = `${conceptoMatch[1]}/${mesAnioReferencia}`;
             }
         }
 
+        // f) Intenta deducir fecha a partir de un patrón dd $x.xx al final
         if (!fechaMovimiento) {
             const numeroCantidadRegex = /(\b\d{2}\b)\s+\$\s*[\d,]+\.\d{2}$/;
             const numeroCantidadMatch = currentMatch.match(numeroCantidadRegex);
@@ -2400,13 +2421,19 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
         console.log(`Cantidades encontradas:`, cantidades);
         console.log(`Fecha encontrada:`, fechaMovimiento);
 
+        // g) Inicializamos abono/cargo por defecto
         let abono = "$0.00";
         let cargo = "$0.00";
 
-        if (currentMatch.includes("SPEI RECIBIDO") || currentMatch.includes("SPEI   RECIBIDO")) {
+        // Si tenemos un tipo particular, revisa si la segunda cantidad es Abono o Cargo
+        if (
+            currentMatch.includes("SPEI RECIBIDO") ||
+            currentMatch.includes("SPEI   RECIBIDO")
+        ) {
             console.log(`Concepto ${i + 1}: Contiene 'SPEI RECIBIDO'`);
             if (cantidades.length >= 2) {
                 abono = cantidades[1];
+                // Retiramos esa segunda cantidad del texto
                 currentMatch = currentMatch.replace(abono, "").trim();
             }
         } else if (
@@ -2414,17 +2441,28 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
             currentMatch.includes("ENVIO   SPEI") ||
             currentMatch.includes("IVA   POR   COMISIONES")
         ) {
-            console.log(`Concepto ${i + 1}: Contiene 'COM MEMBRESIA', 'ENVIO SPEI' o 'IVA POR COMISIONES'`);
+            console.log(
+                `Concepto ${i + 1}: Contiene 'COM MEMBRESIA', 'ENVIO SPEI' o 'IVA POR COMISIONES'`
+            );
             if (cantidades.length >= 2) {
                 cargo = cantidades[1];
+                // Retiramos esa segunda cantidad del texto
                 currentMatch = currentMatch.replace(cargo, "").trim();
             }
         }
 
+        // h) Si al menos tenemos una cantidad, la primera es el Saldo
         if (cantidades.length > 0) {
             const firstAmount = cantidades[0];
-            const newMatch = currentMatch.replace(firstAmount, "").trim();
+            // Retiramos del texto esa primera cantidad (Saldo)
+            let newMatch = currentMatch.replace(firstAmount, "").trim();
 
+            // Podríamos, adicionalmente, **remover cualquier otra cantidad** 
+            // que haya quedado “huérfana” o al final, para que el concepto 
+            // quede sin montos innecesarios:
+            newMatch = newMatch.replace(/\$\s*[\d,]+\.\d{2}/g, "").trim();
+
+            // i) Guardamos finalmente
             resultados.push({
                 Descripcion: newMatch.replace(fechaRegex, "").trim(),
                 Saldo: firstAmount,
@@ -2433,6 +2471,7 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
                 FechaMovimiento: fechaMovimiento || "",
             });
 
+            // j) Si hay más de una cantidad en el match, pasamos la última al siguiente match
             if (cantidades.length > 1 && i + 1 < matches.length) {
                 const lastAmount = cantidades[cantidades.length - 1];
                 matches[i + 1] = `${lastAmount} ${matches[i + 1]}`;
@@ -2442,7 +2481,8 @@ function extraerDatosEspecificosAfirme(textoExtraido) {
 
     console.log("Resultados procesados Afirme:", resultados);
 
-    initTable(resultados);
+     initTable(resultados); 
+    // (Descomenta esta línea si realmente llamas a tu función para inicializar la tabla)
 
     return resultados;
 }
