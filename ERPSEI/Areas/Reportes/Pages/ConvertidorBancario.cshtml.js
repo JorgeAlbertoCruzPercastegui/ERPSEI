@@ -2281,26 +2281,28 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
 
     const resultados = [];
 
-    // Buscar la sección "DETALLE DE OPERACIONES"
+    // 1) Buscar la sección "DETALLE DE OPERACIONES"
     const indiceDetalleOperaciones = textoExtraido.indexOf("DETALLE DE OPERACIONES");
     if (indiceDetalleOperaciones === -1) {
         console.error("No se encontró la sección 'DETALLE DE OPERACIONES'.");
         return [];
     }
 
+    // Cortar el texto a partir de "DETALLE DE OPERACIONES"
     let textoDesdeDetalle = textoExtraido.slice(indiceDetalleOperaciones);
-    
-    const regexSaldoAnterior = /(SALDO ANTERIOR\s+\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
 
+    // 2) Capturar la cantidad tras "SALDO ANTERIOR" y asignarla a Saldo
+    const regexSaldoAnterior = /SALDO ANTERIOR\s+(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/;
     const matchSaldoAnterior = textoDesdeDetalle.match(regexSaldoAnterior);
     if (matchSaldoAnterior) {
         resultados.push({
-            FechaMovimiento: "",  // Fecha vacía
-            Descripcion: matchSaldoAnterior[1]  // El saldo anterior
+            FechaMovimiento: "",               // Puedes dejarlo vacío o asignar otro valor
+            Descripcion: "SALDO ANTERIOR",     // Texto fijo
+            Saldo: matchSaldoAnterior[1]       // La cantidad capturada
         });
     }
 
-    // Expresión regular para fechas en formato "DD MMM"
+    // 3) Expresión regular para fechas en formato "DD MMM" (e.g. "05 MAY")
     const regexFechas = /\b(\d{2}\s(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC))\b/g;
     let match;
     const coincidencias = [];
@@ -2318,7 +2320,7 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
         return [];
     }
 
-    // Recorrer fechas para extraer conceptos
+    // 4) Recorrer cada fecha encontrada para extraer su concepto
     for (let i = 0; i < coincidencias.length; i++) {
         const fechaActual = coincidencias[i].fecha;
         const inicioConcepto = coincidencias[i].index + fechaActual.length;
@@ -2327,7 +2329,8 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
             : textoDesdeDetalle.length;
 
         let concepto = textoDesdeDetalle.slice(inicioConcepto, finConcepto).trim();
-        
+
+        // === Limpiezas de texto (remover encabezados o frases irrelevantes) ===
         const regexDetalleCompleto = /DETALLE\s+DE\s+OPERACIONES\s+FECHA\s+CONCEPTO\s+RETIROS\s+DEPOSITOS\s+SALDO/gi;
         concepto = concepto.replace(regexDetalleCompleto, "").trim();
 
@@ -2351,25 +2354,45 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
         const regexPagina = /Página:\s\d{1,2}\sde\s\d{1,2}/gi;
         concepto = concepto.replace(regexPagina, "").trim();
 
-        concepto = concepto.replace(/\s{2,}/g, ' ').trim();  // Quitar espacios duplicados
-        
+        concepto = concepto.replace(/\s{2,}/g, " ").trim();  // Quitar espacios duplicados
+
+        // === 5) Detectar la parte "SUC xxxx" y capturar hasta 2 cantidades. ===
+        // Captura la primera en grupo 1 y la segunda en grupo 2 (si existe).
         const regexSUC = /SUC\s\d{4}.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)(?:.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?))?/;
         const matchSUC = concepto.match(regexSUC);
-        
-        const regexConceptoInicioCargo = /^(COMISION|IVA COMISION)/i;
-        
-        const regexPagoRecibidoOInterbancario = /^(PAGO RECIBIDO|PAGO INTERBANCARIO)/i;
 
-        if (regexConceptoInicioCargo.test(concepto) && matchSUC && matchSUC[1] && !matchSUC[2]) {
-            // Si inicia con COMISION o IVA COMISION y solo hay una cantidad
-            resultados.push({
-                FechaMovimiento: fechaActual,
-                Descripcion: concepto,
-                Cargo: matchSUC[1]  // La única cantidad se asigna a Cargo
-            });
-        } else if (regexPagoRecibidoOInterbancario.test(concepto) && matchSUC) {
+        // === 6) Patrones para clasificar distintos tipos de conceptos. ===
+        // (a) Conceptos que SIEMPRE van a Cargo en la primera cantidad
+        const regexConceptoInicioCargo = /^(COMISION|IVA COMISION|PAGO INTERBANCARIO)/i;
+
+        // (b) Conceptos donde la primera cantidad es Abono
+        const regexPagoRecibidoOInterbancario = /^(PAGO RECIBIDO|ABONO CANCELACION DE PAGO INTERBANCARIA)/i;
+
+        // === 7) Reglas para asignar montos a Cargo/Abono/Saldo según el concepto. ===
+        if (regexConceptoInicioCargo.test(concepto) && matchSUC) {
+            // Caso (a): inicia con COMISION, IVA COMISION o PAGO INTERBANCARIO
+            // => primera cantidad => Cargo
+            // => segunda cantidad => Saldo (si existe)
             if (matchSUC[1] && matchSUC[2]) {
-                // Si hay dos cantidades, la primera va a Abono y la segunda a Saldo
+                resultados.push({
+                    FechaMovimiento: fechaActual,
+                    Descripcion: concepto,
+                    Cargo: matchSUC[1],
+                    Saldo: matchSUC[2]
+                });
+            } else if (matchSUC[1]) {
+                resultados.push({
+                    FechaMovimiento: fechaActual,
+                    Descripcion: concepto,
+                    Cargo: matchSUC[1]
+                });
+            }
+
+        } else if (regexPagoRecibidoOInterbancario.test(concepto) && matchSUC) {
+            // Caso (b): "PAGO RECIBIDO" o "ABONO CANCELACION DE PAGO INTERBANCARIA"
+            // => primera cantidad => Abono
+            // => segunda => Saldo (si existe)
+            if (matchSUC[1] && matchSUC[2]) {
                 resultados.push({
                     FechaMovimiento: fechaActual,
                     Descripcion: concepto,
@@ -2377,24 +2400,24 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
                     Saldo: matchSUC[2]
                 });
             } else if (matchSUC[1]) {
-                // Si solo hay una cantidad, va a Abono
                 resultados.push({
                     FechaMovimiento: fechaActual,
                     Descripcion: concepto,
                     Abono: matchSUC[1]
                 });
             }
-        } else if (matchSUC) {
-            // Si hay dos cantidades después de SUC, la segunda se asigna a Saldo
-            const segundaCantidad = matchSUC[2];
 
+        } else if (matchSUC) {
+            // Caso general: si hay 2 cantidades, la segunda se asigna a Saldo
+            const segundaCantidad = matchSUC[2];
             resultados.push({
                 FechaMovimiento: fechaActual,
                 Descripcion: concepto,
                 Saldo: segundaCantidad ? segundaCantidad : ""
             });
+
         } else {
-            // Si no hay coincidencias con SUC, guardar el concepto normalmente
+            // Si no hay coincidencias con SUC ni otras condiciones, guardamos el registro simple
             resultados.push({
                 FechaMovimiento: fechaActual,
                 Descripcion: concepto
@@ -2407,6 +2430,7 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
 
     return resultados;
 }
+
 
 function extraerDatosEspecificosAfirme(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
