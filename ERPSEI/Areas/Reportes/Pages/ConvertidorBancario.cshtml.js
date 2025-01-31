@@ -2296,17 +2296,16 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
     const matchSaldoAnterior = textoDesdeDetalle.match(regexSaldoAnterior);
     if (matchSaldoAnterior) {
         resultados.push({
-            FechaMovimiento: "",               // Puedes dejarlo vacío o asignar otro valor
-            Descripcion: "SALDO ANTERIOR",     // Texto fijo
-            Saldo: matchSaldoAnterior[1]       // La cantidad capturada
+            FechaMovimiento: "",
+            Descripcion: "SALDO ANTERIOR",
+            Saldo: matchSaldoAnterior[1]
         });
     }
 
     // 3) Expresión regular para fechas en formato "DD MMM" (e.g. "05 MAY")
     const regexFechas = /\b(\d{2}\s(?:ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC))\b/g;
-    let match;
     const coincidencias = [];
-
+    let match;
     while ((match = regexFechas.exec(textoDesdeDetalle)) !== null) {
         coincidencias.push({
             fecha: match[1],
@@ -2330,7 +2329,7 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
 
         let concepto = textoDesdeDetalle.slice(inicioConcepto, finConcepto).trim();
 
-        // === Limpiezas de texto (remover encabezados o frases irrelevantes) ===
+        // -- Limpiezas de texto previas --
         const regexDetalleCompleto = /DETALLE\s+DE\s+OPERACIONES\s+FECHA\s+CONCEPTO\s+RETIROS\s+DEPOSITOS\s+SALDO/gi;
         concepto = concepto.replace(regexDetalleCompleto, "").trim();
 
@@ -2351,77 +2350,115 @@ function extraerDatosEspecificosBanamex(textoExtraido) {
         const regexCliente = /CLIENTE:\s\d{9}/gi;
         concepto = concepto.replace(regexCliente, "").trim();
 
-        const regexPagina = /Página:\s\d{1,2}\sde\s\d{1,2}/gi;
-        concepto = concepto.replace(regexPagina, "").trim();
+        // Notamos que antes eliminabas "Página: X de Y" aquí,
+        // pero ahora lo haremos *después* de asignar montos, 
+        // para no afectar la detección de nada.
 
-        concepto = concepto.replace(/\s{2,}/g, " ").trim();  // Quitar espacios duplicados
+        concepto = concepto.replace(/\s{2,}/g, " ").trim(); // Quitar espacios duplicados
 
-        // === 5) Detectar la parte "SUC xxxx" y capturar hasta 2 cantidades. ===
-        // Captura la primera en grupo 1 y la segunda en grupo 2 (si existe).
+        // 5) Detectar "SUC xxxx" y capturar hasta 2 cantidades (grupo 1 y grupo 2)
         const regexSUC = /SUC\s\d{4}.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)(?:.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?))?/;
         const matchSUC = concepto.match(regexSUC);
 
-        // === 6) Patrones para clasificar distintos tipos de conceptos. ===
-        // (a) Conceptos que SIEMPRE van a Cargo en la primera cantidad
+        // 6) Patrones para clasificar
         const regexConceptoInicioCargo = /^(COMISION|IVA COMISION|PAGO INTERBANCARIO)/i;
-
-        // (b) Conceptos donde la primera cantidad es Abono
         const regexPagoRecibidoOInterbancario = /^(PAGO RECIBIDO|ABONO CANCELACION DE PAGO INTERBANCARIA)/i;
 
-        // === 7) Reglas para asignar montos a Cargo/Abono/Saldo según el concepto. ===
+        // 7) Reglas para asignar montos a Cargo/Abono/Saldo
+        let registro = null;
         if (regexConceptoInicioCargo.test(concepto) && matchSUC) {
-            // Caso (a): inicia con COMISION, IVA COMISION o PAGO INTERBANCARIO
-            // => primera cantidad => Cargo
-            // => segunda cantidad => Saldo (si existe)
+            // Primera cantidad => Cargo, segunda => Saldo (si existe)
             if (matchSUC[1] && matchSUC[2]) {
-                resultados.push({
+                registro = {
                     FechaMovimiento: fechaActual,
                     Descripcion: concepto,
                     Cargo: matchSUC[1],
                     Saldo: matchSUC[2]
-                });
+                };
             } else if (matchSUC[1]) {
-                resultados.push({
+                registro = {
                     FechaMovimiento: fechaActual,
                     Descripcion: concepto,
                     Cargo: matchSUC[1]
-                });
+                };
             }
-
         } else if (regexPagoRecibidoOInterbancario.test(concepto) && matchSUC) {
-            // Caso (b): "PAGO RECIBIDO" o "ABONO CANCELACION DE PAGO INTERBANCARIA"
-            // => primera cantidad => Abono
-            // => segunda => Saldo (si existe)
+            // Primera cantidad => Abono, segunda => Saldo (si existe)
             if (matchSUC[1] && matchSUC[2]) {
-                resultados.push({
+                registro = {
                     FechaMovimiento: fechaActual,
                     Descripcion: concepto,
                     Abono: matchSUC[1],
                     Saldo: matchSUC[2]
-                });
+                };
             } else if (matchSUC[1]) {
-                resultados.push({
+                registro = {
                     FechaMovimiento: fechaActual,
                     Descripcion: concepto,
                     Abono: matchSUC[1]
-                });
+                };
             }
-
         } else if (matchSUC) {
-            // Caso general: si hay 2 cantidades, la segunda se asigna a Saldo
+            // Caso general: si hay 2 cantidades, la segunda = Saldo
             const segundaCantidad = matchSUC[2];
-            resultados.push({
+            registro = {
                 FechaMovimiento: fechaActual,
                 Descripcion: concepto,
                 Saldo: segundaCantidad ? segundaCantidad : ""
-            });
-
+            };
         } else {
-            // Si no hay coincidencias con SUC ni otras condiciones, guardamos el registro simple
-            resultados.push({
+            // Concepto normal
+            registro = {
                 FechaMovimiento: fechaActual,
                 Descripcion: concepto
-            });
+            };
+        }
+
+        // ====== LIMPIEZA FINAL DE LA DESCRIPCIÓN =======
+        if (registro) {
+            // a) Quitar "Página: X de Y" y todo lo que siga
+            //    (X, Y pueden ser cualquier dígito)
+            registro.Descripcion = registro.Descripcion.replace(
+                /Página:\s*\d+\s*de\s*\d+.*/i,
+                ""
+            ).trim();
+
+            // b) Quitar cualquier cantidad que sea IGUAL (numéricamente)
+            //    a las que pusimos en Cargo, Abono o Saldo.
+            //    (cuando no sean nulos o "0.00", etc.)
+
+            // Función auxiliar para eliminar un valor del texto si coincide numéricamente
+            function removeIfMatchNumeric(text, valString) {
+                if (!valString) return text;
+                // Ej: valString = "520,800.00"
+                // 1) Eliminar comas y parsear
+                const valFloat = parseFloat(valString.replace(/,/g, ""));
+                // Si no es número o es 0.00, no hacemos nada
+                if (isNaN(valFloat) || valFloat === 0) return text;
+
+                // Eliminamos tokens del texto que sean ###,###.## parseables
+                return text.replace(/[\d,]+\.\d{2}/g, (match) => {
+                    const matchFloat = parseFloat(match.replace(/,/g, ""));
+                    // Si coincide, lo borramos
+                    return (matchFloat === valFloat) ? "" : match;
+                });
+            }
+
+            // Aplica la limpieza
+            if (registro.Cargo) {
+                registro.Descripcion = removeIfMatchNumeric(registro.Descripcion, registro.Cargo);
+            }
+            if (registro.Abono) {
+                registro.Descripcion = removeIfMatchNumeric(registro.Descripcion, registro.Abono);
+            }
+            if (registro.Saldo) {
+                registro.Descripcion = removeIfMatchNumeric(registro.Descripcion, registro.Saldo);
+            }
+
+            // c) Quitar posibles espacios de más luego de las eliminaciones
+            registro.Descripcion = registro.Descripcion.replace(/\s+/g, " ").trim();
+
+            resultados.push(registro);
         }
     }
 
