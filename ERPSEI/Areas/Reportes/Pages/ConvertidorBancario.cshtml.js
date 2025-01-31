@@ -1211,7 +1211,7 @@ async function extraerTextoDesdePDF(pdfArchivo) {
 function extraerDatosEspecificosMonex(textoExtraido) {
     console.log("Texto Extraído Completo (Monex):", textoExtraido);
 
-    // Identificar el año en el rango de fechas
+    // 1) Lógica existente para extraer año, recortar texto, etc.
     const regexRangoFechas = /Del \d{1,2} \w+ (\d{4}) al \d{1,2} \w+ \d{4} DIAS TRANSCURRIDOS/i;
     const matchRango = textoExtraido.match(regexRangoFechas);
     let anioActual = new Date().getFullYear();
@@ -1232,28 +1232,22 @@ function extraerDatosEspecificosMonex(textoExtraido) {
         return [];
     }
 
-    // Patrón para fechas en formato dd/mmm
+    // 2) Extraer fechas en formato dd/mmm
     const regexFechas = /\b\d{2}\/[A-Z][a-z]{2}\b/g;
-
-    // Extraer todas las fechas que coincidan con el patrón
     const fechasEncontradas = [];
-    const matchFechas = textoExtraido.matchAll(regexFechas);
-    for (const match of matchFechas) {
-        const [dia, mesTexto] = match[0].split('/');
+    for (const match of textoExtraido.matchAll(regexFechas)) {
+        const [dia, mesTexto] = match[0].split("/");
         const fechaEstandar = `${dia}/${mesTexto}/${anioActual}`;
         fechasEncontradas.push({ FechaMovimiento: fechaEstandar });
     }
 
     console.log("Lista de Fechas Monex (formato DD/mmm/YYYY):", fechasEncontradas);
 
-    // Obtener datos por concepto y mostrar en log
-    const datosPorConcepto = extraerDatosPorConcepto(textoExtraido);
-    console.log("Datos por Concepto Extraídos:");
-    datosPorConcepto.forEach((resultado, index) => {
-        console.log(`Concepto ${index + 1}:`, resultado);
-    });
+    // 3) Obtener datos por concepto
+    const datosPorConcepto = extraerDatosPorConcepto(textoExtraido); // <= tu propia función
+    console.log("Datos por Concepto Extraídos:", datosPorConcepto);
 
-    // Procesar el último registro y ajustarlo
+    // 4) Ajuste opcional para el último registro
     if (datosPorConcepto.length > 0) {
         const ultimoRegistro = datosPorConcepto[datosPorConcepto.length - 1];
         const textoUltimoRegistro = ultimoRegistro.Contenido;
@@ -1269,74 +1263,108 @@ function extraerDatosEspecificosMonex(textoExtraido) {
         }
     }
 
-    // Agregar conceptos, fechas y referencias como registros
+    // 5) Construir los registros finales
     const registros = datosPorConcepto.map((concepto, index) => {
         const fecha = fechasEncontradas[index]?.FechaMovimiento || "Sin fecha";
 
-        // Buscar número de referencia en el contenido del concepto
+        // Buscar número de referencia
         const regexNumeroReferencia = /\b\d{8,9}\b/;
         const numeroReferenciaMatch = concepto.Contenido.match(regexNumeroReferencia);
         const numeroReferencia = numeroReferenciaMatch ? numeroReferenciaMatch[0] : "Sin referencia";
 
+        // ------------------------------
+        // LÓGICA EXISTENTE DE SALDO
+        // ------------------------------
         let saldo = "Sin saldo";
-
-        // Verificar si el contenido tiene la palabra "Hoja"
         if (concepto.Contenido.includes("Hoja")) {
-            // Dividir el contenido hasta la palabra "Hoja"
             const contenidoAntesDeHoja = concepto.Contenido.split("Hoja")[0];
-
-            // Buscar los números en el texto antes de la palabra "Hoja"
-            const regexNumeros = /[\d,]+\.\d{2}/g; // Números con formato decimal
+            const regexNumeros = /[\d,]+\.\d{2}/g;
             const numerosEncontrados = contenidoAntesDeHoja.match(regexNumeros) || [];
-
             console.log("Números encontrados antes de 'Hoja':", numerosEncontrados);
-
-            // Verificar si hay al menos dos números
             if (numerosEncontrados.length >= 2) {
-                // Tomar el segundo número antes de "Hoja"
                 saldo = numerosEncontrados[numerosEncontrados.length - 1];
             }
         } else {
-            // Lógica anterior: buscar duplicados en todo el contenido
-            const regexNumeros = /[\d,]+\.\d{2}/g; // Números con formato decimal
+            const regexNumeros = /[\d,]+\.\d{2}/g;
             const numerosEncontrados = concepto.Contenido.match(regexNumeros) || [];
-
             console.log("Números encontrados en el concepto:", numerosEncontrados);
-
             if (numerosEncontrados.length >= 2) {
-                const penultimoNumero = numerosEncontrados[numerosEncontrados.length - 2].replace(/,/g, '');
-                const ultimoNumero = numerosEncontrados[numerosEncontrados.length - 1].replace(/,/g, '');
-                console.log(`Comparando: penúltimo=${penultimoNumero}, último=${ultimoNumero}`);
-
+                const penultimoNumero = numerosEncontrados[numerosEncontrados.length - 2].replace(/,/g, "");
+                const ultimoNumero = numerosEncontrados[numerosEncontrados.length - 1].replace(/,/g, "");
                 if (penultimoNumero === ultimoNumero) {
-                    saldo = numerosEncontrados[numerosEncontrados.length - 1]; // Mantener el formato con comas
+                    saldo = numerosEncontrados[numerosEncontrados.length - 1];
                 }
             }
         }
 
-        // NUEVA LÓGICA PARA ABONO Y CARGO
+        // ------------------------------
+        // LÓGICA EXISTENTE DE ABONO / CARGO
+        // ------------------------------
         let abono = "0.00";
         let cargo = "0.00";
-        const regexNumeros = /[\d,]+\.\d{2}/g; // Números con formato decimal
-        const numerosEncontrados = concepto.Contenido.match(regexNumeros) || [];
+        const regexNums = /[\d,]+\.\d{2}/g;
+        const numsEncontrados = concepto.Contenido.match(regexNums) || [];
 
-        if (numerosEncontrados.length >= 2) {
-            const [numero1, numero2] = numerosEncontrados.map(num => parseFloat(num.replace(/,/g, '')));
-            if (concepto.Concepto.startsWith("Depósito Emisor:") || concepto.Concepto.startsWith("Compra de divisas") || concepto.Concepto.startsWith("Depósito En Cta De Captación")) {
-                abono = numero1 !== 0.00 ? numero1.toFixed(2) : numero2.toFixed(2);
-            } else if (concepto.Concepto.startsWith("Retiro por compra") || concepto.Concepto.startsWith("RETIRO") || concepto.Concepto.startsWith("Comision Por Transferencia")) {
-                cargo = numero1 !== 0.00 ? numero1.toFixed(2) : numero2.toFixed(2);
+        if (numsEncontrados.length >= 2) {
+            const [numero1, numero2] = numsEncontrados.map(num => parseFloat(num.replace(/,/g, "")));
+            if (
+                concepto.Concepto.startsWith("Depósito Emisor:") ||
+                concepto.Concepto.startsWith("Compra de divisas") ||
+                concepto.Concepto.startsWith("Depósito En Cta De Captación")
+            ) {
+                abono = numero1 !== 0.0 ? numero1.toFixed(2) : numero2.toFixed(2);
+            } else if (
+                concepto.Concepto.startsWith("Retiro por compra") ||
+                concepto.Concepto.startsWith("RETIRO") ||
+                concepto.Concepto.startsWith("Comision Por Transferencia")
+            ) {
+                cargo = numero1 !== 0.0 ? numero1.toFixed(2) : numero2.toFixed(2);
             }
         }
 
+        // ------------------------------
+        // DESCRIPCIÓN INICIAL
+        // ------------------------------
+        let descripcion = `${concepto.Concepto} ${concepto.Contenido}`.trim();
+
+        // ------------------------------
+        // Remover cantidades/fechas si ya lo haces...
+        // (ejemplo simplificado)
+        // ------------------------------
+        // 1. Eliminar fechas DD/Abc
+        descripcion = descripcion.replace(/\d{1,2}\/[A-Z][a-z]{2}/g, "").trim();
+        // 2. Eliminar cantidades que coincidan con abono/cargo/saldo (solo ejemplo)
+        //    (usa tu lógica si ya la tienes)
+        function removeValueIfNumericMatch(text, valueStr) {
+            if (!valueStr || valueStr === "0.00" || valueStr === "Sin saldo") return text;
+            const valor = parseFloat(valueStr.replace(/,/g, ""));
+            if (isNaN(valor)) return text;
+            // Replace tokens en formato ###,###.## si parseados == valor
+            return text.replace(/[\d,]+\.\d{2}/g, (matchNumber) => {
+                const parsed = parseFloat(matchNumber.replace(/,/g, ""));
+                return parsed === valor ? "" : matchNumber;
+            });
+        }
+        descripcion = removeValueIfNumericMatch(descripcion, abono);
+        descripcion = removeValueIfNumericMatch(descripcion, cargo);
+        descripcion = removeValueIfNumericMatch(descripcion, saldo);
+
+        // ------------------------------
+        // FINALMENTE, CORTAR DESPUÉS DE "Hoja X de Y"
+        // ------------------------------
+        // Con esta expresión, si encontramos "Hoja 1 de 10", "Hoja 2 de 5", etc.,
+        // quitamos TODO lo que sigue a partir de esa coincidencia (incluida la coincidencia).
+        descripcion = descripcion.replace(/Hoja\s+\d+\s+de\s+\d+.*/i, "").trim();
+
+        // 6) Retornar el registro
         return {
             FechaMovimiento: fecha,
             Concepto: concepto.Concepto,
-            Descripcion: `${concepto.Concepto} ${concepto.Contenido}`,
+            Descripcion: descripcion,      // ← Texto final SIN lo posterior a "Hoja X de Y"
             NumeroReferencia: numeroReferencia,
-            Saldo: saldo, // Mantener lógica original
-            Abono: abono, // Agregar campo adicional
-            Cargo: cargo  // Agregar campo adicional
+            Saldo: saldo,
+            Abono: abono,
+            Cargo: cargo
         };
     });
 
