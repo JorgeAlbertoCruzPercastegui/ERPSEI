@@ -1926,9 +1926,18 @@ function extraerDatosEspecificosAutofin(textoExtraido) {
     console.log("Texto extraído Autofín:", textoExtraido);
 
     // Eliminar textos irrelevantes específicos en el contenido
-    textoExtraido = textoExtraido.replace(/Depósitos, Préstamos y Créditos a que se refieren las fracciones I y II del artículo 46 de la Ley de Instituciones de Crédito contratados con Banco Autofin México, S\.A\., Institución de Banca Múltiple, están garantizados por el Instituto para la Protección al Ahorro Bancario hasta por un monto total al equivalente a cuatrocientas mil UDIS por cliente\. Las obligaciones quedarán cubiertas en títulos nominativos siempre y cuando los títulos no hayan sido negociados\. www\.ipab\.org\.mx/gi, '');
-    textoExtraido = textoExtraido.replace(/Página\s+\d+\/\d+\s+Número\s+de\s+Cliente\s+\d{6,8}/gi, '');
-    textoExtraido = textoExtraido.replace(/DETALLE\s+DE\s+MOVIMIENTOS\s+\(MONEDA\s+NACIONAL\)/gi, '');
+    textoExtraido = textoExtraido.replace(
+        /Depósitos, Préstamos y Créditos a que se refieren las fracciones I y II del artículo 46 de la Ley de Instituciones de Crédito contratados con Banco Autofin México, S\.A\., Institución de Banca Múltiple, están garantizados por el Instituto para la Protección al Ahorro Bancario hasta por un monto total al equivalente a cuatrocientas mil UDIS por cliente\. Las obligaciones quedarán cubiertas en títulos nominativos siempre y cuando los títulos no hayan sido negociados\. www\.ipab\.org\.mx/gi,
+        ""
+    );
+    textoExtraido = textoExtraido.replace(
+        /Página\s+\d+\/\d+\s+Número\s+de\s+Cliente\s+\d{6,8}/gi,
+        ""
+    );
+    textoExtraido = textoExtraido.replace(
+        /DETALLE\s+DE\s+MOVIMIENTOS\s+\(MONEDA\s+NACIONAL\)/gi,
+        ""
+    );
 
     // Expresión regular para localizar el bloque de texto después de la cabecera especificada
     const regexBloque = /FECHA\s+CONCEPTO\s+ORIGEN Y REFERENCIA\s+DEPÓSITO\s+RETIRO\s+SALDO([\s\S]*)/i;
@@ -1943,6 +1952,10 @@ function extraerDatosEspecificosAutofin(textoExtraido) {
     const textoPosterior = bloqueCoincide[1];
 
     // Expresión regular para capturar conceptos seguidos de fechas (DD-MMM-AAAA) y hasta tres cantidades
+    //  1) (.*?) = posible texto del concepto antes de la fecha
+    //  2) (\d{2}-[A-Za-z]{3}-\d{4}) = fecha
+    //  3) ([\s\S]*?) = texto (origen / ref)
+    //  4,5,6) cantidades en $... formato
     const regexConceptos = /(.*?)(\d{2}-[A-Za-z]{3}-\d{4})([\s\S]*?)(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?).*?(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?).*?(\$\s?-?\d{1,3}(?:,\d{3})*(?:\.\d{2})?)/g;
 
     // Crear un arreglo de objetos con los conceptos unificados, número de referencia y montos
@@ -1954,20 +1967,23 @@ function extraerDatosEspecificosAutofin(textoExtraido) {
         let concepto = coincidencia[1].trim();
 
         // Omitir palabras irrelevantes en mayúsculas y la palabra 'Los' al inicio dentro del concepto
-        concepto = concepto.replace(/^Los\s+/i, '').trim();
-        concepto = concepto.replace(/\b(FECHA|CONCEPTO|ORIGEN Y REFERENCIA|DEPÓSITO|RETIRO|SALDO)\b/gi, '').trim();
+        concepto = concepto.replace(/^Los\s+/i, "").trim();
+        concepto = concepto.replace(
+            /\b(FECHA|CONCEPTO|ORIGEN Y REFERENCIA|DEPÓSITO|RETIRO|SALDO)\b/gi,
+            ""
+        ).trim();
 
-        const conceptoCompleto = `${concepto} ${detalle} ${coincidencia[4]} ${coincidencia[5]} ${coincidencia[6]}`.trim();
         const fecha = coincidencia[2];
 
         // Convertir las cantidades a números para comparación
-        const cantidad1 = parseFloat(coincidencia[4].replace(/[$,\s]/g, ''));
-        const cantidad2 = parseFloat(coincidencia[5].replace(/[$,\s]/g, ''));
-        const cantidad3 = coincidencia[6]; // Siempre será Saldo
+        const cantidad1 = parseFloat(coincidencia[4].replace(/[$,\s]/g, ""));
+        const cantidad2 = parseFloat(coincidencia[5].replace(/[$,\s]/g, ""));
+        const cantidad3 = coincidencia[6]; // Siempre será Saldo en string
 
         let cargo = "$ 0.00";
         let abono = "$ 0.00";
 
+        // Lógica de clasificación de Cargo y Abono
         if (cantidad2 < 0) {
             cargo = coincidencia[5];
             abono = coincidencia[4];
@@ -1976,24 +1992,34 @@ function extraerDatosEspecificosAutofin(textoExtraido) {
             cargo = coincidencia[5];
         }
 
+        // === Aquí quitamos las 3 últimas cantidades del concepto ===
+        // En lugar de concatenar todos los montos a la descripción,
+        // nos quedamos con la parte textual (concepto + detalle).
+        let descripcionFinal = `${concepto} ${detalle}`.trim();
+
+        // Guardar el registro con los campos
         resultados.push({
             FechaMovimiento: fecha,
-            FechaAplicacion: fecha, // Asumiendo que FechaAplicacion es igual a FechaMovimiento
+            FechaAplicacion: "", 
             NumeroReferencia: detalle,
-            Descripcion: conceptoCompleto,
+            Descripcion: descripcionFinal,
             Cargo: cargo,
             Abono: abono,
             Saldo: cantidad3
         });
     }
 
-    console.log("Resultados con concepto limpio, fechas, número de referencia y montos clasificados:", resultados);
+    console.log(
+        "Resultados con concepto limpio, fechas, número de referencia y montos clasificados:",
+        resultados
+    );
 
     // Llamar a la función para inicializar la tabla con los datos
     initTable(resultados);
 
     return resultados;
 }
+
 
 function extraerDatosEspecificosPayMax(textoExtraido) {
     if (!textoExtraido || textoExtraido.trim() === "") {
