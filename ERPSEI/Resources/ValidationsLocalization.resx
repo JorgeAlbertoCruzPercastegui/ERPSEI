@@ -118,351 +118,351 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="AccionistaField" xml:space="preserve">
-    <value>Accionista</value>
+    <value />
   </data>
   <data name="ActividadEconomicaField" xml:space="preserve">
-    <value>Actividad económica</value>
+    <value />
   </data>
   <data name="AdministradorField" xml:space="preserve">
-    <value>Administrador</value>
+    <value />
   </data>
   <data name="Alphabetic" xml:space="preserve">
-    <value>El campo {0} debe tener solo letras.</value>
+    <value />
   </data>
   <data name="AlphanumNoSpaceNoUnderscore" xml:space="preserve">
-    <value>El campo {0} solo permite letras y números.</value>
+    <value />
   </data>
   <data name="AlphanumSpace" xml:space="preserve">
-    <value>El campo {0} solo permite letras, números, guión bajo y espacios.</value>
+    <value />
   </data>
   <data name="AlphanumSpaceParenthesis" xml:space="preserve">
-    <value>El campo {0} solo permite letras, números, guión bajo, espacios y paréntesis.</value>
+    <value />
   </data>
   <data name="AreaField" xml:space="preserve">
-    <value>Área</value>
+    <value />
   </data>
   <data name="CantidadField" xml:space="preserve">
-    <value>Cantidad</value>
+    <value />
   </data>
   <data name="ClienteField" xml:space="preserve">
-    <value>Cliente</value>
+    <value />
   </data>
   <data name="CompanyName" xml:space="preserve">
-    <value>El campo {0} solo permite letras, números, guión bajo, espacios, comas puntos y ampersand.</value>
+    <value />
   </data>
   <data name="ConfirmNewPasswordField" xml:space="preserve">
-    <value>Confirmar nueva contraseña</value>
+    <value />
   </data>
   <data name="ConfirmPasswordField" xml:space="preserve">
-    <value>Confirmar contraseña</value>
+    <value />
   </data>
   <data name="CorreoBancosField" xml:space="preserve">
-    <value>Correo bancos</value>
+    <value />
   </data>
   <data name="CorreoEmpresarialField" xml:space="preserve">
-    <value>Correo Empresarial</value>
+    <value />
   </data>
   <data name="CorreoFacturacionField" xml:space="preserve">
-    <value>Correo facturación</value>
+    <value />
   </data>
   <data name="CorreoFiscalField" xml:space="preserve">
-    <value>Correo fiscal</value>
+    <value />
   </data>
   <data name="CorreoGeneralField" xml:space="preserve">
-    <value>Correo general</value>
+    <value />
   </data>
   <data name="CURPField" xml:space="preserve">
-    <value>CURP</value>
+    <value />
   </data>
   <data name="DescripcionField" xml:space="preserve">
-    <value>Descripción</value>
+    <value />
   </data>
   <data name="DescuentoField" xml:space="preserve">
-    <value>Descuento</value>
+    <value />
   </data>
   <data name="DireccionField" xml:space="preserve">
-    <value>Dirección</value>
+    <value />
   </data>
   <data name="DomicilioFiscalField" xml:space="preserve">
-    <value>Domicilio fiscal</value>
+    <value />
   </data>
   <data name="EmailField" xml:space="preserve">
-    <value>Correo electrónico</value>
+    <value />
   </data>
   <data name="EmailFormat" xml:space="preserve">
-    <value>El campo {0} no es una dirección de correo electrónico válida.</value>
+    <value />
   </data>
   <data name="EmployeeNameField" xml:space="preserve">
-    <value>Nombre de empleado</value>
+    <value />
   </data>
   <data name="EstadoCivilField" xml:space="preserve">
-    <value>Estado Civil</value>
+    <value />
   </data>
   <data name="EstatusField" xml:space="preserve">
-    <value>Estatus</value>
+    <value />
   </data>
   <data name="ExportacionField" xml:space="preserve">
-    <value>Exportación</value>
+    <value />
   </data>
   <data name="FathersLastNameField" xml:space="preserve">
-    <value>Primer apellido</value>
+    <value />
   </data>
   <data name="FechaConstitucionField" xml:space="preserve">
-    <value>Constitución</value>
+    <value />
   </data>
   <data name="FechaElaboracionFinField" xml:space="preserve">
-    <value>Fecha Elaboración (Fin)</value>
+    <value />
   </data>
   <data name="FechaElaboracionInicioField" xml:space="preserve">
-    <value>Fecha Elaboración (Inicio)</value>
+    <value />
   </data>
   <data name="FechaField" xml:space="preserve">
-    <value>Fecha</value>
+    <value />
   </data>
   <data name="FechaFinField" xml:space="preserve">
-    <value>Fecha (Fin)</value>
+    <value />
   </data>
   <data name="FechaFinModalDComprobantesField" xml:space="preserve">
-    <value>Fecha Final</value>
+    <value />
   </data>
   <data name="FechaIngresoField" xml:space="preserve">
-    <value>Fecha Ingreso</value>
+    <value />
   </data>
   <data name="FechaIngresoFinField" xml:space="preserve">
-    <value>Fecha ingreso (Fin)</value>
+    <value />
   </data>
   <data name="FechaIngresoInicioField" xml:space="preserve">
-    <value>Fecha ingreso (Inicio)</value>
+    <value />
   </data>
   <data name="FechaInicioAsimiladosField" xml:space="preserve">
-    <value>Inicio de asimilados</value>
+    <value />
   </data>
   <data name="FechaInicioFacturacionField" xml:space="preserve">
-    <value>Inicio de facturación</value>
+    <value />
   </data>
   <data name="FechaInicioField" xml:space="preserve">
-    <value>Fecha (Inicio)</value>
+    <value />
   </data>
   <data name="FechaInicioModalDComprobantesField" xml:space="preserve">
-    <value>Fecha Inicial</value>
+    <value />
   </data>
   <data name="FechaInicioOperacionField" xml:space="preserve">
-    <value>Inicio de operación</value>
+    <value />
   </data>
   <data name="FechaNacimientoField" xml:space="preserve">
-    <value>Fecha Nacimiento</value>
+    <value />
   </data>
   <data name="FechaNacimientoFinField" xml:space="preserve">
-    <value>Fecha nacimiento (Fin)</value>
+    <value />
   </data>
   <data name="FechaNacimientoInicioField" xml:space="preserve">
-    <value>Fecha nacimiento (Inicio)</value>
+    <value />
   </data>
   <data name="FieldLength" xml:space="preserve">
-    <value>El campo {0} debe tener al menos {2} y un máximo de {1} caracteres.</value>
+    <value />
   </data>
   <data name="FieldsComparison" xml:space="preserve">
-    <value>El campo {1} y el campo {0} no coinciden.</value>
+    <value />
   </data>
   <data name="FirstNameField" xml:space="preserve">
-    <value>Primer nombre</value>
+    <value />
   </data>
   <data name="FolioField" xml:space="preserve">
-    <value>Folio</value>
+    <value />
   </data>
   <data name="FormaPagoField" xml:space="preserve">
-    <value>Forma de pago</value>
+    <value />
   </data>
   <data name="FullNameField" xml:space="preserve">
-    <value>Nombre</value>
+    <value />
   </data>
   <data name="GeneroField" xml:space="preserve">
-    <value>Género</value>
+    <value />
   </data>
   <data name="HorarioField" xml:space="preserve">
-    <value>Horario</value>
+    <value />
   </data>
   <data name="IdField" xml:space="preserve">
-    <value>Id</value>
+    <value />
   </data>
   <data name="JefeField" xml:space="preserve">
-    <value>Jefe</value>
+    <value />
   </data>
   <data name="MetodoPagoField" xml:space="preserve">
-    <value>Método de pago</value>
+    <value />
   </data>
   <data name="MonedaField" xml:space="preserve">
-    <value>Moneda</value>
+    <value />
   </data>
   <data name="MothersLastNameField" xml:space="preserve">
-    <value>Segundo apellido</value>
+    <value />
   </data>
   <data name="NameField" xml:space="preserve">
-    <value>Nombre(s)</value>
+    <value />
   </data>
   <data name="NewEmailField" xml:space="preserve">
-    <value>Nuevo correo electrónico</value>
+    <value />
   </data>
   <data name="NewPasswordField" xml:space="preserve">
-    <value>Nueva contraseña</value>
+    <value />
   </data>
   <data name="NivelField" xml:space="preserve">
-    <value>Nivel</value>
+    <value />
   </data>
   <data name="NSSField" xml:space="preserve">
-    <value>NSS</value>
+    <value />
   </data>
   <data name="Numeric" xml:space="preserve">
-    <value>El campo {0} solo permite números. El primer número debe ser diferente de cero.</value>
+    <value />
   </data>
   <data name="NumericNoRestriction" xml:space="preserve">
-    <value>El campo {0} solo permite números.</value>
+    <value />
   </data>
   <data name="NumeroOperacionField" xml:space="preserve">
-    <value>Número de operación</value>
+    <value />
   </data>
   <data name="ObjetoImpuestoField" xml:space="preserve">
-    <value>Objeto de impuesto</value>
+    <value />
   </data>
   <data name="ObjetoSocialField" xml:space="preserve">
-    <value>Objeto social</value>
+    <value />
   </data>
   <data name="OficinaField" xml:space="preserve">
-    <value>Oficina</value>
+    <value />
   </data>
   <data name="OldPasswordField" xml:space="preserve">
-    <value>Contraseña anterior</value>
+    <value />
   </data>
   <data name="OrdinalField" xml:space="preserve">
-    <value>Ordinal</value>
+    <value />
   </data>
   <data name="OrigenField" xml:space="preserve">
-    <value>Origen</value>
+    <value />
   </data>
   <data name="PasswordField" xml:space="preserve">
-    <value>Contraseña</value>
+    <value />
   </data>
   <data name="PerfilField" xml:space="preserve">
-    <value>Perfil</value>
+    <value />
   </data>
   <data name="PeriodoField" xml:space="preserve">
-    <value>Periodo</value>
+    <value />
   </data>
   <data name="PersonName" xml:space="preserve">
-    <value>El campo {0} debe tener solo letras. Se permiten los espacios en blanco. La primera letra debe estar en mayúscula y debe haber mínimo dos letras.</value>
+    <value />
   </data>
   <data name="PhoneFormat" xml:space="preserve">
-    <value>El campo {0} no es un número de teléfono válido</value>
+    <value />
   </data>
   <data name="PhoneNumberField" xml:space="preserve">
-    <value>Teléfono</value>
+    <value />
   </data>
   <data name="PreferredNameField" xml:space="preserve">
-    <value>Nombre preferido</value>
+    <value />
   </data>
   <data name="PuedeFacturarField" xml:space="preserve">
-    <value>¿Puede facturar?</value>
+    <value />
   </data>
   <data name="PuestoField" xml:space="preserve">
-    <value>Puesto</value>
+    <value />
   </data>
   <data name="RazonSocialField" xml:space="preserve">
-    <value>Razón social</value>
+    <value />
   </data>
   <data name="RememberField" xml:space="preserve">
-    <value>¿Recordarme?</value>
+    <value />
   </data>
   <data name="Required" xml:space="preserve">
-    <value>El campo {0} es requerido</value>
+    <value />
   </data>
   <data name="RetencionField" xml:space="preserve">
-    <value>Retención</value>
+    <value />
   </data>
   <data name="RFCField" xml:space="preserve">
-    <value>RFC</value>
+    <value />
   </data>
   <data name="RolField" xml:space="preserve">
-    <value>Rol</value>
+    <value />
   </data>
   <data name="SearchCompanyField" xml:space="preserve">
-    <value>Tecleé razón social o rfc para buscar...</value>
+    <value />
   </data>
   <data name="SearchEconomicActivityField" xml:space="preserve">
-    <value>Tecleé descripción o clave para buscar...</value>
+    <value />
   </data>
   <data name="SearchProductServiceField" xml:space="preserve">
-    <value>Tecleé descripción o clave para buscar...</value>
+    <value />
   </data>
   <data name="SerieField" xml:space="preserve">
-    <value>Serie</value>
+    <value />
   </data>
   <data name="SubareaField" xml:space="preserve">
-    <value>Subárea</value>
+    <value />
   </data>
   <data name="TipoCambioField" xml:space="preserve">
-    <value>Tipo de cambio</value>
+    <value />
   </data>
   <data name="TipoComprobanteField" xml:space="preserve">
-    <value>Tipo de comprobante</value>
+    <value />
   </data>
   <data name="TipoField" xml:space="preserve">
-    <value>Tipo</value>
+    <value />
   </data>
   <data name="TrasladoField" xml:space="preserve">
-    <value>Traslado</value>
+    <value />
   </data>
   <data name="UnidadField" xml:space="preserve">
-    <value>Unidad de medida</value>
+    <value />
   </data>
   <data name="UnitarioField" xml:space="preserve">
-    <value>Precio unitario</value>
+    <value />
   </data>
   <data name="URLWeb" xml:space="preserve">
-    <value>URL Web</value>
+    <value />
   </data>
   <data name="UserNameField" xml:space="preserve">
-    <value>Nombre de usuario</value>
+    <value />
   </data>
   <data name="UsoCFDIField" xml:space="preserve">
-    <value>Uso de CFDI</value>
+    <value />
   </data>
   <data name="UsuarioCreadorField" xml:space="preserve">
-    <value>Usuario creador</value>
+    <value />
   </data>
   <data name="UsuarioModificadorField" xml:space="preserve">
-    <value>Usuario Modificador</value>
+    <value />
   </data>
   <data name="UsuarioTimbradorField" xml:space="preserve">
-    <value>Usuario timbrador</value>
+    <value />
   </data>
   <data name="UUIDField" xml:space="preserve">
-    <value>UUID</value>
+    <value />
   </data>
   <data name="EmisorField" xml:space="preserve">
-    <value>Emisor</value>
+    <value />
   </data>
   <data name="ReceptorField" xml:space="preserve">
-    <value>Receptor</value>
+    <value />
   </data>
   <data name="AnioField" xml:space="preserve">
-    <value>Año</value>
+    <value />
   </data>
   <data name="MesField" xml:space="preserve">
-    <value>Mes</value>
+    <value />
   </data>
   <data name="EmpresaField" xml:space="preserve">
-    <value>Empresa</value>
+    <value />
   </data>
   <data name="EstatusContableField" xml:space="preserve">
-    <value>Estatus Contable</value>
+    <value />
   </data>
   <data name="ProveedorField" xml:space="preserve">
-    <value>Proveedor</value>
+    <value />
   </data>
   <data name="SubtipoField" xml:space="preserve">
-    <value>Subtipo</value>
+    <value />
   </data>
   <data name="CuentaField" xml:space="preserve">
-    <value>Cuenta</value>
+    <value />
   </data>
 </root>

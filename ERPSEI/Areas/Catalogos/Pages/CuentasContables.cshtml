@@ -1,0 +1,291 @@
+﻿@page "{handler?}"
+@using Microsoft.AspNetCore.Localization;
+@using Microsoft.AspNetCore.Mvc.Localization;
+@using ERPSEI.Data.Entities.Cuentas;
+@using ERPSEI.Data.Managers.Cuentas;
+
+@model ERPSEI.Areas.Catalogos.Pages.CuentasContablesModel
+@inject IViewLocalizer localizer;
+@inject ICuentaContableTipoManager cuentaContableTiposManager;
+@inject ICuentaContableSubtipoManager cuentaContableSubtiposManager;
+@{
+	ViewData["Title"] = localizer["Title"];
+
+	// Retrieves the requested culture
+	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+
+	// Culture contains the information of the requested culture
+	System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+
+	string cultureName = culture.Name;
+
+	List<CuentaContableTipo> tiposCuentas = await cuentaContableTiposManager.GetAllAsync();
+	List<CuentaContableSubtipo> subtiposCuentas = await cuentaContableSubtiposManager.GetAllAsync();
+
+	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+}
+<h3 id="hTitle" class="title mb-3">@ViewData["Title"]</h3>
+
+<!-- --------------------------- -->
+<!-- Sección de filtros -------- -->
+<div class="accordion shadow mb-5" id="accordionFiltros">
+	<div class="accordion-item">
+		<h2 class="accordion-header" id="headingOne">
+			<button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFiltros" aria-expanded="true" aria-controls="collapseFiltros">
+				<h6>@localizer["FilterTitle"]</h6>
+			</button>
+		</h2>
+		<div id="collapseFiltros" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+			<div class="accordion-body">
+				<form id="filtros" method="post">
+					<div class="row">
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroEmpresaRFC" type="search" asp-for="InputFiltro.EmpresaRFC" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" idselected='' area="Catalogos" module="CuentasContables" source="GetEmpresaSuggestion" />
+								<label for="inpFiltroEmpresaRFC" asp-for="InputFiltro.EmpresaRFC" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroClienteRFC" type="search" asp-for="InputFiltro.ClienteRFC" class="form-control" placeholder="@localizer["ClientePlaceholder"]" idselected='' area="Catalogos" module="CuentasContables" source="GetClienteSuggestion" />
+								<label for="inpFiltroClienteRFC" asp-for="InputFiltro.ClienteRFC" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<input id="inpFiltroProveedorRFC" type="search" asp-for="InputFiltro.ProveedorRFC" class="form-control" placeholder="@localizer["ProveedorPlaceholder"]" idselected='' area="Catalogos" module="CuentasContables" source="GetProveedorSuggestion" />
+								<label for="inpFiltroProveedorRFC" asp-for="InputFiltro.ProveedorRFC" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-select" placeholder="@localizer["TipoPlaceholder"]">
+									<option selected value='0'>@localizer["EmptySelectItemText"]</option>
+									@{
+										@foreach (CuentaContableTipo tipo in tiposCuentas)
+										{
+											<option value='@tipo.Clave'>@tipo.Clave - @tipo.Descripcion</option>
+										}
+									}
+								</select>
+								<label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
+							</div>
+						</div>
+						<div class="col-sm-6 col-md-6 col-lg-3">
+							<div class="form-floating mb-3">
+								<select id="selFiltroSubtipo" asp-for="InputFiltro.SubtipoId" class="form-select" placeholder="@localizer["SubtipoPlaceholder"]">
+									<option selected value='0'>@localizer["EmptySelectItemText"]</option>
+									@{
+										@foreach (CuentaContableSubtipo subtipo in subtiposCuentas)
+										{
+											<option value='@subtipo.Clave'>@subtipo.Clave - @subtipo.Descripcion</option>
+										}
+									}
+								</select>
+								<label for="selFiltroSubtipo" asp-for="InputFiltro.SubtipoId" class="form-label"></label>
+							</div>
+						</div>
+					</div>
+				</form>
+				@if (puedeTodo || puedeConsultar)
+				{
+					<div class="row text-end">
+						<div class="col-12">
+							<button id="btnBuscar" class="btn btn-primary" onclick="onBuscarClick();">
+								<i class="bi bi-search"></i> @localizer["SearchButton"]
+							</button>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+</div>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+<!-- --------------------------- -->
+<!-- Sección Editar/Ver Registro --- -->
+<div id="dlgCuentaContable" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 id="dlgDetalleTitle" class="modal-title"></h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body align-items-center">
+				<form id="theForm" method="post">
+					<div class="container-fluid">
+						<div class="row">
+							<div class="col-3 col-lg-2">
+								<div class="form-floating mb-3">
+									<input id="inpId" asp-for="InputCuenta.Id" type="text" class="form-control" />
+									<label for="inpCuentaId" asp-for="InputCuenta.Id" class="form-label"></label>
+									<span asp-validation-for="InputCuenta.Id" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+						<hr />
+						<div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+						<div class="row">
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpNombre" asp-for="InputCuenta.Nombre" type="text" class="form-control" placeholder="@localizer["NombrePlaceholder"]" />
+									<label asp-for="InputCuenta.Nombre" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.Nombre" class="text-danger"></span>
+								</div>
+							</div>
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpCuenta" asp-for="InputCuenta.Cuenta" type="text" class="form-control" placeholder="@localizer["CuentaPlaceholder"]" />
+									<label asp-for="InputCuenta.Cuenta" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.Cuenta" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpEmpresaId" asp-for="InputCuenta.EmpresaId" type="text" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" />
+									<label asp-for="InputCuenta.EmpresaId" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.EmpresaId" class="text-danger"></span>
+								</div>
+							</div>
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<select id="selTipoId" asp-for="InputCuenta.TipoId" class="form-select formSelect" placeholder="@localizer["TipoPlaceholder"]">
+										@{
+											foreach (CuentaContableTipo tipo in tiposCuentas)
+											{
+												<option value='@tipo.Clave'>@tipo.Clave - @tipo.Descripcion</option>
+											}
+										}
+									</select>
+									<label for="selTipoId" asp-for="InputCuenta.TipoId" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.TipoId" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<select id="selSubtipoId" asp-for="InputCuenta.SubtipoId" class="form-select formSelect" placeholder="@localizer["SubtipoPlaceholder"]">
+										@{
+											foreach (CuentaContableSubtipo subtipo in subtiposCuentas)
+											{
+												<option value='@subtipo.Clave'>@subtipo.Clave - @subtipo.Descripcion</option>
+											}
+										}
+									</select>
+									<label for="selSubtipoId" asp-for="InputCuenta.SubtipoId" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.SubtipoId" class="text-danger"></span>
+								</div>
+							</div>
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpEmpresaId" asp-for="InputCuenta.RFC" type="text" class="form-control" placeholder="@localizer["RFCPlaceholder"]" />
+									<label asp-for="InputCuenta.RFC" class="form-label"></label>
+									<span asp-validation-for="InputCuenta.RFC" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div class="modal-footer" style="display: inline !important;">
+				<div class="container row">
+					<div class="col-12 text-end">
+						<button id="dlgBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();">
+							<i class="bi bi-x-lg"></i> @localizer["CancelButtonTitle"]
+						</button>
+						@if (puedeTodo || puedeEditar)
+						{
+							<button id="dlgBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onGuardarClick();">
+								<i class="bi bi-floppy"></i> @localizer["SaveButtonTitle"]
+							</button>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+<!-- --------------------------- -->
+<!-- Sección tabla de resultados -->
+<div id="toolbar" class="col-xl-12">
+	@{
+		@if (puedeTodo || puedeEditar)
+		{
+			<button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgCuentasContables" onclick="onAgregarClick();">
+				<i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@localizer["AddButtonTitle"]</span>
+			</button>
+		}
+	}
+</div>
+<table id="table" class="table-sm"
+	   data-unique-id="id"
+	   data-toolbar="#toolbar"
+	   data-search="true"
+	   data-show-fullscreen="true"
+	   data-show-columns="true"
+	   data-show-columns-toggle-all="true"
+	   data-click-to-select="true"
+	   data-minimum-count-columns="2"
+	   data-show-pagination-switch="true"
+	   data-pagination="true"
+	   data-id-field="id"
+	   data-page-list="[10, 25, 50, 100, all]"
+	   data-show-footer="false"
+	   data-side-pagination="client"
+	   data-response-handler="responseHandler"
+	   data-buttons-class="primary">
+	<thead>
+		<tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+		</tr>
+	</thead>
+</table>
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+
+@section Scripts
+{
+	<!-- Librería autocompletar y dependencias -->
+	<link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+	<script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+	<script src="~/js/autocompletar.js"></script>
+
+	<!-- Bootstrap table -->
+	<link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+	<script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+	<script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
+
+	<!-- Scripts del módulo y dependencias -->
+	<link rel="stylesheet" href="~/css/CuentasContables.css" />
+	<script src="~/../Areas/Catalogos/Pages/CuentasContables.cshtml.js"></script>
+	<script type="text/javascript">
+		var cultureName = "@cultureName";
+		var title = '@localizer["Title"]';
+
+		var nuevoRegistro = '@localizer["NuevoRegistro"]';
+
+		var dlgEditarTitle = '@localizer["EditDialogTitle"]';
+		var dlgVerTitle = '@localizer["SeeDialogTitle"]';
+		var dlgNuevoTitle = '@localizer["NewDialogTitle"]';
+
+		var puedeTodo = '@puedeTodo' == 'True';
+		var puedeConsultar = '@puedeConsultar' == 'True';
+		var puedeEditar = '@puedeEditar' == 'True';
+		var puedeEliminar = '@puedeEliminar' == 'True';
+		var puedeAutorizar = '@puedeAutorizar' == 'True';
+	</script>
+
+	<partial name="_ValidationScriptsPartial" />
+}

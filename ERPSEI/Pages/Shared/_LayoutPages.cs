@@ -54,6 +54,9 @@ namespace ERPSEI.Pages.Shared
 		public static string CatalogoPerfiles => "Perfiles";
 		public static string CatalogoPerfilesNavClass(ViewContext viewContext) => PageNavClass(viewContext, CatalogoPerfiles);
 
+        public static string CatalogoCuentasContables => "CuentasContables";
+        public static string CatalogoCuentasContablesNavClass(ViewContext viewContext) => PageNavClass(viewContext, CatalogoCuentasContables);
+
         #endregion
 
         #endregion

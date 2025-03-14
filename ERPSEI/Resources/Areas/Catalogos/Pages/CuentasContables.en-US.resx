@@ -117,103 +117,79 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AccountingMenu" xml:space="preserve">
-    <value>Contabilidad</value>
+  <data name="AddButtonTitle" xml:space="preserve">
+    <value>Add</value>
   </data>
-  <data name="AdministradorDeComprobantesMenu" xml:space="preserve">
-    <value>Administrador de Comprobantes</value>
+  <data name="CancelButtonTitle" xml:space="preserve">
+    <value>Cancel</value>
   </data>
-  <data name="AreasCatalogMenu" xml:space="preserve">
-    <value>Áreas</value>
+  <data name="ClientePlaceholder" xml:space="preserve">
+    <value>Client</value>
   </data>
-  <data name="AsistenciaMenu" xml:space="preserve">
-    <value>Asistencia</value>
+  <data name="CloseButtonTitle" xml:space="preserve">
+    <value>Close</value>
   </data>
-  <data name="CatalogsMenu" xml:space="preserve">
-    <value>Catálogos</value>
+  <data name="DeactivateButton" xml:space="preserve">
+    <value>Unsubscribe</value>
   </data>
-  <data name="ConciliacionesMenu" xml:space="preserve">
-    <value>Conciliaciones</value>
+  <data name="DeleteButton" xml:space="preserve">
+    <value>Delete</value>
   </data>
-  <data name="DisabilitiesMenu" xml:space="preserve">
-    <value>Incapacidades</value>
+  <data name="DeleteElementDialogQuestion" xml:space="preserve">
+    <value>Are you sure you want to delete the selected items from the list?</value>
   </data>
-  <data name="EmitidosSubmenu" xml:space="preserve">
-    <value>Emitidos</value>
+  <data name="DeleteEmpresaDialogTitle" xml:space="preserve">
+    <value>Delete company</value>
   </data>
-  <data name="EmpresasCatalogMenu" xml:space="preserve">
-    <value>Empresas</value>
+  <data name="EditButtonTitle" xml:space="preserve">
+    <value>Edit</value>
   </data>
-  <data name="ERPMenu" xml:space="preserve">
-    <value>ERP</value>
+  <data name="EditDialogTitle" xml:space="preserve">
+    <value>Edit record</value>
   </data>
-  <data name="FacturacionMenu" xml:space="preserve">
-    <value>Operaciones Empresas</value>
+  <data name="EditLink" xml:space="preserve">
+    <value>Edit</value>
   </data>
-  <data name="HomeMenu" xml:space="preserve">
-    <value>Inicio</value>
+  <data name="EmpresaPlaceholder" xml:space="preserve">
+    <value>Company</value>
   </data>
-  <data name="HumanResourcesMenu" xml:space="preserve">
-    <value>Recursos Humanos</value>
+  <data name="EmptySelectItemText" xml:space="preserve">
+    <value>Select...</value>
   </data>
-  <data name="LevelsCatalogMenu" xml:space="preserve">
-    <value>Niveles</value>
+  <data name="FilterTitle" xml:space="preserve">
+    <value>Search filters</value>
   </data>
-  <data name="OfficesCatalogMenu" xml:space="preserve">
-    <value>Oficinas</value>
+  <data name="NewDialogTitle" xml:space="preserve">
+    <value>New</value>
   </data>
-  <data name="OrganizationChartMenu" xml:space="preserve">
-    <value>Organigrama</value>
+  <data name="Nuevo" xml:space="preserve">
+    <value>New</value>
   </data>
-  <data name="OriginsCatalogMenu" xml:space="preserve">
-    <value>Orígenes</value>
+  <data name="ProveedorPlaceholder" xml:space="preserve">
+    <value>Supplier</value>
   </data>
-  <data name="PermissionsMenu" xml:space="preserve">
-    <value>Permisos</value>
+  <data name="SaveButtonTitle" xml:space="preserve">
+    <value>Save</value>
   </data>
-  <data name="PersonalCatalogMenu" xml:space="preserve">
-    <value>Gestión de talento</value>
+  <data name="SearchButton" xml:space="preserve">
+    <value>Search</value>
   </data>
-  <data name="PositionsCatalogMenu" xml:space="preserve">
-    <value>Puestos</value>
+  <data name="SeeButtonTitle" xml:space="preserve">
+    <value>See</value>
   </data>
-  <data name="PrefacturasMenu" xml:space="preserve">
-    <value>Prefacturas</value>
+  <data name="SeeDialogTitle" xml:space="preserve">
+    <value>See record</value>
   </data>
-  <data name="PrivacyMenu" xml:space="preserve">
-    <value>Aviso de privacidad</value>
+  <data name="Seleccione" xml:space="preserve">
+    <value>Select...</value>
   </data>
-  <data name="ProfilesCatalogMenu" xml:space="preserve">
-    <value>Perfiles</value>
+  <data name="SubtipoPlaceholder" xml:space="preserve">
+    <value>Subtype</value>
   </data>
-  <data name="RecibidosSubmenu" xml:space="preserve">
-    <value>Recibidos</value>
+  <data name="TipoPlaceholder" xml:space="preserve">
+    <value>Type</value>
   </data>
-  <data name="ReportesMenu" xml:space="preserve">
-    <value>Reportes</value>
-  </data>
-  <data name="RightFooter" xml:space="preserve">
-    <value>Imagenes por &lt;a href="https://www.freepik.com/author/stories"&gt;storyset&lt;/a&gt; en Freepik.com</value>
-  </data>
-  <data name="RolesCatalogMenu" xml:space="preserve">
-    <value>Roles</value>
-  </data>
-  <data name="SubareasCatalogMenu" xml:space="preserve">
-    <value>Subáreas</value>
-  </data>
-  <data name="UsersCatalogMenu" xml:space="preserve">
-    <value>Usuarios</value>
-  </data>
-  <data name="VacationMenu" xml:space="preserve">
-    <value>Vacaciones</value>
-  </data>
-  <data name="BillingReportMenu" xml:space="preserve">
-    <value>Facturación</value>
-  </data>
-  <data name="BankConverterMenu" xml:space="preserve">
-    <value>Convertidor Bancario</value>
-  </data>
-  <data name="AccountingAccountsCatalogMenu" xml:space="preserve">
-    <value>Cuentas Contables</value>
+  <data name="Title" xml:space="preserve">
+    <value>Accounting Accounts</value>
   </data>
 </root>

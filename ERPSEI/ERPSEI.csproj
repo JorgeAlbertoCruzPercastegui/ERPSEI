@@ -55,6 +55,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="Areas\Catalogos\Pages\CuentasContables.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Update="Areas\Reportes\Pages\Facturacion.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -62,6 +66,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Resources\Areas\Catalogos\Pages\CuentasContables.en-US.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Areas\Catalogos\Pages\CuentasContables.es-MX.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Areas\Catalogos\Pages\CuentasContablesModel.en-US.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Resources\Areas\Catalogos\Pages\CuentasContablesModel.es-MX.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Update="Resources\Areas\Catalogos\Pages\UsuariosModel.es-MX.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
