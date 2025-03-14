@@ -159,6 +159,9 @@
   <data name="FilterTitle" xml:space="preserve">
     <value>Search filters</value>
   </data>
+  <data name="NewDialogTitle" xml:space="preserve">
+    <value>New</value>
+  </data>
   <data name="Nuevo" xml:space="preserve">
     <value>New</value>
   </data>

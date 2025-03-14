@@ -108,125 +108,59 @@ function onAgregarClick() {
 ////////////////////////////////
 //Función para crear un nuevo objeto CFDI
 function createNewCuenta() {
-    let oCFDINuevo = {
+    let oCuentaNueva = {
         id: nuevoRegistro,
-        fecha: strCurDate,
-        fechaJS: strCurDate,
-        tipoComprobanteId: 0,
-        serie: "",
-        folio: "",
-        usoCFDIId: 0,
-        formaPagoId: 0,
-        metodoPagoId: 0,
-        monedaId: 0,
-        tipoCambio: "",
-        exportacionId: 0,
-        numeroOperacion: "",
-        emisorId: 0,
-        emisor: "",
-        receptorId: 0,
-        receptor: "",
-        conceptos: []
+        cuenta: "",
+        nombre: "",
+        rfc: "",
+        empresaDescripcion: '',
+        empresaId: '',
+        tipoId: 0,
+        subtipoId: 0
     };
 
-    return oCFDINuevo;
+    return oCuentaNueva;
 }
 
 //Función para inicializar el cuadro de diálogo
 function initCuentaContableDialog(action, row) {
-    let tabGenerales = document.getElementById("tabGenerales");
-
-    let idField = document.getElementById("inpCFDIId");
-
-    let fechaField = document.getElementById("inpFecha"),
-        tipoComprobanteField = document.getElementById("selTipoComprobante");
-
-    let serieField = document.getElementById("inpSerie"),
-        folioField = document.getElementById("inpFolio"),
-        usoField = document.getElementById("selUsoCFDI");
-
-    let formaField = document.getElementById("selFormaPago"),
-        metodoField = document.getElementById("selMetodoPago"),
-        monedaField = document.getElementById("selMoneda"),
-        tipoCambioField = document.getElementById("inpTipoCambio");
-
-    let exportacionField = document.getElementById("selExportacion"),
-        numeroOperacionField = document.getElementById("inpNumeroOperacion");
-
-    let emisorField = document.getElementById("inpEmisor"),
-        btnInfoEmisor = document.getElementById("btnInfoEmisor"),
-        receptorField = document.getElementById("inpReceptor"),
-        btnInfoReceptor = document.getElementById("btnInfoReceptor");
-
-    let btnLimpiar = document.getElementById("btnLimpiar"),
-        btnGuardar = document.getElementById("dlgCFDIBtnGuardar");
-
-    let dlgTitle = document.getElementById("dlgCFDITitle"),
-        summaryContainer = document.getElementById("saveValidationSummary");
-
-    summaryContainer.innerHTML = "";
+    $("#saveValidationSummary").html("");
 
     dialogMode = action;
 
-    idField.setAttribute("disabled", true);
+    $("#inpId").attr("disabled", true);
     switch (action) {
         case NUEVO:
         case EDITAR:
             if (action == NUEVO) {
-                dlgTitle.innerHTML = dlgNuevoTitle;
+                $("#dlgDetalleTitle").html(dlgNuevoTitle);
             }
             else {
-                dlgTitle.innerHTML = dlgEditarTitle;
+                $("#dlgDetalleTitle").html(dlgEditarTitle);
             }
-
-            btnLimpiar.hidden = false;
-            btnGuardar.hidden = false;
 
             document.querySelectorAll(".formButton").forEach(function (btn) { btn.classList.remove("disabled"); });
             document.querySelectorAll(".formInput, .formSelect").forEach(function (e) { e.removeAttribute("disabled"); });
 
             break;
         default:
-            dlgTitle.innerHTML = dlgVerTitle;
-
-            btnLimpiar.hidden = true;
-            btnGuardar.hidden = true;
+            $("#dlgDetalleTitle").html(dlgVerTitle);
 
             document.querySelectorAll(".formButton").forEach(function (btn) { btn.classList.add("disabled"); });
             document.querySelectorAll(".formInput, .formSelect").forEach(function (e) { e.setAttribute("disabled", true); });
             break;
     }
 
-    idField.value = row.id;
+    $("#inpId").val(row.id);
+    $("#inpNombre").val(row.nombre);
+    $("#inpCuenta").val(row.cuenta);
+    $("#inpEmpresaId").val(row.empresaDescripcion);
+    $("#inpEmpresaId").attr("idselected", row.empresaId);
+    $("#selTipoId").val(row.tipoId);
+    $("#selSubtipoId").val(row.subtipoId);
 
-    fechaField.value = row.fechaJS;
-    tipoComprobanteField.value = row.tipoComprobanteId;
-
-    serieField.value = row.serie;
-    folioField.value = row.folio;
-    usoField.value = row.usoCFDIId;
-
-    formaField.value = row.formaPagoId;
-    metodoField.value = row.metodoPagoId;
-    monedaField.value = row.monedaId;
-    tipoCambioField.value = row.tipoCambio;
-    if (action != VER) { tipoCambioField.removeAttribute("disabled"); }
-
-    exportacionField.value = row.exportacionId;
-    numeroOperacionField.value = row.numeroOperacion;
-
-    emisorField.setAttribute("idselected", row.emisorId);
-    emisorField.value = row.emisor;
-    btnInfoEmisor.setAttribute("hidden", true);
-    receptorField.setAttribute("idselected", row.receptorId);
-    receptorField.value = row.receptor;
-    btnInfoReceptor.setAttribute("hidden", true);
-
-    tabGenerales.click();
-
-    if (action == NUEVO || (row.hasDatosAdicionales || false)) {
-        establecerDatosAdicionales(row);
-        dlgCFDIModal.toggle();
+    if (action == NUEVO) {
+        dlgCuentaContableModal.toggle();
         return;
     }
 }
@@ -247,20 +181,6 @@ function onCerrarClick() {
     //Removes is-valid and is-invalid class
     $(".is-valid").removeClass("is-valid");
     $(".is-invalid").removeClass("is-invalid");
-}
-
-//Función para el cierre del cuadro de diálogo
-function onCerrarDialogoClick() {
-    if (dialogMode == VER) {
-        onCerrarClick();
-        dlgCuentaContableModal.toggle();
-    }
-    else {
-        askConfirmation(dlgConfirmActionTitle, dlgConfirmActionQuestion, function () {
-            onCerrarClick();
-            dlgCuentaContableModal.toggle();
-        });
-    }
 }
 
 //Función para el guardado de información del empleado

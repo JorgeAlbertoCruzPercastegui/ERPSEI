@@ -462,4 +462,7 @@
   <data name="SubtipoField" xml:space="preserve">
     <value>Subtype</value>
   </data>
+  <data name="CuentaField" xml:space="preserve">
+    <value>Account</value>
+  </data>
 </root>

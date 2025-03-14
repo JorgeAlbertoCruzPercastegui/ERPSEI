@@ -109,68 +109,111 @@
 <!-- --------------------------- -->
 
 <!-- --------------------------- -->
-<!-- Diálogo Cuenta Contable----- -->
-<form id="theform" method="post">
-	<div id="dlgCuentaContable" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered modal-xl">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 id="dlgTitle" class="modal-title">@localizer["DlgCuentasPolizaEgresosTitle"]</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-				</div>
-				<div class="modal-body align-items-center ui-front">
+<!-- Sección Editar/Ver Registro --- -->
+<div id="dlgCuentaContable" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 id="dlgDetalleTitle" class="modal-title"></h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body align-items-center">
+				<form id="theForm" method="post">
 					<div class="container-fluid">
 						<div class="row">
-							<div class="alert alert-primary d-flex align-items-center mb-3" role="alert">
-								<i class="bi bi-info-circle-fill me-2" style="font-size: x-large"></i>
-								<div id="dlgCuentasMessage"></div>
+							<div class="col-3 col-lg-2">
+								<div class="form-floating mb-3">
+									<input id="inpId" asp-for="InputCuenta.Id" type="text" class="form-control" />
+									<label for="inpCuentaId" asp-for="InputCuenta.Id" class="form-label"></label>
+									<span asp-validation-for="InputCuenta.Id" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+						<hr />
+						<div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+						<div class="row">
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpNombre" asp-for="InputCuenta.Nombre" type="text" class="form-control" placeholder="@localizer["NombrePlaceholder"]" />
+									<label asp-for="InputCuenta.Nombre" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.Nombre" class="text-danger"></span>
+								</div>
+							</div>
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpCuenta" asp-for="InputCuenta.Cuenta" type="text" class="form-control" placeholder="@localizer["CuentaPlaceholder"]" />
+									<label asp-for="InputCuenta.Cuenta" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.Cuenta" class="text-danger"></span>
+								</div>
 							</div>
 						</div>
 						<div class="row">
-							<table id="tableCuentasContables" class="table-sm"
-								   data-unique-id="id"
-								   data-undefined-text=""
-								   data-toolbar="#toolbarCuentasContables"
-								   data-search="true"
-								   data-show-fullscreen="false"
-								   data-show-columns="false"
-								   data-show-columns-toggle-all="false"
-								   data-click-to-select="true"
-								   data-minimum-count-columns="2"
-								   data-show-pagination-switch="false"
-								   data-pagination="true"
-								   data-id-field="id"
-								   data-page-list="[10, 25, 50, 100, all]"
-								   data-show-footer="false"
-								   data-side-pagination="client"
-								   data-response-handler="responseHandler"
-								   data-detail-view="true"
-								   data-detail-formatter="detailFormatter"
-								   data-buttons-class="primary">
-								<thead><tr align="center" valign="middle" class="bg-primary bg-opacity-10"></tr></thead>
-							</table>
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpEmpresaId" asp-for="InputCuenta.EmpresaId" type="text" class="form-control" placeholder="@localizer["EmpresaPlaceholder"]" />
+									<label asp-for="InputCuenta.EmpresaId" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.EmpresaId" class="text-danger"></span>
+								</div>
+							</div>
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<select id="selTipoId" asp-for="InputCuenta.TipoId" class="form-select formSelect" placeholder="@localizer["TipoPlaceholder"]">
+										@{
+											foreach (CuentaContableTipo tipo in tiposCuentas)
+											{
+												<option value='@tipo.Clave'>@tipo.Clave - @tipo.Descripcion</option>
+											}
+										}
+									</select>
+									<label for="selTipoId" asp-for="InputCuenta.TipoId" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.TipoId" class="text-danger"></span>
+								</div>
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<select id="selSubtipoId" asp-for="InputCuenta.SubtipoId" class="form-select formSelect" placeholder="@localizer["SubtipoPlaceholder"]">
+										@{
+											foreach (CuentaContableSubtipo subtipo in subtiposCuentas)
+											{
+												<option value='@subtipo.Clave'>@subtipo.Clave - @subtipo.Descripcion</option>
+											}
+										}
+									</select>
+									<label for="selSubtipoId" asp-for="InputCuenta.SubtipoId" class="form-label required"></label>
+									<span asp-validation-for="InputCuenta.SubtipoId" class="text-danger"></span>
+								</div>
+							</div>
+							<div class="col-sm-12 col-md-12 col-lg-6">
+								<div class="form-floating mb-3">
+									<input id="inpEmpresaId" asp-for="InputCuenta.RFC" type="text" class="form-control" placeholder="@localizer["RFCPlaceholder"]" />
+									<label asp-for="InputCuenta.RFC" class="form-label"></label>
+									<span asp-validation-for="InputCuenta.RFC" class="text-danger"></span>
+								</div>
+							</div>
 						</div>
 					</div>
-				</div>
-				<div class="modal-footer">
-					<button id="dlgBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-						<i class="bi bi-x-lg"></i> @localizer["CloseButtonTitle"]
-					</button>
-					@if (puedeTodo || puedeEditar)
-					{
-						<button id="dlgBtnAgregar" type="button" class="btn btn-primary formButton" onclick="onShowCFDIs(TIPO_EXPORTADO_POLIZA_EGRESO, this);">
-							<i class="bi bi-file-earmark-minus"></i> @localizer["PolizaEgresoButtonTitle"]
+				</form>
+			</div>
+			<div class="modal-footer" style="display: inline !important;">
+				<div class="container row">
+					<div class="col-12 text-end">
+						<button id="dlgBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();">
+							<i class="bi bi-x-lg"></i> @localizer["CancelButtonTitle"]
 						</button>
-
-						<button id="dlgBtnAgregarIngresos" type="button" class="btn btn-primary formButton" onclick="onShowCFDIs(TIPO_EXPORTADO_POLIZA_INGRESO, this);">
-							<i class="bi bi-file-earmark-plus"></i> @localizer["PolizaIngresoButtonTitle"]
-						</button>
-					}
+						@if (puedeTodo || puedeEditar)
+						{
+							<button id="dlgBtnGuardar" type="button" class="btn btn-primary formButton" onclick="onGuardarClick();">
+								<i class="bi bi-floppy"></i> @localizer["SaveButtonTitle"]
+							</button>
+						}
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-</form>
+</div>
 <!-- --------------------------- -->
 <!-- --------------------------- -->
 
@@ -232,6 +275,10 @@
 		var title = '@localizer["Title"]';
 
 		var nuevoRegistro = '@localizer["NuevoRegistro"]';
+
+		var dlgEditarTitle = '@localizer["EditDialogTitle"]';
+		var dlgVerTitle = '@localizer["SeeDialogTitle"]';
+		var dlgNuevoTitle = '@localizer["NewDialogTitle"]';
 
 		var puedeTodo = '@puedeTodo' == 'True';
 		var puedeConsultar = '@puedeConsultar' == 'True';
