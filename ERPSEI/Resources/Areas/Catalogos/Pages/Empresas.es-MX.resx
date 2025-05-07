@@ -381,4 +381,16 @@
   <data name="LimitePlaceholder" xml:space="preserve">
     <value>Límite Transaccional</value>
   </data>
+  <data name="ActaConstitutiva" xml:space="preserve">
+    <value>Acta Constitutiva</value>
+  </data>
+  <data name="INE2" xml:space="preserve">
+    <value>INE 2</value>
+  </data>
+  <data name="INE3" xml:space="preserve">
+    <value>INE 3</value>
+  </data>
+  <data name="Organigrama" xml:space="preserve">
+    <value>Organigrama</value>
+  </data>
 </root>

@@ -299,13 +299,17 @@ namespace ERPSEI.Data
 				.HasData(
 					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.CSF, "CSF"),
 					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.INE, "INE"),
-                    new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.RFC, "RFC"),
+					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.INE2, "INE2"),
+					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.INE3, "INE3"),
+					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.RFC, "RFC"),
                     new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.ComprobanteDomicilio, "ComprobanteDomicilio"),
                     new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.Otro, "Otro"),
 					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.CER, "CER"),
 					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.KEY, "KEY"),
 					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.Logo, "Logo"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.HojaMembretada, "HojaMembretada")
+					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.HojaMembretada, "HojaMembretada"),
+					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.ActaConstitutiva, "ActaConstitutiva"),
+					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.Organigrama, "Organigrama")
 				);
 		}
 
