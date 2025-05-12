@@ -4,8 +4,6 @@
     {
         CSF = 1,
         INE,
-		INE2,
-        INE3,
 		RFC,
         ComprobanteDomicilio,
         Otro,
@@ -13,7 +11,9 @@
         KEY, 
         Logo,
         HojaMembretada,
-        ActaConstitutiva,
+		INE2,
+		INE3,
+		ActaConstitutiva,
         Organigrama
     }
     public class TipoArchivoEmpresa
