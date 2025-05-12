@@ -233,7 +233,80 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
             return jsonResponse;
         }
-        private async Task<string> GetListaEmpresas(FiltroModel? filtro = null)
+
+		private async Task<List<object>> GetListaEmpresas(FiltroModel? filtro = null)
+		{
+			string nombreOrigen;
+			string nombreNivel;
+			string nombrePerfil;
+
+			List<object> empresasJson = [];
+			List<Empresa> empresas;
+
+			if (filtro != null)
+			{
+				empresas = await _empresaManager.GetAllAsync(
+					filtro.OrigenId,
+					filtro.NivelId,
+					filtro.ActividadEconomicaId,
+					filtro.RFC
+				);
+			}
+			else
+			{
+				empresas = await _empresaManager.GetAllAsync();
+			}
+
+			foreach (Empresa e in empresas)
+			{
+				nombreOrigen = e.Origen != null ? e.Origen.Nombre : string.Empty;
+				nombreNivel = e.Nivel != null ? e.Nivel.Nombre : string.Empty;
+				nombrePerfil = e.Perfil != null ? e.Perfil.Nombre : string.Empty;
+
+				e.ObjetoSocial = JsonEscape(e.ObjetoSocial ?? string.Empty);
+
+				DateTime? fechaConstitucion = e.FechaConstitucion == DateTime.MinValue ? null : e.FechaConstitucion;
+				DateTime? fechaInicioOperacion = e.FechaInicioOperacion == DateTime.MinValue ? null : e.FechaInicioOperacion;
+				DateTime? fechaInicioFacturacion = e.FechaInicioFacturacion == DateTime.MinValue ? null : e.FechaInicioFacturacion;
+				DateTime? fechaInicioAsimilados = e.FechaInicioAsimilados == DateTime.MinValue ? null : e.FechaInicioAsimilados;
+
+				empresasJson.Add(new
+				{
+					id = e.Id,
+					razonSocial = e.RazonSocial,
+					perfilId = e.PerfilId,
+					perfil = nombrePerfil,
+					origenId = e.OrigenId,
+					origen = nombreOrigen,
+					nivelId = e.NivelId,
+					nivel = nombreNivel,
+					fechaConstitucion = fechaConstitucion?.ToString("dd/MM/yyyy"),
+					fechaConstitucionJS = fechaConstitucion?.ToString("yyyy-MM-dd"),
+					fechaInicioOperacion = fechaInicioOperacion?.ToString("dd/MM/yyyy"),
+					fechaInicioOperacionJS = fechaInicioOperacion?.ToString("yyyy-MM-dd"),
+					fechaInicioFacturacion = fechaInicioFacturacion?.ToString("dd/MM/yyyy"),
+					fechaInicioFacturacionJS = fechaInicioFacturacion?.ToString("yyyy-MM-dd"),
+					fechaInicioAsimilados = fechaInicioAsimilados?.ToString("dd/MM/yyyy"),
+					fechaInicioAsimiladosJS = fechaInicioAsimilados?.ToString("yyyy-MM-dd"),
+					rfc = e.RFC,
+					domicilioFiscal = e.DomicilioFiscal,
+					administrador = e.Administrador,
+					accionista = e.Accionista,
+					correoGeneral = e.CorreoGeneral,
+					correoBancos = e.CorreoBancos,
+					correoFiscal = e.CorreoFiscal,
+					correoFacturacion = e.CorreoFacturacion,
+					telefono = e.Telefono,
+					objetoSocial = e.ObjetoSocial,
+					hasPasswordSAT = !string.IsNullOrEmpty(e.PFESAT)
+				});
+			}
+
+			return empresasJson;
+		}
+
+
+		/*private async Task<string> GetListaEmpresas(FiltroModel? filtro = null)
 		{
 			string nombreOrigen;
 			string nombreNivel;
@@ -305,7 +378,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			jsonResponse = $"[{string.Join(",", jsonEmpresas)}]";
 
 			return jsonResponse;
-		}
+		}*/
+
 		private static string JsonEscape(string str)
 		{
 			return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
@@ -482,6 +556,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar || PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos)
 				{
 					resp.Datos = await GetListaEmpresas(InputFiltro);
+
 					resp.TieneError = false;
 					resp.Mensaje = _strLocalizer["EmpresasFiltradasSuccessfully"];
 				}
