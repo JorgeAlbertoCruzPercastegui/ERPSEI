@@ -26,6 +26,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     dlgEmpresaModal = new bootstrap.Modal(dlgEmpresa, null);
     //Función para limpiar el cuadro de diálogo cuando es cerrado
     dlgEmpresa.addEventListener('hidden.bs.modal', function (event) { onCerrarClick(); });
+
     //Función para ejecutar acciones posteriores al mostrado del diálogo.
     dlgEmpresa.addEventListener('shown.bs.modal', function (e) {
         //Este evento es necesario para poder mostrar el text area ajustado al tamaño del contenido, basado en el tamaño del scroll.
@@ -557,6 +558,132 @@ function prepareForm(action) {
 }
 //Función para establecer los datos adicionales de la empresa
 function establecerDatosAdicionales(row, action) {
+    if (tieneAccesoEmpresas) {
+        // Actividades económicas
+        let data = [];
+        row.actividadesEconomicas = row.actividadesEconomicas || [];
+        row.actividadesEconomicas.forEach(function (p) { data.push(p); });
+        initTableActividad(data);
+
+        // Archivos
+        let ID_TIPO_ARCHIVO_CER = 6;
+        let ID_TIPO_ARCHIVO_KEY = 7;
+        $("#bodyArchivos, #bodyArchivosSAT").html("");
+
+        row.archivos = (row.archivos || []).filter(a => parseInt(a.fileSize) >= 1);
+
+        // Ordenar por ID descendente (más reciente primero)
+        row.archivos.sort((a, b) => b.id.localeCompare(a.id));
+
+        // Filtrar uno por tipo (más reciente)
+        let archivosUnicosPorTipo = [];
+        let tiposAgregados = new Set();
+        row.archivos.forEach(function (a) {
+            if (!tiposAgregados.has(a.tipoArchivoId)) {
+                archivosUnicosPorTipo.push(a);
+                tiposAgregados.add(a.tipoArchivoId);
+            }
+        });
+
+        // Renderizar tarjetas por tipo
+        Object.keys(arrTiposDocumentos).forEach(function (tipoArchivoIdStr) {
+            let tipoArchivoId = parseInt(tipoArchivoIdStr);
+            let archivo = archivosUnicosPorTipo.find(x => x.tipoArchivoId === tipoArchivoId);
+
+            let containerClass = "document-container-empty";
+            let iconClass = "opacity-25";
+            let nameClass = "opacity-25";
+            let nameHTML = `<div class="overflowed-text">${emptySelectItemText}</div>`;
+            let editDisabled = (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) ? (action == VER ? "disabled" : "") : ("disabled");
+            let itemVerHTML = "";
+            let itemEditarHTML = "";
+            let itemEliminarHTML = "";
+            let menuHTML = "";
+            let actualizar = 1;
+            let containerName;
+            let mimeTypes;
+            let allowedExtensions;
+
+            if (tipoArchivoId === ID_TIPO_ARCHIVO_CER) {
+                mimeTypes = "application/x-x509-ca-cert";
+                containerName = "#bodyArchivosSAT";
+                allowedExtensions = ".cer";
+            } else if (tipoArchivoId === ID_TIPO_ARCHIVO_KEY) {
+                mimeTypes = ".key";
+                containerName = "#bodyArchivosSAT";
+                allowedExtensions = ".key";
+            } else {
+                mimeTypes = "image/png, image/jpeg, application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/msword";
+                containerName = "#bodyArchivos";
+                allowedExtensions = ".png, .jpg, .jpeg, .pdf, .doc, .docx";
+            }
+
+            if (archivo) {
+                containerClass = "document-container-filled";
+                iconClass = "document-icon-filled";
+                nameClass = "document-name-filled";
+                nameHTML = `<div class="overflowed-text">${archivo.nombre}</div>.<div>${archivo.extension}</div>`;
+                actualizar = 0;
+
+                if (puedeTodo || puedeEditar) {
+                    itemVerHTML = `<li><a class='dropdown-item see' onclick='onVerDocumentClick(this);' inputName="selector${archivo.tipoArchivoId}"><i class='bi bi-search'></i> ${btnVerTitle}</a></li>`;
+                }
+                if (puedeTodo || puedeEditar || puedeEliminar) {
+                    itemEditarHTML = `<li><a class='dropdown-item edit ${editDisabled}' onclick='onEditDocumentClick(this);' inputName="selector${archivo.tipoArchivoId}"><i class='bi bi-pencil-fill'></i> ${btnEditarTitle}</a></li>`;
+                }
+                if (puedeTodo || puedeEliminar) {
+                    itemEliminarHTML = `<li><a class="dropdown-item disableable" inputName="selector${archivo.tipoArchivoId}" onclick="onDeleteClick(this);" sourceId="selector${archivo.tipoArchivoId}" sourceLength="${archivo.fileSize}"><i class="bi bi-x-lg"></i> ${btnEliminarTitle}</a></li>`;
+                }
+            }
+
+            if (itemVerHTML || itemEditarHTML || itemEliminarHTML) {
+                menuHTML = `
+                    <div class="dropdown">
+                        <button class="btn p-0 p-lg-2 p-xl-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical success"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            ${itemVerHTML}
+                            ${itemEditarHTML}
+                            ${itemEliminarHTML}
+                        </ul>
+                    </div>`;
+            }
+
+            $(containerName).append(
+                `<div class="col-12 col-xl-6">
+                    <div><b>${arrTiposDocumentos[tipoArchivoId]}</b></div>
+                    <div id="container${tipoArchivoId}" class="alert mb-2 mt-2 ${containerClass} row me-0">
+                        <div id="fileIcon${tipoArchivoId}" class="align-self-center col-1 ${iconClass} p-0 p-lg-2 p-xl-2"><i class='bi bi-file-image' style='font-size:25px'></i></div>
+                        <div id="fileName${tipoArchivoId}" class="align-self-center col-10 ${nameClass} p-2" style="display:flex; color:dimgray">${nameHTML}</div>
+                        <div class="align-self-center col-1">
+                            <input type="file"
+                                   actualizar="${actualizar}"
+                                   id="selector${tipoArchivoId}"
+                                   ${archivo ? `sourceId="${archivo.id}" safeL="${archivo.safeL}" sourceName="${archivo.nombre}.${archivo.extension}" sourceLength="${archivo.fileSize}"` : ""}
+                                   tipoArchivoId="${tipoArchivoId}"
+                                   containerName="container${tipoArchivoId}"
+                                   fileIconName="fileIcon${tipoArchivoId}"
+                                   fileNameName="fileName${tipoArchivoId}"
+                                   onchange="onDocumentSelectorChanged(this, '${allowedExtensions}');"
+                                   accept="${mimeTypes}" hidden />
+                            ${menuHTML}
+                        </div>
+                    </div>
+                </div>`
+            );
+        });
+    }
+
+    if (tieneAccesoBancos) {
+        $("#bodyBancos").html("");
+        row.bancos = row.bancos || [];
+        row.bancos.forEach(function (b) { onAgregarBancoClick(b); });
+        onLimiteBancoChanged();
+    }
+}
+
+/*function establecerDatosAdicionales(row, action) {
     
     if (tieneAccesoEmpresas) {
         //Se establecen las actividades económicas
@@ -659,6 +786,8 @@ function establecerDatosAdicionales(row, action) {
         onLimiteBancoChanged();
     }
 }
+*/
+
 //Función para habilitar/deshabilitar los botones de visualización en base a si existe contenido o no para visualizar.
 function initializeDisableableButtons(isConsulta = false) {
     //Botones de acción de editar y eliminar

@@ -426,7 +426,93 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
             return jsonBancos;
         }
-        private List<string> GetListJsonArchivos(ICollection<SemiArchivoEmpresa>? archivos)
+
+		private List<string> GetListJsonArchivos(ICollection<SemiArchivoEmpresa>? archivos)
+		{
+			List<string> jsonArchivos = [];
+			string imgSrc = string.Empty;
+			string htmlContainer = string.Empty;
+			SemiArchivoEmpresa? a = null;
+			string id = string.Empty;
+
+			// Ordena los archivos por tipo
+			List<SemiArchivoEmpresa> empresaFiles = [.. (from f in archivos orderby f.TipoArchivoId ascending select f)];
+
+			// Recorre todos los tipos de archivos definidos
+			foreach (FileTypes i in Enum.GetValues(typeof(FileTypes)))
+			{
+				var archivosTipo = empresaFiles.Where(f => f.TipoArchivoId == (int)i).ToList();
+
+				if (archivosTipo.Count == 0)
+				{
+					id = Guid.NewGuid().ToString();
+					htmlContainer = "<i class='bi bi-file-image opacity-50' style='font-size:105px'></i>";
+					jsonArchivos.Add(
+						"{" +
+							$"\"id\": \"{id}\"," +
+							$"\"nombre\": \"\"," +
+							$"\"tipoArchivoId\": {(int)i}," +
+							$"\"extension\": \"\"," +
+							$"\"imgSrc\": \"\"," +
+							$"\"htmlContainer\": \"{htmlContainer}\"," +
+							$"\"fileSize\": \"0\"" +
+						"}"
+					);
+					continue;
+				}
+
+				foreach (SemiArchivoEmpresa aa in archivosTipo)
+				{
+					id = aa.Id ?? Guid.NewGuid().ToString();
+					string b64 = Convert.ToBase64String(aa.Archivo);
+					string extension = aa.Extension?.ToLower() ?? "";
+					imgSrc = "";
+					htmlContainer = "";
+
+					if (extension == "pdf")
+					{
+						imgSrc = $"data:application/pdf;base64,{b64}";
+						htmlContainer = $"<canvas id = '{id}' b64 = '{b64}' class = 'canvaspdf'></canvas>";
+					}
+					else if (extension == "jpg" || extension == "jpeg")
+					{
+						imgSrc = $"data:image/jpeg;base64,{b64}";
+						htmlContainer = $"<img id = '{id}' src = '{imgSrc}' style='max-height: 200px;' />";
+					}
+					else if (extension == "png")
+					{
+						imgSrc = $"data:image/png;base64,{b64}";
+						htmlContainer = $"<img id = '{id}' src = '{imgSrc}' style='max-height: 200px;' />";
+					}
+
+					AppUser? usr = _userManager.GetUserAsync(User).Result;
+					string safeL = string.Empty;
+					if (usr != null)
+					{
+						safeL = $"userId={usr.Id}&id={aa.Id}&module=empresas";
+						safeL = _encriptacionAES.PlainTextToBase64AES(safeL);
+					}
+
+					jsonArchivos.Add(
+						"{" +
+							$"\"id\": \"{aa.Id}\"," +
+							$"\"safeL\": \"{safeL}\"," +
+							$"\"nombre\": \"{aa.Nombre}\"," +
+							$"\"tipoArchivoId\": {aa.TipoArchivoId}," +
+							$"\"extension\": \"{aa.Extension}\"," +
+							$"\"imgSrc\": \"{imgSrc}\"," +
+							$"\"htmlContainer\": \"{htmlContainer}\"," +
+							$"\"fileSize\": \"{aa.FileSize}\"" +
+						"}"
+					);
+				}
+			}
+
+			return jsonArchivos;
+		}
+
+
+		/*private List<string> GetListJsonArchivos(ICollection<SemiArchivoEmpresa>? archivos)
 		{
 			List<string> jsonArchivos = [];
 			string imgSrc = string.Empty;
@@ -440,6 +526,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 												   select empresaFile)];
 
 			//Recorre todos los tipos de archivos.
+
 			foreach (FileTypes i in Enum.GetValues(typeof(FileTypes)))
 			{
 				id = Guid.NewGuid().ToString();
@@ -511,7 +598,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			}
 
 			return jsonArchivos;
-		}
+		}*/
 
 		public ActionResult OnGetDownloadPlantilla()
 		{
