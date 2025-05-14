@@ -624,31 +624,32 @@ function establecerDatosAdicionales(row, action) {
                 nameClass = "document-name-filled";
                 nameHTML = `<div class="overflowed-text">${archivo.nombre}</div>.<div>${archivo.extension}</div>`;
                 actualizar = 0;
-
-                if (puedeTodo || puedeEditar) {
-                    itemVerHTML = `<li><a class='dropdown-item see' onclick='onVerDocumentClick(this);' inputName="selector${archivo.tipoArchivoId}"><i class='bi bi-search'></i> ${btnVerTitle}</a></li>`;
-                }
-                if (puedeTodo || puedeEditar || puedeEliminar) {
-                    itemEditarHTML = `<li><a class='dropdown-item edit ${editDisabled}' onclick='onEditDocumentClick(this);' inputName="selector${archivo.tipoArchivoId}"><i class='bi bi-pencil-fill'></i> ${btnEditarTitle}</a></li>`;
-                }
-                if (puedeTodo || puedeEliminar) {
-                    itemEliminarHTML = `<li><a class="dropdown-item disableable" inputName="selector${archivo.tipoArchivoId}" onclick="onDeleteClick(this);" sourceId="selector${archivo.tipoArchivoId}" sourceLength="${archivo.fileSize}"><i class="bi bi-x-lg"></i> ${btnEliminarTitle}</a></li>`;
-                }
             }
 
-            if (itemVerHTML || itemEditarHTML || itemEliminarHTML) {
-                menuHTML = `
-                    <div class="dropdown">
-                        <button class="btn p-0 p-lg-2 p-xl-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-three-dots-vertical success"></i>
-                        </button>
-                        <ul class="dropdown-menu">
-                            ${itemVerHTML}
-                            ${itemEditarHTML}
-                            ${itemEliminarHTML}
-                        </ul>
-                    </div>`;
+            // Mostrar menú incluso sin archivo
+            if (puedeTodo || puedeEditar) {
+                itemVerHTML = `<li><a class='dropdown-item see ${archivo ? "" : "disabled"}' onclick='onVerDocumentClick(this);' inputName="selector${tipoArchivoId}"><i class='bi bi-search'></i> ${btnVerTitle}</a></li>`;
             }
+            if (puedeTodo || puedeEditar || puedeEliminar) {
+                itemEditarHTML = `<li><a class='dropdown-item edit ${editDisabled}' onclick='onEditDocumentClick(this);' inputName="selector${tipoArchivoId}"><i class='bi bi-pencil-fill'></i> ${btnEditarTitle}</a></li>`;
+            }
+            if (puedeTodo || puedeEliminar) {
+                itemEliminarHTML = `<li><a class="dropdown-item disableable ${archivo ? "" : "disabled"}" inputName="selector${tipoArchivoId}" onclick="onDeleteClick(this);" sourceId="selector${tipoArchivoId}" sourceLength="${archivo?.fileSize || 0}"><i class="bi bi-x-lg"></i> ${btnEliminarTitle}</a></li>`;
+            }
+
+            // Generar menú aunque no haya archivo
+            menuHTML = `
+            <div class="dropdown">
+                <button class="btn p-0 p-lg-2 p-xl-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical success"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    ${itemVerHTML}
+                    ${itemEditarHTML}
+                    ${itemEliminarHTML}
+                </ul>
+            </div>`;
+
 
             $(containerName).append(
                 `<div class="col-12 col-xl-6">
