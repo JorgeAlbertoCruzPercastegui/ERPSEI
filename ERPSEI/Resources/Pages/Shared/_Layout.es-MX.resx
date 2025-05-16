@@ -216,4 +216,7 @@
   <data name="AccountingAccountsCatalogMenu" xml:space="preserve">
     <value>Cuentas Contables</value>
   </data>
+  <data name="FixedAsset" xml:space="preserve">
+    <value>Activos Fijos</value>
+  </data>
 </root>
