@@ -77,6 +77,8 @@ namespace ERPSEI.Pages.Shared
         public static string Permisos => "Permisos";
         public static string PermisosNavClass(ViewContext viewContext) => PageNavClass(viewContext, Permisos);
 
+        public static string ActivosFijos => "ActivosFijos";
+        public static string ActivosFijosNavClass(ViewContext viewContext) => PageNavClass(viewContext, ActivosFijos);
         #endregion
 
         #region Operaciones Empresas
