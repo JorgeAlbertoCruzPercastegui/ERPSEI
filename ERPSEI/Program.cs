@@ -77,6 +77,7 @@ using(IServiceScope scope = app.Services.CreateScope())
 							case "incapacidades":
 							case "permisos":
 							case "organigrama":
+							case "activosfijos":
 								await accesoModuloManager.CreateAsync(new AccesoModulo() { RolId = r.Id, ModuloId = m.Id, PuedeTodo = 0, PuedeConsultar = 1, PuedeEditar = 0, PuedeEliminar = 0, PuedeAutorizar = 0 });
 								break;
 							default:
