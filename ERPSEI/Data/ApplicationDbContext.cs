@@ -14,6 +14,7 @@ using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
 using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.SAT.Pagos20;
 using ERPSEI.Data.Entities.Polizas;
+using ERPSEI.Data.Entities.ActivosFijos;
 
 namespace ERPSEI.Data
 {
@@ -142,8 +143,13 @@ namespace ERPSEI.Data
         public DbSet<ConciliacionDetalleComprobante> ConciliacionesDetallesComprobantes { get; set; }
         public DbSet<ConciliacionDetalleMovimiento> ConciliacionesDetallesMovimientos { get; set; }
 
-		//Cuentas contables
-		public DbSet<CuentaContable> CuentasContables { get; set; }
+		//Activos Fijos
+		public DbSet<ActivoFijo> ActivosFijos {  get; set; }
+		public DbSet<CategoriaActivoFijo> CategoriasActivosFijos { get; set; }
+        public DbSet<TipoActivoFijo> TiposActivosFijos { get; set; }
+
+        //Cuentas contables
+        public DbSet<CuentaContable> CuentasContables { get; set; }
 		public DbSet<CuentaContableTipo> CuentaContableTipos { get; set; }
 		public DbSet<CuentaContableSubtipo> CuentaContableSubtipos { get; set; }
 		public DbSet<CuentaContableProductoServicio> CuentaContableProductosServicios { get; set; }
@@ -192,9 +198,73 @@ namespace ERPSEI.Data
 
 			//Polizas
 			BuildPolizas(modelBuilder);
+
+			//Activos Fijos
+			BuildActivosFijos(modelBuilder);
         }
 
-		private static void BuildPolizas(ModelBuilder b) 
+        private static void BuildActivosFijos(ModelBuilder b)
+        {
+            // Relación: ActivoFijo -> CategoriaActivoFijo
+            b.Entity<ActivoFijo>()
+                .HasOne(a => a.Categoria)
+                .WithMany(c => c.ActivosFijos)
+                .HasForeignKey(a => a.CategoriaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relación: ActivoFijo -> TipoActivoFijo
+            b.Entity<ActivoFijo>()
+                .HasOne(a => a.Tipo)
+                .WithMany(t => t.ActivosFijos)
+                .HasForeignKey(a => a.TipoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relación: ActivoFijo -> Empleado
+            b.Entity<ActivoFijo>()
+                .HasOne(a => a.Empleado)
+                .WithMany() // Si agregas navegación en Empleado, puedes usar .WithMany(e => e.ActivosAsignados)
+                .HasForeignKey(a => a.EmpleadoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Conversión booleana a int en BD para compatibilidad
+            b.Entity<CategoriaActivoFijo>()
+                .Property(c => c.Deshabilitado)
+                .HasConversion<int>();
+
+            b.Entity<TipoActivoFijo>()
+                .Property(t => t.Deshabilitado)
+                .HasConversion<int>();
+
+            b.Entity<TipoActivoFijo>()
+                .Property(t => t.PermiteMultiplesAsignaciones)
+                .HasConversion<int>();
+
+            b.Entity<ActivoFijo>()
+                .Property(a => a.Deshabilitado)
+                .HasConversion<int>();
+
+            // Datos iniciales para Categorías
+            b.Entity<CategoriaActivoFijo>().HasData(
+                new CategoriaActivoFijo { Id = 1, Descripcion = "Software", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 2, Descripcion = "Hardware", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 3, Descripcion = "Inmobiliario", Deshabilitado = false }
+            );
+
+            // Datos iniciales para Tipos
+            b.Entity<TipoActivoFijo>().HasData(
+                new TipoActivoFijo { Id = 1, Descripcion = "Laptop", PermiteMultiplesAsignaciones = false, Deshabilitado = false },
+                new TipoActivoFijo { Id = 2, Descripcion = "Monitor", PermiteMultiplesAsignaciones = false, Deshabilitado = false },
+                new TipoActivoFijo { Id = 3, Descripcion = "Licencia", PermiteMultiplesAsignaciones = true, Deshabilitado = false },
+                new TipoActivoFijo { Id = 4, Descripcion = "Programa", PermiteMultiplesAsignaciones = true, Deshabilitado = false },
+                new TipoActivoFijo { Id = 5, Descripcion = "Mesa", PermiteMultiplesAsignaciones = false, Deshabilitado = false },
+                new TipoActivoFijo { Id = 6, Descripcion = "Silla", PermiteMultiplesAsignaciones = false, Deshabilitado = false },
+                new TipoActivoFijo { Id = 7, Descripcion = "Escritorio", PermiteMultiplesAsignaciones = false, Deshabilitado = false },
+                new TipoActivoFijo { Id = 8, Descripcion = "Unidad de Almacenamiento", PermiteMultiplesAsignaciones = false, Deshabilitado = false }
+            );
+        }
+
+
+        private static void BuildPolizas(ModelBuilder b) 
 		{
 			b.Entity<GrupoPoliza>().HasMany(p => p.Polizas).WithOne(p => p.Grupo).OnDelete(DeleteBehavior.NoAction);
 			b.Entity<GrupoPoliza>().HasOne(p => p.UsuarioCreador).WithMany(p => p.GruposPolizasCreados).OnDelete(DeleteBehavior.NoAction);

@@ -74,6 +74,14 @@ function initTable() {
         exportTypes: ['excel'],
         columns: [
             {
+                title: "Id",
+                field: "id",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                width: "80px"
+            },
+            {
                 title: "Folio",
                 field: "folio",
                 align: "center",
@@ -190,6 +198,7 @@ function initTable() {
 
 //Funcionalidad Diálogo
 function initActivoFijoDialog(action, row) {
+    let idField = document.getElementById("inpActivoFijoId");
     let folioField = document.getElementById("inpActivoFijoFolio");
     let descripcionField = document.getElementById("ActivoFijoDescripcion");
     let responsableField = document.getElementById("ActivoFijoResponsable");
@@ -209,6 +218,7 @@ function initActivoFijoDialog(action, row) {
         case NUEVO:
             dlgTitle.innerHTML = dlgNuevoTitle;
 
+            idField.removeAttribute("disabled");
             folioField.removeAttribute("disabled");
             descripcionField.removeAttribute("disabled");
             responsableField.removeAttribute("disabled");
@@ -222,6 +232,7 @@ function initActivoFijoDialog(action, row) {
         case EDITAR:
             dlgTitle.innerHTML = dlgEditarTitle;
 
+            idField.removeAttribute("disabled");
             folioField.removeAttribute("disabled");
             descripcionField.removeAttribute("disabled");
             responsableField.removeAttribute("disabled");
@@ -235,6 +246,7 @@ function initActivoFijoDialog(action, row) {
         default:
             dlgTitle.innerHTML = dlgVerTitle;
 
+            idField.setAttribute("disabled", true);
             folioField.setAttribute("disabled", true);
             descripcionField.setAttribute("disabled", true);
             responsableField.setAttribute("disabled", true);
@@ -248,6 +260,7 @@ function initActivoFijoDialog(action, row) {
             break;
     }
 
+    idField.value = row.id;
     folioField.value = row.folio;
     descripcionField.value = row.descripcion;
     responsableField.value = row.responsable;
@@ -282,6 +295,7 @@ function onGuardarClick() {
     if (!valid) { return; }
 
     let btnClose = document.getElementById("dlgActivoFijoBtnCancelar");
+    let idField = document.getElementById("inpActivoFijoId");
     let folioField = document.getElementById("inpActivoFijoFolio");
     let descripcionField = document.getElementById("inpActivoFijoDescripcion");
     let responsableField = document.getElementById("inpActivoFijoResponsable");
@@ -295,7 +309,8 @@ function onGuardarClick() {
     summaryContainer.innerHTML = "";
 
     let oParams = {
-        folio: folioField.value == "Nuevo" ? 0 : folioField.value,
+        id: idField.value == "Nuevo" ? 0 : idField.value,
+        folio: folioField.value,
         descripcion: descripcionField.value,
         responsable: responsableField.value,
         categoria: categoriaField.value,

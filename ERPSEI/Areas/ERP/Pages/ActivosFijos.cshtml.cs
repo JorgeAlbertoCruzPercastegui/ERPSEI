@@ -57,15 +57,11 @@ namespace ERPSEI.Areas.ERP.Pages
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Responsable { get; set; } = string.Empty;
 
-            [DataType(DataType.Text)]
-            //[StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
-            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
-            public string? Categoria { get; set; }
+            [Display(Name = "Categoria")]
+            public int? CategoriaId { get; set; }
 
-            [DataType(DataType.Text)]
-            //[StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
-            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
-            public string? Tipo { get; set; }
+            [Display(Name = "Tipo")]
+            public int? TipoId { get; set; }
 
             [Display(Name = "Fecha Compra Inicio")]
             [DataType(DataType.Date)]
@@ -74,6 +70,11 @@ namespace ERPSEI.Areas.ERP.Pages
             [Display(Name = "Fecha Compra Fin")]
             [DataType(DataType.Date)]
             public DateTime? FechaCompraFin { get; set; }
+
+            [DataType(DataType.Text)]
+            //[StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
+            public string? Estatus { get; set; }
         }
 
 
@@ -82,7 +83,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
         public class ActivoFijoTableModel
         {
-            public int? Folio { get; set; }
+            public int? Id { get; set; }
+            public string? Folio { get; set; }
 
             [DataType(DataType.Text)]
             [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]

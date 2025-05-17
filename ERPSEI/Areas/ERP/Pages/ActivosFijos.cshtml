@@ -2,8 +2,19 @@
 @using ERPSEI.Data.Managers;
 @using Microsoft.AspNetCore.Localization;
 @using Microsoft.AspNetCore.Mvc.Localization;
+@using ERPSEI.Data.Managers.ActivosFijos;
+@using ERPSEI.Data.Entities.ActivosFijos;
+@using ERPSEI.Data.Entities.Usuarios;
+@using ERPSEI.Data.Managers.Usuarios;
 @model ERPSEI.Areas.ERP.Pages.ActivosFijosModel
+
+
+@inject ICategoriaActivosFijosManager CategoriaManager;
+@inject ITipoActivosFijosManager TipoManager;
 @inject IViewLocalizer Localizer;
+@inject AppRoleManager RolesManager;
+@inject AppUserManager UsuariosManager;
+@inject IConfiguration Configuration;
 @{
     ViewData["Title"] = Localizer["Title"];
 
@@ -14,6 +25,9 @@
     System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
 
     string cultureName = culture.Name;
+
+    List<TipoActivoFijo> tipos = await TipoManager.GetAllAsync();
+    List<CategoriaActivoFijo> categorias = await CategoriaManager.GetAllAsync();
 
     bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
     bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
@@ -51,14 +65,30 @@
                         </div>
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroCategoria" type="text" asp-for="InputFiltro.Categoria" class="form-control" placeholder="@Localizer["CategoriaField"]" />
-                                <label for="inpFiltroCategoria" asp-for="InputFiltro.Categoria" class="form-label"></label>
+                                <select id="selFiltroCategoria" asp-for="InputFiltro.CategoriaId" class="form-select" placeholder="@Localizer["CategoriaField"]">
+                                    <option value="0">Seleccione...</option>
+                                    @{
+                                        @foreach (CategoriaActivoFijo categoria in categorias)
+                                        {
+                                            <option value='@categoria.Id'>@categoria.Descripcion</option>
+                                        }
+                                    }
+                                </select>
+                                <label for="selFiltroMoneda" asp-for="InputFiltro.CategoriaId" class="form-label"></label>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroTipo" type="text" asp-for="InputFiltro.Tipo" class="form-control" placeholder="@Localizer["TipoField"]" />
-                                <label for="inpFiltroTipo" asp-for="InputFiltro.Tipo" class="form-label"></label>
+                                <select id="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-select" placeholder="@Localizer["TipoField"]">
+                                    <option value="0">Seleccione...</option>
+                                    @{
+                                        @foreach (TipoActivoFijo tipo in tipos)
+                                        {
+                                            <option value='@tipo.Id'>@tipo.Descripcion</option>
+                                        }
+                                    }
+                                </select>
+                                <label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-6 col-lg-3">
@@ -71,6 +101,12 @@
                             <div class="form-floating mb-3">
                                 <input id="inpFiltroFechaCompraFin" type="date" asp-for="InputFiltro.FechaCompraFin" class="form-control" placeholder="@Localizer["FechaCompraFinField"]" />
                                 <label for="inpFiltroFechaCompraFin" asp-for="InputFiltro.FechaCompraFin" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroEstatus" type="text" asp-for="InputFiltro.Estatus" class="form-control" placeholder="@Localizer["EstatusField"]" />
+                                <label for="inpFiltroEstatus" asp-for="InputFiltro.Estatus" class="form-label"></label>
                             </div>
                         </div>
                     </div>
@@ -140,6 +176,15 @@
                 <div class="modal-body align-items-center">
                     <div class="container-fluid">
                         <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoId" asp-for="InputActivosFijos.Id" type="text" class="form-control" />
+                                    <label asp-for="InputActivosFijos.Id" class="form-label"></label>
+                                    <span asp-validation-for="InputActivosFijos.Id" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="col-3">
                                 <div class="form-floating mb-3">

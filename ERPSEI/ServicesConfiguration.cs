@@ -4,10 +4,12 @@ using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Data.Entities.Clientes;
+using ERPSEI.Data.Entities.ActivosFijos;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers;
 using ERPSEI.Data.Managers.Empleados;
+using ERPSEI.Data.Managers.ActivosFijos;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Managers.Reportes;
 using ERPSEI.Data.Managers.Conciliaciones;
@@ -88,6 +90,8 @@ namespace ERPSEI
             ConfigureDICuentasContables(_builder);
 
             ConfigureDIPolizas(_builder);
+
+            ConfigureDIActivosFijos(_builder);
         }
         private static void ConfigureDIAsistencias(WebApplicationBuilder _builder) 
         {
@@ -115,7 +119,13 @@ namespace ERPSEI
 			_builder.Services.AddScoped<IPolizasDetalles, PolizasDetallesManager>();
 			_builder.Services.AddScoped<IPolizasTipos, PolizasTiposManager>();
 		}
-		private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)
+        private static void ConfigureDIActivosFijos(WebApplicationBuilder _builder)
+        {
+            //Activos Fijos
+            _builder.Services.AddScoped<ITipoActivosFijosManager, TipoActivosFijosManager>();
+            _builder.Services.AddScoped<ICategoriaActivosFijosManager, CategoriaActivosFijosManager>();
+        }
+        private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)
 		{
 			//Cuentas Contables
 			_builder.Services.AddScoped<ICuentaContableManager, CuentaContableManager>();
