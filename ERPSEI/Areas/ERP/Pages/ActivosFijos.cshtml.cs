@@ -1,8 +1,15 @@
 using ERPSEI.Data;
+using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers;
+using ERPSEI.Data.Managers.AdministradorPolizas;
+using ERPSEI.Data.Managers.Conciliaciones;
+using ERPSEI.Data.Managers.Cuentas;
 using ERPSEI.Data.Managers.Empleados;
+using ERPSEI.Data.Managers.Empresas;
+using ERPSEI.Data.Managers.Polizas;
+using ERPSEI.Data.Managers.SAT.cfdiv40;
 using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Email;
 using ERPSEI.Pages.Shared;
@@ -22,11 +29,68 @@ using System.Data;
 using System.Net.Mime;
 using System.Text;
 using System.Web;
+using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
     public class ActivosFijosModel : ERPPageModel
-    { 
-    
+    {
+        private readonly IStringLocalizer<ActivosFijosModel> stringLocalizer;
+        private readonly ILogger<ActivosFijosModel> logger;
+        private readonly AppUserManager appUserManager;
+        private readonly IStringLocalizer<ActivosFijosModel> localizer;
+
+        private readonly Data.ApplicationDbContext db;
+
+        [BindProperty]
+        public InputFiltroModel InputFiltro { get; set; }
+
+        public class InputFiltroModel
+        {
+            //[StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            //[RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
+            public int? Folio { get; set; }
+
+            [DataType(DataType.Text)]
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
+            public string? Responsable { get; set; } = string.Empty;
+
+            [DataType(DataType.Text)]
+            //[StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
+            public string? Categoria { get; set; }
+
+            [DataType(DataType.Text)]
+            //[StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
+            public string? Tipo { get; set; }
+
+            [Display(Name = "Fecha Compra Inicio")]
+            [DataType(DataType.Date)]
+            public DateTime? FechaCompraInicio { get; set; }
+
+            [Display(Name = "Fecha Compra Fin")]
+            [DataType(DataType.Date)]
+            public DateTime? FechaCompraFin { get; set; }
+        }
+
+        public ActivosFijosModel(
+            IStringLocalizer<ActivosFijosModel> _stringLocalizer,
+            ILogger<ActivosFijosModel> _logger,
+            AppUserManager _appUserManager,
+            IStringLocalizer<ActivosFijosModel> _localizer,
+            Data.ApplicationDbContext _db
+        )
+        {
+            stringLocalizer = _stringLocalizer;
+            logger = _logger;
+            appUserManager = _appUserManager;
+            localizer = _localizer;
+            db = _db;
+
+            InputFiltro = new InputFiltroModel();
+        }
+
     }
 }
