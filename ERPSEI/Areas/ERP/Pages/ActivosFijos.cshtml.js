@@ -1,279 +1,335 @@
-﻿//var table;
-//var buttonRemove;
-//var tableActividad;
-//var selections = [];
-//var dlgAsistencia = null;
-//var dlgAsistenciaModal = null;
+﻿var table;
+var buttonRemove;
+var selections = [];
+var dlg = null;
+var dlgModal = null;
 
-//const NUEVO = 0;
-//const EDITAR = 1;
-//const VER = 2;
-//const maxFileSizeInBytes = 5242880; //5mb = (5 * 1024) * 1024;
-//const oneMegabyteSizeInBytes = 1048576; // 1mb = (1 * 1024) * 1024
-//const postOptions = {
-//    headers: {
-//        "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
-//    }
-//};
-//document.addEventListener("DOMContentLoaded", function (event) {
-//    table = $("#table");
-//    initTable();
-//    buttonRemove = $("#remove");
+const NUEVO = 0;
+const EDITAR = 1;
+const VER = 2;
+const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
-//    dlgAsistencia = document.getElementById('dlgAsistencia');
-//    dlgAsistenciaModal = new bootstrap.Modal(dlgAsistencia, null);
-//    //Función para limpiar el cuadro de diálogo cuando es cerrado
-//    dlgAsistencia.addEventListener('hidden.bs.modal', function (event) {
-//        onCerrarClick();
-//    });
-//    //Función para ejecutar acciones posteriores al mostrado del diálogo.
-//    dlgAsistencia.addEventListener('shown.bs.modal', function (e) {
-//        //Este evento es necesario para poder mostrar el text area ajustado al tamaño del contenido, basado en el tamaño del scroll.
-//        calculateTextAreaHeight(document.querySelectorAll("textarea"));
-//    })
+document.addEventListener("DOMContentLoaded", function (event) {
+    table = $("#table");
+    buttonRemove = $("#remove");
+    dlg = document.getElementById('dlgActivoFijo');
+    dlgModal = new bootstrap.Modal(dlg, null);
+    //Función para limpiar el cuadro de diálogo cuando es cerrado
+    dlg.addEventListener('hidden.bs.modal', function (event) {
+        onCerrarClick();
+    });
 
-//    let btnBuscar = document.getElementById("btnBuscar");
-//    btnBuscar.click();
-//});
+    initTable();
+});
 
-////Función para procesar la respuesta del servidor al consultar datos
-//function responseHandler(res) {
-//    if (typeof res == "string" && res.length >= 1) {
-//        res = JSON.parse(res);
-//    }
-//    $.each(res, function (i, row) {
-//        row.state = $.inArray(row.id, selections) !== -1
-//    });
+//Funcionalidad Tabla
+function getIdSelections() {
+    return $.map(table.bootstrapTable('getSelections'), function (row) {
+        return row.id
+    })
+}
+function responseHandler(res) {
+    $.each(res, function (i, row) {
+        row.state = $.inArray(row.id, selections) !== -1
+    })
+    return res
+}
+//Función para dar formato a los iconos de operación de los registros
+function operateFormatter(value, row, index) {
+    let icons = [];
 
-//    return res
-//}
+    //Icono Ver
+    icons.push(`<li><a class="dropdown-item see" href="#" title="${btnVerTitle}"><i class="bi bi-search"></i> ${btnVerTitle}</a></li>`);
+    //Icono Editar
+    icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
 
-////Función para añadir botones a la cinta de botones de la tabla
-//function additionalButtons() {
-//    return {
-//        btnImport: {
-//            text: btnImportarText,
-//            icon: 'bi-upload',
-//            event: function () { },
-//            attributes: {
-//                "title": btnImportarTitle,
-//                "data-bs-toggle": "modal",
-//                "data-bs-target": "#dlgImportarExcel"
-//            }
-//        }
-//    }
-//}
-//function initTable() {
-//    table.bootstrapTable('destroy').bootstrapTable({
-//        height: 550,
-//        locale: cultureName,
-//        exportDataType: 'all',
-//        exportTypes: ['excel'],
-//        toolbar: '#toolbar', // Asegúrate de que este ID coincida con el elemento HTML donde quieres que aparezcan los botones
-//        buttons: additionalButtons, // Asegúrate de que `additionalButtons` esté siendo llamado correctamente aquí
-//        columns: [{
-//            title: colHorarioHeader,
-//            field: "Horario",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//        },
-//        {
-//            title: colNombreEmpleadoHeader,
-//            field: "NombreEmpleado",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//        },
-//        {
-//            title: colFechaHeader,
-//            field: "Fecha",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//        },
-//        {
-//            title: colDiaHeader,
-//            field: "Dia",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//        },
-//        {
-//            title: colEntradaHeader,
-//            field: "Entrada",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//        },
-//        {
-//            title: colResultadoEHeader,
-//            field: "ResultadoE",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//        },
-//        {
-//            title: colSalidaHeader,
-//            field: "Salida",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//        },
-//        {
-//            title: colResultadoSHeader,
-//            field: "ResultadoS",
-//            align: "center",
-//            valign: "middle",
-//            sortable: true
-//         }
-//        ]
-//    });
-//}
+    return `<div class="dropdown">
+              <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots-vertical success"></i>
+              </button>
+              <ul class="dropdown-menu">${icons.join("")}</ul>
+            </div>`;
+}
+window.operateEvents = {
+    'click .see': function (e, value, row, index) {
+        initActivoFijoDialog(VER, row);
+    },
+    'click .edit': function (e, value, row, index) {
+        initActivoFijoDialog(EDITAR, row);
+        //table.bootstrapTable('remove', {
+        //    field: 'id',
+        //    values: [row.id]
+        //})
+    }
+}
 
-//// Función para manejar el click en el botón de búsqueda
-//function onBuscarClick() {
-//    let nombreField = document.getElementById("inpFiltroNombreEmpleado").value.trim();
-//    let fechaInicioField = document.getElementById("inpFiltroFechaIngresoInicio").value.trim();
-//    let fechaFinField = document.getElementById("inpFiltroFechaIngresoFin").value.trim();
-//    let summaryContainer = document.getElementById("saveValidationSummary");
-//    summaryContainer.innerHTML = "";
+function onAgregarClick() {
+    initActivoFijoDialog(NUEVO, { id: "Nuevo", nombre: "" });
+}
+function initTable() {
+    table.bootstrapTable('destroy').bootstrapTable({
+        height: 550,
+        locale: cultureName,
+        exportDataType: 'all',
+        exportTypes: ['excel'],
+        columns: [
+            {
+                title: "Folio",
+                field: "folio",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                width: "80px"
+            },
+            {
+                title: "Descripcion",
+                field: "descripcion",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Responsable",
+                field: "responsable",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Categoria",
+                field: "categoria",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Tipo",
+                field: "tipo",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Fecha Compra",
+                field: "fechacompra",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Precio",
+                field: "precio",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Link Factura Compra",
+                field: "linkfacturacompra",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: colAccionesHeader,
+                field: "operate",
+                align: 'center',
+                width: "100px",
+                clickToSelect: false,
+                events: window.operateEvents,
+                formatter: operateFormatter
+            }
+        ]
+    })
+    table.on('check.bs.table uncheck.bs.table ' +
+        'check-all.bs.table uncheck-all.bs.table',
+        function () {
+            buttonRemove.prop('disabled', !table.bootstrapTable('getSelections').length)
 
-//    let oParams = {
-//        nombreEmpleado: nombreField.length <= 0 ? null : nombreField,
-//        fechaIngresoInicio: fechaInicioField.length <= 0 ? null : fechaInicioField,
-//        fechaIngresoFin: fechaFinField.length <= 0 ? null : fechaFinField
-//    };
+            // save your data, here just save the current page
+            selections = getIdSelections()
+            // push or splice the selections if you want to save all data selections
+        })
+    table.on('all.bs.table', function (e, name, args) {
+        console.log(name, args)
+    })
+    buttonRemove.click(function () {
+        askConfirmation(dlgDeleteTitle, dlgDeleteQuestion, function () {
+            let oParams = { ids: selections };
 
-//    //Resetea el valor de los filtros.
-//    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
-//    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
+            doAjax(
+                "/ERP/ActivosFijos/DeleteActivosFijos",
+                oParams,
+                function (resp) {
+                    if (resp.tieneError) {
+                        showError(dlgDeleteTitle, resp.mensaje);
+                        return;
+                    }
 
-//    doAjax(
-//        "/Reportes/Asistencia/FiltrarAsistencia",
-//        oParams,
-//        function (resp) {
-//            if (resp.tieneError) {
-//                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
-//                    let summary = ``;
-//                    resp.errores.forEach(function (error) {
-//                        summary += `<li>${error}</li>`;
-//                    });
-//                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
-//                }
-//                showError(btnBuscar.innerHTML, resp.mensaje);
-//                return;
-//            }
+                    table.bootstrapTable('remove', {
+                        field: 'id',
+                        values: selections
+                    })
+                    selections = [];
+                    buttonRemove.prop('disabled', true);
 
-//            table.bootstrapTable('load', responseHandler(resp.datos));
-//        }, function (error) {
-//            showError("Error", error);
-//        },
-//        postOptions
-//    );
-//}
+                    let e = document.querySelector("[name='refresh']");
+                    e.click();
 
-////Función para obtener el archivo de un input
-//function getFile(inputId) {
-//    let fileField = document.getElementById(inputId),
-//        file = null,
-//        tipoArchivo = fileField.getAttribute("tipoArchivoId"),
-//        b64 = fileField.getAttribute("b64") || "",
-//        sourceId = fileField.getAttribute("sourceId") || "",
-//        actualizar = parseInt(fileField.getAttribute("actualizar") || "0")
+                    showSuccess(dlgDeleteTitle, resp.mensaje);
+                }, function (error) {
+                    showError(dlgDeleteTitle, error);
+                },
+                postOptions
+            );
 
-//    file = fileField != null ? fileField.files : null;
-//    if (file) { file = file.length > 0 ? file[0] : null; }
+        });
+    })
+}
+/////////////////////
 
-//    let oFile = {
-//        id: sourceId,
-//        tipoArchivoId: tipoArchivo,
-//        imgSrc: b64,
-//        nombre: "",
-//        extension: ""
-//    }
+//Funcionalidad Diálogo
+function initActivoFijoDialog(action, row) {
+    let folioField = document.getElementById("inpActivoFijoFolio");
+    let descripcionField = document.getElementById("ActivoFijoDescripcion");
+    let responsableField = document.getElementById("ActivoFijoResponsable");
+    let categoriaField = document.getElementById("ActivoFijoCategoria");
+    let tipoField = document.getElementById("ActivoFijoTipo");
+    let fechacompraField = document.getElementById("ActivoFijoFechaCompra");
+    let precioField = document.getElementById("ActivoFijoPrecio");
+    let linkfacturaField = document.getElementById("ActivoFijoLinkFacturaCompra");
+    let btnGuardar = document.getElementById("dlgActivoFijoBtnGuardar");
+    let dlgTitle = document.getElementById("dlgActivoFijoTitle");
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    summaryContainer.innerHTML = "";
 
-//    if (file) {
-//        //Si se estableció archivo en pantalla, crea el json con el archivo.
-//        let fileParts = (file.name || "").split(".");
-//        oFile.nombre = fileParts.length >= 1 ? fileParts.slice(0, -1).join(".") : "";
-//        oFile.extension = fileParts.length >= 2 ? fileParts[fileParts.length - 1] : "";
-//    }
+    idField.setAttribute("disabled", true);
 
-//    if (actualizar) { return oFile; }
+    switch (action) {
+        case NUEVO:
+            dlgTitle.innerHTML = dlgNuevoTitle;
 
-//    return null;
-//}
-////Función para el importado del archivo con información de empresas
-//function onImportarClick() {
-//    //Ejecuta la validación
-//    $("#importForm").validate();
-//    //Determina los errores
-//    let valid = $("#importForm").valid();
-//    //Si la forma no es válida, entonces finaliza.
-//    if (!valid) { return; }
+            folioField.removeAttribute("disabled");
+            descripcionField.removeAttribute("disabled");
+            responsableField.removeAttribute("disabled");
+            categoriaField.removeAttribute("disabled");
+            tipoField.removeAttribute("disabled");
+            fechacompraField.removeAttribute("disabled");
+            precioField.removeAttribute("disabled");
+            linkfacturaField.removeAttribute("disabled");
+            btnGuardar.removeAttribute("disabled");
+            break;
+        case EDITAR:
+            dlgTitle.innerHTML = dlgEditarTitle;
 
-//    let form = new FormData();
-//    let btnClose = document.getElementById("dlgExcelBtnCancelar");
-//    let dlgTitle = document.getElementById("dlgExcelTitle");
-//    let fileField = document.getElementById("excelFile");
-//    fileField = fileField != null ? fileField.files : null;
+            folioField.removeAttribute("disabled");
+            descripcionField.removeAttribute("disabled");
+            responsableField.removeAttribute("disabled");
+            categoriaField.removeAttribute("disabled");
+            tipoField.removeAttribute("disabled");
+            fechacompraField.removeAttribute("disabled");
+            precioField.removeAttribute("disabled");
+            linkfacturaField.removeAttribute("disabled");
+            btnGuardar.removeAttribute("disabled");
+            break;
+        default:
+            dlgTitle.innerHTML = dlgVerTitle;
 
-//    if (fileField) { fileField = fileField.length > 0 ? fileField[0] : null; }
+            folioField.setAttribute("disabled", true);
+            descripcionField.setAttribute("disabled", true);
+            responsableField.setAttribute("disabled", true);
+            categoriaField.setAttribute("disabled", true);
+            tipoField.setAttribute("disabled", true);
+            fechacompraField.setAttribute("disabled", true);
+            precioField.setAttribute("disabled", true);
+            linkfacturaField.setAttribute("disabled", true);
 
-//    if (fileField) { form.append("plantilla", fileField); }
+            btnGuardar.setAttribute("disabled", true);
+            break;
+    }
 
-//    let extendedOptions = {
-//        headers: postOptions.headers,
-//        data: form,
-//        contentType: false,
-//        processData: false
-//    }
+    folioField.value = row.folio;
+    descripcionField.value = row.descripcion;
+    responsableField.value = row.responsable;
+    categoriaField.value = row.categoria;
+    tipoField.value = row.tipo;
+    fechacompraField.value = row.fechacompra;
+    precioField.value = row.precio;
+    linkfacturaField.value = row.linkfacturacompra;
 
-//    doAjax(
-//        "/Reportes/Asistencia/ImportarAsistencias",
-//        {},
-//        function (resp) {
-//            if (resp.tieneError) {
-//                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
-//                    let summary = ``;
-//                    resp.errores.forEach(function (error) {
-//                        summary += `<li>${error}</li>`;
-//                    });
-//                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
-//                }
-//                showError(dlgTitle.innerHTML, resp.mensaje);
-//                return;
-//            }
+    dlgModal.toggle();
+}
+function onCerrarClick() {
+    //Removes validation from input-fields
+    $('.input-validation-error').addClass('input-validation-valid');
+    $('.input-validation-error').removeClass('input-validation-error');
+    //Removes validation message after input-fields
+    $('.field-validation-error').addClass('field-validation-valid');
+    $('.field-validation-error').removeClass('field-validation-error');
+    //Removes validation summary 
+    $('.validation-summary-errors').addClass('validation-summary-valid');
+    $('.validation-summary-errors').removeClass('validation-summary-errors');
+    //Removes danger text from fields
+    $(".text-danger").children().remove()
+}
 
-//            btnClose.click();
+function onGuardarClick() {
+    //Ejecuta la validación
+    $("#theForm").validate();
+    //Determina los errores
+    let valid = $("#theForm").valid();
+    //Si la forma no es válida, entonces finaliza.
+    if (!valid) { return; }
 
-//            onBuscarClick();
+    let btnClose = document.getElementById("dlgActivoFijoBtnCancelar");
+    let folioField = document.getElementById("inpActivoFijoFolio");
+    let descripcionField = document.getElementById("inpActivoFijoDescripcion");
+    let responsableField = document.getElementById("inpActivoFijoResponsable");
+    let categoriaField = document.getElementById("inpActivoFijoCategoria");
+    let tipoField = document.getElementById("inpActivoFijoTipo");
+    let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
+    let precioField = document.getElementById("inpActivoFijoPrecio");
+    let linkfacturaField = document.getElementById("inpActivoFijoLinkFacturaCompra");
+    let dlgTitle = document.getElementById("dlgOficinaTitle");
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    summaryContainer.innerHTML = "";
 
-//            showSuccess(dlgTitle.innerHTML, resp.mensaje);
-//        },
-//        function (error) {
-//            showError("Error", error);
-//        },
-//        extendedOptions
-//    );
-//}
-////Función para el cierre del cuadro de diálogo
-//function onCerrarImportarClick() {
-//    let fileField = document.getElementById("excelFile");
-//    fileField.value = null;
-//    onCerrarClick();
-//}
-////Función para procesar el cambio de archivo a exportar
-//function onExcelSelectorChanged(input) {
-//    //Validación para seleccionar archivos excel solamente.
-//    if (input.files && (input.files.length || 0) >= 1) {
-//        let docType = input.files[0].type;
-//        let isExcel = docType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || docType == "application/vnd.ms-excel";
+    let oParams = {
+        folio: folioField.value == "Nuevo" ? 0 : folioField.value,
+        descripcion: descripcionField.value,
+        responsable: responsableField.value,
+        categoria: categoriaField.value,
+        tipo: tipoField.value,
+        fechacompra: fechacompraField.value,
+        precio: precioField.value,
+        linkfacturacompra: linkfacturaField.value
+    };
 
-//        if (!isExcel) {
-//            input.value = null;
-//            showAlert(invalidFormatTitle, invalidFormatMsg);
-//        }
-//    }
-//}
+    doAjax(
+        "/ERP/ActivosFijos/SaveActivoFijo",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    let summary = ``;
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                }
+                showError(dlgTitle.innerHTML, resp.mensaje);
+                return;
+            }
+
+            btnClose.click();
+
+            let e = document.querySelector("[name='refresh']");
+            e.click();
+
+            showSuccess(dlgTitle.innerHTML, resp.mensaje);
+        }, function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}

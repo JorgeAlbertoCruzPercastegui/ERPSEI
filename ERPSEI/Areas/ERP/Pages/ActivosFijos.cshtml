@@ -117,35 +117,127 @@
        data-show-footer="false"
        data-side-pagination="client"
        data-response-handler="responseHandler"
-       data-buttons-class="primary"
-       data-url="/ERP/Conciliaciones/ConciliacionesList">
+       data-buttons-class="primary">
     <thead>
         <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
         </tr>
     </thead>
 </table>
 
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+<!-- Sección Nuevo/Editar/Ver Registro --- -->
+
+<form id="theForm" method="post">
+    <div id="dlgActivoFijo" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="dlgActivoFijoTitle" class="modal-title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body align-items-center">
+                    <div class="container-fluid">
+                        <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoFolio" asp-for="InputActivosFijos.Folio" type="text" class="form-control" />
+                                    <label asp-for="InputActivosFijos.Folio" class="form-label"></label>
+                                    <span asp-validation-for="InputActivosFijos.Folio" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoDescripcion" asp-for="InputActivosFijos.Descripcion" type="text" class="form-control" placeholder="@Localizer["DescripcionPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Descripcion" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Descripcion" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <input id="inpOficinaNombre" asp-for="InputActivosFijos.Responsable" type="text" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Responsable" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Responsable" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoCategoria" asp-for="InputActivosFijos.Categoria" type="text" class="form-control" placeholder="@Localizer["CategoriaPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Categoria" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Categoria" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoTipo" asp-for="InputActivosFijos.Tipo" type="text" class="form-control" placeholder="@Localizer["TipoPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Tipo" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Tipo" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoFechaCompra" asp-for="InputActivosFijos.FechaCompra" type="text" class="form-control" placeholder="@Localizer["FechaCompraPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.FechaCompra" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.FechaCompra" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoPrecio" asp-for="InputActivosFijos.Precio" type="text" class="form-control" placeholder="@Localizer["PrecioPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Precio" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Precio" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoLinkFacturaCompra" asp-for="InputActivosFijos.LinkFacturaCompra" type="text" class="form-control" placeholder="@Localizer["LinkFacturaCompraPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.LinkFacturaCompra" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.LinkFacturaCompra" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="dlgActivoFijoBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
+                    </button>
+                    <button id="dlgActivoFijoBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+                        <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
 @section Scripts {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
-    <link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
     <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
     <script src="~/js/autocompletar.js"></script>
 
     <script src="~/lib/bootstrap-table/extensions/export/tableExport.min.js"></script>
+
     <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
     <script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
     <script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
     <script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
-    <script src="~/lib/bootstrap-table/extensions/export/xlsx.full.min.js"></script>
-    <script src="~/lib/bootstrap-table/extensions/export/exceljs.min.js"></script>
-    <script src="~/lib/bootstrap-table/extensions/export/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
     <script src="~/../Areas/ERP/Pages/ActivosFijos.cshtml.js"></script>
 
@@ -158,31 +250,19 @@
         var dlgEditarTitle = '@Localizer["EditDialogTitle"]';
         var dlgVerTitle = '@Localizer["SeeDialogTitle"]';
         var dlgNuevoTitle = '@Localizer["NewDialogTitle"]';
-        var dlgDeleteTitle = '@Localizer["DeleteDialogTitle"]';
-        var dlgDeleteQuestion = '@Localizer["DeleteDialogQuestion"]';
-        var dlgFinishConTitle = '@Localizer["FinishConDialogTitle"]';
-        var dlgMessageFinishConTitle = '@Localizer["MessageFinishConDialogTitle"]';
-        var dlgConciliacionTitle = '@Localizer["dlgConciliacionTitle"]';
+        var dlgDeleteTitle = '@Localizer["DeleteOfficeDialogTitle"]';
+        var dlgDeleteQuestion = '@Localizer["DeleteOfficeDialogQuestion"]';
 
-        /*Tabla de resultados*/
-        var colIdHeader = '@Localizer["colIdHeader"]';
-        var colFechaHeader = '@Localizer["ColDateHeader"]';
-        var colDescripcionHeader = '@Localizer["ColDescriptionHeader"]';
-        var colClienteHeader = '@Localizer["ColCustomerHeader"]';
-        var colTotalHeader = '@Localizer["ColTotalHeader"]';
-        var colUsuarioCreadorHeader = '@Localizer["ColCreatedUserHeader"]';
-        var colUsuarioModificoHeader = '@Localizer["ColModifyUserHeader"]';
-        var colFinalizadaHeader = '@Localizer["ColStatushHeader"]';
+        var colFolioHeader = '@Localizer["ColFolioHeader"]';
+        var colDescripcionHeader = '@Localizer["ColDescripcionHeader"]';
+        var colResponsableHeader = '@Localizer["ColResponsableHeader"]';
+        var colCategoriaHeader = '@Localizer["ColCategoriaHeader"]';
+        var colTipoHeader = '@Localizer["ColTipoHeader"]';
+        var colFechaCompraHeader = '@Localizer["ColFechaCompraHeader"]';
+        var colPrecioHeader = '@Localizer["ColPrecioHeader"]';
+        var colLinkFacturaHeader = '@Localizer["ColLinkFacturaHeader"]';
+
         var colAccionesHeader = '@Localizer["ColActionsHeader"]';
-
-        /*Tabla de resultados Detalles*/
-        var colIdHeaderD = '@Localizer["colIdHeaderD"]';
-        var colSerieHeaderD = '@Localizer["colSerieHeaderD"]';
-        var colFolioHeaderD = '@Localizer["colFolioHeaderD"]';
-        var colFechaHeaderD = '@Localizer["colFechaHeaderD"]';
-        var colTotalHeaderD = '@Localizer["colTotalHeaderD"]';
-        var colPSimilitudHeaderD = '@Localizer["colPSimilitudHeaderD"]';
-        var colCheckHeaderD = '@Localizer["colCheckHeaderD"]';
 
         /*Permisos*/
         var puedeTodo = '@puedeTodo' == 'True';

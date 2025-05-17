@@ -29,6 +29,7 @@ using System.Data;
 using System.Net.Mime;
 using System.Text;
 using System.Web;
+using static ERPSEI.Areas.Catalogos.Pages.GestionDeTalentoModel;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 
 namespace ERPSEI.Areas.ERP.Pages
@@ -75,6 +76,43 @@ namespace ERPSEI.Areas.ERP.Pages
             public DateTime? FechaCompraFin { get; set; }
         }
 
+
+        [BindProperty]
+        public ActivoFijoTableModel InputActivosFijos { get; set; }
+
+        public class ActivoFijoTableModel
+        {
+            public int? Folio { get; set; }
+
+            [DataType(DataType.Text)]
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
+            public string? Descripcion { get; set; } = string.Empty;
+
+            [DataType(DataType.Text)]
+            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
+            public string? Responsable { get; set; }
+
+            [DataType(DataType.Text)]
+            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
+            public string? Categoria { get; set; }
+
+            [DataType(DataType.Text)]
+            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
+            public string? Tipo { get; set; }
+
+            [Display(Name = "Fecha Compra")]
+            [DataType(DataType.Date)]
+            public DateTime? FechaCompra { get; set; }
+
+            public decimal? Precio { get; set; }
+
+            [Display(Name = "Link Factura Compra")]
+            [DataType(DataType.Url)]
+            [StringLength(300, ErrorMessage = "La URL es demasiado larga")]
+            public string? LinkFacturaCompra { get; set; }
+        }
+
         public ActivosFijosModel(
             IStringLocalizer<ActivosFijosModel> _stringLocalizer,
             ILogger<ActivosFijosModel> _logger,
@@ -90,7 +128,7 @@ namespace ERPSEI.Areas.ERP.Pages
             db = _db;
 
             InputFiltro = new InputFiltroModel();
+            InputActivosFijos = new ActivoFijoTableModel();
         }
-
     }
 }

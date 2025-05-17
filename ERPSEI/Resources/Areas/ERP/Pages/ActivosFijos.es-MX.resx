@@ -117,17 +117,53 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="." xml:space="preserve">
-    <value />
-  </data>
   <data name="AddButton" xml:space="preserve">
     <value>Agregar</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Cancelar</value>
   </data>
   <data name="CategoriaField" xml:space="preserve">
     <value>Categoria</value>
   </data>
+  <data name="CategoriaPlaceholder" xml:space="preserve">
+    <value>Categoria</value>
+  </data>
+  <data name="ColActionsHeader" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="ColCategoriaHeader" xml:space="preserve">
+    <value>Categoría</value>
+  </data>
+  <data name="ColDescripcionHeader" xml:space="preserve">
+    <value>Descripción</value>
+  </data>
+  <data name="ColFechaCompraHeader" xml:space="preserve">
+    <value>Fecha Compra</value>
+  </data>
+  <data name="ColFolioHeader" xml:space="preserve">
+    <value>Folio</value>
+  </data>
+  <data name="ColLinkFacturaHeader" xml:space="preserve">
+    <value>Link Factura Compra</value>
+  </data>
+  <data name="ColPrecioHeader" xml:space="preserve">
+    <value>Precio</value>
+  </data>
+  <data name="ColResponsableHeader" xml:space="preserve">
+    <value>Responsable</value>
+  </data>
+  <data name="ColTipoHeader" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
   <data name="DeactivateButton" xml:space="preserve">
     <value>Dar de baja</value>
+  </data>
+  <data name="DescripcionPlaceholder" xml:space="preserve">
+    <value>Descripción</value>
+  </data>
+  <data name="EditButtonTitle" xml:space="preserve">
+    <value>Editar</value>
   </data>
   <data name="FechaCompraFinField" xml:space="preserve">
     <value>Fecha Fin Compra</value>
@@ -135,19 +171,49 @@
   <data name="FechaCompraInicioField" xml:space="preserve">
     <value>Fecha Inicio Compra</value>
   </data>
+  <data name="FechaCompraPlaceholder" xml:space="preserve">
+    <value>Fecha Compra</value>
+  </data>
   <data name="FilterTitle" xml:space="preserve">
     <value>Filtros de búsquedas</value>
   </data>
   <data name="FolioField" xml:space="preserve">
     <value>Folio</value>
   </data>
+  <data name="ImportButtonText" xml:space="preserve">
+    <value>Importar</value>
+  </data>
+  <data name="LinkFacturaCompraPlaceholder" xml:space="preserve">
+    <value>Link Factura Compra</value>
+  </data>
+  <data name="NewDialogTitle" xml:space="preserve">
+    <value>Nuevo Registro</value>
+  </data>
+  <data name="PrecioPlaceholder" xml:space="preserve">
+    <value>Precio</value>
+  </data>
   <data name="ResponsableField" xml:space="preserve">
     <value>Responsable</value>
+  </data>
+  <data name="ResponsablePlaceholder" xml:space="preserve">
+    <value>Responsable</value>
+  </data>
+  <data name="SaveButton" xml:space="preserve">
+    <value>Guardar</value>
   </data>
   <data name="SearchButton" xml:space="preserve">
     <value>Buscar</value>
   </data>
+  <data name="SeeButtonTitle" xml:space="preserve">
+    <value>Ver</value>
+  </data>
+  <data name="SeeDialogTitle" xml:space="preserve">
+    <value>Ver</value>
+  </data>
   <data name="TipoField" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="TipoPlaceholder" xml:space="preserve">
     <value>Tipo</value>
   </data>
   <data name="Title" xml:space="preserve">
