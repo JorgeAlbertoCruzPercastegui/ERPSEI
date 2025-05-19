@@ -122,6 +122,7 @@ namespace ERPSEI
         private static void ConfigureDIActivosFijos(WebApplicationBuilder _builder)
         {
             //Activos Fijos
+            _builder.Services.AddScoped<IActivoFijoManager, ActivoFijoManager>();
             _builder.Services.AddScoped<ITipoActivosFijosManager, TipoActivosFijosManager>();
             _builder.Services.AddScoped<ICategoriaActivosFijosManager, CategoriaActivosFijosManager>();
         }

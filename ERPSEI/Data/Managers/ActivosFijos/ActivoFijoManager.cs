@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.ActivosFijos;
+using ERPSEI.Data.Entities.Clientes;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.ActivosFijos
@@ -87,6 +88,10 @@ namespace ERPSEI.Data.Managers.ActivosFijos
             }
         }
 
+        /*public async Task<List<ActivoFijo>> GetAllAsync()
+        {
+            return await db.ActivosFijos.ToListAsync();
+        }*/
         public async Task<List<ActivoFijo>> GetAllAsync()
         {
             return await db.ActivosFijos

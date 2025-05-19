@@ -35,6 +35,7 @@ using System.Text;
 using System.Web;
 using static ERPSEI.Areas.Catalogos.Pages.GestionDeTalentoModel;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
+using Microsoft.DotNet.MSIdentity.Shared;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -126,7 +127,8 @@ namespace ERPSEI.Areas.ERP.Pages
             ILogger<ActivosFijosModel> _logger,
             AppUserManager _appUserManager,
             IStringLocalizer<ActivosFijosModel> _localizer,
-            Data.ApplicationDbContext _db
+            Data.ApplicationDbContext _db,
+            IActivoFijoManager _activoFijoManager // <--- AÑADIR ESTO
         )
         {
             stringLocalizer = _stringLocalizer;
@@ -134,10 +136,10 @@ namespace ERPSEI.Areas.ERP.Pages
             appUserManager = _appUserManager;
             localizer = _localizer;
             db = _db;
+            activoFijoManager = _activoFijoManager; // <--- AÑADIR ESTA LÍNEA
 
             InputFiltro = new InputFiltroModel();
             InputActivosFijos = new ActivoFijoTableModel();
-            ActivosFijosList = new ActivoFijo();
         }
 
 
@@ -188,7 +190,6 @@ namespace ERPSEI.Areas.ERP.Pages
             return jsonResponse;
         }
 
-
         private async Task<string> GetActivosFijosL(InputFiltroModel? filtro = null)
         {
             string jsonResponse;
@@ -238,57 +239,41 @@ namespace ERPSEI.Areas.ERP.Pages
             return jsonResponse;
         }
 
+        //Método para listar en json todos los activos fijos
+
         public async Task<JsonResult> OnGetActivosFijosList()
         {
-            List<string> jsonActivos = new();
             var activos = await activoFijoManager.GetAllAsync();
 
-            foreach (var af in activos)
+            var jsonActivos = new List<object>();
+
+            foreach (var a in activos)
             {
-                // Validaciones defensivas
-                string responsable = (af.Empleado != null && !string.IsNullOrWhiteSpace(af.Empleado.NombreCompleto))
-                    ? af.Empleado.NombreCompleto
-                    : $"{af.Empleado?.Nombre} {af.Empleado?.ApellidoPaterno} {af.Empleado?.ApellidoMaterno}".Trim();
+                DateTime? fecha = a.FechaCompra == DateTime.MinValue ? null : a.FechaCompra;
 
-                string categoria = af.Categoria?.Descripcion ?? "-";
-                string tipo = af.Tipo?.Descripcion ?? "-";
-                string folio = af.Folio ?? "-";
-                string marca = af.Marca ?? "-";
-                string numeroSerie = af.NumeroSerie ?? "-";
-                string descripcion = af.Descripcion ?? "-";
-                string ubicacion = af.Ubicacion ?? "-";
-                string linkFactura = af.LinkFacturaCompra ?? "-";
-
-                string fechaCompra = af.FechaCompra.HasValue ? af.FechaCompra.Value.ToString("dd/MM/yyyy") : "-";
-                string fechaCompraJS = af.FechaCompra.HasValue ? af.FechaCompra.Value.ToString("yyyy-MM-dd") : "-";
-
-                jsonActivos.Add("{" +
-                    $"\"id\": \"{af.Id}\", " +
-                    $"\"folio\": \"{folio}\", " +
-                    $"\"descripcion\": \"{descripcion}\", " +
-                    $"\"marca\": \"{marca}\", " +
-                    $"\"numeroSerie\": \"{numeroSerie}\", " +
-                    $"\"responsableId\": \"{af.EmpleadoId}\", " +
-                    $"\"responsable\": \"{responsable}\", " +
-                    $"\"categoriaId\": \"{af.CategoriaId}\", " +
-                    $"\"categoria\": \"{categoria}\", " +
-                    $"\"tipoId\": \"{af.TipoId}\", " +
-                    $"\"tipo\": \"{tipo}\", " +
-                    $"\"fechaCompra\": \"{fechaCompra}\", " +
-                    $"\"fechaCompraJS\": \"{fechaCompraJS}\", " +
-                    $"\"precio\": \"{af.Precio}\", " +
-                    $"\"ubicacion\": \"{ubicacion}\", " +
-                    $"\"linkFacturaCompra\": \"{linkFactura}\", " +
-                    $"\"deshabilitado\": \"{af.Deshabilitado}\"" +
-                "}");
+                jsonActivos.Add(new
+                {
+                    id = a.Id,
+                    folio = a.Folio ?? "-",
+                    descripcion = a.Descripcion ?? "-",
+                    marca = a.Marca ?? "-",
+                    numeroSerie = a.NumeroSerie ?? "-",
+                    responsable = a.Empleado?.NombreCompleto ?? "-",
+                    responsableId = a.EmpleadoId,
+                    categoria = a.Categoria?.Descripcion ?? "-",
+                    categoriaId = a.CategoriaId,
+                    tipo = a.Tipo?.Descripcion ?? "-",
+                    tipoId = a.TipoId,
+                    fechaCompra = fecha?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaCompraJS = fecha?.ToString("yyyy-MM-dd") ?? "-",
+                    precio = a.Precio,
+                    ubicacion = a.Ubicacion ?? "-",
+                    linkFacturaCompra = a.LinkFacturaCompra ?? "-",
+                    deshabilitado = a.Deshabilitado.ToString()
+                });
             }
 
-            return new JsonResult($"[{string.Join(",", jsonActivos)}]");
+            return new JsonResult(jsonActivos);
         }
-
-
-
-
-
     }
 }

@@ -68,6 +68,7 @@ function onAgregarClick() {
 }
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
+        url: '/ERP/ActivosFijos?handler=ActivosFijosList',
         height: 550,
         locale: cultureName,
         exportDataType: 'all',
@@ -118,8 +119,8 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "Fecha Compra",
-                field: "fechacompra",
+                title: "FechaCompra",
+                field: "fechaCompra",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -132,8 +133,8 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "Link Factura Compra",
-                field: "linkfacturacompra",
+                title: "LinkFacturaCompra",
+                field: "linkFacturaCompra",
                 align: "center",
                 valign: "middle",
                 sortable: true
