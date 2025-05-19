@@ -289,9 +289,9 @@ namespace ERPSEI
         {
             _builder.Services.Configure<FormOptions>(options =>
             {
-                options.ValueCountLimit = 10000; // si aún lo necesitas
-                options.ValueLengthLimit = int.MaxValue; // 🔥 ESTE es el que soluciona el error
-                options.MultipartBodyLengthLimit = long.MaxValue; // tamaño total permitido del cuerpo
+                options.ValueCountLimit = 10000; 
+                options.ValueLengthLimit = int.MaxValue;
+                options.MultipartBodyLengthLimit = long.MaxValue;
                 options.MultipartHeadersLengthLimit = int.MaxValue;
             });
         }
