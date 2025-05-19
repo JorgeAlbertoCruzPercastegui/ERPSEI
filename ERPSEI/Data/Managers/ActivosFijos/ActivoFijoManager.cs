@@ -89,8 +89,13 @@ namespace ERPSEI.Data.Managers.ActivosFijos
 
         public async Task<List<ActivoFijo>> GetAllAsync()
         {
-            return await db.ActivosFijos.ToListAsync();
+            return await db.ActivosFijos
+                .Include(a => a.Empleado)
+                .Include(a => a.Categoria)
+                .Include(a => a.Tipo)
+                .ToListAsync();
         }
+
 
         public async Task<ActivoFijo?> GetByIdAsync(int id)
         {

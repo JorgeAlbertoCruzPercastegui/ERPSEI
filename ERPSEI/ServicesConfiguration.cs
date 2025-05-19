@@ -278,12 +278,23 @@ namespace ERPSEI
             });
         }
 
-        public static void ConfigureFormOptions(WebApplicationBuilder _builder)
+        /*public static void ConfigureFormOptions(WebApplicationBuilder _builder)
         {
             _builder.Services.Configure<FormOptions>(options =>
             {
                 options.ValueCountLimit = 10000;
             });
+        }*/
+        public static void ConfigureFormOptions(WebApplicationBuilder _builder)
+        {
+            _builder.Services.Configure<FormOptions>(options =>
+            {
+                options.ValueCountLimit = 10000; // si aún lo necesitas
+                options.ValueLengthLimit = int.MaxValue; // 🔥 ESTE es el que soluciona el error
+                options.MultipartBodyLengthLimit = long.MaxValue; // tamaño total permitido del cuerpo
+                options.MultipartHeadersLengthLimit = int.MaxValue;
+            });
         }
+
     }
 }

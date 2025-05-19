@@ -1,4 +1,4 @@
-using ERPSEI.Data;
+ï»¿using ERPSEI.Data;
 using ERPSEI.Data.Entities.ActivosFijos;
 using ERPSEI.Data.Managers.ActivosFijos;
 using ERPSEI.Data.Entities.Conciliaciones;
@@ -49,6 +49,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly Data.ApplicationDbContext db;
 
         [BindProperty]
+        public ActivoFijo? ActivosFijosList { get; set; }
         public InputFiltroModel InputFiltro { get; set; }
 
         public class InputFiltroModel
@@ -136,6 +137,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             InputFiltro = new InputFiltroModel();
             InputActivosFijos = new ActivoFijoTableModel();
+            ActivosFijosList = new ActivoFijo();
         }
 
 
@@ -146,7 +148,7 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
                 {
-                    resp.Datos = await GetActivosFijosList(InputFiltro); // usa el método adaptado que ya hicimos
+                    resp.Datos = await GetActivosFijosL(InputFiltro); // usa el mÃ©todo adaptado que ya hicimos
                     resp.TieneError = false;
                     resp.Mensaje = localizer["ConsultadoSuccessfully"];
                 }
@@ -168,7 +170,7 @@ namespace ERPSEI.Areas.ERP.Pages
             string jsonResponse;
 
             ActivoFijo? a = await activoFijoManager.GetByIdAsync(idActivo)
-                ?? throw new Exception($"No se encontró información del activo fijo con id {idActivo}");
+                ?? throw new Exception($"No se encontrÃ³ informaciÃ³n del activo fijo con id {idActivo}");
 
             jsonResponse = "{" +
                 $"\"id\": {a.Id}, " +
@@ -187,7 +189,7 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
 
-        private async Task<string> GetActivosFijosList(InputFiltroModel? filtro = null)
+        private async Task<string> GetActivosFijosL(InputFiltroModel? filtro = null)
         {
             string jsonResponse;
             List<string> jsonActivos = [];
@@ -235,6 +237,58 @@ namespace ERPSEI.Areas.ERP.Pages
             jsonResponse = $"[{string.Join(",", jsonActivos)}]";
             return jsonResponse;
         }
+
+        public async Task<JsonResult> OnGetActivosFijosList()
+        {
+            List<string> jsonActivos = new();
+            var activos = await activoFijoManager.GetAllAsync();
+
+            foreach (var af in activos)
+            {
+                // Validaciones defensivas
+                string responsable = (af.Empleado != null && !string.IsNullOrWhiteSpace(af.Empleado.NombreCompleto))
+                    ? af.Empleado.NombreCompleto
+                    : $"{af.Empleado?.Nombre} {af.Empleado?.ApellidoPaterno} {af.Empleado?.ApellidoMaterno}".Trim();
+
+                string categoria = af.Categoria?.Descripcion ?? "-";
+                string tipo = af.Tipo?.Descripcion ?? "-";
+                string folio = af.Folio ?? "-";
+                string marca = af.Marca ?? "-";
+                string numeroSerie = af.NumeroSerie ?? "-";
+                string descripcion = af.Descripcion ?? "-";
+                string ubicacion = af.Ubicacion ?? "-";
+                string linkFactura = af.LinkFacturaCompra ?? "-";
+
+                string fechaCompra = af.FechaCompra.HasValue ? af.FechaCompra.Value.ToString("dd/MM/yyyy") : "-";
+                string fechaCompraJS = af.FechaCompra.HasValue ? af.FechaCompra.Value.ToString("yyyy-MM-dd") : "-";
+
+                jsonActivos.Add("{" +
+                    $"\"id\": \"{af.Id}\", " +
+                    $"\"folio\": \"{folio}\", " +
+                    $"\"descripcion\": \"{descripcion}\", " +
+                    $"\"marca\": \"{marca}\", " +
+                    $"\"numeroSerie\": \"{numeroSerie}\", " +
+                    $"\"responsableId\": \"{af.EmpleadoId}\", " +
+                    $"\"responsable\": \"{responsable}\", " +
+                    $"\"categoriaId\": \"{af.CategoriaId}\", " +
+                    $"\"categoria\": \"{categoria}\", " +
+                    $"\"tipoId\": \"{af.TipoId}\", " +
+                    $"\"tipo\": \"{tipo}\", " +
+                    $"\"fechaCompra\": \"{fechaCompra}\", " +
+                    $"\"fechaCompraJS\": \"{fechaCompraJS}\", " +
+                    $"\"precio\": \"{af.Precio}\", " +
+                    $"\"ubicacion\": \"{ubicacion}\", " +
+                    $"\"linkFacturaCompra\": \"{linkFactura}\", " +
+                    $"\"deshabilitado\": \"{af.Deshabilitado}\"" +
+                "}");
+            }
+
+            return new JsonResult($"[{string.Join(",", jsonActivos)}]");
+        }
+
+
+
+
 
     }
 }

@@ -11,5 +11,8 @@ namespace ERPSEI.Data.Managers.ActivosFijos
             int? tipoId,
             DateTime? fechaInicio,
             DateTime? fechaFin);
+
+        Task<List<ActivoFijo>> GetAllAsync();
+
     }
 }
