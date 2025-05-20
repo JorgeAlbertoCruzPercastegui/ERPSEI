@@ -195,25 +195,27 @@ function initTable() {
         });
     })
 }
+
+
 /////////////////////
 
 //Funcionalidad Diálogo
 function initActivoFijoDialog(action, row) {
     let idField = document.getElementById("inpActivoFijoId");
     let folioField = document.getElementById("inpActivoFijoFolio");
-    let descripcionField = document.getElementById("ActivoFijoDescripcion");
-    let responsableField = document.getElementById("ActivoFijoResponsable");
-    let categoriaField = document.getElementById("ActivoFijoCategoria");
-    let tipoField = document.getElementById("ActivoFijoTipo");
-    let fechacompraField = document.getElementById("ActivoFijoFechaCompra");
-    let precioField = document.getElementById("ActivoFijoPrecio");
-    let linkfacturaField = document.getElementById("ActivoFijoLinkFacturaCompra");
+    let descripcionField = document.getElementById("inpActivoFijoDescripcion");
+    let responsableField = document.getElementById("inpActivoFijoResponsable");
+    let categoriaField = document.getElementById("inpActivoFijoCategoria");
+    let tipoField = document.getElementById("inpActivoFijoTipo");
+    let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
+    let precioField = document.getElementById("inpActivoFijoPrecio");
+    let linkfacturaField = document.getElementById("inpActivoFijoLinkFacturaCompra");
     let btnGuardar = document.getElementById("dlgActivoFijoBtnGuardar");
     let dlgTitle = document.getElementById("dlgActivoFijoTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
-    idField.setAttribute("disabled", true);
+    idField.setAttribute("disabled", "true");
 
     switch (action) {
         case NUEVO:
@@ -256,23 +258,24 @@ function initActivoFijoDialog(action, row) {
             fechacompraField.setAttribute("disabled", true);
             precioField.setAttribute("disabled", true);
             linkfacturaField.setAttribute("disabled", true);
-
             btnGuardar.setAttribute("disabled", true);
             break;
     }
 
-    idField.value = row.id;
-    folioField.value = row.folio;
-    descripcionField.value = row.descripcion;
-    responsableField.value = row.responsable;
-    categoriaField.value = row.categoria;
-    tipoField.value = row.tipo;
-    fechacompraField.value = row.fechacompra;
-    precioField.value = row.precio;
-    linkfacturaField.value = row.linkfacturacompra;
+    idField.value = row.id ?? "";
+    folioField.value = row.folio ?? "";
+    descripcionField.value = row.descripcion ?? "";
+    responsableField.value = row.responsable ?? "";
+    categoriaField.value = row.categoria ?? "";
+    tipoField.value = row.tipo ?? "";
+    fechacompraField.value = row.fechaCompra || '';
+    precioField.value = row.precio ?? "";
+    linkfacturaField.value = row.linkFacturaCompra || '';
+
 
     dlgModal.toggle();
 }
+
 function onCerrarClick() {
     //Removes validation from input-fields
     $('.input-validation-error').addClass('input-validation-valid');

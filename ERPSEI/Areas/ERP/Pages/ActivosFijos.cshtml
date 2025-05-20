@@ -53,7 +53,7 @@
                     <div class="row">
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroId" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["FolioField"]" />
+                                <input id="inpFiltroFolio" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["FolioField"]" />
                                 <label for="inpFiltroFolio" asp-for="InputFiltro.Folio" class="form-label"></label>
                             </div>
                         </div>
@@ -206,7 +206,7 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="form-floating mb-3">
-                                    <input id="inpOficinaNombre" asp-for="InputActivosFijos.Responsable" type="text" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
+                                    <input id="inpActivoFijoResponsable" asp-for="InputActivosFijos.Responsable" type="text" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
                                     <label asp-for="InputActivosFijos.Responsable" class="form-label required"></label>
                                     <span asp-validation-for="InputActivosFijos.Responsable" class="text-danger"></span>
                                 </div>
@@ -272,17 +272,109 @@
     </div>
 </form>
 
+<div class="modal fade" id="dlgActivoFijo" tabindex="-1" aria-labelledby="dlgActivoFijoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dlgActivoFijoTitle">@Localizer["TitleDialogPlaceholder"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label for="inpActivoFijoId">Id</label>
+                    <input type="text" id="inpActivoFijoId" class="form-control" disabled />
+                </div>
+
+                <h6 class="mb-3">Información General</h6>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <input type="text" id="inpActivoFijoFolio" class="form-control" placeholder="@Localizer["FolioPlaceholder"]" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <input type="text" id="inpActivoFijoMarca" class="form-control" placeholder="@Localizer["MarcaPlaceholder"]" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <input type="text" id="inpActivoFijoNumeroSerie" class="form-control" placeholder="@Localizer["SeriePlaceholder"]" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <input type="text" id="inpActivoFijoDescripcion" class="form-control" placeholder="@Localizer["DescripcionPlaceholder"]" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <input type="text" id="inpActivoFijoFechaCompra" class="form-control" placeholder="@Localizer["FechaCompraPlaceholder"]" />
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <input type="text" id="inpActivoFijoUbicacion" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <input type="text" id="inpActivoFijoResponsable" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <select id="inpActivoFijoCategoria" class="form-select">
+                            <option value="">@Localizer["CategoriaPlaceholder"]</option>
+                            @foreach (var categoria in categorias)
+                            {
+                                <option value="@categoria.Id">@categoria.Descripcion</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <input type="url" id="inpActivoFijoLinkFacturaCompra" class="form-control" placeholder="Link de Factura de Compra" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <select id="inpActivoFijoTipo" class="form-select">
+                            <option value="">@Localizer["TipoPlaceholder"]</option>
+                            @foreach (var tipo in tipos)
+                            {
+                                <option value="@tipo.Id">@tipo.Descripcion</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <input type="number" id="inpActivoFijoPrecio" class="form-control" placeholder="@Localizer["PrecioPlaceholder"]" />
+                    </div>
+                </div>
+
+                <div id="saveValidationSummary" class="text-danger validation-summary-errors"></div>
+            </div>
+
+             <div class="modal-footer">
+                    <button id="dlgActivoFijoBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
+                    </button>
+                    <button id="dlgActivoFijoBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+                        <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
+                    </button>
+                </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
     <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
     <script src="~/js/autocompletar.js"></script>
 
     <script src="~/lib/bootstrap-table/extensions/export/tableExport.min.js"></script>
-
     <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
     <script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
     <script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
     <script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/xlsx.full.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/exceljs.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
     <script src="~/../Areas/ERP/Pages/ActivosFijos.cshtml.js"></script>
 

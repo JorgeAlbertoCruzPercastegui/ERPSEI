@@ -1,6 +1,7 @@
 ﻿using ERPSEI.Data.Entities.ActivosFijos;
 using ERPSEI.Data.Entities.Clientes;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace ERPSEI.Data.Managers.ActivosFijos
 {
@@ -92,6 +93,7 @@ namespace ERPSEI.Data.Managers.ActivosFijos
         {
             return await db.ActivosFijos.ToListAsync();
         }*/
+
         public async Task<List<ActivoFijo>> GetAllAsync()
         {
             return await db.ActivosFijos
@@ -110,41 +112,6 @@ namespace ERPSEI.Data.Managers.ActivosFijos
         public async Task<ActivoFijo?> GetByNameAsync(string name)
         {
             return await db.ActivosFijos.Where(a => a.Descripcion.ToLower() == name.ToLower() || a.Descripcion.ToLower() == name.ToLower()).FirstOrDefaultAsync();
-        }
-
-        public async Task<List<ActivoFijo>> GetFilteredAsync(
-        int? folio,
-        string? responsable,
-        int? categoriaId,
-        int? tipoId,
-        DateTime? fechaInicio,
-        DateTime? fechaFin)
-        {
-            var query = db.ActivosFijos
-                .Include(a => a.Empleado)
-                .Include(a => a.Categoria)
-                .Include(a => a.Tipo)
-                .AsQueryable();
-
-            if (folio.HasValue)
-                query = query.Where(a => a.Folio == folio.ToString());
-
-            if (!string.IsNullOrWhiteSpace(responsable))
-                query = query.Where(a => a.Empleado != null && a.Empleado.NombreCompleto.Contains(responsable));
-
-            if (categoriaId.HasValue)
-                query = query.Where(a => a.CategoriaId == categoriaId);
-
-            if (tipoId.HasValue)
-                query = query.Where(a => a.TipoId == tipoId);
-
-            if (fechaInicio.HasValue)
-                query = query.Where(a => a.FechaCompra >= fechaInicio);
-
-            if (fechaFin.HasValue)
-                query = query.Where(a => a.FechaCompra <= fechaFin);
-
-            return await query.ToListAsync();
         }
 
     }

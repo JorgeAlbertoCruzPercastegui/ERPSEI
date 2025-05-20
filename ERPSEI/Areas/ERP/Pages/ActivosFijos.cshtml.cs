@@ -57,7 +57,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             //[StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
             //[RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
-            public int? Folio { get; set; }
+            public string? Folio { get; set; }
 
             [DataType(DataType.Text)]
             [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
@@ -142,102 +142,6 @@ namespace ERPSEI.Areas.ERP.Pages
             InputActivosFijos = new ActivoFijoTableModel();
         }
 
-
-        public async Task<JsonResult> OnPostFiltrar()
-        {
-            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
-            try
-            {
-                if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
-                {
-                    resp.Datos = await GetActivosFijosL(InputFiltro); // usa el método adaptado que ya hicimos
-                    resp.TieneError = false;
-                    resp.Mensaje = localizer["ConsultadoSuccessfully"];
-                }
-                else
-                {
-                    resp.Mensaje = localizer["AccesoDenegado"];
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error al filtrar activos fijos");
-            }
-
-            return new JsonResult(resp);
-        }
-
-        private async Task<string> GetDatosAdicionales(int idActivo)
-        {
-            string jsonResponse;
-
-            ActivoFijo? a = await activoFijoManager.GetByIdAsync(idActivo)
-                ?? throw new Exception($"No se encontró información del activo fijo con id {idActivo}");
-
-            jsonResponse = "{" +
-                $"\"id\": {a.Id}, " +
-                $"\"folio\": \"{a.Folio}\", " +
-                $"\"descripcion\": \"{a.Descripcion}\", " +
-                $"\"responsable\": \"{a.Empleado?.NombreCompleto}\", " +
-                $"\"categoria\": \"{a.Categoria?.Descripcion}\", " +
-                $"\"tipo\": \"{a.Tipo?.Descripcion}\", " +
-                $"\"fechaCompra\": \"{a.FechaCompra:dd/MM/yyyy}\", " +
-                $"\"precio\": {a.Precio}, " +
-                $"\"linkFacturaCompra\": \"{a.LinkFacturaCompra}\", " +
-                $"\"comentarios\": \"{a.Comentarios}\" " +
-            "}";
-
-            return jsonResponse;
-        }
-
-        private async Task<string> GetActivosFijosL(InputFiltroModel? filtro = null)
-        {
-            string jsonResponse;
-            List<string> jsonActivos = [];
-            List<ActivoFijo> activos;
-
-            if (filtro != null)
-            {
-                activos = await activoFijoManager.GetFilteredAsync(
-                    filtro.Folio,
-                    filtro.Responsable,
-                    filtro.CategoriaId,
-                    filtro.TipoId,
-                    filtro.FechaCompraInicio,
-                    filtro.FechaCompraFin
-                );
-            }
-            else
-            {
-                activos = await activoFijoManager.GetAllAsync();
-            }
-
-            foreach (ActivoFijo a in activos)
-            {
-                DateTime? fecha = a.FechaCompra == DateTime.MinValue ? null : a.FechaCompra;
-
-                jsonActivos.Add(
-                    "{" +
-                        $"\"id\": {a.Id}," +
-                        $"\"folio\": \"{a.Folio}\", " +
-                        $"\"descripcion\": \"{a.Descripcion}\", " +
-                        $"\"responsable\": \"{a.Empleado?.NombreCompleto}\", " +
-                        $"\"responsableId\": {a.EmpleadoId}, " +
-                        $"\"categoria\": \"{a.Categoria?.Descripcion}\", " +
-                        $"\"categoriaId\": {a.CategoriaId}, " +
-                        $"\"tipo\": \"{a.Tipo?.Descripcion}\", " +
-                        $"\"tipoId\": {a.TipoId}, " +
-                        $"\"fechaCompra\": \"{fecha:dd/MM/yyyy}\", " +
-                        $"\"fechaCompraJS\": \"{fecha:yyyy-MM-dd}\", " +
-                        $"\"precio\": {a.Precio}, " +
-                        $"\"linkFacturaCompra\": \"{a.LinkFacturaCompra}\"" +
-                    "}"
-                );
-            }
-
-            jsonResponse = $"[{string.Join(",", jsonActivos)}]";
-            return jsonResponse;
-        }
 
         //Método para listar en json todos los activos fijos
 
