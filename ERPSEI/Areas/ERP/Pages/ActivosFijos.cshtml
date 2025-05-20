@@ -214,26 +214,41 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoCategoria" asp-for="InputActivosFijos.Categoria" type="text" class="form-control" placeholder="@Localizer["CategoriaPlaceholder"]" />
+                                <div class="mb-3">
                                     <label asp-for="InputActivosFijos.Categoria" class="form-label required"></label>
+                                    <select id="inpActivoFijoCategoria" asp-for="InputActivosFijos.Categoria" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        @foreach (var categoria in categorias)
+                                        {
+                                            <option value="@categoria.Id">@categoria.Descripcion</option>
+                                        }
+                                    </select>
                                     <span asp-validation-for="InputActivosFijos.Categoria" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
+
                         <div class="row">
                             <div class="col-12">
-                                <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoTipo" asp-for="InputActivosFijos.Tipo" type="text" class="form-control" placeholder="@Localizer["TipoPlaceholder"]" />
+                                <div class="mb-3">
                                     <label asp-for="InputActivosFijos.Tipo" class="form-label required"></label>
+                                    <select id="inpActivoFijoTipo" asp-for="InputActivosFijos.Tipo" class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        @foreach (var tipo in tipos)
+                                        {
+                                            <option value="@tipo.Id">@tipo.Descripcion</option>
+                                        }
+                                    </select>
+
                                     <span asp-validation-for="InputActivosFijos.Tipo" class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
+
                         <div class="row">
                             <div class="col-12">
                                 <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoFechaCompra" asp-for="InputActivosFijos.FechaCompra" type="text" class="form-control" placeholder="@Localizer["FechaCompraPlaceholder"]" />
+                                    <input id="inpActivoFijoFechaCompra" asp-for="InputActivosFijos.FechaCompra" type="date" class="form-control" placeholder="@Localizer["FechaCompraPlaceholder"]" />
                                     <label asp-for="InputActivosFijos.FechaCompra" class="form-label required"></label>
                                     <span asp-validation-for="InputActivosFijos.FechaCompra" class="text-danger"></span>
                                 </div>
@@ -272,87 +287,6 @@
     </div>
 </form>
 
-<div class="modal fade" id="dlgActivoFijo" tabindex="-1" aria-labelledby="dlgActivoFijoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="dlgActivoFijoTitle">@Localizer["TitleDialogPlaceholder"]</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-
-            <div class="modal-body">
-                <div class="form-group mb-3">
-                    <label for="inpActivoFijoId">Id</label>
-                    <input type="text" id="inpActivoFijoId" class="form-control" disabled />
-                </div>
-
-                <h6 class="mb-3">Información General</h6>
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <input type="text" id="inpActivoFijoFolio" class="form-control" placeholder="@Localizer["FolioPlaceholder"]" />
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <input type="text" id="inpActivoFijoMarca" class="form-control" placeholder="@Localizer["MarcaPlaceholder"]" />
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <input type="text" id="inpActivoFijoNumeroSerie" class="form-control" placeholder="@Localizer["SeriePlaceholder"]" />
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <input type="text" id="inpActivoFijoDescripcion" class="form-control" placeholder="@Localizer["DescripcionPlaceholder"]" />
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <input type="text" id="inpActivoFijoFechaCompra" class="form-control" placeholder="@Localizer["FechaCompraPlaceholder"]" />
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-                        <input type="text" id="inpActivoFijoUbicacion" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <input type="text" id="inpActivoFijoResponsable" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <select id="inpActivoFijoCategoria" class="form-select">
-                            <option value="">@Localizer["CategoriaPlaceholder"]</option>
-                            @foreach (var categoria in categorias)
-                            {
-                                <option value="@categoria.Id">@categoria.Descripcion</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <input type="url" id="inpActivoFijoLinkFacturaCompra" class="form-control" placeholder="Link de Factura de Compra" />
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <select id="inpActivoFijoTipo" class="form-select">
-                            <option value="">@Localizer["TipoPlaceholder"]</option>
-                            @foreach (var tipo in tipos)
-                            {
-                                <option value="@tipo.Id">@tipo.Descripcion</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <input type="number" id="inpActivoFijoPrecio" class="form-control" placeholder="@Localizer["PrecioPlaceholder"]" />
-                    </div>
-                </div>
-
-                <div id="saveValidationSummary" class="text-danger validation-summary-errors"></div>
-            </div>
-
-             <div class="modal-footer">
-                    <button id="dlgActivoFijoBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
-                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
-                    </button>
-                    <button id="dlgActivoFijoBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
-                        <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
-                    </button>
-                </div>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">

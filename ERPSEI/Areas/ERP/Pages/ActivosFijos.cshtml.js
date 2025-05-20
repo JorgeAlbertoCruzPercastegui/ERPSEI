@@ -215,7 +215,7 @@ function initActivoFijoDialog(action, row) {
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
-    idField.setAttribute("disabled", "true");
+    idField.setAttribute("disabled", true);
 
     switch (action) {
         case NUEVO:
@@ -266,15 +266,47 @@ function initActivoFijoDialog(action, row) {
     folioField.value = row.folio ?? "";
     descripcionField.value = row.descripcion ?? "";
     responsableField.value = row.responsable ?? "";
-    categoriaField.value = row.categoria ?? "";
-    tipoField.value = row.tipo ?? "";
-    fechacompraField.value = row.fechaCompra || '';
+    categoriaField.value = row.categoriaId ?? row.categoria ?? "";
+    tipoField.value = row.tipoId ?? row.tipo ?? "";
+    if (row.fechaCompra) {
+        try {
+            // Detectar si viene como dd/MM/yyyy
+            if (row.fechaCompra.includes("/")) {
+                const [dia, mes, anio] = row.fechaCompra.split("/");
+                fechacompraField.value = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+            } else {
+                // Si ya viene en formato ISO
+                const fecha = new Date(row.fechaCompra);
+                fechacompraField.value = fecha.toISOString().split("T")[0];
+            }
+        } catch (e) {
+            fechacompraField.value = "";
+        }
+    } else {
+        fechacompraField.value = "";
+    }
+
     precioField.value = row.precio ?? "";
     linkfacturaField.value = row.linkFacturaCompra || '';
 
 
     dlgModal.toggle();
 }
+
+function onAgregarClick() {
+    initActivoFijoDialog(NUEVO, {
+        id: "Nuevo",
+        folio: "",
+        descripcion: "",
+        responsable: "",
+        categoria: "",
+        tipo: "",
+        fechaCompra: "",
+        precio: "",
+        linkFacturaCompra: ""
+    });
+}
+
 
 function onCerrarClick() {
     //Removes validation from input-fields
