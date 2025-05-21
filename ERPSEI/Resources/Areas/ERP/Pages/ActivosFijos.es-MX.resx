@@ -120,9 +120,6 @@
   <data name="." xml:space="preserve">
     <value />
   </data>
-  <data name=".." xml:space="preserve">
-    <value />
-  </data>
   <data name="AddButton" xml:space="preserve">
     <value>Agregar</value>
   </data>
@@ -164,6 +161,12 @@
   </data>
   <data name="DeactivateButton" xml:space="preserve">
     <value>Dar de baja</value>
+  </data>
+  <data name="DeleteOfficeDialogQuestion" xml:space="preserve">
+    <value>¿Está seguro que desea dar de baja los registros seleccionados?</value>
+  </data>
+  <data name="DeleteOfficeDialogTitle" xml:space="preserve">
+    <value>Dar de baja registro</value>
   </data>
   <data name="DescripcionPlaceholder" xml:space="preserve">
     <value>Descripción</value>

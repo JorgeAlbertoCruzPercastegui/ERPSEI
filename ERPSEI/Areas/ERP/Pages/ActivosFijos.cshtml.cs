@@ -167,6 +167,8 @@ namespace ERPSEI.Areas.ERP.Pages
         public async Task<JsonResult> OnGetActivosFijosList()
         {
             var activos = await activoFijoManager.GetAllAsync();
+            activos = activos.Where(a => a.Deshabilitado != true).ToList();
+
 
             var jsonActivos = new List<object>();
 
@@ -221,6 +223,47 @@ namespace ERPSEI.Areas.ERP.Pages
             var siguienteFolio = $"AF{siguienteNumero.ToString("D4")}";
 
             return new JsonResult(new { folio = siguienteFolio });
+        }
+
+        public async Task<JsonResult> OnPostDeleteActivosFijos(string[] ids)
+        {
+            ServerResponse resp = new(true, "No se pudieron dar de baja los registros.");
+
+            try
+            {
+                await db.Database.BeginTransactionAsync();
+
+                foreach (string id in ids)
+                {
+                    if (!int.TryParse(id, out int intId))
+                        continue;
+
+                    var activo = await db.ActivosFijos.FirstOrDefaultAsync(a => a.Id == intId);
+
+                    if (activo == null)
+                        continue;
+
+                    // Baja lógica
+                    activo.Deshabilitado = true;
+
+                    // Guardar cambios por cada uno (opcional: puedes mover SaveChanges fuera del foreach)
+                    db.ActivosFijos.Update(activo);
+                }
+
+                await db.SaveChangesAsync();
+                await db.Database.CommitTransactionAsync();
+
+                resp.TieneError = false;
+                resp.Mensaje = "Registros dados de baja correctamente.";
+            }
+            catch (Exception ex)
+            {
+                await db.Database.RollbackTransactionAsync();
+                logger.LogError(ex, "Error al dar de baja activos fijos");
+                resp.Mensaje = "Ocurrió un error al dar de baja los registros.";
+            }
+
+            return new JsonResult(resp);
         }
 
 
