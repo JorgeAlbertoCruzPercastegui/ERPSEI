@@ -120,6 +120,9 @@
   <data name="." xml:space="preserve">
     <value />
   </data>
+  <data name=".." xml:space="preserve">
+    <value />
+  </data>
   <data name="AddButton" xml:space="preserve">
     <value>Agregar</value>
   </data>

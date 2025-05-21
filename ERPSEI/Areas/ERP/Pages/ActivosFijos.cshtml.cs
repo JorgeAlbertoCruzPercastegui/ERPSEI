@@ -36,6 +36,7 @@ using System.Web;
 using static ERPSEI.Areas.Catalogos.Pages.GestionDeTalentoModel;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 using Microsoft.DotNet.MSIdentity.Shared;
+using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -120,6 +121,24 @@ namespace ERPSEI.Areas.ERP.Pages
             [DataType(DataType.Url)]
             [StringLength(300, ErrorMessage = "La URL es demasiado larga")]
             public string? LinkFacturaCompra { get; set; }
+
+            [Display(Name = "Marca")]
+            public string? Marca { get; set; }
+
+            [Display(Name = "Número Serie")]
+            public string? NumeroSerie { get; set; }
+
+            [Display(Name = "Ubicación")]
+            public string? Ubicacion { get; set; }
+
+            [Display(Name = "Comentarios")]
+            public string? Comentarios { get; set; }
+
+            [Display(Name = "Fecha Renovación")]
+            [DataType(DataType.Date)]
+            public DateTime? FechaRenovacion { get; set; }
+
+            public int? Deshabilitado { get; set; } = 0;
         }
 
         public ActivosFijosModel(
@@ -153,7 +172,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
             foreach (var a in activos)
             {
-                DateTime? fecha = a.FechaCompra == DateTime.MinValue ? null : a.FechaCompra;
+                DateTime? fechaCompra = a.FechaCompra == DateTime.MinValue ? null : a.FechaCompra;
+                DateTime? fechaRenovacion = a.FechaRenovacion == DateTime.MinValue ? null : a.FechaRenovacion;
 
                 jsonActivos.Add(new
                 {
@@ -168,16 +188,41 @@ namespace ERPSEI.Areas.ERP.Pages
                     categoriaId = a.CategoriaId,
                     tipo = a.Tipo?.Descripcion ?? "-",
                     tipoId = a.TipoId,
-                    fechaCompra = fecha?.ToString("dd/MM/yyyy") ?? "-",
-                    fechaCompraJS = fecha?.ToString("yyyy-MM-dd") ?? "-",
+                    fechaCompra = fechaCompra?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaCompraJS = fechaCompra?.ToString("yyyy-MM-dd") ?? "-",
+                    fechaRenovacion = fechaRenovacion?.ToString("dd/MM/yyyy") ?? "-",
                     precio = a.Precio,
                     ubicacion = a.Ubicacion ?? "-",
                     linkFacturaCompra = a.LinkFacturaCompra ?? "-",
+                    comentarios = a.Comentarios ?? "-",
                     deshabilitado = a.Deshabilitado.ToString()
                 });
             }
 
             return new JsonResult(jsonActivos);
         }
+
+        public async Task<JsonResult> OnGetObtenerSiguienteFolioAsync()
+        {
+            // Buscar el folio más alto que comienza con 'AF' y tiene 4 dígitos numéricos
+            var ultimoFolio = await db.ActivosFijos
+                .Where(a => a.Folio.StartsWith("AF") && a.Folio.Length == 6)
+                .OrderByDescending(a => a.Folio)
+                .Select(a => a.Folio)
+                .FirstOrDefaultAsync();
+
+            int siguienteNumero = 1;
+
+            if (!string.IsNullOrEmpty(ultimoFolio) && int.TryParse(ultimoFolio.Substring(2), out int ultimoNumero))
+            {
+                siguienteNumero = ultimoNumero + 1;
+            }
+
+            var siguienteFolio = $"AF{siguienteNumero.ToString("D4")}";
+
+            return new JsonResult(new { folio = siguienteFolio });
+        }
+
+
     }
 }

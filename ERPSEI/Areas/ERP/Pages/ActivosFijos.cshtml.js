@@ -9,18 +9,36 @@ const EDITAR = 1;
 const VER = 2;
 const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
-document.addEventListener("DOMContentLoaded", function (event) {
+/*document.addEventListener("DOMContentLoaded", function (event) {
     table = $("#table");
     buttonRemove = $("#remove");
     dlg = document.getElementById('dlgActivoFijo');
     dlgModal = new bootstrap.Modal(dlg, null);
-    //Función para limpiar el cuadro de diálogo cuando es cerrado
+
     dlg.addEventListener('hidden.bs.modal', function (event) {
         onCerrarClick();
     });
 
     initTable();
+});*/
+document.addEventListener("DOMContentLoaded", function (event) {
+    table = $("#table");
+    buttonRemove = $("#remove");
+    dlg = document.getElementById('dlgActivoFijo');
+
+    if (dlg) {
+        dlgModal = new bootstrap.Modal(dlg, null);
+
+        dlg.addEventListener('hidden.bs.modal', function (event) {
+            onCerrarClick();
+        });
+    } else {
+        console.error("No se encontró el modal con id #dlgActivoFijo");
+    }
+
+    initTable();
 });
+
 
 //Funcionalidad Tabla
 function getIdSelections() {
@@ -74,6 +92,12 @@ function initTable() {
         exportDataType: 'all',
         exportTypes: ['excel'],
         columns: [
+            {
+                field: "state",
+                checkbox: true,
+                align: "center",
+                valign: "middle"
+            },
             {
                 title: "Id",
                 field: "id",
@@ -210,6 +234,13 @@ function initActivoFijoDialog(action, row) {
     let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
     let precioField = document.getElementById("inpActivoFijoPrecio");
     let linkfacturaField = document.getElementById("inpActivoFijoLinkFacturaCompra");
+
+    let marcaField = document.getElementById("inpActivoFijoMarca");
+    let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
+    let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
+    let comentariosField = document.getElementById("inpActivoFijoComentarios");
+    let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
+
     let btnGuardar = document.getElementById("dlgActivoFijoBtnGuardar");
     let dlgTitle = document.getElementById("dlgActivoFijoTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
@@ -230,6 +261,13 @@ function initActivoFijoDialog(action, row) {
             fechacompraField.removeAttribute("disabled");
             precioField.removeAttribute("disabled");
             linkfacturaField.removeAttribute("disabled");
+
+            marcaField.removeAttribute("disabled");
+            numeroSerieField.removeAttribute("disabled");
+            ubicacionField.removeAttribute("disabled");
+            comentariosField.removeAttribute("disabled");
+            fechaRenovacionField.removeAttribute("disabled");
+            
             btnGuardar.removeAttribute("disabled");
             break;
         case EDITAR:
@@ -244,6 +282,13 @@ function initActivoFijoDialog(action, row) {
             fechacompraField.removeAttribute("disabled");
             precioField.removeAttribute("disabled");
             linkfacturaField.removeAttribute("disabled");
+
+            marcaField.removeAttribute("disabled");
+            numeroSerieField.removeAttribute("disabled");
+            ubicacionField.removeAttribute("disabled");
+            comentariosField.removeAttribute("disabled");
+            fechaRenovacionField.removeAttribute("disabled");
+
             btnGuardar.removeAttribute("disabled");
             break;
         default:
@@ -258,6 +303,13 @@ function initActivoFijoDialog(action, row) {
             fechacompraField.setAttribute("disabled", true);
             precioField.setAttribute("disabled", true);
             linkfacturaField.setAttribute("disabled", true);
+
+            marcaField.setAttribute("disabled", true);
+            numeroSerieField.setAttribute("disabled", true);
+            ubicacionField.setAttribute("disabled", true);
+            comentariosField.setAttribute("disabled", true);
+            fechaRenovacionField.setAttribute("disabled", true);
+
             btnGuardar.setAttribute("disabled", true);
             break;
     }
@@ -289,24 +341,56 @@ function initActivoFijoDialog(action, row) {
     precioField.value = row.precio ?? "";
     linkfacturaField.value = row.linkFacturaCompra || '';
 
+    marcaField.value = row.marca ?? "";
+    numeroSerieField.value = row.numeroSerie ?? "";
+    ubicacionField.value = row.ubicacion ?? "";
+    comentariosField.value = row.comentarios ?? "";
+
+    if (row.fechaRenovacion) {
+        try {
+            if (row.fechaRenovacion.includes("/")) {
+                const [dia, mes, anio] = row.fechaRenovacion.split("/");
+                fechaRenovacionField.value = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+            } else {
+                const fecha = new Date(row.fechaRenovacion);
+                fechaRenovacionField.value = fecha.toISOString().split("T")[0];
+            }
+        } catch (e) {
+            fechaRenovacionField.value = "";
+        }
+    } else {
+        fechaRenovacionField.value = "";
+    }
 
     dlgModal.toggle();
 }
 
-function onAgregarClick() {
-    initActivoFijoDialog(NUEVO, {
-        id: "Nuevo",
-        folio: "",
-        descripcion: "",
-        responsable: "",
-        categoria: "",
-        tipo: "",
-        fechaCompra: "",
-        precio: "",
-        linkFacturaCompra: ""
-    });
+async function obtenerFolioDesdeServidor() {
+    const response = await fetch('/ERP/ActivosFijos?handler=ObtenerSiguienteFolio');
+    const data = await response.json();
+    return data.folio;
 }
 
+async function onAgregarClick() {
+    const siguienteFolio = await obtenerFolioDesdeServidor();
+
+    initActivoFijoDialog(NUEVO, {
+        id: "Nuevo",
+        folio: siguienteFolio,
+        descripcion: "",
+        responsable: "",
+        categoria: null,
+        tipo: null,
+        fechaCompra: "",
+        precio: "",
+        linkFacturaCompra: "",
+        marca: "",
+        numeroSerie: "",
+        ubicacion: "",
+        comentarios: "",
+        fechaRenovacion: ""
+    });
+}
 
 function onCerrarClick() {
     //Removes validation from input-fields

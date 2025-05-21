@@ -167,7 +167,7 @@
 
 <form id="theForm" method="post">
     <div id="dlgActivoFijo" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 id="dlgActivoFijoTitle" class="modal-title"></h5>
@@ -176,6 +176,8 @@
                 <div class="modal-body align-items-center">
                     <div class="container-fluid">
                         <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+
+                        <!-- ID (solo) -->
                         <div class="row">
                             <div class="col-3">
                                 <div class="form-floating mb-3">
@@ -185,26 +187,49 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Grupo 1 -->
                         <div class="row">
-                            <div class="col-3">
+                            <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpActivoFijoFolio" asp-for="InputActivosFijos.Folio" type="text" class="form-control" />
                                     <label asp-for="InputActivosFijos.Folio" class="form-label"></label>
                                     <span asp-validation-for="InputActivosFijos.Folio" class="text-danger"></span>
                                 </div>
                             </div>
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoMarca" asp-for="InputActivosFijos.Marca" type="text" class="form-control" />
+                                    <label asp-for="InputActivosFijos.Marca" class="form-label"></label>
+                                    <span asp-validation-for="InputActivosFijos.Marca" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoNumeroSerie" asp-for="InputActivosFijos.NumeroSerie" type="text" class="form-control" placeholder="@Localizer["NumeroSeriePlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.NumeroSerie" class="form-label"></label>
+                                    <span asp-validation-for="InputActivosFijos.NumeroSerie" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Grupo 2 -->
                         <div class="row">
-                            <div class="col-12">
+                            <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpActivoFijoDescripcion" asp-for="InputActivosFijos.Descripcion" type="text" class="form-control" placeholder="@Localizer["DescripcionPlaceholder"]" />
                                     <label asp-for="InputActivosFijos.Descripcion" class="form-label required"></label>
                                     <span asp-validation-for="InputActivosFijos.Descripcion" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoUbicacion" asp-for="InputActivosFijos.Ubicacion" type="text" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Ubicacion" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Ubicacion" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpActivoFijoResponsable" asp-for="InputActivosFijos.Responsable" type="text" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
                                     <label asp-for="InputActivosFijos.Responsable" class="form-label required"></label>
@@ -212,8 +237,10 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Grupo 3 -->
                         <div class="row">
-                            <div class="col-12">
+                            <div class="col-4">
                                 <div class="mb-3">
                                     <label asp-for="InputActivosFijos.Categoria" class="form-label required"></label>
                                     <select id="inpActivoFijoCategoria" asp-for="InputActivosFijos.Categoria" class="form-select">
@@ -226,10 +253,7 @@
                                     <span asp-validation-for="InputActivosFijos.Categoria" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12">
+                            <div class="col-4">
                                 <div class="mb-3">
                                     <label asp-for="InputActivosFijos.Tipo" class="form-label required"></label>
                                     <select id="inpActivoFijoTipo" asp-for="InputActivosFijos.Tipo" class="form-select">
@@ -239,14 +263,10 @@
                                             <option value="@tipo.Id">@tipo.Descripcion</option>
                                         }
                                     </select>
-
                                     <span asp-validation-for="InputActivosFijos.Tipo" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12">
+                            <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpActivoFijoFechaCompra" asp-for="InputActivosFijos.FechaCompra" type="date" class="form-control" placeholder="@Localizer["FechaCompraPlaceholder"]" />
                                     <label asp-for="InputActivosFijos.FechaCompra" class="form-label required"></label>
@@ -254,24 +274,43 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Grupo 4 -->
                         <div class="row">
-                            <div class="col-12">
+                            <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpActivoFijoPrecio" asp-for="InputActivosFijos.Precio" type="text" class="form-control" placeholder="@Localizer["PrecioPlaceholder"]" />
                                     <label asp-for="InputActivosFijos.Precio" class="form-label required"></label>
                                     <span asp-validation-for="InputActivosFijos.Precio" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-12">
+                            <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpActivoFijoLinkFacturaCompra" asp-for="InputActivosFijos.LinkFacturaCompra" type="text" class="form-control" placeholder="@Localizer["LinkFacturaCompraPlaceholder"]" />
                                     <label asp-for="InputActivosFijos.LinkFacturaCompra" class="form-label required"></label>
                                     <span asp-validation-for="InputActivosFijos.LinkFacturaCompra" class="text-danger"></span>
                                 </div>
                             </div>
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoComentarios" asp-for="InputActivosFijos.Comentarios" type="text" class="form-control" placeholder="@Localizer["ComentariosPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Comentarios" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Comentarios" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Grupo 5 -->
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoFechaRenovacion" asp-for="InputActivosFijos.FechaRenovacion" type="date" class="form-control" placeholder="@Localizer["FechaRenovacionPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.FechaRenovacion" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.FechaRenovacion" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -286,6 +325,7 @@
         </div>
     </div>
 </form>
+
 
 
 @section Scripts {
