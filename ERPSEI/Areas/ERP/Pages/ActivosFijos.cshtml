@@ -4,6 +4,8 @@
 @using Microsoft.AspNetCore.Mvc.Localization;
 @using ERPSEI.Data.Managers.ActivosFijos;
 @using ERPSEI.Data.Entities.ActivosFijos;
+@using ERPSEI.Data.Managers.Empleados;
+@using ERPSEI.Data.Entities.Empleados;
 @using ERPSEI.Data.Entities.Usuarios;
 @using ERPSEI.Data.Managers.Usuarios;
 @model ERPSEI.Areas.ERP.Pages.ActivosFijosModel
@@ -11,6 +13,8 @@
 
 @inject ICategoriaActivosFijosManager CategoriaManager;
 @inject ITipoActivosFijosManager TipoManager;
+@inject IEmpleadoManager EmpleadoManager;
+
 @inject IViewLocalizer Localizer;
 @inject AppRoleManager RolesManager;
 @inject AppUserManager UsuariosManager;
@@ -28,6 +32,7 @@
 
     List<TipoActivoFijo> tipos = await TipoManager.GetAllAsync();
     List<CategoriaActivoFijo> categorias = await CategoriaManager.GetAllAsync();
+    List<Empleado> empleados = await EmpleadoManager.GetAllAsync();
 
     bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
     bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
@@ -231,18 +236,25 @@
                             </div>
                             <div class="col-4">
                                 <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoResponsable" asp-for="InputActivosFijos.Responsable" type="text" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
-                                    <label asp-for="InputActivosFijos.Responsable" class="form-label"></label>
-                                    <span asp-validation-for="InputActivosFijos.Responsable" class="text-danger"></span>
+                                    <select id="inpActivoFijoResponsable" class="form-select" disabled>
+                                        <option value="">Seleccione un responsable</option>
+                                        @foreach (var empleado in empleados)
+                                        {
+                                            <option value="@empleado.Id">@empleado.NombreCompleto</option>
+                                        }
+                                    </select>
+                                    <label for="inpActivoFijoResponsable">Responsable</label>
                                 </div>
                             </div>
+                            <input type="hidden" id="inpEmpleadoId" name="InputActivosFijos.EmpleadoId" />
+
+
                         </div>
 
                         <!-- Grupo 3 -->
                         <div class="row">
                             <div class="col-4">
-                                <div class="mb-3">
-                                    <label asp-for="InputActivosFijos.Categoria" class="form-label required"></label>
+                                <div class="form-floating mb-3">
                                     <select id="inpActivoFijoCategoria" asp-for="InputActivosFijos.Categoria" class="form-select">
                                         <option value="">Seleccione...</option>
                                         @foreach (var categoria in categorias)
@@ -250,12 +262,13 @@
                                             <option value="@categoria.Id">@categoria.Descripcion</option>
                                         }
                                     </select>
-                                    <span asp-validation-for="InputActivosFijos.Categoria" class="text-danger"></span>
+                                    <label for="inpActivoFijoCategoria">Categoría</label>
                                 </div>
+                                <span asp-validation-for="InputActivosFijos.Categoria" class="text-danger"></span>
                             </div>
+
                             <div class="col-4">
-                                <div class="mb-3">
-                                    <label asp-for="InputActivosFijos.Tipo" class="form-label required"></label>
+                                <div class="form-floating mb-3">
                                     <select id="inpActivoFijoTipo" asp-for="InputActivosFijos.Tipo" class="form-select">
                                         <option value="">Seleccione...</option>
                                         @foreach (var tipo in tipos)
@@ -263,9 +276,11 @@
                                             <option value="@tipo.Id">@tipo.Descripcion</option>
                                         }
                                     </select>
-                                    <span asp-validation-for="InputActivosFijos.Tipo" class="text-danger"></span>
+                                    <label for="inpActivoFijoTipo">Tipo</label>
                                 </div>
+                                <span asp-validation-for="InputActivosFijos.Tipo" class="text-danger"></span>
                             </div>
+
                             <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpActivoFijoFechaCompra" asp-for="InputActivosFijos.FechaCompra" type="date" class="form-control" placeholder="@Localizer["FechaCompraPlaceholder"]" />

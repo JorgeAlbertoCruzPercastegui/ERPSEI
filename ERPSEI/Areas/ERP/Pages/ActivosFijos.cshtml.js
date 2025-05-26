@@ -229,6 +229,7 @@ function initActivoFijoDialog(action, row) {
     let folioField = document.getElementById("inpActivoFijoFolio");
     let descripcionField = document.getElementById("inpActivoFijoDescripcion");
     let responsableField = document.getElementById("inpActivoFijoResponsable");
+    let empleadoIdField = document.getElementById("inpEmpleadoId");
     let categoriaField = document.getElementById("inpActivoFijoCategoria");
     let tipoField = document.getElementById("inpActivoFijoTipo");
     let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
@@ -267,7 +268,7 @@ function initActivoFijoDialog(action, row) {
             ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
-            
+
             btnGuardar.removeAttribute("disabled");
             break;
         case EDITAR:
@@ -314,20 +315,29 @@ function initActivoFijoDialog(action, row) {
             break;
     }
 
+    // Asignación de valores
     idField.value = row.id ?? "";
     folioField.value = row.folio ?? "";
     descripcionField.value = row.descripcion ?? "";
-    responsableField.value = row.responsable ?? "";
+
+    if (row.responsableId) {
+        responsableField.value = row.responsableId.toString(); // porque value es string
+        empleadoIdField.value = row.responsableId;
+    } else {
+        responsableField.value = "";
+        empleadoIdField.value = "0";
+    }
+
+
     categoriaField.value = row.categoriaId ?? row.categoria ?? "";
     tipoField.value = row.tipoId ?? row.tipo ?? "";
+
     if (row.fechaCompra) {
         try {
-            // Detectar si viene como dd/MM/yyyy
             if (row.fechaCompra.includes("/")) {
                 const [dia, mes, anio] = row.fechaCompra.split("/");
                 fechacompraField.value = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
             } else {
-                // Si ya viene en formato ISO
                 const fecha = new Date(row.fechaCompra);
                 fechacompraField.value = fecha.toISOString().split("T")[0];
             }
@@ -340,7 +350,6 @@ function initActivoFijoDialog(action, row) {
 
     precioField.value = row.precio ?? "";
     linkfacturaField.value = row.linkFacturaCompra || '';
-
     marcaField.value = row.marca ?? "";
     numeroSerieField.value = row.numeroSerie ?? "";
     ubicacionField.value = row.ubicacion ?? "";
@@ -362,8 +371,16 @@ function initActivoFijoDialog(action, row) {
         fechaRenovacionField.value = "";
     }
 
+    // Al cambiar el select de responsable, actualiza el hidden de EmpleadoId
+    responsableField.addEventListener("change", function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const empleadoId = selectedOption.getAttribute("data-id");
+        empleadoIdField.value = empleadoId || "0";
+    });
+
     dlgModal.toggle();
 }
+
 
 async function obtenerFolioDesdeServidor() {
     const response = await fetch('/ERP/ActivosFijos?handler=ObtenerSiguienteFolio');

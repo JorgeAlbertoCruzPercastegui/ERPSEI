@@ -89,6 +89,11 @@ namespace ERPSEI.Areas.ERP.Pages
         [BindProperty]
         public ActivoFijoTableModel InputActivosFijos { get; set; }
 
+        // ⬇️ Agrega esto aquí
+        public List<Empleado> empleados { get; set; } = new();
+
+
+
         public class ActivoFijoTableModel
         {
             public int? Id { get; set; }
@@ -356,5 +361,14 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
+        public async Task OnGetAsync()
+        {
+            empleados = await db.Empleados
+                .OrderBy(e => e.NombreCompleto)
+                .ToListAsync();
+        }
+
     }
 }
+
