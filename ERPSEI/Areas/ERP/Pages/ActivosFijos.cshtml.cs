@@ -100,15 +100,14 @@ namespace ERPSEI.Areas.ERP.Pages
             public string? Descripcion { get; set; } = string.Empty;
 
             [DataType(DataType.Text)]
-            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
             public string? Responsable { get; set; }
 
+            public int? EmpleadoId { get; set; }
+
             [DataType(DataType.Text)]
-            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
             public string? Categoria { get; set; }
 
             [DataType(DataType.Text)]
-            [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
             public string? Tipo { get; set; }
 
             [Display(Name = "Fecha Compra")]
@@ -227,7 +226,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
         public async Task<JsonResult> OnPostDeleteActivosFijos(string[] ids)
         {
-            ServerResponse resp = new(true, "No se pudieron dar de baja los registros.");
+            //ServerResponse resp = new(true, "No se pudieron dar de baja los registros.");
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 
             try
             {
@@ -243,10 +243,9 @@ namespace ERPSEI.Areas.ERP.Pages
                     if (activo == null)
                         continue;
 
-                    // Baja lógica
                     activo.Deshabilitado = true;
 
-                    // Guardar cambios por cada uno (opcional: puedes mover SaveChanges fuera del foreach)
+                    // Guardar cambios por cada uno
                     db.ActivosFijos.Update(activo);
                 }
 
@@ -254,7 +253,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 await db.Database.CommitTransactionAsync();
 
                 resp.TieneError = false;
-                resp.Mensaje = "Registros dados de baja correctamente.";
+                //resp.Mensaje = "Registros dados de baja correctamente.";
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
             }
             catch (Exception ex)
             {
@@ -266,6 +266,95 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
+        public async Task<JsonResult> OnPostSaveActivoFijo(ActivoFijoTableModel input)
+        {
+            //ServerResponse resp = new(true, "No se pudo guardar el registro.");
+            ServerResponse resp = new(true, localizer["ActualizadoAFUnsuccessfully"]);
 
+            try
+            {
+                await db.Database.BeginTransactionAsync();
+
+                if (input == null)
+                {
+                    resp.Mensaje = "No se recibieron datos para guardar.";
+                    return new JsonResult(resp);
+                }
+
+                if (string.IsNullOrWhiteSpace(input.Folio) || string.IsNullOrWhiteSpace(input.Descripcion))
+                {
+                    resp.Mensaje = "El folio y la descripción son obligatorios.";
+                    return new JsonResult(resp);
+                }
+
+                ActivoFijo activo;
+
+                var empleado = await db.Empleados
+                    .FirstOrDefaultAsync(e => e.NombreCompleto == input.Responsable);
+
+                if (empleado == null)
+                {
+                    resp.Mensaje = $"No se encontró el responsable asignado: {input.Responsable}";
+                    return new JsonResult(resp);
+                }
+
+                bool esNuevo = input.Id == null || input.Id == 0;
+
+                if (esNuevo)
+                {
+                    int nextId = (await db.ActivosFijos.OrderByDescending(a => a.Id).Select(a => a.Id).FirstOrDefaultAsync()) + 1;
+
+                    activo = new ActivoFijo
+                    {
+                        Id = nextId
+                    };
+
+                    db.ActivosFijos.Add(activo);
+                }
+                else
+                {
+                    activo = await db.ActivosFijos.FirstOrDefaultAsync(a => a.Id == input.Id);
+                    if (activo == null)
+                    {
+                        resp.Mensaje = "El activo no fue encontrado.";
+                        return new JsonResult(resp);
+                    }
+                }
+
+                // Asignación de valores
+                activo.Folio = input.Folio ?? "";
+                activo.Descripcion = input.Descripcion ?? "";
+                activo.Marca = input.Marca ?? "";
+                activo.NumeroSerie = input.NumeroSerie ?? "";
+                activo.Ubicacion = input.Ubicacion ?? "";
+                activo.FechaCompra = input.FechaCompra;
+                activo.Precio = input.Precio ?? 0;
+                activo.LinkFacturaCompra = input.LinkFacturaCompra ?? "";
+                activo.Comentarios = input.Comentarios ?? "";
+                activo.FechaRenovacion = input.FechaRenovacion;
+
+                // Claves foráneas
+                //activo.EmpleadoId = input.EmpleadoId ?? 0;
+                activo.EmpleadoId = empleado.Id;
+                activo.TipoId = int.TryParse(input.Tipo, out int tipoId) ? tipoId : 0;
+                activo.CategoriaId = int.TryParse(input.Categoria, out int catId) ? catId : 0;
+
+                await db.SaveChangesAsync();
+
+                await db.Database.CommitTransactionAsync();
+
+                resp.TieneError = false;
+                resp.Mensaje = esNuevo ? "Activo creado correctamente." : "Activo actualizado correctamente.";
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al guardar el activo fijo.");
+                await db.Database.RollbackTransactionAsync();
+                resp.Mensaje = localizer["ActualizadoAFSuccessfully"];
+                //resp.Mensaje = "Ocurrió un error al guardar el registro.";
+            }
+
+            return new JsonResult(resp);
+        }
     }
 }

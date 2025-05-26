@@ -252,8 +252,8 @@ function initActivoFijoDialog(action, row) {
         case NUEVO:
             dlgTitle.innerHTML = dlgNuevoTitle;
 
-            idField.removeAttribute("disabled");
-            folioField.removeAttribute("disabled");
+            idField.setAttribute("disabled", true);
+            folioField.setAttribute("disabled", true);
             descripcionField.removeAttribute("disabled");
             responsableField.removeAttribute("disabled");
             categoriaField.removeAttribute("disabled");
@@ -273,8 +273,8 @@ function initActivoFijoDialog(action, row) {
         case EDITAR:
             dlgTitle.innerHTML = dlgEditarTitle;
 
-            idField.removeAttribute("disabled");
-            folioField.removeAttribute("disabled");
+            idField.setAttribute("disabled", true);
+            folioField.setAttribute("disabled", true);
             descripcionField.removeAttribute("disabled");
             responsableField.removeAttribute("disabled");
             categoriaField.removeAttribute("disabled");
@@ -415,6 +415,7 @@ function onGuardarClick() {
     if (!valid) { return; }
 
     let btnClose = document.getElementById("dlgActivoFijoBtnCancelar");
+
     let idField = document.getElementById("inpActivoFijoId");
     let folioField = document.getElementById("inpActivoFijoFolio");
     let descripcionField = document.getElementById("inpActivoFijoDescripcion");
@@ -424,20 +425,36 @@ function onGuardarClick() {
     let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
     let precioField = document.getElementById("inpActivoFijoPrecio");
     let linkfacturaField = document.getElementById("inpActivoFijoLinkFacturaCompra");
-    let dlgTitle = document.getElementById("dlgOficinaTitle");
+
+    let marcaField = document.getElementById("inpActivoFijoMarca");
+    let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
+    let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
+    let comentariosField = document.getElementById("inpActivoFijoComentarios");
+    let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
+
+    let dlgTitle = document.getElementById("dlgActivoFijoTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
+    let empleadoIdField = document.getElementById("inpEmpleadoId"); // o como se llame el input oculto
+
+    // Armado de parámetros
     let oParams = {
-        id: idField.value == "Nuevo" ? 0 : idField.value,
+        id: idField.value === "Nuevo" ? 0 : parseInt(idField.value),
         folio: folioField.value,
         descripcion: descripcionField.value,
         responsable: responsableField.value,
+        empleadoId: parseInt(empleadoIdField?.value || 0), // <<--- IMPORTANTE
         categoria: categoriaField.value,
         tipo: tipoField.value,
-        fechacompra: fechacompraField.value,
-        precio: precioField.value,
-        linkfacturacompra: linkfacturaField.value
+        fechaCompra: fechacompraField.value,
+        precio: parseFloat(precioField.value) || 0,
+        linkFacturaCompra: linkfacturaField.value,
+        marca: marcaField.value,
+        numeroSerie: numeroSerieField.value,
+        ubicacion: ubicacionField.value,
+        comentarios: comentariosField.value,
+        fechaRenovacion: fechaRenovacionField.value
     };
 
     doAjax(
@@ -467,4 +484,14 @@ function onGuardarClick() {
         },
         postOptions
     );
+}
+
+function onBuscarClick() {
+    let tabla = $("#table");
+
+    if (tabla.length > 0) {
+        tabla.bootstrapTable('refresh');
+    } else {
+        console.warn("No se encontró la tabla para refrescar.");
+    }
 }
