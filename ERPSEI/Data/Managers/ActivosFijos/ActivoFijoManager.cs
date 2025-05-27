@@ -104,6 +104,7 @@ namespace ERPSEI.Data.Managers.ActivosFijos
         }
 
 
+
         public async Task<ActivoFijo?> GetByIdAsync(int id)
         {
             return await db.ActivosFijos.Where(p => p.Id == id).FirstOrDefaultAsync();
@@ -114,5 +115,42 @@ namespace ERPSEI.Data.Managers.ActivosFijos
             return await db.ActivosFijos.Where(a => a.Descripcion.ToLower() == name.ToLower() || a.Descripcion.ToLower() == name.ToLower()).FirstOrDefaultAsync();
         }
 
+        public async Task<List<ActivoFijo>> GetAllAsync(ERPSEI.Areas.ERP.Pages.ActivosFijosModel.InputFiltroModel? filtro = null)
+        {
+            var query = db.ActivosFijos
+                .Include(a => a.Empleado)
+                .Include(a => a.Categoria)
+                .Include(a => a.Tipo)
+                .Where(a => !a.Deshabilitado);
+
+            if (filtro != null)
+            {
+                if (!string.IsNullOrWhiteSpace(filtro.Folio))
+                    query = query.Where(a => a.Folio.Contains(filtro.Folio));
+
+                if (!string.IsNullOrWhiteSpace(filtro.Responsable))
+                    query = query.Where(a => a.Empleado != null && a.Empleado.NombreCompleto.Contains(filtro.Responsable));
+
+                if (filtro.CategoriaId.HasValue && filtro.CategoriaId != 0)
+                    query = query.Where(a => a.CategoriaId == filtro.CategoriaId);
+
+                if (filtro.TipoId.HasValue && filtro.TipoId != 0)
+                    query = query.Where(a => a.TipoId == filtro.TipoId);
+
+                if (filtro.FechaCompraInicio.HasValue)
+                    query = query.Where(a => a.FechaCompra >= filtro.FechaCompraInicio.Value);
+
+                if (filtro.FechaCompraFin.HasValue)
+                    query = query.Where(a => a.FechaCompra <= filtro.FechaCompraFin.Value);
+
+                if (!string.IsNullOrWhiteSpace(filtro.Estatus))
+                {
+                    bool activo = filtro.Estatus.ToLower().Trim() == "activo";
+                    query = query.Where(a => a.Deshabilitado == !activo);
+                }
+            }
+
+            return await query.ToListAsync();
+        }
     }
 }

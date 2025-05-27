@@ -37,6 +37,7 @@ using static ERPSEI.Areas.Catalogos.Pages.GestionDeTalentoModel;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 using Microsoft.DotNet.MSIdentity.Shared;
 using Microsoft.EntityFrameworkCore;
+using ERPSEI.Requests;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -368,6 +369,133 @@ namespace ERPSEI.Areas.ERP.Pages
                 .OrderBy(e => e.NombreCompleto)
                 .ToListAsync();
         }
+
+        public async Task<JsonResult> OnPostFiltrarActivosFijos()
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+
+            try
+            {
+                var activos = await activoFijoManager.GetAllAsync(InputFiltro);
+
+                var result = activos.Select(a => new {
+                    id = a.Id,
+                    folio = a.Folio ?? "-",
+                    descripcion = a.Descripcion ?? "-",
+                    marca = a.Marca ?? "-",
+                    numeroSerie = a.NumeroSerie ?? "-",
+                    responsable = a.Empleado?.NombreCompleto ?? "-",
+                    responsableId = a.EmpleadoId,
+                    categoria = a.Categoria?.Descripcion ?? "-",
+                    categoriaId = a.CategoriaId,
+                    tipo = a.Tipo?.Descripcion ?? "-",
+                    tipoId = a.TipoId,
+                    fechaCompra = a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaCompraJS = a.FechaCompra?.ToString("yyyy-MM-dd") ?? "-",
+                    fechaRenovacion = a.FechaRenovacion?.ToString("dd/MM/yyyy") ?? "-",
+                    precio = a.Precio,
+                    ubicacion = a.Ubicacion ?? "-",
+                    linkFacturaCompra = a.LinkFacturaCompra ?? "-",
+                    comentarios = a.Comentarios ?? "-",
+                    deshabilitado = a.Deshabilitado
+                }).ToList();
+
+                resp.Datos = result;
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al filtrar activos fijos");
+            }
+
+            return new JsonResult(resp);
+        }
+
+
+        /*public async Task<JsonResult> OnPostFiltrarActivosFijos()
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+
+            try
+            {
+                resp.Datos = await GetActivosFijosJsonList(InputFiltro);
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al filtrar activos fijos");
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task<string> GetActivosFijosJsonList(InputFiltroModel? filtro = null)
+        {
+            List<string> jsonActivos = new();
+            var query = db.ActivosFijos
+                .Include(a => a.Empleado)
+                .Include(a => a.Categoria)
+                .Include(a => a.Tipo)
+                .Where(a => !a.Deshabilitado);
+
+            if (filtro != null)
+            {
+                if (!string.IsNullOrWhiteSpace(filtro.Folio))
+                    query = query.Where(a => a.Folio.Contains(filtro.Folio));
+
+                if (!string.IsNullOrWhiteSpace(filtro.Responsable))
+                    query = query.Where(a => a.Empleado != null && a.Empleado.NombreCompleto.Contains(filtro.Responsable));
+
+                if (filtro.CategoriaId.HasValue && filtro.CategoriaId != 0)
+                    query = query.Where(a => a.CategoriaId == filtro.CategoriaId);
+
+                if (filtro.TipoId.HasValue && filtro.TipoId != 0)
+                    query = query.Where(a => a.TipoId == filtro.TipoId);
+
+                if (filtro.FechaCompraInicio.HasValue)
+                    query = query.Where(a => a.FechaCompra >= filtro.FechaCompraInicio.Value);
+
+                if (filtro.FechaCompraFin.HasValue)
+                    query = query.Where(a => a.FechaCompra <= filtro.FechaCompraFin.Value);
+
+                if (!string.IsNullOrWhiteSpace(filtro.Estatus))
+                {
+                    bool activo = filtro.Estatus.ToLower().Trim() == "activo";
+                    query = query.Where(a => a.Deshabilitado == !activo);
+                }
+            }
+
+            var activos = await query.ToListAsync();
+
+            foreach (var a in activos)
+            {
+                jsonActivos.Add("{" +
+                    $"\"id\":\"{a.Id}\"," +
+                    $"\"folio\":\"{a.Folio ?? "-"}\"," +
+                    $"\"descripcion\":\"{a.Descripcion ?? "-"}\"," +
+                    $"\"marca\":\"{a.Marca ?? "-"}\"," +
+                    $"\"numeroSerie\":\"{a.NumeroSerie ?? "-"}\"," +
+                    $"\"responsable\":\"{a.Empleado?.NombreCompleto ?? "-"}\"," +
+                    $"\"responsableId\":\"{a.EmpleadoId}\"," +
+                    $"\"categoria\":\"{a.Categoria?.Descripcion ?? "-"}\"," +
+                    $"\"categoriaId\":\"{a.CategoriaId}\"," +
+                    $"\"tipo\":\"{a.Tipo?.Descripcion ?? "-"}\"," +
+                    $"\"tipoId\":\"{a.TipoId}\"," +
+                    $"\"fechaCompra\":\"{a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-"}\"," +
+                    $"\"fechaCompraJS\":\"{a.FechaCompra?.ToString("yyyy-MM-dd") ?? "-"}\"," +
+                    $"\"fechaRenovacion\":\"{a.FechaRenovacion?.ToString("dd/MM/yyyy") ?? "-"}\"," +
+                    $"\"precio\":\"{a.Precio}\"," +
+                    $"\"ubicacion\":\"{a.Ubicacion ?? "-"}\"," +
+                    $"\"linkFacturaCompra\":\"{a.LinkFacturaCompra ?? "-"}\"," +
+                    $"\"comentarios\":\"{a.Comentarios ?? "-"}\"," +
+                    $"\"deshabilitado\":\"{a.Deshabilitado}\"" +
+                "}");
+            }
+
+            return $"[{string.Join(",", jsonActivos)}]";
+        }*/
 
     }
 }

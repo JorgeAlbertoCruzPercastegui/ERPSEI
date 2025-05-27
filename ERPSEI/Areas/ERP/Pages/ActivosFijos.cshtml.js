@@ -86,7 +86,7 @@ function onAgregarClick() {
 }
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
-        url: '/ERP/ActivosFijos?handler=ActivosFijosList',
+        //url: '/ERP/ActivosFijos?handler=ActivosFijosList',
         height: 550,
         locale: cultureName,
         exportDataType: 'all',
@@ -504,11 +504,49 @@ function onGuardarClick() {
 }
 
 function onBuscarClick() {
-    let tabla = $("#table");
+    let btnBuscar = document.getElementById("btnBuscar");
+    let inpFolio = document.getElementById("inpFiltroFolio");
+    let inpResponsable = document.getElementById("inpFiltroResponsable");
+    let selCategoria = document.getElementById("selFiltroCategoria");
+    let selTipo = document.getElementById("selFiltroTipo");
+    let inpFechaInicio = document.getElementById("inpFiltroFechaCompraInicio");
+    let inpFechaFin = document.getElementById("inpFiltroFechaCompraFin");
+    let inpEstatus = document.getElementById("inpFiltroEstatus");
 
-    if (tabla.length > 0) {
-        tabla.bootstrapTable('refresh');
-    } else {
-        console.warn("No se encontró la tabla para refrescar.");
-    }
+    let oParams = {
+        folio: inpFolio.value.trim() || null,
+        responsable: inpResponsable.value.trim() || null,
+        categoriaId: selCategoria.value === "0" || selCategoria.value === "" ? null : parseInt(selCategoria.value),
+        tipoId: selTipo.value === "0" || selTipo.value === "" ? null : parseInt(selTipo.value),
+        fechaCompraInicio: inpFechaInicio.value || null,
+        fechaCompraFin: inpFechaFin.value || null,
+        estatus: inpEstatus.value.trim() || null
+    };
+
+    doAjax(
+        "/ERP/ActivosFijos/FiltrarActivosFijos",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError(btnBuscar.innerHTML, resp.mensaje);
+                return;
+            }
+
+            table.bootstrapTable('load', responseHandler(resp.datos));
+            //$("#table").bootstrapTable("load", responseHandler(JSON.parse(resp.datos)));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+
+    // Resetea el valor de los filtros después de la solicitud.
+    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
+    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
+
 }
