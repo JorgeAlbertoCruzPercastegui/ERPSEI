@@ -147,6 +147,8 @@ namespace ERPSEI.Data
 		public DbSet<ActivoFijo> ActivosFijos {  get; set; }
 		public DbSet<CategoriaActivoFijo> CategoriasActivosFijos { get; set; }
         public DbSet<TipoActivoFijo> TiposActivosFijos { get; set; }
+        public DbSet<ArchivoActivoFijo> ArchivosActivosFijos { get; set; }
+
 
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
@@ -261,8 +263,31 @@ namespace ERPSEI.Data
                 new TipoActivoFijo { Id = 7, Descripcion = "Escritorio", PermiteMultiplesAsignaciones = false, Deshabilitado = false },
                 new TipoActivoFijo { Id = 8, Descripcion = "Unidad de Almacenamiento", PermiteMultiplesAsignaciones = false, Deshabilitado = false }
             );
-        }
 
+            // Relación: ArchivoActivoFijo -> ActivoFijo
+            b.Entity<ArchivoActivoFijo>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.ActivoFijo)
+                      .WithMany(a => a.Archivos)
+                      .HasForeignKey(e => e.ActivoFijoId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property(e => e.NombreArchivo)
+                      .IsRequired()
+                      .HasMaxLength(300);
+
+                entity.Property(e => e.Extension)
+                      .HasMaxLength(10);
+
+                entity.Property(e => e.MimeType)
+                      .HasMaxLength(50);
+
+                entity.Property(e => e.RutaArchivo)
+                      .HasMaxLength(500);
+            });
+        }
 
         private static void BuildPolizas(ModelBuilder b) 
 		{

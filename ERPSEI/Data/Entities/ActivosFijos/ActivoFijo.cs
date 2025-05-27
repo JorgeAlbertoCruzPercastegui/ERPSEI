@@ -34,5 +34,6 @@ namespace ERPSEI.Data.Entities.ActivosFijos
         public string LinkFacturaCompra { get; set; } = string.Empty;
 
         public bool Deshabilitado { get; set; } = false;
+        public ICollection<ArchivoActivoFijo>? Archivos { get; set; }
     }
 }

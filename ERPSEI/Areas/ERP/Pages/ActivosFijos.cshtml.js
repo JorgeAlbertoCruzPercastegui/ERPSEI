@@ -424,11 +424,8 @@ function onCerrarClick() {
 }
 
 function onGuardarClick() {
-    //Ejecuta la validación
     $("#theForm").validate();
-    //Determina los errores
     let valid = $("#theForm").valid();
-    //Si la forma no es válida, entonces finaliza.
     if (!valid) { return; }
 
     let btnClose = document.getElementById("dlgActivoFijoBtnCancelar");
@@ -453,15 +450,17 @@ function onGuardarClick() {
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
-    let empleadoIdField = document.getElementById("inpEmpleadoId"); // o como se llame el input oculto
+    let empleadoIdField = document.getElementById("inpEmpleadoId");
 
-    // Armado de parámetros
+    // 🔁 ACTUALIZA EL INPUT OCULTO CON EL VALOR DEL SELECT
+    $("#inpEmpleadoId").val(responsableField.value);
+
     let oParams = {
         id: idField.value === "Nuevo" ? 0 : parseInt(idField.value),
         folio: folioField.value,
         descripcion: descripcionField.value,
         responsable: responsableField.value,
-        empleadoId: parseInt(empleadoIdField?.value || 0), // <<--- IMPORTANTE
+        empleadoId: parseInt(empleadoIdField?.value || 0),
         categoria: categoriaField.value,
         tipo: tipoField.value,
         fechaCompra: fechacompraField.value,
@@ -491,17 +490,16 @@ function onGuardarClick() {
             }
 
             btnClose.click();
-
-            let e = document.querySelector("[name='refresh']");
-            e.click();
-
+            document.querySelector("[name='refresh']").click();
             showSuccess(dlgTitle.innerHTML, resp.mensaje);
-        }, function (error) {
+        },
+        function (error) {
             showError("Error", error);
         },
         postOptions
     );
 }
+
 
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");

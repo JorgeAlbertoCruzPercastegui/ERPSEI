@@ -298,11 +298,11 @@ namespace ERPSEI.Areas.ERP.Pages
                 var empleado = await db.Empleados
                     .FirstOrDefaultAsync(e => e.NombreCompleto == input.Responsable);
 
-                if (empleado == null)
+                /*if (empleado == null)
                 {
                     resp.Mensaje = $"No se encontró el responsable asignado: {input.Responsable}";
                     return new JsonResult(resp);
-                }
+                }*/
 
                 bool esNuevo = input.Id == null || input.Id == 0;
 
@@ -341,7 +341,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 // Claves foráneas
                 //activo.EmpleadoId = input.EmpleadoId ?? 0;
-                activo.EmpleadoId = empleado.Id;
+                activo.EmpleadoId = input.EmpleadoId ?? 0;
                 activo.TipoId = int.TryParse(input.Tipo, out int tipoId) ? tipoId : 0;
                 activo.CategoriaId = int.TryParse(input.Categoria, out int catId) ? catId : 0;
 
