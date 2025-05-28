@@ -500,7 +500,6 @@ function onGuardarClick() {
     );
 }
 
-
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");
     let inpFolio = document.getElementById("inpFiltroFolio");
@@ -545,6 +544,9 @@ function onBuscarClick() {
 
     // Resetea el valor de los filtros después de la solicitud.
     document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
-    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
+    //document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
 
 }
+$(document).ready(function () {
+    autoCompletar("#inpFiltroResponsable");
+});

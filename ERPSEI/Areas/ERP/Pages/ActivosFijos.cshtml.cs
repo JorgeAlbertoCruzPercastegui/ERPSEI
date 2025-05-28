@@ -48,6 +48,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly AppUserManager appUserManager;
         private readonly IActivoFijoManager activoFijoManager;
         private readonly IStringLocalizer<ActivosFijosModel> localizer;
+        private readonly AppUserManager userManager;
 
         private readonly Data.ApplicationDbContext db;
 
@@ -59,8 +60,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
         public class InputFiltroModel
         {
-            //[StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
-            //[RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
+            [StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "PersonName")]
             public string? Folio { get; set; }
 
             [DataType(DataType.Text)]
@@ -100,14 +101,17 @@ namespace ERPSEI.Areas.ERP.Pages
         public class ActivoFijoTableModel
         {
             public int? Id { get; set; }
+            [StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Folio { get; set; }
 
             [DataType(DataType.Text)]
-            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Descripcion { get; set; } = string.Empty;
 
             [DataType(DataType.Text)]
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
             public string? Responsable { get; set; }
 
             public int? EmpleadoId { get; set; }
@@ -118,26 +122,35 @@ namespace ERPSEI.Areas.ERP.Pages
             [DataType(DataType.Text)]
             public string? Tipo { get; set; }
 
+            [Required(ErrorMessage = "La Fecha Compra es obligatoria.")]
             [Display(Name = "Fecha Compra")]
             [DataType(DataType.Date)]
             public DateTime? FechaCompra { get; set; }
 
-            public decimal? Precio { get; set; }
+            [Required(ErrorMessage = "El Precio es obligatoria.")]
+            public decimal? Precio { get; set; } = 0;
 
             [Display(Name = "Link Factura Compra")]
             [DataType(DataType.Url)]
             [StringLength(300, ErrorMessage = "La URL es demasiado larga")]
-            public string? LinkFacturaCompra { get; set; }
+            public string? LinkFacturaCompra { get; set; } = string.Empty;
 
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             [Display(Name = "Marca")]
-            public string? Marca { get; set; }
+            public string? Marca { get; set; } = string.Empty;
 
+            [Required(ErrorMessage = "El Número de Serie es obligatoria.")]
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             [Display(Name = "Número Serie")]
-            public string? NumeroSerie { get; set; }
+            public string? NumeroSerie { get; set; } = string.Empty;
 
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [Display(Name = "Ubicación")]
             public string? Ubicacion { get; set; }
 
+            [StringLength(150, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [Display(Name = "Comentarios")]
             public string? Comentarios { get; set; }
 
@@ -154,7 +167,8 @@ namespace ERPSEI.Areas.ERP.Pages
             AppUserManager _appUserManager,
             IStringLocalizer<ActivosFijosModel> _localizer,
             Data.ApplicationDbContext _db,
-            IActivoFijoManager _activoFijoManager // <--- AÑADIR ESTO
+            IActivoFijoManager _activoFijoManager,
+            AppUserManager _userManager
         )
         {
             stringLocalizer = _stringLocalizer;
@@ -162,7 +176,8 @@ namespace ERPSEI.Areas.ERP.Pages
             appUserManager = _appUserManager;
             localizer = _localizer;
             db = _db;
-            activoFijoManager = _activoFijoManager; // <--- AÑADIR ESTA LÍNEA
+            activoFijoManager = _activoFijoManager;
+            userManager = _userManager;
 
             InputFiltro = new InputFiltroModel();
             InputActivosFijos = new ActivoFijoTableModel();
@@ -415,90 +430,47 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-
-        /*public async Task<JsonResult> OnPostFiltrarActivosFijos()
+        public async Task<JsonResult> OnPostGetUsuariosSuggestion(string texto)
         {
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
-
             try
             {
-                resp.Datos = await GetActivosFijosJsonList(InputFiltro);
-                resp.TieneError = false;
-                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+                    resp.Datos = await GetUsuariosSuggestion(texto);
+                    resp.TieneError = false;
+                    resp.Mensaje = localizer["ConsultadoSuccessfully"];
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error al filtrar activos fijos");
+                logger.LogError(ex.Message);
             }
 
             return new JsonResult(resp);
         }
 
-        private async Task<string> GetActivosFijosJsonList(InputFiltroModel? filtro = null)
+        private async Task<string> GetUsuariosSuggestion(string texto)
         {
-            List<string> jsonActivos = new();
-            var query = db.ActivosFijos
-                .Include(a => a.Empleado)
-                .Include(a => a.Categoria)
-                .Include(a => a.Tipo)
-                .Where(a => !a.Deshabilitado);
+            string jsonResponse;
+            List<string> jsonUsuarios = [];
 
-            if (filtro != null)
+            List<AppUser> usuarios = await userManager.SearchUsuarios(texto);
+
+            if (usuarios != null)
             {
-                if (!string.IsNullOrWhiteSpace(filtro.Folio))
-                    query = query.Where(a => a.Folio.Contains(filtro.Folio));
-
-                if (!string.IsNullOrWhiteSpace(filtro.Responsable))
-                    query = query.Where(a => a.Empleado != null && a.Empleado.NombreCompleto.Contains(filtro.Responsable));
-
-                if (filtro.CategoriaId.HasValue && filtro.CategoriaId != 0)
-                    query = query.Where(a => a.CategoriaId == filtro.CategoriaId);
-
-                if (filtro.TipoId.HasValue && filtro.TipoId != 0)
-                    query = query.Where(a => a.TipoId == filtro.TipoId);
-
-                if (filtro.FechaCompraInicio.HasValue)
-                    query = query.Where(a => a.FechaCompra >= filtro.FechaCompraInicio.Value);
-
-                if (filtro.FechaCompraFin.HasValue)
-                    query = query.Where(a => a.FechaCompra <= filtro.FechaCompraFin.Value);
-
-                if (!string.IsNullOrWhiteSpace(filtro.Estatus))
+                foreach (AppUser u in usuarios)
                 {
-                    bool activo = filtro.Estatus.ToLower().Trim() == "activo";
-                    query = query.Where(a => a.Deshabilitado == !activo);
+                    string desc = u.Empleado?.NombreCompleto.Length >= 1 ? $"{u.Empleado?.NombreCompleto}" : $"{u.UserName}";
+                    jsonUsuarios.Add($"{{" +
+                                        $"\"id\": \"{u.Id}\", " +
+                                        $"\"value\": \"{desc}\", " +
+                                        $"\"label\": \"{desc}\"" +
+                                    $"}}");
                 }
             }
 
-            var activos = await query.ToListAsync();
+            jsonResponse = $"[{string.Join(",", jsonUsuarios)}]";
 
-            foreach (var a in activos)
-            {
-                jsonActivos.Add("{" +
-                    $"\"id\":\"{a.Id}\"," +
-                    $"\"folio\":\"{a.Folio ?? "-"}\"," +
-                    $"\"descripcion\":\"{a.Descripcion ?? "-"}\"," +
-                    $"\"marca\":\"{a.Marca ?? "-"}\"," +
-                    $"\"numeroSerie\":\"{a.NumeroSerie ?? "-"}\"," +
-                    $"\"responsable\":\"{a.Empleado?.NombreCompleto ?? "-"}\"," +
-                    $"\"responsableId\":\"{a.EmpleadoId}\"," +
-                    $"\"categoria\":\"{a.Categoria?.Descripcion ?? "-"}\"," +
-                    $"\"categoriaId\":\"{a.CategoriaId}\"," +
-                    $"\"tipo\":\"{a.Tipo?.Descripcion ?? "-"}\"," +
-                    $"\"tipoId\":\"{a.TipoId}\"," +
-                    $"\"fechaCompra\":\"{a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-"}\"," +
-                    $"\"fechaCompraJS\":\"{a.FechaCompra?.ToString("yyyy-MM-dd") ?? "-"}\"," +
-                    $"\"fechaRenovacion\":\"{a.FechaRenovacion?.ToString("dd/MM/yyyy") ?? "-"}\"," +
-                    $"\"precio\":\"{a.Precio}\"," +
-                    $"\"ubicacion\":\"{a.Ubicacion ?? "-"}\"," +
-                    $"\"linkFacturaCompra\":\"{a.LinkFacturaCompra ?? "-"}\"," +
-                    $"\"comentarios\":\"{a.Comentarios ?? "-"}\"," +
-                    $"\"deshabilitado\":\"{a.Deshabilitado}\"" +
-                "}");
-            }
-
-            return $"[{string.Join(",", jsonActivos)}]";
-        }*/
+            return jsonResponse;
+        }
 
     }
 }
