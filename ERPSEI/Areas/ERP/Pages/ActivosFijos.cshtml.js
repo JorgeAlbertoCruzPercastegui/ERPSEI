@@ -81,7 +81,20 @@ window.operateEvents = {
         //})
     }
 }
-
+function additionalButtons() {
+    return {
+        btnImport: {
+            text: btnImportarText,
+            icon: 'bi-upload',
+            event: function () { },
+            attributes: {
+                "title": btnImportarTitle,
+                "data-bs-toggle": "modal",
+                "data-bs-target": "#dlgImportarExcel"
+            }
+        }
+    }
+}
 function onAgregarClick() {
     initActivoFijoDialog(NUEVO, { id: "Nuevo", nombre: "" });
 }
@@ -557,4 +570,79 @@ $(document).ready(function () {
 //Método para exportar todos los campos y registros en excel del backend
 function exportarActivosFijos() {
     window.location.href = "/ERP/ActivosFijos?handler=ExportarActivosFijos";
+}
+
+//Función para el importado del archivo con información de empleados
+function onImportarClick() {
+    //Ejecuta la validación
+    $("#importForm").validate();
+    //Determina los errores
+    let valid = $("#importForm").valid();
+    //Si la forma no es válida, entonces finaliza.
+    if (!valid) { return; }
+
+    let form = new FormData();
+    let btnClose = document.getElementById("dlgExcelBtnCancelar");
+    let dlgTitle = document.getElementById("dlgExcelTitle");
+    let fileField = document.getElementById("excelFile");
+    fileField = fileField != null ? fileField.files : null;
+
+    if (fileField) { fileField = fileField.length > 0 ? fileField[0] : null; }
+
+    if (fileField) { form.append("plantilla", fileField); }
+
+    let extendedOptions = {
+        headers: postOptions.headers,
+        data: form,
+        contentType: false,
+        processData: false
+    }
+
+    doAjax(
+        "/ERP/ActivosFijos/ImportarActivosFijos",
+        {},
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    let summary = ``;
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                }
+                showError(dlgTitle.innerHTML, resp.mensaje);
+                return;
+            }
+
+            btnClose.click();
+
+            onBuscarClick();
+
+            showSuccess(dlgTitle.innerHTML, resp.mensaje);
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        extendedOptions
+    );
+}
+
+//Función para el cierre del cuadro de diálogo
+function onCerrarImportarClick() {
+    let fileField = document.getElementById("excelFile");
+    fileField.value = null;
+    onCerrarClick();
+}
+//Función para procesar el cambio de archivo a exportar
+function onExcelSelectorChanged(input) {
+    //Validación para seleccionar archivos excel solamente.
+    if (input.files && (input.files.length || 0) >= 1) {
+        let docType = input.files[0].type;
+        let isExcel = docType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || docType == "application/vnd.ms-excel";
+
+        if (!isExcel) {
+            input.value = null;
+            showAlert(invalidFormatTitle, invalidFormatMsg);
+        }
+    }
 }

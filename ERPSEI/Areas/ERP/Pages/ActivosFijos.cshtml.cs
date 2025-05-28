@@ -165,6 +165,14 @@ namespace ERPSEI.Areas.ERP.Pages
             public int? Deshabilitado { get; set; } = 0;
         }
 
+        [BindProperty]
+        public ImportarModel InputImportar { get; set; }
+        public class ImportarModel
+        {
+            [Required(ErrorMessage = "Required")]
+            public IFormFile? Plantilla { get; set; }
+        }
+
         public ActivosFijosModel(
             IStringLocalizer<ActivosFijosModel> _stringLocalizer,
             ILogger<ActivosFijosModel> _logger,
@@ -474,6 +482,11 @@ namespace ERPSEI.Areas.ERP.Pages
             jsonResponse = $"[{string.Join(",", jsonUsuarios)}]";
 
             return jsonResponse;
+        }
+
+        public ActionResult OnGetDownloadPlantilla()
+        {
+            return File("/templates/PlantillaActivosFijos.xlsx", MediaTypeNames.Application.Octet, "PlantillaActivosFijos.xlsx");
         }
 
         public async Task<IActionResult> OnGetExportarActivosFijos()

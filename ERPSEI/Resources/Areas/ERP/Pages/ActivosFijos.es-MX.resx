@@ -120,10 +120,16 @@
   <data name="." xml:space="preserve">
     <value />
   </data>
+  <data name="..." xml:space="preserve">
+    <value />
+  </data>
   <data name="AddButton" xml:space="preserve">
     <value>Agregar</value>
   </data>
   <data name="CancelButton" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="CancelButtonTitle" xml:space="preserve">
     <value>Cancelar</value>
   </data>
   <data name="CategoriaField" xml:space="preserve">
@@ -201,6 +207,15 @@
   <data name="ImportButtonText" xml:space="preserve">
     <value>Importar</value>
   </data>
+  <data name="ImportExcelDialogTitle" xml:space="preserve">
+    <value>Importar Activos Fijos</value>
+  </data>
+  <data name="ImportExcelSuggestionA" xml:space="preserve">
+    <value>Descargue la plantilla y rellénela con su información para cargar datos correctamente.</value>
+  </data>
+  <data name="ImportExcelSuggestionB" xml:space="preserve">
+    <value>Seleccione el archivo que rellenó con su información e importe los datos.</value>
+  </data>
   <data name="LinkFacturaCompraPlaceholder" xml:space="preserve">
     <value>Link Factura Compra</value>
   </data>
@@ -209,6 +224,9 @@
   </data>
   <data name="NewDialogTitle" xml:space="preserve">
     <value>Nuevo Registro</value>
+  </data>
+  <data name="PlantillaButtonTitle" xml:space="preserve">
+    <value>Descargar Plantilla</value>
   </data>
   <data name="PrecioPlaceholder" xml:space="preserve">
     <value>Precio</value>

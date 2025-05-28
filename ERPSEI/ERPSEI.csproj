@@ -51,10 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\templates\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Update="Areas\Catalogos\Pages\CuentasContables.cshtml">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
