@@ -53,6 +53,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
         [BindProperty]
         public ActivoFijo? ActivosFijosList { get; set; }
+
+        [BindProperty]
         public InputFiltroModel InputFiltro { get; set; }
 
         public class InputFiltroModel
@@ -164,6 +166,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             InputFiltro = new InputFiltroModel();
             InputActivosFijos = new ActivoFijoTableModel();
+            ActivosFijosList = new ActivoFijo();
         }
 
 
