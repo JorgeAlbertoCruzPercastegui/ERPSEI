@@ -24,6 +24,7 @@ const postOptions = { headers: { "RequestVerificationToken": $('input[name="__Re
 document.addEventListener("DOMContentLoaded", function (event) {
     table = $("#table");
     buttonRemove = $("#remove");
+    buttonExportAll = $("#exportAll");
     dlg = document.getElementById('dlgActivoFijo');
 
     if (dlg) {
@@ -178,6 +179,7 @@ function initTable() {
         'check-all.bs.table uncheck-all.bs.table',
         function () {
             buttonRemove.prop('disabled', !table.bootstrapTable('getSelections').length)
+            buttonExportAll.prop('disabled', !table.bootstrapTable('getSelections').length)
 
             // save your data, here just save the current page
             selections = getIdSelections()
@@ -205,6 +207,7 @@ function initTable() {
                     })
                     selections = [];
                     buttonRemove.prop('disabled', true);
+                    buttonExportAll.prop('disabled', true);
 
                     let e = document.querySelector("[name='refresh']");
                     e.click();
@@ -550,3 +553,8 @@ function onBuscarClick() {
 $(document).ready(function () {
     autoCompletar("#inpFiltroResponsable");
 });
+
+//Método para exportar todos los campos y registros en excel del backend
+function exportarActivosFijos() {
+    window.location.href = "/ERP/ActivosFijos?handler=ExportarActivosFijos";
+}

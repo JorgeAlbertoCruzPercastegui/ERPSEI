@@ -38,6 +38,10 @@ using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 using Microsoft.DotNet.MSIdentity.Shared;
 using Microsoft.EntityFrameworkCore;
 using ERPSEI.Requests;
+using OfficeOpenXml;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+using iText.Layout;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -470,6 +474,91 @@ namespace ERPSEI.Areas.ERP.Pages
             jsonResponse = $"[{string.Join(",", jsonUsuarios)}]";
 
             return jsonResponse;
+        }
+
+        public async Task<IActionResult> OnGetExportarActivosFijos()
+        {
+            var activos = await activoFijoManager.GetAllAsync();
+
+            IWorkbook workbook = new XSSFWorkbook();
+            ISheet sheet = workbook.CreateSheet("Activos Fijos");
+
+            // Estilo de encabezado
+            ICellStyle headerStyle = workbook.CreateCellStyle();
+            IFont headerFont = workbook.CreateFont();
+            headerFont.IsBold = true;
+            headerStyle.SetFont(headerFont);
+            headerStyle.Alignment = NPOI.SS.UserModel.HorizontalAlignment.Center;
+            headerStyle.FillForegroundColor = IndexedColors.Grey25Percent.Index;
+            headerStyle.FillPattern = FillPattern.SolidForeground;
+            headerStyle.BorderBottom = BorderStyle.Thin;
+            headerStyle.BorderTop = BorderStyle.Thin;
+            headerStyle.BorderLeft = BorderStyle.Thin;
+            headerStyle.BorderRight = BorderStyle.Thin;
+
+            // Estilo para datos
+            ICellStyle dataStyle = workbook.CreateCellStyle();
+            dataStyle.BorderBottom = BorderStyle.Thin;
+            dataStyle.BorderTop = BorderStyle.Thin;
+            dataStyle.BorderLeft = BorderStyle.Thin;
+            dataStyle.BorderRight = BorderStyle.Thin;
+
+            // Encabezados
+            var headers = new[] {
+        "Id", "Folio", "Descripción", "Responsable", "Categoría", "Tipo",
+        "Fecha Compra", "Precio", "Ubicación", "Número Serie", "Link Factura", "Comentarios"
+    };
+
+            IRow headerRow = sheet.CreateRow(0);
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = headerRow.CreateCell(i);
+                cell.SetCellValue(headers[i]);
+                cell.CellStyle = headerStyle;
+            }
+
+            // Contenido
+            for (int i = 0; i < activos.Count; i++)
+            {
+                var a = activos[i];
+                IRow row = sheet.CreateRow(i + 1);
+
+                row.CreateCell(0).SetCellValue(a.Id);
+                row.CreateCell(1).SetCellValue(a.Folio ?? "-");
+                row.CreateCell(2).SetCellValue(a.Descripcion ?? "-");
+                row.CreateCell(3).SetCellValue(a.Empleado?.NombreCompleto ?? "-");
+                row.CreateCell(4).SetCellValue(a.Categoria?.Descripcion ?? "-");
+                row.CreateCell(5).SetCellValue(a.Tipo?.Descripcion ?? "-");
+                row.CreateCell(6).SetCellValue(a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-");
+                row.CreateCell(7).SetCellValue(Convert.ToDouble(a.Precio));
+                row.CreateCell(8).SetCellValue(a.Ubicacion ?? "-");
+                row.CreateCell(9).SetCellValue(a.NumeroSerie ?? "-");
+                row.CreateCell(10).SetCellValue(a.LinkFacturaCompra ?? "-");
+                row.CreateCell(11).SetCellValue(a.Comentarios ?? "-");
+
+                // Aplica estilo a cada celda
+                for (int j = 0; j < headers.Length; j++)
+                {
+                    row.GetCell(j).CellStyle = dataStyle;
+                }
+            }
+
+            // Autoajustar ancho de columnas
+            for (int i = 0; i < headers.Length; i++)
+            {
+                sheet.AutoSizeColumn(i);
+            }
+
+            // Exportar archivo
+            byte[] fileBytes;
+            using (var exportData = new MemoryStream())
+            {
+                workbook.Write(exportData);
+                fileBytes = exportData.ToArray();
+            }
+
+            string fileName = $"ActivosFijos_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
     }

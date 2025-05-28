@@ -177,6 +177,9 @@
   <data name="EditDialogTitle" xml:space="preserve">
     <value>Editar Registro</value>
   </data>
+  <data name="ExportAllButton" xml:space="preserve">
+    <value>Exportar todos</value>
+  </data>
   <data name="FechaCompraFinField" xml:space="preserve">
     <value>Fecha Fin Compra</value>
   </data>
