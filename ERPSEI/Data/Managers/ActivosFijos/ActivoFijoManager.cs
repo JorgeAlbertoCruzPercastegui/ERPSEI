@@ -120,8 +120,7 @@ namespace ERPSEI.Data.Managers.ActivosFijos
             var query = db.ActivosFijos
                 .Include(a => a.Empleado)
                 .Include(a => a.Categoria)
-                .Include(a => a.Tipo)
-                .Where(a => !a.Deshabilitado);
+                .Include(a => a.Tipo).AsQueryable();
 
             if (filtro != null)
             {
@@ -146,9 +145,10 @@ namespace ERPSEI.Data.Managers.ActivosFijos
                 if (!string.IsNullOrWhiteSpace(filtro.Estatus))
                 {
                     bool activo = filtro.Estatus.ToLower().Trim() == "activo";
-                    query = query.Where(a => a.Deshabilitado == !activo);
+                    query = query.Where(a => a.Deshabilitado == !activo); // ⬅️ esta lógica sí se queda
                 }
             }
+
 
             return await query.ToListAsync();
         }
