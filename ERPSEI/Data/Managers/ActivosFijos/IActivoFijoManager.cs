@@ -9,5 +9,8 @@ namespace ERPSEI.Data.Managers.ActivosFijos
     {
         Task<List<ActivoFijo>> GetAllAsync(ERPSEI.Areas.ERP.Pages.ActivosFijosModel.InputFiltroModel? filtro = null);
 
+        Task<int> CreateFromExcelAsync(ActivoFijo activoFijo);
+        Task UpdateFromExcelAsync(ActivoFijo activoFijo);
+
     }
 }

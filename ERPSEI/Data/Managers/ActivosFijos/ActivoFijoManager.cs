@@ -152,5 +152,38 @@ namespace ERPSEI.Data.Managers.ActivosFijos
 
             return await query.ToListAsync();
         }
+
+        public async Task<int> CreateFromExcelAsync(ActivoFijo activoFijo)
+        {
+            activoFijo.Id = await GetNextId();
+            db.ActivosFijos.Add(activoFijo);
+            await db.SaveChangesAsync();
+            return activoFijo.Id;
+        }
+
+        public async Task UpdateFromExcelAsync(ActivoFijo activoFijo)
+        {
+            var a = await db.ActivosFijos.FindAsync(activoFijo.Id);
+            if (a != null)
+            {
+                a.Descripcion = activoFijo.Descripcion;
+                a.Folio = activoFijo.Folio;
+                a.CategoriaId = activoFijo.CategoriaId;
+                a.TipoId = activoFijo.TipoId;
+                a.EmpleadoId = activoFijo.EmpleadoId;
+                a.Marca = activoFijo.Marca;
+                a.NumeroSerie = activoFijo.NumeroSerie;
+                a.Ubicacion = activoFijo.Ubicacion;
+                a.FechaCompra = activoFijo.FechaCompra;
+                a.Precio = activoFijo.Precio;
+                a.Comentarios = activoFijo.Comentarios;
+                a.FechaRenovacion = activoFijo.FechaRenovacion;
+                a.LinkFacturaCompra = activoFijo.LinkFacturaCompra;
+                a.Deshabilitado = activoFijo.Deshabilitado;
+
+                await db.SaveChangesAsync();
+            }
+        }
+
     }
 }

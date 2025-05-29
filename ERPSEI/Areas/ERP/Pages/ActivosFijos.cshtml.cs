@@ -42,6 +42,7 @@ using OfficeOpenXml;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using iText.Layout;
+using MathNet.Numerics.Distributions;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -51,6 +52,9 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly ILogger<ActivosFijosModel> logger;
         private readonly AppUserManager appUserManager;
         private readonly IActivoFijoManager activoFijoManager;
+        private readonly ICategoriaActivosFijosManager categoriaActivoFijoManager;
+        private readonly ITipoActivosFijosManager tipoActivoFijoManager;
+        private readonly IEmpleadoManager empleadoActivoFijoManager;
         private readonly IStringLocalizer<ActivosFijosModel> localizer;
         private readonly AppUserManager userManager;
 
@@ -97,10 +101,7 @@ namespace ERPSEI.Areas.ERP.Pages
         [BindProperty]
         public ActivoFijoTableModel InputActivosFijos { get; set; }
 
-        // ⬇️ Agrega esto aquí
         public List<Empleado> empleados { get; set; } = new();
-
-
 
         public class ActivoFijoTableModel
         {
@@ -180,7 +181,10 @@ namespace ERPSEI.Areas.ERP.Pages
             IStringLocalizer<ActivosFijosModel> _localizer,
             Data.ApplicationDbContext _db,
             IActivoFijoManager _activoFijoManager,
-            AppUserManager _userManager
+            AppUserManager _userManager,
+            ICategoriaActivosFijosManager categoriaManager,
+            ITipoActivosFijosManager tipoManager,
+            IEmpleadoManager empleadoManager
         )
         {
             stringLocalizer = _stringLocalizer;
@@ -190,6 +194,10 @@ namespace ERPSEI.Areas.ERP.Pages
             db = _db;
             activoFijoManager = _activoFijoManager;
             userManager = _userManager;
+
+            categoriaActivoFijoManager = categoriaManager;
+            tipoActivoFijoManager = tipoManager;
+            empleadoActivoFijoManager = empleadoManager;
 
             InputFiltro = new InputFiltroModel();
             InputActivosFijos = new ActivoFijoTableModel();
@@ -574,6 +582,180 @@ namespace ERPSEI.Areas.ERP.Pages
             return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
+        private async Task<string> ValidarSiExisteActivoFijo(ActivoFijoTableModel af)
+        {
+            List<ActivoFijo> activos = await activoFijoManager.GetAllAsync();
+
+            // Si el Id ya existe, se excluye de la comparación
+            activos = activos.Where(a => a.Id != af.Id).ToList();
+
+            // Validación por Folio
+            if (activos.Any(a => !a.Deshabilitado && (a.Folio ?? "") == af.Folio))
+                return $"El folio '{af.Folio}' ya está registrado en otro activo.";
+
+            // Validación por Número de Serie
+            if (activos.Any(a => !a.Deshabilitado && (a.NumeroSerie ?? "") == af.NumeroSerie))
+                return $"El número de serie '{af.NumeroSerie}' ya está registrado en otro activo.";
+
+            return string.Empty;
+        }
+
+        private async Task CreateOrUpdateActivoFijo(ActivoFijoTableModel af)
+        {
+            try
+            {
+                await db.Database.BeginTransactionAsync();
+
+                int idActivo = 0;
+                ActivoFijo? activo = await activoFijoManager.GetByIdAsync(af.Id ?? 0);
+
+                if (activo != null)
+                {
+                    idActivo = activo.Id;
+                }
+                else
+                {
+                    activo = new ActivoFijo();
+                }
+
+                // Asignar propiedades
+                activo.Folio = af.Folio ?? "";
+                activo.Marca = af.Marca ?? "";
+                activo.NumeroSerie = af.NumeroSerie ?? "";
+                activo.Descripcion = af.Descripcion ?? "";
+                activo.Ubicacion = af.Ubicacion ?? "";
+                activo.FechaCompra = af.FechaCompra;
+                activo.Precio = af.Precio ?? 0;
+                activo.Comentarios = af.Comentarios ?? "";
+                activo.FechaRenovacion = af.FechaRenovacion;
+                activo.EmpleadoId = af.EmpleadoId ?? 0;
+                activo.CategoriaId = int.TryParse(af.Categoria, out var catId) ? catId : 0;
+                activo.TipoId = int.TryParse(af.Tipo, out var tipoId) ? tipoId : 0;
+                activo.LinkFacturaCompra = af.LinkFacturaCompra ?? "";
+                activo.Deshabilitado = false;
+
+                // Crear o actualizar según corresponda
+                if (idActivo > 0)
+                    await activoFijoManager.UpdateFromExcelAsync(activo);
+                else
+                    await activoFijoManager.CreateFromExcelAsync(activo);
+
+                await db.Database.CommitTransactionAsync();
+            }
+            catch (Exception)
+            {
+                await db.Database.RollbackTransactionAsync();
+                throw;
+            }
+        }
+
+        public async Task<JsonResult> OnPostImportarActivosFijos()
+        {
+            ServerResponse resp = new(true, localizer["ActivosFijosImportadosUnsuccessfully"]);
+
+            try
+            {
+                if (Request.Form.Files.Count >= 1)
+                {
+                    using Stream s = Request.Form.Files[0].OpenReadStream();
+                    using var reader = ExcelReaderFactory.CreateReader(s);
+                    DataSet result = reader.AsDataSet(new ExcelDataSetConfiguration
+                    {
+                        FilterSheet = (tableReader, sheetIndex) => sheetIndex == 0
+                    });
+
+                    foreach (DataRow row in result.Tables[0].Rows)
+                    {
+                        if (result.Tables[0].Rows.IndexOf(row) == 0)
+                        {
+                            resp.TieneError = false;
+                            resp.Mensaje = localizer["ActivosFijosImportadosSuccessfully"];
+                            continue;
+                        }
+
+                        string vmsg = await CreateActivoFijoFromExcelRow(row);
+
+                        if (!string.IsNullOrEmpty(vmsg))
+                        {
+                            resp.TieneError = true;
+                            resp.Mensaje = vmsg;
+                            break;
+                        }
+
+                        resp.TieneError = false;
+                        resp.Mensaje = localizer["ActivosFijosImportadosSuccessfully"];
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex.Message);
+                resp.TieneError = true;
+                resp.Mensaje = localizer["ActivosFijosImportadosUnsuccessfully"];
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task<string> CreateActivoFijoFromExcelRow(DataRow row)
+        {
+            // Conversión de fechas y números
+            _ = DateTime.TryParse(row[5]?.ToString(), out DateTime fechaCompra);
+            _ = DateTime.TryParse(row[8]?.ToString(), out DateTime fechaRenovacion);
+            _ = decimal.TryParse(row[6]?.ToString(), out decimal precio);
+
+            // Obtener nombres desde el Excel
+            string folio = row[0]?.ToString()?.Trim() ?? "";
+            string marca = row[1]?.ToString()?.Trim() ?? "";
+            string numeroSerie = row[2]?.ToString()?.Trim() ?? "";
+            string descripcion = row[3]?.ToString()?.Trim() ?? "";
+            string responsableNombre = row[9]?.ToString()?.Trim() ?? "";
+            string categoriaNombre = row[10]?.ToString()?.Trim() ?? "";
+            string tipoNombre = row[11]?.ToString()?.Trim() ?? "";
+            string linkFactura = row[12]?.ToString()?.Trim() ?? "";
+            string comentarios = row[7]?.ToString()?.Trim() ?? "";
+            string ubicacion = row[4]?.ToString()?.Trim() ?? "";
+
+            // Validación de existencia en catálogos
+            var categoria = await categoriaActivoFijoManager.GetByNameAsync(categoriaNombre);
+            if (categoria == null)
+                return $"La categoría '{categoriaNombre}' no existe en el catálogo.";
+
+            var tipo = await tipoActivoFijoManager.GetByNameAsync(tipoNombre);
+            if (tipo == null)
+                return $"El tipo '{tipoNombre}' no existe en el catálogo.";
+
+            var responsable = await empleadoActivoFijoManager.GetByNameAsync(responsableNombre);
+            if (responsable == null)
+                return $"El responsable '{responsableNombre}' no existe en el catálogo.";
+
+            // Crear modelo
+            ActivoFijoTableModel af = new()
+            {
+                Folio = folio,
+                Marca = marca,
+                NumeroSerie = numeroSerie,
+                Descripcion = descripcion,
+                EmpleadoId = responsable.Id,
+                Categoria = categoria.Id.ToString(),
+                Tipo = tipo.Id.ToString(),
+                FechaCompra = fechaCompra,
+                Precio = precio,
+                LinkFacturaCompra = linkFactura,
+                Comentarios = comentarios,
+                FechaRenovacion = fechaRenovacion == DateTime.MinValue ? null : fechaRenovacion,
+                Ubicacion = ubicacion
+            };
+
+            // Validar duplicados por folio o serie
+            string validationMsg = await ValidarSiExisteActivoFijo(af);
+            if (string.IsNullOrEmpty(validationMsg))
+            {
+                await CreateOrUpdateActivoFijo(af);
+            }
+
+            return validationMsg ?? "";
+        }
     }
 }
 
