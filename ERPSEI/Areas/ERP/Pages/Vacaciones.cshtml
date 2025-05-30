@@ -1,0 +1,193 @@
+﻿@page "{handler?}"
+@using ERPSEI.Data.Managers;
+@using Microsoft.AspNetCore.Localization;
+@using ERPSEI.Requests;
+@using Microsoft.AspNetCore.Mvc.Localization;
+@using ERPSEI.Data.Managers.ActivosFijos;
+@using ERPSEI.Data.Entities.ActivosFijos;
+@using ERPSEI.Data.Managers.Empleados;
+@using ERPSEI.Data.Entities.Empleados;
+@using ERPSEI.Data.Entities.Usuarios;
+@using ERPSEI.Data.Managers.Usuarios;
+@model ERPSEI.Areas.ERP.Pages.ActivosFijosModel
+
+
+@inject ICategoriaActivosFijosManager CategoriaManager;
+@inject ITipoActivosFijosManager TipoManager;
+@inject IEmpleadoManager EmpleadoManager;
+
+@inject IViewLocalizer Localizer;
+@inject AppRoleManager RolesManager;
+@inject AppUserManager UsuariosManager;
+@inject IConfiguration Configuration;
+@{
+    ViewData["Title"] = Localizer["Title"];
+
+    // Retrieves the requested culture
+    IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+
+    // Culture contains the information of the requested culture
+    System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+
+    string cultureName = culture.Name;
+
+    List<TipoActivoFijo> tipos = await TipoManager.GetAllAsync();
+    List<CategoriaActivoFijo> categorias = await CategoriaManager.GetAllAsync();
+    List<Empleado> empleados = await EmpleadoManager.GetAllAsync();
+
+    bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+}
+
+<h3 class="title mb-3">@ViewData["Title"]</h3>
+
+<!-- --------------------------- -->
+<!-- Sección de filtros -------- -->
+<div class="accordion shadow mb-5" id="accordionFiltros">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <h6>@Localizer["FilterTitle"]</h6>
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+            <div class="accordion-body">
+                <form id="filtros" method="post">
+                    <div class="row">
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroFolio" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["FolioField"]" />
+                                <label for="inpFiltroFolio" asp-for="InputFiltro.Folio" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroResponsable" type="search" asp-for="InputFiltro.Responsable" class="form-control" placeholder="@Localizer["ResponsableField"]" idselected='' area="ERP" module="ActivosFijos" source="GetUsuariosSuggestion" />
+                                <label for="inpFiltroResponsable" asp-for="InputFiltro.Responsable" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select id="selFiltroCategoria" asp-for="InputFiltro.CategoriaId" class="form-select" placeholder="@Localizer["CategoriaField"]">
+                                    <option value="0">Seleccione...</option>
+                                    @{
+                                        @foreach (CategoriaActivoFijo categoria in categorias)
+                                        {
+                                            <option value='@categoria.Id'>@categoria.Descripcion</option>
+                                        }
+                                    }
+                                </select>
+                                <label for="selFiltroMoneda" asp-for="InputFiltro.CategoriaId" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select id="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-select" placeholder="@Localizer["TipoField"]">
+                                    <option value="0">Seleccione...</option>
+                                    @{
+                                        @foreach (TipoActivoFijo tipo in tipos)
+                                        {
+                                            <option value='@tipo.Id'>@tipo.Descripcion</option>
+                                        }
+                                    }
+                                </select>
+                                <label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroFechaCompraInicio" type="date" asp-for="InputFiltro.FechaCompraInicio" class="form-control" placeholder="@Localizer["FechaCompraInicioField"]" />
+                                <label for="inpFiltroFechaCompraInicio" asp-for="InputFiltro.FechaCompraInicio" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroFechaCompraFin" type="date" asp-for="InputFiltro.FechaCompraFin" class="form-control" placeholder="@Localizer["FechaCompraFinField"]" />
+                                <label for="inpFiltroFechaCompraFin" asp-for="InputFiltro.FechaCompraFin" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select id="inpFiltroEstatus" asp-for="InputFiltro.Estatus" class="form-select" placeholder="@Localizer["EstatusField"]">
+                                    <option value="">Seleccione...</option>
+                                    <option value="activo">Habilitado</option>
+                                    <option value="inactivo">Deshabilitado</option>
+                                </select>
+                                <label for="inpFiltroEstatus" asp-for="InputFiltro.Estatus" class="form-label"></label>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+                <div class="row text-end">
+                    <div class="col-12">
+                        <button id="btnBuscar" name="refresh" class="btn btn-primary" onclick="onBuscarClick();">
+                            <i class="bi bi-search"></i> @Localizer["SearchButton"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+    <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+    <script src="~/js/autocompletar.js"></script>
+
+    <script src="~/lib/bootstrap-table/extensions/export/tableExport.min.js"></script>
+    <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/xlsx.full.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/exceljs.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.15.349/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <script src="~/../Areas/ERP/Pages/ActivosFijos.cshtml.js"></script>
+
+    <script type="text/javascript">
+        var cultureName = "@cultureName";
+        var btnImportarText = '@Localizer["ImportButtonText"]';
+        var btnImportarTitle = '@Localizer["ImportButtonTitle"]';
+        var btnVerTitle = '@Localizer["SeeButtonTitle"]';
+        var btnEditarTitle = '@Localizer["EditButtonTitle"]';
+        var dlgEditarTitle = '@Localizer["EditDialogTitle"]';
+        var dlgVerTitle = '@Localizer["SeeDialogTitle"]';
+        var dlgNuevoTitle = '@Localizer["NewDialogTitle"]';
+        var dlgDeleteTitle = '@Localizer["DeleteOfficeDialogTitle"]';
+        var dlgDeleteQuestion = '@Localizer["DeleteOfficeDialogQuestion"]';
+
+        var colFolioHeader = '@Localizer["ColFolioHeader"]';
+        var colDescripcionHeader = '@Localizer["ColDescripcionHeader"]';
+        var colResponsableHeader = '@Localizer["ColResponsableHeader"]';
+        var colCategoriaHeader = '@Localizer["ColCategoriaHeader"]';
+        var colTipoHeader = '@Localizer["ColTipoHeader"]';
+        var colFechaCompraHeader = '@Localizer["ColFechaCompraHeader"]';
+        var colPrecioHeader = '@Localizer["ColPrecioHeader"]';
+        var colLinkFacturaHeader = '@Localizer["ColLinkFacturaHeader"]';
+
+        var colAccionesHeader = '@Localizer["ColActionsHeader"]';
+
+        /*Permisos*/
+        var puedeTodo = '@puedeTodo' == 'True';
+        var puedeConsultar = '@puedeConsultar' == 'True';
+        var puedeEditar = '@puedeEditar' == 'True';
+        var puedeEliminar = '@puedeEliminar' == 'True';
+        var puedeAutorizar = '@puedeAutorizar' == 'True';
+    </script>
+
+    <partial name="_ValidationScriptsPartial" />
+}
