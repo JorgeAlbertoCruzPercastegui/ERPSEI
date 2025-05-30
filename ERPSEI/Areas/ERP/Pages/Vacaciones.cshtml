@@ -59,64 +59,38 @@
                     <div class="row">
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroFolio" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["FolioField"]" />
-                                <label for="inpFiltroFolio" asp-for="InputFiltro.Folio" class="form-label"></label>
+                                <input id="inpFiltroNombreEmpleado" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["NombreEmpleadoField"]" />
+                                <label for="inpFiltroNombreEmpleado" asp-for="InputFiltro.Folio" class="form-label"></label>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroResponsable" type="search" asp-for="InputFiltro.Responsable" class="form-control" placeholder="@Localizer["ResponsableField"]" idselected='' area="ERP" module="ActivosFijos" source="GetUsuariosSuggestion" />
-                                <label for="inpFiltroResponsable" asp-for="InputFiltro.Responsable" class="form-label"></label>
+                                <input id="inpFiltroFechaInicio" type="date" asp-for="InputFiltro.FechaCompraInicio" class="form-control" placeholder="@Localizer["FechaInicioField"]" />
+                                <label for="inpFiltroFechaInicio" asp-for="InputFiltro.FechaCompraInicio" class="form-label"></label>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <select id="selFiltroCategoria" asp-for="InputFiltro.CategoriaId" class="form-select" placeholder="@Localizer["CategoriaField"]">
-                                    <option value="0">Seleccione...</option>
-                                    @{
-                                        @foreach (CategoriaActivoFijo categoria in categorias)
-                                        {
-                                            <option value='@categoria.Id'>@categoria.Descripcion</option>
-                                        }
-                                    }
-                                </select>
-                                <label for="selFiltroMoneda" asp-for="InputFiltro.CategoriaId" class="form-label"></label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
-                            <div class="form-floating mb-3">
-                                <select id="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-select" placeholder="@Localizer["TipoField"]">
-                                    <option value="0">Seleccione...</option>
-                                    @{
-                                        @foreach (TipoActivoFijo tipo in tipos)
-                                        {
-                                            <option value='@tipo.Id'>@tipo.Descripcion</option>
-                                        }
-                                    }
-                                </select>
-                                <label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
-                            <div class="form-floating mb-3">
-                                <input id="inpFiltroFechaCompraInicio" type="date" asp-for="InputFiltro.FechaCompraInicio" class="form-control" placeholder="@Localizer["FechaCompraInicioField"]" />
-                                <label for="inpFiltroFechaCompraInicio" asp-for="InputFiltro.FechaCompraInicio" class="form-label"></label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
-                            <div class="form-floating mb-3">
-                                <input id="inpFiltroFechaCompraFin" type="date" asp-for="InputFiltro.FechaCompraFin" class="form-control" placeholder="@Localizer["FechaCompraFinField"]" />
-                                <label for="inpFiltroFechaCompraFin" asp-for="InputFiltro.FechaCompraFin" class="form-label"></label>
+                                <input id="inpFiltroFechaFin" type="date" asp-for="InputFiltro.FechaCompraFin" class="form-control" placeholder="@Localizer["FechaFinField"]" />
+                                <label for="inpFiltroFechaFin" asp-for="InputFiltro.FechaCompraFin" class="form-label"></label>
                             </div>
                         </div>
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <select id="inpFiltroEstatus" asp-for="InputFiltro.Estatus" class="form-select" placeholder="@Localizer["EstatusField"]">
                                     <option value="">Seleccione...</option>
-                                    <option value="activo">Habilitado</option>
-                                    <option value="inactivo">Deshabilitado</option>
+                                    <option value="">Pendiente</option>
+                                    <option value="">Aprobado</option>
+                                    <option value="">Rechazado</option>
+                                    <option value="">Cancelado</option>
                                 </select>
                                 <label for="inpFiltroEstatus" asp-for="InputFiltro.Estatus" class="form-label"></label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroUsuarioAutorizador" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["UsuarioAutorizadorField"]" />
+                                <label for="inpFiltroUsuarioAutorizador" asp-for="InputFiltro.Folio" class="form-label"></label>
                             </div>
                         </div>
 
@@ -133,6 +107,46 @@
         </div>
     </div>
 </div>
+
+<!-- --------------------------- -->
+<!-- Sección tabla de resultados -->
+<div id="toolbar" class="col-xl-12">
+    <button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgConciliacion" onclick="onAgregarClick();">
+        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
+    </button>
+    <button id="remove" class="btn btn-danger" disabled>
+        <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
+    </button>
+</div>
+
+<table id="table" class="table-sm"
+       data-unique-id="id"
+       data-toolbar="#toolbar"
+       data-search="true"
+       data-show-toggle="true"
+       data-show-fullscreen="true"
+       data-show-columns="true"
+       data-show-columns-toggle-all="true"
+       data-show-export="true"
+       data-click-to-select="true"
+       data-minimum-count-columns="2"
+       data-show-pagination-switch="true"
+       data-pagination="true"
+       data-id-field="id"
+       data-page-list="[10, 25, 50, 100, all]"
+       data-show-footer="false"
+       data-side-pagination="client"
+       data-response-handler="responseHandler"
+       data-buttons-class="primary"
+       data-buttons="additionalButtons"
+       data-url="/ERP/Vacaciones/VacacionesList">
+    <thead>
+        <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+        </tr>
+    </thead>
+</table>
+
+
 
 @section Scripts {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
@@ -156,7 +170,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-    <script src="~/../Areas/ERP/Pages/ActivosFijos.cshtml.js"></script>
+    <script src="~/../Areas/ERP/Pages/Vacaciones.cshtml.js"></script>
 
     <script type="text/javascript">
         var cultureName = "@cultureName";
