@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Reportes;
+using ERPSEI.Data.Entities.Vacaciones;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ERPSEI.Data.Entities.Empleados
@@ -75,5 +76,11 @@ namespace ERPSEI.Data.Entities.Empleados
 		public Horario? Horario { get; set; }
 
 		public bool? CalcularAsistencia { get; set; } = true;
-	}
+
+        // Propiedades de navegación
+        public ICollection<PeriodoVacacional> PeriodosVacacionales { get; set; }
+        public ICollection<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
+        public ICollection<SolicitudVacaciones> SolicitudesAutorizadas { get; set; }
+        public ICollection<HistorialVacaciones> HistorialVacaciones { get; set; }
+    }
 }

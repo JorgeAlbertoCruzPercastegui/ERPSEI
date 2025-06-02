@@ -15,6 +15,9 @@ using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.SAT.Pagos20;
 using ERPSEI.Data.Entities.Polizas;
 using ERPSEI.Data.Entities.ActivosFijos;
+using Microsoft.Identity.Client;
+using ERPSEI.Data.Entities.Vacaciones;
+using System.Reflection.Emit;
 
 namespace ERPSEI.Data
 {
@@ -149,6 +152,11 @@ namespace ERPSEI.Data
         public DbSet<TipoActivoFijo> TiposActivosFijos { get; set; }
         public DbSet<ArchivoActivoFijo> ArchivosActivosFijos { get; set; }
 
+		//Vacaciones
+		public DbSet<DiaFestivo> DiasFestivos { get; set; }
+        public DbSet<HistorialVacaciones> HistorialesVacaciones { get; set; }
+        public DbSet<PeriodoVacacional> PeriodosVacacionales { get; set; }
+        public DbSet<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
 
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
@@ -203,6 +211,9 @@ namespace ERPSEI.Data
 
 			//Activos Fijos
 			BuildActivosFijos(modelBuilder);
+
+            //Vacaciones
+            BuildVacaciones(modelBuilder);
         }
 
         private static void BuildActivosFijos(ModelBuilder b)
@@ -287,6 +298,44 @@ namespace ERPSEI.Data
                 entity.Property(e => e.RutaArchivo)
                       .HasMaxLength(500);
             });
+        }
+
+        private static void BuildVacaciones(ModelBuilder b)
+        {
+            // === PeriodoVacacional - Empleado (1:N) ===
+            b.Entity<PeriodoVacacional>()
+                .HasOne(p => p.Empleado)
+                .WithMany(e => e.PeriodosVacacionales)
+                .HasForeignKey(p => p.EmpleadoId)
+                .OnDelete(DeleteBehavior.Restrict); // Evita cascada
+
+            // === SolicitudVacaciones - Empleado solicitante (1:N) ===
+            b.Entity<SolicitudVacaciones>()
+                .HasOne(s => s.Empleado)
+                .WithMany(e => e.SolicitudesVacaciones)
+                .HasForeignKey(s => s.EmpleadoId)
+                .OnDelete(DeleteBehavior.Restrict); // Evita cascada
+
+            // === SolicitudVacaciones - Autorizador (Empleado) (1:N) ===
+            b.Entity<SolicitudVacaciones>()
+                .HasOne(s => s.Autorizador)
+                .WithMany(e => e.SolicitudesAutorizadas)
+                .HasForeignKey(s => s.AutorizadorId)
+                .OnDelete(DeleteBehavior.Restrict); // Evita ciclos de cascada
+
+            // === HistorialVacaciones - Empleado (1:N) ===
+            b.Entity<HistorialVacaciones>()
+                .HasOne(h => h.Empleado)
+                .WithMany(e => e.HistorialVacaciones)
+                .HasForeignKey(h => h.EmpleadoId)
+                .OnDelete(DeleteBehavior.Restrict); // Evita cascada
+
+            // === HistorialVacaciones - SolicitudVacaciones (1:N) ===
+            b.Entity<HistorialVacaciones>()
+                .HasOne(h => h.Solicitud)
+                .WithMany(s => s.Historiales)
+                .HasForeignKey(h => h.SolicitudVacacionesId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         private static void BuildPolizas(ModelBuilder b) 

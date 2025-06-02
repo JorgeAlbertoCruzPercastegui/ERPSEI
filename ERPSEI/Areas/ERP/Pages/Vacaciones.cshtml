@@ -3,17 +3,13 @@
 @using Microsoft.AspNetCore.Localization;
 @using ERPSEI.Requests;
 @using Microsoft.AspNetCore.Mvc.Localization;
-@using ERPSEI.Data.Managers.ActivosFijos;
-@using ERPSEI.Data.Entities.ActivosFijos;
 @using ERPSEI.Data.Managers.Empleados;
 @using ERPSEI.Data.Entities.Empleados;
 @using ERPSEI.Data.Entities.Usuarios;
 @using ERPSEI.Data.Managers.Usuarios;
-@model ERPSEI.Areas.ERP.Pages.ActivosFijosModel
+@using ERPSEI.Data.Entities.Vacaciones;
+@model ERPSEI.Areas.ERP.Pages.VacacionesModel
 
-
-@inject ICategoriaActivosFijosManager CategoriaManager;
-@inject ITipoActivosFijosManager TipoManager;
 @inject IEmpleadoManager EmpleadoManager;
 
 @inject IViewLocalizer Localizer;
@@ -31,8 +27,7 @@
 
     string cultureName = culture.Name;
 
-    List<TipoActivoFijo> tipos = await TipoManager.GetAllAsync();
-    List<CategoriaActivoFijo> categorias = await CategoriaManager.GetAllAsync();
+
     List<Empleado> empleados = await EmpleadoManager.GetAllAsync();
 
     bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
@@ -57,48 +52,57 @@
             <div class="accordion-body">
                 <form id="filtros" method="post">
                     <div class="row">
+                        <!-- Empleado -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroNombreEmpleado" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["NombreEmpleadoField"]" />
-                                <label for="inpFiltroNombreEmpleado" asp-for="InputFiltro.Folio" class="form-label"></label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
-                            <div class="form-floating mb-3">
-                                <input id="inpFiltroFechaInicio" type="date" asp-for="InputFiltro.FechaCompraInicio" class="form-control" placeholder="@Localizer["FechaInicioField"]" />
-                                <label for="inpFiltroFechaInicio" asp-for="InputFiltro.FechaCompraInicio" class="form-label"></label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
-                            <div class="form-floating mb-3">
-                                <input id="inpFiltroFechaFin" type="date" asp-for="InputFiltro.FechaCompraFin" class="form-control" placeholder="@Localizer["FechaFinField"]" />
-                                <label for="inpFiltroFechaFin" asp-for="InputFiltro.FechaCompraFin" class="form-label"></label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
-                            <div class="form-floating mb-3">
-                                <select id="inpFiltroEstatus" asp-for="InputFiltro.Estatus" class="form-select" placeholder="@Localizer["EstatusField"]">
-                                    <option value="">Seleccione...</option>
-                                    <option value="">Pendiente</option>
-                                    <option value="">Aprobado</option>
-                                    <option value="">Rechazado</option>
-                                    <option value="">Cancelado</option>
-                                </select>
-                                <label for="inpFiltroEstatus" asp-for="InputFiltro.Estatus" class="form-label"></label>
-                            </div>
-                        </div>
-                        <div class="col-sm-6 col-md-6 col-lg-3">
-                            <div class="form-floating mb-3">
-                                <input id="inpFiltroUsuarioAutorizador" type="text" asp-for="InputFiltro.Folio" class="form-control" placeholder="@Localizer["UsuarioAutorizadorField"]" />
-                                <label for="inpFiltroUsuarioAutorizador" asp-for="InputFiltro.Folio" class="form-label"></label>
+                                <input id="inpFiltroEmpleado" type="search" asp-for="InputFiltro.EmpleadoId" class="form-control" placeholder="@Localizer["EmpleadoField"]" idselected='' area="ERP" module="Vacaciones" source="GetUsuariosSuggestion" />
+                                <label for="inpFiltroEmpleado" asp-for="InputFiltro.EmpleadoId" class="form-label"></label>
                             </div>
                         </div>
 
+                        <!-- Autorizador -->
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input id="inpFiltroAutorizador" type="search" asp-for="InputFiltro.AutorizadorId" class="form-control" placeholder="@Localizer["AutorizadorField"]" idselected='' area="ERP" module="Vacaciones" source="GetUsuariosSuggestion" />
+                                <label for="inpFiltroAutorizador" asp-for="InputFiltro.AutorizadorId" class="form-label"></label>
+                            </div>
+                        </div>
+
+                        <!-- Fecha Inicio Desde -->
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input type="date" class="form-control" asp-for="InputFiltro.FechaInicioDesde" id="inpFiltroFechaInicio" placeholder="Fecha Inicio" />
+                                <label asp-for="InputFiltro.FechaInicioDesde" for="inpFiltroFechaInicio" class="form-label"></label>
+                            </div>
+                        </div>
+
+                        <!-- Fecha Fin Hasta -->
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <input type="date" class="form-control" asp-for="InputFiltro.FechaFinHasta" id="inpFiltroFechaFin" placeholder="Fecha Fin" />
+                                <label asp-for="InputFiltro.FechaFinHasta" for="inpFiltroFechaFin" class="form-label"></label>
+                            </div>
+                        </div>
+
+                        <!-- Estado -->
+                        <div class="col-sm-6 col-md-4 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select asp-for="InputFiltro.Estado" class="form-select" id="inpFiltroEstado">
+                                    <option value="">Todos</option>
+                                    @foreach (EstadoSolicitud estado in Enum.GetValues(typeof(EstadoSolicitud)))
+                                    {
+                                        <option value="@((int)estado)">@estado</option>
+                                    }
+                                </select>
+                                <label asp-for="InputFiltro.Estado" for="inpFiltroEstado" class="form-label"></label>
+                            </div>
+                        </div>
                     </div>
                 </form>
+
                 <div class="row text-end">
                     <div class="col-12">
-                        <button id="btnBuscar" name="refresh" class="btn btn-primary" onclick="onBuscarClick();">
+                        <button id="btnBuscar" type="submit" form="filtros" class="btn btn-primary">
                             <i class="bi bi-search"></i> @Localizer["SearchButton"]
                         </button>
                     </div>
@@ -108,10 +112,11 @@
     </div>
 </div>
 
+
 <!-- --------------------------- -->
 <!-- Sección tabla de resultados -->
 <div id="toolbar" class="col-xl-12">
-    <button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgConciliacion" onclick="onAgregarClick();">
+    <button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgVacacion" onclick="onAgregarClick();">
         <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
     </button>
     <button id="remove" class="btn btn-danger" disabled>
@@ -194,13 +199,6 @@
         var colLinkFacturaHeader = '@Localizer["ColLinkFacturaHeader"]';
 
         var colAccionesHeader = '@Localizer["ColActionsHeader"]';
-
-        /*Permisos*/
-        var puedeTodo = '@puedeTodo' == 'True';
-        var puedeConsultar = '@puedeConsultar' == 'True';
-        var puedeEditar = '@puedeEditar' == 'True';
-        var puedeEliminar = '@puedeEliminar' == 'True';
-        var puedeAutorizar = '@puedeAutorizar' == 'True';
     </script>
 
     <partial name="_ValidationScriptsPartial" />

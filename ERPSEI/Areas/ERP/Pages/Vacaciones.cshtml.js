@@ -101,50 +101,43 @@ function initTable() {
                 width: "80px"
             },
             {
+                title: "FechaSolicitud",
+                field: "fechaSolicitud",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
                 title: "FechaInicio",
-                field: "fechainicio",
+                field: "fechaInicio",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
                 title: "FechaFin",
-                field: "fechafin",
+                field: "fechaFin",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
                 title: "DiasSolicitados",
-                field: "diassolicitados",
+                field: "diasSolicitados",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
                 title: "Estatus",
-                field: "estatus",
+                field: "estado",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
-                title: "UsuarioAutorizador",
-                field: "usuarioautorizador",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: "FechaSolicitud",
-                field: "fechasolicitud",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: "FechaRespuesta",
-                field: "fecharespuesta",
+                title: "Autorizador",
+                field: "autorizador",
                 align: "center",
                 valign: "middle",
                 sortable: true
