@@ -55,16 +55,16 @@
                         <!-- Empleado -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroEmpleado" type="search" asp-for="InputFiltro.EmpleadoId" class="form-control" placeholder="@Localizer["EmpleadoField"]" idselected='' area="ERP" module="Vacaciones" source="GetUsuariosSuggestion" />
-                                <label for="inpFiltroEmpleado" asp-for="InputFiltro.EmpleadoId" class="form-label"></label>
+                                <input id="inpFiltroEmpleado" type="search" asp-for="InputFiltro.Empleado" class="form-control" placeholder="@Localizer["EmpleadoField"]" idselected='' area="ERP" module="Vacaciones" source="GetUsuariosSuggestion" />
+                                <label for="inpFiltroEmpleado" asp-for="InputFiltro.Empleado" class="form-label"></label>
                             </div>
                         </div>
 
                         <!-- Autorizador -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input id="inpFiltroAutorizador" type="search" asp-for="InputFiltro.AutorizadorId" class="form-control" placeholder="@Localizer["AutorizadorField"]" idselected='' area="ERP" module="Vacaciones" source="GetUsuariosSuggestion" />
-                                <label for="inpFiltroAutorizador" asp-for="InputFiltro.AutorizadorId" class="form-label"></label>
+                                <input id="inpFiltroAutorizador" type="search" asp-for="InputFiltro.Autorizador" class="form-control" placeholder="@Localizer["AutorizadorField"]" idselected='' area="ERP" module="Vacaciones" source="GetUsuariosSuggestion" />
+                                <label for="inpFiltroAutorizador" asp-for="InputFiltro.Autorizador" class="form-label"></label>
                             </div>
                         </div>
 
@@ -102,7 +102,7 @@
 
                 <div class="row text-end">
                     <div class="col-12">
-                        <button id="btnBuscar" type="submit" form="filtros" class="btn btn-primary">
+                        <button id="btnBuscar" name="refresh" class="btn btn-primary" onclick="onBuscarClick();">
                             <i class="bi bi-search"></i> @Localizer["SearchButton"]
                         </button>
                     </div>

@@ -200,3 +200,50 @@ function initTable() {
         });
     })
 }
+
+function onBuscarClick() {
+    let btnBuscar = document.getElementById("btnBuscar");
+
+    let selEmpleado = document.getElementById("inpFiltroEmpleado");
+    let selAutorizador = document.getElementById("inpFiltroAutorizador");
+    let selEstado = document.getElementById("inpFiltroEstado");
+    let inpFechaInicio = document.getElementById("inpFiltroFechaInicio");
+    let inpFechaFin = document.getElementById("inpFiltroFechaFin");
+
+    let oParams = {
+        empleado: selEmpleado.value.trim() || null,
+        autorizador: selAutorizador.value.trim() || null,
+        estado: selEstado.value === "" ? null : parseInt(selEstado.value),
+        fechaInicioDesde: inpFechaInicio.value || null,
+        fechaFinHasta: inpFechaFin.value || null
+    };
+
+    doAjax(
+        "/ERP/Vacaciones/FiltrarVacaciones",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError(btnBuscar.innerHTML, resp.mensaje);
+                return;
+            }
+
+            table.bootstrapTable('load', responseHandler(resp.datos));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+
+    //limpia los filtros tras buscar
+    document.querySelectorAll("#filtros .form-control, #filtros .form-select").forEach(function (e) { e.value = ""; });
+}
+
+$(document).ready(function () {
+    autoCompletar("#inpFiltroEmpleado"); // si usas autocompletado para empleados
+    autoCompletar("#inpFiltroAutorizador");
+});

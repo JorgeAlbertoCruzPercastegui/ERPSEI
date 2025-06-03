@@ -10,6 +10,7 @@ using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers;
 using ERPSEI.Data.Managers.Empleados;
 using ERPSEI.Data.Managers.ActivosFijos;
+using ERPSEI.Data.Managers.Vacaciones;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Managers.Reportes;
 using ERPSEI.Data.Managers.Conciliaciones;
@@ -92,6 +93,8 @@ namespace ERPSEI
             ConfigureDIPolizas(_builder);
 
             ConfigureDIActivosFijos(_builder);
+
+            ConfigureDIVacaciones(_builder);
         }
         private static void ConfigureDIAsistencias(WebApplicationBuilder _builder) 
         {
@@ -126,6 +129,12 @@ namespace ERPSEI
             _builder.Services.AddScoped<ITipoActivosFijosManager, TipoActivosFijosManager>();
             _builder.Services.AddScoped<ICategoriaActivosFijosManager, CategoriaActivosFijosManager>();
         }
+        private static void ConfigureDIVacaciones(WebApplicationBuilder _builder)
+        {
+            //Activos Fijos
+            _builder.Services.AddScoped<ISolicitudVacacionesManager, SolicitudVacacionesManager>();
+        }
+
         private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)
 		{
 			//Cuentas Contables

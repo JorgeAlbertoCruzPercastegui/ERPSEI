@@ -32,8 +32,10 @@ using NPOI.XSSF.UserModel;
 using iText.Layout;
 using MathNet.Numerics.Distributions;
 using ERPSEI.Data.Entities.Vacaciones;
+using ERPSEI.Data.Managers.Vacaciones;
 using ERPSEI.Areas.ERP.Pages;
 using ERPSEI.Data.Migrations;
+using ERPSEI.Data.Managers.ActivosFijos;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -44,6 +46,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly AppUserManager appUserManager;
         private readonly AppUserManager userManager;
         private readonly IStringLocalizer<VacacionesModel> localizer;
+        private readonly ISolicitudVacacionesManager solicitudVacacionesManager;
 
         //private readonly IActivoFijoManager activoFijoManager;
         //private readonly ICategoriaActivosFijosManager categoriaActivoFijoManager;
@@ -63,12 +66,14 @@ namespace ERPSEI.Areas.ERP.Pages
         public class InputFiltroVacacionesModel
         {
             [Display(Name = "Empleado")]
-            [Range(1, int.MaxValue, ErrorMessage = "Seleccione un empleado válido.")]
-            public int? EmpleadoId { get; set; }
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
+            public string? Empleado { get; set; }
 
             [Display(Name = "Autorizador")]
-            [Range(1, int.MaxValue, ErrorMessage = "Seleccione un autorizador válido.")]
-            public int? AutorizadorId { get; set; }
+            [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
+            public string? Autorizador { get; set; }
 
             [Display(Name = "Estado")]
             public EstadoSolicitud? Estado { get; set; }
@@ -136,7 +141,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 IStringLocalizer<VacacionesModel> _localizer,
                 ApplicationDbContext _db,
                 AppUserManager _userManager,
-                IEmpleadoManager empleadoManager
+                IEmpleadoManager empleadoManager,
+                ISolicitudVacacionesManager _solicitudVacacionesManager
 
             //IActivoFijoManager _activoFijoManager,
             //ICategoriaActivosFijosManager categoriaManager,
@@ -152,6 +158,7 @@ namespace ERPSEI.Areas.ERP.Pages
             //activoFijoManager = _activoFijoManager;
             userManager = _userManager;
             empleadoActivoFijoManager = empleadoManager;
+            solicitudVacacionesManager = _solicitudVacacionesManager;
 
             InputFiltro = new InputFiltroVacacionesModel();
             InputVacaciones = new VacacionesTableModel();
@@ -184,6 +191,38 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(jsonVacaciones);
+        }
+
+        public async Task<JsonResult> OnPostFiltrarVacaciones()
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+
+            try
+            {
+                var solicitudes = await solicitudVacacionesManager.GetAllAsync(InputFiltro);
+
+                var result = solicitudes.Select(s => new
+                {
+                    id = s.Id,
+                    empleado = s.Empleado?.NombreCompleto ?? "-",
+                    fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                    fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                    fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                    diasSolicitados = s.DiasSolicitados,
+                    estado = s.Estado.ToString(),
+                    autorizador = s.Autorizador?.NombreCompleto ?? "-"
+                }).ToList();
+
+                resp.Datos = result;
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al filtrar solicitudes de vacaciones");
+            }
+
+            return new JsonResult(resp);
         }
 
 
