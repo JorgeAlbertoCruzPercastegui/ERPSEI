@@ -117,6 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AcumuladasField" xml:space="preserve">
+    <value>(+) Acumuladas</value>
+  </data>
+  <data name="EstasSolicitandoField" xml:space="preserve">
+    <value>Estás solicitando</value>
+  </data>
   <data name="EstatusField" xml:space="preserve">
     <value>Estatus</value>
   </data>
@@ -135,7 +141,19 @@
   <data name="Title" xml:space="preserve">
     <value>Vacaciones</value>
   </data>
+  <data name="TomadasField" xml:space="preserve">
+    <value>(-) Tomadas</value>
+  </data>
+  <data name="TomadasFuturoField" xml:space="preserve">
+    <value>(-) Tomadas en el Futuro</value>
+  </data>
+  <data name="TotalSaldoField" xml:space="preserve">
+    <value>(=) Total Saldo</value>
+  </data>
   <data name="UsuarioAutorizadorField" xml:space="preserve">
     <value>Usuario Autorizador</value>
+  </data>
+  <data name="VencidasField" xml:space="preserve">
+    <value>(-) Vencidas</value>
   </data>
 </root>

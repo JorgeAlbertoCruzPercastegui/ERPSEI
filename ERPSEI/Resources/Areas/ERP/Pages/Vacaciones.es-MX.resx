@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AcumuladasField" xml:space="preserve">
+    <value>(+)  Acumuladas</value>
+  </data>
   <data name="AddButton" xml:space="preserve">
     <value>Solicitar Vacaciones</value>
   </data>
@@ -153,14 +156,35 @@
   <data name="ColUsuarioAutorizadorHeader" xml:space="preserve">
     <value>Usuario Autorizador</value>
   </data>
+  <data name="ConceptoField" xml:space="preserve">
+    <value>Concepto</value>
+  </data>
   <data name="DeactivateButton" xml:space="preserve">
     <value>Dar de baja</value>
+  </data>
+  <data name="DetalleSaldoVacacionesField" xml:space="preserve">
+    <value>Detalle de Saldo de Vacaciones</value>
+  </data>
+  <data name="diasDisponiblesField" xml:space="preserve">
+    <value>días disponibles.</value>
+  </data>
+  <data name="diasLaboralesField" xml:space="preserve">
+    <value>días laborales.</value>
   </data>
   <data name="EditButtonTitle" xml:space="preserve">
     <value>Editar</value>
   </data>
+  <data name="EstadoField" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="EstasSolicitandoField" xml:space="preserve">
+    <value>Estás solicitando</value>
+  </data>
   <data name="EstatusField" xml:space="preserve">
     <value>Estatus</value>
+  </data>
+  <data name="FechaField" xml:space="preserve">
+    <value>Fecha</value>
   </data>
   <data name="FechaFinField" xml:space="preserve">
     <value>Fecha Fin</value>
@@ -171,6 +195,27 @@
   <data name="FilterTitle" xml:space="preserve">
     <value>Filtros de búsqueda</value>
   </data>
+  <data name="InicioField" xml:space="preserve">
+    <value>Inicio</value>
+  </data>
+  <data name="LegalesField" xml:space="preserve">
+    <value>Legales</value>
+  </data>
+  <data name="NoHayVacacionesTomadasField" xml:space="preserve">
+    <value>No hay vacaciones tomadas.</value>
+  </data>
+  <data name="NumeroDiasField" xml:space="preserve">
+    <value>Número de Días</value>
+  </data>
+  <data name="OpcionesField" xml:space="preserve">
+    <value>Opciones</value>
+  </data>
+  <data name="PeriodoField" xml:space="preserve">
+    <value>Periodo</value>
+  </data>
+  <data name="SaldoAlField" xml:space="preserve">
+    <value>Saldo al</value>
+  </data>
   <data name="SaveButton" xml:space="preserve">
     <value>Guardar</value>
   </data>
@@ -180,10 +225,46 @@
   <data name="SeeButtonTitle" xml:space="preserve">
     <value>Ver</value>
   </data>
+  <data name="SolicitarField" xml:space="preserve">
+    <value>Solicitar</value>
+  </data>
+  <data name="SolicitarVacacionesField" xml:space="preserve">
+    <value>Nueva Solicitud de Vacaciones</value>
+  </data>
+  <data name="TerminoField" xml:space="preserve">
+    <value>Terminó</value>
+  </data>
+  <data name="TienesField" xml:space="preserve">
+    <value>Tienes</value>
+  </data>
+  <data name="TipoField" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
   <data name="Title" xml:space="preserve">
     <value>Vacaciones</value>
   </data>
+  <data name="TomadasField" xml:space="preserve">
+    <value>(-)  Tomadas</value>
+  </data>
+  <data name="TomadasFuturoField" xml:space="preserve">
+    <value>(-)  Tomadas en el Futuro</value>
+  </data>
+  <data name="TotalSaldoField" xml:space="preserve">
+    <value>(=)  Total Saldo</value>
+  </data>
   <data name="UsuarioAutorizadorField" xml:space="preserve">
     <value>Usuario Autorizador</value>
+  </data>
+  <data name="VacacionesAcumuladasField" xml:space="preserve">
+    <value>Vacaciones Acumuladas</value>
+  </data>
+  <data name="VacacionesTomadasField" xml:space="preserve">
+    <value>Vacaciones Tomadas</value>
+  </data>
+  <data name="VencidasField" xml:space="preserve">
+    <value>(-)  Vencidas</value>
+  </data>
+  <data name="VencimientoField" xml:space="preserve">
+    <value>Vencimiento</value>
   </data>
 </root>

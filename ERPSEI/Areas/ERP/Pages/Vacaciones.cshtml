@@ -71,7 +71,7 @@
                         <!-- Fecha Inicio Desde -->
                         <div class="col-sm-6 col-md-4 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input type="date" class="form-control" asp-for="InputFiltro.FechaInicioDesde" id="inpFiltroFechaInicio" placeholder="Fecha Inicio" />
+                                <input type="date" class="form-control" asp-for="InputFiltro.FechaInicioDesde" id="inpFiltroFechaInicio" placeholder="@Localizer["FechaInicioField"]" />
                                 <label asp-for="InputFiltro.FechaInicioDesde" for="inpFiltroFechaInicio" class="form-label"></label>
                             </div>
                         </div>
@@ -79,7 +79,7 @@
                         <!-- Fecha Fin Hasta -->
                         <div class="col-sm-6 col-md-4 col-lg-3">
                             <div class="form-floating mb-3">
-                                <input type="date" class="form-control" asp-for="InputFiltro.FechaFinHasta" id="inpFiltroFechaFin" placeholder="Fecha Fin" />
+                                <input type="date" class="form-control" asp-for="InputFiltro.FechaFinHasta" id="inpFiltroFechaFin" placeholder="@Localizer["FechaFinField"]" />
                                 <label asp-for="InputFiltro.FechaFinHasta" for="inpFiltroFechaFin" class="form-label"></label>
                             </div>
                         </div>
@@ -161,7 +161,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 id="dlgSolicitudVacacionesTitle" class="modal-title">Solicitar Vacaciones</h5>
+                    <h5 id="dlgSolicitudVacacionesTitle" class="modal-title">@Localizer["SolicitarVacacionesField"]</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -174,42 +174,42 @@
                             <div class="col-12">
                                 <div class="card border-primary">
                                     <div class="card-header bg-primary text-white fw-bold">
-                                        <i class="bi bi-clipboard-check"></i> Detalle de Saldo de Vacaciones
+                                        <i class="bi bi-clipboard-check"></i> @Localizer["DetalleSaldoVacacionesField"]
                                     </div>
                                     <div class="card-body">
                                         <div class="table-responsive">
                                             <table class="table table-sm table-bordered mb-0">
                                                 <thead class="table-light">
                                                     <tr>
-                                                        <th>Concepto</th>
-                                                        <th class="text-end">Legales</th>
+                                                        <th>@Localizer["ConceptoField"]</th>
+                                                        <th class="text-end">@Localizer["LegalesField"]</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     <tr>
-                                                        <td>(+) Acumuladas</td>
+                                                        <td>@Localizer["AcumuladasField"]</td>
                                                         <td class="text-end">0.0 días</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>(-) Tomadas</td>
+                                                        <td>@Localizer["TomadasField"]</td>
                                                         <td class="text-end">0.0 días</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>(-) Vencidas</td>
+                                                        <td>@Localizer["VencidasField"]</td>
                                                         <td class="text-end">0.0 días</td>
                                                     </tr>
                                                     <tr>
-                                                        <td>(-) Tomadas en el Futuro</td>
+                                                        <td>@Localizer["TomadasFuturoField"]</td>
                                                         <td class="text-end">0.0 días</td>
                                                     </tr>
                                                     <tr class="fw-bold">
-                                                        <td>(=) Total Saldo</td>
+                                                        <td>@Localizer["TotalSaldoField"]</td>
                                                         <td class="text-end">0.0 días</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <small class="text-muted">Saldo al <strong>@DateTime.Now.ToString("dd-MM-yyyy")</strong></small>
+                                        <small class="text-muted">@Localizer["SaldoAlField"] <strong>@DateTime.Now.ToString("dd-MM-yyyy")</strong></small>
                                     </div>
                                 </div>
                             </div>
@@ -219,9 +219,9 @@
                         <!-- Sección Vacaciones Tomadas -->
                         <div class="card mb-4">
                             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                                <span><strong>Vacaciones Tomadas</strong></span>
+                                <span><strong>@Localizer["VacacionesTomadasField"]</strong></span>
                                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#dlgVacacionesSolicitud">
-                                    <i class="bi bi-plus-circle"></i> Solicitar
+                                    <i class="bi bi-plus-circle"></i> @Localizer["SolicitarField"]
                                 </button>
                             </div>
                             <div class="card-body p-0">
@@ -229,18 +229,18 @@
                                     <table class="table table-bordered table-sm mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Inicio</th>
-                                                <th>Término</th>
-                                                <th>Número de Días</th>
-                                                <th>Tipo</th>
-                                                <th>Estado</th>
-                                                <th>Opciones</th>
+                                                <th>@Localizer["InicioField"]</th>
+                                                <th>@Localizer["TerminoField"]</th>
+                                                <th>@Localizer["NumeroDiasField"]</th>
+                                                <th>@Localizer["TipoField"]</th>
+                                                <th>@Localizer["EstadoField"]</th>
+                                                <th>@Localizer["OpcionesField"]</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @* Aquí puedes iterar sobre solicitudes reales si las tienes *@
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted">No hay vacaciones tomadas.</td>
+                                                <td colspan="6" class="text-center text-muted">@Localizer["NoHayVacacionesTomadasField"]</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -251,19 +251,19 @@
                         <!-- Sección Vacaciones Acumuladas -->
                         <div class="card">
                             <div class="card-header bg-primary text-white fw-bold">
-                                Vacaciones Acumuladas
+                                @Localizer["VacacionesAcumuladasField"]
                             </div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-sm mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Fecha</th>
-                                                <th>Número de Días</th>
-                                                <th>Tipo</th>
-                                                <th>Vencimiento</th>
-                                                <th>Periodo</th>
-                                                <th>Opciones</th>
+                                                <th>@Localizer["FechaField"]</th>
+                                                <th>@Localizer["NumeroDiasField"]</th>
+                                                <th>@Localizer["TipoField"]</th>
+                                                <th>@Localizer["VencimientoField"]</th>
+                                                <th>@Localizer["PeriodoField"]</th>
+                                                <th>@Localizer["OpcionesField"]</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -301,7 +301,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 id="dlgSolicitudVacacionesTitle" class="modal-title">Solicitar Vacaciones</h5>
+                    <h5 id="dlgSolicitudVacacionesTitle" class="modal-title">@Localizer["SolicitarVacacionesField"]</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
@@ -313,7 +313,7 @@
                         <div class="row mb-3">
                             <div class="col-12">
                                 <div class="alert alert-info">
-                                    <i class="bi bi-palm"></i> Tienes <strong>@Model.DiasDisponibles</strong> días disponibles.
+                                    <i class="bi bi-palm"></i> @Localizer["TienesField"] <strong>@Model.DiasDisponibles</strong> @Localizer["diasDisponiblesField"]
                                 </div>
                             </div>
                         </div>
@@ -340,7 +340,7 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="alert alert-light border">
-                                    Estás solicitando <strong id="diasSolicitadosTexto">0</strong> días laborales.
+                                    @Localizer["EstasSolicitandoField"] <strong id="diasSolicitadosTexto">0</strong> @Localizer["diasLaboralesField"]
                                 </div>
                             </div>
                         </div>
