@@ -133,6 +133,27 @@ namespace ERPSEI.Areas.ERP.Pages
         public List<Empleado> Empleados { get; set; } = new();
         public List<Empleado> Autorizadores { get; set; } = new();
 
+        //Modal crear, editar y eliminar
+        [BindProperty]
+        public InputSolicitudVacacionesModel InputSolicitud { get; set; }
+
+        public int EmpleadoId { get; set; } // lo puedes setear al cargar la vista
+        public decimal DiasDisponibles { get; set; } // lo puedes calcular desde el backend
+        public class InputSolicitudVacacionesModel
+        {
+            [Required]
+            [DataType(DataType.Date)]
+            public DateTime FechaInicio { get; set; }
+
+            [Required]
+            [DataType(DataType.Date)]
+            public DateTime FechaFin { get; set; }
+
+            [StringLength(300)]
+            public string? ComentarioEmpleado { get; set; }
+
+            public int EmpleadoId { get; set; }
+        }
 
         public VacacionesModel(
                 IStringLocalizer<VacacionesModel> _stringLocalizer,

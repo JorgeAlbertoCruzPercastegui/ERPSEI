@@ -57,10 +57,10 @@ function operateFormatter(value, row, index) {
 }
 window.operateEvents = {
     'click .see': function (e, value, row, index) {
-        initActivoFijoDialog(VER, row);
+        initSolicitudVacacionesDialog(VER, row);
     },
     'click .edit': function (e, value, row, index) {
-        initActivoFijoDialog(EDITAR, row);
+        initSolicitudVacacionesDialog(EDITAR, row);
         //table.bootstrapTable('remove', {
         //    field: 'id',
         //    values: [row.id]
@@ -69,7 +69,7 @@ window.operateEvents = {
 }
 
 function onAgregarClick() {
-    initActivoFijoDialog(NUEVO, { id: "Nuevo", nombre: "" });
+    initSolicitudVacacionesDialog(NUEVO, { id: "Nuevo", nombre: "" });
 }
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
@@ -200,6 +200,106 @@ function initTable() {
         });
     })
 }
+
+function initSolicitudVacacionesDialog(action, row) {
+    let fechaInicioField = document.getElementById("inpFechaInicio");
+    let fechaFinField = document.getElementById("inpFechaFin");
+    let comentarioField = document.getElementById("inpComentarioEmpleado");
+    let empleadoIdField = document.getElementById("inpEmpleadoId");
+
+    let btnGuardar = document.getElementById("dlgSolicitudVacacionesBtnGuardar");
+    let dlgTitle = document.getElementById("dlgSolicitudVacacionesTitle");
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    let diasSolicitadosTexto = document.getElementById("diasSolicitadosTexto");
+
+    summaryContainer.innerHTML = "";
+    diasSolicitadosTexto.innerText = "0";
+
+    // Limpiar campos
+    fechaInicioField.value = "";
+    fechaFinField.value = "";
+    comentarioField.value = "";
+
+    switch (action) {
+        case NUEVO:
+            dlgTitle.innerHTML = "Nueva Solicitud de Vacaciones";
+            fechaInicioField.removeAttribute("disabled");
+            fechaFinField.removeAttribute("disabled");
+            comentarioField.removeAttribute("disabled");
+            btnGuardar.removeAttribute("disabled");
+            break;
+
+        case EDITAR:
+            dlgTitle.innerHTML = "Editar Solicitud de Vacaciones";
+            fechaInicioField.removeAttribute("disabled");
+            fechaFinField.removeAttribute("disabled");
+            comentarioField.removeAttribute("disabled");
+            btnGuardar.removeAttribute("disabled");
+            break;
+
+        default:
+            dlgTitle.innerHTML = "Ver Solicitud de Vacaciones";
+            fechaInicioField.setAttribute("disabled", true);
+            fechaFinField.setAttribute("disabled", true);
+            comentarioField.setAttribute("disabled", true);
+            btnGuardar.setAttribute("disabled", true);
+            break;
+    }
+
+    // Asignar valores si existen
+    if (row) {
+        if (row.fechaInicio) {
+            try {
+                if (row.fechaInicio.includes("/")) {
+                    const [dia, mes, anio] = row.fechaInicio.split("/");
+                    fechaInicioField.value = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+                } else {
+                    const fecha = new Date(row.fechaInicio);
+                    fechaInicioField.value = fecha.toISOString().split("T")[0];
+                }
+            } catch { fechaInicioField.value = ""; }
+        }
+
+        if (row.fechaFin) {
+            try {
+                if (row.fechaFin.includes("/")) {
+                    const [dia, mes, anio] = row.fechaFin.split("/");
+                    fechaFinField.value = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+                } else {
+                    const fecha = new Date(row.fechaFin);
+                    fechaFinField.value = fecha.toISOString().split("T")[0];
+                }
+            } catch { fechaFinField.value = ""; }
+        }
+
+        comentarioField.value = row.comentario || "";
+        empleadoIdField.value = row.empleadoId || "0";
+
+        // Calcular días solicitados si hay fechas válidas
+        calcularDiasSolicitados();
+    }
+
+    // Asociar evento al cambiar fechas
+    fechaInicioField.addEventListener("change", calcularDiasSolicitados);
+    fechaFinField.addEventListener("change", calcularDiasSolicitados);
+
+    dlgModal.toggle(); // Mostrar el modal
+}
+
+function calcularDiasSolicitados() {
+    const inicio = new Date(document.getElementById("inpFechaInicio").value);
+    const fin = new Date(document.getElementById("inpFechaFin").value);
+    const output = document.getElementById("diasSolicitadosTexto");
+
+    if (!isNaN(inicio) && !isNaN(fin) && fin >= inicio) {
+        const diff = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+        output.innerText = diff;
+    } else {
+        output.innerText = "0";
+    }
+}
+
+
 
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");

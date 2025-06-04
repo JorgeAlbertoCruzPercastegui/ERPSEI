@@ -120,6 +120,9 @@
   <data name="AddButton" xml:space="preserve">
     <value>Solicitar Vacaciones</value>
   </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
   <data name="ColActionsHeader" xml:space="preserve">
     <value>Acciones</value>
   </data>
@@ -167,6 +170,9 @@
   </data>
   <data name="FilterTitle" xml:space="preserve">
     <value>Filtros de búsqueda</value>
+  </data>
+  <data name="SaveButton" xml:space="preserve">
+    <value>Guardar</value>
   </data>
   <data name="SearchButton" xml:space="preserve">
     <value>Buscar</value>

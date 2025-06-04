@@ -151,6 +151,230 @@
     </thead>
 </table>
 
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+<!-- Sección Nuevo/Editar/Ver Registro --- -->
+
+<form id="theForm" method="post">
+    <div id="dlgVacaciones" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="dlgSolicitudVacacionesTitle" class="modal-title">Solicitar Vacaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body align-items-center">
+                    <div class="container-fluid">
+                        <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+
+                        <!-- Resumen de saldo -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white fw-bold">
+                                        <i class="bi bi-clipboard-check"></i> Detalle de Saldo de Vacaciones
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Concepto</th>
+                                                        <th class="text-end">Legales</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>(+) Acumuladas</td>
+                                                        <td class="text-end">0.0 días</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>(-) Tomadas</td>
+                                                        <td class="text-end">0.0 días</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>(-) Vencidas</td>
+                                                        <td class="text-end">0.0 días</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>(-) Tomadas en el Futuro</td>
+                                                        <td class="text-end">0.0 días</td>
+                                                    </tr>
+                                                    <tr class="fw-bold">
+                                                        <td>(=) Total Saldo</td>
+                                                        <td class="text-end">0.0 días</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <small class="text-muted">Saldo al <strong>@DateTime.Now.ToString("dd-MM-yyyy")</strong></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+
+                        <!-- Sección Vacaciones Tomadas -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <span><strong>Vacaciones Tomadas</strong></span>
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#dlgVacacionesSolicitud">
+                                    <i class="bi bi-plus-circle"></i> Solicitar
+                                </button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Inicio</th>
+                                                <th>Término</th>
+                                                <th>Número de Días</th>
+                                                <th>Tipo</th>
+                                                <th>Estado</th>
+                                                <th>Opciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @* Aquí puedes iterar sobre solicitudes reales si las tienes *@
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">No hay vacaciones tomadas.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sección Vacaciones Acumuladas -->
+                        <div class="card">
+                            <div class="card-header bg-primary text-white fw-bold">
+                                Vacaciones Acumuladas
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Número de Días</th>
+                                                <th>Tipo</th>
+                                                <th>Vencimiento</th>
+                                                <th>Periodo</th>
+                                                <th>Opciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>03/06/2025</td>
+                                                <td>0.0 días</td>
+                                                <td>Tipo</td>
+                                                <td>03/06/2025</td>
+                                                <td>2025-2026</td>
+                                                <td>-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="inpEmpleadoId" name="InputSolicitud.EmpleadoId" value="@Model.EmpleadoId" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button id="dlgSolicitudVacacionesBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!--Modal para solicitar vacaciones-->
+<form id="theForm" method="post">
+    <div id="dlgVacacionesSolicitud" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="dlgSolicitudVacacionesTitle" class="modal-title">Solicitar Vacaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body align-items-center">
+                    <div class="container-fluid">
+                        <div id="saveValidationSummary" class="text-danger mb-3" role="alert"></div>
+
+                        <!-- Saldo disponible -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-palm"></i> Tienes <strong>@Model.DiasDisponibles</strong> días disponibles.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-floating mb-3">
+                                    <input id="inpFechaInicio" asp-for="InputSolicitud.FechaInicio" type="date" class="form-control" />
+                                    <label asp-for="InputSolicitud.FechaInicio" class="form-label required"></label>
+                                    <span asp-validation-for="InputSolicitud.FechaInicio" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-floating mb-3">
+                                    <input id="inpFechaFin" asp-for="InputSolicitud.FechaFin" type="date" class="form-control" />
+                                    <label asp-for="InputSolicitud.FechaFin" class="form-label required"></label>
+                                    <span asp-validation-for="InputSolicitud.FechaFin" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Días solicitados -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-light border">
+                                    Estás solicitando <strong id="diasSolicitadosTexto">0</strong> días laborales.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comentario -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <textarea id="inpComentarioEmpleado" asp-for="InputSolicitud.ComentarioEmpleado" class="form-control" style="height: 100px;"></textarea>
+                                    <label asp-for="InputSolicitud.ComentarioEmpleado" class="form-label"></label>
+                                    <span asp-validation-for="InputSolicitud.ComentarioEmpleado" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <input type="hidden" id="inpEmpleadoId" name="InputSolicitud.EmpleadoId" value="@Model.EmpleadoId" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button id="dlgSolicitudVacacionesBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
+                    </button>
+                    <button id="dlgSolicitudVacacionesBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+                        <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
 
 
 @section Scripts {
