@@ -211,7 +211,14 @@ namespace ERPSEI.Data.Managers.Empleados
 
 		public async Task<Empleado?> GetByEmailAsync(string email)
         {
-            return await _db.Empleados.Where(e => e.Deshabilitado == 0 && e.Email.Equals(email, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefaultAsync();
+            //return await _db.Empleados.Where(e => e.Deshabilitado == 0 && e.Email.Equals(email, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefaultAsync();
+            /*return await _db.Empleados
+            .Where(e => e.Deshabilitado == 0 && e.Email.ToLower() == email.ToLower())
+            .FirstOrDefaultAsync();*/
+            return await _db.Empleados
+            .Where(e => e.Deshabilitado == 0 && e.Email != null && e.Email.ToLower() == email.ToLower())
+            .FirstOrDefaultAsync();
+
         }
 
     }
