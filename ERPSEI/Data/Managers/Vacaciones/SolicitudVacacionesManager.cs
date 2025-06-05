@@ -18,7 +18,7 @@ namespace ERPSEI.Data.Managers.Vacaciones
         }
         public async Task<int> CreateAsync(SolicitudVacaciones solicitudVacaciones)
         {
-            solicitudVacaciones.Id = await GetNextId();
+            //solicitudVacaciones.Id = await GetNextId();
             db.SolicitudesVacaciones.Add(solicitudVacaciones);
             await db.SaveChangesAsync();
             return solicitudVacaciones.Id;

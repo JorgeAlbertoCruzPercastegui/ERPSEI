@@ -36,6 +36,7 @@ using ERPSEI.Data.Managers.Vacaciones;
 using ERPSEI.Areas.ERP.Pages;
 using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.ActivosFijos;
+using System.Security.Claims;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -245,6 +246,66 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
+        public async Task<JsonResult> OnPostGuardarSolicitud()
+        {
+            ServerResponse resp = new(false, localizer["SolicitudVacacionesSavedUnsuccessfully"]);
+
+            try
+            {
+                // Obtener usuario autenticado
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario == null || usuario.Empleado == null)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "No se pudo identificar al empleado actual.";
+                    return new JsonResult(resp);
+                }
+
+                var empleado = usuario.Empleado;
+                var fechaActual = DateTime.Now;
+
+                // Calcular días solicitados (ej. 06/06 - 09/06 = 4 días)
+                var diasSolicitados = Enumerable
+                    .Range(0, (InputSolicitud.FechaFin - InputSolicitud.FechaInicio).Days + 1)
+                    .Select(offset => InputSolicitud.FechaInicio.AddDays(offset))
+                    .Count(date => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday);
+
+
+                var solicitud = new SolicitudVacaciones
+                {
+                    EmpleadoId = empleado.Id,
+                    Empleado = empleado,
+                    FechaSolicitud = fechaActual,
+                    FechaInicio = InputSolicitud.FechaInicio,
+                    FechaFin = InputSolicitud.FechaFin,
+                    DiasSolicitados = diasSolicitados,
+                    ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
+                    ComentarioAutorizador = null,
+                    Estado = EstadoSolicitud.Pendiente,
+                    AutorizadorId = empleado.Id, // Mismo empleado por default
+                    FechaRespuesta = fechaActual
+                };
+
+                await solicitudVacacionesManager.CreateAsync(solicitud);
+
+                resp.TieneError = false;
+                resp.Mensaje = localizer["SolicitudVacacionesSavedSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al guardar la solicitud de vacaciones");
+                resp.Mensaje = "Ocurrió un error inesperado.";
+            }
+
+            return new JsonResult(resp);
+        }
+
+
+
+
 
 
         public async Task<JsonResult> OnPostGetUsuariosSuggestion(string texto)

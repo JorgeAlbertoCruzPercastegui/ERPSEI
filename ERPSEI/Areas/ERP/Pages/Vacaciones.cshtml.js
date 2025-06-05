@@ -287,19 +287,30 @@ function initSolicitudVacacionesDialog(action, row) {
 }
 
 function calcularDiasSolicitados() {
-    const inicio = new Date(document.getElementById("inpFechaInicio").value);
-    const fin = new Date(document.getElementById("inpFechaFin").value);
+    const inicioInput = document.getElementById("inpFechaInicio").value;
+    const finInput = document.getElementById("inpFechaFin").value;
     const output = document.getElementById("diasSolicitadosTexto");
 
+    const inicio = new Date(inicioInput);
+    const fin = new Date(finInput);
+
     if (!isNaN(inicio) && !isNaN(fin) && fin >= inicio) {
-        const diff = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
-        output.innerText = diff;
+        let diasLaborales = 0;
+        let temp = new Date(inicio);
+
+        while (temp <= fin) {
+            const dia = temp.getDay(); // 0=domingo, 6=sábado
+            if (dia !== 0 && dia !== 6) {
+                diasLaborales++;
+            }
+            temp.setDate(temp.getDate() + 1);
+        }
+
+        output.innerText = diasLaborales;
     } else {
         output.innerText = "0";
     }
 }
-
-
 
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");
@@ -347,3 +358,75 @@ $(document).ready(function () {
     autoCompletar("#inpFiltroEmpleado"); // si usas autocompletado para empleados
     autoCompletar("#inpFiltroAutorizador");
 });
+
+function onGuardarClick() {
+    $("#theFormS").validate(); // Asegura que se valide el formulario correcto
+    let valid = $("#theFormS").valid();
+    if (!valid) { return; }
+
+    let btnClose = document.getElementById("dlgSolicitudVacacionesBtnCancelar");
+
+    let fechaInicio = document.getElementById("inpFechaInicio").value;
+    let fechaFin = document.getElementById("inpFechaFin").value;
+    let comentario = document.getElementById("inpComentarioEmpleado").value;
+    let empleadoId = document.getElementById("inpEmpleadoId").value;
+
+    let dlgTitle = document.getElementById("dlgSolicitudVacacionesTitle");
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    summaryContainer.innerHTML = "";
+
+    let oParams = {
+        InputSolicitud: {
+            FechaInicio: fechaInicio,
+            FechaFin: fechaFin,
+            ComentarioEmpleado: comentario,
+            EmpleadoId: parseInt(empleadoId)
+        }
+    };
+
+    doAjax(
+        "/ERP/Vacaciones/GuardarSolicitud",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    let summary = ``;
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                }
+                showError(dlgTitle.innerHTML, resp.mensaje);
+                return;
+            }
+
+            let modalElement = document.getElementById('dlgVacacionesSolicitud');
+            let modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) modalInstance.hide();
+
+            document.querySelector("[name='refresh']").click();
+            showSuccess(dlgTitle.innerHTML, resp.mensaje);
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
+
+function onCerrarClick() {
+    //Removes validation from input-fields
+    $('.input-validation-error').addClass('input-validation-valid');
+    $('.input-validation-error').removeClass('input-validation-error');
+    //Removes validation message after input-fields
+    $('.field-validation-error').addClass('field-validation-valid');
+    $('.field-validation-error').removeClass('field-validation-error');
+    //Removes validation summary 
+    $('.validation-summary-errors').addClass('validation-summary-valid');
+    $('.validation-summary-errors').removeClass('validation-summary-errors');
+    //Removes danger text from fields
+    $(".text-danger").children().remove()
+}
+
+document.getElementById("inpFechaInicio").addEventListener("change", calcularDiasSolicitados);
+document.getElementById("inpFechaFin").addEventListener("change", calcularDiasSolicitados);

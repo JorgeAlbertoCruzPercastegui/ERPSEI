@@ -103,5 +103,13 @@ namespace ERPSEI.Data.Managers.Usuarios
 			return usuarios;
 		}
 
-	}
+        public async Task<AppUser?> FindByNameWithEmpleadoAsync(string userName)
+        {
+            return await Users
+                .Include(u => u.Empleado)
+                .FirstOrDefaultAsync(u => u.UserName == userName);
+        }
+
+
+    }
 }
