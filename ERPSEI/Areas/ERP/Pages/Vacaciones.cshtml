@@ -188,28 +188,28 @@
                                                 <tbody>
                                                     <tr>
                                                         <td>@Localizer["AcumuladasField"]</td>
-                                                        <td class="text-end">0.0 días</td>
+                                                        <td class="text-end" id="tdAcumuladas">0.0 días</td>
                                                     </tr>
                                                     <tr>
                                                         <td>@Localizer["TomadasField"]</td>
-                                                        <td class="text-end">0.0 días</td>
+                                                        <td class="text-end" id="tdTomadas">0.0 días</td>
                                                     </tr>
                                                     <tr>
                                                         <td>@Localizer["VencidasField"]</td>
-                                                        <td class="text-end">0.0 días</td>
+                                                        <td class="text-end" id="tdVencidas">0.0 días</td>
                                                     </tr>
                                                     <tr>
                                                         <td>@Localizer["TomadasFuturoField"]</td>
-                                                        <td class="text-end">0.0 días</td>
+                                                        <td class="text-end" id="tdFuturas">0.0 días</td>
                                                     </tr>
                                                     <tr class="fw-bold">
                                                         <td>@Localizer["TotalSaldoField"]</td>
-                                                        <td class="text-end">0.0 días</td>
+                                                        <td class="text-end" id="tdSaldoTotal">0.0 días</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <small class="text-muted">@Localizer["SaldoAlField"] <strong>@DateTime.Now.ToString("dd-MM-yyyy")</strong></small>
+                                        <small class="text-muted">@Localizer["SaldoAlField"] <strong id="lblFechaSaldo">@DateTime.Now.ToString("dd-MM-yyyy")</strong></small>
                                     </div>
                                 </div>
                             </div>
@@ -237,12 +237,12 @@
                                                 <th>@Localizer["OpcionesField"]</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            @* Aquí puedes iterar sobre solicitudes reales si las tienes *@
+                                        <tbody id="tbodyVacacionesTomadas">
                                             <tr>
-                                                <td colspan="6" class="text-center text-muted">@Localizer["NoHayVacacionesTomadasField"]</td>
+                                                <td colspan="6" class="text-center text-muted">Cargando...</td>
                                             </tr>
                                         </tbody>
+
                                     </table>
                                 </div>
                             </div>
@@ -265,17 +265,14 @@
                                                 <th>@Localizer["PeriodoField"]</th>
                                                 <th>@Localizer["OpcionesField"]</th>
                                             </tr>
-                                        </thead>
-                                        <tbody>
                                             <tr>
-                                                <td>03/06/2025</td>
-                                                <td>0.0 días</td>
-                                                <td>Tipo</td>
-                                                <td>03/06/2025</td>
-                                                <td>2025-2026</td>
-                                                <td>-</td>
+                                        <tbody id="tbodyVacAcumuladas">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">Cargando...</td>
                                             </tr>
                                         </tbody>
+                                             </tr>
+                                        </thead>
                                     </table>
                                 </div>
                             </div>
@@ -313,7 +310,7 @@
                         <div class="row mb-3">
                             <div class="col-12">
                                 <div class="alert alert-info">
-                                    <i class="bi bi-palm"></i> @Localizer["TienesField"] <strong>@Model.DiasDisponibles</strong> @Localizer["diasDisponiblesField"]
+                                    <i class="bi bi-palm"></i> @Localizer["TienesField"] <strong id="lblDiasDisponibles">@Model.DiasDisponibles</strong> @Localizer["diasDisponiblesField"]
                                 </div>
                             </div>
                         </div>

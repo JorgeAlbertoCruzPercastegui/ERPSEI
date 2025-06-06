@@ -7,6 +7,8 @@ var dlgModal = null;
 const NUEVO = 0;
 const EDITAR = 1;
 const VER = 2;
+let diasDisponiblesActuales = 0;
+
 const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
 document.addEventListener("DOMContentLoaded", function (event) {
@@ -26,6 +28,14 @@ document.addEventListener("DOMContentLoaded", function (event) {
     }
 
     initTable();
+
+    obtenerDiasDisponibles();
+
+    cargarResumenVacaciones();
+    
+    cargarVacacionesAcumuladas();
+
+    cargarVacacionesTomadas()
 });
 
 function getIdSelections() {
@@ -215,10 +225,17 @@ function initSolicitudVacacionesDialog(action, row) {
     summaryContainer.innerHTML = "";
     diasSolicitadosTexto.innerText = "0";
 
-    // Limpiar campos
+    // ✅ Limpiar campos
     fechaInicioField.value = "";
     fechaFinField.value = "";
     comentarioField.value = "";
+    diasSolicitadosTexto.innerText = "0";
+    summaryContainer.innerHTML = "";
+
+    // ✅ Obtener resumen actualizado (acumuladas, tomadas, saldo, disponibles)
+    diasDisponiblesActuales = 0;
+    cargarResumenVacaciones(); // esto también actualiza lblDiasDisponibles
+    obtenerDiasDisponibles();
 
     switch (action) {
         case NUEVO:
@@ -286,7 +303,7 @@ function initSolicitudVacacionesDialog(action, row) {
     dlgModal.toggle(); // Mostrar el modal
 }
 
-function calcularDiasSolicitados() {
+/*function calcularDiasSolicitados() {
     const inicioInput = document.getElementById("inpFechaInicio").value;
     const finInput = document.getElementById("inpFechaFin").value;
     const output = document.getElementById("diasSolicitadosTexto");
@@ -299,7 +316,7 @@ function calcularDiasSolicitados() {
         let temp = new Date(inicio);
 
         while (temp <= fin) {
-            const dia = temp.getDay(); // 0=domingo, 6=sábado
+            const dia = temp.getDay();
             if (dia !== 0 && dia !== 6) {
                 diasLaborales++;
             }
@@ -310,12 +327,98 @@ function calcularDiasSolicitados() {
     } else {
         output.innerText = "0";
     }
+}*/
+
+function calcularDiasSolicitados() {
+    const inicio = new Date(document.getElementById("inpFechaInicio").value);
+    const fin = new Date(document.getElementById("inpFechaFin").value);
+    const output = document.getElementById("diasSolicitadosTexto");
+    const tdSaldo = document.getElementById("tdSaldoTotal");
+    const lblDisponibles = document.getElementById("lblDiasDisponibles");
+
+    if (!isNaN(inicio) && !isNaN(fin) && fin >= inicio) {
+        let totalDias = 0;
+        let fecha = new Date(inicio);
+
+        while (fecha <= fin) {
+            const dia = fecha.getDay();
+            if (dia !== 0 && dia !== 6) {
+                totalDias++;
+            }
+            fecha.setDate(fecha.getDate() + 1);
+        }
+
+        const restante = Math.max(diasDisponiblesActuales - totalDias, 0);
+
+        if (totalDias > diasDisponiblesActuales) {
+            output.innerHTML = `<span class="text-danger">${totalDias} días (excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)</span>`;
+        } else {
+            output.innerText = `${totalDias}`;
+        }
+
+        // ✅ Actualizar "Tienes X días disponibles"
+        lblDisponibles.innerText = restante.toFixed(1);
+
+        // ✅ Actualizar "Total Saldo"
+        tdSaldo.innerText = `${restante.toFixed(1)} días`;
+    } else {
+        output.innerText = "0";
+        lblDisponibles.innerText = diasDisponiblesActuales.toFixed(1);
+        tdSaldo.innerText = `${diasDisponiblesActuales.toFixed(1)} días`;
+    }
 }
+
+
+
+async function obtenerDiasDisponibles() {
+    try {
+        const response = await fetch("/ERP/Vacaciones?handler=ObtenerDiasDisponibles");
+        const dias = await response.json();
+
+        diasDisponiblesActuales = dias; // ← Guarda en la variable global
+        document.getElementById("lblDiasDisponibles").innerText = dias.toFixed(1);
+
+        // También actualizar resumen si deseas
+        document.getElementById("tdAcumuladas").innerText = `${dias.toFixed(1)} días`;
+        document.getElementById("tdSaldoTotal").innerText = `${dias.toFixed(1)} días`;
+    } catch (error) {
+        console.error("Error al obtener días disponibles:", error);
+    }
+}
+
+
+function cargarResumenVacaciones() {
+    doAjax(
+        "/ERP/Vacaciones?handler=ResumenVacaciones",
+        null,
+        function (resp) {
+            if (resp.error) {
+                showError("Resumen", resp.error);
+                return;
+            }
+
+            document.getElementById("tdAcumuladas").innerText = `${resp.acumuladas.toFixed(1)} días`;
+            document.getElementById("tdTomadas").innerText = `${resp.tomadas.toFixed(1)} días`;
+            document.getElementById("tdVencidas").innerText = `0.0 días`;
+            document.getElementById("tdFuturas").innerText = `0.0 días`;
+            document.getElementById("tdSaldoTotal").innerText = `${resp.saldo.toFixed(1)} días`;
+
+            document.getElementById("lblDiasDisponibles").innerText = `${resp.saldo.toFixed(1)}`;
+
+            diasDisponiblesActuales = resp.saldo; // 👈 este valor será base
+        },
+        function (error) {
+            console.error("Error al cargar resumen:", error);
+        },
+        { type: "GET" }
+    );
+}
+
 
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");
 
-    let selEmpleado = document.getElementById("inpFiltroEmpleado");
+    let selEmpleado = document.getElementById("inpFiltroEmpleado"); 
     let selAutorizador = document.getElementById("inpFiltroAutorizador");
     let selEstado = document.getElementById("inpFiltroEstado");
     let inpFechaInicio = document.getElementById("inpFiltroFechaInicio");
@@ -360,7 +463,7 @@ $(document).ready(function () {
 });
 
 function onGuardarClick() {
-    $("#theFormS").validate(); // Asegura que se valide el formulario correcto
+    $("#theFormS").validate();
     let valid = $("#theFormS").valid();
     if (!valid) { return; }
 
@@ -400,12 +503,28 @@ function onGuardarClick() {
                 return;
             }
 
+            // Cerrar modal
             let modalElement = document.getElementById('dlgVacacionesSolicitud');
             let modalInstance = bootstrap.Modal.getInstance(modalElement);
             if (modalInstance) modalInstance.hide();
 
+            // Limpiar campos después de guardar
+            document.getElementById("inpFechaInicio").value = "";
+            document.getElementById("inpFechaFin").value = "";
+            document.getElementById("inpComentarioEmpleado").value = "";
+            document.getElementById("diasSolicitadosTexto").innerText = "0";
+
+            // Refrescar tabla principal
             document.querySelector("[name='refresh']").click();
+
+            // Mostrar mensaje de éxito
             showSuccess(dlgTitle.innerHTML, resp.mensaje);
+
+            // Esperar un poco para que el backend se actualice antes de recargar el resumen
+            setTimeout(() => {
+                obtenerDiasDisponibles();       // Actualiza lblDiasDisponibles
+                cargarResumenVacaciones();      // Actualiza la tabla y saldo total
+            }, 300); // puede ajustarse a 500ms si necesario
         },
         function (error) {
             showError("Error", error);
@@ -413,6 +532,80 @@ function onGuardarClick() {
         postOptions
     );
 }
+
+function cargarVacacionesAcumuladas() {
+    fetch("/ERP/Vacaciones/VacacionesAcumuladas")
+        .then(resp => resp.json())
+        .then(data => {
+            const tbody = document.getElementById("tbodyVacAcumuladas");
+            tbody.innerHTML = "";
+
+            if (data.error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${data.error}</td></tr>`;
+                return;
+            }
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No hay vacaciones acumuladas</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${item.fecha ? new Date(item.fecha).toLocaleDateString() : ""}</td>
+                    <td>${item.numeroDias.toFixed(1)} días</td>
+                    <td>${item.tipo}</td>
+                    <td>${item.vencimiento ? new Date(item.vencimiento).toLocaleDateString() : ""}</td>
+                    <td>${item.periodo || ""}</td>
+                    <td>-</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(err => {
+            console.error("Error al cargar vacaciones acumuladas:", err);
+            document.getElementById("tbodyVacAcumuladas").innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos</td></tr>`;
+        });
+}
+
+function cargarVacacionesTomadas() {
+    fetch("/ERP/Vacaciones?handler=VacacionesTomadas")
+        .then(resp => resp.json())
+        .then(data => {
+            const tbody = document.getElementById("tbodyVacacionesTomadas");
+            tbody.innerHTML = "";
+
+            if (data.error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${data.error}</td></tr>`;
+                return;
+            }
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No hay vacaciones tomadas.</td></tr>`;
+                return;
+            }
+
+            data.forEach(vac => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${vac.inicio}</td>
+                    <td>${vac.fin}</td>
+                    <td>${vac.dias} días</td>
+                    <td>${vac.tipo}</td>
+                    <td>${vac.estado}</td>
+                    <td>-</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(err => {
+            console.error("Error al cargar vacaciones tomadas:", err);
+            document.getElementById("tbodyVacacionesTomadas").innerHTML =
+                `<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos</td></tr>`;
+        });
+}
+
 
 function onCerrarClick() {
     //Removes validation from input-fields

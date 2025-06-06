@@ -132,6 +132,42 @@ namespace ERPSEI.Data.Managers.Vacaciones
             return await query.ToListAsync();
         }
 
+        public async Task<decimal> CalcularDiasDisponiblesAsync(int empleadoId)
+        {
+            var empleado = await db.Empleados.FindAsync(empleadoId);
+            if (empleado == null) return 0;
+
+            DateTime hoy = DateTime.Today;
+            DateTime fechaIngreso = empleado.FechaIngreso.Date;
+
+            // Años completos trabajados
+            int aniosCompletos = hoy.Year - fechaIngreso.Year;
+            if (fechaIngreso > hoy.AddYears(-aniosCompletos)) aniosCompletos--;
+
+            decimal diasPorAnio = 12m;
+
+            // Total por años completos
+            decimal totalAcumulado = aniosCompletos * diasPorAnio;
+
+            // Proporcional del año actual (si aún no cumple el año adicional)
+            DateTime inicioPeriodoActual = fechaIngreso.AddYears(aniosCompletos);
+            if (hoy < inicioPeriodoActual.AddYears(1))
+            {
+                int diasTrabajados = (hoy - inicioPeriodoActual).Days + 1;
+                decimal proporcional = Math.Round((diasPorAnio / 365m) * diasTrabajados, 1);
+                totalAcumulado += proporcional;
+            }
+
+            // Días tomados hasta la fecha
+            var diasTomados = await db.SolicitudesVacaciones
+                .Where(s => s.EmpleadoId == empleadoId && s.Estado == EstadoSolicitud.Aprobado)
+                .SumAsync(s => s.DiasSolicitados);
+
+            decimal saldo = totalAcumulado - diasTomados;
+            return Math.Max(saldo, 0);
+        }
+
+
 
     }
 }

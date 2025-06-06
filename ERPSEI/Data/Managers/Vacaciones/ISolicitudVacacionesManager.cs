@@ -7,5 +7,7 @@ namespace ERPSEI.Data.Managers.Vacaciones
         Task<List<SolicitudVacaciones>> GetAllAsync(ERPSEI.Areas.ERP.Pages.VacacionesModel.InputFiltroVacacionesModel? filtro = null);
 
         Task<int> CreateAsync(SolicitudVacaciones solicitudVacaciones);
+        Task<decimal> CalcularDiasDisponiblesAsync(int empleadoId);
+
     }
 }

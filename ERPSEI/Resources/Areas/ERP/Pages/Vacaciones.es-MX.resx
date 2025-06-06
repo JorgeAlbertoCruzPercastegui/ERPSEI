@@ -231,6 +231,9 @@
   <data name="SolicitarVacacionesField" xml:space="preserve">
     <value>Nueva Solicitud de Vacaciones</value>
   </data>
+  <data name="SolicitudVacacionesSavedSuccessfully" xml:space="preserve">
+    <value>Solicitud enviada exitosamente.</value>
+  </data>
   <data name="TerminoField" xml:space="preserve">
     <value>Terminó</value>
   </data>

@@ -156,6 +156,28 @@ namespace ERPSEI.Areas.ERP.Pages
             public int EmpleadoId { get; set; }
         }
 
+        public List<VacacionesAcumuladasModel> ListaVacacionesAcumuladas { get; set; } = new();
+
+        public class VacacionesAcumuladasModel
+        {
+            public DateTime Fecha { get; set; }
+            public decimal NumeroDias { get; set; }
+            public string Tipo { get; set; } = string.Empty;
+            public DateTime? Vencimiento { get; set; }
+            public string Periodo { get; set; } = string.Empty;
+        }
+
+        public List<VacacionesTomadasModel> ListaVacacionesTomadas { get; set; } = new();
+        public class VacacionesTomadasModel
+        {
+            public DateTime FechaInicio { get; set; }
+            public DateTime FechaFin { get; set; }
+            public int DiasSolicitados { get; set; }
+            public string Tipo { get; set; } = "Legales"; // Por default
+            public string Estado { get; set; } = string.Empty;
+        }
+
+
         public VacacionesModel(
                 IStringLocalizer<VacacionesModel> _stringLocalizer,
                 ILogger<VacacionesModel> _logger,
@@ -285,7 +307,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
                     ComentarioAutorizador = null,
                     Estado = EstadoSolicitud.Pendiente,
-                    AutorizadorId = empleado.Id, // Mismo empleado por default
+                    AutorizadorId = empleado.Id, 
                     FechaRespuesta = fechaActual
                 };
 
@@ -303,11 +325,142 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
+        public async Task<JsonResult> OnGetResumenVacaciones()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+            if (usuario == null || usuario.Empleado == null)
+                return new JsonResult(new { error = "Empleado no encontrado." });
+
+            var empleado = usuario.Empleado;
+            var fechaHoy = DateTime.Now;
+
+            // 1. Días acumulados proporcionales
+            decimal diasAcumulados = Math.Round((12m / 365m) * (fechaHoy - empleado.FechaIngreso).Days, 1);
+
+            // 2. Días tomados (aprobados o solicitados)
+            var diasTomados = await db.SolicitudesVacaciones
+                .Where(s => s.EmpleadoId == empleado.Id && s.Estado != EstadoSolicitud.Rechazado)
+                .SumAsync(s => s.DiasSolicitados);
+
+            // 3. Saldo actual
+            decimal saldo = Math.Max(diasAcumulados - diasTomados, 0);
+
+            return new JsonResult(new
+            {
+                Acumuladas = diasAcumulados,
+                Tomadas = diasTomados,
+                Vencidas = 0,
+                Futuras = 0,
+                Saldo = saldo,
+                Fecha = DateTime.Now.ToString("dd-MM-yyyy")
+            });
+        }
 
 
+        public async Task<JsonResult> OnGetObtenerDiasDisponibles()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario == null || usuario.Empleado == null)
+                return new JsonResult(0); // o JsonResult(new { error = "Empleado no encontrado" });
+
+            decimal dias = await solicitudVacacionesManager.CalcularDiasDisponiblesAsync(usuario.Empleado.Id);
+            return new JsonResult(dias);
+        }
+
+        public async Task<JsonResult> OnGetVacacionesAcumuladas()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario?.Empleado == null)
+                return new JsonResult(new { error = "Empleado no encontrado." });
+
+            var empleado = usuario.Empleado;
+            var fechaIngreso = empleado.FechaIngreso.Date;
+            var fechaActual = DateTime.Today;
+
+            const decimal diasLegales = 12m;
+
+            if (fechaActual >= fechaIngreso.AddYears(1))
+            {
+                // Cumplió al menos 1 año
+                var fechaAniversario = fechaIngreso.AddYears(1);
+                var vencimiento = fechaAniversario.AddMonths(18);
+
+                ListaVacacionesAcumuladas.Add(new VacacionesAcumuladasModel
+                {
+                    Fecha = fechaAniversario,
+                    NumeroDias = diasLegales,
+                    Tipo = "Legales",
+                    Vencimiento = vencimiento,
+                    Periodo = $"{fechaAniversario.Year}-{vencimiento.Year}"
+                });
+
+                var diasProporcionales = Math.Round((diasLegales / 365) * (decimal)(fechaActual - fechaAniversario).TotalDays, 1);
+
+                if (diasProporcionales > 0)
+                {
+                    ListaVacacionesAcumuladas.Add(new VacacionesAcumuladasModel
+                    {
+                        Fecha = fechaActual,
+                        NumeroDias = diasProporcionales,
+                        Tipo = "Legales (Proporcionales)",
+                        Vencimiento = null,
+                        Periodo = ""
+                    });
+                }
+            }
+            else
+            {
+                // Solo proporcionales si no ha cumplido 1 año
+                var diasTrabajados = (fechaActual - fechaIngreso).TotalDays;
+                var diasProporcionales = Math.Round((diasLegales / 365) * (decimal)diasTrabajados, 1);
+
+                ListaVacacionesAcumuladas.Add(new VacacionesAcumuladasModel
+                {
+                    Fecha = fechaActual,
+                    NumeroDias = diasProporcionales,
+                    Tipo = "Legales (Proporcionales)",
+                    Vencimiento = null,
+                    Periodo = ""
+                });
+            }
+
+            return new JsonResult(ListaVacacionesAcumuladas);
+        }
+
+        public async Task<JsonResult> OnGetVacacionesTomadas()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario?.Empleado == null)
+                return new JsonResult(new { error = "Empleado no encontrado." });
+
+            var empleado = usuario.Empleado;
+
+            var solicitudes = await db.SolicitudesVacaciones
+                .Where(s => s.EmpleadoId == empleado.Id)
+                .OrderByDescending(s => s.FechaInicio)
+                .ToListAsync();
+
+            var lista = solicitudes.Select(s => new
+            {
+                inicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                fin = s.FechaFin.ToString("dd/MM/yyyy"),
+                dias = s.DiasSolicitados,
+                tipo = "Legales",
+                estado = s.Estado.ToString()
+            }).ToList();
+
+            return new JsonResult(lista);
+        }
 
 
-
+        //Autocompletado Empleado y Autorizador
         public async Task<JsonResult> OnPostGetUsuariosSuggestion(string texto)
         {
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);

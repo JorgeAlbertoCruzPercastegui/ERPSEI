@@ -138,6 +138,9 @@
   <data name="SearchButton" xml:space="preserve">
     <value>Buscar</value>
   </data>
+  <data name="SolicitudVacacionesSavedSuccessfully" xml:space="preserve">
+    <value>Solicitud enviada exitosamente.</value>
+  </data>
   <data name="Title" xml:space="preserve">
     <value>Vacaciones</value>
   </data>
