@@ -294,6 +294,7 @@ function initSolicitudVacacionesDialog(action, row) {
 
         // Calcular días solicitados si hay fechas válidas
         calcularDiasSolicitados();
+        cargarResumenVacaciones();
     }
 
     // Asociar evento al cambiar fechas
@@ -524,6 +525,7 @@ function onGuardarClick() {
             setTimeout(() => {
                 obtenerDiasDisponibles();       // Actualiza lblDiasDisponibles
                 cargarResumenVacaciones();      // Actualiza la tabla y saldo total
+                cargarVacacionesTomadas();         // ✅ Actualiza tabla de vacaciones tomadas
             }, 300); // puede ajustarse a 500ms si necesario
         },
         function (error) {

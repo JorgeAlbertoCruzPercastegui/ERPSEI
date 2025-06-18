@@ -1,4 +1,5 @@
-﻿namespace ERPSEI.Email
+﻿using Microsoft.AspNetCore.Identity.UI.Services;
+namespace ERPSEI.Email
 {
     public interface IEmailSender
     {

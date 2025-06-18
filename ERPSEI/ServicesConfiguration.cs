@@ -64,6 +64,7 @@ namespace ERPSEI
             );
         }
 
+
         public static void ConfigureDatabase(WebApplicationBuilder _builder)
         {
             var connectionString = _builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -133,6 +134,7 @@ namespace ERPSEI
         {
             //Activos Fijos
             _builder.Services.AddScoped<ISolicitudVacacionesManager, SolicitudVacacionesManager>();
+
         }
 
         private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)

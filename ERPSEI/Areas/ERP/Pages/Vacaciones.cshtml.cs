@@ -48,6 +48,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly AppUserManager userManager;
         private readonly IStringLocalizer<VacacionesModel> localizer;
         private readonly ISolicitudVacacionesManager solicitudVacacionesManager;
+        private readonly IEmailSender _emailSender;
 
         //private readonly IActivoFijoManager activoFijoManager;
         //private readonly ICategoriaActivosFijosManager categoriaActivoFijoManager;
@@ -186,7 +187,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 ApplicationDbContext _db,
                 AppUserManager _userManager,
                 IEmpleadoManager empleadoManager,
-                ISolicitudVacacionesManager _solicitudVacacionesManager
+                ISolicitudVacacionesManager _solicitudVacacionesManager,
+                IEmailSender emailSender
 
             //IActivoFijoManager _activoFijoManager,
             //ICategoriaActivosFijosManager categoriaManager,
@@ -203,6 +205,7 @@ namespace ERPSEI.Areas.ERP.Pages
             userManager = _userManager;
             empleadoActivoFijoManager = empleadoManager;
             solicitudVacacionesManager = _solicitudVacacionesManager;
+            _emailSender = emailSender;
 
             InputFiltro = new InputFiltroVacacionesModel();
             InputVacaciones = new VacacionesTableModel();
@@ -210,7 +213,7 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         //Método para mostrar las solicitudes enviadas de vacaciones
-        public async Task<JsonResult> OnGetVacacionesList()
+        /*public async Task<JsonResult> OnGetVacacionesList()
         {
             var solicitudes = await db.SolicitudesVacaciones
                 .Include(s => s.Empleado)
@@ -235,9 +238,42 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(jsonVacaciones);
+        }*/
+        public async Task<JsonResult> OnGetVacacionesList()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            var esAdmin = User.IsInRole("ADMINISTRADOR");
+
+            var solicitudesQuery = db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                .Include(s => s.Autorizador)
+                .AsQueryable();
+
+            // Solo mostrar sus propias vacaciones si no es administrador
+            if (!esAdmin && usuario?.Empleado != null)
+                solicitudesQuery = solicitudesQuery.Where(s => s.EmpleadoId == usuario.Empleado.Id);
+
+            var solicitudes = await solicitudesQuery.ToListAsync();
+
+            var jsonVacaciones = solicitudes.Select(s => new
+            {
+                id = s.Id,
+                empleado = s.Empleado?.NombreCompleto ?? "-",
+                fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                diasSolicitados = s.DiasSolicitados,
+                estado = s.Estado.ToString(),
+                autorizador = s.Autorizador?.NombreCompleto ?? "-"
+            }).ToList();
+
+            return new JsonResult(jsonVacaciones);
         }
 
-        public async Task<JsonResult> OnPostFiltrarVacaciones()
+
+        /*public async Task<JsonResult> OnPostFiltrarVacaciones()
         {
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 
@@ -267,9 +303,46 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(resp);
+        }*/
+        public async Task<JsonResult> OnPostFiltrarVacaciones()
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+            try
+            {
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+                var esAdmin = User.IsInRole("ADMINISTRADOR");
+
+                var solicitudes = await solicitudVacacionesManager.GetAllAsync(InputFiltro);
+
+                if (!esAdmin && usuario?.Empleado != null)
+                    solicitudes = solicitudes.Where(s => s.EmpleadoId == usuario.Empleado.Id).ToList();
+
+                var result = solicitudes.Select(s => new
+                {
+                    id = s.Id,
+                    empleado = s.Empleado?.NombreCompleto ?? "-",
+                    fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                    fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                    fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                    diasSolicitados = s.DiasSolicitados,
+                    estado = s.Estado.ToString(),
+                    autorizador = s.Autorizador?.NombreCompleto ?? "-"
+                }).ToList();
+
+                resp.Datos = result;
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al filtrar solicitudes de vacaciones");
+            }
+
+            return new JsonResult(resp);
         }
 
-        public async Task<JsonResult> OnPostGuardarSolicitud()
+        /*public async Task<JsonResult> OnPostGuardarSolicitud()
         {
             ServerResponse resp = new(false, localizer["SolicitudVacacionesSavedUnsuccessfully"]);
 
@@ -312,6 +385,87 @@ namespace ERPSEI.Areas.ERP.Pages
                 };
 
                 await solicitudVacacionesManager.CreateAsync(solicitud);
+
+                resp.TieneError = false;
+                resp.Mensaje = localizer["SolicitudVacacionesSavedSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al guardar la solicitud de vacaciones");
+                resp.Mensaje = "Ocurrió un error inesperado.";
+            }
+
+            return new JsonResult(resp);
+        }*/
+        public async Task<JsonResult> OnPostGuardarSolicitud()
+        {
+            ServerResponse resp = new(false, localizer["SolicitudVacacionesSavedUnsuccessfully"]);
+
+            try
+            {
+                // Obtener usuario autenticado
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario == null || usuario.Empleado == null)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "No se pudo identificar al empleado actual.";
+                    return new JsonResult(resp);
+                }
+
+                var empleado = usuario.Empleado;
+                var fechaActual = DateTime.Now;
+
+                // Calcular días solicitados
+                var diasSolicitados = Enumerable
+                    .Range(0, (InputSolicitud.FechaFin - InputSolicitud.FechaInicio).Days + 1)
+                    .Select(offset => InputSolicitud.FechaInicio.AddDays(offset))
+                    .Count(date => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday);
+
+                var solicitud = new SolicitudVacaciones
+                {
+                    EmpleadoId = empleado.Id,
+                    Empleado = empleado,
+                    FechaSolicitud = fechaActual,
+                    FechaInicio = InputSolicitud.FechaInicio,
+                    FechaFin = InputSolicitud.FechaFin,
+                    DiasSolicitados = diasSolicitados,
+                    ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
+                    ComentarioAutorizador = null,
+                    Estado = EstadoSolicitud.Pendiente,
+                    AutorizadorId = empleado.Id, // Puedes ajustar esto si el autorizador es otro
+                    FechaRespuesta = fechaActual
+                };
+
+                await solicitudVacacionesManager.CreateAsync(solicitud);
+
+                // 🔔 Enviar correo al autorizador
+                var autorizador = await db.Empleados
+                    .Include(e => e.Usuario)
+                    .FirstOrDefaultAsync(e => e.Id == solicitud.AutorizadorId);
+
+                if (autorizador != null && !string.IsNullOrWhiteSpace(autorizador.Usuario?.Email))
+                {
+                    string subject = "Solicitud de vacaciones pendiente de autorización";
+
+                    string message = $@"
+                Estimado(a) {autorizador.NombreCompleto},<br><br>
+                El empleado <strong>{empleado.NombreCompleto}</strong> ha solicitado vacaciones del 
+                <strong>{InputSolicitud.FechaInicio:dd/MM/yyyy}</strong> al 
+                <strong>{InputSolicitud.FechaFin:dd/MM/yyyy}</strong>, por un total de 
+                <strong>{diasSolicitados}</strong> día(s).<br><br>
+                Por favor, ingrese al sistema para revisar y autorizar la solicitud.<br><br>
+                Saludos,<br>
+                Sistema ERP
+            ";
+
+                    _emailSender.SendEmailAsync(
+                    autorizador.Usuario.Email,
+                    subject,
+                    message
+                );
+                }
 
                 resp.TieneError = false;
                 resp.Mensaje = localizer["SolicitudVacacionesSavedSuccessfully"];

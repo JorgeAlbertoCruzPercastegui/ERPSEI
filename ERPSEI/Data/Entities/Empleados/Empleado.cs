@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Reportes;
+using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Entities.Vacaciones;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -59,7 +60,10 @@ namespace ERPSEI.Data.Entities.Empleados
 
 		public string? UserId { get; set; } = string.Empty;
 
-		public ICollection<ContactoEmergencia>? ContactosEmergencia { get; }
+        [ForeignKey("UserId")]
+        public AppUser? Usuario { get; set; }
+
+        public ICollection<ContactoEmergencia>? ContactosEmergencia { get; }
 
 		public ICollection<ArchivoEmpleado>? ArchivosEmpleado { get; }
 
@@ -82,5 +86,6 @@ namespace ERPSEI.Data.Entities.Empleados
         public ICollection<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
         public ICollection<SolicitudVacaciones> SolicitudesAutorizadas { get; set; }
         public ICollection<HistorialVacaciones> HistorialVacaciones { get; set; }
+
     }
 }
