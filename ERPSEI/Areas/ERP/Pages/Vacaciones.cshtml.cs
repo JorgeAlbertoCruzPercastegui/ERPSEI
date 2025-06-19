@@ -40,6 +40,7 @@ using System.Security.Claims;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
+    [Authorize]
     public class VacacionesModel : ERPPageModel
     {
         private readonly IStringLocalizer<VacacionesModel> stringLocalizer;
@@ -397,13 +398,13 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }*/
+
         public async Task<JsonResult> OnPostGuardarSolicitud()
         {
             ServerResponse resp = new(false, localizer["SolicitudVacacionesSavedUnsuccessfully"]);
 
             try
             {
-                // Obtener usuario autenticado
                 var userEmail = User.Identity?.Name;
                 var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
 
@@ -417,7 +418,6 @@ namespace ERPSEI.Areas.ERP.Pages
                 var empleado = usuario.Empleado;
                 var fechaActual = DateTime.Now;
 
-                // Calcular días solicitados
                 var diasSolicitados = Enumerable
                     .Range(0, (InputSolicitud.FechaFin - InputSolicitud.FechaInicio).Days + 1)
                     .Select(offset => InputSolicitud.FechaInicio.AddDays(offset))
@@ -434,37 +434,78 @@ namespace ERPSEI.Areas.ERP.Pages
                     ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
                     ComentarioAutorizador = null,
                     Estado = EstadoSolicitud.Pendiente,
-                    AutorizadorId = empleado.Id, // Puedes ajustar esto si el autorizador es otro
+                    AutorizadorId = empleado.Id,
                     FechaRespuesta = fechaActual
                 };
 
                 await solicitudVacacionesManager.CreateAsync(solicitud);
 
-                // 🔔 Enviar correo al autorizador
                 var autorizador = await db.Empleados
                     .Include(e => e.Usuario)
                     .FirstOrDefaultAsync(e => e.Id == solicitud.AutorizadorId);
 
                 if (autorizador != null && !string.IsNullOrWhiteSpace(autorizador.Usuario?.Email))
                 {
+                    var fechaHoy = DateTime.Now;
+                    decimal diasAcumulados = Math.Round((12m / 365m) * (fechaHoy - empleado.FechaIngreso).Days, 1);
+
+                    var diasTomados = await db.SolicitudesVacaciones
+                        .Where(s => s.EmpleadoId == empleado.Id && s.Estado != EstadoSolicitud.Rechazado)
+                        .SumAsync(s => s.DiasSolicitados);
+
+                    decimal diasDisponibles = Math.Max(diasAcumulados - diasTomados, 0);
+
                     string subject = "Solicitud de vacaciones pendiente de autorización";
 
+                    var request = HttpContext.Request;
+                    string baseUrl = $"{request.Scheme}://{request.Host}";
+                    string urlAutorizacion = $"{baseUrl}/ERP/Vacaciones/Autorizar?id={solicitud.Id}";
+                    string urlCancelar = $"{baseUrl}/ERP/Vacaciones/Cancelar?id={solicitud.Id}";
+
                     string message = $@"
-                Estimado(a) {autorizador.NombreCompleto},<br><br>
-                El empleado <strong>{empleado.NombreCompleto}</strong> ha solicitado vacaciones del 
-                <strong>{InputSolicitud.FechaInicio:dd/MM/yyyy}</strong> al 
-                <strong>{InputSolicitud.FechaFin:dd/MM/yyyy}</strong>, por un total de 
-                <strong>{diasSolicitados}</strong> día(s).<br><br>
-                Por favor, ingrese al sistema para revisar y autorizar la solicitud.<br><br>
-                Saludos,<br>
-                Sistema ERP
-            ";
+                <p>Estimado(a) {autorizador.NombreCompleto},</p>
+                <p>Se ha generado una nueva solicitud de vacaciones por parte del empleado:</p>
+                <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+                    <tr>
+                        <th style='background-color:#f2f2f2;'>Solicitante</th>
+                        <td>{empleado.NombreCompleto}</td>
+                    </tr>
+                    <tr>
+                        <th style='background-color:#f2f2f2;'>Rango de vacaciones</th>
+                        <td>{InputSolicitud.FechaInicio:dd/MM/yyyy} al {InputSolicitud.FechaFin:dd/MM/yyyy}</td>
+                    </tr>
+                    <tr>
+                        <th style='background-color:#f2f2f2;'>Días solicitados</th>
+                        <td>{diasSolicitados} día(s)</td>
+                    </tr>
+                    <tr>
+                        <th style='background-color:#f2f2f2;'>Días disponibles (saldo)</th>
+                        <td>{diasDisponibles:0.0} día(s)</td>
+                    </tr>
+                    <tr>
+                        <th style='background-color:#f2f2f2;'>Comentario</th>
+                        <td>{(string.IsNullOrWhiteSpace(InputSolicitud.ComentarioEmpleado) ? "Ninguno" : InputSolicitud.ComentarioEmpleado)}</td>
+                    </tr>
+                </table>
+                <br>
+                <p style='font-weight:bold;'>Acciones disponibles:</p>
+                <div style='margin-top:20px; display: flex; gap: 20px;'>
+                    <a href='{urlAutorizacion}' style='padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>
+                        ✅ Autorizar solicitud
+                    </a>
+                    <font color='white'>.........</font>
+                    <a href='{urlCancelar}' style='padding: 10px 20px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>
+                        ❌ Cancelar solicitud
+                    </a>
+                </div>
+                <br>
+                <p style='color:gray;'>Este es un mensaje automático del sistema ERP.</p>";
 
                     _emailSender.SendEmailAsync(
-                    autorizador.Usuario.Email,
-                    subject,
-                    message
-                );
+                        autorizador.Usuario.Email,
+                        subject,
+                        message
+                    );
                 }
 
                 resp.TieneError = false;
