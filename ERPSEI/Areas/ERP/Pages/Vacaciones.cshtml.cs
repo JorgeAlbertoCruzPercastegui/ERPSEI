@@ -37,6 +37,7 @@ using ERPSEI.Areas.ERP.Pages;
 using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.ActivosFijos;
 using System.Security.Claims;
+using iText.Commons.Actions.Contexts;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -654,6 +655,30 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(lista);
         }
 
+        public async Task<IActionResult> OnPostAutorizarSolicitudAsync(int idSolicitud, bool autorizar)
+        {
+            try
+            {
+                var solicitud = await db.SolicitudesVacaciones.FindAsync(idSolicitud);
+                if (solicitud == null)
+                {
+                    return new JsonResult(new { exito = false, mensaje = "Solicitud no encontrada." });
+                }
+
+                solicitud.Estado = autorizar ? EstadoSolicitud.Aprobado : EstadoSolicitud.Rechazado;
+                solicitud.FechaRespuesta = DateTime.Now;
+
+                db.SolicitudesVacaciones.Update(solicitud);
+                await db.SaveChangesAsync();
+
+                return new JsonResult(new { exito = true });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al actualizar el estado de la solicitud");
+                return new JsonResult(new { exito = false, mensaje = "Error inesperado." });
+            }
+        }
 
         //Autocompletado Empleado y Autorizador
         public async Task<JsonResult> OnPostGetUsuariosSuggestion(string texto)

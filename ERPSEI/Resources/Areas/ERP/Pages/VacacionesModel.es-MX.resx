@@ -120,6 +120,9 @@
   <data name="AcumuladasField" xml:space="preserve">
     <value>(+) Acumuladas</value>
   </data>
+  <data name="AutorizarVacButton" xml:space="preserve">
+    <value>Autorizar Vacaciones</value>
+  </data>
   <data name="EstasSolicitandoField" xml:space="preserve">
     <value>Estás solicitando</value>
   </data>

@@ -608,6 +608,73 @@ function cargarVacacionesTomadas() {
         });
 }
 
+function onAutorizarVacacionesClick() {
+    var selectedRow = $("input[type='checkbox']:checked").closest("tr");
+
+    if (selectedRow.length === 0) {
+        var modal = new bootstrap.Modal(document.getElementById("modalAlerta"));
+        modal.show();
+        return;
+    }
+
+    // 🔍 Corregido: extraer el ID desde la primera celda de la fila
+    var solicitudId = selectedRow.find("td").eq(1).text().trim(); // columna 1 si el checkbox está en la 0
+    $("#modalSolicitudId").val(solicitudId);
+
+    var modal = new bootstrap.Modal(document.getElementById("modalAutorizar"));
+    modal.show();
+}
+
+function enviarAccionSolicitud(estado) {
+    var id = $("#modalSolicitudId").val();
+    var autorizar = estado === "Aprobado";
+
+    doAjax(
+        "/ERP/Vacaciones?handler=AutorizarSolicitud",
+        { idSolicitud: parseInt(id), autorizar: autorizar },
+        function (resp) {
+            $("#modalAutorizar").modal("hide");
+            mostrarConfirmacion(
+                autorizar
+                    ? "La solicitud fue autorizada exitosamente."
+                    : "La solicitud fue rechazada correctamente."
+            );
+        },
+        function (error) {
+            console.error("Error al procesar:", error);
+            showError("Error", "No se pudo procesar la solicitud.");
+        },
+        postOptions
+    );
+}
+
+function mostrarConfirmacion(mensaje) {
+    $("#modalConfirmacion").remove();
+
+    var modalHtml = `
+        <div class="modal fade" id="modalConfirmacion" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Confirmación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>${mensaje}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" data-bs-dismiss="modal" onclick="location.reload()">Aceptar</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    $("body").append(modalHtml);
+    var confirmModal = new bootstrap.Modal(document.getElementById("modalConfirmacion"));
+    confirmModal.show();
+}
+
+
 
 function onCerrarClick() {
     //Removes validation from input-fields

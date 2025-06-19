@@ -119,6 +119,9 @@
     <button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgVacacion" onclick="onAgregarClick();">
         <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
     </button>
+    <button id="btnAbrirModalAutorizar" class="btn btn-success" onclick="onAutorizarVacacionesClick();">
+        <i class="bi bi-check-circle"></i> <span class="d-none d-sm-inline">@Localizer["AutorizarVacButton"]</span>
+    </button>
     <button id="remove" class="btn btn-danger" disabled>
         <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
     </button>
@@ -372,6 +375,50 @@
     </div>
 </form>
 
+<!--Modales para autorizar y rechazar solitiudes de vacaciones-->
+<div class="modal fade" id="modalAutorizar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form method="post" asp-page-handler="AutorizarSolicitud" id="formAutorizar">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">@Localizer["AutorizarSolModal"]</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <input type="hidden" name="idSolicitud" id="modalSolicitudId" />
+                    <input type="hidden" name="estado" id="estadoSolicitud" />
+                    <center><p id="modalPreguntaTexto">@Localizer["AutorizarPreguntaModal"]</p></center>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger w-45" onclick="enviarAccionSolicitud('Rechazado')">
+                        <i class="bi bi-x-circle"></i> @Localizer["RechazarBtn"]
+                    </button>
+                    <button type="button" class="btn btn-success w-45" onclick="enviarAccionSolicitud('Aprobado')">
+                        <i class="bi bi-check-circle"></i> @Localizer["AprobarBtn"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modalAlerta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">@Localizer["AtencionModal"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <center><p>@Localizer["SolicitudAntesContinuar"]</p></center>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">@Localizer["CerrarBtn"]</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 @section Scripts {

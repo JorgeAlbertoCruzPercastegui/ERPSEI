@@ -123,8 +123,26 @@
   <data name="AddButton" xml:space="preserve">
     <value>Solicitar Vacaciones</value>
   </data>
+  <data name="AprobarBtn" xml:space="preserve">
+    <value>Autorizar</value>
+  </data>
+  <data name="AtencionModal" xml:space="preserve">
+    <value>Atención</value>
+  </data>
+  <data name="AutorizarPreguntaModal" xml:space="preserve">
+    <value>¿Estás seguro de que deseas autorizar esta solicitud?</value>
+  </data>
+  <data name="AutorizarSolModal" xml:space="preserve">
+    <value>Autorizar Solicitud</value>
+  </data>
+  <data name="AutorizarVacButton" xml:space="preserve">
+    <value>Autorizar Vacaciones</value>
+  </data>
   <data name="CancelButton" xml:space="preserve">
     <value>Cancelar</value>
+  </data>
+  <data name="CerrarBtn" xml:space="preserve">
+    <value>Cerrar</value>
   </data>
   <data name="ColActionsHeader" xml:space="preserve">
     <value>Acciones</value>
@@ -213,6 +231,9 @@
   <data name="PeriodoField" xml:space="preserve">
     <value>Periodo</value>
   </data>
+  <data name="RechazarBtn" xml:space="preserve">
+    <value>Rechazar</value>
+  </data>
   <data name="SaldoAlField" xml:space="preserve">
     <value>Saldo al</value>
   </data>
@@ -230,6 +251,9 @@
   </data>
   <data name="SolicitarVacacionesField" xml:space="preserve">
     <value>Nueva Solicitud de Vacaciones</value>
+  </data>
+  <data name="SolicitudAntesContinuar" xml:space="preserve">
+    <value>Por favor selecciona una solicitud de vacaciones antes de continuar.</value>
   </data>
   <data name="SolicitudVacacionesSavedSuccessfully" xml:space="preserve">
     <value>Solicitud enviada exitosamente.</value>
