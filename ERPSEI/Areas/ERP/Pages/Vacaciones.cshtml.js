@@ -87,12 +87,21 @@ function initTable() {
         locale: cultureName,
         exportDataType: 'all',
         exportTypes: ['excel'],
+        rowStyle: function (row, index) {
+            if (row.estado === "Aprobado" || row.estado === "Rechazado") {
+                return { classes: 'table-secondary' };
+            }
+            return {};
+        },
         columns: [
             {
                 field: "state",
                 checkbox: true,
                 align: "center",
-                valign: "middle"
+                valign: "middle",
+                checkboxDisabled: function (row, index) {
+                    return row.estado === "Aprobado" || row.estado === "Rechazado";
+                }
             },
             {
                 title: "Id",
@@ -153,6 +162,13 @@ function initTable() {
                 sortable: true
             },
             {
+                title: "ComentarioEmpleado",
+                field: "comentarioEmpleado",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            }/*,
+            {
                 title: colAccionesHeader,
                 field: "operate",
                 align: 'center',
@@ -160,7 +176,7 @@ function initTable() {
                 clickToSelect: false,
                 events: window.operateEvents,
                 formatter: operateFormatter
-            }
+            }*/
         ]
     })
     table.on('check.bs.table uncheck.bs.table ' +
@@ -608,7 +624,7 @@ function cargarVacacionesTomadas() {
         });
 }
 
-function onAutorizarVacacionesClick() {
+/*function onAutorizarVacacionesClick() {
     var selectedRow = $("input[type='checkbox']:checked").closest("tr");
 
     if (selectedRow.length === 0) {
@@ -623,7 +639,39 @@ function onAutorizarVacacionesClick() {
 
     var modal = new bootstrap.Modal(document.getElementById("modalAutorizar"));
     modal.show();
+}*/
+function onAutorizarVacacionesClick() {
+    var selectedRow = $("input[type='checkbox']:checked").closest("tr");
+
+    if (selectedRow.length === 0) {
+        var modal = new bootstrap.Modal(document.getElementById("modalAlerta"));
+        modal.show();
+        return;
+    }
+
+    var estado = selectedRow.find("td").eq(7).text().trim(); // ← CORREGIDO A 7
+    if (estado !== "Pendiente") {
+        showError("Acción no permitida", "No puedes modificar una solicitud que ya ha sido procesada.");
+        selectedRow.find("input[type='checkbox']").prop("checked", false);
+        return;
+    }
+
+    var solicitudId = selectedRow.find("td").eq(1).text().trim(); // ID sigue en la columna 1
+    $("#modalSolicitudId").val(solicitudId);
+
+    var modal = new bootstrap.Modal(document.getElementById("modalAutorizar"));
+    modal.show();
 }
+
+$(document).ready(function () {
+    $('#tableVacaciones tbody tr').each(function () {
+        var estado = $(this).find("td").eq(7).text().trim(); // ← TAMBIÉN CORREGIDO A 7
+        if (estado === "Aprobado" || estado === "Rechazado") {
+            $(this).find('input[type="checkbox"]').prop("disabled", true);
+            $(this).addClass('table-secondary'); // Color visual gris
+        }
+    });
+});
 
 function enviarAccionSolicitud(estado) {
     var id = $("#modalSolicitudId").val();
@@ -674,6 +722,18 @@ function mostrarConfirmacion(mensaje) {
     confirmModal.show();
 }
 
+$(document).ready(function () {
+    // Al finalizar la carga de datos en la tabla
+    $('#tableVacaciones').on('post-body.bs.table', function () {
+        $('#tableVacaciones tbody tr').each(function () {
+            var estado = $(this).find("td").eq(7).text().trim(); // ← columna "Estatus"
+            if (estado === "Aprobado" || estado === "Rechazado") {
+                $(this).find('input[type="checkbox"]').prop("disabled", true);
+                $(this).addClass('table-secondary');
+            }
+        });
+    });
+});
 
 
 function onCerrarClick() {

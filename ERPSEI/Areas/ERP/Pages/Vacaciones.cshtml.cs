@@ -268,7 +268,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
                 diasSolicitados = s.DiasSolicitados,
                 estado = s.Estado.ToString(),
-                autorizador = s.Autorizador?.NombreCompleto ?? "-"
+                autorizador = s.Autorizador?.NombreCompleto ?? "-",
+                comentarioEmpleado = s.ComentarioEmpleado?.ToString()
             }).ToList();
 
             return new JsonResult(jsonVacaciones);
