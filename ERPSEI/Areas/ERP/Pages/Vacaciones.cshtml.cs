@@ -420,6 +420,13 @@ namespace ERPSEI.Areas.ERP.Pages
                 var empleado = usuario.Empleado;
                 var fechaActual = DateTime.Now;
 
+                if (empleado.JefeId == null || empleado.JefeId == 0)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "No se pudo identificar al jefe directo del empleado. Verifica la información del empleado.";
+                    return new JsonResult(resp);
+                }
+
                 var diasSolicitados = Enumerable
                     .Range(0, (InputSolicitud.FechaFin - InputSolicitud.FechaInicio).Days + 1)
                     .Select(offset => InputSolicitud.FechaInicio.AddDays(offset))
@@ -436,7 +443,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
                     ComentarioAutorizador = null,
                     Estado = EstadoSolicitud.Pendiente,
-                    AutorizadorId = empleado.Id,
+                    AutorizadorId = empleado.JefeId,
                     FechaRespuesta = fechaActual
                 };
 

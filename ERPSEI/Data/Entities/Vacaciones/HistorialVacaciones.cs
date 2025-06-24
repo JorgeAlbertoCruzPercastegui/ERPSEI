@@ -17,5 +17,6 @@ namespace ERPSEI.Data.Entities.Vacaciones
 
         public int SolicitudVacacionesId { get; set; }
         public SolicitudVacaciones Solicitud { get; set; }
+        public int? AutorizadorId { get; set; }
     }
 }

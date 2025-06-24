@@ -385,8 +385,6 @@ function calcularDiasSolicitados() {
     }
 }
 
-
-
 async function obtenerDiasDisponibles() {
     try {
         const response = await fetch("/ERP/Vacaciones?handler=ObtenerDiasDisponibles");
