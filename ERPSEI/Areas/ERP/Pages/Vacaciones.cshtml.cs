@@ -667,16 +667,42 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             try
             {
-                var solicitud = await db.SolicitudesVacaciones.FindAsync(idSolicitud);
+                var solicitud = await db.SolicitudesVacaciones
+                    .Include(s => s.Empleado)
+                    .FirstOrDefaultAsync(s => s.Id == idSolicitud);
+
                 if (solicitud == null)
                 {
                     return new JsonResult(new { exito = false, mensaje = "Solicitud no encontrada." });
+                }
+
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario?.Empleado == null)
+                {
+                    return new JsonResult(new { exito = false, mensaje = "Usuario no encontrado." });
                 }
 
                 solicitud.Estado = autorizar ? EstadoSolicitud.Aprobado : EstadoSolicitud.Rechazado;
                 solicitud.FechaRespuesta = DateTime.Now;
 
                 db.SolicitudesVacaciones.Update(solicitud);
+                await db.SaveChangesAsync();
+
+                // ✅ Insertar en HistorialVacaciones para ambos casos
+                var historial = new HistorialVacaciones
+                {
+                    EmpleadoId = solicitud.EmpleadoId,                 // Quien solicitó
+                    FechaInicio = solicitud.FechaInicio,
+                    FechaFin = solicitud.FechaFin,
+                    DiasTomados = solicitud.DiasSolicitados,
+                    Observaciones = solicitud.ComentarioEmpleado ?? "",
+                    SolicitudVacacionesId = solicitud.Id,
+                    AutorizadorId = usuario.Empleado.Id,               // Quien autoriza o rechaza
+                };
+
+                db.HistorialesVacaciones.Add(historial);
                 await db.SaveChangesAsync();
 
                 return new JsonResult(new { exito = true });
@@ -687,6 +713,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(new { exito = false, mensaje = "Error inesperado." });
             }
         }
+
 
         //Autocompletado Empleado y Autorizador
         public async Task<JsonResult> OnPostGetUsuariosSuggestion(string texto)
