@@ -325,18 +325,17 @@
                                                                     <i class="bi bi-airplane-engines-fill"></i> @Localizer["VacationMenu"]
                                                                 </a>
                                                             }
-                                                            @if (permisos["incapacidades"])
-                                                            {
+
+                                                            <!--                                                           
                                                                 <a class="dropdown-item p-2 @_LayoutPages.IncapacidadesNavClass(ViewContext)" asp-area="" asp-page="/Building">
                                                                     <i class="bi bi-heart-pulse-fill"></i> @Localizer["DisabilitiesMenu"]
                                                                 </a>
-                                                            }
-                                                            @if (permisos["permisos"])
-                                                            {
+                                                            
                                                                 <a class="dropdown-item p-2 @_LayoutPages.PermisosNavClass(ViewContext)" asp-area="" asp-page="/Building">
                                                                     <i class="bi bi-calendar-check-fill"></i> @Localizer["PermissionsMenu"]
                                                                 </a>
-                                                            }
+                                                            -->
+                                                            
                                                             @if (permisos["activosfijos"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.ActivosFijosNavClass(ViewContext)" asp-area="ERP" asp-page="/ActivosFijos">
