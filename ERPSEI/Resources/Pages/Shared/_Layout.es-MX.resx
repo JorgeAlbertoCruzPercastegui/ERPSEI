@@ -219,4 +219,7 @@
   <data name="FixedAsset" xml:space="preserve">
     <value>Activos Fijos</value>
   </data>
+  <data name="ContractGeneratorMenu" xml:space="preserve">
+    <value>Generar Contratos Empresas</value>
+  </data>
 </root>

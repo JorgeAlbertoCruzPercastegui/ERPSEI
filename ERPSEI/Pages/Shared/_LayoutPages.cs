@@ -115,6 +115,8 @@ namespace ERPSEI.Pages.Shared
 
         public static string ConvertidorBancario => "ConvertidorBancario";
         public static string ConvertidorBancarioNavClass(ViewContext viewContext) => PageNavClass(viewContext, ConvertidorBancario);
+        public static string GeneradorContrato => "GeneradorContrato";
+        public static string GeneradorContratoNavClass(ViewContext viewContext) => PageNavClass(viewContext, GeneradorContrato);
         #endregion
 
         #endregion

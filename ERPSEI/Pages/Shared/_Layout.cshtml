@@ -48,7 +48,8 @@
             (m.Modulo?.NombreNormalizado == "vacaciones" ||
             m.Modulo?.NombreNormalizado == "incapacidades" ||
             m.Modulo?.NombreNormalizado == "permisos" ||
-            m.Modulo?.NombreNormalizado == "activosfijos") &&
+            m.Modulo?.NombreNormalizado == "activosfijos" ||
+            m.Modulo?.NombreNormalizado == "generadorContrato") &&
             (m.PuedeTodo == 1 ||
             m.PuedeConsultar == 1 ||
             m.PuedeEditar == 1 ||
@@ -91,7 +92,8 @@
         tieneReportesEmpresas = accesos.FindAll(m =>
             (
                 m.Modulo?.NombreNormalizado == "facturacion" ||
-                m.Modulo?.NombreNormalizado == "convertidorBancario"
+                m.Modulo?.NombreNormalizado == "convertidorBancario" ||
+                m.Modulo?.NombreNormalizado == "generadorContrato"
             )
         ).Count >= 1;
 
@@ -434,6 +436,10 @@
                                                                     <i class="bi bi-piggy-bank"></i> @Localizer["BankConverterMenu"]
                                                                 </a>
                                                             }
+                                                                <a class="dropdown-item p-2 @_LayoutPages.GeneradorContratoNavClass(ViewContext)" asp-area="Reportes" asp-page="/GeneradorContrato">
+                                                                    <i class="bi bi-file-earmark-text"></i> @Localizer["ContractGeneratorMenu"]
+                                                                </a>
+                                                            
                                                         </div>
                                                     </div>
                                                 }

@@ -216,4 +216,7 @@
   <data name="AccountingAccountsCatalogMenu" xml:space="preserve">
     <value>Accounting Accounts</value>
   </data>
+  <data name="ContractGeneratorMenu" xml:space="preserve">
+    <value>Contract Generator</value>
+  </data>
 </root>
