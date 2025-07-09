@@ -73,7 +73,8 @@ namespace ERPSEI.Data.Migrations
                     { 13, 0, "Permisos" },
                     { 14, 0, "Prefacturas" },
                     { 15, 0, "Organigrama" },
-                    { 16, 0, "Asistencia" }
+                    { 16, 0, "Asistencia" },
+                    { 17, 0, "GeneradorContrato" }
                 });
 
             migrationBuilder.CreateIndex(

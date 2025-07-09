@@ -18,6 +18,7 @@ using ERPSEI.Data.Entities.ActivosFijos;
 using Microsoft.Identity.Client;
 using ERPSEI.Data.Entities.Vacaciones;
 using System.Reflection.Emit;
+using ERPSEI.Data.Entities.TipoContratos;
 
 namespace ERPSEI.Data
 {
@@ -152,8 +153,11 @@ namespace ERPSEI.Data
         public DbSet<TipoActivoFijo> TiposActivosFijos { get; set; }
         public DbSet<ArchivoActivoFijo> ArchivosActivosFijos { get; set; }
 
-		//Vacaciones
-		public DbSet<DiaFestivo> DiasFestivos { get; set; }
+        //Tipo Contratos
+        public DbSet<TipoContrato> TipoContratos { get; set; }
+
+        //Vacaciones
+        public DbSet<DiaFestivo> DiasFestivos { get; set; }
         public DbSet<HistorialVacaciones> HistorialesVacaciones { get; set; }
         public DbSet<PeriodoVacacional> PeriodosVacacionales { get; set; }
         public DbSet<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
@@ -214,6 +218,21 @@ namespace ERPSEI.Data
 
             //Vacaciones
             BuildVacaciones(modelBuilder);
+
+            //Vacaciones
+            BuildTipoContratos(modelBuilder);
+        }
+
+		private static void BuildTipoContratos(ModelBuilder b)
+		{
+			b.Entity<TipoContrato>().HasData(
+				new TipoContrato { Id = 1, Nombre = "Asimilados", Descripcion = "Contratos de tipo asimilados a salarios", Deshabilitado = true },
+				new TipoContrato { Id = 2, Nombre = "Servicios", Descripcion = "Prestación de servicios profesionales o técnicos", Deshabilitado = true },
+				new TipoContrato { Id = 3, Nombre = "Uso de Marca", Descripcion = "Contrato por uso de marca registrada", Deshabilitado = true },
+				new TipoContrato { Id = 4, Nombre = "Arrendamiento Act.", Descripcion = "Arrendamiento de activos generales", Deshabilitado = true },
+				new TipoContrato { Id = 5, Nombre = "Arrendamiento TI", Descripcion = "Arrendamiento de tecnología e infraestructura", Deshabilitado = true },
+				new TipoContrato { Id = 6, Nombre = "Arrendamiento Ofi.", Descripcion = "Arrendamiento de oficinas físicas", Deshabilitado = true }
+			);
         }
 
         private static void BuildActivosFijos(ModelBuilder b)
@@ -767,7 +786,7 @@ namespace ERPSEI.Data
 					new Modulo() { Id = 18, Nombre = "Activos Fijos", NombreNormalizado = "activosfijos", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 19, Nombre = "Conciliaciones", NombreNormalizado = "conciliaciones", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 20, Nombre = "Administrador de Comprobantes", NombreNormalizado = "administradordecomprobantes", Deshabilitado = 0, Categoria = "erp" }
-				);
+                );
 		}
 
 		private static void BuildCuentasContables(ModelBuilder b)

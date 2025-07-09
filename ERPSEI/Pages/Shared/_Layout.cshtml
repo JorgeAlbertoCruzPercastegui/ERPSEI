@@ -153,6 +153,12 @@
 
         permisos.Add(m.NombreNormalizado, puedeTodo || puedeConsultar || puedeEditar || puedeEliminar || puedeAutorizar);
     }
+
+    // Agregar clave faltante si no está en la base
+    if (!permisos.ContainsKey("generadorContrato"))
+    {
+        permisos["generadorContrato"] = false; // o true si quieres evitar el error y mostrarlo
+    }
 }
 <!DOCTYPE html>
 <html lang="es-mx">

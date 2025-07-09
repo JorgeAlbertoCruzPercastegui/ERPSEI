@@ -1,13 +1,128 @@
-﻿<!DOCTYPE html>
+﻿@page "{handler?}"
+@using ERPSEI.Data.Managers;
+@using Microsoft.AspNetCore.Localization;
+@using ERPSEI.Requests;
+@using Microsoft.AspNetCore.Mvc.Localization;
+@using ERPSEI.Data.Managers.ActivosFijos;
+@using ERPSEI.Data.Entities.ActivosFijos;
+@using ERPSEI.Data.Managers.Empleados;
+@using ERPSEI.Data.Entities.Empleados;
+@using ERPSEI.Data.Entities.Usuarios;
+@using ERPSEI.Data.Managers.Usuarios;
+@using ERPSEI.Data.Entities.Empresas;
+@using ERPSEI.Data.Managers.Empresas;
+@using ERPSEI.Data.Entities.TipoContratos;
+@using ERPSEI.Data.Managers.TipoContratos;
+@model ERPSEI.Areas.Reportes.Pages.GeneradorContratoModel
 
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>@ViewBag.Title</title>
-</head>
-<body>
-    <div>
-        @RenderBody()
+@inject ICategoriaActivosFijosManager CategoriaManager;
+@inject ITipoActivosFijosManager TipoManager;
+@inject IEmpleadoManager EmpleadoManager;
+@inject IEmpresaManager EmpresaManager;
+@inject ITipoContratosManager TipoContratoManager;
+
+@inject IViewLocalizer Localizer;
+@inject AppRoleManager RolesManager;
+@inject AppUserManager UsuariosManager;
+@inject IConfiguration Configuration;
+
+@{
+    ViewData["Title"] = Localizer["Title"];
+
+    // Cultura
+    IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+    System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+    string cultureName = culture.Name;
+
+    // Datos
+    List<Empleado> empleados = await EmpleadoManager.GetAllAsync();
+    List<Empresa> empresas = await EmpresaManager.GetAllAsync();
+    List<TipoContrato> tipoContratos = await TipoContratoManager.GetAllAsync();
+
+    // Permisos
+    bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+    bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+
+    // 🔐 Agregar permisos al ViewData
+    var permisos = new Dictionary<string, bool>();
+    permisos["generadorContrato"] = true; // puedes condicionar esto con lógica si lo deseas
+
+    ViewData["permisos"] = permisos;
+}
+
+<h3 class="title mb-3">@ViewData["Title"]</h3>
+
+
+<!-- --------------------------- -->
+<!-- Sección de filtros -------- -->
+<div class="accordion shadow mb-5" id="accordionFiltros">
+    <div class="accordion-item">
+        <h2 class="accordion-header" id="headingOne">
+            <button class="accordion-button p-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <h6>@Localizer["FilterTitle"]</h6>
+            </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionFiltros">
+            <div class="accordion-body">
+                <form id="filtros" method="post">
+                    <div class="row">
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select id="selFiltroTipoContrato" asp-for="InputFiltro.TipoContratoId" class="form-select" placeholder="@Localizer["TipoContratoField"]">
+                                    <option value="0">Seleccione...</option>
+                                    @{
+                                        @foreach (TipoContrato tipoContrato in tipoContratos)
+                                        {
+                                            <option value='@tipoContrato.Id'>@tipoContrato.Nombre</option>
+                                        }
+                                    }
+                                </select>
+                                <label for="selFiltroMoneda" asp-for="InputFiltro.TipoContratoId" class="form-label"></label>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select id="selFiltroPrestador" asp-for="InputFiltro.PrestadorId" class="form-select" placeholder="@Localizer["TipoField"]">
+                                    <option value="0">Seleccione...</option>
+                                    @{
+                                        @foreach (Empresa empresa in empresas)
+                                        {
+                                            <option value='@empresa.Id'>@empresa.RazonSocial</option>
+                                        }
+                                    }
+                                </select>
+                                <label for="selFiltroPrestador" asp-for="InputFiltro.PrestadorId" class="form-label"></label>
+                            </div>
+                        </div>
+
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select id="selFiltroPrestatario" asp-for="InputFiltro.PrestatarioId" class="form-select" placeholder="@Localizer["TipoField"]">
+                                    <option value="0">Seleccione...</option>
+                                    @{
+                                        @foreach (Empresa empresa in empresas)
+                                        {
+                                            <option value='@empresa.Id'>@empresa.RazonSocial</option>
+                                        }
+                                    }
+                                </select>
+                                <label for="selFiltroPrestatario" asp-for="InputFiltro.PrestatarioId" class="form-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="row text-end">
+                    <div class="col-12">
+                        <button id="btnBuscar" name="refresh" class="btn btn-primary" onclick="onBuscarClick();">
+                            <i class="bi bi-search"></i> @Localizer["SearchButton"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</body>
-</html>
+</div>

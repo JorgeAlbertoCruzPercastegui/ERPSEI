@@ -32,6 +32,7 @@ using ERPSEI.Data.Managers.Cuentas;
 using ERPSEI.Data.Managers.AdministradorPolizas;
 using ERPSEI.Data.Managers.Polizas;
 using Microsoft.AspNetCore.Http.Features;
+using ERPSEI.Data.Managers.TipoContratos;
 
 namespace ERPSEI
 {
@@ -96,6 +97,13 @@ namespace ERPSEI
             ConfigureDIActivosFijos(_builder);
 
             ConfigureDIVacaciones(_builder);
+
+            ConfigureDITipoContratos(_builder);
+        }
+        private static void ConfigureDITipoContratos(WebApplicationBuilder _builder)
+        {
+            //TipoContratos
+            _builder.Services.AddScoped<ITipoContratosManager, TipoContratosManager>();
         }
         private static void ConfigureDIAsistencias(WebApplicationBuilder _builder) 
         {
