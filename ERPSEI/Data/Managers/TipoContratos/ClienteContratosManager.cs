@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.TipoContratos;
+using iText.Commons.Actions.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.TipoContratos
@@ -100,6 +101,12 @@ namespace ERPSEI.Data.Managers.TipoContratos
             return await db.ClienteContratos
                 .FirstOrDefaultAsync(a => a.RazonSocial != null &&
                                           a.RazonSocial.Trim().ToLower() == name.Trim().ToLower());
+        }
+        public async Task<List<ClienteContrato>> GetByEmpresaContratoIdAsync(int empresaContratoId)
+        {
+            return await db.ClienteContratos
+                .Where(c => c.EmpresaContratoId == empresaContratoId)
+                .ToListAsync();
         }
     }
 }

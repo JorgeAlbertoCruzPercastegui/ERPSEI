@@ -228,6 +228,17 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(resp);
         }
 
+        public async Task<JsonResult> OnGetClientesPorEmpresa(int id)
+        {
+            var clientes = await clienteContratosManager.GetByEmpresaContratoIdAsync(id);
 
+            var result = clientes.Select(c => new
+            {
+                nombre = c.RazonSocial ?? "-",
+                rfc = c.RFC ?? "-"
+            });
+
+            return new JsonResult(result);
+        }
     }
 }

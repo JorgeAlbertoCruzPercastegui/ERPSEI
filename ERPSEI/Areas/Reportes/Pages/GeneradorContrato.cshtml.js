@@ -26,6 +26,26 @@ document.addEventListener("DOMContentLoaded", function (event) {
     }
 
     initTable();
+
+    table.on('expand-row.bs.table', function (e, index, row, $detail) {
+        let containerId = `#clientes-${row.id}`;
+        $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
+            if (clientes.length === 0) {
+                $(containerId).html('<em>No hay clientes relacionados.</em>');
+                return;
+            }
+
+            let html = '<ul class="list-group">';
+            clientes.forEach(cliente => {
+                html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${cliente.nombre}
+                            <span class="badge bg-primary">${cliente.rfc}</span>
+                        </li>`;
+            });
+            html += '</ul>';
+            $(containerId).html(html);
+        });
+    });
 });
 
 //Funcionalidad Tabla
@@ -90,7 +110,8 @@ function onAgregarClick() {
 
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
-        //url: '/ERP/ActivosFijos?handler=ActivosFijosList',
+        detailView: true,
+        detailFormatter: detailFormatter,
         height: 550,
         locale: cultureName,
         exportDataType: 'all',
@@ -211,4 +232,10 @@ function initTable() {
         });
     })
 }
+
+function detailFormatter(index, row) {
+    // Aquí se muestra texto base, luego lo mejoramos con datos reales
+    return `<div id="clientes-${row.id}">Cargando clientes...</div>`;
+}
+
 
