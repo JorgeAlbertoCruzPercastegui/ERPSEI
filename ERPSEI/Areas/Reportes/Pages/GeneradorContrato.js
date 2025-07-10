@@ -182,7 +182,7 @@ function initTable() {
             let oParams = { ids: selections };
 
             doAjax(
-                "/Reportes/GeneradorContrato/DeleteGeneradorContratos",
+                "/Reportes/GeneradorContrato/DeleteEmpresaContratos",
                 oParams,
                 function (resp) {
                     if (resp.tieneError) {

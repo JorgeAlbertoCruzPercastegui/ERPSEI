@@ -104,6 +104,8 @@ namespace ERPSEI
         {
             //TipoContratos
             _builder.Services.AddScoped<ITipoContratosManager, TipoContratosManager>();
+            _builder.Services.AddScoped<IEmpresaContratosManager, EmpresaContratosManager>();
+            _builder.Services.AddScoped<IClienteContratosManager, ClienteContratosManager>();
         }
         private static void ConfigureDIAsistencias(WebApplicationBuilder _builder) 
         {
