@@ -155,6 +155,8 @@ namespace ERPSEI.Data
 
         //Tipo Contratos
         public DbSet<TipoContrato> TipoContratos { get; set; }
+        public DbSet<EmpresaContrato> EmpresaContratos { get; set; }
+        public DbSet<ClienteContrato> ClienteContratos { get; set; }
 
         //Vacaciones
         public DbSet<DiaFestivo> DiasFestivos { get; set; }
@@ -233,6 +235,20 @@ namespace ERPSEI.Data
 				new TipoContrato { Id = 5, Nombre = "Arrendamiento TI", Descripcion = "Arrendamiento de tecnología e infraestructura", Deshabilitado = true },
 				new TipoContrato { Id = 6, Nombre = "Arrendamiento Ofi.", Descripcion = "Arrendamiento de oficinas físicas", Deshabilitado = true }
 			);
+
+            // Relación EmpresaContrato -> TipoContrato (muchos a uno)
+            b.Entity<EmpresaContrato>()
+                .HasOne(ec => ec.TipoContrato)
+                .WithMany() // Si deseas una lista de empresas en TipoContrato, aquí puedes usar `.WithMany(tc => tc.Empresas)`
+                .HasForeignKey(ec => ec.TipoContratoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Relación ClienteContrato -> EmpresaContrato (muchos a uno)
+            b.Entity<ClienteContrato>()
+                .HasOne(cc => cc.EmpresaContrato)
+                .WithMany(ec => ec.Clientes)
+                .HasForeignKey(cc => cc.EmpresaContratoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
         private static void BuildActivosFijos(ModelBuilder b)
