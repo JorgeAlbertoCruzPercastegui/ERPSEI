@@ -126,3 +126,95 @@
         </div>
     </div>
 </div>
+
+<!-- --------------------------- -->
+<!-- Sección tabla de resultados -->
+<div id="toolbar" class="col-xl-12">
+    <button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgContrato" onclick="onAgregarClick();">
+        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
+    </button>
+    <button id="remove" class="btn btn-danger" disabled>
+        <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
+    </button>
+</div>
+
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+<table id="table" class="table-sm"
+       data-unique-id="id"
+       data-toolbar="#toolbar"
+       data-search="true"
+       data-show-toggle="true"
+       data-show-fullscreen="true"
+       data-show-columns="true"
+       data-show-columns-toggle-all="true"
+       data-show-export="true"
+       data-click-to-select="true"
+       data-minimum-count-columns="2"
+       data-show-pagination-switch="true"
+       data-pagination="true"
+       data-id-field="id"
+       data-page-list="[10, 25, 50, 100, all]"
+       data-show-footer="false"
+       data-side-pagination="client"
+       data-response-handler="responseHandler"
+       data-buttons-class="primary"
+       data-buttons="additionalButtons"
+       data-url="/Reportes/GeneradorContrato/GeneradorContratosList">
+    <thead>
+        <tr align="center" valign="middle" class="bg-primary bg-opacity-10">
+        </tr>
+    </thead>
+</table>
+
+@section Scripts {
+    <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
+    <link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+    <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+    <script src="~/js/autocompletar.js"></script>
+
+    <script src="~/lib/bootstrap-table/extensions/export/tableExport.min.js"></script>
+    <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/xlsx.full.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/exceljs.min.js"></script>
+    <script src="~/lib/bootstrap-table/extensions/export/FileSaver.min.js"></script>
+
+    <script src="~/../Areas/Reportes/Pages/GeneradorContrato.cshtml.js"></script>
+
+    <script type="text/javascript">
+        var cultureName = "@cultureName";
+        var btnImportarText = '@Localizer["ImportButtonText"]';
+        var btnImportarTitle = '@Localizer["ImportButtonTitle"]';
+        var btnVerTitle = '@Localizer["SeeButtonTitle"]';
+        var btnEditarTitle = '@Localizer["EditButtonTitle"]';
+        var dlgEditarTitle = '@Localizer["EditDialogTitle"]';
+        var dlgVerTitle = '@Localizer["SeeDialogTitle"]';
+        var dlgNuevoTitle = '@Localizer["NewDialogTitle"]';
+        var dlgDeleteTitle = '@Localizer["DeleteOfficeDialogTitle"]';
+        var dlgDeleteQuestion = '@Localizer["DeleteOfficeDialogQuestion"]';
+
+        var colIdHeader = '@Localizer["ColIdHeader"]';
+        var colRazonSocialHeader = '@Localizer["ColRazonSocialHeader"]';
+        var colRFCHeader = '@Localizer["ColRFCHeader"]';
+        var colNotarioHeader = '@Localizer["ColNotarioHeader"]';
+        var colRepresentanteLegalHeader = '@Localizer["ColRepresentanteLegalHeader"]';
+        var colDomicilioFiscalHeader = '@Localizer["ColDomicilioFiscalHeader"]';
+        var colEmailHeader = '@Localizer["ColEmailHeader"]';
+        var colFechaConstitucionHeader = '@Localizer["ColFechaConstitucionHeader"]';
+        var colNoEscrituraHeader = '@Localizer["ColNoEscrituraHeader"]';
+
+        var colAccionesHeader = '@Localizer["ColActionsHeader"]';
+
+        /*Permisos*/
+        var puedeTodo = '@puedeTodo' == 'True';
+        var puedeConsultar = '@puedeConsultar' == 'True';
+        var puedeEditar = '@puedeEditar' == 'True';
+        var puedeEliminar = '@puedeEliminar' == 'True';
+        var puedeAutorizar = '@puedeAutorizar' == 'True';
+    </script>
+
+    <partial name="_ValidationScriptsPartial" />
+}
