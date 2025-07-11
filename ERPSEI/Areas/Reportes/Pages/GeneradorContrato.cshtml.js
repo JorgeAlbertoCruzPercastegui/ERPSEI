@@ -45,9 +45,10 @@ document.addEventListener("DOMContentLoaded", function (event) {
                         <td>${cliente.noNotario}</td>
                         <td>${cliente.notario}</td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="generarContrato(${cliente.id})">
-                                <i class="bi bi-file-earmark-text"></i> Generar Contrato
-                            </button>
+                            <a href="/Reportes/GeneradorContrato?handler=GenerarWord&clienteId=${cliente.id}&empresaId=${row.id}" 
+                               class="btn btn-sm btn-primary" target="_blank">
+                               Generar Contrato
+                            </a>
                         </td>
                     </tr>`;
             });
@@ -248,6 +249,41 @@ function initTable() {
     })
 }
 
+function onBuscarClick() {
+    let btnBuscar = document.getElementById("btnBuscar");
+    let tipoContrato = document.getElementById("selFiltroTipoContrato");
+    let prestador = document.getElementById("selFiltroPrestador");
+    let prestatario = document.getElementById("selFiltroPrestatario");
+
+    let oParams = {
+        tipoContratoId: tipoContrato.value === "0" || tipoContrato.value === "" ? null : parseInt(tipoContrato.value),
+        prestadorId: prestador.value === "0" || prestador.value === "" ? null : parseInt(prestador.value),
+        prestatarioId: prestatario.value === "0" || prestatario.value === "" ? null : parseInt(prestatario.value)
+    };
+
+    doAjax(
+        "/Reportes/GeneradorContrato/FiltrarEmpresasContratos",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError(btnBuscar.innerHTML, resp.mensaje);
+                return;
+            }
+
+            table.bootstrapTable('load', responseHandler(resp.datos));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
+
+
 function detailFormatter(index, row) {
     return `<div id="clientes-${row.id}">
         <div class="table-responsive mt-2">
@@ -272,10 +308,11 @@ function detailFormatter(index, row) {
 }
 
 
-function generarContrato(clienteId) {
+/*function generarContrato(clienteId) {
     alert("Generar contrato para Cliente ID: " + clienteId);
     // Aquí puedes luego hacer una llamada AJAX para generar el contrato real.
+}*/
+
+function generarContrato(clienteId) {
+    window.location.href = `/Reportes/GeneradorContrato?handler=GenerarWord&clienteId=${clienteId}`;
 }
-
-
-

@@ -47,6 +47,11 @@ using ERPSEI.Areas.ERP.Pages;
 using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.TipoContratos;
 using ERPSEI.Data.Managers.TipoContratos;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using TemplateEngine.Docx;
+using DocumentFormat.OpenXml.InkML;
+
 
 namespace ERPSEI.Areas.Reportes.Pages
 {
@@ -131,6 +136,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             public int? TipoContratoId { get; set; }
         }
 
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
         public GeneradorContratoModel(
             IStringLocalizer<GeneradorContratoModel> _stringLocalizer,
@@ -139,6 +145,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             IStringLocalizer<GeneradorContratoModel> _localizer,
             Data.ApplicationDbContext _db,
             AppUserManager _userManager,
+            IWebHostEnvironment hostingEnvironment,
             ITipoContratosManager _tipoContratosManager,
             IEmpresaContratosManager _empresaContratosManager,
             IClienteContratosManager _clienteContratosManager
@@ -151,6 +158,8 @@ namespace ERPSEI.Areas.Reportes.Pages
             db = _db;
             userManager = _userManager;
 
+            InputFiltro = new InputFiltroModel();
+            _hostingEnvironment = hostingEnvironment;
             tipoContratosManager = _tipoContratosManager;
             empresaContratosManager = _empresaContratosManager;
             clienteContratosManager = _clienteContratosManager;
@@ -187,6 +196,44 @@ namespace ERPSEI.Areas.Reportes.Pages
             }
 
             return new JsonResult(jsonEmpresas);
+        }
+
+        public async Task<JsonResult> OnPostFiltrarEmpresasContratos()
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+
+            try
+            {
+                var empresas = await empresaContratosManager.GetAllAsync(InputFiltro);
+
+                var result = empresas.Select(e => new
+                {
+                    id = e.Id,
+                    razonSocial = e.RazonSocial ?? "-",
+                    domicilioFiscal = e.DomicilioFiscal ?? "-",
+                    rfc = e.RFC ?? "-",
+                    noNotario = e.NoNotario?.ToString() ?? "-",
+                    notario = e.Notario ?? "-",
+                    representanteLegal = e.RepresentanteLegal ?? "-",
+                    email = e.Email ?? "-",
+                    paginaWeb = e.PaginaWeb ?? "-",
+                    fechaConstitucion = e.FechaConstitucion?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaConstitucionJS = e.FechaConstitucion?.ToString("yyyy-MM-dd") ?? "-",
+                    tipoContrato = e.TipoContrato?.Nombre ?? "-",
+                    tipoContratoId = e.TipoContratoId,
+                    deshabilitado = e.Deshabilitado.ToString()
+                }).ToList();
+
+                resp.Datos = result;
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al filtrar empresas contrato");
+            }
+
+            return new JsonResult(resp);
         }
 
         public async Task<JsonResult> OnPostDeleteEmpresaContratos(string[] ids)
@@ -232,19 +279,119 @@ namespace ERPSEI.Areas.Reportes.Pages
         {
             var clientes = await clienteContratosManager.GetByEmpresaContratoIdAsync(id);
 
-            var result = clientes.Select(c => new
-            {
+            var result = clientes.Select(c => new {
                 id = c.Id,
                 nombre = c.RazonSocial ?? "-",
                 rfc = c.RFC ?? "-",
                 domicilioFiscal = c.DomicilioFiscal ?? "-",
                 representanteLegal = c.RepresentanteLegal ?? "-",
-                noNotario = c.NoNotario ?? 0,
+                noNotario = c.NoNotario?.ToString() ?? "-",
                 notario = c.Notario ?? "-"
             });
 
             return new JsonResult(result);
         }
+
+        /*public async Task<IActionResult> OnGetGenerarWordAsync(int clienteId, int empresaId)
+        {
+            try
+            {
+                var cliente = await clienteContratosManager.GetByIdAsync(clienteId);
+                var empresa = await empresaContratosManager.GetByIdAsync(empresaId);
+
+                if (cliente == null || empresa == null)
+                    return NotFound("Cliente o empresa no encontrados.");
+
+                // Ruta de plantilla y de archivo temporal
+                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", "Contrato_Generado_EDIT.docx");
+                var outputPath = Path.Combine(Path.GetTempPath(), $"Contrato_{Guid.NewGuid()}.docx");
+
+                // Copiar plantilla al archivo temporal
+                System.IO.File.Copy(templatePath, outputPath, true);
+
+                using (var outputDocument = new TemplateProcessor(outputPath).SetRemoveContentControls(true))
+                {
+                    var content = new Content(
+                        new FieldContent("Empresa", empresa.RazonSocial ?? "-"),
+                        new FieldContent("RFC", empresa.RFC ?? "-"),
+                        new FieldContent("Domicilio_Empresa", empresa.DomicilioFiscal ?? "-"),
+                        new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
+                        new FieldContent("RFC_Cliente", cliente.RFC ?? "-"),
+                        new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-")
+                    );
+
+                    outputDocument.FillContent(content);
+                    outputDocument.SaveChanges();
+                }
+
+                var memory = new MemoryStream(await System.IO.File.ReadAllBytesAsync(outputPath));
+                return File(memory, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Contrato_Generado.docx");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error al generar el contrato: {ex.Message}");
+            }
+        }*/
+
+        public async Task<IActionResult> OnGetGenerarWordAsync(int clienteId, int empresaId)
+        {
+            try
+            {
+                // Validar existencia de cliente y empresa
+                var cliente = await clienteContratosManager.GetByIdAsync(clienteId);
+                var empresa = await empresaContratosManager.GetByIdAsync(empresaId);
+
+                if (cliente == null || empresa == null)
+                    return NotFound("Cliente o empresa no encontrados.");
+
+                // Definir rutas
+                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", "Contrato_Generado_EDIT.docx");
+                var outputPath = Path.Combine(Path.GetTempPath(), $"Contrato_{Guid.NewGuid()}.docx");
+
+                // Copiar plantilla para edición
+                System.IO.File.Copy(templatePath, outputPath, overwrite: true);
+
+                // Insertar contenido dinámico
+                using (var outputDocument = new TemplateProcessor(outputPath).SetRemoveContentControls(true))
+                {
+                    var content = new Content(
+                        new FieldContent("Empresa", empresa.RazonSocial ?? "-"),
+                        new FieldContent("RFC", empresa.RFC ?? "-"),
+                        new FieldContent("Domicilio_Empresa", empresa.DomicilioFiscal ?? "-"),
+                        new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
+                        new FieldContent("RFC_Cliente", cliente.RFC ?? "-"),
+                        new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-"),
+                        new FieldContent("Representante_Empresa", empresa.RepresentanteLegal ?? "-"),
+                        new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-"),
+                        new FieldContent("Notario_Empresa", empresa.Notario ?? "-"),
+                        new FieldContent("NoNotario_Empresa", empresa.NoNotario?.ToString() ?? "-"),
+                        new FieldContent("Notario_Cliente", cliente.Notario ?? "-"),
+                        new FieldContent("NoNotario_Cliente", cliente.NoNotario?.ToString() ?? "-")
+                    );
+
+                    outputDocument.FillContent(content);
+                    outputDocument.SaveChanges();
+                }
+
+                // Leer archivo generado y devolverlo al cliente
+                var memory = new MemoryStream(await System.IO.File.ReadAllBytesAsync(outputPath));
+                return File(memory,
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    $"Contrato_{empresa.RazonSocial}_{cliente.RazonSocial}.docx");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al generar contrato Word");
+                return BadRequest($"Error al generar el contrato: {ex.Message}");
+            }
+        }
+
+
+
+
+
+
+
 
     }
 }

@@ -107,5 +107,27 @@ namespace ERPSEI.Data.Managers.TipoContratos
                                           a.RazonSocial.Trim().ToLower() == name.Trim().ToLower());
         }
 
+        public async Task<List<EmpresaContrato>> GetAllAsync(ERPSEI.Areas.Reportes.Pages.GeneradorContratoModel.InputFiltroModel? filtro = null)
+        {
+            var query = db.EmpresaContratos
+                .Include(e => e.TipoContrato)
+                .AsQueryable();
+
+            if (filtro != null)
+            {
+                if (filtro.TipoContratoId.HasValue && filtro.TipoContratoId.Value != 0)
+                    query = query.Where(e => e.TipoContratoId == filtro.TipoContratoId.Value);
+
+                /*if (filtro.PrestadorId.HasValue && filtro.PrestadorId.Value != 0)
+                    query = query.Where(e => e.PrestadorId == filtro.PrestadorId.Value);
+
+                if (filtro.PrestatarioId.HasValue && filtro.PrestatarioId.Value != 0)
+                    query = query.Where(e => e.PrestatarioId == filtro.PrestatarioId.Value);*/
+            }
+
+            return await query.ToListAsync();
+        }
+
+
     }
 }
