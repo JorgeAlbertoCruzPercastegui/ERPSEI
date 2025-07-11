@@ -28,21 +28,29 @@ document.addEventListener("DOMContentLoaded", function (event) {
     initTable();
 
     table.on('expand-row.bs.table', function (e, index, row, $detail) {
-        let containerId = `#clientes-${row.id}`;
+        let containerId = `#detalle-clientes-${row.id}`;
         $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
             if (clientes.length === 0) {
-                $(containerId).html('<em>No hay clientes relacionados.</em>');
+                $(containerId).html('<tr><td colspan="6"><em>No hay clientes relacionados.</em></td></tr>');
                 return;
             }
 
-            let html = '<ul class="list-group">';
+            let html = '';
             clientes.forEach(cliente => {
-                html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${cliente.nombre}
-                            <span class="badge bg-primary">${cliente.rfc}</span>
-                        </li>`;
+                html += `<tr>
+                        <td>${cliente.nombre}</td>
+                        <td>${cliente.rfc}</td>
+                        <td>${cliente.domicilioFiscal}</td>
+                        <td>${cliente.representanteLegal}</td>
+                        <td>${cliente.noNotario}</td>
+                        <td>${cliente.notario}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="generarContrato(${cliente.id})">
+                                <i class="bi bi-file-earmark-text"></i> Generar Contrato
+                            </button>
+                        </td>
+                    </tr>`;
             });
-            html += '</ul>';
             $(containerId).html(html);
         });
     });
@@ -175,6 +183,13 @@ function initTable() {
                 sortable: true
             },
             {
+                title: "TipoContrato",
+                field: "tipoContrato",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            }/*,
+            {
                 title: colAccionesHeader,
                 field: "operate",
                 align: 'center',
@@ -182,7 +197,7 @@ function initTable() {
                 clickToSelect: false,
                 events: window.operateEvents,
                 formatter: operateFormatter
-            }
+            }*/
         ]
     })
     table.on('check.bs.table uncheck.bs.table ' +
@@ -234,8 +249,33 @@ function initTable() {
 }
 
 function detailFormatter(index, row) {
-    // Aquí se muestra texto base, luego lo mejoramos con datos reales
-    return `<div id="clientes-${row.id}">Cargando clientes...</div>`;
+    return `<div id="clientes-${row.id}">
+        <div class="table-responsive mt-2">
+            <table class="table table-bordered table-sm mb-0">
+                <thead class="table-light text-center"> <!-- 👈 centrado aquí -->
+                    <tr>
+                        <th>Razón Social</th>
+                        <th>RFC</th>
+                        <th>Domicilio Fiscal</th>
+                        <th>Representante Legal</th>
+                        <th>No. Notario</th>
+                        <th>Notario</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="detalle-clientes-${row.id}">
+                    <tr><td colspan="7" class="text-center">Cargando clientes...</td></tr> <!-- 👈 centrado también aquí -->
+                </tbody>
+            </table>
+        </div>
+    </div>`;
 }
+
+
+function generarContrato(clienteId) {
+    alert("Generar contrato para Cliente ID: " + clienteId);
+    // Aquí puedes luego hacer una llamada AJAX para generar el contrato real.
+}
+
 
 

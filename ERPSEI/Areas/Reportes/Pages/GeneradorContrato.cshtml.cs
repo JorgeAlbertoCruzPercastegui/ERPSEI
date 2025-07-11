@@ -234,11 +234,17 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             var result = clientes.Select(c => new
             {
+                id = c.Id,
                 nombre = c.RazonSocial ?? "-",
-                rfc = c.RFC ?? "-"
+                rfc = c.RFC ?? "-",
+                domicilioFiscal = c.DomicilioFiscal ?? "-",
+                representanteLegal = c.RepresentanteLegal ?? "-",
+                noNotario = c.NoNotario ?? 0,
+                notario = c.Notario ?? "-"
             });
 
             return new JsonResult(result);
         }
+
     }
 }

@@ -89,7 +89,10 @@ namespace ERPSEI.Data.Managers.TipoContratos
 
         public async Task<List<EmpresaContrato>> GetAllAsync()
         {
-            return await db.EmpresaContratos.ToListAsync();
+            //return await db.EmpresaContratos.ToListAsync();
+            return await db.EmpresaContratos
+               .Include(ec => ec.TipoContrato)
+               .ToListAsync();
         }
 
         public async Task<EmpresaContrato?> GetByIdAsync(int id)
