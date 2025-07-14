@@ -27,6 +27,13 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     initTable();
 
+    //Llenado automático del RFC al seleccionar una empresa
+    $('#prestadorSelect').on('change', function () {
+        const selectedId = $(this).val();
+        const rfc = empresaRFCMap.get(selectedId) || '';
+        $('#prestadorRFC').val(rfc);
+    });
+
     table.on('expand-row.bs.table', function (e, index, row, $detail) {
         let containerId = `#detalle-clientes-${row.id}`;
         $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
@@ -283,6 +290,45 @@ function onBuscarClick() {
     );
 }
 
+let empresaRFCMap = new Map();
+
+function onAgregarClick() {
+    $('#dlgContrato input').val('');
+    $('#tipoContratoSelectPrestador').empty();
+    $('#tipoContratoSelectPrestatario').empty();
+    $('#prestadorSelect').empty();
+    $('#prestatarioSelect').empty();
+
+    // Opciones por defecto
+    $('#tipoContratoSelectPrestador').append('<option value="">Seleccione...</option>');
+    $('#tipoContratoSelectPrestatario').append('<option value="">Seleccione...</option>');
+    $('#prestadorSelect').append('<option value="">Seleccione...</option>');
+    $('#prestatarioSelect').append('<option value="">Seleccione...</option>');
+
+    // Obtener IDs siguientes
+    $.get("/Reportes/GeneradorContrato?handler=ObtenerSiguientesIds", function (data) {
+        $('#prestadorId').val(data.empresaId);
+        $('#prestatarioId').val(data.clienteId);
+    });
+
+    // Tipos de contrato
+    $.get("/Reportes/GeneradorContrato?handler=TiposContrato", function (data) {
+        data.forEach(function (item) {
+            $('#tipoContratoSelectPrestador').append(`<option value="${item.id}">${item.nombre}</option>`);
+            $('#tipoContratoSelectPrestatario').append(`<option value="${item.id}">${item.nombre}</option>`);
+        });
+    });
+
+    // Empresas
+    $.get("/Reportes/GeneradorContrato?handler=Empresas", function (data) {
+        empresaRFCMap.clear(); // Limpiar mapa
+        data.forEach(function (item) {
+            $('#prestadorSelect').append(`<option value="${item.id}">${item.nombre}</option>`);
+            $('#prestatarioSelect').append(`<option value="${item.id}">${item.nombre}</option>`);
+            empresaRFCMap.set(item.id.toString(), item.rfc); // Guardar el RFC por ID como string
+        });
+    });
+}
 
 function detailFormatter(index, row) {
     return `<div id="clientes-${row.id}">

@@ -68,6 +68,7 @@ namespace ERPSEI.Areas.Reportes.Pages
         private readonly IStringLocalizer<GeneradorContratoModel> localizer;
         private readonly AppUserManager userManager;
 
+
         private readonly Data.ApplicationDbContext db;
 
         [BindProperty]
@@ -148,7 +149,8 @@ namespace ERPSEI.Areas.Reportes.Pages
             IWebHostEnvironment hostingEnvironment,
             ITipoContratosManager _tipoContratosManager,
             IEmpresaContratosManager _empresaContratosManager,
-            IClienteContratosManager _clienteContratosManager
+            IClienteContratosManager _clienteContratosManager,
+            IEmpresaManager _empresaManager
             ) 
         {
             stringLocalizer = _stringLocalizer;
@@ -163,6 +165,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             tipoContratosManager = _tipoContratosManager;
             empresaContratosManager = _empresaContratosManager;
             clienteContratosManager = _clienteContratosManager;
+            empresaManager = _empresaManager;
 
             EmpresaContratosList = new EmpresaContrato();
         }
@@ -386,10 +389,54 @@ namespace ERPSEI.Areas.Reportes.Pages
             }
         }
 
+        //Métodos para agregar en nuevo contrato
 
+        public async Task<JsonResult> OnGetObtenerSiguientesIdsAsync()
+        {
+            var siguienteEmpresaId = await db.EmpresaContratos.MaxAsync(e => (int?)e.Id) ?? 0;
+            var siguienteClienteId = await db.ClienteContratos.MaxAsync(c => (int?)c.Id) ?? 0;
 
+            return new JsonResult(new
+            {
+                empresaId = siguienteEmpresaId + 1,
+                clienteId = siguienteClienteId + 1
+            });
+        }
 
+        public async Task<JsonResult> OnGetTiposContratoAsync()
+        {
+            var tipos = await tipoContratosManager.GetAllAsync();
+            var result = tipos.Select(t => new { id = t.Id, nombre = t.Nombre }).ToList();
+            return new JsonResult(result);
+        }
 
+        public async Task<JsonResult> OnGetEmpresasContratoAsync()
+        {
+            var empresas = await empresaContratosManager.GetAllAsync();
+            var activas = empresas.Where(e => !e.Deshabilitado)
+                                  .Select(e => new { id = e.Id, nombre = e.RazonSocial ?? "-" })
+                                  .ToList();
+            return new JsonResult(activas);
+        }
+
+        public async Task<JsonResult> OnGetClientesContratoAsync()
+        {
+            var clientes = await clienteContratosManager.GetAllAsync(); // Asegúrate de tener este método
+            var activos = clientes.Select(c => new { id = c.Id, nombre = c.RazonSocial ?? "-" }).ToList();
+            return new JsonResult(activos);
+        }
+
+        public async Task<JsonResult> OnGetEmpresasAsync()
+        {
+            var empresas = await empresaManager.GetAllAsync();
+            var result = empresas.Select(e => new {
+                id = e.Id,
+                nombre = e.RazonSocial ?? "-",
+                rfc = e.RFC ?? "-" // ?? asegúrate de incluir el RFC
+            }).ToList();
+
+            return new JsonResult(result);
+        }
 
 
 
