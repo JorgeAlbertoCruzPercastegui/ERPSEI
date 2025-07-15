@@ -414,12 +414,63 @@ function detailFormatter(index, row) {
     </div>`;
 }
 
-
-/*function generarContrato(clienteId) {
-    alert("Generar contrato para Cliente ID: " + clienteId);
-    // Aquí puedes luego hacer una llamada AJAX para generar el contrato real.
-}*/
-
 function generarContrato(clienteId) {
     window.location.href = `/Reportes/GeneradorContrato?handler=GenerarWord&clienteId=${clienteId}`;
 }
+
+function onGuardarClick() {
+    const data = {
+        prestadorId: parseInt($('#prestadorId').val()),
+        prestadorNombre: $('#prestadorSelect option:selected').text(),
+        prestadorRFC: $('#prestadorRFC').val(),
+        prestadorDomicilio: $('#prestadorDomicilio').val(),
+        prestadorRepresentante: $('#prestadorRepresentante').val(),
+        prestadorEmail: $('#prestadorEmail').val(),
+        prestadorFecha: $('#prestadorFecha').val(),
+        tipoContratoPrestadorId: parseInt($('#tipoContratoSelectPrestador').val()),
+        prestadorNoNotario: parseInt($('#prestadorNumeroNotario').val()),
+        prestadorNotario: $('#prestadorNotario').val(),
+        prestadorPaginaWeb: $('#prestadorWeb').val(),
+
+        prestatarioId: parseInt($('#prestatarioId').val()),
+        prestatarioNombre: $('#prestatarioSelect option:selected').text(),
+        prestatarioRFC: $('#prestatarioRFC').val(),
+        prestatarioDomicilio: $('#prestatarioDomicilio').val(),
+        prestatarioRepresentante: $('#prestatarioRepresentante').val(),
+        prestatarioEmail: $('#prestatarioEmail').val(),
+        prestatarioFecha: $('#prestatarioFecha').val(),
+        tipoContratoPrestatarioId: parseInt($('#tipoContratoSelectPrestatario').val()),
+        prestatarioNoNotario: parseInt($('#prestatarioNumeroNotario').val()), 
+        prestatarioNotario: $('#prestatarioNotario').val(),
+        prestatarioPaginaWeb: $('#prestatarioWeb').val()
+    };
+
+    $.ajax({
+        url: '/Reportes/GeneradorContrato?handler=GuardarContrato',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function (resp) {
+            if (resp.tieneError) {
+                showError("Error al guardar", resp.mensaje);
+            } else {
+                showSuccess("Éxito", resp.mensaje);
+
+                // ✅ Cierra el modal (asegúrate de que dlgModal esté definido correctamente)
+                const dlgModal = bootstrap.Modal.getInstance(document.getElementById('dlgContrato'));
+                dlgModal.hide();
+
+                // ✅ Refresca la tabla
+                $('#table').bootstrapTable('refresh');
+            }
+        },
+        error: function (xhr, status, error) {
+            showError("Error", "No se pudo guardar el contrato.");
+        }
+    });
+}
+
+

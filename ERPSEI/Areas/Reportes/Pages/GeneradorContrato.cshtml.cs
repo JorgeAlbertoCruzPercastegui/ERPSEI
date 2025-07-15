@@ -1,56 +1,18 @@
-using ERPSEI.Data;
-using ERPSEI.Data.Entities.ActivosFijos;
-using ERPSEI.Data.Managers.ActivosFijos;
-using ERPSEI.Data.Entities.Conciliaciones;
-using ERPSEI.Data.Entities.Empleados;
-using ERPSEI.Data.Entities.SAT;
-using ERPSEI.Data.Entities.Usuarios;
-using ERPSEI.Data.Managers;
-using ERPSEI.Data.Managers.AdministradorPolizas;
-using ERPSEI.Data.Managers.Conciliaciones;
-using ERPSEI.Data.Managers.Cuentas;
 using ERPSEI.Data.Managers.Empleados;
 using ERPSEI.Data.Managers.Empresas;
-using ERPSEI.Data.Managers.Polizas;
-using ERPSEI.Data.Managers.SAT;
-using ERPSEI.Data.Managers.SAT.cfdiv40;
 using ERPSEI.Data.Managers.Usuarios;
-using ERPSEI.Email;
 using ERPSEI.Pages.Shared;
 using ERPSEI.Requests;
-using ERPSEI.Resources;
-using ERPSEI.Utils;
-using ExcelDataReader;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Net.Mime;
-using System.Text;
-using System.Web;
-using static ERPSEI.Areas.Catalogos.Pages.GestionDeTalentoModel;
-using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
-using Microsoft.DotNet.MSIdentity.Shared;
 using Microsoft.EntityFrameworkCore;
-using ERPSEI.Requests;
-using OfficeOpenXml;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
-using iText.Layout;
-using MathNet.Numerics.Distributions;
-using ERPSEI.Areas.ERP.Pages;
 using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.TipoContratos;
 using ERPSEI.Data.Managers.TipoContratos;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
 using TemplateEngine.Docx;
-using DocumentFormat.OpenXml.InkML;
 
 
 namespace ERPSEI.Areas.Reportes.Pages
@@ -136,6 +98,35 @@ namespace ERPSEI.Areas.Reportes.Pages
             [Display(Name = "Tipo de Contrato")]
             public int? TipoContratoId { get; set; }
         }
+        public class GuardarContratoRequest
+        {
+            // Prestador
+            public int PrestadorId { get; set; }
+            public string PrestadorNombre { get; set; }
+            public string PrestadorRFC { get; set; }
+            public string PrestadorDomicilio { get; set; }
+            public string PrestadorRepresentante { get; set; }
+            public string PrestadorEmail { get; set; }
+            public DateTime? PrestadorFecha { get; set; }
+            public int? TipoContratoPrestadorId { get; set; }
+            public int? PrestadorNoNotario { get; set; }
+            public string? PrestadorNotario { get; set; }
+            public string? PrestadorPaginaWeb { get; set; }
+
+            // Prestatario
+            public int PrestatarioId { get; set; }
+            public string PrestatarioNombre { get; set; }
+            public string PrestatarioRFC { get; set; }
+            public string PrestatarioDomicilio { get; set; }
+            public string PrestatarioRepresentante { get; set; }
+            public string PrestatarioEmail { get; set; }
+            public DateTime? PrestatarioFecha { get; set; }
+            public int? TipoContratoPrestatarioId { get; set; }
+            public int? PrestatarioNoNotario { get; set; }
+            public string? PrestatarioNotario { get; set; }
+            public string? PrestatarioPaginaWeb { get; set; }
+        }
+
 
         private readonly IWebHostEnvironment _hostingEnvironment;
 
@@ -295,47 +286,6 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(result);
         }
 
-        /*public async Task<IActionResult> OnGetGenerarWordAsync(int clienteId, int empresaId)
-        {
-            try
-            {
-                var cliente = await clienteContratosManager.GetByIdAsync(clienteId);
-                var empresa = await empresaContratosManager.GetByIdAsync(empresaId);
-
-                if (cliente == null || empresa == null)
-                    return NotFound("Cliente o empresa no encontrados.");
-
-                // Ruta de plantilla y de archivo temporal
-                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", "Contrato_Generado_EDIT.docx");
-                var outputPath = Path.Combine(Path.GetTempPath(), $"Contrato_{Guid.NewGuid()}.docx");
-
-                // Copiar plantilla al archivo temporal
-                System.IO.File.Copy(templatePath, outputPath, true);
-
-                using (var outputDocument = new TemplateProcessor(outputPath).SetRemoveContentControls(true))
-                {
-                    var content = new Content(
-                        new FieldContent("Empresa", empresa.RazonSocial ?? "-"),
-                        new FieldContent("RFC", empresa.RFC ?? "-"),
-                        new FieldContent("Domicilio_Empresa", empresa.DomicilioFiscal ?? "-"),
-                        new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
-                        new FieldContent("RFC_Cliente", cliente.RFC ?? "-"),
-                        new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-")
-                    );
-
-                    outputDocument.FillContent(content);
-                    outputDocument.SaveChanges();
-                }
-
-                var memory = new MemoryStream(await System.IO.File.ReadAllBytesAsync(outputPath));
-                return File(memory, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "Contrato_Generado.docx");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Error al generar el contrato: {ex.Message}");
-            }
-        }*/
-
         public async Task<IActionResult> OnGetGenerarWordAsync(int clienteId, int empresaId)
         {
             try
@@ -460,7 +410,59 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(result);
         }
 
+        public async Task<IActionResult> OnPostGuardarContratoAsync([FromBody] GuardarContratoRequest request)
+        {
+            var response = new ServerResponse(true, localizer["ErrorIneSavedUnSuccessfully"]);
 
+            try
+            {
+                var empresa = new EmpresaContrato
+                {
+                    RazonSocial = request.PrestadorNombre,
+                    RFC = request.PrestadorRFC,
+                    DomicilioFiscal = request.PrestadorDomicilio,
+                    RepresentanteLegal = request.PrestadorRepresentante,
+                    Email = request.PrestadorEmail,
+                    FechaConstitucion = request.PrestadorFecha,
+                    TipoContratoId = request.TipoContratoPrestadorId,
+                    NoNotario = request.PrestadorNoNotario,
+                    Notario = request.PrestadorNotario,
+                    PaginaWeb = request.PrestadorPaginaWeb,
+                    Deshabilitado = false
+                };
 
+                await db.EmpresaContratos.AddAsync(empresa);
+                await db.SaveChangesAsync();
+
+                var cliente = new ClienteContrato
+                {
+                    RazonSocial = request.PrestatarioNombre,
+                    RFC = request.PrestatarioRFC,
+                    DomicilioFiscal = request.PrestatarioDomicilio,
+                    RepresentanteLegal = request.PrestatarioRepresentante,
+                    Email = request.PrestatarioEmail,
+                    FechaConstitucion = request.PrestatarioFecha,
+                    TipoContratoId = request.TipoContratoPrestatarioId,
+                    EmpresaContratoId = empresa.Id,
+                    NoNotario = request.PrestatarioNoNotario,
+                    Notario = request.PrestatarioNotario,
+                    PaginaWeb = request.PrestatarioPaginaWeb,
+                    Deshabilitado = false
+                };
+
+                await db.ClienteContratos.AddAsync(cliente);
+                await db.SaveChangesAsync();
+
+                response.TieneError = false;
+                response.Mensaje = localizer["ContactSavedSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, localizer["ErrorSaveContradUnSuccessfully"]);
+                response.Mensaje = localizer["ErrorIneSavedUnSuccessfully"];
+            }
+
+            return new JsonResult(response);
+        }
     }
 }
