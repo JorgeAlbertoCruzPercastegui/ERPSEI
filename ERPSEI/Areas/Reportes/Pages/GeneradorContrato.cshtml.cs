@@ -443,6 +443,23 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(result);
         }
 
+        public async Task<JsonResult> OnGetClientesAsync()
+        {
+            var empresas = await empresaManager.GetAllAsync();
+            var result = empresas.Select(e => new {
+                id = e.Id,
+                nombre = e.RazonSocial ?? "-",
+                crfc = e.RFC ?? "-",
+                cdomicilioFiscal = e.DomicilioFiscal ?? "-",
+                crepresentanteLegal = e.Administrador ?? "-",
+                cfechaConstitucion = e.FechaConstitucion,
+                ccorreoElectronico = e.CorreoGeneral ?? "-",
+
+            }).ToList();
+
+            return new JsonResult(result);
+        }
+
 
 
     }

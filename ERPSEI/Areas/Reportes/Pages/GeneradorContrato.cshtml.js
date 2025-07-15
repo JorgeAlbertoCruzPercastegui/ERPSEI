@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     initTable();
 
-    //Llenado automático del RFC al seleccionar una empresa
+    //Llenado automático de datos al seleccionar una empresa
     $('#prestadorSelect').on('change', function () {
         const selectedId = $(this).val();
         const rfc = empresaRFCMap.get(selectedId) || '';
@@ -43,6 +43,24 @@ document.addEventListener("DOMContentLoaded", function (event) {
         $('#prestadorFecha').val(fechaFormateada);
         $('#prestadorEmail').val(correoElectronico);
     });
+
+    //Llenado automático de datos del cliente al seleccionar un clientes
+    $('#prestatarioSelect').on('change', function () {
+        const selectedId = $(this).val();
+        const crfc = clienteRFCMap.get(selectedId) || '';
+        const cdomicilioFiscal = clienteDomicilioFiscalMap.get(selectedId) || '';
+        const crepresentanteLegal = clienterepresentanteLegalMap.get(selectedId) || '';
+        const cfechaConstitucion = clientefechaConstitucionMap.get(selectedId) || '';
+        const cfechaFormateada = cfechaConstitucion ? cfechaConstitucion.split('T')[0] : '';
+        const ccorreoElectronico = clientecorreoElectronicoMap.get(selectedId) || '';
+
+        $('#prestatarioRFC').val(crfc);
+        $('#prestatarioDomicilio').val(cdomicilioFiscal);
+        $('#prestatarioRepresentante').val(crepresentanteLegal);
+        $('#prestatarioFecha').val(cfechaFormateada);
+        $('#prestatarioEmail').val(ccorreoElectronico);
+    });
+
 
     table.on('expand-row.bs.table', function (e, index, row, $detail) {
         let containerId = `#detalle-clientes-${row.id}`;
@@ -300,24 +318,26 @@ function onBuscarClick() {
     );
 }
 
+// Mapas de datos para Empresas
 let empresaRFCMap = new Map();
 let empresaDomicilioFiscalMap = new Map();
 let representanteLegalMap = new Map();
 let fechaConstitucionMap = new Map();
 let correoElectronicoMap = new Map();
 
+// Mapas de datos para Clientes
+let clienteRFCMap = new Map();
+let clienteDomicilioFiscalMap = new Map();
+let clienterepresentanteLegalMap = new Map();
+let clientefechaConstitucionMap = new Map();
+let clientecorreoElectronicoMap = new Map();
+
 function onAgregarClick() {
     $('#dlgContrato input').val('');
-    $('#tipoContratoSelectPrestador').empty();
-    $('#tipoContratoSelectPrestatario').empty();
-    $('#prestadorSelect').empty();
-    $('#prestatarioSelect').empty();
-
-    // Opciones por defecto
-    $('#tipoContratoSelectPrestador').append('<option value="">Seleccione...</option>');
-    $('#tipoContratoSelectPrestatario').append('<option value="">Seleccione...</option>');
-    $('#prestadorSelect').append('<option value="">Seleccione...</option>');
-    $('#prestatarioSelect').append('<option value="">Seleccione...</option>');
+    $('#tipoContratoSelectPrestador').empty().append('<option value="">Seleccione...</option>');
+    $('#tipoContratoSelectPrestatario').empty().append('<option value="">Seleccione...</option>');
+    $('#prestadorSelect').empty().append('<option value="">Seleccione...</option>');
+    $('#prestatarioSelect').empty().append('<option value="">Seleccione...</option>');
 
     // Obtener IDs siguientes
     $.get("/Reportes/GeneradorContrato?handler=ObtenerSiguientesIds", function (data) {
@@ -325,7 +345,7 @@ function onAgregarClick() {
         $('#prestatarioId').val(data.clienteId);
     });
 
-    // Tipos de contrato
+    // Cargar tipos de contrato
     $.get("/Reportes/GeneradorContrato?handler=TiposContrato", function (data) {
         data.forEach(function (item) {
             $('#tipoContratoSelectPrestador').append(`<option value="${item.id}">${item.nombre}</option>`);
@@ -333,9 +353,9 @@ function onAgregarClick() {
         });
     });
 
-    // Empresas
+    // Cargar datos de empresas
     $.get("/Reportes/GeneradorContrato?handler=Empresas", function (data) {
-        empresaRFCMap.clear(); // Limpiar mapa
+        empresaRFCMap.clear();
         empresaDomicilioFiscalMap.clear();
         representanteLegalMap.clear();
         fechaConstitucionMap.clear();
@@ -343,15 +363,33 @@ function onAgregarClick() {
 
         data.forEach(function (item) {
             $('#prestadorSelect').append(`<option value="${item.id}">${item.nombre}</option>`);
-            $('#prestatarioSelect').append(`<option value="${item.id}">${item.nombre}</option>`);
-            empresaRFCMap.set(item.id.toString(), item.rfc); 
+            empresaRFCMap.set(item.id.toString(), item.rfc);
             empresaDomicilioFiscalMap.set(item.id.toString(), item.domicilioFiscal);
             representanteLegalMap.set(item.id.toString(), item.representanteLegal);
             fechaConstitucionMap.set(item.id.toString(), item.fechaConstitucion);
-            correoElectronicoMap.set(item.id.toString(), item.correoElectronico); 
+            correoElectronicoMap.set(item.id.toString(), item.correoElectronico);
+        });
+    });
+
+    // Cargar datos de clientes
+    $.get("/Reportes/GeneradorContrato?handler=Clientes", function (data) {
+        clienteRFCMap.clear();
+        clienteDomicilioFiscalMap.clear();
+        clienterepresentanteLegalMap.clear();
+        clientefechaConstitucionMap.clear();
+        clientecorreoElectronicoMap.clear();
+
+        data.forEach(function (item) {
+            $('#prestatarioSelect').append(`<option value="${item.id}">${item.nombre}</option>`);
+            clienteRFCMap.set(item.id.toString(), item.crfc);
+            clienteDomicilioFiscalMap.set(item.id.toString(), item.cdomicilioFiscal);
+            clienterepresentanteLegalMap.set(item.id.toString(), item.crepresentanteLegal);
+            clientefechaConstitucionMap.set(item.id.toString(), item.cfechaConstitucion);
+            clientecorreoElectronicoMap.set(item.id.toString(), item.ccorreoElectronico);
         });
     });
 }
+
 
 function detailFormatter(index, row) {
     return `<div id="clientes-${row.id}">
