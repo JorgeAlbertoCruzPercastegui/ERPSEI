@@ -249,6 +249,13 @@ namespace ERPSEI.Data
                 .WithMany(ec => ec.Clientes)
                 .HasForeignKey(cc => cc.EmpresaContratoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // ClienteContrato → TipoContrato
+            b.Entity<ClienteContrato>()
+                .HasOne(cc => cc.TipoContrato)
+                .WithMany()
+                .HasForeignKey(cc => cc.TipoContratoId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
 
         private static void BuildActivosFijos(ModelBuilder b)
