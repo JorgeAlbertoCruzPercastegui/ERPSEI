@@ -31,7 +31,17 @@ document.addEventListener("DOMContentLoaded", function (event) {
     $('#prestadorSelect').on('change', function () {
         const selectedId = $(this).val();
         const rfc = empresaRFCMap.get(selectedId) || '';
+        const domicilioFiscal = empresaDomicilioFiscalMap.get(selectedId) || '';
+        const representanteLegal = representanteLegalMap.get(selectedId) || '';
+        const fechaConstitucion = fechaConstitucionMap.get(selectedId) || '';
+        const fechaFormateada = fechaConstitucion ? fechaConstitucion.split('T')[0] : '';
+        const correoElectronico = correoElectronicoMap.get(selectedId) || '';
+
         $('#prestadorRFC').val(rfc);
+        $('#prestadorDomicilio').val(domicilioFiscal);
+        $('#prestadorRepresentante').val(representanteLegal);
+        $('#prestadorFecha').val(fechaFormateada);
+        $('#prestadorEmail').val(correoElectronico);
     });
 
     table.on('expand-row.bs.table', function (e, index, row, $detail) {
@@ -291,6 +301,10 @@ function onBuscarClick() {
 }
 
 let empresaRFCMap = new Map();
+let empresaDomicilioFiscalMap = new Map();
+let representanteLegalMap = new Map();
+let fechaConstitucionMap = new Map();
+let correoElectronicoMap = new Map();
 
 function onAgregarClick() {
     $('#dlgContrato input').val('');
@@ -322,10 +336,19 @@ function onAgregarClick() {
     // Empresas
     $.get("/Reportes/GeneradorContrato?handler=Empresas", function (data) {
         empresaRFCMap.clear(); // Limpiar mapa
+        empresaDomicilioFiscalMap.clear();
+        representanteLegalMap.clear();
+        fechaConstitucionMap.clear();
+        correoElectronicoMap.clear();
+
         data.forEach(function (item) {
             $('#prestadorSelect').append(`<option value="${item.id}">${item.nombre}</option>`);
             $('#prestatarioSelect').append(`<option value="${item.id}">${item.nombre}</option>`);
-            empresaRFCMap.set(item.id.toString(), item.rfc); // Guardar el RFC por ID como string
+            empresaRFCMap.set(item.id.toString(), item.rfc); 
+            empresaDomicilioFiscalMap.set(item.id.toString(), item.domicilioFiscal);
+            representanteLegalMap.set(item.id.toString(), item.representanteLegal);
+            fechaConstitucionMap.set(item.id.toString(), item.fechaConstitucion);
+            correoElectronicoMap.set(item.id.toString(), item.correoElectronico); 
         });
     });
 }

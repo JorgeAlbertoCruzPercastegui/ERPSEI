@@ -432,7 +432,12 @@ namespace ERPSEI.Areas.Reportes.Pages
             var result = empresas.Select(e => new {
                 id = e.Id,
                 nombre = e.RazonSocial ?? "-",
-                rfc = e.RFC ?? "-" // ?? asegúrate de incluir el RFC
+                rfc = e.RFC ?? "-",
+                domicilioFiscal = e.DomicilioFiscal ?? "-",
+                representanteLegal = e.Administrador ?? "-",
+                fechaConstitucion = e.FechaConstitucion, 
+                correoElectronico = e.CorreoGeneral ?? "-",
+
             }).ToList();
 
             return new JsonResult(result);
