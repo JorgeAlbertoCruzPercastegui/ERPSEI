@@ -162,6 +162,12 @@
   <data name="DomicilioFiscalPrestadorField" xml:space="preserve">
     <value>Domicilio Fiscal:</value>
   </data>
+  <data name="EditButtonTitle" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="EditDialogTitle" xml:space="preserve">
+    <value>Editar Registro</value>
+  </data>
   <data name="EmailPrestadorField" xml:space="preserve">
     <value>Email:</value>
   </data>
@@ -218,6 +224,12 @@
   </data>
   <data name="SearchButton" xml:space="preserve">
     <value>Buscar</value>
+  </data>
+  <data name="SeeButtonTitle" xml:space="preserve">
+    <value>Ver</value>
+  </data>
+  <data name="SeeDialogTitle" xml:space="preserve">
+    <value>Ver Registro</value>
   </data>
   <data name="TipoContratoField" xml:space="preserve">
     <value>Tipo Contrato:</value>
