@@ -159,6 +159,9 @@
   <data name="ContactSavedSuccessfully" xml:space="preserve">
     <value>Contrato guardado correctamente</value>
   </data>
+  <data name="ContactUpdatedSuccessfully" xml:space="preserve">
+    <value>Registro actualizado exitosamente</value>
+  </data>
   <data name="DeactivateButton" xml:space="preserve">
     <value>Eliminar Contrato</value>
   </data>

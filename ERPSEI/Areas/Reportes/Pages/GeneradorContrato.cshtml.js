@@ -495,7 +495,7 @@ function initGeneradorContratoDialog(modo, row) {
             if (clientes.length > 0) {
                 const cliente = clientes[0];
                 $('#prestatarioIdVer').val(cliente.id);
-                $('#tipoContratoPrestatarioVer').val(row.tipoContrato || ''); // Se asume mismo tipo
+                $('#tipoContratoPrestatarioVer').val(cliente.tipoContrato?.toString() || '');
                 $('#prestatarioNombreVer').val(cliente.nombre || '');
                 $('#prestatarioRFCVer').val(cliente.rfc || '');
                 $('#prestatarioDomicilioVer').val(cliente.domicilioFiscal || '');
@@ -507,48 +507,59 @@ function initGeneradorContratoDialog(modo, row) {
                 $('#prestatarioWebVer').val(cliente.paginaWeb || '');
             }
 
-            // Mostrar modal VER
             const modalVer = new bootstrap.Modal(document.getElementById('dlgContratoVer'));
             modalVer.show();
         });
 
     } else if (modo === EDITAR) {
-        // Prestador
-        $('#prestadorIdEditar').val(row.id);
-        $('#tipoContratoPrestadorEditar').val(row.tipoContrato || '');
-        $('#prestadorNombreEditar').val(row.razonSocial || '');
-        $('#prestadorRFCEditar').val(row.rfc || '');
-        $('#prestadorDomicilioEditar').val(row.domicilioFiscal || '');
-        $('#prestadorNumeroNotarioEditar').val(row.noNotario || '');
-        $('#prestadorNotarioEditar').val(row.notario || '');
-        $('#prestadorRepresentanteEditar').val(row.representanteLegal || '');
-        $('#prestadorFechaEditar').val(row.fechaConstitucionJS || '');
-        $('#prestadorEmailEditar').val(row.email || '');
-        $('#prestadorWebEditar').val(row.paginaWeb || '');
+        // Cargar tipos de contrato antes de llenar campos
+        $.get("/Reportes/GeneradorContrato?handler=TiposContrato", function (tipos) {
+            $('#tipoContratoPrestadorEditar').empty().append('<option value="">Seleccione...</option>');
+            $('#tipoContratoPrestatarioEditar').empty().append('<option value="">Seleccione...</option>');
 
-        // Obtener datos del cliente (prestatario)
-        $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
-            if (clientes.length > 0) {
-                const cliente = clientes[0];
-                $('#prestatarioIdEditar').val(cliente.id);
-                $('#tipoContratoPrestatarioEditar').val(row.tipoContrato || ''); // Se asume mismo tipo
-                $('#prestatarioNombreEditar').val(cliente.nombre || '');
-                $('#prestatarioRFCEditar').val(cliente.rfc || '');
-                $('#prestatarioDomicilioEditar').val(cliente.domicilioFiscal || '');
-                $('#prestatarioNumeroNotarioEditar').val(cliente.noNotario || '');
-                $('#prestatarioNotarioEditar').val(cliente.notario || '');
-                $('#prestatarioRepresentanteEditar').val(cliente.representanteLegal || '');
-                $('#prestatarioFechaEditar').val(cliente.fechaConstitucion || '');
-                $('#prestatarioEmailEditar').val(cliente.email || '');
-                $('#prestatarioWebEditar').val(cliente.paginaWeb || '');
-            }
+            tipos.forEach(function (item) {
+                $('#tipoContratoPrestadorEditar').append(`<option value="${item.id}">${item.nombre}</option>`);
+                $('#tipoContratoPrestatarioEditar').append(`<option value="${item.id}">${item.nombre}</option>`);
+            });
 
-            // Mostrar modal EDITAR
-            const modalEditar = new bootstrap.Modal(document.getElementById('dlgContratoEditar'));
-            modalEditar.show();
+            // Prestador
+            $('#prestadorIdEditar').val(row.id);
+            $('#tipoContratoPrestadorEditar').val(row.tipoContratoId?.toString() || '');
+            $('#prestadorNombreEditar').val(row.razonSocial || '');
+            $('#prestadorRFCEditar').val(row.rfc || '');
+            $('#prestadorDomicilioEditar').val(row.domicilioFiscal || '');
+            $('#prestadorNumeroNotarioEditar').val(row.noNotario || '');
+            $('#prestadorNotarioEditar').val(row.notario || '');
+            $('#prestadorRepresentanteEditar').val(row.representanteLegal || '');
+            $('#prestadorFechaEditar').val(row.fechaConstitucionJS || '');
+            $('#prestadorEmailEditar').val(row.email || '');
+            $('#prestadorWebEditar').val(row.paginaWeb || '');
+
+            // Cliente
+            $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
+                if (clientes.length > 0) {
+                    const cliente = clientes[0];
+                    $('#prestatarioIdEditar').val(cliente.id);
+                    $('#tipoContratoPrestatarioEditar').val(cliente.tipoContratoId?.toString() || '');
+                    $('#prestatarioNombreEditar').val(cliente.nombre || '');
+                    $('#prestatarioRFCEditar').val(cliente.rfc || '');
+                    $('#prestatarioDomicilioEditar').val(cliente.domicilioFiscal || '');
+                    $('#prestatarioNumeroNotarioEditar').val(cliente.noNotario || '');
+                    $('#prestatarioNotarioEditar').val(cliente.notario || '');
+                    $('#prestatarioRepresentanteEditar').val(cliente.representanteLegal || '');
+                    $('#prestatarioFechaEditar').val(cliente.fechaConstitucion || '');
+                    $('#prestatarioEmailEditar').val(cliente.email || '');
+                    $('#prestatarioWebEditar').val(cliente.paginaWeb || '');
+                }
+
+                const modalEditar = new bootstrap.Modal(document.getElementById('dlgContratoEditar'));
+                modalEditar.show();
+            });
         });
     }
 }
+
+
 
 function onCerrarClick() {
     $('#dlgContrato input, #dlgContrato select').prop('disabled', false);
@@ -556,32 +567,47 @@ function onCerrarClick() {
 }
 
 function onActualizarClick() {
-    const data = {
-        // Prestador
-        prestadorId: parseInt($('#prestadorId').val()),
-        prestadorNombre: $('#prestadorSelect option:selected').text(),
-        prestadorRFC: $('#prestadorRFC').val(),
-        prestadorDomicilio: $('#prestadorDomicilio').val(),
-        prestadorRepresentante: $('#prestadorRepresentante').val(),
-        prestadorEmail: $('#prestadorEmail').val(),
-        prestadorFecha: $('#prestadorFecha').val(),
-        tipoContratoPrestadorId: parseInt($('#tipoContratoSelectPrestador').val()),
-        prestadorNoNotario: parseInt($('#prestadorNumeroNotario').val()),
-        prestadorNotario: $('#prestadorNotario').val(),
-        prestadorPaginaWeb: $('#prestadorWeb').val(),
+    const tipoContratoPrestador = $('#tipoContratoPrestadorEditar').val();
+    const tipoContratoPrestatario = $('#tipoContratoPrestatarioEditar').val();
 
-        // Prestatario
-        prestatarioId: parseInt($('#prestatarioId').val()),
-        prestatarioNombre: $('#prestatarioSelect option:selected').text(),
-        prestatarioRFC: $('#prestatarioRFC').val(),
-        prestatarioDomicilio: $('#prestatarioDomicilio').val(),
-        prestatarioRepresentante: $('#prestatarioRepresentante').val(),
-        prestatarioEmail: $('#prestatarioEmail').val(),
-        prestatarioFecha: $('#prestatarioFecha').val(),
-        tipoContratoPrestatarioId: parseInt($('#tipoContratoSelectPrestatario').val()),
-        prestatarioNoNotario: parseInt($('#prestatarioNumeroNotario').val()),
-        prestatarioNotario: $('#prestatarioNotario').val(),
-        prestatarioPaginaWeb: $('#prestatarioWeb').val()
+    // Validación básica
+    if (!tipoContratoPrestador || tipoContratoPrestador === "0") {
+        showError("Validación", "Debes seleccionar un Tipo de Contrato para el Prestador.");
+        return;
+    }
+
+    if (!tipoContratoPrestatario || tipoContratoPrestatario === "0") {
+        showError("Validación", "Debes seleccionar un Tipo de Contrato para el Prestatario.");
+        return;
+    }
+
+    const data = {
+        empresa: {
+            id: parseInt($('#prestadorIdEditar').val()),
+            razonSocial: $('#prestadorNombreEditar').val(),
+            rfc: $('#prestadorRFCEditar').val(),
+            domicilioFiscal: $('#prestadorDomicilioEditar').val(),
+            representanteLegal: $('#prestadorRepresentanteEditar').val(),
+            email: $('#prestadorEmailEditar').val(),
+            fechaConstitucion: $('#prestadorFechaEditar').val(),
+            tipoContratoId: parseInt(tipoContratoPrestador),
+            noNotario: parseInt($('#prestadorNumeroNotarioEditar').val()),
+            notario: $('#prestadorNotarioEditar').val(),
+            paginaWeb: $('#prestadorWebEditar').val()
+        },
+        cliente: {
+            id: parseInt($('#prestatarioIdEditar').val()),
+            razonSocial: $('#prestatarioNombreEditar').val(),
+            rfc: $('#prestatarioRFCEditar').val(),
+            domicilioFiscal: $('#prestatarioDomicilioEditar').val(),
+            representanteLegal: $('#prestatarioRepresentanteEditar').val(),
+            email: $('#prestatarioEmailEditar').val(),
+            fechaConstitucion: $('#prestatarioFechaEditar').val(),
+            tipoContratoId: parseInt(tipoContratoPrestatario),
+            noNotario: parseInt($('#prestatarioNumeroNotarioEditar').val()),
+            notario: $('#prestatarioNotarioEditar').val(),
+            paginaWeb: $('#prestatarioWebEditar').val()
+        }
     };
 
     $.ajax({
@@ -604,12 +630,8 @@ function onActualizarClick() {
                 $('#table').bootstrapTable('refresh');
             }
         },
-        error: function (xhr, status, error) {
+        error: function () {
             showError("Error", "No se pudo actualizar el contrato.");
         }
     });
 }
-
-
-
-

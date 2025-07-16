@@ -128,6 +128,12 @@ namespace ERPSEI.Areas.Reportes.Pages
             public string? PrestatarioPaginaWeb { get; set; }
         }
 
+        public class ActualizarContratoRequest
+        {
+            public EmpresaContrato Empresa { get; set; }
+            public ClienteContrato Cliente { get; set; }
+        }
+
 
         private readonly IWebHostEnvironment _hostingEnvironment;
 
@@ -272,7 +278,12 @@ namespace ERPSEI.Areas.Reportes.Pages
 
         public async Task<JsonResult> OnGetClientesPorEmpresa(int id)
         {
-            var clientes = await clienteContratosManager.GetByEmpresaContratoIdAsync(id);
+            //var clientes = await clienteContratosManager.GetByEmpresaContratoIdAsync(id);
+            var clientes = await db.ClienteContratos
+                .Include(c => c.TipoContrato)
+                .Where(c => c.EmpresaContratoId == id)
+                .ToListAsync();
+
 
             var result = clientes.Select(c => new {
                 id = c.Id,
@@ -284,7 +295,10 @@ namespace ERPSEI.Areas.Reportes.Pages
                 notario = c.Notario ?? "-",
                 email = c.Email ?? "-",
                 paginaWeb = c.PaginaWeb ?? "-",
-                fechaConstitucion = c.FechaConstitucion?.ToString("yyyy-MM-dd") ?? ""
+                fechaConstitucion = c.FechaConstitucion?.ToString("yyyy-MM-dd") ?? "",
+                tipoContratoId = c.TipoContratoId,
+                tipoContrato = c.TipoContrato != null ? c.TipoContrato.Nombre : "-"
+
             });
 
             return new JsonResult(result);
@@ -469,14 +483,34 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(response);
         }
 
-        public async Task<JsonResult> OnPostActualizarContratoAsync([FromBody] EmpresaContrato request, ClienteContrato request2)
+        public JsonResult OnGetListaTipoContratos()
+        {
+            var tipos = db.TipoContratos
+                .Select(t => new { id = t.Id, nombre = t.Nombre })
+                .ToList();
+
+            return new JsonResult(tipos);
+        }
+
+        public async Task<JsonResult> OnGetObtenerTipoContratosAsync()
+        {
+            var tipos = await db.TipoContratos
+                .Select(t => new { id = t.Id, nombre = t.Nombre })
+                .ToListAsync();
+
+            return new JsonResult(tipos);
+        }
+
+
+
+        public async Task<JsonResult> OnPostActualizarContratoAsync([FromBody] ActualizarContratoRequest request)
         {
             var response = new ServerResponse(true, localizer["ErrorIneSavedUnSuccessfully"]);
 
             try
             {
-                var empresa = await db.EmpresaContratos.FirstOrDefaultAsync(c => c.Id == request.Id);
-                var cliente = await db.ClienteContratos.FirstOrDefaultAsync(c => c.Id == request2.Id);
+                var empresa = await db.EmpresaContratos.FirstOrDefaultAsync(c => c.Id == request.Empresa.Id);
+                var cliente = await db.ClienteContratos.FirstOrDefaultAsync(c => c.Id == request.Cliente.Id);
 
                 if (empresa == null || cliente == null)
                 {
@@ -485,30 +519,30 @@ namespace ERPSEI.Areas.Reportes.Pages
                 }
 
                 // Actualizar empresa (Prestador)
-                empresa.RazonSocial = request.RazonSocial;
-                empresa.RFC = request.RFC;
-                empresa.DomicilioFiscal = request.DomicilioFiscal;
-                empresa.RepresentanteLegal = request.RepresentanteLegal;
-                empresa.Email = request.Email;
-                empresa.FechaConstitucion = request.FechaConstitucion;
-                empresa.TipoContratoId = request.TipoContratoId;
-                empresa.NoNotario = request.NoNotario;
-                empresa.Notario = request.Notario;
-                empresa.PaginaWeb = request.PaginaWeb;
+                empresa.RazonSocial = request.Empresa.RazonSocial;
+                empresa.RFC = request.Empresa.RFC;
+                empresa.DomicilioFiscal = request.Empresa.DomicilioFiscal;
+                empresa.RepresentanteLegal = request.Empresa.RepresentanteLegal;
+                empresa.Email = request.Empresa.Email;
+                empresa.FechaConstitucion = request.Empresa.FechaConstitucion;
+                empresa.TipoContratoId = request.Empresa.TipoContratoId;
+                empresa.NoNotario = request.Empresa.NoNotario;
+                empresa.Notario = request.Empresa.Notario;
+                empresa.PaginaWeb = request.Empresa.PaginaWeb;
 
                 db.EmpresaContratos.Update(empresa);
 
                 // Actualizar cliente (Prestatario)
-                cliente.RazonSocial = request2.RazonSocial;
-                cliente.RFC = request2.RFC;
-                cliente.DomicilioFiscal = request2.DomicilioFiscal;
-                cliente.RepresentanteLegal = request2.RepresentanteLegal;
-                cliente.Email = request2.Email;
-                cliente.FechaConstitucion = request2.FechaConstitucion;
-                cliente.TipoContratoId = request2.TipoContratoId;
-                cliente.NoNotario = request2.NoNotario;
-                cliente.Notario = request2.Notario;
-                cliente.PaginaWeb = request2.PaginaWeb;
+                cliente.RazonSocial = request.Cliente.RazonSocial;
+                cliente.RFC = request.Cliente.RFC;
+                cliente.DomicilioFiscal = request.Cliente.DomicilioFiscal;
+                cliente.RepresentanteLegal = request.Cliente.RepresentanteLegal;
+                cliente.Email = request.Cliente.Email;
+                cliente.FechaConstitucion = request.Cliente.FechaConstitucion;
+                cliente.TipoContratoId = request.Cliente.TipoContratoId;
+                cliente.NoNotario = request.Cliente.NoNotario;
+                cliente.Notario = request.Cliente.Notario;
+                cliente.PaginaWeb = request.Cliente.PaginaWeb;
 
                 db.ClienteContratos.Update(cliente);
 
@@ -525,8 +559,5 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             return new JsonResult(response);
         }
-
-
-
     }
 }
