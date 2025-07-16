@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ActualizarContratoField" xml:space="preserve">
+    <value>Actualizar Contrato</value>
+  </data>
   <data name="AddButton" xml:space="preserve">
     <value>Agregar Contrato</value>
   </data>
@@ -162,6 +165,9 @@
   <data name="DomicilioFiscalPrestadorField" xml:space="preserve">
     <value>Domicilio Fiscal:</value>
   </data>
+  <data name="EditarContratoField" xml:space="preserve">
+    <value>Editar Registro</value>
+  </data>
   <data name="EditButtonTitle" xml:space="preserve">
     <value>Editar</value>
   </data>
@@ -194,6 +200,9 @@
   </data>
   <data name="InformacionPrestadorField" xml:space="preserve">
     <value>Información del Prestador</value>
+  </data>
+  <data name="InformacionPrestatarioField" xml:space="preserve">
+    <value>Información del Prestatario</value>
   </data>
   <data name="NombrePrestatarioField" xml:space="preserve">
     <value>Prestatario</value>
@@ -239,5 +248,8 @@
   </data>
   <data name="Title" xml:space="preserve">
     <value>Generador Contratos Empresas</value>
+  </data>
+  <data name="VerContratoField" xml:space="preserve">
+    <value>Ver Registro</value>
   </data>
 </root>

@@ -224,12 +224,113 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CerrarField"]</button>
-                <button type="button" class="btn btn-primary" onclick="onGuardarClick()">@Localizer["GuardarContratoField"]</button>
+                <button type="button" id="btnGuardarContrato" class="btn btn-primary" onclick="onGuardarClick()">@Localizer["GuardarContratoField"]</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Modal Ver Contrato -->
+<div class="modal fade" id="dlgContratoVer" tabindex="-1" aria-labelledby="dlgContratoVerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="dlgContratoVerLabel">@Localizer["VerContratoField"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <h6>@Localizer["InformacionPrestadorField"]</h6>
+                <div class="row">
+                    <div class="col-md-4"><label>ID:</label> <input type="text" class="form-control" id="prestadorIdVer" readonly /></div>
+                    <div class="col-md-4"><label>Tipo Contrato:</label> <input type="text" class="form-control" id="tipoContratoPrestadorVer" readonly /></div>
+                    <div class="col-md-4"><label>Prestador:</label> <input type="text" class="form-control" id="prestadorNombreVer" readonly /></div>
+                    <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestadorRFCVer" readonly /></div>
+                    <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestadorDomicilioVer" readonly /></div>
+                    <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestadorNumeroNotarioVer" readonly /></div>
+                    <div class="col-md-4"><label>Notario:</label> <input type="text" class="form-control" id="prestadorNotarioVer" readonly /></div>
+                    <div class="col-md-4"><label>Representante Legal:</label> <input type="text" class="form-control" id="prestadorRepresentanteVer" readonly /></div>
+                    <div class="col-md-4"><label>Fecha Constitución:</label> <input type="date" class="form-control" id="prestadorFechaVer" readonly /></div>
+                    <div class="col-md-4"><label>Email:</label> <input type="text" class="form-control" id="prestadorEmailVer" readonly /></div>
+                    <div class="col-md-4"><label>Página Web:</label> <input type="text" class="form-control" id="prestadorWebVer" readonly /></div>
+                </div>
+
+                <hr />
+
+                <h6>@Localizer["InformacionPrestatarioField"]</h6>
+                <div class="row">
+                    <div class="col-md-4"><label>ID:</label> <input type="text" class="form-control" id="prestatarioIdVer" readonly /></div>
+                    <div class="col-md-4"><label>Tipo Contrato:</label> <input type="text" class="form-control" id="tipoContratoPrestatarioVer" readonly /></div>
+                    <div class="col-md-4"><label>Prestatario:</label> <input type="text" class="form-control" id="prestatarioNombreVer" readonly /></div>
+                    <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestatarioRFCVer" readonly /></div>
+                    <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestatarioDomicilioVer" readonly /></div>
+                    <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestatarioNumeroNotarioVer" readonly /></div>
+                    <div class="col-md-4"><label>Notario:</label> <input type="text" class="form-control" id="prestatarioNotarioVer" readonly /></div>
+                    <div class="col-md-4"><label>Representante Legal:</label> <input type="text" class="form-control" id="prestatarioRepresentanteVer" readonly /></div>
+                    <div class="col-md-4"><label>Fecha Constitución:</label> <input type="date" class="form-control" id="prestatarioFechaVer" readonly /></div>
+                    <div class="col-md-4"><label>Email:</label> <input type="text" class="form-control" id="prestatarioEmailVer" readonly /></div>
+                    <div class="col-md-4"><label>Página Web:</label> <input type="text" class="form-control" id="prestatarioWebVer" readonly /></div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CerrarField"]</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal dlgContratoEditar -->
+<div class="modal fade" id="dlgContratoEditar" tabindex="-1" aria-labelledby="dlgContratoEditarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dlgContratoEditarLabel">@Localizer["EditarContratoField"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="modal-body">
+                    <h6>@Localizer["InformacionPrestadorField"]</h6>
+                    <div class="row">
+                        <div class="col-md-4"><label>Id:</label> <input type="text" class="form-control" id="prestadorIdEditar" readonly /></div>
+                        <div class="col-md-4"><label>Tipo Contrato:</label> <input type="text" class="form-control" id="tipoContratoPrestadorEditar" /></div>
+                        <div class="col-md-4"><label>Prestador:</label> <input type="text" class="form-control" id="prestadorNombreEditar" /></div>
+                        <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestadorRFCEditar" /></div>
+                        <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestadorDomicilioEditar" /></div>
+                        <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestadorNumeroNotarioEditar" /></div>
+                        <div class="col-md-4"><label>Notario:</label> <input type="text" class="form-control" id="prestadorNotarioEditar" /></div>
+                        <div class="col-md-4"><label>Representante Legal:</label> <input type="text" class="form-control" id="prestadorRepresentanteEditar" /></div>
+                        <div class="col-md-4"><label>Fecha Constitución:</label> <input type="date" class="form-control" id="prestadorFechaEditar" /></div>
+                        <div class="col-md-4"><label>Email:</label> <input type="text" class="form-control" id="prestadorEmailEditar" /></div>
+                        <div class="col-md-4"><label>Página Web:</label> <input type="text" class="form-control" id="prestadorWebEditar" /></div>
+                    </div>
+
+                    <hr />
+
+                    <h6>@Localizer["InformacionPrestatarioField"]</h6>
+                    <div class="row">
+                        <div class="col-md-4"><label>Id:</label> <input type="text" class="form-control" id="prestatarioIdEditar" readonly /></div>
+                        <div class="col-md-4"><label>Tipo Contrato:</label> <input type="text" class="form-control" id="tipoContratoPrestatarioEditar" /></div>
+                        <div class="col-md-4"><label>Prestatario:</label> <input type="text" class="form-control" id="prestatarioNombreEditar" /></div>
+                        <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestatarioRFCEditar" /></div>
+                        <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestatarioDomicilioEditar" /></div>
+                        <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestatarioNumeroNotarioEditar" /></div>
+                        <div class="col-md-4"><label>Notario:</label> <input type="text" class="form-control" id="prestatarioNotarioEditar" /></div>
+                        <div class="col-md-4"><label>Representante Legal:</label> <input type="text" class="form-control" id="prestatarioRepresentanteEditar" /></div>
+                        <div class="col-md-4"><label>Fecha Constitución:</label> <input type="date" class="form-control" id="prestatarioFechaEditar" /></div>
+                        <div class="col-md-4"><label>Email:</label> <input type="text" class="form-control" id="prestatarioEmailEditar" /></div>
+                        <div class="col-md-4"><label>Página Web:</label> <input type="text" class="form-control" id="prestatarioWebEditar" /></div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["CerrarField"]</button>
+                <button type="button" id="btnGuardarContrato" class="btn btn-success" onclick="onActualizarClick()">@Localizer["ActualizarContratoField"]</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 @section Scripts {

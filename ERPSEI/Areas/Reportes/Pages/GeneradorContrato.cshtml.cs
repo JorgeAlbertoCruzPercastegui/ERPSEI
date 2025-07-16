@@ -13,6 +13,7 @@ using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.TipoContratos;
 using ERPSEI.Data.Managers.TipoContratos;
 using TemplateEngine.Docx;
+using ERPSEI.Data.Entities.Clientes;
 
 
 namespace ERPSEI.Areas.Reportes.Pages
@@ -280,7 +281,10 @@ namespace ERPSEI.Areas.Reportes.Pages
                 domicilioFiscal = c.DomicilioFiscal ?? "-",
                 representanteLegal = c.RepresentanteLegal ?? "-",
                 noNotario = c.NoNotario?.ToString() ?? "-",
-                notario = c.Notario ?? "-"
+                notario = c.Notario ?? "-",
+                email = c.Email ?? "-",
+                paginaWeb = c.PaginaWeb ?? "-",
+                fechaConstitucion = c.FechaConstitucion?.ToString("yyyy-MM-dd") ?? ""
             });
 
             return new JsonResult(result);
@@ -464,5 +468,65 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             return new JsonResult(response);
         }
+
+        public async Task<JsonResult> OnPostActualizarContratoAsync([FromBody] EmpresaContrato request, ClienteContrato request2)
+        {
+            var response = new ServerResponse(true, localizer["ErrorIneSavedUnSuccessfully"]);
+
+            try
+            {
+                var empresa = await db.EmpresaContratos.FirstOrDefaultAsync(c => c.Id == request.Id);
+                var cliente = await db.ClienteContratos.FirstOrDefaultAsync(c => c.Id == request2.Id);
+
+                if (empresa == null || cliente == null)
+                {
+                    response.Mensaje = "Prestador o Prestatario no encontrado.";
+                    return new JsonResult(response);
+                }
+
+                // Actualizar empresa (Prestador)
+                empresa.RazonSocial = request.RazonSocial;
+                empresa.RFC = request.RFC;
+                empresa.DomicilioFiscal = request.DomicilioFiscal;
+                empresa.RepresentanteLegal = request.RepresentanteLegal;
+                empresa.Email = request.Email;
+                empresa.FechaConstitucion = request.FechaConstitucion;
+                empresa.TipoContratoId = request.TipoContratoId;
+                empresa.NoNotario = request.NoNotario;
+                empresa.Notario = request.Notario;
+                empresa.PaginaWeb = request.PaginaWeb;
+
+                db.EmpresaContratos.Update(empresa);
+
+                // Actualizar cliente (Prestatario)
+                cliente.RazonSocial = request2.RazonSocial;
+                cliente.RFC = request2.RFC;
+                cliente.DomicilioFiscal = request2.DomicilioFiscal;
+                cliente.RepresentanteLegal = request2.RepresentanteLegal;
+                cliente.Email = request2.Email;
+                cliente.FechaConstitucion = request2.FechaConstitucion;
+                cliente.TipoContratoId = request2.TipoContratoId;
+                cliente.NoNotario = request2.NoNotario;
+                cliente.Notario = request2.Notario;
+                cliente.PaginaWeb = request2.PaginaWeb;
+
+                db.ClienteContratos.Update(cliente);
+
+                await db.SaveChangesAsync();
+
+                response.TieneError = false;
+                response.Mensaje = localizer["ContactUpdatedSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, localizer["ErrorSaveContradUnSuccessfully"]);
+                response.Mensaje = localizer["ErrorIneSavedUnSuccessfully"];
+            }
+
+            return new JsonResult(response);
+        }
+
+
+
     }
 }
