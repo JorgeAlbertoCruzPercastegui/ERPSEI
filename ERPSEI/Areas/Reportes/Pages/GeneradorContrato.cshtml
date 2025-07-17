@@ -86,33 +86,22 @@
 
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <select id="selFiltroPrestador" asp-for="InputFiltro.PrestadorId" class="form-select" placeholder="@Localizer["TipoField"]">
-                                    <option value="0">Seleccione...</option>
-                                    @{
-                                        @foreach (Empresa empresa in empresas)
-                                        {
-                                            <option value='@empresa.Id'>@empresa.RazonSocial</option>
-                                        }
-                                    }
-                                </select>
-                                <label for="selFiltroPrestador" asp-for="InputFiltro.PrestadorId" class="form-label"></label>
+                                <input id="inputRazonSocial" type="search" class="form-control"
+                                       placeholder="@Localizer["RazonSocialPrestadorField"]"
+                                       idselected='' area="ERP" module="Empresas" source="GetEmpresasSuggestion" />
+                                <label for="inputRazonSocial" class="form-label">@Localizer["RazonSocialPrestadorField"]</label>
                             </div>
                         </div>
 
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
-                                <select id="selFiltroPrestatario" asp-for="InputFiltro.PrestatarioId" class="form-select" placeholder="@Localizer["TipoField"]">
-                                    <option value="0">Seleccione...</option>
-                                    @{
-                                        @foreach (Empresa empresa in empresas)
-                                        {
-                                            <option value='@empresa.Id'>@empresa.RazonSocial</option>
-                                        }
-                                    }
-                                </select>
-                                <label for="selFiltroPrestatario" asp-for="InputFiltro.PrestatarioId" class="form-label"></label>
+                                <input id="inputRazonSocialPrestatario" type="search" class="form-control"
+                                       placeholder="@Localizer["RazonSocialPrestatarioField"]"
+                                       idselected='' area="ERP" module="Empresas" source="GetEmpresasSuggestion" />
+                                <label for="inputRazonSocialPrestatario" class="form-label">@Localizer["RazonSocialPrestatarioField"]</label>
                             </div>
                         </div>
+
                     </div>
                 </form>
                 <div class="row text-end">

@@ -207,22 +207,28 @@ namespace ERPSEI.Areas.Reportes.Pages
             {
                 var empresas = await empresaContratosManager.GetAllAsync(InputFiltro);
 
-                var result = empresas.Select(e => new
+                var result = empresas.Select(e =>
                 {
-                    id = e.Id,
-                    razonSocial = e.RazonSocial ?? "-",
-                    domicilioFiscal = e.DomicilioFiscal ?? "-",
-                    rfc = e.RFC ?? "-",
-                    noNotario = e.NoNotario?.ToString() ?? "-",
-                    notario = e.Notario ?? "-",
-                    representanteLegal = e.RepresentanteLegal ?? "-",
-                    email = e.Email ?? "-",
-                    paginaWeb = e.PaginaWeb ?? "-",
-                    fechaConstitucion = e.FechaConstitucion?.ToString("dd/MM/yyyy") ?? "-",
-                    fechaConstitucionJS = e.FechaConstitucion?.ToString("yyyy-MM-dd") ?? "-",
-                    tipoContrato = e.TipoContrato?.Nombre ?? "-",
-                    tipoContratoId = e.TipoContratoId,
-                    deshabilitado = e.Deshabilitado.ToString()
+                    var cliente = db.ClienteContratos.FirstOrDefault(c => c.EmpresaContratoId == e.Id);
+
+                    return new
+                    {
+                        id = e.Id,
+                        razonSocial = e.RazonSocial ?? "-",
+                        razonSocialPrestatario = cliente != null ? cliente.RazonSocial ?? "-" : "-",
+                        domicilioFiscal = e.DomicilioFiscal ?? "-",
+                        rfc = e.RFC ?? "-",
+                        noNotario = e.NoNotario?.ToString() ?? "-",
+                        notario = e.Notario ?? "-",
+                        representanteLegal = e.RepresentanteLegal ?? "-",
+                        email = e.Email ?? "-",
+                        paginaWeb = e.PaginaWeb ?? "-",
+                        fechaConstitucion = e.FechaConstitucion?.ToString("dd/MM/yyyy") ?? "-",
+                        fechaConstitucionJS = e.FechaConstitucion?.ToString("yyyy-MM-dd") ?? "-",
+                        tipoContrato = e.TipoContrato?.Nombre ?? "-",
+                        tipoContratoId = e.TipoContratoId,
+                        deshabilitado = e.Deshabilitado.ToString()
+                    };
                 }).ToList();
 
                 resp.Datos = result;
@@ -236,6 +242,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             return new JsonResult(resp);
         }
+
 
         public async Task<JsonResult> OnPostDeleteEmpresaContratos(string[] ids)
         {

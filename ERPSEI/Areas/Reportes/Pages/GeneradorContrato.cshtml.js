@@ -287,13 +287,11 @@ function initTable() {
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");
     let tipoContrato = document.getElementById("selFiltroTipoContrato");
-    let prestador = document.getElementById("selFiltroPrestador");
-    let prestatario = document.getElementById("selFiltroPrestatario");
+    let razonSocialInput = document.getElementById("inputRazonSocial").value.trim().toLowerCase();
+    let razonSocialPrestatarioInput = document.getElementById("inputRazonSocialPrestatario").value.trim().toLowerCase();
 
     let oParams = {
-        tipoContratoId: tipoContrato.value === "0" || tipoContrato.value === "" ? null : parseInt(tipoContrato.value),
-        prestadorId: prestador.value === "0" || prestador.value === "" ? null : parseInt(prestador.value),
-        prestatarioId: prestatario.value === "0" || prestatario.value === "" ? null : parseInt(prestatario.value)
+        tipoContratoId: tipoContrato.value === "0" || tipoContrato.value === "" ? null : parseInt(tipoContrato.value)
     };
 
     doAjax(
@@ -309,7 +307,13 @@ function onBuscarClick() {
                 return;
             }
 
-            table.bootstrapTable('load', responseHandler(resp.datos));
+            let resultadosFiltrados = resp.datos.filter(row => {
+                let matchPrestador = razonSocialInput === "" || row.razonSocial.toLowerCase().includes(razonSocialInput);
+                let matchPrestatario = razonSocialPrestatarioInput === "" || row.razonSocialPrestatario.toLowerCase().includes(razonSocialPrestatarioInput);
+                return matchPrestador && matchPrestatario;
+            });
+
+            table.bootstrapTable('load', responseHandler(resultadosFiltrados));
         },
         function (error) {
             showError("Error", error);
@@ -317,6 +321,7 @@ function onBuscarClick() {
         postOptions
     );
 }
+
 
 // Mapas de datos para Empresas
 let empresaRFCMap = new Map();

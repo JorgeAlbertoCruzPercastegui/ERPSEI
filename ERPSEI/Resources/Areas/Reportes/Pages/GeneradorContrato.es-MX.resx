@@ -228,6 +228,12 @@
   <data name="PrestatarioField" xml:space="preserve">
     <value>Información del Prestatario</value>
   </data>
+  <data name="RazonSocialPrestadorField" xml:space="preserve">
+    <value>Nombre Prestador</value>
+  </data>
+  <data name="RazonSocialPrestatarioField" xml:space="preserve">
+    <value>Nombre Prestatario</value>
+  </data>
   <data name="RepresentanteLegalPrestadorField" xml:space="preserve">
     <value>Representante Legal:</value>
   </data>
