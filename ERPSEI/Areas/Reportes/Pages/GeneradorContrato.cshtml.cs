@@ -566,5 +566,65 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             return new JsonResult(response);
         }
+
+        public async Task<JsonResult> OnPostGetPrestadoresSuggestion(string texto)
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+            try
+            {
+                resp.Datos = await GetEmpresasSuggestion(texto); // Reutilizado
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error en GetPrestadoresSuggestion");
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> OnPostGetPrestatariosSuggestion(string texto)
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+            try
+            {
+                resp.Datos = await GetEmpresasSuggestion(texto); // Reutilizado
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error en GetPrestatariosSuggestion");
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task<string> GetEmpresasSuggestion(string texto)
+        {
+            string jsonResponse;
+            List<string> jsonEmpresas = [];
+
+            var empresas = await db.Empresas
+                .Where(e => e.RazonSocial.Contains(texto))
+                .ToListAsync();
+
+            foreach (var e in empresas)
+            {
+                string desc = e.RazonSocial ?? "-";
+                jsonEmpresas.Add($"{{" +
+                    $"\"id\": \"{e.Id}\", " +
+                    $"\"value\": \"{desc}\", " +
+                    $"\"label\": \"{desc}\"" +
+                $"}}");
+            }
+
+            jsonResponse = $"[{string.Join(",", jsonEmpresas)}]";
+            return jsonResponse;
+        }
+
+
+
     }
 }

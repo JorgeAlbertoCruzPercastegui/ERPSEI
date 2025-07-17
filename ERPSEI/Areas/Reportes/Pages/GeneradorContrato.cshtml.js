@@ -322,6 +322,14 @@ function onBuscarClick() {
     );
 }
 
+$(document).ready(function () {
+    autoCompletar("#inputRazonSocial");
+});
+
+$(document).ready(function () {
+    autoCompletar("#inputRazonSocialPrestatario");
+});
+
 
 // Mapas de datos para Empresas
 let empresaRFCMap = new Map();
