@@ -109,6 +109,8 @@ namespace ERPSEI.Areas.Reportes.Pages
             public string PrestadorRepresentante { get; set; }
             public string PrestadorEmail { get; set; }
             public DateTime? PrestadorFecha { get; set; }
+            public DateTime? PrestadorFechaInicio { get; set; }
+            public DateTime? PrestadorFechaFin { get; set; }
             public int? TipoContratoPrestadorId { get; set; }
             public int? PrestadorNoNotario { get; set; }
             public string? PrestadorNotario { get; set; }
@@ -122,6 +124,8 @@ namespace ERPSEI.Areas.Reportes.Pages
             public string PrestatarioRepresentante { get; set; }
             public string PrestatarioEmail { get; set; }
             public DateTime? PrestatarioFecha { get; set; }
+            public DateTime? PrestatarioFechaInicio { get; set; }
+            public DateTime? PrestatarioFechaFin { get; set; }
             public int? TipoContratoPrestatarioId { get; set; }
             public int? PrestatarioNoNotario { get; set; }
             public string? PrestatarioNotario { get; set; }
@@ -190,6 +194,10 @@ namespace ERPSEI.Areas.Reportes.Pages
                     paginaWeb = e.PaginaWeb ?? "-",
                     fechaConstitucion = e.FechaConstitucion?.ToString("dd/MM/yyyy") ?? "-",
                     fechaConstitucionJS = e.FechaConstitucion?.ToString("yyyy-MM-dd") ?? "-",
+                    fechaInicio = e.FechaInicio?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaInicioJS = e.FechaInicio?.ToString("yyyy-MM-dd") ?? "-",
+                    fechaFin = e.FechaFin?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaFinJS = e.FechaFin?.ToString("yyyy-MM-dd") ?? "-",
                     tipoContrato = e.TipoContrato?.Nombre ?? "-",
                     tipoContratoId = e.TipoContratoId,
                     deshabilitado = e.Deshabilitado.ToString()
@@ -303,6 +311,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                 email = c.Email ?? "-",
                 paginaWeb = c.PaginaWeb ?? "-",
                 fechaConstitucion = c.FechaConstitucion?.ToString("yyyy-MM-dd") ?? "",
+                fechaInicio = c.FechaInicio?.ToString("yyyy-MM-dd") ?? "",
+                fechaFin = c.FechaFin?.ToString("yyyy-MM-dd") ?? "",
                 tipoContratoId = c.TipoContratoId,
                 tipoContrato = c.TipoContrato != null ? c.TipoContrato.Nombre : "-"
 
@@ -449,6 +459,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                     RepresentanteLegal = request.PrestadorRepresentante,
                     Email = request.PrestadorEmail,
                     FechaConstitucion = request.PrestadorFecha,
+                    FechaInicio = request.PrestadorFechaInicio,
+                    FechaFin = request.PrestadorFechaFin,
                     TipoContratoId = request.TipoContratoPrestadorId,
                     NoNotario = request.PrestadorNoNotario,
                     Notario = request.PrestadorNotario,
@@ -467,6 +479,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                     RepresentanteLegal = request.PrestatarioRepresentante,
                     Email = request.PrestatarioEmail,
                     FechaConstitucion = request.PrestatarioFecha,
+                    FechaInicio = request.PrestatarioFechaInicio,
+                    FechaFin = request.PrestatarioFechaFin,
                     TipoContratoId = request.TipoContratoPrestatarioId,
                     EmpresaContratoId = empresa.Id,
                     NoNotario = request.PrestatarioNoNotario,
@@ -532,6 +546,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                 empresa.RepresentanteLegal = request.Empresa.RepresentanteLegal;
                 empresa.Email = request.Empresa.Email;
                 empresa.FechaConstitucion = request.Empresa.FechaConstitucion;
+                empresa.FechaInicio = request.Empresa.FechaInicio;
+                empresa.FechaFin = request.Empresa.FechaFin;
                 empresa.TipoContratoId = request.Empresa.TipoContratoId;
                 empresa.NoNotario = request.Empresa.NoNotario;
                 empresa.Notario = request.Empresa.Notario;
@@ -546,6 +562,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                 cliente.RepresentanteLegal = request.Cliente.RepresentanteLegal;
                 cliente.Email = request.Cliente.Email;
                 cliente.FechaConstitucion = request.Cliente.FechaConstitucion;
+                cliente.FechaInicio = request.Cliente.FechaInicio;
+                cliente.FechaFin = request.Cliente.FechaFin;
                 cliente.TipoContratoId = request.Cliente.TipoContratoId;
                 cliente.NoNotario = request.Cliente.NoNotario;
                 cliente.Notario = request.Cliente.Notario;

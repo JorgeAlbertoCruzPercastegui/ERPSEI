@@ -189,6 +189,18 @@
   <data name="FechaConstitucionPrestadorField" xml:space="preserve">
     <value>Fecha Constitución:</value>
   </data>
+  <data name="FechaFinPrestadorField" xml:space="preserve">
+    <value>Fecha Fin:</value>
+  </data>
+  <data name="FechaFinPrestatarioField" xml:space="preserve">
+    <value>Fecha Fin:</value>
+  </data>
+  <data name="FechaInicioPrestadorField" xml:space="preserve">
+    <value>Fecha Inicio:</value>
+  </data>
+  <data name="FechaInicioPrestatarioField" xml:space="preserve">
+    <value>Fecha Inicio:</value>
+  </data>
   <data name="FilterTitle" xml:space="preserve">
     <value>Filtro de búsqueda</value>
   </data>

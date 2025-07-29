@@ -177,6 +177,8 @@
                         <label>@Localizer["PrestadorField"]</label>
                         <select class="form-select" id="prestadorSelect"></select>
                     </div>
+                    <div class="col-md-4"><label>@Localizer["FechaInicioPrestadorField"]</label> <input type="date" class="form-control" id="prestadorFechaInicio" /></div>
+                    <div class="col-md-4"><label>@Localizer["FechaFinPrestadorField"]</label> <input type="date" class="form-control" id="prestadorFechaFin" /></div>
                     <div class="col-md-4"><label>@Localizer["RFCPrestadorField"]</label> <input type="text" class="form-control" id="prestadorRFC" /></div>
                     <div class="col-md-4"><label>@Localizer["DomicilioFiscalPrestadorField"]</label> <input type="text" class="form-control" id="prestadorDomicilio" /></div>
                     <div class="col-md-4"><label>@Localizer["NoNotarioPrestadorField"]</label> <input type="text" class="form-control" id="prestadorNumeroNotario" /></div>
@@ -200,6 +202,8 @@
                         <label>@Localizer["NombrePrestatarioField"]</label>
                         <select class="form-select" id="prestatarioSelect"></select>
                     </div>
+                    <div class="col-md-4"><label>@Localizer["FechaInicioPrestatarioField"]</label> <input type="date" class="form-control" id="prestatarioFechaInicio" /></div>
+                    <div class="col-md-4"><label>@Localizer["FechaFinPrestatarioField"]</label> <input type="date" class="form-control" id="prestatarioFechaFin" /></div>
                     <div class="col-md-4"><label>@Localizer["RFCPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioRFC" /></div>
                     <div class="col-md-4"><label>@Localizer["DomicilioFiscalPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioDomicilio" /></div>
                     <div class="col-md-4"><label>@Localizer["NoNotarioPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioNumeroNotario" /></div>
@@ -233,6 +237,8 @@
                     <div class="col-md-4"><label>ID:</label> <input type="text" class="form-control" id="prestadorIdVer" readonly /></div>
                     <div class="col-md-4"><label>Tipo Contrato:</label> <input type="text" class="form-control" id="tipoContratoPrestadorVer" readonly /></div>
                     <div class="col-md-4"><label>Prestador:</label> <input type="text" class="form-control" id="prestadorNombreVer" readonly /></div>
+                    <div class="col-md-4"><label>Fecha Inicio:</label> <input type="date" class="form-control" id="prestadorFechaInicioVer" readonly /></div>
+                    <div class="col-md-4"><label>Fecha Fin:</label> <input type="date" class="form-control" id="prestadorFechaFinVer" readonly /></div>
                     <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestadorRFCVer" readonly /></div>
                     <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestadorDomicilioVer" readonly /></div>
                     <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestadorNumeroNotarioVer" readonly /></div>
@@ -250,6 +256,8 @@
                     <div class="col-md-4"><label>ID:</label> <input type="text" class="form-control" id="prestatarioIdVer" readonly /></div>
                     <div class="col-md-4"><label>Tipo Contrato:</label> <input type="text" class="form-control" id="tipoContratoPrestatarioVer" readonly /></div>
                     <div class="col-md-4"><label>Prestatario:</label> <input type="text" class="form-control" id="prestatarioNombreVer" readonly /></div>
+                    <div class="col-md-4"><label>Fecha Inicio:</label> <input type="date" class="form-control" id="prestatarioFechaInicioVer" readonly /></div>
+                    <div class="col-md-4"><label>Fecha Fin:</label> <input type="date" class="form-control" id="prestatarioFechaFinVer" readonly /></div>
                     <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestatarioRFCVer" readonly /></div>
                     <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestatarioDomicilioVer" readonly /></div>
                     <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestatarioNumeroNotarioVer" readonly /></div>
@@ -284,6 +292,8 @@
                         <div class="col-md-4"><label>Id:</label> <input type="text" class="form-control" id="prestadorIdEditar" readonly /></div>
                         <div class="col-md-4"><label>Tipo Contrato:</label> <select class="form-select" id="tipoContratoPrestadorEditar"></select></div>
                         <div class="col-md-4"><label>Prestador:</label> <input type="text" class="form-control" id="prestadorNombreEditar" /></div>
+                        <div class="col-md-4"><label>Fecha Inicio:</label> <input type="date" class="form-control" id="prestadorFechaInicioEditar" /></div>
+                        <div class="col-md-4"><label>Fecha Fin:</label> <input type="date" class="form-control" id="prestadorFechaFinEditar" /></div>
                         <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestadorRFCEditar" /></div>
                         <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestadorDomicilioEditar" /></div>
                         <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestadorNumeroNotarioEditar" /></div>
@@ -301,6 +311,8 @@
                         <div class="col-md-4"><label>Id:</label> <input type="text" class="form-control" id="prestatarioIdEditar" readonly /></div>
                         <div class="col-md-4"><label>Tipo Contrato:</label> <select class="form-select" id="tipoContratoPrestatarioEditar"></select></div>
                         <div class="col-md-4"><label>Prestatario:</label> <input type="text" class="form-control" id="prestatarioNombreEditar" /></div>
+                        <div class="col-md-4"><label>Fecha Inicio:</label> <input type="date" class="form-control" id="prestatarioFechaInicioEditar" /></div>
+                        <div class="col-md-4"><label>Fecha Fin:</label> <input type="date" class="form-control" id="prestatarioFechaFinEditar" /></div>
                         <div class="col-md-4"><label>RFC:</label> <input type="text" class="form-control" id="prestatarioRFCEditar" /></div>
                         <div class="col-md-4"><label>Domicilio Fiscal:</label> <input type="text" class="form-control" id="prestatarioDomicilioEditar" /></div>
                         <div class="col-md-4"><label># Notario:</label> <input type="text" class="form-control" id="prestatarioNumeroNotarioEditar" /></div>

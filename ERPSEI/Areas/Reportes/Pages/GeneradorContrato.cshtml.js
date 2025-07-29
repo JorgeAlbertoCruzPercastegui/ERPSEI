@@ -440,6 +440,8 @@ function onGuardarClick() {
         prestadorRepresentante: $('#prestadorRepresentante').val(),
         prestadorEmail: $('#prestadorEmail').val(),
         prestadorFecha: $('#prestadorFecha').val(),
+        prestadorFechaInicio: $('#prestadorFechaInicio').val(),
+        prestadorFechaFin: $('#prestadorFechaFin').val(),
         tipoContratoPrestadorId: parseInt($('#tipoContratoSelectPrestador').val()),
         prestadorNoNotario: parseInt($('#prestadorNumeroNotario').val()),
         prestadorNotario: $('#prestadorNotario').val(),
@@ -452,6 +454,8 @@ function onGuardarClick() {
         prestatarioRepresentante: $('#prestatarioRepresentante').val(),
         prestatarioEmail: $('#prestatarioEmail').val(),
         prestatarioFecha: $('#prestatarioFecha').val(),
+        prestatarioFechaInicio: $('#prestatarioFechaInicio').val(),
+        prestatarioFechaFin: $('#prestatarioFechaFin').val(),
         tipoContratoPrestatarioId: parseInt($('#tipoContratoSelectPrestatario').val()),
         prestatarioNoNotario: parseInt($('#prestatarioNumeroNotario').val()), 
         prestatarioNotario: $('#prestatarioNotario').val(),
@@ -500,6 +504,8 @@ function initGeneradorContratoDialog(modo, row) {
         $('#prestadorNotarioVer').val(row.notario || '');
         $('#prestadorRepresentanteVer').val(row.representanteLegal || '');
         $('#prestadorFechaVer').val(row.fechaConstitucionJS || '');
+        $('#prestadorFechaInicioVer').val(row.fechaInicioJS || '');
+        $('#prestadorFechaFinVer').val(row.fechaFinJS || '');
         $('#prestadorEmailVer').val(row.email || '');
         $('#prestadorWebVer').val(row.paginaWeb || '');
 
@@ -516,6 +522,8 @@ function initGeneradorContratoDialog(modo, row) {
                 $('#prestatarioNotarioVer').val(cliente.notario || '');
                 $('#prestatarioRepresentanteVer').val(cliente.representanteLegal || '');
                 $('#prestatarioFechaVer').val(cliente.fechaConstitucion || '');
+                $('#prestatarioFechaInicioVer').val(cliente.fechaInicio || '');
+                $('#prestatarioFechaFinVer').val(cliente.fechaFin || '');
                 $('#prestatarioEmailVer').val(cliente.email || '');
                 $('#prestatarioWebVer').val(cliente.paginaWeb || '');
             }
@@ -545,6 +553,8 @@ function initGeneradorContratoDialog(modo, row) {
             $('#prestadorNotarioEditar').val(row.notario || '');
             $('#prestadorRepresentanteEditar').val(row.representanteLegal || '');
             $('#prestadorFechaEditar').val(row.fechaConstitucionJS || '');
+            $('#prestadorFechaInicioEditar').val(row.fechaInicioJS || '');
+            $('#prestadorFechaFinEditar').val(row.fechaFinJS || '');
             $('#prestadorEmailEditar').val(row.email || '');
             $('#prestadorWebEditar').val(row.paginaWeb || '');
 
@@ -561,6 +571,8 @@ function initGeneradorContratoDialog(modo, row) {
                     $('#prestatarioNotarioEditar').val(cliente.notario || '');
                     $('#prestatarioRepresentanteEditar').val(cliente.representanteLegal || '');
                     $('#prestatarioFechaEditar').val(cliente.fechaConstitucion || '');
+                    $('#prestatarioFechaInicioEditar').val(cliente.fechaInicio || '');
+                    $('#prestatarioFechaFinEditar').val(cliente.fechaFin || '');
                     $('#prestatarioEmailEditar').val(cliente.email || '');
                     $('#prestatarioWebEditar').val(cliente.paginaWeb || '');
                 }
@@ -603,6 +615,8 @@ function onActualizarClick() {
             representanteLegal: $('#prestadorRepresentanteEditar').val(),
             email: $('#prestadorEmailEditar').val(),
             fechaConstitucion: $('#prestadorFechaEditar').val(),
+            fechaInicio: $('#prestadorFechaInicioEditar').val(),
+            fechaFin: $('#prestadorFechaFinEditar').val(),
             tipoContratoId: parseInt(tipoContratoPrestador),
             noNotario: parseInt($('#prestadorNumeroNotarioEditar').val()),
             notario: $('#prestadorNotarioEditar').val(),
@@ -616,6 +630,8 @@ function onActualizarClick() {
             representanteLegal: $('#prestatarioRepresentanteEditar').val(),
             email: $('#prestatarioEmailEditar').val(),
             fechaConstitucion: $('#prestatarioFechaEditar').val(),
+            fechaInicio: $('#prestatarioFechaInicioEditar').val(),
+            fechaFin: $('#prestatarioFechaFinEditar').val(),
             tipoContratoId: parseInt(tipoContratoPrestatario),
             noNotario: parseInt($('#prestatarioNumeroNotarioEditar').val()),
             notario: $('#prestatarioNotarioEditar').val(),

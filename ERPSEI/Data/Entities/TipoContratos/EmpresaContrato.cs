@@ -4,6 +4,8 @@
     {
         public int Id { get; set; }
         public DateTime? FechaConstitucion { get; set; }
+        public DateTime? FechaInicio { get; set; }
+        public DateTime? FechaFin { get; set; }
         public string? RazonSocial { get; set; }
         public string? DomicilioFiscal { get; set; }
         public string? RFC { get; set; }
