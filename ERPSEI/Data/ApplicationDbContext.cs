@@ -157,6 +157,7 @@ namespace ERPSEI.Data
         public DbSet<TipoContrato> TipoContratos { get; set; }
         public DbSet<EmpresaContrato> EmpresaContratos { get; set; }
         public DbSet<ClienteContrato> ClienteContratos { get; set; }
+        public DbSet<HistorialContratoGenerado> HistorialContratoGenerados { get; set; }
 
         //Vacaciones
         public DbSet<DiaFestivo> DiasFestivos { get; set; }
@@ -221,7 +222,7 @@ namespace ERPSEI.Data
             //Vacaciones
             BuildVacaciones(modelBuilder);
 
-            //Vacaciones
+            //Contratos
             BuildTipoContratos(modelBuilder);
         }
 
@@ -256,6 +257,20 @@ namespace ERPSEI.Data
                 .WithMany()
                 .HasForeignKey(cc => cc.TipoContratoId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // HistorialContratoGenerado -> EmpresaContrato
+            b.Entity<HistorialContratoGenerado>()
+                .HasOne(h => h.EmpresaContrato)
+                .WithMany()
+                .HasForeignKey(h => h.EmpresaContratoId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // HistorialContratoGenerado -> ClienteContrato
+            b.Entity<HistorialContratoGenerado>()
+                .HasOne(h => h.ClienteContrato)
+                .WithMany()
+                .HasForeignKey(h => h.ClienteContratoId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
 
         private static void BuildActivosFijos(ModelBuilder b)

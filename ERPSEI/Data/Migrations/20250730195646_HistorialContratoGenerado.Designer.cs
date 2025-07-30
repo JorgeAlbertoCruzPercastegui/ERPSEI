@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250730195646_HistorialContratoGenerado")]
+    partial class HistorialContratoGenerado
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4617,45 +4620,6 @@ namespace ERPSEI.Data.Migrations
                     b.ToTable("EmpresaContratos");
                 });
 
-            modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.HistorialContratoGenerado", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("ArchivoGenerado")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ClienteContratoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EmpresaContratoId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaGeneracion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("NumeroContrato")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UsuarioGenerador")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClienteContratoId");
-
-                    b.HasIndex("EmpresaContratoId");
-
-                    b.ToTable("HistorialContratoGenerados");
-                });
-
             modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.TipoContrato", b =>
                 {
                     b.Property<int>("Id")
@@ -6260,25 +6224,6 @@ namespace ERPSEI.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("TipoContrato");
-                });
-
-            modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.HistorialContratoGenerado", b =>
-                {
-                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.ClienteContrato", "ClienteContrato")
-                        .WithMany()
-                        .HasForeignKey("ClienteContratoId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.EmpresaContrato", "EmpresaContrato")
-                        .WithMany()
-                        .HasForeignKey("EmpresaContratoId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("ClienteContrato");
-
-                    b.Navigation("EmpresaContrato");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Usuarios.AccesoModulo", b =>

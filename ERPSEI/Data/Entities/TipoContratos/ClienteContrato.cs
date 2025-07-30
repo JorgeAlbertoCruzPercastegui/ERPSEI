@@ -17,6 +17,7 @@ namespace ERPSEI.Data.Entities.TipoContratos
         public string? Email { get; set; }
         public string? PaginaWeb { get; set; }
         public bool Deshabilitado { get; set; } = false;
+        public bool Estatus { get; set; } = false;
 
         // 🔗 Relación con EmpresaContrato
         public int EmpresaContratoId { get; set; }
