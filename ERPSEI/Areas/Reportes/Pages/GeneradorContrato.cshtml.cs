@@ -175,7 +175,7 @@ namespace ERPSEI.Areas.Reportes.Pages
         public async Task<JsonResult> OnGetEmpresaContratosList()
         {
             var empresas = await empresaContratosManager.GetAllAsync();
-            empresas = empresas.Where(e => !e.Deshabilitado).ToList();
+            empresas = empresas.Where(e => !e.Deshabilitado && !e.Estatus).ToList();
 
             var jsonEmpresas = new List<object>();
 
@@ -214,6 +214,11 @@ namespace ERPSEI.Areas.Reportes.Pages
             try
             {
                 var empresas = await empresaContratosManager.GetAllAsync(InputFiltro);
+
+                // ? Filtrar solo las empresas que no tienen contrato generado (Estatus = false)
+                empresas = empresas
+                    .Where(e => !e.Deshabilitado && !e.Estatus)
+                    .ToList();
 
                 var result = empresas.Select(e =>
                 {
@@ -325,21 +330,37 @@ namespace ERPSEI.Areas.Reportes.Pages
         {
             try
             {
-                // Validar existencia de cliente y empresa
-                var cliente = await clienteContratosManager.GetByIdAsync(clienteId);
-                var empresa = await empresaContratosManager.GetByIdAsync(empresaId);
+                var cliente = await db.ClienteContratos.FirstOrDefaultAsync(c => c.Id == clienteId);
+                var empresa = await db.EmpresaContratos.FirstOrDefaultAsync(e => e.Id == empresaId);
 
                 if (cliente == null || empresa == null)
                     return NotFound("Cliente o empresa no encontrados.");
 
-                // Definir rutas
-                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", "Contrato_Generado_EDIT.docx");
-                var outputPath = Path.Combine(Path.GetTempPath(), $"Contrato_{Guid.NewGuid()}.docx");
+                // 1. Actualizar estatus
+                empresa.Estatus = true;
+                cliente.Estatus = true;
 
-                // Copiar plantilla para edición
+                // 2. Insertar en historial
+                var historial = new HistorialContratoGenerado
+                {
+                    EmpresaContratoId = empresa.Id,
+                    ClienteContratoId = cliente.Id,
+                    UsuarioGenerador = User.Identity?.Name ?? "Desconocido",
+                    FechaGeneracion = DateTime.Now,
+                    NumeroContrato = $"CTR-{empresa.Id}-{cliente.Id}-{DateTime.Now:yyyyMMddHHmmss}",
+                    ArchivoGenerado = $"Contrato_{empresa.RazonSocial}_{cliente.RazonSocial}.docx",
+                    Activo = true
+                };
+
+                db.HistorialContratoGenerados.Add(historial);
+                await db.SaveChangesAsync();
+
+                // 3. Crear contrato Word
+                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", "Contrato_Generado_EDIT.docx");
+                var outputPath = Path.Combine(Path.GetTempPath(), historial.ArchivoGenerado);
+
                 System.IO.File.Copy(templatePath, outputPath, overwrite: true);
 
-                // Insertar contenido dinámico
                 using (var outputDocument = new TemplateProcessor(outputPath).SetRemoveContentControls(true))
                 {
                     var content = new Content(
@@ -361,11 +382,10 @@ namespace ERPSEI.Areas.Reportes.Pages
                     outputDocument.SaveChanges();
                 }
 
-                // Leer archivo generado y devolverlo al cliente
                 var memory = new MemoryStream(await System.IO.File.ReadAllBytesAsync(outputPath));
                 return File(memory,
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    $"Contrato_{empresa.RazonSocial}_{cliente.RazonSocial}.docx");
+                    historial.ArchivoGenerado);
             }
             catch (Exception ex)
             {

@@ -92,6 +92,16 @@ document.addEventListener("DOMContentLoaded", function (event) {
     });
 });
 
+
+// ✅ Refrescar tabla automáticamente cuando se hace clic en "Generar Contrato"
+$(document).on("click", "a[href*='GenerarWord']", function () {
+    // Espera 1.5 segundos para que el backend actualice estatus y el historial
+    setTimeout(function () {
+        $('#table').bootstrapTable('refresh');
+    }, 1500);
+});
+
+
 //Funcionalidad Tabla
 function getIdSelections() {
     return $.map(table.bootstrapTable('getSelections'), function (row) {
