@@ -356,7 +356,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                 await db.SaveChangesAsync();
 
                 // 3. Crear contrato Word
-                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", "Contrato_Generado_EDIT.docx");
+                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", "CONTRATO_DE_PRESTACION_DE_SERVICIOS_MODELO_1_SERVICIOS_PROFESIONALES.docx");
                 var outputPath = Path.Combine(Path.GetTempPath(), historial.ArchivoGenerado);
 
                 System.IO.File.Copy(templatePath, outputPath, overwrite: true);
@@ -365,17 +365,17 @@ namespace ERPSEI.Areas.Reportes.Pages
                 {
                     var content = new Content(
                         new FieldContent("Empresa", empresa.RazonSocial ?? "-"),
-                        new FieldContent("RFC", empresa.RFC ?? "-"),
-                        new FieldContent("Domicilio_Empresa", empresa.DomicilioFiscal ?? "-"),
+                        //new FieldContent("RFC", empresa.RFC ?? "-"),
+                        //new FieldContent("Domicilio_Empresa", empresa.DomicilioFiscal ?? "-"),
                         new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
-                        new FieldContent("RFC_Cliente", cliente.RFC ?? "-"),
-                        new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-"),
+                        //new FieldContent("RFC_Cliente", cliente.RFC ?? "-"),
+                        //new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-"),
                         new FieldContent("Representante_Empresa", empresa.RepresentanteLegal ?? "-"),
-                        new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-"),
-                        new FieldContent("Notario_Empresa", empresa.Notario ?? "-"),
-                        new FieldContent("NoNotario_Empresa", empresa.NoNotario?.ToString() ?? "-"),
-                        new FieldContent("Notario_Cliente", cliente.Notario ?? "-"),
-                        new FieldContent("NoNotario_Cliente", cliente.NoNotario?.ToString() ?? "-")
+                        new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-")
+                        //new FieldContent("Notario_Empresa", empresa.Notario ?? "-"),
+                        //new FieldContent("NoNotario_Empresa", empresa.NoNotario?.ToString() ?? "-"),
+                        //new FieldContent("Notario_Cliente", cliente.Notario ?? "-"),
+                        //new FieldContent("NoNotario_Cliente", cliente.NoNotario?.ToString() ?? "-")
                     );
 
                     outputDocument.FillContent(content);

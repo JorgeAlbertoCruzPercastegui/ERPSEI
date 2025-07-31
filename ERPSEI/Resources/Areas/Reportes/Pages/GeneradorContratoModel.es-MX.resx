@@ -117,45 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ActualizarContratoField" xml:space="preserve">
-    <value>Actualizar Contrato</value>
-  </data>
-  <data name="AddButton" xml:space="preserve">
-    <value>Agregar Contrato</value>
-  </data>
-  <data name="CerrarField" xml:space="preserve">
-    <value>Cerrar</value>
-  </data>
-  <data name="ColActionsHeader" xml:space="preserve">
-    <value>Acciones</value>
-  </data>
-  <data name="ColDomicilioFiscalHeader" xml:space="preserve">
-    <value>Domicilio Fiscal</value>
-  </data>
-  <data name="ColEmailHeader" xml:space="preserve">
-    <value>Email</value>
-  </data>
-  <data name="ColFechaConstitucionHeader" xml:space="preserve">
-    <value>Fecha Constitución</value>
-  </data>
-  <data name="ColIdHeader" xml:space="preserve">
-    <value>Id</value>
-  </data>
-  <data name="ColNoEscrituraHeader" xml:space="preserve">
-    <value>No Escritura</value>
-  </data>
-  <data name="ColNotarioHeader" xml:space="preserve">
-    <value>Notario</value>
-  </data>
-  <data name="ColRazonSocialHeader" xml:space="preserve">
-    <value>Razón Social</value>
-  </data>
-  <data name="ColRepresentanteLegalHeader" xml:space="preserve">
-    <value>Representante Legal</value>
-  </data>
-  <data name="ColRFCHeader" xml:space="preserve">
-    <value>RFC</value>
-  </data>
   <data name="ConsultadoSuccessfully" xml:space="preserve">
     <value>Registro eliminado exitosamente.</value>
   </data>
@@ -163,126 +124,12 @@
     <value>Contrato guardado correctamente</value>
   </data>
   <data name="ContactUpdatedSuccessfully" xml:space="preserve">
-    <value>Registro actualizado exitosamente</value>
-  </data>
-  <data name="ContactUpdatedSuccessfully1" xml:space="preserve">
     <value>Registro actualizado exitosamente.</value>
-  </data>
-  <data name="DeactivateButton" xml:space="preserve">
-    <value>Eliminar Contrato</value>
   </data>
   <data name="DeleteOfficeDialogQuestion" xml:space="preserve">
     <value>¿Estás seguro que quieres eliminar el registro?</value>
   </data>
   <data name="DeleteOfficeDialogTitle" xml:space="preserve">
     <value>Eliminar Registro</value>
-  </data>
-  <data name="DomicilioFiscalPrestadorField" xml:space="preserve">
-    <value>Domicilio Fiscal:</value>
-  </data>
-  <data name="EditarContratoField" xml:space="preserve">
-    <value>Editar Registro</value>
-  </data>
-  <data name="EditButtonTitle" xml:space="preserve">
-    <value>Editar</value>
-  </data>
-  <data name="EditDialogTitle" xml:space="preserve">
-    <value>Editar Registro</value>
-  </data>
-  <data name="EmailPrestadorField" xml:space="preserve">
-    <value>Email:</value>
-  </data>
-  <data name="ErrorIneSavedUnSuccessfully" xml:space="preserve">
-    <value>Error inesperado al guardar</value>
-  </data>
-  <data name="ErrorSaveContradUnSuccessfully" xml:space="preserve">
-    <value>Error al guardar contrato</value>
-  </data>
-  <data name="FechaConstitucionPrestadorField" xml:space="preserve">
-    <value>Fecha Constitución:</value>
-  </data>
-  <data name="FechaFinPrestadorField" xml:space="preserve">
-    <value>Fecha Fin:</value>
-  </data>
-  <data name="FechaFinPrestatarioField" xml:space="preserve">
-    <value>Fecha Fin:</value>
-  </data>
-  <data name="FechaInicioPrestadorField" xml:space="preserve">
-    <value>Fecha Inicio:</value>
-  </data>
-  <data name="FechaInicioPrestatarioField" xml:space="preserve">
-    <value>Fecha Inicio:</value>
-  </data>
-  <data name="FilterTitle" xml:space="preserve">
-    <value>Filtro de búsqueda</value>
-  </data>
-  <data name="GuardarContratoField" xml:space="preserve">
-    <value>Guardar Contrato</value>
-  </data>
-  <data name="IdPrestadorField" xml:space="preserve">
-    <value>ID:</value>
-  </data>
-  <data name="IdPrestatarioField" xml:space="preserve">
-    <value>ID:</value>
-  </data>
-  <data name="InformacionPrestadorField" xml:space="preserve">
-    <value>Información del Prestador</value>
-  </data>
-  <data name="InformacionPrestatarioField" xml:space="preserve">
-    <value>Información del Prestatario</value>
-  </data>
-  <data name="NombrePrestatarioField" xml:space="preserve">
-    <value>Prestatario</value>
-  </data>
-  <data name="NoNotarioPrestadorField" xml:space="preserve">
-    <value># Notario:</value>
-  </data>
-  <data name="NotarioPrestadorField" xml:space="preserve">
-    <value>Notario:</value>
-  </data>
-  <data name="NuevoContratoField" xml:space="preserve">
-    <value>Nuevo Contrato</value>
-  </data>
-  <data name="PaginaWebPrestadorField" xml:space="preserve">
-    <value>Página Web:</value>
-  </data>
-  <data name="PrestadorField" xml:space="preserve">
-    <value>Prestador:</value>
-  </data>
-  <data name="PrestatarioField" xml:space="preserve">
-    <value>Información del Prestatario</value>
-  </data>
-  <data name="RazonSocialPrestadorField" xml:space="preserve">
-    <value>Nombre Prestador</value>
-  </data>
-  <data name="RazonSocialPrestatarioField" xml:space="preserve">
-    <value>Nombre Prestatario</value>
-  </data>
-  <data name="RepresentanteLegalPrestadorField" xml:space="preserve">
-    <value>Representante Legal:</value>
-  </data>
-  <data name="RFCPrestadorField" xml:space="preserve">
-    <value>RFC:</value>
-  </data>
-  <data name="SearchButton" xml:space="preserve">
-    <value>Buscar</value>
-  </data>
-  <data name="SeeButtonTitle" xml:space="preserve">
-    <value>Ver</value>
-  </data>
-  <data name="SeeDialogTitle" xml:space="preserve">
-    <value>Ver Registro</value>
-  </data>
-  <data name="TipoContratoField" xml:space="preserve">
-    <value>Tipo Contrato:</value>
-  </data>
-  <data name="TipoContratoPrestatarioField" xml:space="preserve">
-    <value>Tipo Contrato:</value>
-  </data>
-  <data name="Title" xml:space="preserve">
-    <value>Generador Contratos Empresas</value>
-  </data>
-  <data name="VerContratoField" xml:space="preserve">
-    <value>Ver Registro</value>
   </data>
 </root>
