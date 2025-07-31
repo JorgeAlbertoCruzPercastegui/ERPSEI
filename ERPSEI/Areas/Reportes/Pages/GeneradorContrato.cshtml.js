@@ -186,7 +186,7 @@ function initTable() {
                 width: "80px"
             },
             {
-                title: "RazonSocial",
+                title: "Razon Social",
                 field: "razonSocial",
                 align: "center",
                 valign: "middle",
@@ -194,14 +194,14 @@ function initTable() {
                 width: "80px"
             },
             {
-                title: "DomicilioFiscal",
+                title: "Domicilio Fiscal",
                 field: "domicilioFiscal",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
-                title: "NoNotario",
+                title: "No. Notario",
                 field: "noNotario",
                 align: "center",
                 valign: "middle",
@@ -215,7 +215,7 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "RepresentanteLegal",
+                title: "Representante Legal",
                 field: "representanteLegal",
                 align: "center",
                 valign: "middle",
@@ -229,7 +229,7 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "TipoContrato",
+                title: "Tipo Contrato",
                 field: "tipoContrato",
                 align: "center",
                 valign: "middle",

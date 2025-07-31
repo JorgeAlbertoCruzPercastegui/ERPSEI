@@ -423,20 +423,17 @@ namespace ERPSEI.Areas.Reportes.Pages
                 db.HistorialContratoGenerados.Add(historial);
                 await db.SaveChangesAsync();
 
-                // 3. Seleccionar plantilla Word según la Razón Social
+                // 3. Seleccionar plantilla
                 string templateFileName;
+                bool isModelo2 = false;
 
                 if (empresa.RazonSocial.Equals("CYBERTRADE INTERNATIONAL, S.A. DE C.V.", StringComparison.OrdinalIgnoreCase))
                 {
                     templateFileName = "CONTRATO_DE_PRESTACION_DE_SERVICIOS_MODELO_2_SERVICIOS_PROFESIONALES.docx";
-                }
-                else if (empresa.RazonSocial.Contains("DOR DESARROLLOS INTEGRALES, S.A. DE C.V.", StringComparison.OrdinalIgnoreCase))
-                {
-                    templateFileName = "CONTRATO_DE_PRESTACION_DE_SERVICIOS_MODELO_1_SERVICIOS_PROFESIONALES.docx";
+                    isModelo2 = true;
                 }
                 else
                 {
-                    // Plantilla por defecto en caso de no coincidir ninguna condición
                     templateFileName = "CONTRATO_DE_PRESTACION_DE_SERVICIOS_MODELO_1_SERVICIOS_PROFESIONALES.docx";
                 }
 
@@ -445,25 +442,41 @@ namespace ERPSEI.Areas.Reportes.Pages
 
                 System.IO.File.Copy(templatePath, outputPath, overwrite: true);
 
-                // 4. Procesar contenido del contrato
-                using (var outputDocument = new TemplateProcessor(outputPath).SetRemoveContentControls(true))
+                // 4. Crear contenido dinámico según modelo
+                Content content;
+
+                if (isModelo2)
                 {
-                    var content = new Content(
+                    // Campos adicionales para el Modelo 2
+                    content = new Content(
                         new FieldContent("Empresa", empresa.RazonSocial ?? "-"),
-                        new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
-                        new FieldContent("Representante_Empresa", empresa.RepresentanteLegal ?? "-"),
-                        new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-"),
-                        new FieldContent("Empresa", empresa.RazonSocial ?? "-")
                         //new FieldContent("RFC", empresa.RFC ?? "-"),
                         //new FieldContent("Domicilio_Empresa", empresa.DomicilioFiscal ?? "-"),
+                        new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
                         //new FieldContent("RFC_Cliente", cliente.RFC ?? "-"),
                         //new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-"),
+                        new FieldContent("Representante_Empresa", empresa.RepresentanteLegal ?? "-"),
+                        new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-")
                         //new FieldContent("Notario_Empresa", empresa.Notario ?? "-"),
                         //new FieldContent("NoNotario_Empresa", empresa.NoNotario?.ToString() ?? "-"),
                         //new FieldContent("Notario_Cliente", cliente.Notario ?? "-"),
                         //new FieldContent("NoNotario_Cliente", cliente.NoNotario?.ToString() ?? "-")
                     );
+                }
+                else
+                {
+                    // Campos básicos para el Modelo 1
+                    content = new Content(
+                        new FieldContent("Empresa", empresa.RazonSocial ?? "-"),
+                        new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
+                        new FieldContent("Representante_Empresa", empresa.RepresentanteLegal ?? "-"),
+                        new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-")
+                    );
+                }
 
+                // 5. Procesar documento
+                using (var outputDocument = new TemplateProcessor(outputPath).SetRemoveContentControls(true))
+                {
                     outputDocument.FillContent(content);
                     outputDocument.SaveChanges();
                 }
