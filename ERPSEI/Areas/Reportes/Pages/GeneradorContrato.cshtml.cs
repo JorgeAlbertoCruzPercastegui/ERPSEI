@@ -326,7 +326,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(result);
         }
 
-        public async Task<IActionResult> OnGetGenerarWordAsync(int clienteId, int empresaId)
+        /*public async Task<IActionResult> OnGetGenerarWordAsync(int clienteId, int empresaId)
         {
             try
             {
@@ -372,6 +372,92 @@ namespace ERPSEI.Areas.Reportes.Pages
                         //new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-"),
                         new FieldContent("Representante_Empresa", empresa.RepresentanteLegal ?? "-"),
                         new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-")
+                    //new FieldContent("Notario_Empresa", empresa.Notario ?? "-"),
+                    //new FieldContent("NoNotario_Empresa", empresa.NoNotario?.ToString() ?? "-"),
+                    //new FieldContent("Notario_Cliente", cliente.Notario ?? "-"),
+                    //new FieldContent("NoNotario_Cliente", cliente.NoNotario?.ToString() ?? "-")
+                    );
+
+                    outputDocument.FillContent(content);
+                    outputDocument.SaveChanges();
+                }
+
+                var memory = new MemoryStream(await System.IO.File.ReadAllBytesAsync(outputPath));
+                return File(memory,
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    historial.ArchivoGenerado);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al generar contrato Word");
+                return BadRequest($"Error al generar el contrato: {ex.Message}");
+            }
+        }*/
+
+        public async Task<IActionResult> OnGetGenerarWordAsync(int clienteId, int empresaId)
+        {
+            try
+            {
+                var cliente = await db.ClienteContratos.FirstOrDefaultAsync(c => c.Id == clienteId);
+                var empresa = await db.EmpresaContratos.FirstOrDefaultAsync(e => e.Id == empresaId);
+
+                if (cliente == null || empresa == null)
+                    return NotFound("Cliente o empresa no encontrados.");
+
+                // 1. Actualizar estatus
+                empresa.Estatus = true;
+                cliente.Estatus = true;
+
+                // 2. Insertar en historial
+                var historial = new HistorialContratoGenerado
+                {
+                    EmpresaContratoId = empresa.Id,
+                    ClienteContratoId = cliente.Id,
+                    UsuarioGenerador = User.Identity?.Name ?? "Desconocido",
+                    FechaGeneracion = DateTime.Now,
+                    NumeroContrato = $"CTR-{empresa.Id}-{cliente.Id}-{DateTime.Now:yyyyMMddHHmmss}",
+                    ArchivoGenerado = $"Contrato_{empresa.RazonSocial}_{cliente.RazonSocial}.docx",
+                    Activo = true
+                };
+
+                db.HistorialContratoGenerados.Add(historial);
+                await db.SaveChangesAsync();
+
+                // 3. Seleccionar plantilla Word según la Razón Social
+                string templateFileName;
+
+                if (empresa.RazonSocial.Equals("CYBERTRADE INTERNATIONAL, S.A. DE C.V.", StringComparison.OrdinalIgnoreCase))
+                {
+                    templateFileName = "CONTRATO_DE_PRESTACION_DE_SERVICIOS_MODELO_2_SERVICIOS_PROFESIONALES.docx";
+                }
+                else if (empresa.RazonSocial.Contains("DOR DESARROLLOS INTEGRALES, S.A. DE C.V.", StringComparison.OrdinalIgnoreCase))
+                {
+                    templateFileName = "CONTRATO_DE_PRESTACION_DE_SERVICIOS_MODELO_1_SERVICIOS_PROFESIONALES.docx";
+                }
+                else
+                {
+                    // Plantilla por defecto en caso de no coincidir ninguna condición
+                    templateFileName = "CONTRATO_DE_PRESTACION_DE_SERVICIOS_MODELO_1_SERVICIOS_PROFESIONALES.docx";
+                }
+
+                var templatePath = Path.Combine(_hostingEnvironment.WebRootPath, "templates", templateFileName);
+                var outputPath = Path.Combine(Path.GetTempPath(), historial.ArchivoGenerado);
+
+                System.IO.File.Copy(templatePath, outputPath, overwrite: true);
+
+                // 4. Procesar contenido del contrato
+                using (var outputDocument = new TemplateProcessor(outputPath).SetRemoveContentControls(true))
+                {
+                    var content = new Content(
+                        new FieldContent("Empresa", empresa.RazonSocial ?? "-"),
+                        new FieldContent("Cliente", cliente.RazonSocial ?? "-"),
+                        new FieldContent("Representante_Empresa", empresa.RepresentanteLegal ?? "-"),
+                        new FieldContent("Representante_Cliente", cliente.RepresentanteLegal ?? "-"),
+                        new FieldContent("Empresa", empresa.RazonSocial ?? "-")
+                        //new FieldContent("RFC", empresa.RFC ?? "-"),
+                        //new FieldContent("Domicilio_Empresa", empresa.DomicilioFiscal ?? "-"),
+                        //new FieldContent("RFC_Cliente", cliente.RFC ?? "-"),
+                        //new FieldContent("Domicilio_Cliente", cliente.DomicilioFiscal ?? "-"),
                         //new FieldContent("Notario_Empresa", empresa.Notario ?? "-"),
                         //new FieldContent("NoNotario_Empresa", empresa.NoNotario?.ToString() ?? "-"),
                         //new FieldContent("Notario_Cliente", cliente.Notario ?? "-"),
@@ -393,6 +479,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                 return BadRequest($"Error al generar el contrato: {ex.Message}");
             }
         }
+
 
         //Métodos para agregar en nuevo contrato
 
