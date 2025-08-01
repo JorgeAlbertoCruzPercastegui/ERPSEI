@@ -168,50 +168,139 @@
 
                 <h6>@Localizer["InformacionPrestadorField"]</h6>
                 <div class="row">
-                    <div class="col-md-4"><label>@Localizer["IdPrestadorField"]</label> <input type="text" class="form-control" id="prestadorId" readonly /></div>
+                    <div class="col-md-4">
+                        <label>@Localizer["IdPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestadorId" readonly />
+                    </div>
+
                     <div class="col-md-4">
                         <label>@Localizer["TipoContratoField"]</label>
-                        <select class="form-select" id="tipoContratoSelectPrestador"></select>
+                        <div class="dropdown w-100">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button"
+                                    id="dropdownTipoContratoPrestador" data-bs-toggle="dropdown" aria-expanded="false">
+                                Seleccione...
+                            </button>
+                            <ul class="dropdown-menu w-100" id="menuTipoContratoPrestador"></ul>
+                        </div>
+                        <input type="hidden" id="tipoContratoSelectPrestador" />
+                        <input type="hidden" id="tipoSubContratoSelectPrestador" />
                     </div>
+
                     <div class="col-md-4">
                         <label>@Localizer["PrestadorField"]</label>
                         <select class="form-select" id="prestadorSelect"></select>
                     </div>
-                    <div class="col-md-4"><label>@Localizer["FechaInicioPrestadorField"]</label> <input type="date" class="form-control" id="prestadorFechaInicio" /></div>
-                    <div class="col-md-4"><label>@Localizer["FechaFinPrestadorField"]</label> <input type="date" class="form-control" id="prestadorFechaFin" /></div>
-                    <div class="col-md-4"><label>@Localizer["RFCPrestadorField"]</label> <input type="text" class="form-control" id="prestadorRFC" /></div>
-                    <div class="col-md-4"><label>@Localizer["DomicilioFiscalPrestadorField"]</label> <input type="text" class="form-control" id="prestadorDomicilio" /></div>
-                    <div class="col-md-4"><label>@Localizer["NoNotarioPrestadorField"]</label> <input type="text" class="form-control" id="prestadorNumeroNotario" /></div>
-                    <div class="col-md-4"><label>@Localizer["NotarioPrestadorField"]</label> <input type="text" class="form-control" id="prestadorNotario" /></div>
-                    <div class="col-md-4"><label>@Localizer["RepresentanteLegalPrestadorField"]</label> <input type="text" class="form-control" id="prestadorRepresentante" /></div>
-                    <div class="col-md-4"><label>@Localizer["FechaConstitucionPrestadorField"]</label> <input type="date" class="form-control" id="prestadorFecha" /></div>
-                    <div class="col-md-4"><label>@Localizer["EmailPrestadorField"]</label> <input type="text" class="form-control" id="prestadorEmail" /></div>
-                    <div class="col-md-4"><label>@Localizer["PaginaWebPrestadorField"]</label> <input type="url" class="form-control" id="prestadorWeb" /></div>
+
+                    <div class="col-md-4">
+                        <label>@Localizer["FechaInicioPrestadorField"]</label>
+                        <input type="date" class="form-control" id="prestadorFechaInicio" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["FechaFinPrestadorField"]</label>
+                        <input type="date" class="form-control" id="prestadorFechaFin" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["RFCPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestadorRFC" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["DomicilioFiscalPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestadorDomicilio" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["NoNotarioPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestadorNumeroNotario" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["NotarioPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestadorNotario" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["RepresentanteLegalPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestadorRepresentante" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["FechaConstitucionPrestadorField"]</label>
+                        <input type="date" class="form-control" id="prestadorFecha" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["EmailPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestadorEmail" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["PaginaWebPrestadorField"]</label>
+                        <input type="url" class="form-control" id="prestadorWeb" />
+                    </div>
                 </div>
 
                 <hr />
 
                 <h6>@Localizer["PrestatarioField"]</h6>
                 <div class="row">
-                    <div class="col-md-4"><label>@Localizer["IdPrestatarioField"]</label> <input type="text" class="form-control" id="prestatarioId" readonly /></div>
+                    <div class="col-md-4">
+                        <label>@Localizer["IdPrestatarioField"]</label>
+                        <input type="text" class="form-control" id="prestatarioId" readonly />
+                    </div>
+
                     <div class="col-md-4">
                         <label>@Localizer["TipoContratoPrestatarioField"]</label>
-                        <select class="form-select" id="tipoContratoSelectPrestatario"></select>
+                        <div class="dropdown w-100">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button"
+                                    id="dropdownTipoContratoPrestatario" data-bs-toggle="dropdown" aria-expanded="false">
+                                Seleccione...
+                            </button>
+                            <ul class="dropdown-menu w-100" id="menuTipoContratoPrestatario"></ul>
+                        </div>
+                        <input type="hidden" id="tipoContratoSelectPrestatario" />
+                        <input type="hidden" id="tipoSubContratoSelectPrestatario" />
                     </div>
+
+
                     <div class="col-md-4">
                         <label>@Localizer["NombrePrestatarioField"]</label>
                         <select class="form-select" id="prestatarioSelect"></select>
                     </div>
-                    <div class="col-md-4"><label>@Localizer["FechaInicioPrestatarioField"]</label> <input type="date" class="form-control" id="prestatarioFechaInicio" /></div>
-                    <div class="col-md-4"><label>@Localizer["FechaFinPrestatarioField"]</label> <input type="date" class="form-control" id="prestatarioFechaFin" /></div>
-                    <div class="col-md-4"><label>@Localizer["RFCPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioRFC" /></div>
-                    <div class="col-md-4"><label>@Localizer["DomicilioFiscalPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioDomicilio" /></div>
-                    <div class="col-md-4"><label>@Localizer["NoNotarioPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioNumeroNotario" /></div>
-                    <div class="col-md-4"><label>@Localizer["NotarioPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioNotario" /></div>
-                    <div class="col-md-4"><label>@Localizer["RepresentanteLegalPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioRepresentante" /></div>
-                    <div class="col-md-4"><label>@Localizer["FechaConstitucionPrestadorField"]</label> <input type="date" class="form-control" id="prestatarioFecha" /></div>
-                    <div class="col-md-4"><label>@Localizer["EmailPrestadorField"]</label> <input type="text" class="form-control" id="prestatarioEmail" /></div>
-                    <div class="col-md-4"><label>@Localizer["PaginaWebPrestadorField"]</label> <input type="url" class="form-control" id="prestatarioWeb" /></div>
+
+                    <div class="col-md-4">
+                        <label>@Localizer["FechaInicioPrestatarioField"]</label>
+                        <input type="date" class="form-control" id="prestatarioFechaInicio" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["FechaFinPrestatarioField"]</label>
+                        <input type="date" class="form-control" id="prestatarioFechaFin" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["RFCPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestatarioRFC" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["DomicilioFiscalPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestatarioDomicilio" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["NoNotarioPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestatarioNumeroNotario" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["NotarioPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestatarioNotario" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["RepresentanteLegalPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestatarioRepresentante" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["FechaConstitucionPrestadorField"]</label>
+                        <input type="date" class="form-control" id="prestatarioFecha" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["EmailPrestadorField"]</label>
+                        <input type="text" class="form-control" id="prestatarioEmail" />
+                    </div>
+                    <div class="col-md-4">
+                        <label>@Localizer["PaginaWebPrestadorField"]</label>
+                        <input type="url" class="form-control" id="prestatarioWeb" />
+                    </div>
                 </div>
 
             </div>
@@ -222,6 +311,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Modal Ver Contrato -->
 <div class="modal fade" id="dlgContratoVer" tabindex="-1" aria-labelledby="dlgContratoVerLabel" aria-hidden="true">
@@ -337,6 +427,7 @@
 @section Scripts {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css">
     <link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css">
+    <link rel="stylesheet" href="~/lib/jquery-ui/site.css">
     <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
     <script src="~/js/autocompletar.js"></script>
 

@@ -130,6 +130,9 @@ namespace ERPSEI.Areas.Reportes.Pages
             public int? PrestatarioNoNotario { get; set; }
             public string? PrestatarioNotario { get; set; }
             public string? PrestatarioPaginaWeb { get; set; }
+            public int? SubTipoContratoPrestadorId { get; set; }
+            public int? SubTipoContratoPrestatarioId { get; set; }
+
         }
 
         public class ActualizarContratoRequest
@@ -181,6 +184,48 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             foreach (var e in empresas)
             {
+                // ?? Buscar subtipo en la base de datos
+                var subTipo = await db.SubTiposContrato
+                    .FirstOrDefaultAsync(s => s.Id == e.SubTipoContratoId);
+
+                jsonEmpresas.Add(new
+                {
+                    id = e.Id,
+                    razonSocial = e.RazonSocial ?? "-",
+                    domicilioFiscal = e.DomicilioFiscal ?? "-",
+                    rfc = e.RFC ?? "-",
+                    noNotario = e.NoNotario?.ToString() ?? "-",
+                    notario = e.Notario ?? "-",
+                    representanteLegal = e.RepresentanteLegal ?? "-",
+                    email = e.Email ?? "-",
+                    paginaWeb = e.PaginaWeb ?? "-",
+                    fechaConstitucion = e.FechaConstitucion?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaConstitucionJS = e.FechaConstitucion?.ToString("yyyy-MM-dd") ?? "-",
+                    fechaInicio = e.FechaInicio?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaInicioJS = e.FechaInicio?.ToString("yyyy-MM-dd") ?? "-",
+                    fechaFin = e.FechaFin?.ToString("dd/MM/yyyy") ?? "-",
+                    fechaFinJS = e.FechaFin?.ToString("yyyy-MM-dd") ?? "-",
+
+                    // ? Si hay subtipo, mostrar ese nombre. Si no, mostrar el tipo principal
+                    tipoContrato = subTipo != null ? subTipo.Nombre : (e.TipoContrato?.Nombre ?? "-"),
+                    tipoContratoId = e.TipoContratoId,
+                    deshabilitado = e.Deshabilitado.ToString()
+                });
+            }
+
+            return new JsonResult(jsonEmpresas);
+        }
+
+
+        /*public async Task<JsonResult> OnGetEmpresaContratosList()
+        {
+            var empresas = await empresaContratosManager.GetAllAsync();
+            empresas = empresas.Where(e => !e.Deshabilitado && !e.Estatus).ToList();
+
+            var jsonEmpresas = new List<object>();
+
+            foreach (var e in empresas)
+            {
                 jsonEmpresas.Add(new
                 {
                     id = e.Id,
@@ -205,7 +250,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             }
 
             return new JsonResult(jsonEmpresas);
-        }
+        }*/
 
         public async Task<JsonResult> OnPostFiltrarEmpresasContratos()
         {
@@ -581,7 +626,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                     FechaConstitucion = request.PrestadorFecha,
                     FechaInicio = request.PrestadorFechaInicio,
                     FechaFin = request.PrestadorFechaFin,
-                    TipoContratoId = request.TipoContratoPrestadorId,
+                    TipoContratoId = request.TipoContratoPrestadorId,    // ? SIEMPRE SE GUARDA
+                    SubTipoContratoId = request.SubTipoContratoPrestadorId, // ? SI EXISTE SE GUARDA
                     NoNotario = request.PrestadorNoNotario,
                     Notario = request.PrestadorNotario,
                     PaginaWeb = request.PrestadorPaginaWeb,
@@ -601,7 +647,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                     FechaConstitucion = request.PrestatarioFecha,
                     FechaInicio = request.PrestatarioFechaInicio,
                     FechaFin = request.PrestatarioFechaFin,
-                    TipoContratoId = request.TipoContratoPrestatarioId,
+                    TipoContratoId = request.TipoContratoPrestatarioId,   // ? SIEMPRE SE GUARDA
+                    SubTipoContratoId = request.SubTipoContratoPrestatarioId, // ? SI EXISTE SE GUARDA
                     EmpresaContratoId = empresa.Id,
                     NoNotario = request.PrestatarioNoNotario,
                     Notario = request.PrestatarioNotario,
@@ -623,6 +670,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             return new JsonResult(response);
         }
+
 
         public JsonResult OnGetListaTipoContratos()
         {
@@ -703,6 +751,16 @@ namespace ERPSEI.Areas.Reportes.Pages
             }
 
             return new JsonResult(response);
+        }
+
+        public async Task<JsonResult> OnGetSubTiposContratoAsync(int tipoContratoId)
+        {
+            var subTipos = await db.SubTiposContrato
+                .Where(s => s.TipoContratoId == tipoContratoId && !s.Deshabilitado)
+                .Select(s => new { id = s.Id, nombre = s.Nombre })
+                .ToListAsync();
+
+            return new JsonResult(subTipos);
         }
 
         public async Task<JsonResult> OnPostGetPrestadoresSuggestion(string texto)

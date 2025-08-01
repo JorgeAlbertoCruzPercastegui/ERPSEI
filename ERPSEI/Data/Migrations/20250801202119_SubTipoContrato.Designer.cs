@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250801202119_SubTipoContrato")]
+    partial class SubTipoContrato
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4548,9 +4551,6 @@ namespace ERPSEI.Data.Migrations
                     b.Property<string>("RepresentanteLegal")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("SubTipoContratoId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("TipoContratoId")
                         .HasColumnType("int");
 
@@ -4609,9 +4609,6 @@ namespace ERPSEI.Data.Migrations
 
                     b.Property<string>("RepresentanteLegal")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("SubTipoContratoId")
-                        .HasColumnType("int");
 
                     b.Property<int?>("TipoContratoId")
                         .HasColumnType("int");

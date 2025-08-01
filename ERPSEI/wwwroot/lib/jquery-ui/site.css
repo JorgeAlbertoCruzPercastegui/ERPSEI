@@ -1,0 +1,106 @@
+﻿/* Submenú desplegable para dropdown */
+.dropdown-submenu {
+    position: relative;
+}
+
+    .dropdown-submenu > .dropdown-menu {
+        top: 0;
+        left: 100%;
+        margin-top: -0.1rem;
+        margin-left: 0.1rem;
+    }
+
+    /* Flecha indicadora de submenú */
+    .dropdown-submenu > a::after {
+        content: none !important;
+    }
+
+
+    .dropdown-submenu > .dropdown-menu {
+        display: none;
+    }
+
+    .dropdown-submenu:hover > .dropdown-menu {
+        display: block;
+    }
+
+    .dropdown-submenu .dropdown-menu.show {
+        display: block;
+    }
+
+/* Estilo para el botón del dropdown después de seleccionar una opción */
+#dropdownTipoContratoPrestador {
+    color: #000 !important; /* Texto negro */
+    background-color: #fff !important; /* Fondo blanco */
+    border: 1px solid #ced4da; /* Borde similar a select */
+    text-align: left;
+}
+
+    /* Hover sobre el botón */
+    #dropdownTipoContratoPrestador:hover {
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+    }
+
+/* Elementos seleccionados del menú */
+#menuTipoContratoPrestador .dropdown-item:active,
+#submenuServicios .dropdown-item:active {
+    background-color: #e9ecef !important;
+    color: #000 !important;
+}
+
+/* Asegurar que la flecha esté alineada a la derecha */
+#dropdownTipoContratoPrestador::after {
+    position: absolute;
+    right: 12px; /* Ajusta el espacio respecto al borde */
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0 !important;
+}
+
+/* Ajuste del botón para que tenga posición relativa */
+#dropdownTipoContratoPrestador {
+    position: relative;
+    text-align: left;
+    padding-right: 30px; /* Espacio para la flecha */
+}
+
+/*Prestatario*/
+
+
+/* Estilo para el botón del dropdown después de seleccionar una opción */
+#dropdownTipoContratoPrestatario {
+    color: #000 !important; /* Texto negro */
+    background-color: #fff !important; /* Fondo blanco */
+    border: 1px solid #ced4da; /* Borde similar a select */
+    text-align: left;
+}
+
+    /* Hover sobre el botón */
+    #dropdownTipoContratoPrestatario:hover {
+        background-color: #f8f9fa !important;
+        color: #000 !important;
+    }
+
+/* Elementos seleccionados del menú */
+#menuTipoContratoPrestatario .dropdown-item:active,
+#submenuServicios .dropdown-item:active {
+    background-color: #e9ecef !important;
+    color: #000 !important;
+}
+
+/* Asegurar que la flecha esté alineada a la derecha */
+#dropdownTipoContratoPrestatario::after {
+    position: absolute;
+    right: 12px; /* Ajusta el espacio respecto al borde */
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0 !important;
+}
+
+/* Ajuste del botón para que tenga posición relativa */
+#dropdownTipoContratoPrestatario {
+    position: relative;
+    text-align: left;
+    padding-right: 30px; /* Espacio para la flecha */
+}

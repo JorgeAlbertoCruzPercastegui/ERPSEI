@@ -20,6 +20,8 @@
         // Relación con TipoContrato
         public int? TipoContratoId { get; set; }
         public TipoContrato? TipoContrato { get; set; }
+        public int? SubTipoContratoId { get; set; }
+
 
         // Relación con ClienteContrato
         public ICollection<ClienteContrato> Clientes { get; set; } = new List<ClienteContrato>();

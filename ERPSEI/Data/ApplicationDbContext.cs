@@ -155,6 +155,8 @@ namespace ERPSEI.Data
 
         //Tipo Contratos
         public DbSet<TipoContrato> TipoContratos { get; set; }
+        public DbSet<SubTipoContrato> SubTiposContrato { get; set; }
+
         public DbSet<EmpresaContrato> EmpresaContratos { get; set; }
         public DbSet<ClienteContrato> ClienteContratos { get; set; }
         public DbSet<HistorialContratoGenerado> HistorialContratoGenerados { get; set; }
@@ -230,12 +232,30 @@ namespace ERPSEI.Data
 		{
 			b.Entity<TipoContrato>().HasData(
 				new TipoContrato { Id = 1, Nombre = "Asimilados", Descripcion = "Contratos de tipo asimilados a salarios", Deshabilitado = true },
-				new TipoContrato { Id = 2, Nombre = "Servicios", Descripcion = "Prestación de servicios profesionales o técnicos", Deshabilitado = true },
-				new TipoContrato { Id = 3, Nombre = "Uso de Marca", Descripcion = "Contrato por uso de marca registrada", Deshabilitado = true },
-				new TipoContrato { Id = 4, Nombre = "Arrendamiento Act.", Descripcion = "Arrendamiento de activos generales", Deshabilitado = true },
-				new TipoContrato { Id = 5, Nombre = "Arrendamiento TI", Descripcion = "Arrendamiento de tecnología e infraestructura", Deshabilitado = true },
-				new TipoContrato { Id = 6, Nombre = "Arrendamiento Ofi.", Descripcion = "Arrendamiento de oficinas físicas", Deshabilitado = true }
-			);
+                new TipoContrato { Id = 2, Nombre = "Asesoría", Descripcion = "", Deshabilitado = true },
+                new TipoContrato { Id = 3, Nombre = "Servicios", Descripcion = "Prestación de servicios profesionales o técnicos", Deshabilitado = true },
+				new TipoContrato { Id = 4, Nombre = "Uso de Marca", Descripcion = "Contrato por uso de marca registrada", Deshabilitado = true },
+				new TipoContrato { Id = 5, Nombre = "Arrendamiento Act.", Descripcion = "Arrendamiento de activos generales", Deshabilitado = true },
+				new TipoContrato { Id = 6, Nombre = "Arrendamiento TI", Descripcion = "Arrendamiento de tecnología e infraestructura", Deshabilitado = true },
+				new TipoContrato { Id = 7, Nombre = "Arrendamiento Ofi.", Descripcion = "Arrendamiento de oficinas físicas", Deshabilitado = true }
+            );
+
+            b.Entity<SubTipoContrato>().HasData(
+				new SubTipoContrato { Id = 1, Nombre = "Servicios de diseño de presentaciones", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+				new SubTipoContrato { Id = 2, Nombre = "Servicios de evaluación de clientes y proveedores", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+				new SubTipoContrato { Id = 3, Nombre = "Servicios profesionales", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+                new SubTipoContrato { Id = 4, Nombre = "Servicios profesionales independientes", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+                new SubTipoContrato { Id = 5, Nombre = "Servicios (“El Contrato”)", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+                new SubTipoContrato { Id = 6, Nombre = "Servicios profesionales de asesoria en inversiones", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+                new SubTipoContrato { Id = 7, Nombre = "Servicios profesionales de mantenimiento de software", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+                new SubTipoContrato { Id = 8, Nombre = "Servicios profesionales de integración de expedientes para licitaciones", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+                new SubTipoContrato { Id = 9, Nombre = "Servicios profesionales de asesoria legal", Descripcion = "", Deshabilitado = false, TipoContratoId = 3 },
+                new SubTipoContrato { Id = 10, Nombre = "Asesoria Financiera", Descripcion = "", Deshabilitado = false, TipoContratoId = 2 },
+                new SubTipoContrato { Id = 11, Nombre = "Asesoria en Recursos Humanos", Descripcion = "", Deshabilitado = false, TipoContratoId = 2 },
+                new SubTipoContrato { Id = 12, Nombre = "Asesoría financiera y revisión fiscal", Descripcion = "", Deshabilitado = false, TipoContratoId = 2 },
+                new SubTipoContrato { Id = 13, Nombre = "Capacitación y asesoria por la venta a clientes", Descripcion = "", Deshabilitado = false, TipoContratoId = 2 }
+
+            );
 
             // Relación EmpresaContrato -> TipoContrato (muchos a uno)
             b.Entity<EmpresaContrato>()

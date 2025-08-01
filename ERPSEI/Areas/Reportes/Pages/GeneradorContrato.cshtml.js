@@ -357,10 +357,19 @@ let clientecorreoElectronicoMap = new Map();
 
 function onAgregarClick() {
     $('#dlgContrato input').val('');
-    $('#tipoContratoSelectPrestador').empty().append('<option value="">Seleccione...</option>');
-    $('#tipoContratoSelectPrestatario').empty().append('<option value="">Seleccione...</option>');
     $('#prestadorSelect').empty().append('<option value="">Seleccione...</option>');
     $('#prestatarioSelect').empty().append('<option value="">Seleccione...</option>');
+
+    // Limpiar dropdown dinámico de tipo contrato
+    $('#menuTipoContratoPrestador').empty();
+    $('#dropdownTipoContratoPrestador').text("Seleccione...");
+    $('#tipoContratoSelectPrestador').val("");
+    $('#tipoSubContratoSelectPrestador').val("");
+
+    $('#menuTipoContratoPrestatario').empty();
+    $('#dropdownTipoContratoPrestatario').text("Seleccione...");
+    $('#tipoContratoSelectPrestatario').val("");
+    $('#tipoSubContratoSelectPrestatario').val("");
 
     // Obtener IDs siguientes
     $.get("/Reportes/GeneradorContrato?handler=ObtenerSiguientesIds", function (data) {
@@ -368,13 +377,77 @@ function onAgregarClick() {
         $('#prestatarioId').val(data.clienteId);
     });
 
-    // Cargar tipos de contrato
-    $.get("/Reportes/GeneradorContrato?handler=TiposContrato", function (data) {
-        data.forEach(function (item) {
-            $('#tipoContratoSelectPrestador').append(`<option value="${item.id}">${item.nombre}</option>`);
-            $('#tipoContratoSelectPrestatario').append(`<option value="${item.id}">${item.nombre}</option>`);
+    // ✅ Cargar tipos de contrato en dropdown dinámico para Prestador y Prestatario
+    $.get("/Reportes/GeneradorContrato?handler=TiposContrato", function (tipos) {
+        $('#menuTipoContratoPrestador').empty();
+        $('#menuTipoContratoPrestatario').empty();
+
+        tipos.forEach(function (tipo) {
+            // ------- PRESTADOR -------
+            $.get(`/Reportes/GeneradorContrato?handler=SubTiposContrato&tipoContratoId=${tipo.id}`, function (subs) {
+                if (subs.length > 0) {
+                    let submenuId = `submenu-prestador-${tipo.id}`;
+                    let submenu = `
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle main-tipo" data-id="${tipo.id}" href="#">${tipo.nombre}</a>
+                            <ul class="dropdown-menu" id="${submenuId}"></ul>
+                        </li>`;
+                    $('#menuTipoContratoPrestador').append(submenu);
+
+                    subs.forEach(function (sub) {
+                        $(`#${submenuId}`).append(`<li><a class="dropdown-item sub-tipo" data-parent="${tipo.id}" href="#" data-id="${sub.id}">${sub.nombre}</a></li>`);
+                    });
+                } else {
+                    $('#menuTipoContratoPrestador').append(`<li><a class="dropdown-item main-tipo" href="#" data-id="${tipo.id}">${tipo.nombre}</a></li>`);
+                }
+            });
+
+            // ------- PRESTATARIO -------
+            $.get(`/Reportes/GeneradorContrato?handler=SubTiposContrato&tipoContratoId=${tipo.id}`, function (subs) {
+                if (subs.length > 0) {
+                    let submenuId = `submenu-prestatario-${tipo.id}`;
+                    let submenu = `
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-toggle main-tipo" data-id="${tipo.id}" href="#">${tipo.nombre}</a>
+                            <ul class="dropdown-menu" id="${submenuId}"></ul>
+                        </li>`;
+                    $('#menuTipoContratoPrestatario').append(submenu);
+
+                    subs.forEach(function (sub) {
+                        $(`#${submenuId}`).append(`<li><a class="dropdown-item sub-tipo" data-parent="${tipo.id}" href="#" data-id="${sub.id}">${sub.nombre}</a></li>`);
+                    });
+                } else {
+                    $('#menuTipoContratoPrestatario').append(`<li><a class="dropdown-item main-tipo" href="#" data-id="${tipo.id}">${tipo.nombre}</a></li>`);
+                }
+            });
         });
     });
+
+    // --- Capturar selección del dropdown Prestador ---
+    $(document).off('click', '#menuTipoContratoPrestador a.main-tipo, #menuTipoContratoPrestador a.sub-tipo')
+        .on('click', '#menuTipoContratoPrestador a.main-tipo, #menuTipoContratoPrestador a.sub-tipo', function (e) {
+            e.preventDefault();
+            let texto = $(this).text();
+            let id = $(this).data('id');
+            let parentId = $(this).data('parent') || id;
+
+            $('#dropdownTipoContratoPrestador').text(texto);
+            $('#tipoContratoSelectPrestador').val(parentId); // ID principal
+            $('#tipoSubContratoSelectPrestador').val(id !== parentId ? id : ""); // ID subtipo
+        });
+
+    // --- Capturar selección del dropdown Prestatario ---
+    $(document).off('click', '#menuTipoContratoPrestatario a.main-tipo, #menuTipoContratoPrestatario a.sub-tipo')
+        .on('click', '#menuTipoContratoPrestatario a.main-tipo, #menuTipoContratoPrestatario a.sub-tipo', function (e) {
+            e.preventDefault();
+            let texto = $(this).text();
+            let id = $(this).data('id');
+            let parentId = $(this).data('parent') || id;
+
+            $('#dropdownTipoContratoPrestatario').text(texto);
+            $('#tipoContratoSelectPrestatario').val(parentId); // ID principal
+            $('#tipoSubContratoSelectPrestatario').val(id !== parentId ? id : ""); // ID subtipo
+        });
 
     // Cargar datos de empresas
     $.get("/Reportes/GeneradorContrato?handler=Empresas", function (data) {
@@ -411,8 +484,16 @@ function onAgregarClick() {
             clientecorreoElectronicoMap.set(item.id.toString(), item.ccorreoElectronico);
         });
     });
-}
 
+    // --- Habilitar submenús al pasar el mouse ---
+    $(document).off('mouseenter', '.dropdown-submenu').on('mouseenter', '.dropdown-submenu', function () {
+        $(this).children('.dropdown-menu').addClass('show');
+    });
+
+    $(document).off('mouseleave', '.dropdown-submenu').on('mouseleave', '.dropdown-submenu', function () {
+        $(this).children('.dropdown-menu').removeClass('show');
+    });
+}
 
 function detailFormatter(index, row) {
     return `<div id="clientes-${row.id}">
@@ -453,6 +534,7 @@ function onGuardarClick() {
         prestadorFechaInicio: $('#prestadorFechaInicio').val(),
         prestadorFechaFin: $('#prestadorFechaFin').val(),
         tipoContratoPrestadorId: parseInt($('#tipoContratoSelectPrestador').val()),
+        subTipoContratoPrestadorId: parseInt($('#tipoSubContratoSelectPrestador').val()) || null,
         prestadorNoNotario: parseInt($('#prestadorNumeroNotario').val()),
         prestadorNotario: $('#prestadorNotario').val(),
         prestadorPaginaWeb: $('#prestadorWeb').val(),
@@ -467,10 +549,13 @@ function onGuardarClick() {
         prestatarioFechaInicio: $('#prestatarioFechaInicio').val(),
         prestatarioFechaFin: $('#prestatarioFechaFin').val(),
         tipoContratoPrestatarioId: parseInt($('#tipoContratoSelectPrestatario').val()),
-        prestatarioNoNotario: parseInt($('#prestatarioNumeroNotario').val()), 
+        subTipoContratoPrestatarioId: parseInt($('#tipoSubContratoSelectPrestatario').val()) || null,
+        prestatarioNoNotario: parseInt($('#prestatarioNumeroNotario').val()),
         prestatarioNotario: $('#prestatarioNotario').val(),
         prestatarioPaginaWeb: $('#prestatarioWeb').val()
     };
+
+    console.log("Datos enviados:", data);
 
     $.ajax({
         url: '/Reportes/GeneradorContrato?handler=GuardarContrato',
@@ -485,20 +570,18 @@ function onGuardarClick() {
                 showError("Error al guardar", resp.mensaje);
             } else {
                 showSuccess("Éxito", resp.mensaje);
-
-                // ✅ Cierra el modal (asegúrate de que dlgModal esté definido correctamente)
                 const dlgModal = bootstrap.Modal.getInstance(document.getElementById('dlgContrato'));
                 dlgModal.hide();
-
-                // ✅ Refresca la tabla
                 $('#table').bootstrapTable('refresh');
             }
         },
         error: function (xhr, status, error) {
+            console.error("Error en la solicitud:", xhr.responseText);
             showError("Error", "No se pudo guardar el contrato.");
         }
     });
 }
+
 
 function initGeneradorContratoDialog(modo, row) {
     if (!row) return;
