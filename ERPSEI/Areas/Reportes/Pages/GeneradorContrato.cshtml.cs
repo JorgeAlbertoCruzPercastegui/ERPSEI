@@ -210,6 +210,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 
                     // ? Si hay subtipo, mostrar ese nombre. Si no, mostrar el tipo principal
                     tipoContrato = subTipo != null ? subTipo.Nombre : (e.TipoContrato?.Nombre ?? "-"),
+                    subTipoContratoId = e.SubTipoContratoId,
                     tipoContratoId = e.TipoContratoId,
                     deshabilitado = e.Deshabilitado.ToString()
                 });

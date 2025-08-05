@@ -619,6 +619,7 @@ function initGeneradorContratoDialog(modo, row) {
         $('#prestadorFechaFinVer').val(row.fechaFinJS || '');
         $('#prestadorEmailVer').val(row.email || '');
         $('#prestadorWebVer').val(row.paginaWeb || '');
+        $('#subTipoContratoPrestadorVer').val(row.subTipoContratoId || ''); // ✅ Subtipo Prestador
 
         // Obtener datos del cliente (prestatario)
         $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
@@ -637,6 +638,7 @@ function initGeneradorContratoDialog(modo, row) {
                 $('#prestatarioFechaFinVer').val(cliente.fechaFin || '');
                 $('#prestatarioEmailVer').val(cliente.email || '');
                 $('#prestatarioWebVer').val(cliente.paginaWeb || '');
+                $('#subTipoContratoPrestatarioVer').val(cliente.subTipoContratoId || ''); // ✅ Subtipo Prestatario
             }
 
             const modalVer = new bootstrap.Modal(document.getElementById('dlgContratoVer'));
@@ -668,6 +670,7 @@ function initGeneradorContratoDialog(modo, row) {
             $('#prestadorFechaFinEditar').val(row.fechaFinJS || '');
             $('#prestadorEmailEditar').val(row.email || '');
             $('#prestadorWebEditar').val(row.paginaWeb || '');
+            $('#subTipoContratoPrestadorEditar').val(row.subTipoContratoId || ''); // ✅ Subtipo Prestador
 
             // Cliente
             $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
@@ -686,6 +689,7 @@ function initGeneradorContratoDialog(modo, row) {
                     $('#prestatarioFechaFinEditar').val(cliente.fechaFin || '');
                     $('#prestatarioEmailEditar').val(cliente.email || '');
                     $('#prestatarioWebEditar').val(cliente.paginaWeb || '');
+                    $('#subTipoContratoPrestatarioEditar').val(cliente.subTipoContratoId || ''); // ✅ Subtipo Prestatario
                 }
 
                 const modalEditar = new bootstrap.Modal(document.getElementById('dlgContratoEditar'));
@@ -694,6 +698,7 @@ function initGeneradorContratoDialog(modo, row) {
         });
     }
 }
+
 
 
 
