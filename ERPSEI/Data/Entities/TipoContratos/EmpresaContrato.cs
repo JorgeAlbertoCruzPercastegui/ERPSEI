@@ -21,6 +21,9 @@
         public int? TipoContratoId { get; set; }
         public TipoContrato? TipoContrato { get; set; }
         public int? SubTipoContratoId { get; set; }
+        public int? TipoRepresentacionId { get; set; }
+        public TipoRepresentacion TipoRepresentacion { get; set; } = null!;
+
 
 
         // Relación con ClienteContrato

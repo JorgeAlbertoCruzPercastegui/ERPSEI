@@ -20,12 +20,17 @@ namespace ERPSEI.Data.Entities.TipoContratos
         public bool Estatus { get; set; } = false;
         public int? SubTipoContratoId { get; set; }
 
-
         // 🔗 Relación con EmpresaContrato
         public int EmpresaContratoId { get; set; }
         public EmpresaContrato EmpresaContrato { get; set; } = null!;
 
         public int? TipoContratoId { get; set; }
         public TipoContrato? TipoContrato { get; set; }
+
+        public int? TipoRepresentacionId { get; set; }
+        public TipoRepresentacion TipoRepresentacion { get; set; } = null!;
+
+
+
     }
 }

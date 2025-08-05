@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250805003722_AddRelacionTipoRepresentacion")]
+    [Migration("20250805023137_AddRelacionTipoRepresentacion")]
     partial class AddRelacionTipoRepresentacion
     {
         /// <inheritdoc />
@@ -4897,7 +4897,7 @@ namespace ERPSEI.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TipoRepresentacion");
+                    b.ToTable("TipoRepresentaciones");
 
                     b.HasData(
                         new
@@ -6437,16 +6437,13 @@ namespace ERPSEI.Data.Migrations
                         .HasForeignKey("TipoContratoId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", "TipoRepresentacion")
+                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", null)
                         .WithMany("Clientes")
-                        .HasForeignKey("TipoRepresentacionId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("TipoRepresentacionId");
 
                     b.Navigation("EmpresaContrato");
 
                     b.Navigation("TipoContrato");
-
-                    b.Navigation("TipoRepresentacion");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.EmpresaContrato", b =>
@@ -6456,14 +6453,11 @@ namespace ERPSEI.Data.Migrations
                         .HasForeignKey("TipoContratoId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", "TipoRepresentacion")
+                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", null)
                         .WithMany("Empresas")
-                        .HasForeignKey("TipoRepresentacionId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("TipoRepresentacionId");
 
                     b.Navigation("TipoContrato");
-
-                    b.Navigation("TipoRepresentacion");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.HistorialContratoGenerado", b =>

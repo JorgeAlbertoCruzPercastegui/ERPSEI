@@ -493,6 +493,20 @@ function onAgregarClick() {
     $(document).off('mouseleave', '.dropdown-submenu').on('mouseleave', '.dropdown-submenu', function () {
         $(this).children('.dropdown-menu').removeClass('show');
     });
+
+    // Cargar tipos de representación
+    $.get("/Reportes/GeneradorContrato?handler=TiposRepresentacion", function (tipos) {
+        const $selectPrestador = $('#tipoRepresentacionPrestadorId');
+        const $selectPrestatario = $('#tipoRepresentacionPrestatarioId');
+
+        $selectPrestador.empty().append('<option value="">Seleccione...</option>');
+        $selectPrestatario.empty().append('<option value="">Seleccione...</option>');
+
+        tipos.forEach(tipo => {
+            $selectPrestador.append(`<option value="${tipo.id}">${tipo.nombre}</option>`);
+            $selectPrestatario.append(`<option value="${tipo.id}">${tipo.nombre}</option>`);
+        });
+    });
 }
 
 function detailFormatter(index, row) {
@@ -538,6 +552,8 @@ function onGuardarClick() {
         prestadorNoNotario: parseInt($('#prestadorNumeroNotario').val()),
         prestadorNotario: $('#prestadorNotario').val(),
         prestadorPaginaWeb: $('#prestadorWeb').val(),
+        // 👇 Agrega aquí:
+        tipoRepresentacionPrestadorId: parseInt($('#tipoRepresentacionPrestadorId').val()) || null,
 
         prestatarioId: parseInt($('#prestatarioId').val()),
         prestatarioNombre: $('#prestatarioSelect option:selected').text(),
@@ -552,7 +568,9 @@ function onGuardarClick() {
         subTipoContratoPrestatarioId: parseInt($('#tipoSubContratoSelectPrestatario').val()) || null,
         prestatarioNoNotario: parseInt($('#prestatarioNumeroNotario').val()),
         prestatarioNotario: $('#prestatarioNotario').val(),
-        prestatarioPaginaWeb: $('#prestatarioWeb').val()
+        prestatarioPaginaWeb: $('#prestatarioWeb').val(),
+        // 👇 Y aquí:
+        tipoRepresentacionPrestatarioId: parseInt($('#tipoRepresentacionPrestatarioId').val()) || null
     };
 
     console.log("Datos enviados:", data);

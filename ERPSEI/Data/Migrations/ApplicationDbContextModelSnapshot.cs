@@ -4554,11 +4554,16 @@ namespace ERPSEI.Data.Migrations
                     b.Property<int?>("TipoContratoId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TipoRepresentacionId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("EmpresaContratoId");
 
                     b.HasIndex("TipoContratoId");
+
+                    b.HasIndex("TipoRepresentacionId");
 
                     b.ToTable("ClienteContratos");
                 });
@@ -4616,9 +4621,14 @@ namespace ERPSEI.Data.Migrations
                     b.Property<int?>("TipoContratoId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("TipoRepresentacionId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TipoContratoId");
+
+                    b.HasIndex("TipoRepresentacionId");
 
                     b.ToTable("EmpresaContratos");
                 });
@@ -4867,6 +4877,35 @@ namespace ERPSEI.Data.Migrations
                             Descripcion = "Arrendamiento de oficinas físicas",
                             Deshabilitado = true,
                             Nombre = "Arrendamiento Ofi."
+                        });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TipoRepresentaciones");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Representante Legal"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Apoderado Legal"
                         });
                 });
 
@@ -6395,6 +6434,10 @@ namespace ERPSEI.Data.Migrations
                         .HasForeignKey("TipoContratoId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", null)
+                        .WithMany("Clientes")
+                        .HasForeignKey("TipoRepresentacionId");
+
                     b.Navigation("EmpresaContrato");
 
                     b.Navigation("TipoContrato");
@@ -6406,6 +6449,10 @@ namespace ERPSEI.Data.Migrations
                         .WithMany()
                         .HasForeignKey("TipoContratoId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", null)
+                        .WithMany("Empresas")
+                        .HasForeignKey("TipoRepresentacionId");
 
                     b.Navigation("TipoContrato");
                 });
@@ -6905,6 +6952,13 @@ namespace ERPSEI.Data.Migrations
             modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.EmpresaContrato", b =>
                 {
                     b.Navigation("Clientes");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.TipoRepresentacion", b =>
+                {
+                    b.Navigation("Clientes");
+
+                    b.Navigation("Empresas");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Usuarios.AppRole", b =>

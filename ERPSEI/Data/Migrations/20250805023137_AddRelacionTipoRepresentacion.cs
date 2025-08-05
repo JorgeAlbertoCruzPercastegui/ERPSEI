@@ -12,14 +12,6 @@ namespace ERPSEI.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "TipoRepresentacion",
-                table: "EmpresaContratos");
-
-            migrationBuilder.DropColumn(
-                name: "TipoRepresentacion",
-                table: "ClienteContratos");
-
             migrationBuilder.AddColumn<int>(
                 name: "TipoRepresentacionId",
                 table: "EmpresaContratos",
@@ -33,7 +25,7 @@ namespace ERPSEI.Data.Migrations
                 nullable: true);
 
             migrationBuilder.CreateTable(
-                name: "TipoRepresentacion",
+                name: "TipoRepresentaciones",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -42,11 +34,11 @@ namespace ERPSEI.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TipoRepresentacion", x => x.Id);
+                    table.PrimaryKey("PK_TipoRepresentaciones", x => x.Id);
                 });
 
             migrationBuilder.InsertData(
-                table: "TipoRepresentacion",
+                table: "TipoRepresentaciones",
                 columns: new[] { "Id", "Nombre" },
                 values: new object[,]
                 {
@@ -65,35 +57,33 @@ namespace ERPSEI.Data.Migrations
                 column: "TipoRepresentacionId");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_ClienteContratos_TipoRepresentacion_TipoRepresentacionId",
+                name: "FK_ClienteContratos_TipoRepresentaciones_TipoRepresentacionId",
                 table: "ClienteContratos",
                 column: "TipoRepresentacionId",
-                principalTable: "TipoRepresentacion",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                principalTable: "TipoRepresentaciones",
+                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
-                name: "FK_EmpresaContratos_TipoRepresentacion_TipoRepresentacionId",
+                name: "FK_EmpresaContratos_TipoRepresentaciones_TipoRepresentacionId",
                 table: "EmpresaContratos",
                 column: "TipoRepresentacionId",
-                principalTable: "TipoRepresentacion",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Restrict);
+                principalTable: "TipoRepresentaciones",
+                principalColumn: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_ClienteContratos_TipoRepresentacion_TipoRepresentacionId",
+                name: "FK_ClienteContratos_TipoRepresentaciones_TipoRepresentacionId",
                 table: "ClienteContratos");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_EmpresaContratos_TipoRepresentacion_TipoRepresentacionId",
+                name: "FK_EmpresaContratos_TipoRepresentaciones_TipoRepresentacionId",
                 table: "EmpresaContratos");
 
             migrationBuilder.DropTable(
-                name: "TipoRepresentacion");
+                name: "TipoRepresentaciones");
 
             migrationBuilder.DropIndex(
                 name: "IX_EmpresaContratos_TipoRepresentacionId",
@@ -110,18 +100,6 @@ namespace ERPSEI.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "TipoRepresentacionId",
                 table: "ClienteContratos");
-
-            migrationBuilder.AddColumn<string>(
-                name: "TipoRepresentacion",
-                table: "EmpresaContratos",
-                type: "nvarchar(max)",
-                nullable: true);
-
-            migrationBuilder.AddColumn<string>(
-                name: "TipoRepresentacion",
-                table: "ClienteContratos",
-                type: "nvarchar(max)",
-                nullable: true);
         }
     }
 }

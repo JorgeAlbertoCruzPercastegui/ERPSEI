@@ -115,6 +115,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             public int? PrestadorNoNotario { get; set; }
             public string? PrestadorNotario { get; set; }
             public string? PrestadorPaginaWeb { get; set; }
+            public int? TipoRepresentacionPrestadorId { get; set; }
 
             // Prestatario
             public int PrestatarioId { get; set; }
@@ -132,6 +133,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             public string? PrestatarioPaginaWeb { get; set; }
             public int? SubTipoContratoPrestadorId { get; set; }
             public int? SubTipoContratoPrestatarioId { get; set; }
+            public int? TipoRepresentacionPrestatarioId { get; set; }
 
         }
 
@@ -622,6 +624,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                     RFC = request.PrestadorRFC,
                     DomicilioFiscal = request.PrestadorDomicilio,
                     RepresentanteLegal = request.PrestadorRepresentante,
+                    TipoRepresentacionId = request.TipoRepresentacionPrestadorId,
                     Email = request.PrestadorEmail,
                     FechaConstitucion = request.PrestadorFecha,
                     FechaInicio = request.PrestadorFechaInicio,
@@ -643,6 +646,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                     RFC = request.PrestatarioRFC,
                     DomicilioFiscal = request.PrestatarioDomicilio,
                     RepresentanteLegal = request.PrestatarioRepresentante,
+                    TipoRepresentacionId = request.TipoRepresentacionPrestatarioId,
                     Email = request.PrestatarioEmail,
                     FechaConstitucion = request.PrestatarioFecha,
                     FechaInicio = request.PrestatarioFechaInicio,
@@ -669,6 +673,15 @@ namespace ERPSEI.Areas.Reportes.Pages
             }
 
             return new JsonResult(response);
+        }
+
+        public async Task<JsonResult> OnGetTiposRepresentacionAsync()
+        {
+            var tipos = await db.TipoRepresentaciones
+                .Select(tr => new { id = tr.Id, nombre = tr.Nombre })
+                .ToListAsync();
+
+            return new JsonResult(tipos);
         }
 
 
