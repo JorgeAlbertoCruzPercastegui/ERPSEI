@@ -321,7 +321,8 @@
                                     <div class="dropdown-menu shadow-lg mt-0 @classDropdownERP" aria-labelledby="navbarDropdownMenuLinkERP">
                                         <div class="container">
                                             <div class="row my-2">
-                                                @if(tieneERPRH){
+                                                @*@if(tieneERPRH)
+                                                {
                                                     <div class="@classDivERP">
                                                         <div class="list-group list-group-flush">
                                                             <p class="mb-0 list-group-item text-uppercase text-center">
@@ -334,7 +335,7 @@
                                                                 </a>
                                                             }
 
-                                                            <!--                                                           
+                                                                                                                       
                                                                 <a class="dropdown-item p-2 @_LayoutPages.IncapacidadesNavClass(ViewContext)" asp-area="" asp-page="/Building">
                                                                     <i class="bi bi-heart-pulse-fill"></i> @Localizer["DisabilitiesMenu"]
                                                                 </a>
@@ -342,7 +343,7 @@
                                                                 <a class="dropdown-item p-2 @_LayoutPages.PermisosNavClass(ViewContext)" asp-area="" asp-page="/Building">
                                                                     <i class="bi bi-calendar-check-fill"></i> @Localizer["PermissionsMenu"]
                                                                 </a>
-                                                            -->
+                                                            
                                                             
                                                             @if (permisos["activosfijos"])
                                                             {
@@ -352,7 +353,7 @@
                                                             }
                                                         </div>
                                                     </div>
-                                                }
+                                                }*@
                                                 @if (tieneERPEmpresas)
                                                 {
                                                     <div class="@classDivERP">
@@ -414,12 +415,12 @@
                                                                     <i class="bi bi-diagram-3-fill"></i> @Localizer["OrganizationChartMenu"]
                                                                 </a>
                                                             }
-                                                            @if (permisos["asistencia"])
+                                                            @*@if (permisos["asistencia"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.AsistenciaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Asistencia">
                                                                     <i class="bi bi-fingerprint"></i> @Localizer["AsistenciaMenu"]
                                                                 </a>
-                                                            }
+                                                            }*@
                                                         </div>
                                                     </div>
                                                 }
@@ -436,7 +437,7 @@
                                                                     <i class="bi bi-receipt"></i> @Localizer["BillingReportMenu"]
                                                                 </a>
                                                             }
-                                                            @if (permisos["convertidorBancario"])
+                                                            @*@if (permisos["convertidorBancario"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.OrganigramaNavClass(ViewContext)" asp-area="Reportes" asp-page="/ConvertidorBancario">
                                                                     <i class="bi bi-piggy-bank"></i> @Localizer["BankConverterMenu"]
@@ -444,7 +445,7 @@
                                                             }
                                                                 <a class="dropdown-item p-2 @_LayoutPages.GeneradorContratoNavClass(ViewContext)" asp-area="Reportes" asp-page="/GeneradorContrato">
                                                                     <i class="bi bi-file-earmark-text"></i> @Localizer["ContractGeneratorMenu"]
-                                                                </a>
+                                                                </a>*@
                                                             
                                                         </div>
                                                     </div>
