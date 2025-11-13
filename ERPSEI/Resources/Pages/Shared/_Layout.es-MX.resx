@@ -183,6 +183,9 @@
   <data name="PrivacyMenu" xml:space="preserve">
     <value>Aviso de privacidad</value>
   </data>
+	<data name="DevMenu" xml:space="preserve">
+    <value>Desarrollado por el departamento de Reingeniería de Procesos</value>
+  </data>
   <data name="ProfilesCatalogMenu" xml:space="preserve">
     <value>Perfiles</value>
   </data>
