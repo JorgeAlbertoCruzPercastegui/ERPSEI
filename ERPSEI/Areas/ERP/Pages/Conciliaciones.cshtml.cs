@@ -1,4 +1,4 @@
-using ERPSEI.Data.Entities.Conciliaciones;
+ï»¿using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Requests;
 using ERPSEI.Resources;
 using Microsoft.AspNetCore.Mvc;
@@ -113,6 +113,8 @@ namespace ERPSEI.Areas.ERP.Pages
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Cliente { get; set; } = string.Empty;
 
+            public int? ClienteId { get; set; }
+
             [DataType(DataType.Text)]
             [Display(Name = "DescripcionField")]
             [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 1)]
@@ -165,7 +167,7 @@ namespace ERPSEI.Areas.ERP.Pages
             [Display(Name = "Fecha")]
             public DateTime? Fecha { get; set; }
 
-            [Display(Name = "Descripción")]
+            [Display(Name = "DescripciÃ³n")]
             public string? Descripcion { get; set; }
 
             [Display(Name = "Importe")]
@@ -234,16 +236,16 @@ namespace ERPSEI.Areas.ERP.Pages
                 var nombreUsuario = user?.UserName ?? "Usuario Desconocido";
                 var idUser = user?.Id;
 
-                // Crear un nuevo registro de GrupoPoliza específicamente para la exportación
+                // Crear un nuevo registro de GrupoPoliza especÃ­ficamente para la exportaciÃ³n
                 var idGrupoPoliza = await CrearGrupoPolizaParaExportacion(idUser, nombreUsuario);
 
                 if (idGrupoPoliza == null)
                 {
-                    resp.Mensaje = "Error al guardar la información en la base de datos.";
+                    resp.Mensaje = "Error al guardar la informaciÃ³n en la base de datos.";
                     return new JsonResult(resp);
                 }
 
-                // Obtener datos para la exportación y generar Excel
+                // Obtener datos para la exportaciÃ³n y generar Excel
                 resp.Datos = await GetExportarExcel(id, HttpContext, cuentaBancariaSeleccionada);
                 resp.TieneError = false;
                 resp.Mensaje = localizer["ExportExcelSuccessfully"];
@@ -262,7 +264,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             try
             {
-                // Obtener la conciliación por ID 
+                // Obtener la conciliaciÃ³n por ID 
                 var conciliacion = await conciliacionManager.GetByIdAsync(conciliacionId);
 
                 // Crear una lista para almacenar los datos del Excel
@@ -283,13 +285,13 @@ namespace ERPSEI.Areas.ERP.Pages
                 // Crear el registro en GrupoPoliza y obtener su Id
                 var idGrupoPoliza = await ObtenerGrupoPolizaId(idUser);
 
-                // Verificar si se creó correctamente el registro
+                // Verificar si se creÃ³ correctamente el registro
                 if (idGrupoPoliza == null)
                 {
                     throw new Exception("No se pudo crear el registro de GrupoPoliza.");
                 }
 
-                // Recorrer los detalles de la conciliación y preparar los datos
+                // Recorrer los detalles de la conciliaciÃ³n y preparar los datos
                 foreach (var detalle in conciliacion.DetallesConciliacion)
                 {
                     foreach (var comprobante in detalle.ConciliacionesDetallesComprobantes)
@@ -311,7 +313,7 @@ namespace ERPSEI.Areas.ERP.Pages
                         var nombreReceptor = comprobante.Comprobante?.Receptor?.Nombre ?? "N/A";
                         var tipoDeComprobante = comprobante.Comprobante?.TipoDeComprobante ?? "N/A";
 
-                        // Mapear TipoDeComprobante a descripción de PolizaTipo
+                        // Mapear TipoDeComprobante a descripciÃ³n de PolizaTipo
                         string descripcionPolizaTipo = tipoDeComprobante switch
                         {
                             "I" => "Ingreso",
@@ -320,7 +322,7 @@ namespace ERPSEI.Areas.ERP.Pages
                             _ => "N/A"
                         };
 
-                        // Buscar el Id de PolizaTipo correspondiente a la descripción
+                        // Buscar el Id de PolizaTipo correspondiente a la descripciÃ³n
                         var polizaTipoId = polizaTipos
                             .FirstOrDefault(pt => pt.Descripcion == descripcionPolizaTipo)?.Id ?? 0;
 
@@ -339,23 +341,23 @@ namespace ERPSEI.Areas.ERP.Pages
                         foreach (var movimiento in detalle.ConciliacionesDetallesMovimientos)
                         {
 
-                            // Definir fecha y concepto para la póliza
+                            // Definir fecha y concepto para la pÃ³liza
                             var fechaString = comprobante.Comprobante?.Fecha; // Suponiendo que este valor es un string
                             DateTime fechaHora;
 
                             // Intentar convertir el string a DateTime de manera segura
                             if (!DateTime.TryParse(fechaString, out fechaHora))
                             {
-                                // Si la conversión falla, asignar la fecha y hora actual como valor predeterminado
+                                // Si la conversiÃ³n falla, asignar la fecha y hora actual como valor predeterminado
                                 fechaHora = DateTime.Now;
                             }
 
                             var concepto = $"INGRESOS {nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}";
 
-                            // Llamar al método para crear la póliza en la base de datos
+                            // Llamar al mÃ©todo para crear la pÃ³liza en la base de datos
                             await CrearPoliza(idUser, idGrupoPoliza, polizaTipoId, fechaHora, concepto);
 
-                            // Obtener el ID de la póliza generada
+                            // Obtener el ID de la pÃ³liza generada
                             var polizaId = await db.VPolizas
                                 .Where(p => p.GrupoId == idGrupoPoliza && p.TipoId == polizaTipoId && p.FechaHora == fechaHora)
                                 .Select(p => p.Id)
@@ -363,10 +365,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
                             if (polizaId == 0)
                             {
-                                throw new Exception("No se pudo obtener el ID de la póliza creada.");
+                                throw new Exception("No se pudo obtener el ID de la pÃ³liza creada.");
                             }
 
-                            // Filtrar las cuentas contables según los criterios
+                            // Filtrar las cuentas contables segÃºn los criterios
                             var cuentasFiltradas = todasLasCuentasContables
                                 .Where(cc =>
                                     cc.Cuenta == cuentaBancariaSeleccionada &&
@@ -379,16 +381,16 @@ namespace ERPSEI.Areas.ERP.Pages
                                 // Concepto Detalle para las filas del Excel repetido 4 veces, separado por espacios
                                 var conceptoDetalle = string.Join(" ", Enumerable.Repeat($"{nombreReceptor} {comprobante.Comprobante?.Serie ?? "N/A"}-F-{comprobante.Comprobante?.Folio ?? "N/A"}", 4));
                                 decimal debe = movimiento.MovimientoBancario?.Importe ?? 0;
-                                //decimal debeImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
+                                //decimal debeImp = totalImpuestosTrasladados; // Asume algÃºn valor de impuestos
                                 decimal totalDebe = debe;
 
                                 decimal haber = movimiento.MovimientoBancario?.Importe ?? 0;
-                                //decimal haberImp = totalImpuestosTrasladados; // Asume algún valor de impuestos
+                                //decimal haberImp = totalImpuestosTrasladados; // Asume algÃºn valor de impuestos
                                 decimal totalHaber = haber;
 
-                                // Llamar al método CrearPolizaDetalle con cc.Id como cuentaId
+                                // Llamar al mÃ©todo CrearPolizaDetalle con cc.Id como cuentaId
                                 await CrearPolizaDetalle(
-                                    polizaId: polizaId, // Usar el ID de la póliza generada
+                                    polizaId: polizaId, // Usar el ID de la pÃ³liza generada
                                     cuentaId: cuentaFiltrada.Id,         // Usar el ID de la cuenta contable filtrada
                                     concepto: conceptoDetalle,
                                     debe: totalDebe,
@@ -423,7 +425,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                         CuentaBancariaExcel = string.Join(", ", cuentasContablesBanc.Select(c => c.Cuenta)),
                                         
 
-                                        // Información del usuario logueado para GrupoPoliza
+                                        // InformaciÃ³n del usuario logueado para GrupoPoliza
                                         IdGrupoPoliza = idGrupoPoliza,
                                         UsuarioLogueado = nombreUsuario,
                                         IdUsuarioCreador = idUser,
@@ -433,7 +435,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                         NumeroImpresion = 1,
                                         Deshabilitado = 0,
 
-                                        // Información de PolizaTipo
+                                        // InformaciÃ³n de PolizaTipo
                                         PolizaTipos = polizaTipos.Select(pt => new
                                         {
                                              pt.Id,
@@ -443,7 +445,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                         
                                         //Informacion de la PolizaTipo del registro seleccionado
 
-                                        //Información Poliza
+                                        //InformaciÃ³n Poliza
                                         VPolizas = vPolizas.Select(vp => new
                                         {
                                             vp.Id,
@@ -546,7 +548,7 @@ namespace ERPSEI.Areas.ERP.Pages
             catch (Exception ex)
             {
                 logger.LogError("Error al obtener las cuentas contables: {message}", ex.Message);
-                return new List<CuentaContable>(); // Retornar lista vacía en caso de error
+                return new List<CuentaContable>(); // Retornar lista vacÃ­a en caso de error
             }
         }
 
@@ -554,7 +556,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             try
             {
-                // Generar un nuevo Id basado en el valor máximo actual
+                // Generar un nuevo Id basado en el valor mÃ¡ximo actual
                 var nuevoId = (await db.PolizasDetalles.MaxAsync(pd => (int?)pd.Id) ?? 0) + 1;
 
                 // Crear una nueva instancia de PolizaDetalle
@@ -597,7 +599,7 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             try
             {
-                // Verificar si ya existe una póliza con los mismos valores de GrupoId, TipoId, y FechaHora
+                // Verificar si ya existe una pÃ³liza con los mismos valores de GrupoId, TipoId, y FechaHora
                 var existePoliza = await db.VPolizas
                     .AnyAsync(p => p.GrupoId == grupoId && p.TipoId == tipoId && p.FechaHora == fechaHora);
 
@@ -607,7 +609,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     return true; // Evitar duplicar el registro
                 }
 
-                // Generar un nuevo Id basado en el valor máximo actual en la tabla
+                // Generar un nuevo Id basado en el valor mÃ¡ximo actual en la tabla
                 var nuevoId = (await db.VPolizas.MaxAsync(p => (int?)p.Id) ?? 0) + 1;
 
                 // Crear una nueva instancia de Poliza
@@ -816,10 +818,10 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 await db.Database.BeginTransactionAsync();
 
-                // Obtener la conciliación por ID
+                // Obtener la conciliaciÃ³n por ID
                 Conciliacion? conciliacion = await conciliacionManager.GetByIdAsync(id);
 
-                // Verificar si la conciliación es nula
+                // Verificar si la conciliaciÃ³n es nula
                 if (conciliacion == null)
                 {
                     resp.TieneError = true;
@@ -827,7 +829,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                // Marcar la conciliación como finalizada
+                // Marcar la conciliaciÃ³n como finalizada
                 conciliacion.Finalizada = true;
                 await conciliacionManager.UpdateAsync(conciliacion);
 
@@ -854,7 +856,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             foreach (Comprobante comp in comprobantes)
             {
-                // Inicializa el UUID como vacío o nulo por defecto
+                // Inicializa el UUID como vacÃ­o o nulo por defecto
                 string uuid = string.Empty;
 
                 // Verifica si Complemento y TimbreFiscalDigital no son nulos antes de acceder a UUID
@@ -863,7 +865,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     uuid = comp.Complemento.TimbreFiscalDigital.UUID ?? string.Empty;
                 }
 
-                // Construir el JSON con el UUID y los demás campos
+                // Construir el JSON con el UUID y los demÃ¡s campos
                 jsonComprobantes.Add("{" +
                     $"\"Id\": \"{comp.Id}\", " +
                     $"\"Serie\": \"{comp.Serie}\", " +
@@ -906,7 +908,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 Conciliacion? c = await conciliacionManager.GetByIdAsync(id);
                 string jsonDetalles = string.Empty;
 
-                // Obtenemos los detalles y les agregamos un identificador único
+                // Obtenemos los detalles y les agregamos un identificador Ãºnico
                 List<string> detallesConId = new();
                 int contadorId = 1;
 
@@ -1012,7 +1014,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 jsonDetalles.Add("{" +
                     $"\"Id\":\"{cc.MovimientoBancario?.Id}\"," +
                     $"\"Fecha\":\"{cc.MovimientoBancario?.Fecha:yyyy-MM-dd HH:mm:ss}\"," +
-                    $"\"Descripción\":\"{cc.MovimientoBancario?.Descripcion}\"," +
+                    $"\"DescripciÃ³n\":\"{cc.MovimientoBancario?.Descripcion}\"," +
                     $"\"Cargos\":\"{cc.MovimientoBancario?.Importe}\"" +
                 "}");
             }
@@ -1050,14 +1052,14 @@ namespace ERPSEI.Areas.ERP.Pages
 
             foreach (var cc in detalles)
             {
-                // Extraer información del movimiento bancario
+                // Extraer informaciÃ³n del movimiento bancario
                 var movimiento = cc.MovimientoBancario;
                 if (movimiento != null)
                 {
                     jsonDetalles.Add("{" +
                         $"\"Id\": \"{movimiento.Id}\", " +
                         $"\"Fecha\": \"{movimiento.Fecha:dd/MM/yyyy HH:mm:ss}\", " +
-                        $"\"Descripcion\": \"{movimiento.Descripcion ?? "Sin descripción"}\", " +
+                        $"\"Descripcion\": \"{movimiento.Descripcion ?? "Sin descripciÃ³n"}\", " +
                         $"\"Banco\": \"{movimiento.Conciliacion?.BancoId}\", " +
                         $"\"Total\": \"{movimiento.Importe}\", " +
                         $"\"Similitud\": \"100.00%\"" +
@@ -1100,7 +1102,7 @@ namespace ERPSEI.Areas.ERP.Pages
                         {
                             Id = movimiento.Id,
                             Fecha = movimiento.MovimientoBancario.Fecha?.ToString("yyyy-MM-dd"),
-                            Descripcion = movimiento.MovimientoBancario.Descripcion ?? "Sin descripción",
+                            Descripcion = movimiento.MovimientoBancario.Descripcion ?? "Sin descripciÃ³n",
                             Cargos = movimiento.MovimientoBancario.Importe ?? 0,
                             Abonos = 0,
                             Banco = banco,
@@ -1203,7 +1205,7 @@ namespace ERPSEI.Areas.ERP.Pages
                         {
                             Id = movimiento.Id,
                             Fecha = movimiento.MovimientoBancario.Fecha?.ToString("yyyy-MM-dd"),
-                            Descripcion = movimiento.MovimientoBancario.Descripcion ?? "Sin descripción",
+                            Descripcion = movimiento.MovimientoBancario.Descripcion ?? "Sin descripciÃ³n",
                             Cargos = movimiento.MovimientoBancario.Importe ?? 0,
                             Abonos = 0,
                             Banco = banco,
@@ -1303,7 +1305,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             if (!string.IsNullOrEmpty(rfc))
             {
-                // Filtra los comprobantes según el RFC filtrado
+                // Filtra los comprobantes segÃºn el RFC filtrado
                 comprobantes = await comprobanteManager.GetByRFCAsync(rfc);
             }
             else
@@ -1349,20 +1351,20 @@ namespace ERPSEI.Areas.ERP.Pages
                     if (!int.TryParse(id, out int sid)) { sid = 0; }
                     Conciliacion? conciliacion = await conciliacionManager.GetByIdAsync(sid);
 
-                    // Verificar si la conciliación es nula
+                    // Verificar si la conciliaciÃ³n es nula
                     if (conciliacion == null)
                     {
                         resp.TieneError = true;
-                        resp.Mensaje = $"Conciliación con ID {sid} no encontrada.";
+                        resp.Mensaje = $"ConciliaciÃ³n con ID {sid} no encontrada.";
                         break;
                     }
 
-                    // Marcar la conciliación como deshabilitada
+                    // Marcar la conciliaciÃ³n como deshabilitada
                     conciliacion.Deshabilitado = true;
                     await conciliacionManager.UpdateAsync(conciliacion);
                 }
 
-                // Si hubo algún error, lanzar excepción para revertir la transacción
+                // Si hubo algÃºn error, lanzar excepciÃ³n para revertir la transacciÃ³n
                 //if (resp.TieneError) { throw new Exception(resp.Mensaje); }
 
                 await db.Database.CommitTransactionAsync();
@@ -1374,7 +1376,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 await db.Database.RollbackTransactionAsync();
                 logger.LogError(ex.Message);
                 resp.TieneError = true;
-                resp.Mensaje = "Ocurrió un error al procesar la solicitud.";
+                resp.Mensaje = "OcurriÃ³ un error al procesar la solicitud.";
             }
 
             return new JsonResult(resp);
@@ -1423,7 +1425,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 conciliaciones = await conciliacionManager.GetAllAsync();
             }
 
-            // Construir el JSON con objetos anónimos
+            // Construir el JSON con objetos anÃ³nimos
             foreach (Conciliacion cons in conciliaciones)
             {
                 string UsuarioCreador = cons.UsuarioCreador?.Empleado?.NombreCompleto ?? cons.UsuarioCreador?.UserName ?? "-";
@@ -1498,7 +1500,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 // Si el complemento o TimbreFiscalDigital no existe, devolver valores por defecto
                 string uuid = comp.Complemento?.TimbreFiscalDigital?.UUID ?? "-";
 
-                // Añadir el comprobante a la lista en formato JSON
+                // AÃ±adir el comprobante a la lista en formato JSON
                 jsonComprobantes.Add("{" +
                     $"\"Id\": \"{comp.Id}\", " +
                     $"\"Serie\": \"{comp.Serie}\", " +
@@ -1541,14 +1543,23 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 await db.Database.BeginTransactionAsync();
 
-                var cliente = await db.Clientes.FirstOrDefaultAsync(c => c.RazonSocial == InputFiltroModalAgregar.Cliente);
-                if (cliente == null)
+                // ðŸ” 1. Normalizamos el texto del cliente recibido
+                var clienteTexto = InputFiltroModalAgregar.Cliente?.Trim().ToUpper();
+
+                logger.LogInformation($"Texto que llega desde el front: {clienteTexto}");
+
+                // ðŸ” 2. Buscar en la tabla EMPRESAS (porque Clientes estÃ¡ vacÃ­a)
+                var empresa = await db.Empresas
+                    .FirstOrDefaultAsync(e => e.RazonSocial.Trim().ToUpper() == clienteTexto);
+
+                if (empresa == null)
                 {
                     resp.TieneError = true;
-                    resp.Mensaje = stringLocalizer["ClienteNotFound"];
+                    resp.Mensaje = $"No se encontrÃ³ la empresa '{clienteTexto}'";
                     return new JsonResult(resp);
                 }
 
+                // ðŸ” 3. Buscar el usuario creador
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var usuarioCreador = await db.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -1559,71 +1570,67 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                // Calcular el próximo ID para Conciliacion
+                // ðŸ“Œ 4. Calcular nuevo ID de ConciliaciÃ³n
                 var lastConciliacion = await db.Conciliaciones.OrderByDescending(c => c.Id).FirstOrDefaultAsync();
                 int nextConciliacionId = (lastConciliacion?.Id ?? 0) + 1;
 
-                // Calcular el total sumando los totales de todos los comprobantes conciliados
+                // ðŸ“Œ 5. Sumar el total de comprobantes
                 decimal totalConciliacion = InputFiltroModalAgregar.Comprobantes?.Sum(comp => comp.Total) ?? 0;
 
-                // Crear el registro de Conciliacion
+                // ðŸ§¾ 6. Crear ConciliaciÃ³n asociada a Empresa
                 Conciliacion conciliacion = new Conciliacion
                 {
                     Id = nextConciliacionId,
                     Fecha = InputFiltroModalAgregar.FechaElaboracionInicio,
-                    ClienteId = cliente.Id,
+                    ClienteId = empresa.Id,        // <--- AHORA USA EMPRESA
+                    EmpresaId = empresa.Id,        // <--- TAMBIÃ‰N SEGURO QUE SE USE AQUÃ
                     Descripcion = InputFiltroModalAgregar.Descripcion,
                     UsuarioCreador = usuarioCreador,
                     UsuarioModificador = usuarioCreador,
                     BancoId = InputFiltroModalAgregar.BancoId,
-                    EmpresaId = cliente.Id,
                     Finalizada = InputFiltroModalAgregar.Finalizada,
                     Total = totalConciliacion
                 };
 
                 await db.Conciliaciones.AddAsync(conciliacion);
-                await db.SaveChangesAsync(); // Guardar para asegurar que ConciliacionId esté disponible
+                await db.SaveChangesAsync();
 
-                // Obtener los IDs iniciales para ConciliacionDetalle y ConciliacionDetalleComprobante
+                // ðŸ“Œ 7. Crear detalles para comprobantes
                 var lastDetalleConciliacion = await db.ConciliacionesDetalles.OrderByDescending(cd => cd.Id).FirstOrDefaultAsync();
                 int nextDetalleId = (lastDetalleConciliacion?.Id ?? 0) + 1;
                 int nextComprobanteId = await db.ConciliacionesDetallesComprobantes.MaxAsync(dc => (int?)dc.Id) ?? 0;
 
-                // Crear un registro en ConciliacionDetalle para cada comprobante seleccionado
-                List<int> detalleConciliacionIds = new List<int>();
+                List<int> detalleConciliacionIds = new();
+
                 if (InputFiltroModalAgregar.Comprobantes != null && InputFiltroModalAgregar.Comprobantes.Any())
                 {
                     foreach (var comp in InputFiltroModalAgregar.Comprobantes)
                     {
-                        // Crear un nuevo detalle de conciliación para cada comprobante
                         var detalleConciliacion = new ConciliacionDetalle
                         {
-                            Id = nextDetalleId++,  // Incrementa el ID para cada detalle
-                            ConciliacionId = conciliacion.Id, // Asocia el mismo ConciliacionId para cada registro
-                            Conciliacion = conciliacion,
-                            ConciliacionesDetallesComprobantes = new List<ConciliacionDetalleComprobante>(),
-                            ConciliacionesDetallesMovimientos = new List<ConciliacionDetalleMovimiento>()
+                            Id = nextDetalleId++,
+                            ConciliacionId = conciliacion.Id,
+                            Conciliacion = conciliacion
                         };
 
-                        // Agregar el comprobante a ConciliacionDetalleComprobante
-                        detalleConciliacion.ConciliacionesDetallesComprobantes.Add(new ConciliacionDetalleComprobante
-                        {
-                            Id = ++nextComprobanteId,  // Incrementa el ID para cada comprobante
-                            ConciliacionDetalleId = detalleConciliacion.Id,
-                            ComprobanteId = comp.Id
-                        });
+                        detalleConciliacion.ConciliacionesDetallesComprobantes = new List<ConciliacionDetalleComprobante>
+                {
+                    new ConciliacionDetalleComprobante
+                    {
+                        Id = ++nextComprobanteId,
+                        ConciliacionDetalleId = detalleConciliacion.Id,
+                        ComprobanteId = comp.Id
+                    }
+                };
 
-                        // Guardar cada ConciliacionDetalle individualmente para asegurar su disponibilidad
                         await db.ConciliacionesDetalles.AddAsync(detalleConciliacion);
-
-                        // Guardar el ID del detalle de conciliación recién creado
                         detalleConciliacionIds.Add(detalleConciliacion.Id);
                     }
 
-                    await db.SaveChangesAsync(); // Guardar cambios para asegurar que todos los detalles estén en la base de datos
+                    await db.SaveChangesAsync();
                 }
 
-                // Agregar los movimientos bancarios distribuidos entre los ConciliacionDetalleIds creados
+                // ðŸ“Œ 8. Agregar movimientos bancarios
                 var nextMovimientoId = await db.MovimientosBancarios.MaxAsync(m => (int?)m.Id) ?? 0;
                 var nextDetalleMovimientoId = await db.ConciliacionesDetallesMovimientos.MaxAsync(dm => (int?)dm.Id) ?? 0;
 
@@ -1644,27 +1651,24 @@ namespace ERPSEI.Areas.ERP.Pages
 
                         await db.MovimientosBancarios.AddAsync(movimiento);
 
-                        // Asocia el movimiento con el correspondiente ConciliacionDetalleId
                         var detalleMovimiento = new ConciliacionDetalleMovimiento
                         {
                             Id = ++nextDetalleMovimientoId,
                             MovimientoBancarioId = movimiento.Id,
-                            ConciliacionDetalleId = detalleConciliacionIds[index]  // Asociar al ConciliacionDetalleId correspondiente
+                            ConciliacionDetalleId = detalleConciliacionIds[index]
                         };
 
                         await db.ConciliacionesDetallesMovimientos.AddAsync(detalleMovimiento);
 
-                        // Incrementa el índice y reinicia si es necesario para distribuir entre los IDs disponibles
                         index = (index + 1) % detalleConciliacionIds.Count;
                     }
                 }
 
                 await db.SaveChangesAsync();
+                await db.Database.CommitTransactionAsync();
 
                 resp.TieneError = false;
                 resp.Mensaje = stringLocalizer["ConciliacionCreatedSuccessfully"];
-
-                await db.Database.CommitTransactionAsync();
             }
             catch (Exception ex)
             {
@@ -1676,6 +1680,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }
+
 
 
         public ActionResult OnGetDownloadPlantilla()

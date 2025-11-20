@@ -299,12 +299,10 @@
                                                                     <i class="bi bi-circle-square"></i> @Localizer["ProfilesCatalogMenu"]
                                                                 </a>
                                                             }
-                                                            <!--@*
+                                                            
                                                                 <a class="dropdown-item p-2 @_LayoutPages.CatalogoCuentasContablesNavClass(ViewContext)" asp-area="Catalogos" asp-page="/CuentasContables">
                                                                     <i class="bi bi-cash-coin"></i> @Localizer["AccountingAccountsCatalogMenu"]
                                                                 </a>
-                                                    *@
-                                                                -->
                                                         </div>
                                                     </div>
                                                 }
@@ -325,7 +323,7 @@
                                         <div class="container">
                                             <div class="row my-2">
 
-                                                @*@if(tieneERPRH)
+                                                @if(tieneERPRH)
                                                 {
                                                     <div class="@classDivERP">
                                                         <div class="list-group list-group-flush">
@@ -357,7 +355,7 @@
                                                             }
                                                         </div>
                                                     </div>
-                                                }*@
+                                                }
                                                 @if (tieneERPEmpresas)
                                                 {
                                                     <div class="@classDivERP">
@@ -381,12 +379,12 @@
                                                                     </div>
                                                                 </div>
                                                             }
-                                                            @*@if (permisos["conciliaciones"])
+                                                            @if (permisos["conciliaciones"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.ConciliacionesNavClass(ViewContext)" asp-area="ERP" asp-page="/Conciliaciones">
                                                                     <i class="bi bi-bookmark-star-fill"></i> @Localizer["ConciliacionesMenu"]
                                                                 </a>
-                                                            }*@
+                                                            }
                                                         </div>
                                                     </div>
                                                 }
@@ -419,12 +417,12 @@
                                                                     <i class="bi bi-diagram-3-fill"></i> @Localizer["OrganizationChartMenu"]
                                                                 </a>
                                                             }
-                                                            @*@if (permisos["asistencia"])
+                                                            @if (permisos["asistencia"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.AsistenciaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Asistencia">
                                                                     <i class="bi bi-fingerprint"></i> @Localizer["AsistenciaMenu"]
                                                                 </a>
-                                                            }*@
+                                                            }
                                                         </div>
                                                     </div>
                                                 }
@@ -441,7 +439,7 @@
                                                                     <i class="bi bi-receipt"></i> @Localizer["BillingReportMenu"]
                                                                 </a>
                                                             }
-                                                            @*@if (permisos["convertidorBancario"])
+                                                            @if (permisos["convertidorBancario"])
                                                             {
                                                                 <a class="dropdown-item p-2 @_LayoutPages.OrganigramaNavClass(ViewContext)" asp-area="Reportes" asp-page="/ConvertidorBancario">
                                                                     <i class="bi bi-piggy-bank"></i> @Localizer["BankConverterMenu"]
@@ -449,7 +447,7 @@
                                                             }
                                                                 <a class="dropdown-item p-2 @_LayoutPages.GeneradorContratoNavClass(ViewContext)" asp-area="Reportes" asp-page="/GeneradorContrato">
                                                                     <i class="bi bi-file-earmark-text"></i> @Localizer["ContractGeneratorMenu"]
-                                                                </a>*@
+                                                                </a>
                                                         </div>
                                                     </div>
                                                 }

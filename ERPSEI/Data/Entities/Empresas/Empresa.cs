@@ -11,7 +11,7 @@ namespace ERPSEI.Data.Entities.Empresas
 		[DatabaseGenerated(DatabaseGeneratedOption.None)]
 		public int Id { get; set; }
 
-		public string RazonSocial { get; set; } = string.Empty;
+		public string? RazonSocial { get; set; }
 
 		public int? OrigenId { get; set; }
 		public Origen? Origen { get; set; }

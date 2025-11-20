@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
         });
 
         //initTableComprobantes();
+
     });
 
     initTable();
@@ -879,8 +880,8 @@ function conciliacionIndidual(value, row, index) {
     let disabled = row.coincidencia || row.bloqueado ? 'disabled' : '';
 
     return `
-        <button class="btn btn-primary btn-sm" onclick="consultarComp(${row.Id}, '${row.Serie}', '${row.Folio}', '${row.Fecha}', '${row.UUID}', '${row.Total}')" ${disabled}>
-            <i class="bi bi-paperclip rotate-clip"></i> Conciliar
+        <button type="button" class="btn btn-primary btn-sm" onclick="consultarComp(${row.Id}, '${row.Serie}', '${row.Folio}', '${row.Fecha}', '${row.UUID}', '${row.Total}')" ${disabled}>
+            <i class="bi bi-paperclip rotate-clip"></i> Conciliar Comp
         </button>
     `;
 }
@@ -1584,11 +1585,12 @@ function conciliarFormatterMov(value, row, index) {
     let disabled = row.coincidencia || row.bloqueado ? 'disabled' : '';
 
     return `
-        <button class="btn btn-primary btn-sm" onclick="conciliarMovimiento(${index}, '${row.Fecha}', '${row.Cargos}')" ${disabled}>
-            <i class="bi bi-paperclip rotate-clip"></i> Conciliar
+        <button type="button" class="btn btn-primary btn-sm" onclick="conciliarMovimiento(${index}, '${row.Fecha}', '${row.Cargos}')" ${disabled}>
+            <i class="bi bi-paperclip rotate-clip"></i> Conciliar MOV
         </button>
     `;
 }
+
 
 // Inicializar un contador global de ID incremental
 let nextId = 1;
@@ -2380,7 +2382,8 @@ function onGuardarClick() {
     let oParams = {
         Id: idField.value === "Nuevo" ? 0 : idField.value,
         FechaElaboracionInicio: fechaField.value,
-        Cliente: clienteIdField.value,
+        ClienteId: clienteIdField.getAttribute("idselected"), // IMPORTANTEEEE!!!!
+        Cliente: clienteIdField.value, // opcional
         Descripcion: descripcionField.value,
         BancoId: bancoIdField.value,
         Movimientos: [],
