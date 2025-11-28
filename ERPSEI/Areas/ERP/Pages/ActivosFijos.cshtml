@@ -243,20 +243,21 @@
                             </div>
                             <div class="col-4">
                                 <div class="form-floating mb-3">
-                                    <select id="inpActivoFijoOficina" class="form-select" disabled>
-                                        <option value="">Seleccione una oficina</option>
+                                    <select id="inpActivoFijoOficina"
+                                            asp-for="InputActivosFijos.Oficina"
+                                            class="form-select">
+                                        <option value="">Seleccione...</option>
                                         @foreach (var oficina in oficinas)
                                         {
                                             <option value="@oficina.Id">@oficina.Nombre</option>
                                         }
                                     </select>
                                     <label for="inpActivoFijoOficina">Oficina</label>
-                                    <!--<input id="inpActivoFijoUbicacion" asp-for="InputActivosFijos.Ubicacion" type="text" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
-                                    <label asp-for="InputActivosFijos.Ubicacion" class="form-label required"></label>
-                                    <span asp-validation-for="InputActivosFijos.Ubicacion" class="text-danger"></span>-->
                                 </div>
+                                <span asp-validation-for="InputActivosFijos.Oficina" class="text-danger"></span>
                             </div>
-                            <input type="hidden" id="inpOficinaId" name="InputActivosFijos.EmpleadoId" />
+
+                            <input type="hidden" id="inpOficinaId" name="InputActivosFijos.OficinaId" />
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">

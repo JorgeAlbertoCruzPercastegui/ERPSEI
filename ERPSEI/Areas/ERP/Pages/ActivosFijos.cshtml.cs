@@ -55,6 +55,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly ICategoriaActivosFijosManager categoriaActivoFijoManager;
         private readonly ITipoActivosFijosManager tipoActivoFijoManager;
         private readonly IEmpleadoManager empleadoActivoFijoManager;
+        private readonly IOficinaManager oficinaActivoFijoManager;
         private readonly IStringLocalizer<ActivosFijosModel> localizer;
         private readonly AppUserManager userManager;
 
@@ -127,6 +128,9 @@ namespace ERPSEI.Areas.ERP.Pages
             [DataType(DataType.Text)]
             public string? Tipo { get; set; }
 
+            [DataType(DataType.Text)]
+            public string? Oficina { get; set; }
+
             [Required(ErrorMessage = "La Fecha Compra es obligatoria.")]
             [Display(Name = "Fecha Compra")]
             [DataType(DataType.Date)]
@@ -184,7 +188,8 @@ namespace ERPSEI.Areas.ERP.Pages
             AppUserManager _userManager,
             ICategoriaActivosFijosManager categoriaManager,
             ITipoActivosFijosManager tipoManager,
-            IEmpleadoManager empleadoManager
+            IEmpleadoManager empleadoManager,
+            IOficinaManager oficinaManager
         )
         {
             stringLocalizer = _stringLocalizer;
@@ -198,6 +203,7 @@ namespace ERPSEI.Areas.ERP.Pages
             categoriaActivoFijoManager = categoriaManager;
             tipoActivoFijoManager = tipoManager;
             empleadoActivoFijoManager = empleadoManager;
+            oficinaActivoFijoManager = oficinaManager;
 
             InputFiltro = new InputFiltroModel();
             InputActivosFijos = new ActivoFijoTableModel();
@@ -233,6 +239,8 @@ namespace ERPSEI.Areas.ERP.Pages
                     categoriaId = a.CategoriaId,
                     tipo = a.Tipo?.Descripcion ?? "-",
                     tipoId = a.TipoId,
+                    oficina = a.Oficina?.Nombre ?? "",
+                    oficinaId = a.OficinaId,
                     fechaCompra = fechaCompra?.ToString("dd/MM/yyyy") ?? "-",
                     fechaCompraJS = fechaCompra?.ToString("yyyy-MM-dd") ?? "-",
                     fechaRenovacion = fechaRenovacion?.ToString("dd/MM/yyyy") ?? "-",
@@ -378,6 +386,16 @@ namespace ERPSEI.Areas.ERP.Pages
                 activo.FechaRenovacion = input.FechaRenovacion;
 
                 // Claves foráneas
+                int ofiId = 0;
+                int.TryParse(input.Oficina, out ofiId);
+
+                if (ofiId <= 0 || !await db.Oficinas.AnyAsync(o => o.Id == ofiId))
+                {
+                    resp.Mensaje = "La oficina seleccionada no existe en el catálogo.";
+                    return new JsonResult(resp);
+                }
+
+                activo.OficinaId = ofiId;
                 //activo.EmpleadoId = input.EmpleadoId ?? 0;
                 activo.EmpleadoId = input.EmpleadoId ?? 0;
                 activo.TipoId = int.TryParse(input.Tipo, out int tipoId) ? tipoId : 0;
@@ -428,6 +446,8 @@ namespace ERPSEI.Areas.ERP.Pages
                     categoriaId = a.CategoriaId,
                     tipo = a.Tipo?.Descripcion ?? "-",
                     tipoId = a.TipoId,
+                    oficina = a.Oficina?.Nombre ?? "-",
+                    oficinaId = a.OficinaId,
                     fechaCompra = a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-",
                     fechaCompraJS = a.FechaCompra?.ToString("yyyy-MM-dd") ?? "-",
                     fechaRenovacion = a.FechaRenovacion?.ToString("dd/MM/yyyy") ?? "-",
@@ -501,6 +521,17 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             var activos = await activoFijoManager.GetAllAsync();
 
+            foreach (var a in activos)
+            {
+                logger.LogInformation(
+                    "Activo {Id} | OficinaId: {OficinaId} | OficinaNombre: {OficinaNombre}",
+                    a.Id,
+                    a.OficinaId,
+                    a.Oficina?.Nombre
+                );
+            }
+
+
             IWorkbook workbook = new XSSFWorkbook();
             ISheet sheet = workbook.CreateSheet("Activos Fijos");
 
@@ -527,7 +558,7 @@ namespace ERPSEI.Areas.ERP.Pages
             // Encabezados
             var headers = new[] {
         "Id", "Folio", "Descripción", "Responsable", "Categoría", "Tipo",
-        "Fecha Compra", "Precio", "Ubicación", "Número Serie", "Link Factura", "Comentarios"
+        "Fecha Compra", "Precio", "Oficina", "Número Serie", "Link Factura", "Comentarios"
     };
 
             IRow headerRow = sheet.CreateRow(0);
@@ -552,7 +583,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 row.CreateCell(5).SetCellValue(a.Tipo?.Descripcion ?? "-");
                 row.CreateCell(6).SetCellValue(a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-");
                 row.CreateCell(7).SetCellValue(Convert.ToDouble(a.Precio));
-                row.CreateCell(8).SetCellValue(a.Ubicacion ?? "-");
+                row.CreateCell(8).SetCellValue(a.Oficina?.Nombre ?? "-");
                 row.CreateCell(9).SetCellValue(a.NumeroSerie ?? "-");
                 row.CreateCell(10).SetCellValue(a.LinkFacturaCompra ?? "-");
                 row.CreateCell(11).SetCellValue(a.Comentarios ?? "-");
@@ -623,7 +654,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 activo.Marca = af.Marca ?? "";
                 activo.NumeroSerie = af.NumeroSerie ?? "";
                 activo.Descripcion = af.Descripcion ?? "";
-                activo.Ubicacion = af.Ubicacion ?? "";
+                //activo.Ubicacion = af.Ubicacion ?? "";
                 activo.FechaCompra = af.FechaCompra;
                 activo.Precio = af.Precio ?? 0;
                 activo.Comentarios = af.Comentarios ?? "";
@@ -631,6 +662,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 activo.EmpleadoId = af.EmpleadoId ?? 0;
                 activo.CategoriaId = int.TryParse(af.Categoria, out var catId) ? catId : 0;
                 activo.TipoId = int.TryParse(af.Tipo, out var tipoId) ? tipoId : 0;
+                activo.OficinaId = int.TryParse(af.Oficina, out var ofiId) ? ofiId : 0;
                 activo.LinkFacturaCompra = af.LinkFacturaCompra ?? "";
                 activo.Deshabilitado = false;
 
@@ -714,7 +746,8 @@ namespace ERPSEI.Areas.ERP.Pages
             string tipoNombre = row[11]?.ToString()?.Trim() ?? "";
             string linkFactura = row[12]?.ToString()?.Trim() ?? "";
             string comentarios = row[7]?.ToString()?.Trim() ?? "";
-            string ubicacion = row[4]?.ToString()?.Trim() ?? "";
+            string oficinaNombre = row[13]?.ToString()?.Trim() ?? "";
+            //string ubicacion = row[4]?.ToString()?.Trim() ?? "";
 
             // Validación de existencia en catálogos
             var categoria = await categoriaActivoFijoManager.GetByNameAsync(categoriaNombre);
@@ -724,6 +757,10 @@ namespace ERPSEI.Areas.ERP.Pages
             var tipo = await tipoActivoFijoManager.GetByNameAsync(tipoNombre);
             if (tipo == null)
                 return $"El tipo '{tipoNombre}' no existe en el catálogo.";
+
+            var oficina = await oficinaActivoFijoManager.GetByNameAsync(oficinaNombre);
+            if (oficina == null)
+                return $"La oficina '{oficinaNombre}' no existe en el catálogo.";
 
             var responsable = await empleadoActivoFijoManager.GetByNameAsync(responsableNombre);
             if (responsable == null)
@@ -739,12 +776,13 @@ namespace ERPSEI.Areas.ERP.Pages
                 EmpleadoId = responsable.Id,
                 Categoria = categoria.Id.ToString(),
                 Tipo = tipo.Id.ToString(),
+                Oficina = oficina.Id.ToString(),
                 FechaCompra = fechaCompra,
                 Precio = precio,
                 LinkFacturaCompra = linkFactura,
                 Comentarios = comentarios,
-                FechaRenovacion = fechaRenovacion == DateTime.MinValue ? null : fechaRenovacion,
-                Ubicacion = ubicacion
+                FechaRenovacion = fechaRenovacion == DateTime.MinValue ? null : fechaRenovacion
+                //Ubicacion = ubicacion
             };
 
             // Validar duplicados por folio o serie

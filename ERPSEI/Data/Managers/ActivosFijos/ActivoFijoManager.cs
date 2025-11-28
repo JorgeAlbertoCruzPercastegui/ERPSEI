@@ -36,7 +36,7 @@ namespace ERPSEI.Data.Managers.ActivosFijos
                 a.EmpleadoId = activoFijo.EmpleadoId;
                 a.Marca = activoFijo.Marca;
                 a.NumeroSerie = activoFijo.NumeroSerie;
-                a.Ubicacion = activoFijo.Ubicacion;
+                a.Oficina = activoFijo.Oficina;
                 a.FechaCompra = activoFijo.FechaCompra;
                 a.Precio = activoFijo.Precio;
                 a.Comentarios = activoFijo.Comentarios;
@@ -100,10 +100,10 @@ namespace ERPSEI.Data.Managers.ActivosFijos
                 .Include(a => a.Empleado)
                 .Include(a => a.Categoria)
                 .Include(a => a.Tipo)
+                .Include(a => a.Oficina)
+                .AsNoTracking()
                 .ToListAsync();
         }
-
-
 
         public async Task<ActivoFijo?> GetByIdAsync(int id)
         {
@@ -120,6 +120,7 @@ namespace ERPSEI.Data.Managers.ActivosFijos
             var query = db.ActivosFijos
                 .Include(a => a.Empleado)
                 .Include(a => a.Categoria)
+                .Include(a => a.Oficina)
                 .Include(a => a.Tipo).AsQueryable();
 
             if (filtro != null)
@@ -173,7 +174,7 @@ namespace ERPSEI.Data.Managers.ActivosFijos
                 a.EmpleadoId = activoFijo.EmpleadoId;
                 a.Marca = activoFijo.Marca;
                 a.NumeroSerie = activoFijo.NumeroSerie;
-                a.Ubicacion = activoFijo.Ubicacion;
+                a.Oficina = activoFijo.Oficina;
                 a.FechaCompra = activoFijo.FechaCompra;
                 a.Precio = activoFijo.Precio;
                 a.Comentarios = activoFijo.Comentarios;

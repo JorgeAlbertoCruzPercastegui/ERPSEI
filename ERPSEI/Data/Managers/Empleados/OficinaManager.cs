@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Data.Managers.Empleados
 {
-    public class OficinaManager : IRWCatalogoManager<Oficina>
+    public class OficinaManager : IRWCatalogoManager<Oficina>, IOficinaManager
     {
         ApplicationDbContext db { get; set; }
 

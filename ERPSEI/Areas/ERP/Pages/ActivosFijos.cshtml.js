@@ -486,6 +486,7 @@ function onGuardarClick() {
     let empleadoIdField = document.getElementById("inpEmpleadoId");
     let oficinaField = document.getElementById("inpActivoFijoOficina");
 
+
     // 🔁 ACTUALIZA EL INPUT OCULTO CON EL VALOR DEL SELECT
     $("#inpEmpleadoId").val(responsableField.value);
 
@@ -495,7 +496,7 @@ function onGuardarClick() {
         descripcion: descripcionField.value,
         responsable: responsableField.value,
         empleadoId: parseInt(empleadoIdField?.value || 0),
-        oficinaId: parseInt(oficinaField?.value || 0),
+        oficina: oficinaField.value,
         categoria: categoriaField.value,
         tipo: tipoField.value,
         fechaCompra: fechacompraField.value,

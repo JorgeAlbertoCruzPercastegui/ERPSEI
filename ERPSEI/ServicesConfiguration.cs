@@ -139,7 +139,7 @@ namespace ERPSEI
             _builder.Services.AddScoped<IActivoFijoManager, ActivoFijoManager>();
             _builder.Services.AddScoped<ITipoActivosFijosManager, TipoActivosFijosManager>();
             _builder.Services.AddScoped<ICategoriaActivosFijosManager, CategoriaActivosFijosManager>();
-            //_builder.Services.AddScoped<IOficinaManager, OficinaManager>();
+            _builder.Services.AddScoped<IOficinaManager, OficinaManager>();
 
         }
         private static void ConfigureDIVacaciones(WebApplicationBuilder _builder)
