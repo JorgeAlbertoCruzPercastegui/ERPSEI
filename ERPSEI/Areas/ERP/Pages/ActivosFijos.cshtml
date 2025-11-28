@@ -15,6 +15,7 @@
 @inject ICategoriaActivosFijosManager CategoriaManager;
 @inject ITipoActivosFijosManager TipoManager;
 @inject IEmpleadoManager EmpleadoManager;
+@inject IRWCatalogoManager<Oficina> OficinaManager
 
 @inject IViewLocalizer Localizer;
 @inject AppRoleManager RolesManager;
@@ -34,6 +35,7 @@
     List<TipoActivoFijo> tipos = await TipoManager.GetAllAsync();
     List<CategoriaActivoFijo> categorias = await CategoriaManager.GetAllAsync();
     List<Empleado> empleados = await EmpleadoManager.GetAllAsync();
+    List<Oficina> oficinas = await OficinaManager.GetAllAsync();
 
     bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
     bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
@@ -241,11 +243,21 @@
                             </div>
                             <div class="col-4">
                                 <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoUbicacion" asp-for="InputActivosFijos.Ubicacion" type="text" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
+                                    <select id="inpActivoFijoOficina" class="form-select" disabled>
+                                        <option value="">Seleccione una oficina</option>
+                                        @foreach (var oficina in oficinas)
+                                        {
+                                            <option value="@oficina.Id">@oficina.Nombre</option>
+                                        }
+                                    </select>
+                                    <label for="inpActivoFijoOficina">Oficina</label>
+                                    <!--<input id="inpActivoFijoUbicacion" asp-for="InputActivosFijos.Ubicacion" type="text" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
                                     <label asp-for="InputActivosFijos.Ubicacion" class="form-label required"></label>
-                                    <span asp-validation-for="InputActivosFijos.Ubicacion" class="text-danger"></span>
+                                    <span asp-validation-for="InputActivosFijos.Ubicacion" class="text-danger"></span>-->
                                 </div>
                             </div>
+                            <input type="hidden" id="inpOficinaId" name="InputActivosFijos.EmpleadoId" />
+
                             <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <select id="inpActivoFijoResponsable" class="form-select" disabled>

@@ -254,14 +254,20 @@ function initActivoFijoDialog(action, row) {
 
     let marcaField = document.getElementById("inpActivoFijoMarca");
     let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
-    let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
+    //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
     let comentariosField = document.getElementById("inpActivoFijoComentarios");
     let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
+    let oficinaField = document.getElementById("inpActivoFijoOficina");
 
     let btnGuardar = document.getElementById("dlgActivoFijoBtnGuardar");
     let dlgTitle = document.getElementById("dlgActivoFijoTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
+
+    // Verificar si existe el select Oficina
+    if (!oficinaField) {
+        console.warn("inpActivoFijoOficina NO se encontró en el HTML.");
+    }
 
     idField.setAttribute("disabled", true);
 
@@ -281,9 +287,11 @@ function initActivoFijoDialog(action, row) {
 
             marcaField.removeAttribute("disabled");
             numeroSerieField.removeAttribute("disabled");
-            ubicacionField.removeAttribute("disabled");
+            //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
+            oficinaField.removeAttribute("disabled");
+
 
             btnGuardar.removeAttribute("disabled");
             break;
@@ -302,9 +310,10 @@ function initActivoFijoDialog(action, row) {
 
             marcaField.removeAttribute("disabled");
             numeroSerieField.removeAttribute("disabled");
-            ubicacionField.removeAttribute("disabled");
+            //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
+            oficinaField.removeAttribute("disabled");
 
             btnGuardar.removeAttribute("disabled");
             break;
@@ -323,9 +332,10 @@ function initActivoFijoDialog(action, row) {
 
             marcaField.setAttribute("disabled", true);
             numeroSerieField.setAttribute("disabled", true);
-            ubicacionField.setAttribute("disabled", true);
+            //ubicacionField.setAttribute("disabled", true);
             comentariosField.setAttribute("disabled", true);
             fechaRenovacionField.setAttribute("disabled", true);
+            oficinaField.setAttribute("disabled", true);
 
             btnGuardar.setAttribute("disabled", true);
             break;
@@ -348,6 +358,12 @@ function initActivoFijoDialog(action, row) {
     categoriaField.value = row.categoriaId ?? row.categoria ?? "";
     tipoField.value = row.tipoId ?? row.tipo ?? "";
 
+    if (oficinaField && row.oficinaId) {
+        oficinaField.value = row.oficinaId.toString();  // Carga oficina
+    }
+
+    dlgModal.show();
+
     if (row.fechaCompra) {
         try {
             if (row.fechaCompra.includes("/")) {
@@ -368,7 +384,7 @@ function initActivoFijoDialog(action, row) {
     linkfacturaField.value = row.linkFacturaCompra || '';
     marcaField.value = row.marca ?? "";
     numeroSerieField.value = row.numeroSerie ?? "";
-    ubicacionField.value = row.ubicacion ?? "";
+    //ubicacionField.value = row.ubicacion ?? "";
     comentariosField.value = row.comentarios ?? "";
 
     if (row.fechaRenovacion) {
@@ -419,7 +435,8 @@ async function onAgregarClick() {
         linkFacturaCompra: "",
         marca: "",
         numeroSerie: "",
-        ubicacion: "",
+        //ubicacion: "",
+        oficina: null,
         comentarios: "",
         fechaRenovacion: ""
     });
@@ -458,7 +475,7 @@ function onGuardarClick() {
 
     let marcaField = document.getElementById("inpActivoFijoMarca");
     let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
-    let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
+    //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
     let comentariosField = document.getElementById("inpActivoFijoComentarios");
     let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
 
@@ -467,6 +484,7 @@ function onGuardarClick() {
     summaryContainer.innerHTML = "";
 
     let empleadoIdField = document.getElementById("inpEmpleadoId");
+    let oficinaField = document.getElementById("inpActivoFijoOficina");
 
     // 🔁 ACTUALIZA EL INPUT OCULTO CON EL VALOR DEL SELECT
     $("#inpEmpleadoId").val(responsableField.value);
@@ -477,6 +495,7 @@ function onGuardarClick() {
         descripcion: descripcionField.value,
         responsable: responsableField.value,
         empleadoId: parseInt(empleadoIdField?.value || 0),
+        oficinaId: parseInt(oficinaField?.value || 0),
         categoria: categoriaField.value,
         tipo: tipoField.value,
         fechaCompra: fechacompraField.value,
@@ -484,7 +503,7 @@ function onGuardarClick() {
         linkFacturaCompra: linkfacturaField.value,
         marca: marcaField.value,
         numeroSerie: numeroSerieField.value,
-        ubicacion: ubicacionField.value,
+        //ubicacion: ubicacionField.value,
         comentarios: comentariosField.value,
         fechaRenovacion: fechaRenovacionField.value
     };

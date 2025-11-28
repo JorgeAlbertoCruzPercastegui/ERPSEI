@@ -20,6 +20,9 @@ namespace ERPSEI.Data.Entities.ActivosFijos
         public int TipoId { get; set; }
         public TipoActivoFijo? Tipo { get; set; }
 
+        public int? OficinaId { get; set; }
+        public Oficina? Oficina { get; set; }
+
         public string Folio { get; set; } = string.Empty;
         public string Marca { get; set; } = string.Empty;
         public string NumeroSerie { get; set; } = string.Empty;
