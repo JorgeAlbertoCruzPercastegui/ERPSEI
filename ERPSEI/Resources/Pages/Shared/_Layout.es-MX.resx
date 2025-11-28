@@ -183,7 +183,7 @@
   <data name="PrivacyMenu" xml:space="preserve">
     <value>Aviso de privacidad</value>
   </data>
-	<data name="DevMenu" xml:space="preserve">
+  <data name="DevMenu" xml:space="preserve">
     <value>Desarrollado por el departamento de Reingeniería de Procesos</value>
   </data>
   <data name="ProfilesCatalogMenu" xml:space="preserve">
@@ -224,5 +224,8 @@
   </data>
   <data name="ContractGeneratorMenu" xml:space="preserve">
     <value>Generar Contratos Empresas</value>
+  </data>
+  <data name="PoliticaMenu" xml:space="preserve">
+    <value>Sistema Documental Corporativo</value>
   </data>
 </root>

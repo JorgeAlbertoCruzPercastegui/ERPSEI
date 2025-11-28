@@ -198,6 +198,9 @@
   <data name="PhonePlaceholder" xml:space="preserve">
     <value>Por favor introduzca su número de teléfono</value>
   </data>
+  <data name="PoliticaMenu" xml:space="preserve">
+    <value>Sistema Documental Corporativo</value>
+  </data>
   <data name="PreferredNamePlaceholder" xml:space="preserve">
     <value>Nombre preferido</value>
   </data>

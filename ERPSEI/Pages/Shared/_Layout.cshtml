@@ -58,7 +58,7 @@
         ).Count >= 1;
         tieneReportesRH = accesos.FindAll(m =>
             (m.Modulo?.NombreNormalizado == "organigrama" ||
-            m.Modulo?.NombreNormalizado == "asistencia") &&
+            m.Modulo?.NombreNormalizado == "asistencia" || m.Modulo?.NombreNormalizado == "politica") &&
             (m.PuedeTodo == 1 ||
             m.PuedeConsultar == 1 ||
             m.PuedeEditar == 1 ||
@@ -423,6 +423,11 @@
                                                                     <i class="bi bi-fingerprint"></i> @Localizer["AsistenciaMenu"]
                                                                 </a>
                                                             }
+                                                            
+                                                                <a class="dropdown-item p-2 @_LayoutPages.PoliticaNavClass(ViewContext)" asp-area="" asp-page="/Building">
+                                                                    <i class="bi bi-journals"></i> @Localizer["PoliticaMenu"]
+                                                                </a>
+                                                            
                                                         </div>
                                                     </div>
                                                 }
