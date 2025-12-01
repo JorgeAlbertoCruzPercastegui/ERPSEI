@@ -1,0 +1,27 @@
+﻿@page "{handler?}"
+@using ERPSEI.Areas.Reportes.Pages;
+@using ERPSEI.Data.Managers;
+@using Microsoft.AspNetCore.Localization;
+@using Microsoft.AspNetCore.Mvc.Localization;
+@using ERPSEI.Data.Entities.Empleados;
+@using ERPSEI.Data.Managers.Empleados;
+@inject IViewLocalizer Localizer;
+@{
+	ViewData["Title"] = Localizer["Title"];
+
+	// Retrieves the requested culture
+	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+
+	// Culture contains the information of the requested culture
+	System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
+
+	string cultureName = culture.Name;
+
+	/*bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";*/
+}
+
+<h3 class="title mb-3">@ViewData["Title"]</h3>
