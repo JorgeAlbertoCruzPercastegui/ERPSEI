@@ -19,6 +19,7 @@ using Microsoft.Identity.Client;
 using ERPSEI.Data.Entities.Vacaciones;
 using System.Reflection.Emit;
 using ERPSEI.Data.Entities.TipoContratos;
+using ERPSEI.Data.Entities.Politicas;
 
 namespace ERPSEI.Data
 {
@@ -162,9 +163,17 @@ namespace ERPSEI.Data
         public DbSet<HistorialContratoGenerado> HistorialContratoGenerados { get; set; }
         public DbSet<TipoRepresentacion> TipoRepresentaciones { get; set; }
 
+		//Políticas
+		public DbSet<TipoDocumento> TiposDocumento { get; set; }
+		public DbSet<Documento> Documentos { get; set; }
+		public DbSet<DocumentoVersion> DocumentosVersiones { get; set; }
+		public DbSet<DocumentoAdjunto> DocumentosAdjuntos { get; set; }
+		public DbSet<DocumentoRelacion> DocumentosRelaciones { get; set; }
+		public DbSet<AuditoriaDocumento> AuditoriasDocumentos { get; set; }
+		public DbSet<DocumentoEtiqueta> DocumentosEtiquetas { get; set; }
 
-        //Vacaciones
-        public DbSet<DiaFestivo> DiasFestivos { get; set; }
+		//Vacaciones
+		public DbSet<DiaFestivo> DiasFestivos { get; set; }
         public DbSet<HistorialVacaciones> HistorialesVacaciones { get; set; }
         public DbSet<PeriodoVacacional> PeriodosVacacionales { get; set; }
         public DbSet<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
@@ -228,7 +237,96 @@ namespace ERPSEI.Data
 
             //Contratos
             BuildTipoContratos(modelBuilder);
-        }
+
+			//Políticas
+			BuildPoliticas(modelBuilder);
+
+		}
+
+		private static void BuildPoliticas(ModelBuilder b)
+		{
+			// DOCUMENTO RELACION (SELF MANY-TO-MANY)
+			b.Entity<DocumentoRelacion>()
+				.HasOne(r => r.Documento)
+				.WithMany(d => d.DocumentosRelacionados)
+				.HasForeignKey(r => r.DocumentoId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			b.Entity<DocumentoRelacion>()
+				.HasOne(r => r.Relacionado)
+				.WithMany(d => d.RelacionadoDe)
+				.HasForeignKey(r => r.RelacionadoId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// DOCUMENTO → AREA (FK)
+			b.Entity<Documento>()
+				.HasOne(d => d.Area)
+				.WithMany() // No definiste navegación inversa en Area hacia Documentos
+				.HasForeignKey(d => d.AreaId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// DOCUMENTO → TIPO DOCUMENTO (FK)
+			b.Entity<Documento>()
+				.HasOne(d => d.TipoDocumento)
+				.WithMany(t => t.Documentos)
+				.HasForeignKey(d => d.TipoDocumentoId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// DOCUMENTO VERSION → DOCUMENTO
+			b.Entity<DocumentoVersion>()
+				.HasOne(v => v.Documento)
+				.WithMany(d => d.Versiones)
+				.HasForeignKey(v => v.DocumentoId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			// DOCUMENTO ADJUNTO → DOCUMENTO
+			b.Entity<DocumentoAdjunto>()
+				.HasOne(a => a.Documento)
+				.WithMany(d => d.Adjuntos)
+				.HasForeignKey(a => a.DocumentoId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			// AUDITORIA → DOCUMENTO
+			b.Entity<AuditoriaDocumento>()
+				.HasOne(a => a.Documento)
+				.WithMany(d => d.Auditorias)
+				.HasForeignKey(a => a.DocumentoId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			// DOCUMENTO ETIQUETA → DOCUMENTO
+			b.Entity<DocumentoEtiqueta>()
+				.HasOne(e => e.Documento)
+				.WithMany(d => d.Etiquetas)
+				.HasForeignKey(e => e.DocumentoId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			// CAMPOS OPCIONALES / PROPIEDADES
+
+			b.Entity<Documento>()
+				.Property(d => d.Titulo)
+				.HasMaxLength(200)
+				.IsRequired();
+
+			b.Entity<TipoDocumento>()
+				.Property(td => td.Nombre)
+				.HasMaxLength(100)
+				.IsRequired();
+
+			b.Entity<DocumentoRelacion>()
+				.Property(r => r.TipoRelacion)
+				.HasMaxLength(50);
+
+			// NOMBRES DE TABLAS (opcional, pero recomendable)
+			b.Entity<Documento>().ToTable("Documentos");
+			b.Entity<DocumentoVersion>().ToTable("DocumentosVersiones");
+			b.Entity<DocumentoAdjunto>().ToTable("DocumentosAdjuntos");
+			b.Entity<DocumentoRelacion>().ToTable("DocumentosRelaciones");
+			b.Entity<AuditoriaDocumento>().ToTable("AuditoriasDocumentos");
+			b.Entity<DocumentoEtiqueta>().ToTable("DocumentosEtiquetas");
+			b.Entity<TipoDocumento>().ToTable("TiposDocumento");
+		}
+
+
 
 		private static void BuildTipoContratos(ModelBuilder b)
 		{
