@@ -299,10 +299,10 @@
                                                                     <i class="bi bi-circle-square"></i> @Localizer["ProfilesCatalogMenu"]
                                                                 </a>
                                                             }
-                                                            
-                                                                <a class="dropdown-item p-2 @_LayoutPages.CatalogoCuentasContablesNavClass(ViewContext)" asp-area="Catalogos" asp-page="/CuentasContables">
+
+                                                            <!--<a class="dropdown-item p-2 @_LayoutPages.CatalogoCuentasContablesNavClass(ViewContext)" asp-area="Catalogos" asp-page="/CuentasContables">
                                                                     <i class="bi bi-cash-coin"></i> @Localizer["AccountingAccountsCatalogMenu"]
-                                                                </a>
+                                                                </a>-->
                                                         </div>
                                                     </div>
                                                 }
@@ -332,26 +332,26 @@
                                                             </p>
                                                             @if (permisos["vacaciones"])
                                                             {
-                                                                <a class="dropdown-item p-2 @_LayoutPages.VacacionesNavClass(ViewContext)" asp-area="ERP" asp-page="/Vacaciones">
+                                                                <!--<a class="dropdown-item p-2 @_LayoutPages.VacacionesNavClass(ViewContext)" asp-area="ERP" asp-page="/Vacaciones">
                                                                     <i class="bi bi-airplane-engines-fill"></i> @Localizer["VacationMenu"]
-                                                                </a>
+                                                                </a>-->
                                                             }
 
-                                                                                                                       
-                                                                <a class="dropdown-item p-2 @_LayoutPages.IncapacidadesNavClass(ViewContext)" asp-area="" asp-page="/Building">
+
+                                                            <!--<a class="dropdown-item p-2 @_LayoutPages.IncapacidadesNavClass(ViewContext)" asp-area="" asp-page="/Building">
                                                                     <i class="bi bi-heart-pulse-fill"></i> @Localizer["DisabilitiesMenu"]
                                                                 </a>
                                                             
                                                                 <a class="dropdown-item p-2 @_LayoutPages.PermisosNavClass(ViewContext)" asp-area="" asp-page="/Building">
                                                                     <i class="bi bi-calendar-check-fill"></i> @Localizer["PermissionsMenu"]
-                                                                </a>
+                                                                </a>-->
                                                             
                                                             
                                                             @if (permisos["activosfijos"])
                                                             {
-                                                                <a class="dropdown-item p-2 @_LayoutPages.ActivosFijosNavClass(ViewContext)" asp-area="ERP" asp-page="/ActivosFijos">
+                                                                <!-- <a class="dropdown-item p-2 @_LayoutPages.ActivosFijosNavClass(ViewContext)" asp-area="ERP" asp-page="/ActivosFijos">
                                                                     <i class="bi-pc-display"></i> @Localizer["FixedAsset"]
-                                                                </a>
+                                                                </a>-->
                                                             }
                                                         </div>
                                                     </div>
@@ -381,9 +381,9 @@
                                                             }
                                                             @if (permisos["conciliaciones"])
                                                             {
-                                                                <a class="dropdown-item p-2 @_LayoutPages.ConciliacionesNavClass(ViewContext)" asp-area="ERP" asp-page="/Conciliaciones">
+                                                                <!--<a class="dropdown-item p-2 @_LayoutPages.ConciliacionesNavClass(ViewContext)" asp-area="ERP" asp-page="/Conciliaciones">
                                                                     <i class="bi bi-bookmark-star-fill"></i> @Localizer["ConciliacionesMenu"]
-                                                                </a>
+                                                                </a>-->
                                                             }
                                                         </div>
                                                     </div>
@@ -419,14 +419,14 @@
                                                             }
                                                             @if (permisos["asistencia"])
                                                             {
-                                                                <a class="dropdown-item p-2 @_LayoutPages.AsistenciaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Asistencia">
+                                                                <!--<a class="dropdown-item p-2 @_LayoutPages.AsistenciaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Asistencia">
                                                                     <i class="bi bi-fingerprint"></i> @Localizer["AsistenciaMenu"]
-                                                                </a>
+                                                                </a>-->
                                                             }
-                                                            
-                                                                <a class="dropdown-item p-2 @_LayoutPages.PoliticaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Documentacion">
+
+                                                            <!--<a class="dropdown-item p-2 @_LayoutPages.PoliticaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Documentacion">
                                                                     <i class="bi bi-journals"></i> @Localizer["PoliticaMenu"]
-                                                                </a>
+                                                                </a>-->
                                                             
                                                         </div>
                                                     </div>
@@ -446,13 +446,13 @@
                                                             }
                                                             @if (permisos["convertidorBancario"])
                                                             {
-                                                                <a class="dropdown-item p-2 @_LayoutPages.OrganigramaNavClass(ViewContext)" asp-area="Reportes" asp-page="/ConvertidorBancario">
+                                                                <!--<a class="dropdown-item p-2 @_LayoutPages.OrganigramaNavClass(ViewContext)" asp-area="Reportes" asp-page="/ConvertidorBancario">
                                                                     <i class="bi bi-piggy-bank"></i> @Localizer["BankConverterMenu"]
-                                                                </a>
+                                                                </a>-->
                                                             }
-                                                                <a class="dropdown-item p-2 @_LayoutPages.GeneradorContratoNavClass(ViewContext)" asp-area="Reportes" asp-page="/GeneradorContrato">
+                                                            <!--<a class="dropdown-item p-2 @_LayoutPages.GeneradorContratoNavClass(ViewContext)" asp-area="Reportes" asp-page="/GeneradorContrato">
                                                                     <i class="bi bi-file-earmark-text"></i> @Localizer["ContractGeneratorMenu"]
-                                                                </a>
+                                                                </a>-->
                                                         </div>
                                                     </div>
                                                 }
