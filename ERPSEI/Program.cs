@@ -14,8 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 // DataProtection (claves)
 // =======================
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtectionKeys\ERPSEI")) // Asegúrate de crear esta carpeta en el servidor
-    .ProtectKeysWithDpapi()                                                      // Opcional pero recomendado
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtectionKeys\ERPSEI")) // Asegúrate de crear esta carpeta en el servidor                                                 // Opcional pero recomendado
     .SetApplicationName("ERPSEI");
 
 //Email configuration
