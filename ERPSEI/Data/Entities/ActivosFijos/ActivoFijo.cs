@@ -30,6 +30,8 @@ namespace ERPSEI.Data.Entities.ActivosFijos
         public string Ubicacion { get; set; } = string.Empty;
 
         public DateTime? FechaCompra { get; set; }
+        
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Precio { get; set; }
 
         public string Comentarios { get; set; } = string.Empty;

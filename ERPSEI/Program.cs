@@ -2,10 +2,21 @@ using ERPSEI;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Email;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;                            
 
 var builder = WebApplication.CreateBuilder(args);
+
+// =======================
+// DataProtection (claves)
+// =======================
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtectionKeys\ERPSEI")) // Asegúrate de crear esta carpeta en el servidor
+    .ProtectKeysWithDpapi()                                                      // Opcional pero recomendado
+    .SetApplicationName("ERPSEI");
 
 //Email configuration
 ServicesConfiguration.ConfigureEmail(builder);
@@ -132,7 +143,7 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
