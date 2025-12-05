@@ -44,7 +44,7 @@
         "ASPNETCORE_ENVIRONMENT": "Production"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://tiaspel.ddns.net"
+      "applicationUrl": "http://erpsei.ddns.net"
     }
   },
   "iisSettings": {

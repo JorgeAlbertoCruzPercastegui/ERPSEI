@@ -110,7 +110,7 @@ namespace ERPSEI.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        /*public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
@@ -186,7 +186,105 @@ namespace ERPSEI.Areas.Identity.Pages.Account
 
             // If we got this far, something failed, redisplay form
             return Page();
+        }*/
+
+        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        {
+            returnUrl ??= Url.Content("~/");
+            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            if (ModelState.IsValid)
+            {
+                Empleado empleado = await _empleadoManager.GetByEmailAsync(Input.Email);
+
+                var user = CreateUser();
+
+                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+                // Si ya existe empleado
+                if (empleado != null)
+                {
+                    user.IsPreregisterAuthorized = true;
+                    user.EmpleadoId = empleado.Id;
+                }
+
+                var result = await _userManager.CreateAsync(user, Input.Password);
+
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("El usuario creó una nueva cuenta con contraseña.");
+
+                    var userId = await _userManager.GetUserIdAsync(user);
+
+                    // CONFIRMAR EMAIL AUTOMÁTICAMENTE 
+                    // ---------------------------------------------------------------
+                    var confirmToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    await _userManager.ConfirmEmailAsync(user, confirmToken);
+                    // ---------------------------------------------------------------
+
+                    // Asignar roles dependiendo si existe empleado
+                    if (empleado != null)
+                    {
+                        await _userManager.AddToRoleAsync(user, ServicesConfiguration.RolUsuario);
+
+                        empleado.UserId = userId;
+                        await _empleadoManager.UpdateAsync(empleado);
+                    }
+                    else
+                    {
+                        await _userManager.AddToRoleAsync(user, ServicesConfiguration.RolCandidato);
+                    }
+
+                    // BLOQUE ANTERIOR PARA ENVIAR CORREO — YA NO ES NECESARIO
+                    // -------------------------------------------------------------------
+                    /*
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                    var callbackUrl = Url.Page(
+                        "/Account/ConfirmEmail",
+                        pageHandler: null,
+                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                        protocol: Request.Scheme);
+
+                    string emailBody = $"{_localizer["EmailBodyFP"]} <a href='{callbackUrl}'>{_localizer["EmailBodySP"]}</a>";
+                    _emailSender.SendEmailAsync(Input.Email, _localizer["EmailSubject"], emailBody);
+                    */
+                    // -------------------------------------------------------------------
+
+                    // TAMPOCO ES NECESARIO VERIFICAR "RequireConfirmedAccount"
+                    // IDENTIDAD YA SABE QUE EL EMAIL ESTÁ CONFIRMADO
+                    // -------------------------------------------------------------------
+                    /*
+                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
+                    {
+                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+                    }
+                    else
+                    {
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        return LocalRedirect(returnUrl);
+                    }
+                    */
+                    // -------------------------------------------------------------------
+
+                    // INICIO DE SESIÓN INMEDIATO
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    return LocalRedirect(returnUrl);
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    string localizedError = _localizer[error.Code];
+                    ModelState.AddModelError(string.Empty, localizedError);
+                }
+            }
+
+            // If we got this far, something failed, redisplay form
+            return Page();
         }
+
 
         private AppUser CreateUser()
         {
