@@ -51,7 +51,7 @@ namespace ERPSEI
         public static void ConfigureEmail(WebApplicationBuilder _builder)
         {
             //Obtiene la configuración del enviador de correos.
-            IConfigurationSection emailSection = _builder.Configuration.GetSection("Email");
+            /*IConfigurationSection emailSection = _builder.Configuration.GetSection("Email");
             string address = (string)(emailSection.GetValue(typeof(string), "address") ?? throw new InvalidOperationException("Email 'address' not found."));
             string password = (string)(emailSection.GetValue(typeof(string), "password") ?? throw new InvalidOperationException("Email 'password' not found."));
             string smtp = (string)(emailSection.GetValue(typeof(string), "smtp") ?? throw new InvalidOperationException("Email 'smtp' not found."));
@@ -61,6 +61,27 @@ namespace ERPSEI
             MasterUser.UserName = address;
 
             _builder.Services.AddTransient<IEmailSender, EmailSender>(x =>
+                new EmailSender(address, password, smtp, port)
+            );*/
+            IConfigurationSection emailSection = _builder.Configuration.GetSection("Email");
+
+            string address = emailSection.GetValue<string>("address")
+                ?? throw new InvalidOperationException("Email 'address' not found.");
+
+            string password = emailSection.GetValue<string>("password")
+                ?? throw new InvalidOperationException("Email 'password' not found.");
+
+            string smtp = emailSection.GetValue<string>("smtp")
+                ?? throw new InvalidOperationException("Email 'smtp' not found.");
+
+            int port = emailSection.GetValue<int>("port");
+
+            // El usuario master será este mismo correo
+            MasterUser.Email = address;
+            MasterUser.UserName = address;
+
+            // Registro CORRECTO del EmailSender
+            _builder.Services.AddTransient<IEmailSender>(x =>
                 new EmailSender(address, password, smtp, port)
             );
         }

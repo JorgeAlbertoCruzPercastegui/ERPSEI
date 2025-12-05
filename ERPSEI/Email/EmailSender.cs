@@ -1,4 +1,5 @@
 ﻿using MailKit.Net.Smtp;
+using MailKit.Security;
 using MimeKit;
 
 namespace ERPSEI.Email
@@ -33,12 +34,34 @@ namespace ERPSEI.Email
                     //Otro problema potencial es cuando el software antivirus instalado localmente reemplaza
                     //el certificado para escanear el tráfico web en busca de virus.
                     //En un escenario donde el certificado del servidor se encuentre correcto, esta instrucción deberá eliminarse.
-                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                    // Conexión recomendada para Office 365
+                    client.Connect(smtpServer, smtpPort, SecureSocketOptions.StartTlsWhenAvailable);
+
+                    // Necesario cuando usamos App Password
+                    client.AuthenticationMechanisms.Remove("XOAUTH2");
+
+                    // Autenticación normal con contraseña de aplicación
+                    client.Authenticate(mailAddress, mailPassword);
+
+                    client.Send(msg);
+                    client.Disconnect(true);
+
+                    // OPCIONAL: si quieres dejar la validación estricta, elimina esta línea
+                    //client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                    //  STARTTLS correcto para Office 365
+                    //client.Connect(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+
+                    //client.Authenticate(mailAddress, mailPassword);
+                    //client.Send(msg);
+                    //client.Disconnect(true);
+                    /*client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
                     client.Connect(smtpServer, smtpPort, true);
                     client.Authenticate(mailAddress, mailPassword);
                     client.Send(msg);
-                    client.Disconnect(true);
+                    client.Disconnect(true);*/
                 }   
             }
         }
