@@ -17,7 +17,36 @@ namespace ERPSEI.Email
             smtpServer = _smtpServer;
             smtpPort = _smtpPort;
         }
+
         public void SendEmailAsync(string email, string subject, string message)
+        {
+            using (var msg = new MimeMessage())
+            {
+                msg.From.Add(new MailboxAddress(mailAddress, mailAddress));
+                msg.To.Add(new MailboxAddress(email, email));
+                msg.Subject = subject;
+                msg.Body = new TextPart(MimeKit.Text.TextFormat.Html) { Text = message };
+
+                using (var client = new SmtpClient())
+                {
+                    // opcional: desactivar validación de certificado
+                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                    // conexión recomendada para O365
+                    client.Connect(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+
+                    // quitar XOAUTH2 para forzar usuario/contraseña
+                    client.AuthenticationMechanisms.Remove("XOAUTH2");
+
+                    // usar correo + contraseña de aplicación
+                    client.Authenticate(mailAddress, mailPassword);
+
+                    client.Send(msg);
+                    client.Disconnect(true);
+                }
+            }
+        }
+        /*public void SendEmailAsync(string email, string subject, string message)
         {
             using (MimeMessage msg = new MimeMessage())
             {
@@ -61,9 +90,9 @@ namespace ERPSEI.Email
                     client.Connect(smtpServer, smtpPort, true);
                     client.Authenticate(mailAddress, mailPassword);
                     client.Send(msg);
-                    client.Disconnect(true);*/
+                    client.Disconnect(true);
                 }   
             }
-        }
+        }*/
     }
 }
