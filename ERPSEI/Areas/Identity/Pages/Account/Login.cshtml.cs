@@ -148,7 +148,7 @@ namespace ERPSEI.Areas.Identity.Pages.Account
                 else
                 {
                     //De lo contrario se le permite el intento de iniciar sesión.
-                    var result = await _signInManager.PasswordSignInAsync(user.UserName, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                    var result = await _signInManager.PasswordSignInAsync(user.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                     if (result.Succeeded)
                     {
 						if (!await _userManager.IsInRoleAsync(user, ServicesConfiguration.RolMaster) && !user.EmpleadoId.HasValue)
