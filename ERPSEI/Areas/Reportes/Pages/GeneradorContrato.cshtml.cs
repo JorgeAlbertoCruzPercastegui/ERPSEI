@@ -186,7 +186,7 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             foreach (var e in empresas)
             {
-                // ?? Buscar subtipo en la base de datos
+                // Buscar subtipo en la base de datos
                 var subTipo = await db.SubTiposContrato
                     .FirstOrDefaultAsync(s => s.Id == e.SubTipoContratoId);
 
@@ -208,16 +208,21 @@ namespace ERPSEI.Areas.Reportes.Pages
                     fechaFin = e.FechaFin?.ToString("dd/MM/yyyy") ?? "-",
                     fechaFinJS = e.FechaFin?.ToString("yyyy-MM-dd") ?? "-",
 
-                    // ? Si hay subtipo, mostrar ese nombre. Si no, mostrar el tipo principal
-                    tipoContrato = subTipo != null ? subTipo.Nombre : (e.TipoContrato?.Nombre ?? "-"),
-                    subTipoContratoId = e.SubTipoContratoId,
+                    // ? Tipo real (de TipoContrato)
                     tipoContratoId = e.TipoContratoId,
+                    tipoContrato = e.TipoContrato?.Nombre ?? "-",
+
+                    // ? Subtipo: mandas ID y NOMBRE
+                    subTipoContratoId = e.SubTipoContratoId,
+                    subTipoContrato = subTipo != null ? subTipo.Nombre : "-",
+
                     deshabilitado = e.Deshabilitado.ToString()
                 });
             }
 
             return new JsonResult(jsonEmpresas);
         }
+
 
 
         /*public async Task<JsonResult> OnGetEmpresaContratosList()
@@ -349,6 +354,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             //var clientes = await clienteContratosManager.GetByEmpresaContratoIdAsync(id);
             var clientes = await db.ClienteContratos
                 .Include(c => c.TipoContrato)
+                .Include(c => c.SubTipoContrato)
                 .Where(c => c.EmpresaContratoId == id)
                 .ToListAsync();
 
@@ -367,7 +373,11 @@ namespace ERPSEI.Areas.Reportes.Pages
                 fechaInicio = c.FechaInicio?.ToString("yyyy-MM-dd") ?? "",
                 fechaFin = c.FechaFin?.ToString("yyyy-MM-dd") ?? "",
                 tipoContratoId = c.TipoContratoId,
-                tipoContrato = c.TipoContrato != null ? c.TipoContrato.Nombre : "-"
+                tipoContrato = c.TipoContrato != null ? c.TipoContrato.Nombre : "-",
+
+                subTipoContratoId = c.SubTipoContratoId,
+                subTipoContrato = c.SubTipoContrato != null ? c.SubTipoContrato.Nombre : "-"
+
 
             });
 

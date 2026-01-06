@@ -608,6 +608,7 @@ function initGeneradorContratoDialog(modo, row) {
         // Prestador
         $('#prestadorIdVer').val(row.id);
         $('#tipoContratoPrestadorVer').val(row.tipoContrato || '');
+        $('#subTipoContratoPrestadorVer').val(row.subTipoContrato || '');
         $('#prestadorNombreVer').val(row.razonSocial || '');
         $('#prestadorRFCVer').val(row.rfc || '');
         $('#prestadorDomicilioVer').val(row.domicilioFiscal || '');
@@ -619,7 +620,7 @@ function initGeneradorContratoDialog(modo, row) {
         $('#prestadorFechaFinVer').val(row.fechaFinJS || '');
         $('#prestadorEmailVer').val(row.email || '');
         $('#prestadorWebVer').val(row.paginaWeb || '');
-        $('#subTipoContratoPrestadorVer').val(row.subTipoContratoId || ''); // ✅ Subtipo Prestador
+        
 
         // Obtener datos del cliente (prestatario)
         $.get(`/Reportes/GeneradorContrato?handler=ClientesPorEmpresa&id=${row.id}`, function (clientes) {
@@ -627,6 +628,7 @@ function initGeneradorContratoDialog(modo, row) {
                 const cliente = clientes[0];
                 $('#prestatarioIdVer').val(cliente.id);
                 $('#tipoContratoPrestatarioVer').val(cliente.tipoContrato?.toString() || '');
+                $('#subTipoContratoPrestatarioVer').val(cliente.subTipoContrato || '');
                 $('#prestatarioNombreVer').val(cliente.nombre || '');
                 $('#prestatarioRFCVer').val(cliente.rfc || '');
                 $('#prestatarioDomicilioVer').val(cliente.domicilioFiscal || '');
@@ -638,7 +640,6 @@ function initGeneradorContratoDialog(modo, row) {
                 $('#prestatarioFechaFinVer').val(cliente.fechaFin || '');
                 $('#prestatarioEmailVer').val(cliente.email || '');
                 $('#prestatarioWebVer').val(cliente.paginaWeb || '');
-                $('#subTipoContratoPrestatarioVer').val(cliente.subTipoContratoId || ''); // ✅ Subtipo Prestatario
             }
 
             const modalVer = new bootstrap.Modal(document.getElementById('dlgContratoVer'));

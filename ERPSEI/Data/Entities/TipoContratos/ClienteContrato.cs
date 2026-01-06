@@ -19,6 +19,7 @@ namespace ERPSEI.Data.Entities.TipoContratos
         public bool Deshabilitado { get; set; } = false;
         public bool Estatus { get; set; } = false;
         public int? SubTipoContratoId { get; set; }
+        public SubTipoContrato SubTipoContrato { get; set; }
 
         // 🔗 Relación con EmpresaContrato
         public int EmpresaContratoId { get; set; }
