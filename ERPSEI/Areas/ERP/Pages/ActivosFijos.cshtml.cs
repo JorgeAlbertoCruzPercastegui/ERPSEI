@@ -167,6 +167,9 @@ namespace ERPSEI.Areas.ERP.Pages
             [DataType(DataType.Date)]
             public DateTime? FechaRenovacion { get; set; }
 
+            [Display(Name = "Cantidad")]
+            public int? Cantidades { get; set; }
+
             public int? Deshabilitado { get; set; } = 0;
         }
 
@@ -247,6 +250,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     precio = a.Precio,
                     ubicacion = a.Ubicacion ?? "-",
                     linkFacturaCompra = a.LinkFacturaCompra ?? "-",
+                    cantidades = a.Cantidades,
                     comentarios = a.Comentarios ?? "-",
                     deshabilitado = a.Deshabilitado.ToString()
                 });
@@ -384,6 +388,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 activo.LinkFacturaCompra = input.LinkFacturaCompra ?? "";
                 activo.Comentarios = input.Comentarios ?? "";
                 activo.FechaRenovacion = input.FechaRenovacion;
+                activo.Cantidades = input.Cantidades ?? 0;
 
                 // Claves foráneas
                 int ofiId = 0;
@@ -451,6 +456,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     fechaCompra = a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-",
                     fechaCompraJS = a.FechaCompra?.ToString("yyyy-MM-dd") ?? "-",
                     fechaRenovacion = a.FechaRenovacion?.ToString("dd/MM/yyyy") ?? "-",
+                    cantidades = a.Cantidades,
                     precio = a.Precio,
                     ubicacion = a.Ubicacion ?? "-",
                     linkFacturaCompra = a.LinkFacturaCompra ?? "-",
@@ -558,7 +564,7 @@ namespace ERPSEI.Areas.ERP.Pages
             // Encabezados
             var headers = new[] {
         "Id", "Folio", "Descripción", "Responsable", "Categoría", "Tipo",
-        "Fecha Compra", "Precio", "Oficina", "Número Serie", "Link Factura", "Comentarios"
+        "Fecha Compra","Cantidad", "Precio", "Oficina", "Número Serie", "Link Factura", "Comentarios"
     };
 
             IRow headerRow = sheet.CreateRow(0);
@@ -582,11 +588,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 row.CreateCell(4).SetCellValue(a.Categoria?.Descripcion ?? "-");
                 row.CreateCell(5).SetCellValue(a.Tipo?.Descripcion ?? "-");
                 row.CreateCell(6).SetCellValue(a.FechaCompra?.ToString("dd/MM/yyyy") ?? "-");
-                row.CreateCell(7).SetCellValue(Convert.ToDouble(a.Precio));
-                row.CreateCell(8).SetCellValue(a.Oficina?.Nombre ?? "-");
-                row.CreateCell(9).SetCellValue(a.NumeroSerie ?? "-");
-                row.CreateCell(10).SetCellValue(a.LinkFacturaCompra ?? "-");
-                row.CreateCell(11).SetCellValue(a.Comentarios ?? "-");
+                row.CreateCell(7).SetCellValue(Convert.ToInt32(a.Cantidades));
+                row.CreateCell(8).SetCellValue(Convert.ToDouble(a.Precio));
+                row.CreateCell(9).SetCellValue(a.Oficina?.Nombre ?? "-");
+                row.CreateCell(10).SetCellValue(a.NumeroSerie ?? "-");
+                row.CreateCell(11).SetCellValue(a.LinkFacturaCompra ?? "-");
+                row.CreateCell(12).SetCellValue(a.Comentarios ?? "-");
 
                 // Aplica estilo a cada celda
                 for (int j = 0; j < headers.Length; j++)
@@ -735,6 +742,8 @@ namespace ERPSEI.Areas.ERP.Pages
             _ = DateTime.TryParse(row[5]?.ToString(), out DateTime fechaCompra);
             _ = DateTime.TryParse(row[8]?.ToString(), out DateTime fechaRenovacion);
             _ = decimal.TryParse(row[6]?.ToString(), out decimal precio);
+            _ = int.TryParse(row[4]?.ToString(), out int cantidades);
+
 
             // Obtener nombres desde el Excel
             string folio = row[0]?.ToString()?.Trim() ?? "";
@@ -779,6 +788,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 Oficina = oficina.Id.ToString(),
                 FechaCompra = fechaCompra,
                 Precio = precio,
+                Cantidades = cantidades,
                 LinkFacturaCompra = linkFactura,
                 Comentarios = comentarios,
                 FechaRenovacion = fechaRenovacion == DateTime.MinValue ? null : fechaRenovacion

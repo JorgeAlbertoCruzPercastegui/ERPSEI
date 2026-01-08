@@ -36,7 +36,10 @@ namespace ERPSEI.Data.Entities.ActivosFijos
 
         public string Comentarios { get; set; } = string.Empty;
         public DateTime? FechaRenovacion { get; set; }
+
         public string LinkFacturaCompra { get; set; } = string.Empty;
+
+        public int? Cantidades { get; set; }
 
         public bool Deshabilitado { get; set; } = false;
         public ICollection<ArchivoActivoFijo>? Archivos { get; set; }

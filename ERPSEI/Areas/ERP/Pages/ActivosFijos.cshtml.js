@@ -157,8 +157,8 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "FechaCompra",
-                field: "fechaCompra",
+                title: "Cantidad",
+                field: "cantidades",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -257,6 +257,7 @@ function initActivoFijoDialog(action, row) {
     //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
     let comentariosField = document.getElementById("inpActivoFijoComentarios");
     let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
+    let cantidadesField = document.getElementById("inpActivoFijoCantidad");
     let oficinaField = document.getElementById("inpActivoFijoOficina");
 
     let btnGuardar = document.getElementById("dlgActivoFijoBtnGuardar");
@@ -290,6 +291,7 @@ function initActivoFijoDialog(action, row) {
             //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
+            cantidadesField.removeAttribute("disabled");
             oficinaField.removeAttribute("disabled");
 
 
@@ -313,6 +315,7 @@ function initActivoFijoDialog(action, row) {
             //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
+            cantidadesField.removeAttribute("disabled");
             oficinaField.removeAttribute("disabled");
 
             btnGuardar.removeAttribute("disabled");
@@ -335,6 +338,8 @@ function initActivoFijoDialog(action, row) {
             //ubicacionField.setAttribute("disabled", true);
             comentariosField.setAttribute("disabled", true);
             fechaRenovacionField.setAttribute("disabled", true);
+            cantidadesField.setAttribute("disabled", true);
+
             oficinaField.setAttribute("disabled", true);
 
             btnGuardar.setAttribute("disabled", true);
@@ -386,6 +391,7 @@ function initActivoFijoDialog(action, row) {
     numeroSerieField.value = row.numeroSerie ?? "";
     //ubicacionField.value = row.ubicacion ?? "";
     comentariosField.value = row.comentarios ?? "";
+    cantidadesField.value = row.cantidades ?? "";
 
     if (row.fechaRenovacion) {
         try {
@@ -438,7 +444,8 @@ async function onAgregarClick() {
         //ubicacion: "",
         oficina: null,
         comentarios: "",
-        fechaRenovacion: ""
+        fechaRenovacion: "",
+        cantidades: ""
     });
 }
 
@@ -478,6 +485,7 @@ function onGuardarClick() {
     //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
     let comentariosField = document.getElementById("inpActivoFijoComentarios");
     let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
+    let cantidadesField = document.getElementById("inpActivoFijoCantidad");
 
     let dlgTitle = document.getElementById("dlgActivoFijoTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
@@ -506,7 +514,8 @@ function onGuardarClick() {
         numeroSerie: numeroSerieField.value,
         //ubicacion: ubicacionField.value,
         comentarios: comentariosField.value,
-        fechaRenovacion: fechaRenovacionField.value
+        fechaRenovacion: fechaRenovacionField.value,
+        cantidades: parseInt(cantidadesField?.value || 0)
     };
 
     doAjax(

@@ -349,6 +349,15 @@
                                     <span asp-validation-for="InputActivosFijos.FechaRenovacion" class="text-danger"></span>
                                 </div>
                             </div>
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpActivoFijoCantidad" asp-for="InputActivosFijos.Cantidades" type="text" class="form-control" placeholder="@Localizer["CantidadPlaceholder"]" />
+                                    <label asp-for="InputActivosFijos.Cantidades" class="form-label required"></label>
+                                    <span asp-validation-for="InputActivosFijos.Cantidades" class="text-danger"></span>
+                                </div>
+                            </div>
+
                         </div>
 
                     </div>

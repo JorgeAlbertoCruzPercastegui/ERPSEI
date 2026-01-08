@@ -132,6 +132,9 @@
   <data name="CancelButtonTitle" xml:space="preserve">
     <value>Cancelar</value>
   </data>
+  <data name="CantidadPlaceholder" xml:space="preserve">
+    <value>Cantidad</value>
+  </data>
   <data name="CategoriaField" xml:space="preserve">
     <value>Categoria</value>
   </data>
