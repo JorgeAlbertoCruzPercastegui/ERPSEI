@@ -117,6 +117,18 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AreaField" xml:space="preserve">
+    <value>Área</value>
+  </data>
+  <data name="FilterTitle" xml:space="preserve">
+    <value>Filtros de Búsqueda</value>
+  </data>
+  <data name="SearchButton" xml:space="preserve">
+    <value>Buscar</value>
+  </data>
+  <data name="TipoDocumentoField" xml:space="preserve">
+    <value>Tipo Documento</value>
+  </data>
   <data name="Title" xml:space="preserve">
     <value>Documentación Corporativa</value>
   </data>

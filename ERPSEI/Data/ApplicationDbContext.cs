@@ -19,7 +19,7 @@ using Microsoft.Identity.Client;
 using ERPSEI.Data.Entities.Vacaciones;
 using System.Reflection.Emit;
 using ERPSEI.Data.Entities.TipoContratos;
-using ERPSEI.Data.Entities.Politicas;
+using ERPSEI.Data.Entities.Documentos;
 
 namespace ERPSEI.Data
 {
@@ -164,13 +164,11 @@ namespace ERPSEI.Data
         public DbSet<TipoRepresentacion> TipoRepresentaciones { get; set; }
 
 		//Políticas
-		public DbSet<TipoDocumento> TiposDocumento { get; set; }
 		public DbSet<Documento> Documentos { get; set; }
-		public DbSet<DocumentoVersion> DocumentosVersiones { get; set; }
-		public DbSet<DocumentoAdjunto> DocumentosAdjuntos { get; set; }
-		public DbSet<DocumentoRelacion> DocumentosRelaciones { get; set; }
-		public DbSet<AuditoriaDocumento> AuditoriasDocumentos { get; set; }
-		public DbSet<DocumentoEtiqueta> DocumentosEtiquetas { get; set; }
+		public DbSet<TipoDocumento> TiposDocumento { get; set; }
+		public DbSet<DocumentoPalabraClave> DocumentosPalabraClave { get; set; }
+		public DbSet<DocumentoVersion> DocumentosVersion { get; set; }
+		public DbSet<EstatusDocumento> DocumentosEstatus { get; set; }
 
 		//Vacaciones
 		public DbSet<DiaFestivo> DiasFestivos { get; set; }
@@ -243,92 +241,191 @@ namespace ERPSEI.Data
 
 		}
 
-		private static void BuildPoliticas(ModelBuilder b)
-		{
-			// DOCUMENTO RELACION (SELF MANY-TO-MANY)
-			b.Entity<DocumentoRelacion>()
-				.HasOne(r => r.Documento)
-				.WithMany(d => d.DocumentosRelacionados)
-				.HasForeignKey(r => r.DocumentoId)
-				.OnDelete(DeleteBehavior.Restrict);
+	private static void BuildPoliticas(ModelBuilder b)
+    {
+        // =========================
+        // TipoDocumento
+        // =========================
+        b.Entity<TipoDocumento>(e =>
+        {
+            e.ToTable("TiposDocumento");
 
-			b.Entity<DocumentoRelacion>()
-				.HasOne(r => r.Relacionado)
-				.WithMany(d => d.RelacionadoDe)
-				.HasForeignKey(r => r.RelacionadoId)
-				.OnDelete(DeleteBehavior.Restrict);
+            e.HasKey(x => x.Id);
 
-			// DOCUMENTO → AREA (FK)
-			b.Entity<Documento>()
-				.HasOne(d => d.Area)
-				.WithMany() // No definiste navegación inversa en Area hacia Documentos
-				.HasForeignKey(d => d.AreaId)
-				.OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Nombre)
+                .IsRequired()
+                .HasMaxLength(150);
 
-			// DOCUMENTO → TIPO DOCUMENTO (FK)
-			b.Entity<Documento>()
-				.HasOne(d => d.TipoDocumento)
-				.WithMany(t => t.Documentos)
-				.HasForeignKey(d => d.TipoDocumentoId)
-				.OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.Activo)
+                .HasDefaultValue(true);
 
-			// DOCUMENTO VERSION → DOCUMENTO
-			b.Entity<DocumentoVersion>()
-				.HasOne(v => v.Documento)
-				.WithMany(d => d.Versiones)
-				.HasForeignKey(v => v.DocumentoId)
-				.OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.FechaCreacion)
+                .HasDefaultValueSql("GETDATE()");
+        });
 
-			// DOCUMENTO ADJUNTO → DOCUMENTO
-			b.Entity<DocumentoAdjunto>()
-				.HasOne(a => a.Documento)
-				.WithMany(d => d.Adjuntos)
-				.HasForeignKey(a => a.DocumentoId)
-				.OnDelete(DeleteBehavior.Cascade);
+        // ✅ Seed TiposDocumento
+        b.Entity<TipoDocumento>().HasData(
+            new TipoDocumento { Id = 1, Nombre = "Manuales", Activo = true },
+            new TipoDocumento { Id = 2, Nombre = "Procedimientos", Activo = true },
+            new TipoDocumento { Id = 3, Nombre = "Políticas", Activo = true },
+            new TipoDocumento { Id = 4, Nombre = "Reglamentos", Activo = true },
+            new TipoDocumento { Id = 5, Nombre = "Formatos", Activo = true },
+            new TipoDocumento { Id = 6, Nombre = "Diagramas", Activo = true },
+            new TipoDocumento { Id = 7, Nombre = "Referencias Normativas", Activo = true },
+            new TipoDocumento { Id = 8, Nombre = "Requerimientos", Activo = true },
+            new TipoDocumento { Id = 9, Nombre = "Manuales de Capacitación", Activo = true },
+            new TipoDocumento { Id = 10, Nombre = "Otros", Activo = true }
+        );
 
-			// AUDITORIA → DOCUMENTO
-			b.Entity<AuditoriaDocumento>()
-				.HasOne(a => a.Documento)
-				.WithMany(d => d.Auditorias)
-				.HasForeignKey(a => a.DocumentoId)
-				.OnDelete(DeleteBehavior.Cascade);
+        // =========================
+        // EstatusDocumento
+        // =========================
+        b.Entity<EstatusDocumento>(e =>
+        {
+            e.ToTable("EstatusDocumento");
 
-			// DOCUMENTO ETIQUETA → DOCUMENTO
-			b.Entity<DocumentoEtiqueta>()
-				.HasOne(e => e.Documento)
-				.WithMany(d => d.Etiquetas)
-				.HasForeignKey(e => e.DocumentoId)
-				.OnDelete(DeleteBehavior.Cascade);
+            e.HasKey(x => x.Id);
 
-			// CAMPOS OPCIONALES / PROPIEDADES
+            e.Property(x => x.Nombre)
+                .IsRequired()
+                .HasMaxLength(80);
 
-			b.Entity<Documento>()
-				.Property(d => d.Titulo)
-				.HasMaxLength(200)
-				.IsRequired();
+            e.Property(x => x.Activo)
+                .HasDefaultValue(true);
 
-			b.Entity<TipoDocumento>()
-				.Property(td => td.Nombre)
-				.HasMaxLength(100)
-				.IsRequired();
+            e.Property(x => x.EsPublicable)
+                .HasDefaultValue(false);
+        });
 
-			b.Entity<DocumentoRelacion>()
-				.Property(r => r.TipoRelacion)
-				.HasMaxLength(50);
+        // ✅ Seed EstatusDocumento (NO incluye "Todos": eso es de UI)
+        b.Entity<EstatusDocumento>().HasData(
+            new EstatusDocumento { Id = 1, Nombre = "Vigente", Activo = true, EsPublicable = true },
+            new EstatusDocumento { Id = 2, Nombre = "Obsoleto", Activo = true, EsPublicable = false },
+            new EstatusDocumento { Id = 3, Nombre = "En Revisión", Activo = true, EsPublicable = false }
+        );
 
-			// NOMBRES DE TABLAS (opcional, pero recomendable)
-			b.Entity<Documento>().ToTable("Documentos");
-			b.Entity<DocumentoVersion>().ToTable("DocumentosVersiones");
-			b.Entity<DocumentoAdjunto>().ToTable("DocumentosAdjuntos");
-			b.Entity<DocumentoRelacion>().ToTable("DocumentosRelaciones");
-			b.Entity<AuditoriaDocumento>().ToTable("AuditoriasDocumentos");
-			b.Entity<DocumentoEtiqueta>().ToTable("DocumentosEtiquetas");
-			b.Entity<TipoDocumento>().ToTable("TiposDocumento");
-		}
+        // =========================
+        // Documento (cabecera)
+        // =========================
+        b.Entity<Documento>(e =>
+        {
+            e.ToTable("Documentos");
+
+            e.HasKey(x => x.Id);
+
+            e.Property(x => x.Titulo)
+                .IsRequired()
+                .HasMaxLength(250);
+
+            e.Property(x => x.Descripcion)
+                .HasMaxLength(1000);
+
+            e.Property(x => x.Activo)
+                .HasDefaultValue(true);
+
+            e.Property(x => x.FechaCreacion)
+                .HasDefaultValueSql("GETDATE()");
+
+            // FK -> Area (tabla existente en Empleados)
+            e.HasOne(x => x.Area)
+                .WithMany()
+                .HasForeignKey(x => x.AreaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // FK -> TipoDocumento
+            e.HasOne(x => x.TipoDocumento)
+                .WithMany(t => t.Documentos)
+                .HasForeignKey(x => x.TipoDocumentoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.AreaId);
+            e.HasIndex(x => x.TipoDocumentoId);
+            e.HasIndex(x => x.Titulo);
+        });
+
+        // =========================
+        // DocumentoVersion
+        // =========================
+        b.Entity<DocumentoVersion>(e =>
+        {
+            e.ToTable("DocumentoVersiones");
+
+            e.HasKey(x => x.Id);
+
+            e.Property(x => x.Version)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            e.Property(x => x.Comentarios)
+                .HasMaxLength(1000);
+
+            e.Property(x => x.NombreArchivo)
+                .HasMaxLength(260);
+
+            e.Property(x => x.RutaArchivo)
+                .HasMaxLength(800);
+
+            e.Property(x => x.MimeType)
+                .HasMaxLength(100);
+
+            e.Property(x => x.Activo)
+                .HasDefaultValue(true);
+
+            e.Property(x => x.EsActual)
+                .HasDefaultValue(false);
+
+            e.Property(x => x.FechaCreacion)
+                .HasDefaultValueSql("GETDATE()");
+
+            // FK -> Documento
+            e.HasOne(x => x.Documento)
+                .WithMany(d => d.Versiones)
+                .HasForeignKey(x => x.DocumentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // FK -> EstatusDocumento
+            e.HasOne(x => x.EstatusDocumento)
+                .WithMany(s => s.Versiones)
+                .HasForeignKey(x => x.EstatusDocumentoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Una versión no se repite por documento
+            e.HasIndex(x => new { x.DocumentoId, x.Version })
+                .IsUnique();
+
+            // Solo una versión actual por documento
+            e.HasIndex(x => new { x.DocumentoId, x.EsActual })
+                .IsUnique()
+                .HasFilter("[EsActual] = 1");
+        });
+
+        // =========================
+        // DocumentoPalabraClave
+        // =========================
+        b.Entity<DocumentoPalabraClave>(e =>
+        {
+            e.ToTable("DocumentoPalabrasClave");
+
+            e.HasKey(x => x.Id);
+
+            e.Property(x => x.Palabra)
+                .IsRequired()
+                .HasMaxLength(80);
+
+            e.HasOne(x => x.Documento)
+                .WithMany(d => d.PalabrasClave)
+                .HasForeignKey(x => x.DocumentoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasIndex(x => new { x.DocumentoId, x.Palabra })
+                .IsUnique();
+
+            e.HasIndex(x => x.Palabra);
+        });
+    }
 
 
-
-		private static void BuildTipoContratos(ModelBuilder b)
+    private static void BuildTipoContratos(ModelBuilder b)
 		{
 			b.Entity<TipoContrato>().HasData(
 				new TipoContrato { Id = 1, Nombre = "Asimilados", Descripcion = "Contratos de tipo asimilados a salarios", Deshabilitado = true },

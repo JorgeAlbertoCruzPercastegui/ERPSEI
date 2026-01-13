@@ -33,6 +33,8 @@ using ERPSEI.Data.Managers.AdministradorPolizas;
 using ERPSEI.Data.Managers.Polizas;
 using Microsoft.AspNetCore.Http.Features;
 using ERPSEI.Data.Managers.TipoContratos;
+using ERPSEI.Data.Managers.Documentos;
+using ERPSEI.Data.Entities.Documentos;
 
 namespace ERPSEI
 {
@@ -120,7 +122,10 @@ namespace ERPSEI
             ConfigureDIVacaciones(_builder);
 
             ConfigureDITipoContratos(_builder);
+
+            ConfigureDIDocumentos(_builder);
         }
+
         private static void ConfigureDITipoContratos(WebApplicationBuilder _builder)
         {
             //TipoContratos
@@ -165,9 +170,17 @@ namespace ERPSEI
         }
         private static void ConfigureDIVacaciones(WebApplicationBuilder _builder)
         {
-            //Activos Fijos
+            //Vacaciones
             _builder.Services.AddScoped<ISolicitudVacacionesManager, SolicitudVacacionesManager>();
 
+        }
+
+        private static void ConfigureDIDocumentos(WebApplicationBuilder _builder)
+        {
+            //Documentos
+            _builder.Services.AddScoped<IDocumentoManager, DocumentoManager>();
+            _builder.Services.AddScoped<IEstatusDocumentoManager, EstatusDocumentoManager>();
+            _builder.Services.AddScoped<ITipoDocumentoManager, TipoDocumentoManager>();
         }
 
         private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)
