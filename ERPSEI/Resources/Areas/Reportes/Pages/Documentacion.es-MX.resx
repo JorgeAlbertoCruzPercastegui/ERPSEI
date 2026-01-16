@@ -117,19 +117,73 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AddButton" xml:space="preserve">
+    <value>Agregar</value>
+  </data>
   <data name="AreaField" xml:space="preserve">
     <value>Área</value>
+  </data>
+  <data name="CancelButton" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="ColActionsHeader" xml:space="preserve">
+    <value>Acciones</value>
+  </data>
+  <data name="ColAreaHeader" xml:space="preserve">
+    <value>Área</value>
+  </data>
+  <data name="ColEstatusHeader" xml:space="preserve">
+    <value>Estatus</value>
+  </data>
+  <data name="ColFechaCreacionHeader" xml:space="preserve">
+    <value>Fecha Creación</value>
+  </data>
+  <data name="ColIdHeader" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="ColTipoHeader" xml:space="preserve">
+    <value>Tipo Documento</value>
+  </data>
+  <data name="ColTituloHeader" xml:space="preserve">
+    <value>Documento</value>
+  </data>
+  <data name="DeactivateButton" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="DeleteOfficeDialogQuestion" xml:space="preserve">
+    <value>¿Está seguro que desea dar de baja los registros seleccionados?</value>
+  </data>
+  <data name="DeleteOfficeDialogTitle" xml:space="preserve">
+    <value>Dar de baja registro</value>
+  </data>
+  <data name="EditButtonTitle" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="EditDialogTitle" xml:space="preserve">
+    <value>Editar Registro</value>
   </data>
   <data name="FilterTitle" xml:space="preserve">
     <value>Filtros de Búsqueda</value>
   </data>
+  <data name="NewDialogTitle" xml:space="preserve">
+    <value>Nuevo Registro</value>
+  </data>
+  <data name="SaveButton" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
   <data name="SearchButton" xml:space="preserve">
     <value>Buscar</value>
+  </data>
+  <data name="SeeButtonTitle" xml:space="preserve">
+    <value>Ver</value>
+  </data>
+  <data name="SeeDialogTitle" xml:space="preserve">
+    <value>Ver Registro</value>
   </data>
   <data name="TipoDocumentoField" xml:space="preserve">
     <value>Tipo Documento</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Documentación Corporativa</value>
+    <value>Documentación Interna</value>
   </data>
 </root>
