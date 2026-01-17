@@ -221,6 +221,198 @@ function initTable() {
     })
 }
 
+// Funcionalidad Diálogo - DOCUMENTOS
+function initDocumentacionDialog(action, row) {
+
+    let idField = document.getElementById("inpDocumentacionId");
+    let areaField = document.getElementById("inpDocumentacionArea");
+    let tipoDocumentoField = document.getElementById("inpDocumentacionTipoDocumento");
+    let estatusField = document.getElementById("inpDocumentacionEstatusDocumento");
+    let tituloField = document.getElementById("inpDocumentacionTitulo");
+    let descripcionField = document.getElementById("inpDocumentacionDescripcion");
+    let observacionesField = document.getElementById("inpDocumentacionObservaciones");
+    let archivoField = document.getElementById("inpDocumentacionArchivo");
+
+    let btnGuardar = document.getElementById("dlgDocumentoBtnGuardar");
+    let dlgTitle = document.getElementById("dlgDocumentacionTitle");
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    summaryContainer.innerHTML = "";
+
+    // ID siempre deshabilitado
+    idField.setAttribute("disabled", true);
+
+    // Helpers
+    const setDisabled = (el, disabled) => {
+        if (!el) return;
+        if (disabled) el.setAttribute("disabled", true);
+        else el.removeAttribute("disabled");
+    };
+
+    const setTitleByAction = () => {
+        // Usa tus variables si ya existen (dlgNuevoTitle/dlgEditarTitle/dlgVerTitle).
+        // Si no existen, puedes dejar estos textos fijos.
+        if (action === NUEVO) dlgTitle.innerHTML = (typeof dlgNuevoTitle !== "undefined") ? dlgNuevoTitle : "Nuevo Documento";
+        else if (action === EDITAR) dlgTitle.innerHTML = (typeof dlgEditarTitle !== "undefined") ? dlgEditarTitle : "Editar Documento";
+        else dlgTitle.innerHTML = (typeof dlgVerTitle !== "undefined") ? dlgVerTitle : "Ver Documento";
+    };
+
+    setTitleByAction();
+
+    // Habilitar/Deshabilitar según acción
+    switch (action) {
+        case NUEVO:
+            // En nuevo: habilitar todo excepto ID
+            setDisabled(areaField, false);
+            setDisabled(tipoDocumentoField, false);
+            setDisabled(estatusField, false);
+            setDisabled(tituloField, false);
+            setDisabled(descripcionField, false);
+            setDisabled(observacionesField, false);
+            setDisabled(archivoField, false);
+
+            setDisabled(btnGuardar, false);
+            break;
+
+        case EDITAR:
+            // En editar: habilitar (tú decides si permites cambiar archivo)
+            setDisabled(areaField, false);
+            setDisabled(tipoDocumentoField, false);
+            setDisabled(estatusField, false);
+            setDisabled(tituloField, false);
+            setDisabled(descripcionField, false);
+            setDisabled(observacionesField, false);
+
+            // Si quieres permitir cambiar PDF en editar, deja false. Si no, true.
+            setDisabled(archivoField, false);
+
+            setDisabled(btnGuardar, false);
+            break;
+
+        default:
+            // VER: todo disabled
+            setDisabled(areaField, true);
+            setDisabled(tipoDocumentoField, true);
+            setDisabled(estatusField, true);
+            setDisabled(tituloField, true);
+            setDisabled(descripcionField, true);
+            setDisabled(observacionesField, true);
+            setDisabled(archivoField, true);
+
+            setDisabled(btnGuardar, true);
+            break;
+    }
+
+    // =========================
+    // Asignación de valores
+    // =========================
+    if (action === NUEVO) {
+        idField.value = "Nuevo";
+        areaField.value = "";
+        tipoDocumentoField.value = "";
+        estatusField.value = "";
+        tituloField.value = "";
+        descripcionField.value = "";
+        observacionesField.value = "";
+
+        // Limpia file input
+        if (archivoField) archivoField.value = "";
+    } else {
+        // Row viene del grid
+        idField.value = row?.id ?? "";
+
+        // OJO: asegúrate que tu JSON del list traiga estos campos:
+        // areaId, tipoDocumentoId, estatusDocumentoId, titulo, descripcion, observaciones
+        areaField.value = row?.areaId != null ? row.areaId.toString() : "";
+        tipoDocumentoField.value = row?.tipoDocumentoId != null ? row.tipoDocumentoId.toString() : "";
+        estatusField.value = row?.estatusDocumentoId != null ? row.estatusDocumentoId.toString() : "";
+
+        tituloField.value = row?.titulo ?? "";
+        descripcionField.value = row?.descripcion ?? "";
+        observacionesField.value = row?.observaciones ?? "";
+
+        // Por seguridad, no se puede “precargar” un file input desde JS (browser restriction)
+        if (archivoField) archivoField.value = "";
+    }
+
+    // Mostrar modal
+    dlgModal.show();
+}
+
+
+function onGuardarClick() {
+    $("#theForm").validate();
+    let valid = $("#theForm").valid();
+    if (!valid) { return; }
+
+    let btnClose = document.getElementById("dlgDocumentoBtnCancelar");
+
+    let idField = document.getElementById("inpDocumentacionId");
+    let areaField = document.getElementById("inpDocumentacionArea");
+    let tipoDocumentoField = document.getElementById("inpDocumentacionTipoDocumento");
+    let tituloField = document.getElementById("inpDocumentacionTitulo");
+    let descripcionField = document.getElementById("inpDocumentacionDescripcion");
+    let estatusField = document.getElementById("inpDocumentacionEstatusDocumento");
+    let archivoField = document.getElementById("inpDocumentacionArchivo");
+    let observacionesField = document.getElementById("inpDocumentacionObservaciones");
+
+    let dlgTitle = document.getElementById("dlgDocumentacionTitle");
+
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    summaryContainer.innerHTML = "";
+
+    let oParams = new FormData();
+
+    // ✅ Anti-forgery token
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    if (token) oParams.append("__RequestVerificationToken", token);
+
+    // ✅ Prefijo input. para que ligue con: OnPostSaveDocumento(DcoumentacionTableModel input)
+    oParams.append("input.Id", (idField.value === "Nuevo" || idField.value === "") ? 0 : parseInt(idField.value));
+
+    oParams.append("input.AreaId", areaField.value || "");
+    oParams.append("input.TipoDocumentoId", tipoDocumentoField.value || "");
+    oParams.append("input.EstatusDocumentoId", estatusField.value || "");
+
+    oParams.append("input.Titulo", tituloField.value || "");
+    oParams.append("input.Descripcion", descripcionField.value || "");
+    oParams.append("input.Observaciones", observacionesField.value || "");
+
+    // Archivo
+    if (archivoField.files && archivoField.files.length > 0) {
+        oParams.append("input.Archivo", archivoField.files[0]);
+    }
+
+    // multipart
+    let postOptions = { processData: false, contentType: false };
+
+    doAjax(
+        "/Reportes/Documentacion/SaveDocumento",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    let summary = ``;
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                }
+                showError(dlgTitle.innerHTML, resp.mensaje);
+                return;
+            }
+
+            btnClose.click();
+            document.querySelector("[name='refresh']").click();
+            showSuccess(dlgTitle.innerHTML, resp.mensaje);
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
+
+
 function onCerrarClick() {
     //Removes validation from input-fields
     $('.input-validation-error').addClass('input-validation-valid');

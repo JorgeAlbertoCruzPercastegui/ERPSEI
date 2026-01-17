@@ -204,6 +204,7 @@
 
 <form id="theForm" method="post" enctype="multipart/form-data">
     <div id="dlgDocumentacion" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        @Html.AntiForgeryToken()
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
@@ -231,7 +232,7 @@
                             <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <select id="inpDocumentacionArea"
-                                            asp-for="InputDocumentos.Area"
+                                            asp-for="InputDocumentos.AreaId"
                                             class="form-select">
                                         <option value="">Seleccione...</option>
                                         @foreach (var area in areas)
@@ -241,13 +242,13 @@
                                     </select>
                                     <label for="inpDocumentacionArea">Área</label>
                                 </div>
-                                <span asp-validation-for="InputDocumentos.Area" class="text-danger"></span>
+                                <span asp-validation-for="InputDocumentos.AreaId" class="text-danger"></span>
                             </div>
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <select id="inpDocumentacionTipoDocumento"
-                                            asp-for="InputDocumentos.TipoDocumento"
+                                            asp-for="InputDocumentos.TipoDocumentoId"
                                             class="form-select">
                                         <option value="">Seleccione...</option>
                                         @foreach (var tipoDocumento in tipoDocumentos)
@@ -257,7 +258,7 @@
                                     </select>
                                     <label for="inpDocumentacionTipoDocumento">Tipo Documento</label>
                                 </div>
-                                <span asp-validation-for="InputDocumentos.TipoDocumento" class="text-danger"></span>
+                                <span asp-validation-for="InputDocumentos.TipoDocumentoId" class="text-danger"></span>
                             </div>
 
                             <div class="col-4">
@@ -283,7 +284,7 @@
                             <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <select id="inpDocumentacionEstatusDocumento"
-                                            asp-for="InputDocumentos.EstatusDocumento"
+                                            asp-for="InputDocumentos.EstatusDocumentoId"
                                             class="form-select">
                                         <option value="">Seleccione...</option>
                                         @foreach (var estatusDoc in estatusDocumento)
@@ -293,7 +294,7 @@
                                     </select>
                                     <label for="inpDocumentacionEstatusDocumento">Estatus Documento</label>
                                 </div>
-                                <span asp-validation-for="InputDocumentos.EstatusDocumento" class="text-danger"></span>
+                                <span asp-validation-for="InputDocumentos.EstatusDocumentoId" class="text-danger"></span>
                             </div>
 
                             <div class="col-4">
@@ -324,10 +325,10 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="dlgActivoFijoBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
+                    <button id="dlgDocumentoBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
                         <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
                     </button>
-                    <button id="dlgActivoFijoBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
+                    <button id="dlgDocumentoBtnGuardar" type="button" class="btn btn-primary" onclick="onGuardarClick();">
                         <i class="bi bi-floppy"></i> @Localizer["SaveButton"]
                     </button>
                 </div>
