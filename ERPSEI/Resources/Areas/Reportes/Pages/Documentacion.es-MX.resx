@@ -156,6 +156,9 @@
   <data name="DeleteOfficeDialogTitle" xml:space="preserve">
     <value>Dar de baja registro</value>
   </data>
+  <data name="dlgDocumentacionTitle" xml:space="preserve">
+    <value>Nuevo Registro</value>
+  </data>
   <data name="EditButtonTitle" xml:space="preserve">
     <value>Editar</value>
   </data>

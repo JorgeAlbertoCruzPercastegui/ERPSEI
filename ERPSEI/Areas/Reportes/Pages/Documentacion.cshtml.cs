@@ -77,6 +77,15 @@ namespace ERPSEI.Areas.Reportes.Pages
         {
             public int? Id { get; set; }
 
+            [DataType(AnnoDataType.Text)]
+            public string? Area { get; set; }
+
+            [DataType(AnnoDataType.Text)]
+            public string? TipoDocumento { get; set; }
+
+            [DataType(AnnoDataType.Text)]
+            public string? EstatusDocumento { get; set; }
+
             [StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Titulo { get; set; }
@@ -102,6 +111,14 @@ namespace ERPSEI.Areas.Reportes.Pages
             public DateTime? FechaModificacion { get; set; }
 
             public int? Activo { get; set; } = 0;
+
+            [DataType(AnnoDataType.Text)]
+            public string? Ubicacion { get; set; }
+
+            public IFormFile? Archivo { get; set; }
+
+            [DataType(AnnoDataType.Text)]
+            public string? Observaciones { get; set; }
         }
 
         [BindProperty]
@@ -208,33 +225,52 @@ namespace ERPSEI.Areas.Reportes.Pages
         public async Task<JsonResult> OnGetDocumentosList()
         {
             var documentos = await documentoManager.GetAllAsync();
-            documentos = documentos.Where(a => a.Activo == true).ToList();
 
+            // Solo activos
+            documentos = documentos.Where(d => d.Activo).ToList();
 
             var jsonActivos = new List<object>();
 
-            foreach (var a in documentos)
+            foreach (var d in documentos)
             {
-                DateTime? fechaCreacion = a.FechaCreacion == DateTime.MinValue ? null : a.FechaCreacion;
-                DateTime? fechaModificacion = a.FechaModificacion == DateTime.MinValue ? null : a.FechaModificacion;
+                DateTime? fechaCreacion = d.FechaCreacion == DateTime.MinValue ? null : d.FechaCreacion;
+                DateTime? fechaModificacion = d.FechaModificacion == DateTime.MinValue ? null : d.FechaModificacion;
 
                 jsonActivos.Add(new
                 {
-                    id = a.Id,
-                    areaId = a.AreaId,
-                    area = a.Area != null ? a.Area.Nombre : "-",
-                    tipoDocumentoId = a.TipoDocumentoId,
-                    tipoDocumento = a.TipoDocumento != null ? a.TipoDocumento?.Nombre : "-",
-                    titulo = a.Titulo ?? "-",
-                    descripcion = a.Descripcion ?? "-",
-                    activo = a.Activo,
-                    creadoPorId = a.CreadoPorId,
-                    modificadoPorId = a.ModificadoPorId
+                    id = d.Id,
+
+                    areaId = d.AreaId,
+                    area = d.Area != null ? d.Area.Nombre : "-",
+
+                    tipoDocumentoId = d.TipoDocumentoId,
+                    tipoDocumento = d.TipoDocumento != null ? d.TipoDocumento.Nombre : "-",
+
+                    estatusDocumentoId = d.EstatusDocumentoId,
+                    estatusDocumento = d.EstatusDocumento != null ? d.EstatusDocumento.Nombre : "-",
+
+                    titulo = d.Titulo ?? "-",
+                    descripcion = d.Descripcion ?? "-",
+                    responsable = d.Responsable ?? "-",
+                    ubicacion = d.Ubicacion ?? "-",
+                    observaciones = d.Observaciones ?? "-",
+
+                    nombreArchivo = d.NombreArchivo ?? "-",
+                    rutaArchivo = d.RutaArchivo ?? "-",
+
+                    activo = d.Activo,
+
+                    fechaCreacion,
+                    fechaModificacion,
+
+                    creadoPorId = d.CreadoPorId,
+                    modificadoPorId = d.ModificadoPorId
                 });
             }
 
             return new JsonResult(jsonActivos);
         }
+
 
         public async Task<JsonResult> OnPostDeleteDocumentacion(string[] ids)
         {

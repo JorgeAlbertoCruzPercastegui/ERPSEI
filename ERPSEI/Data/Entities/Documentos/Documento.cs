@@ -17,11 +17,29 @@ namespace ERPSEI.Data.Entities.Documentos
         public int TipoDocumentoId { get; set; }
 
         [Required]
+        public int EstatusDocumentoId { get; set; }
+
+        [Required]
         [StringLength(250)]
         public string Titulo { get; set; } = string.Empty;
 
         [StringLength(1000)]
         public string? Descripcion { get; set; }
+
+        [StringLength(150)]
+        public string? Responsable { get; set; }
+
+        [StringLength(500)]
+        public string? Observaciones { get; set; }
+
+        [StringLength(300)]
+        public string? Ubicacion { get; set; }
+
+        [StringLength(300)]
+        public string? NombreArchivo { get; set; }
+
+        [StringLength(500)]
+        public string? RutaArchivo { get; set; }
 
         public bool Activo { get; set; } = true;
 
@@ -38,6 +56,8 @@ namespace ERPSEI.Data.Entities.Documentos
         [ForeignKey(nameof(TipoDocumentoId))]
         public TipoDocumento? TipoDocumento { get; set; }
 
+        [ForeignKey(nameof(EstatusDocumentoId))]
+        public EstatusDocumento? EstatusDocumento { get; set; }
         public ICollection<DocumentoVersion>? Versiones { get; set; }
         public ICollection<DocumentoPalabraClave>? PalabrasClave { get; set; }
     }

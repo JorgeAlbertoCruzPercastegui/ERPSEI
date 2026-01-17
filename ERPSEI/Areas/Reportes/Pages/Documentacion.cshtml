@@ -196,12 +196,18 @@
         </thead>
     </table>
 
-<form id="theForm" method="post">
+
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+<!-- --------------------------- -->
+<!-- Sección Nuevo/Editar/Ver Registro --- -->
+
+<form id="theForm" method="post" enctype="multipart/form-data">
     <div id="dlgDocumentacion" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 id="dlgdlgDocumentacionTitle" class="modal-title"></h5>
+                    <h5 id="dlgDocumentacionTitle" class="modal-title"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body align-items-center">
@@ -217,6 +223,103 @@
                                     <span asp-validation-for="InputDocumentos.Id" class="text-danger"></span>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Grupo 1 -->
+                        <div class="row">
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <select id="inpDocumentacionArea"
+                                            asp-for="InputDocumentos.Area"
+                                            class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        @foreach (var area in areas)
+                                        {
+                                            <option value="@area.Id">@area.Nombre</option>
+                                        }
+                                    </select>
+                                    <label for="inpDocumentacionArea">Área</label>
+                                </div>
+                                <span asp-validation-for="InputDocumentos.Area" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <select id="inpDocumentacionTipoDocumento"
+                                            asp-for="InputDocumentos.TipoDocumento"
+                                            class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        @foreach (var tipoDocumento in tipoDocumentos)
+                                        {
+                                            <option value="@tipoDocumento.Id">@tipoDocumento.Nombre</option>
+                                        }
+                                    </select>
+                                    <label for="inpDocumentacionTipoDocumento">Tipo Documento</label>
+                                </div>
+                                <span asp-validation-for="InputDocumentos.TipoDocumento" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionTitulo" asp-for="InputDocumentos.Titulo" type="text" class="form-control" />
+                                    <label asp-for="InputDocumentos.Titulo" class="form-label"></label>
+                                    <span asp-validation-for="InputDocumentos.Titulo" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grupo 2 -->
+                        <div class="row">
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionDescripcion" asp-for="InputDocumentos.Descripcion" type="text" class="form-control" placeholder="@Localizer["DescripcionPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.Descripcion" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.Descripcion" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <select id="inpDocumentacionEstatusDocumento"
+                                            asp-for="InputDocumentos.EstatusDocumento"
+                                            class="form-select">
+                                        <option value="">Seleccione...</option>
+                                        @foreach (var estatusDoc in estatusDocumento)
+                                        {
+                                            <option value="@estatusDoc.Id">@estatusDoc.Nombre</option>
+                                        }
+                                    </select>
+                                    <label for="inpDocumentacionEstatusDocumento">Estatus Documento</label>
+                                </div>
+                                <span asp-validation-for="InputDocumentos.EstatusDocumento" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="mb-3">
+                                    <label for="inpDocumentacionArchivo" class="form-label required"> Archivo del documento</label>
+                                    <input id="inpDocumentacionArchivo" asp-for="InputDocumentos.Archivo" type="file" class="form-control" accept=".pdf" />
+                                    <span asp-validation-for="InputDocumentos.Archivo" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grupo 3 -->
+                        <div class="row">
+                        <div class="col-4">
+                            <div class="form-floating mb-3">
+                                <textarea id="inpDocumentacionObservaciones"
+                                          asp-for="InputDocumentos.Observaciones"
+                                          class="form-control"
+                                          placeholder="Observaciones"
+                                          style="height: 160px"></textarea>
+
+                                <label for="inpDocumentacionObservaciones"> Observaciones </label>
+
+                                <span asp-validation-for="InputDocumentos.Observaciones" class="text-danger"></span>
+                            </div>
+                        </div>
                         </div>
                     </div>
                 </div>
