@@ -81,16 +81,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             public int? TipoDocumentoId { get; set; }
             public int? EstatusDocumentoId { get; set; }
 
-            /*[DataType(AnnoDataType.Text)]
-            public string? Area { get; set; }
-
-            [DataType(AnnoDataType.Text)]
-            public string? TipoDocumento { get; set; }
-
-            [DataType(AnnoDataType.Text)]
-            public string? EstatusDocumento { get; set; }*/
-
-            [StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
             public string? Titulo { get; set; }
 
@@ -117,12 +108,18 @@ namespace ERPSEI.Areas.Reportes.Pages
             public int? Activo { get; set; } = 1;
 
             [DataType(AnnoDataType.Text)]
+            public string? NombreArchivo { get; set; }
+
+            [DataType(AnnoDataType.Text)]
             public string? Ubicacion { get; set; }
 
             public IFormFile? Archivo { get; set; }
 
             [DataType(AnnoDataType.Text)]
             public string? Observaciones { get; set; }
+
+            [DataType(AnnoDataType.Text)]
+            public string? RutaArchivo { get; set; }
         }
 
         [BindProperty]
@@ -130,32 +127,26 @@ namespace ERPSEI.Areas.Reportes.Pages
 
     public class InputFiltroModel
     {
-        // Búsqueda por título / texto
         [DataType(AnnoDataType.Text)]
         [StringLength(250, ErrorMessage = "FieldLength", MinimumLength = 3)]
         [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
         public string? Titulo { get; set; } = string.Empty;
 
-        // Área (catálogo existente)
         [Display(Name = "Área")]
-        public int? AreaId { get; set; } // 0 o null = todos
+        public int? AreaId { get; set; }
 
-        // TipoDocumento (Manuales, Procedimientos, etc.)
         [Display(Name = "Tipo Documento")]
-        public int? TipoDocumentoId { get; set; } // 0 o null = todos
+        public int? TipoDocumentoId { get; set; } 
 
-        // EstatusDocumento (Vigente, Obsoleto, En Revisión)
         [Display(Name = "Estatus Documento")]
-        public int? EstatusDocumentoId { get; set; } // 0 o null = todos
+        public int? EstatusDocumentoId { get; set; }
 
-        // Palabra clave (tabla DocumentoPalabrasClave)
         [Display(Name = "Palabra clave")]
         [DataType(AnnoDataType.Text)]
         [StringLength(80, ErrorMessage = "FieldLength", MinimumLength = 2)]
         [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
         public string? PalabraClave { get; set; } = string.Empty;
 
-        // Rango de fechas (por FechaCreacion de Documento)
         [Display(Name = "Fecha Creación Inicio")]
         [DataType(AnnoDataType.Date)]
         public DateTime? FechaCreacionInicio { get; set; }
@@ -270,7 +261,6 @@ namespace ERPSEI.Areas.Reportes.Pages
 
         public async Task<JsonResult> OnPostDeleteDocumentacion(string[] ids)
         {
-            //ServerResponse resp = new(true, "No se pudieron dar de baja los registros.");
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 
             try
@@ -374,10 +364,10 @@ namespace ERPSEI.Areas.Reportes.Pages
                     doc = new Documento
                     {
                         FechaCreacion = DateTime.Now,
+                        FechaModificacion = null,
                         Activo = true
                     };
 
-                    // Auditoría (si realmente manejas userId string, cambia tu TableModel a string)
                     doc.CreadoPorId = input.CreadoPorId?.ToString();
 
                     db.Documentos.Add(doc);
@@ -395,26 +385,24 @@ namespace ERPSEI.Areas.Reportes.Pages
                     doc.FechaModificacion = DateTime.Now;
                 }
 
-                // ✅ Asignación de FKs (directo por ID)
                 doc.AreaId = input.AreaId.Value;
                 doc.TipoDocumentoId = input.TipoDocumentoId.Value;
                 doc.EstatusDocumentoId = input.EstatusDocumentoId.Value;
 
-                // ✅ Asignación de valores
                 doc.Titulo = input.Titulo.Trim();
                 doc.Descripcion = string.IsNullOrWhiteSpace(input.Descripcion) ? null : input.Descripcion.Trim();
                 doc.Responsable = string.IsNullOrWhiteSpace(input.Responsable) ? null : input.Responsable.Trim();
-                doc.Ubicacion = string.IsNullOrWhiteSpace(input.Ubicacion) ? null : input.Ubicacion.Trim();
                 doc.Observaciones = string.IsNullOrWhiteSpace(input.Observaciones) ? null : input.Observaciones.Trim();
 
-                // ✅ Activo (si lo mandas; si no, respeta lo que ya tenga)
+                doc.NombreArchivo = string.IsNullOrWhiteSpace(input.NombreArchivo) ? null : input.NombreArchivo.Trim();
+                doc.RutaArchivo = string.IsNullOrWhiteSpace(input.RutaArchivo) ? null : input.RutaArchivo.Trim();
+                doc.Ubicacion = string.IsNullOrWhiteSpace(input.Ubicacion) ? null : input.Ubicacion.Trim();
+
                 if (input.Activo.HasValue)
                     doc.Activo = input.Activo.Value == 1;
 
-                // ✅ Archivo (si viene)
                 if (input.Archivo != null && input.Archivo.Length > 0)
                 {
-                    // Validación básica (PDF)
                     var ext = Path.GetExtension(input.Archivo.FileName);
                     if (!string.Equals(ext, ".pdf", StringComparison.OrdinalIgnoreCase))
                     {
@@ -435,8 +423,11 @@ namespace ERPSEI.Areas.Reportes.Pages
                         await input.Archivo.CopyToAsync(stream);
                     }
 
-                    doc.NombreArchivo = originalName;
-                    doc.RutaArchivo = $"/documentos/{safeFileName}";
+                    if (string.IsNullOrWhiteSpace(doc.NombreArchivo))
+                        doc.NombreArchivo = originalName;
+
+                    if (string.IsNullOrWhiteSpace(doc.RutaArchivo))
+                        doc.RutaArchivo = $"/documentos/{safeFileName}";
                 }
 
                 await db.SaveChangesAsync();
@@ -444,6 +435,18 @@ namespace ERPSEI.Areas.Reportes.Pages
 
                 resp.TieneError = false;
                 resp.Mensaje = esNuevo ? "Documento creado correctamente." : "Documento actualizado correctamente.";
+
+                return new JsonResult(new
+                {
+                    resp.TieneError,
+                    resp.Mensaje,
+                    id = doc.Id,
+                    fechaCreacion = doc.FechaCreacion,
+                    fechaModificacion = doc.FechaModificacion,
+                    nombreArchivo = doc.NombreArchivo,
+                    rutaArchivo = doc.RutaArchivo,
+                    ubicacion = doc.Ubicacion
+                });
             }
             catch (Exception ex)
             {
@@ -452,10 +455,71 @@ namespace ERPSEI.Areas.Reportes.Pages
 
                 resp.TieneError = true;
                 resp.Mensaje = "Ocurrió un error al guardar el documento.";
+                return new JsonResult(resp);
+            }
+        }
+
+        public async Task<JsonResult> OnPostFiltrarDocumentos()
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+
+            try
+            {
+                // [BindProperty] public InputFiltroModel? InputFiltro { get; set; }
+                var documentos = await documentoManager.GetAllAsync(InputFiltro);
+
+                // Solo activos (si aplica)
+                documentos = documentos.Where(d => d.Activo).ToList();
+
+                var result = documentos.Select(d => new
+                {
+                    id = d.Id,
+
+                    areaId = d.AreaId,
+                    area = d.Area != null ? d.Area.Nombre : "-",
+
+                    tipoDocumentoId = d.TipoDocumentoId,
+                    tipoDocumento = d.TipoDocumento != null ? d.TipoDocumento.Nombre : "-",
+
+                    estatusDocumentoId = d.EstatusDocumentoId,
+                    estatusDocumento = d.EstatusDocumento != null ? d.EstatusDocumento.Nombre : "-",
+
+                    titulo = d.Titulo ?? "-",
+                    descripcion = d.Descripcion ?? "-",
+                    responsable = d.Responsable ?? "-",
+                    ubicacion = d.Ubicacion ?? "-",
+                    observaciones = d.Observaciones ?? "-",
+
+                    nombreArchivo = d.NombreArchivo ?? "-",
+                    rutaArchivo = d.RutaArchivo ?? "-",
+
+                    creadoPorId = d.CreadoPorId ?? "-",
+                    modificadoPorId = d.ModificadoPorId ?? "-",
+
+                    // ✅ Para tabla (texto) y para inputs date (yyyy-MM-dd)
+                    fechaCreacion = d.FechaCreacion == DateTime.MinValue ? (DateTime?)null : d.FechaCreacion,
+                    fechaCreacionJS = d.FechaCreacion == DateTime.MinValue ? "" : d.FechaCreacion.ToString("yyyy-MM-dd"),
+
+                    fechaModificacion = d.FechaModificacion.HasValue ? d.FechaModificacion : null,
+                    fechaModificacionJS = d.FechaModificacion.HasValue ? d.FechaModificacion.Value.ToString("yyyy-MM-dd") : "",
+
+                    activo = d.Activo
+                }).ToList();
+
+                resp.Datos = result;
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al filtrar documentos");
+                // resp queda con TieneError=true y mensaje unsuccessfully
             }
 
             return new JsonResult(resp);
         }
+
+
 
 
 

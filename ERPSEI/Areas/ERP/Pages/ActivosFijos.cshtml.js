@@ -662,6 +662,7 @@ function onCerrarImportarClick() {
     fileField.value = null;
     onCerrarClick();
 }
+
 //Función para procesar el cambio de archivo a exportar
 function onExcelSelectorChanged(input) {
     //Validación para seleccionar archivos excel solamente.

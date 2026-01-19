@@ -149,6 +149,13 @@ function initTable() {
                 sortable: true
             },
             {
+                title: "FechaModificacion",
+                field: "fechaModificacion",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
                 title: "ModificadoPorId",
                 field: "modificadoPorId",
                 align: "center",
@@ -178,10 +185,8 @@ function initTable() {
         function () {
             buttonRemove.prop('disabled', !table.bootstrapTable('getSelections').length)
             buttonExportAll.prop('disabled', !table.bootstrapTable('getSelections').length)
-
-            // save your data, here just save the current page
+            
             selections = getIdSelections()
-            // push or splice the selections if you want to save all data selections
         })
     table.on('all.bs.table', function (e, name, args) {
         console.log(name, args)
@@ -221,7 +226,6 @@ function initTable() {
     })
 }
 
-// Funcionalidad Diálogo - DOCUMENTOS
 function initDocumentacionDialog(action, row) {
 
     let idField = document.getElementById("inpDocumentacionId");
@@ -230,18 +234,26 @@ function initDocumentacionDialog(action, row) {
     let estatusField = document.getElementById("inpDocumentacionEstatusDocumento");
     let tituloField = document.getElementById("inpDocumentacionTitulo");
     let descripcionField = document.getElementById("inpDocumentacionDescripcion");
+    let creadoPorIdField = document.getElementById("inpDocumentacionCreadoPor");
+    let modificadoPorIdField = document.getElementById("inpDocumentacionModificadoPor");
+    let nombreArchivoField = document.getElementById("inpDocumentacionNombreArchivo");
+    let responsableField = document.getElementById("inpDocumentacionRespoonsable");
+    let rutaArchivoField = document.getElementById("inpDocumentacionRutaArchivo");
+    let ubicacionField = document.getElementById("inpDocumentacionUbicacion");
     let observacionesField = document.getElementById("inpDocumentacionObservaciones");
     let archivoField = document.getElementById("inpDocumentacionArchivo");
+
+    let fechaCreacionField = document.getElementById("inpDocumentacionFechaCreacion");
+    let fechaModificacionField = document.getElementById("inpDocumentacionFechaModificacion");
+
 
     let btnGuardar = document.getElementById("dlgDocumentoBtnGuardar");
     let dlgTitle = document.getElementById("dlgDocumentacionTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
-    summaryContainer.innerHTML = "";
+    if (summaryContainer) summaryContainer.innerHTML = "";
 
-    // ID siempre deshabilitado
-    idField.setAttribute("disabled", true);
+    if (idField) idField.setAttribute("disabled", true);
 
-    // Helpers
     const setDisabled = (el, disabled) => {
         if (!el) return;
         if (disabled) el.setAttribute("disabled", true);
@@ -249,95 +261,89 @@ function initDocumentacionDialog(action, row) {
     };
 
     const setTitleByAction = () => {
-        // Usa tus variables si ya existen (dlgNuevoTitle/dlgEditarTitle/dlgVerTitle).
-        // Si no existen, puedes dejar estos textos fijos.
+        if (!dlgTitle) return;
+        
         if (action === NUEVO) dlgTitle.innerHTML = (typeof dlgNuevoTitle !== "undefined") ? dlgNuevoTitle : "Nuevo Documento";
         else if (action === EDITAR) dlgTitle.innerHTML = (typeof dlgEditarTitle !== "undefined") ? dlgEditarTitle : "Editar Documento";
         else dlgTitle.innerHTML = (typeof dlgVerTitle !== "undefined") ? dlgVerTitle : "Ver Documento";
     };
 
     setTitleByAction();
+    
+    const esVer = !(action === NUEVO || action === EDITAR);
+    
+    setDisabled(areaField, esVer);
+    setDisabled(tipoDocumentoField, esVer);
+    setDisabled(estatusField, esVer);
+    setDisabled(tituloField, esVer);
+    setDisabled(descripcionField, esVer);
+    setDisabled(observacionesField, esVer);
+    
+    setDisabled(creadoPorIdField, esVer);
+    setDisabled(modificadoPorIdField, esVer);
+    setDisabled(nombreArchivoField, esVer);
+    setDisabled(responsableField, esVer);
+    setDisabled(rutaArchivoField, esVer);
+    setDisabled(ubicacionField, esVer);
+    
+    if (action === EDITAR) setDisabled(archivoField, false);
+    else setDisabled(archivoField, esVer);
+    
+    setDisabled(btnGuardar, esVer);
 
-    // Habilitar/Deshabilitar según acción
-    switch (action) {
-        case NUEVO:
-            // En nuevo: habilitar todo excepto ID
-            setDisabled(areaField, false);
-            setDisabled(tipoDocumentoField, false);
-            setDisabled(estatusField, false);
-            setDisabled(tituloField, false);
-            setDisabled(descripcionField, false);
-            setDisabled(observacionesField, false);
-            setDisabled(archivoField, false);
-
-            setDisabled(btnGuardar, false);
-            break;
-
-        case EDITAR:
-            // En editar: habilitar (tú decides si permites cambiar archivo)
-            setDisabled(areaField, false);
-            setDisabled(tipoDocumentoField, false);
-            setDisabled(estatusField, false);
-            setDisabled(tituloField, false);
-            setDisabled(descripcionField, false);
-            setDisabled(observacionesField, false);
-
-            // Si quieres permitir cambiar PDF en editar, deja false. Si no, true.
-            setDisabled(archivoField, false);
-
-            setDisabled(btnGuardar, false);
-            break;
-
-        default:
-            // VER: todo disabled
-            setDisabled(areaField, true);
-            setDisabled(tipoDocumentoField, true);
-            setDisabled(estatusField, true);
-            setDisabled(tituloField, true);
-            setDisabled(descripcionField, true);
-            setDisabled(observacionesField, true);
-            setDisabled(archivoField, true);
-
-            setDisabled(btnGuardar, true);
-            break;
-    }
-
-    // =========================
-    // Asignación de valores
-    // =========================
     if (action === NUEVO) {
-        idField.value = "Nuevo";
-        areaField.value = "";
-        tipoDocumentoField.value = "";
-        estatusField.value = "";
-        tituloField.value = "";
-        descripcionField.value = "";
-        observacionesField.value = "";
-
-        // Limpia file input
+        if (idField) idField.value = "Nuevo";
+        if (areaField) areaField.value = "";
+        if (tipoDocumentoField) tipoDocumentoField.value = "";
+        if (estatusField) estatusField.value = "";
+        if (tituloField) tituloField.value = "";
+        if (descripcionField) descripcionField.value = "";
+        if (observacionesField) observacionesField.value = "";
+        
+        if (creadoPorIdField) creadoPorIdField.value = "";
+        if (modificadoPorIdField) modificadoPorIdField.value = "";
+        if (nombreArchivoField) nombreArchivoField.value = "";
+        if (responsableField) responsableField.value = "";
+        if (rutaArchivoField) rutaArchivoField.value = "";
+        if (ubicacionField) ubicacionField.value = "";
+        
         if (archivoField) archivoField.value = "";
+        
+        const hoy = new Date().toISOString().split('T')[0];
+        if (fechaCreacionField) fechaCreacionField.value = hoy;
+        if (fechaModificacionField) fechaModificacionField.value = "";
+
     } else {
-        // Row viene del grid
-        idField.value = row?.id ?? "";
+        
+        if (idField) idField.value = row?.id ?? "";
+        
+        if (areaField) areaField.value = row?.areaId != null ? row.areaId.toString() : "";
+        if (tipoDocumentoField) tipoDocumentoField.value = row?.tipoDocumentoId != null ? row.tipoDocumentoId.toString() : "";
+        if (estatusField) estatusField.value = row?.estatusDocumentoId != null ? row.estatusDocumentoId.toString() : "";
 
-        // OJO: asegúrate que tu JSON del list traiga estos campos:
-        // areaId, tipoDocumentoId, estatusDocumentoId, titulo, descripcion, observaciones
-        areaField.value = row?.areaId != null ? row.areaId.toString() : "";
-        tipoDocumentoField.value = row?.tipoDocumentoId != null ? row.tipoDocumentoId.toString() : "";
-        estatusField.value = row?.estatusDocumentoId != null ? row.estatusDocumentoId.toString() : "";
+        if (tituloField) tituloField.value = row?.titulo ?? "";
+        if (descripcionField) descripcionField.value = row?.descripcion ?? "";
+        if (observacionesField) observacionesField.value = row?.observaciones ?? "";
 
-        tituloField.value = row?.titulo ?? "";
-        descripcionField.value = row?.descripcion ?? "";
-        observacionesField.value = row?.observaciones ?? "";
-
-        // Por seguridad, no se puede “precargar” un file input desde JS (browser restriction)
+        
+        if (creadoPorIdField) creadoPorIdField.value = row?.creadoPorId ?? "";
+        if (modificadoPorIdField) modificadoPorIdField.value = row?.modificadoPorId ?? "";
+        if (nombreArchivoField) nombreArchivoField.value = row?.nombreArchivo ?? "";
+        if (responsableField) responsableField.value = row?.responsable ?? "";
+        if (rutaArchivoField) rutaArchivoField.value = row?.rutaArchivo ?? "";
+        if (ubicacionField) ubicacionField.value = row?.ubicacion ?? "";
+       
         if (archivoField) archivoField.value = "";
-    }
 
-    // Mostrar modal
+        const fc = row?.fechaCreacion ? row.fechaCreacion.toString().substring(0, 10) : "";
+        const fm = row?.fechaModificacion ? row.fechaModificacion.toString().substring(0, 10) : "";
+
+        if (fechaCreacionField) fechaCreacionField.value = fc;
+        if (fechaModificacionField) fechaModificacionField.value = fm;
+    }
+    
     dlgModal.show();
 }
-
 
 function onGuardarClick() {
     $("#theForm").validate();
@@ -347,43 +353,44 @@ function onGuardarClick() {
     let btnClose = document.getElementById("dlgDocumentoBtnCancelar");
 
     let idField = document.getElementById("inpDocumentacionId");
-    let areaField = document.getElementById("inpDocumentacionArea");
-    let tipoDocumentoField = document.getElementById("inpDocumentacionTipoDocumento");
     let tituloField = document.getElementById("inpDocumentacionTitulo");
     let descripcionField = document.getElementById("inpDocumentacionDescripcion");
-    let estatusField = document.getElementById("inpDocumentacionEstatusDocumento");
-    let archivoField = document.getElementById("inpDocumentacionArchivo");
+    let creadoPorIdField = document.getElementById("inpDocumentacionCreadoPor");
+    let fechaCrecionField = document.getElementById("inpDocumentacionFechaCreacion");
+    let modificadoPorField = document.getElementById("inpDocumentacionModificadoPor");
+    let fechaModificacionField = document.getElementById("inpDocumentacionFechaModificacion");
+    let nombreArchivoField = document.getElementById("inpDocumentacionNombreArchivo");
     let observacionesField = document.getElementById("inpDocumentacionObservaciones");
 
-    let dlgTitle = document.getElementById("dlgDocumentacionTitle");
+    let responsableField = document.getElementById("inpDocumentacionRespoonsable");
+    let rutaArchivoField = document.getElementById("inpDocumentacionRutaArchivo");
+    let ubicacionField = document.getElementById("inpDocumentacionUbicacion");
 
+    let dlgTitle = document.getElementById("dlgDocumentacionTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
-    let oParams = new FormData();
+    let areaIdField = document.getElementById("inpDocumentacionArea");
+    let tipoDcumentoField = document.getElementById("inpDocumentacionTipoDocumento");
+    let estatusDocumentoIdField = document.getElementById("inpDocumentacionEstatusDocumento");
 
-    // ✅ Anti-forgery token
-    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-    if (token) oParams.append("__RequestVerificationToken", token);
-
-    // ✅ Prefijo input. para que ligue con: OnPostSaveDocumento(DcoumentacionTableModel input)
-    oParams.append("input.Id", (idField.value === "Nuevo" || idField.value === "") ? 0 : parseInt(idField.value));
-
-    oParams.append("input.AreaId", areaField.value || "");
-    oParams.append("input.TipoDocumentoId", tipoDocumentoField.value || "");
-    oParams.append("input.EstatusDocumentoId", estatusField.value || "");
-
-    oParams.append("input.Titulo", tituloField.value || "");
-    oParams.append("input.Descripcion", descripcionField.value || "");
-    oParams.append("input.Observaciones", observacionesField.value || "");
-
-    // Archivo
-    if (archivoField.files && archivoField.files.length > 0) {
-        oParams.append("input.Archivo", archivoField.files[0]);
-    }
-
-    // multipart
-    let postOptions = { processData: false, contentType: false };
+    let oParams = {
+        id: idField.value === "Nuevo" ? 0 : parseInt(idField.value),
+        titulo: tituloField.value,
+        descripcion: descripcionField.value,
+        creadoPorId: creadoPorIdField.value,
+        fechaCreacion: fechaCrecionField.value,
+        modificadoPor: modificadoPorField.value,
+        areaId: parseInt(areaIdField?.value || 0),
+        tipoDocumentoId: parseInt(tipoDcumentoField?.value || 0),
+        estatusDocumentoId: parseInt(estatusDocumentoIdField?.value || 0),
+        fechaModificacion: fechaModificacionField.value,
+        nombreArchivo: nombreArchivoField.value,
+        observaciones: observacionesField.value,
+        responsable: responsableField.value,
+        rutaArchivo: rutaArchivoField.value,
+        ubicacion: ubicacionField.value
+    };
 
     doAjax(
         "/Reportes/Documentacion/SaveDocumento",
@@ -402,6 +409,7 @@ function onGuardarClick() {
             }
 
             btnClose.click();
+
             document.querySelector("[name='refresh']").click();
             showSuccess(dlgTitle.innerHTML, resp.mensaje);
         },
@@ -411,6 +419,58 @@ function onGuardarClick() {
         postOptions
     );
 }
+
+function onBuscarClick() {
+    let btnBuscar = document.getElementById("btnBuscar");
+
+    let inpTitulo = document.getElementById("inpFiltroTitulo");
+    let selArea = document.getElementById("selFiltroArea");
+    let selTipoDocumento = document.getElementById("selFiltroTipoDocumento");
+    let selEstatusDocumento = document.getElementById("selFiltroEstatusDocumento");
+    let inpPalabraClave = document.getElementById("inpFiltroPalabraClave");
+    let inpFechaInicio = document.getElementById("inpFiltroFechaInicio");
+    let inpFechaFin = document.getElementById("inpFiltroFechaFin");
+
+    let oParams = {
+        titulo: inpTitulo?.value?.trim() || null,
+        areaId: (!selArea || selArea.value === "0" || selArea.value === "") ? null : parseInt(selArea.value),
+        tipoDocumentoId: (!selTipoDocumento || selTipoDocumento.value === "0" || selTipoDocumento.value === "") ? null : parseInt(selTipoDocumento.value),
+        estatusDocumentoId: (!selEstatusDocumento || selEstatusDocumento.value === "0" || selEstatusDocumento.value === "") ? null : parseInt(selEstatusDocumento.value),
+        palabraClave: inpPalabraClave?.value?.trim() || null,
+        fechaCreacionInicio: inpFechaInicio?.value || null,
+        fechaCreacionFin: inpFechaFin?.value || null
+    };
+
+    doAjax(
+        "/Reportes/Documentacion/FiltrarDocumentos",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                // Si manejas errores tipo "resp.errores"
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    let saveValidationSummary = document.getElementById("saveValidationSummary");
+                    if (saveValidationSummary) saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError(btnBuscar?.innerHTML ?? "Buscar", resp.mensaje);
+                return;
+            }
+
+            table.bootstrapTable('load', responseHandler(resp.datos));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+
+    // ✅ Igual que tu patrón actual: resetea inputs del form
+    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
+
+    // Si quieres también resetear selects:
+    // document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = "0"; });
+}
+
 
 
 function onCerrarClick() {

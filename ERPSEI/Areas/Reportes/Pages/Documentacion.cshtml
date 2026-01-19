@@ -56,8 +56,6 @@
             <div class="accordion-body">
                 <form id="filtros" method="post">
                     <div class="row">
-
-                        <!-- Título / Búsqueda general -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <input id="inpFiltroTitulo" type="search" asp-for="InputFiltro.Titulo" class="form-control" placeholder="@Localizer["TitleField"]" />
@@ -65,7 +63,6 @@
                             </div>
                         </div>
 
-                        <!-- Área -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <select id="selFiltroArea" asp-for="InputFiltro.AreaId" class="form-select" placeholder="@Localizer["AreaField"]">
@@ -81,7 +78,6 @@
                             </div>
                         </div>
 
-                        <!-- Tipo de documento -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <select id="selFiltroTipoDocumento" asp-for="InputFiltro.TipoDocumentoId" class="form-select" placeholder="@Localizer["TipoDocumentoField"]">
@@ -97,11 +93,10 @@
                             </div>
                         </div>
 
-                        <!-- Estatus -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <select id="selFiltroEstatusDocumento" asp-for="InputFiltro.EstatusDocumentoId" class="form-select" placeholder="@Localizer["EstatusField"]">
-                                    <option value="0">Todos</option> @* “Todos” es UI *@
+                                    <option value="0">Todos</option> 
                                     @{
                                         foreach (var s in estatusDocumento)
                                         {
@@ -113,7 +108,6 @@
                             </div>
                         </div>
 
-                        <!-- Palabra clave -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <input id="inpFiltroPalabraClave" type="search" asp-for="InputFiltro.PalabraClave" class="form-control" placeholder="@Localizer["KeywordField"]" />
@@ -121,7 +115,6 @@
                             </div>
                         </div>
 
-                        <!-- Fecha creación inicio -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <input id="inpFiltroFechaInicio" type="date" asp-for="InputFiltro.FechaCreacionInicio" class="form-control" placeholder="@Localizer["StartDateField"]" />
@@ -129,7 +122,6 @@
                             </div>
                         </div>
 
-                        <!-- Fecha creación fin -->
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <input id="inpFiltroFechaFin" type="date" asp-for="InputFiltro.FechaCreacionFin" class="form-control" placeholder="@Localizer["EndDateField"]" />
@@ -283,6 +275,24 @@
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionCreadoPor" asp-for="InputDocumentos.CreadoPorId" type="text" class="form-control" placeholder="@Localizer["CreadoPorPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.CreadoPorId" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.CreadoPorId" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionModificadoPor" asp-for="InputDocumentos.ModificadoPorId" type="text" class="form-control" placeholder="@Localizer["ModificadoPorPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.ModificadoPorId" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.ModificadoPorId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
                                     <select id="inpDocumentacionEstatusDocumento"
                                             asp-for="InputDocumentos.EstatusDocumentoId"
                                             class="form-select">
@@ -297,18 +307,77 @@
                                 <span asp-validation-for="InputDocumentos.EstatusDocumentoId" class="text-danger"></span>
                             </div>
 
-                            <div class="col-4">
+                            <!--<div class="col-4">
                                 <div class="mb-3">
                                     <label for="inpDocumentacionArchivo" class="form-label required"> Archivo del documento</label>
                                     <input id="inpDocumentacionArchivo" asp-for="InputDocumentos.Archivo" type="file" class="form-control" accept=".pdf" />
                                     <span asp-validation-for="InputDocumentos.Archivo" class="text-danger"></span>
                                 </div>
+                            </div>-->
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionNombreArchivo" asp-for="InputDocumentos.NombreArchivo" type="text" class="form-control" placeholder="@Localizer["NombreArchivoPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.NombreArchivo" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.NombreArchivo" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionRespoonsable" asp-for="InputDocumentos.Responsable" type="text" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
+                                    <label asp-for="InputDocumentos.Responsable" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.Responsable" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+
+                        <div class="col-4">
+                            <div class="form-floating mb-3">
+                                <input id="inpDocumentacionRutaArchivo" asp-for="InputDocumentos.RutaArchivo" type="text" class="form-control" placeholder="@Localizer["RutaArchivoPlaceholder"]" />
+                                <label asp-for="InputDocumentos.RutaArchivo" class="form-label required"></label>
+                                <span asp-validation-for="InputDocumentos.RutaArchivo" class="text-danger"></span>
                             </div>
                         </div>
 
+                        <div class="col-4">
+                            <div class="form-floating mb-3">
+                                <input id="inpDocumentacionUbicacion" asp-for="InputDocumentos.Ubicacion" type="text" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
+                                <label asp-for="InputDocumentos.Ubicacion" class="form-label required"></label>
+                                <span asp-validation-for="InputDocumentos.Ubicacion" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionFechaCreacion"
+                                           asp-for="InputDocumentos.FechaCreacion"
+                                           type="date"
+                                           class="form-control" readonly />
+                                    <label asp-for="InputDocumentos.FechaCreacion" class="form-label"></label>
+                                    <span asp-validation-for="InputDocumentos.FechaCreacion" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                         </div>
+                        
+
                         <!-- Grupo 3 -->
                         <div class="row">
-                        <div class="col-4">
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionFechaModificacion"
+                                           asp-for="InputDocumentos.FechaModificacion"
+                                           type="date"
+                                           class="form-control" readonly />
+                                    <label asp-for="InputDocumentos.FechaModificacion" class="form-label"></label>
+                                    <span asp-validation-for="InputDocumentos.FechaModificacion" class="text-danger"></span>
+                                </div>
+                            </div>
+
                             <div class="form-floating mb-3">
                                 <textarea id="inpDocumentacionObservaciones"
                                           asp-for="InputDocumentos.Observaciones"
@@ -321,9 +390,9 @@
                                 <span asp-validation-for="InputDocumentos.Observaciones" class="text-danger"></span>
                             </div>
                         </div>
+
                         </div>
                     </div>
-                </div>
                 <div class="modal-footer">
                     <button id="dlgDocumentoBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarClick();" data-bs-dismiss="modal">
                         <i class="bi bi-x-lg"></i> @Localizer["CancelButton"]
