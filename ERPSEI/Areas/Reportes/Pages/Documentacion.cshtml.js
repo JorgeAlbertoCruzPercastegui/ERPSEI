@@ -135,41 +135,6 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "Descripcion",
-                field: "descripcion",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: "CreadoPorId",
-                field: "creadoPorId",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: "FechaModificacion",
-                field: "fechaModificacion",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: "ModificadoPorId",
-                field: "modificadoPorId",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
-                title: "Activo",
-                field: "activo",
-                align: "center",
-                valign: "middle",
-                sortable: true
-            },
-            {
                 title: colAccionesHeader,
                 field: "operate",
                 align: 'center',
@@ -345,7 +310,7 @@ function initDocumentacionDialog(action, row) {
     dlgModal.show();
 }
 
-function onGuardarClick() {
+/*function onGuardarClick() {
     $("#theForm").validate();
     let valid = $("#theForm").valid();
     if (!valid) { return; }
@@ -418,7 +383,99 @@ function onGuardarClick() {
         },
         postOptions
     );
+}*/
+
+function onGuardarClick() {
+    $("#theForm").validate();
+    let valid = $("#theForm").valid();
+    if (!valid) { return; }
+
+    let btnClose = document.getElementById("dlgDocumentoBtnCancelar");
+
+    let idField = document.getElementById("inpDocumentacionId");
+    let tituloField = document.getElementById("inpDocumentacionTitulo");
+    let descripcionField = document.getElementById("inpDocumentacionDescripcion");
+
+    let fechaCrecionField = document.getElementById("inpDocumentacionFechaCreacion");
+    let fechaModificacionField = document.getElementById("inpDocumentacionFechaModificacion");
+
+    let nombreArchivoField = document.getElementById("inpDocumentacionNombreArchivo");
+    let observacionesField = document.getElementById("inpDocumentacionObservaciones");
+
+    let responsableField = document.getElementById("inpDocumentacionRespoonsable");
+    let rutaArchivoField = document.getElementById("inpDocumentacionRutaArchivo");
+    let ubicacionField = document.getElementById("inpDocumentacionUbicacion");
+
+    let areaIdField = document.getElementById("inpDocumentacionArea");
+    let tipoDcumentoField = document.getElementById("inpDocumentacionTipoDocumento");
+    let estatusDocumentoIdField = document.getElementById("inpDocumentacionEstatusDocumento");
+
+    let archivoField = document.getElementById("inpDocumentacionArchivo");
+
+    let dlgTitle = document.getElementById("dlgDocumentacionTitle");
+    let summaryContainer = document.getElementById("saveValidationSummary");
+    if (summaryContainer) summaryContainer.innerHTML = "";
+    
+    const fd = new FormData();
+    
+    fd.append("Id", (idField.value === "Nuevo" ? "0" : idField.value));
+    fd.append("Titulo", tituloField.value || "");
+    fd.append("Descripcion", descripcionField.value || "");
+
+    fd.append("AreaId", (areaIdField?.value || "0"));
+    fd.append("TipoDocumentoId", (tipoDcumentoField?.value || "0"));
+    fd.append("EstatusDocumentoId", (estatusDocumentoIdField?.value || "0"));
+
+    fd.append("FechaCreacion", fechaCrecionField?.value || "");
+    fd.append("FechaModificacion", fechaModificacionField?.value || "");
+
+    fd.append("NombreArchivo", nombreArchivoField?.value || "");
+    fd.append("RutaArchivo", rutaArchivoField?.value || "");
+    fd.append("Ubicacion", ubicacionField?.value || "");
+    fd.append("Observaciones", observacionesField?.value || "");
+    fd.append("Responsable", responsableField?.value || "");
+
+    // ✅ Archivo (solo si seleccionaron)
+    if (archivoField && archivoField.files && archivoField.files.length > 0) {
+        fd.append("Archivo", archivoField.files[0]);
+    }
+
+    // ✅ Anti-forgery token (Razor Pages)
+    const token = $('input[name="__RequestVerificationToken"]').val();
+    if (token) fd.append("__RequestVerificationToken", token);
+
+    $.ajax({
+        url: "/Reportes/Documentacion/SaveDocumento",
+        type: "POST",
+        data: fd,
+        processData: false,   // ✅ clave para FormData
+        contentType: false,   // ✅ clave para FormData
+        headers: { "RequestVerificationToken": token }, // (si tu servidor lo lee por header)
+        success: function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+                    let summary = ``;
+                    resp.errores.forEach(function (error) {
+                        summary += `<li>${error}</li>`;
+                    });
+                    if (summaryContainer) summaryContainer.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError(dlgTitle?.innerHTML || "Error", resp.mensaje);
+                return;
+            }
+        
+            if (btnClose) btnClose.click();
+
+            if (table) table.bootstrapTable('refresh');
+
+            showSuccess(dlgTitle?.innerHTML || "OK", resp.mensaje);
+        },
+        error: function (xhr) {
+            showError("Error", xhr?.responseText || "Error al guardar.");
+        }
+    });
 }
+
 
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");

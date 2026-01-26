@@ -46,6 +46,9 @@ using static ERPSEI.Areas.ERP.Pages.ActivosFijosModel;
 using DocumentFormat.OpenXml.Wordprocessing;
 using AnnoDataType = System.ComponentModel.DataAnnotations.DataType;
 using static ERPSEI.Areas.Reportes.Pages.DocumentacionModel;
+using DocumentFormat.OpenXml.Spreadsheet;
+using System.Security.Claims;
+
 
 
 namespace ERPSEI.Areas.Reportes.Pages
@@ -70,6 +73,45 @@ namespace ERPSEI.Areas.Reportes.Pages
 
         [BindProperty]
         public Documento? DocumentosList { get; set; }
+
+        [BindProperty]
+        public DcoumentacionVersionTableModel InputDocumentosVersion { get; set; }
+
+        public class DcoumentacionVersionTableModel
+        {
+            public int? Id { get; set; }
+
+            public int? DocumentoId { get; set; }
+
+            [Required]
+            [StringLength(20)]
+            public string Version { get; set; } = "1.0";
+
+            [Required]
+            public int EstatusDocumentoId { get; set; }
+
+            [DataType(AnnoDataType.Date)]
+            public DateTime? FechaPublicacion { get; set; }
+
+            [StringLength(1000)]
+            public string? Comentarios { get; set; }
+
+            public IFormFile? Archivo { get; set; }
+
+            public string? NombreArchivo { get; set; }
+            public string? RutaArchivo { get; set; }
+            public string? MimeType { get; set; }
+            public long? TamanoBytes { get; set; }
+
+            public bool EsActual { get; set; } = true;
+            public bool Activo { get; set; } = true;
+
+            public string? CreadoPorId { get; set; }
+
+            [DataType(AnnoDataType.Date)]
+            public DateTime FechaCreacion { get; set; } = DateTime.Now;
+        }
+
 
         [BindProperty]
         public DcoumentacionTableModel InputDocumentos { get; set; }
@@ -299,7 +341,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<JsonResult> OnPostSaveDocumento(DcoumentacionTableModel input)
+        /*public async Task<JsonResult> OnPostSaveDocumento(DcoumentacionTableModel input)
         {
             ServerResponse resp = new(true, "No se pudo guardar el documento.");
 
@@ -457,9 +499,250 @@ namespace ERPSEI.Areas.Reportes.Pages
                 resp.Mensaje = "Ocurrió un error al guardar el documento.";
                 return new JsonResult(resp);
             }
-        }
+        }*/
 
-        public async Task<JsonResult> OnPostFiltrarDocumentos()
+
+public async Task<JsonResult> OnPostSaveDocumento(DcoumentacionTableModel input)
+    {
+        ServerResponse resp = new(true, "No se pudo guardar el documento.");
+
+        try
+        {
+            await db.Database.BeginTransactionAsync();
+
+            if (input == null)
+            {
+                resp.Mensaje = "No se recibieron datos para guardar.";
+                return new JsonResult(resp);
+            }
+
+            if (string.IsNullOrWhiteSpace(input.Titulo))
+            {
+                resp.Mensaje = "El título es obligatorio.";
+                return new JsonResult(resp);
+            }
+
+            if (!input.AreaId.HasValue || input.AreaId.Value <= 0)
+            {
+                resp.Mensaje = "El área es obligatoria.";
+                return new JsonResult(resp);
+            }
+
+            if (!input.TipoDocumentoId.HasValue || input.TipoDocumentoId.Value <= 0)
+            {
+                resp.Mensaje = "El tipo de documento es obligatorio.";
+                return new JsonResult(resp);
+            }
+
+            if (!input.EstatusDocumentoId.HasValue || input.EstatusDocumentoId.Value <= 0)
+            {
+                resp.Mensaje = "El estatus del documento es obligatorio.";
+                return new JsonResult(resp);
+            }
+
+            if (!await db.Areas.AnyAsync(a => a.Id == input.AreaId.Value))
+            {
+                resp.Mensaje = "El área seleccionada no existe en el catálogo.";
+                return new JsonResult(resp);
+            }
+
+            if (!await db.TiposDocumento.AnyAsync(t => t.Id == input.TipoDocumentoId.Value))
+            {
+                resp.Mensaje = "El tipo de documento seleccionado no existe en el catálogo.";
+                return new JsonResult(resp);
+            }
+
+            if (!await db.DocumentosEstatus.AnyAsync(e => e.Id == input.EstatusDocumentoId.Value))
+            {
+                resp.Mensaje = "El estatus seleccionado no existe en el catálogo.";
+                return new JsonResult(resp);
+            }
+
+            // ✅ Usuario logeado (AspNetUsers.Id)
+            var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                resp.Mensaje = "No se pudo identificar al usuario logeado.";
+                return new JsonResult(resp);
+            }
+
+            bool esNuevo = !input.Id.HasValue || input.Id.Value == 0;
+
+            Documento doc;
+
+            if (esNuevo)
+            {
+                doc = new Documento
+                {
+                    FechaCreacion = DateTime.Now,
+                    FechaModificacion = null,
+                    Activo = true,
+                    CreadoPorId = userId
+                };
+
+                db.Documentos.Add(doc);
+            }
+            else
+            {
+                doc = await db.Documentos
+                    .Include(d => d.Versiones)
+                    .FirstOrDefaultAsync(d => d.Id == input.Id.Value);
+
+                if (doc == null)
+                {
+                    resp.Mensaje = "El documento no fue encontrado.";
+                    return new JsonResult(resp);
+                }
+
+                doc.ModificadoPorId = userId;
+                doc.FechaModificacion = DateTime.Now;
+            }
+
+            doc.AreaId = input.AreaId.Value;
+            doc.TipoDocumentoId = input.TipoDocumentoId.Value;
+            doc.EstatusDocumentoId = input.EstatusDocumentoId.Value;
+
+            doc.Titulo = input.Titulo.Trim();
+            doc.Descripcion = string.IsNullOrWhiteSpace(input.Descripcion) ? null : input.Descripcion.Trim();
+            doc.Responsable = string.IsNullOrWhiteSpace(input.Responsable) ? null : input.Responsable.Trim();
+            doc.Observaciones = string.IsNullOrWhiteSpace(input.Observaciones) ? null : input.Observaciones.Trim();
+            doc.Ubicacion = string.IsNullOrWhiteSpace(input.Ubicacion) ? null : input.Ubicacion.Trim();
+
+            if (input.Activo.HasValue)
+                doc.Activo = input.Activo.Value == 1;
+
+            await db.SaveChangesAsync();
+
+            DocumentoVersion? versionCreada = null;
+
+            if (input.Archivo != null && input.Archivo.Length > 0)
+            {
+                var ext = Path.GetExtension(input.Archivo.FileName);
+                if (!string.Equals(ext, ".pdf", StringComparison.OrdinalIgnoreCase))
+                {
+                    resp.Mensaje = "Solo se permiten archivos PDF.";
+                    return new JsonResult(resp);
+                }
+
+                await db.DocumentosVersion
+                    .Where(v => v.DocumentoId == doc.Id && v.EsActual)
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(v => v.EsActual, false));
+
+                // - Nuevo: 1.0
+                // - Editar: incrementa la parte menor (1.0 -> 1.1 -> 1.2)
+                string nextVersion = "1.0";
+                if (!esNuevo)
+                {
+                    var last = await db.DocumentosVersion
+                        .Where(v => v.DocumentoId == doc.Id)
+                        .OrderByDescending(v => v.Id)
+                        .Select(v => v.Version)
+                        .FirstOrDefaultAsync();
+
+                    nextVersion = CalcularSiguienteVersion(last); // método abajo
+                }
+
+                // ✅ Ruta física: /wwwroot/documentos/{docId}/
+                var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "documentos", doc.Id.ToString());
+                if (!Directory.Exists(uploadsRoot))
+                    Directory.CreateDirectory(uploadsRoot);
+
+                var originalName = Path.GetFileName(input.Archivo.FileName);
+                var safeFileName = $"{Guid.NewGuid():N}{ext}";
+                var fullPath = Path.Combine(uploadsRoot, safeFileName);
+
+                using (var stream = new FileStream(fullPath, FileMode.Create))
+                {
+                    await input.Archivo.CopyToAsync(stream);
+                }
+
+                var rutaPublica = $"/documentos/{doc.Id}/{safeFileName}";
+
+                // ✅ Crear versión
+                versionCreada = new DocumentoVersion
+                {
+                    DocumentoId = doc.Id,
+                    Version = nextVersion,
+                    EstatusDocumentoId = doc.EstatusDocumentoId,
+                    FechaPublicacion = null, // si luego lo agregas
+                    Comentarios = null,      // si luego lo agregas
+
+                    NombreArchivo = originalName,
+                    RutaArchivo = rutaPublica,
+                    MimeType = input.Archivo.ContentType,
+                    TamanoBytes = input.Archivo.Length,
+
+                    EsActual = true,
+                    Activo = true,
+                    CreadoPorId = userId,
+                    FechaCreacion = DateTime.Now
+                };
+
+                db.DocumentosVersion.Add(versionCreada);
+
+                // (Opcional) Si quieres reflejar “último archivo” en Documento:
+                doc.NombreArchivo = originalName;
+                doc.RutaArchivo = rutaPublica;
+
+                await db.SaveChangesAsync();
+            }
+
+            await db.Database.CommitTransactionAsync();
+
+            resp.TieneError = false;
+            resp.Mensaje = esNuevo ? "Documento creado correctamente." : "Documento actualizado correctamente.";
+
+            return new JsonResult(new
+            {
+                resp.TieneError,
+                resp.Mensaje,
+                id = doc.Id,
+                fechaCreacion = doc.FechaCreacion,
+                fechaModificacion = doc.FechaModificacion,
+                creadoPorId = doc.CreadoPorId,
+                modificadoPorId = doc.ModificadoPorId,
+
+                // Documento (si decides mostrar el último archivo)
+                nombreArchivo = doc.NombreArchivo,
+                rutaArchivo = doc.RutaArchivo,
+                ubicacion = doc.Ubicacion,
+
+                // Versión creada (si hubo PDF)
+                version = versionCreada?.Version,
+                versionNombreArchivo = versionCreada?.NombreArchivo,
+                versionRutaArchivo = versionCreada?.RutaArchivo,
+                versionMimeType = versionCreada?.MimeType,
+                versionTamanoBytes = versionCreada?.TamanoBytes
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error al guardar el documento.");
+            await db.Database.RollbackTransactionAsync();
+
+            resp.TieneError = true;
+            resp.Mensaje = "Ocurrió un error al guardar el documento.";
+            return new JsonResult(resp);
+        }
+    }
+
+    private static string CalcularSiguienteVersion(string? lastVersion)
+    {
+        if (string.IsNullOrWhiteSpace(lastVersion)) return "1.0";
+
+        // espera formato "X.Y"
+        var parts = lastVersion.Split('.');
+        if (parts.Length != 2) return "1.0";
+
+        if (!int.TryParse(parts[0], out var major)) return "1.0";
+        if (!int.TryParse(parts[1], out var minor)) return "1.0";
+
+        minor += 1;
+        return $"{major}.{minor}";
+    }
+
+
+    public async Task<JsonResult> OnPostFiltrarDocumentos()
         {
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 
@@ -518,13 +801,6 @@ namespace ERPSEI.Areas.Reportes.Pages
 
             return new JsonResult(resp);
         }
-
-
-
-
-
-
-
 
     }
 }

@@ -108,12 +108,13 @@
                             </div>
                         </div>
 
-                        <div class="col-sm-6 col-md-6 col-lg-3">
+                        <!--<div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <input id="inpFiltroPalabraClave" type="search" asp-for="InputFiltro.PalabraClave" class="form-control" placeholder="@Localizer["KeywordField"]" />
                                 <label for="inpFiltroPalabraClave" asp-for="InputFiltro.PalabraClave" class="form-label"></label>
                             </div>
                         </div>
+                        -->
 
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
@@ -275,24 +276,6 @@
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
-                                    <input id="inpDocumentacionCreadoPor" asp-for="InputDocumentos.CreadoPorId" type="text" class="form-control" placeholder="@Localizer["CreadoPorPlaceholder"]" />
-                                    <label asp-for="InputDocumentos.CreadoPorId" class="form-label required"></label>
-                                    <span asp-validation-for="InputDocumentos.CreadoPorId" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-4">
-                                <div class="form-floating mb-3">
-                                    <input id="inpDocumentacionModificadoPor" asp-for="InputDocumentos.ModificadoPorId" type="text" class="form-control" placeholder="@Localizer["ModificadoPorPlaceholder"]" />
-                                    <label asp-for="InputDocumentos.ModificadoPorId" class="form-label required"></label>
-                                    <span asp-validation-for="InputDocumentos.ModificadoPorId" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="form-floating mb-3">
                                     <select id="inpDocumentacionEstatusDocumento"
                                             asp-for="InputDocumentos.EstatusDocumentoId"
                                             class="form-select">
@@ -307,6 +290,35 @@
                                 <span asp-validation-for="InputDocumentos.EstatusDocumentoId" class="text-danger"></span>
                             </div>
 
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionNombreArchivo" asp-for="InputDocumentos.NombreArchivo" type="text" class="form-control" placeholder="@Localizer["NombreArchivoPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.NombreArchivo" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.NombreArchivo" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <!--<div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionCreadoPor" asp-for="InputDocumentos.CreadoPorId" type="hidden" class="form-control" placeholder="@Localizer["CreadoPorPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.CreadoPorId" class="form-label required" type="hidden"></label>
+                                    <span asp-validation-for="InputDocumentos.CreadoPorId" class="text-danger" type="hidden"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionModificadoPor" asp-for="InputDocumentos.ModificadoPorId" type="hidden" class="form-control" placeholder="@Localizer["ModificadoPorPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.ModificadoPorId" class="form-label required" type="hidden"></label>
+                                    <span asp-validation-for="InputDocumentos.ModificadoPorId" class="text-danger" type="hidden"></span>
+                                </div>
+                            </div>
+                            -->
+                        </div>
+
+                        <div class="row">
+                            
+
                             <!--<div class="col-4">
                                 <div class="mb-3">
                                     <label for="inpDocumentacionArchivo" class="form-label required"> Archivo del documento</label>
@@ -315,13 +327,7 @@
                                 </div>
                             </div>-->
 
-                            <div class="col-4">
-                                <div class="form-floating mb-3">
-                                    <input id="inpDocumentacionNombreArchivo" asp-for="InputDocumentos.NombreArchivo" type="text" class="form-control" placeholder="@Localizer["NombreArchivoPlaceholder"]" />
-                                    <label asp-for="InputDocumentos.NombreArchivo" class="form-label required"></label>
-                                    <span asp-validation-for="InputDocumentos.NombreArchivo" class="text-danger"></span>
-                                </div>
-                            </div>
+                            
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
@@ -331,27 +337,29 @@
                                 </div>
                             </div>
 
-                        </div>
-
-                        <div class="row">
-
-                        <div class="col-4">
-                            <div class="form-floating mb-3">
-                                <input id="inpDocumentacionRutaArchivo" asp-for="InputDocumentos.RutaArchivo" type="text" class="form-control" placeholder="@Localizer["RutaArchivoPlaceholder"]" />
-                                <label asp-for="InputDocumentos.RutaArchivo" class="form-label required"></label>
-                                <span asp-validation-for="InputDocumentos.RutaArchivo" class="text-danger"></span>
+                            <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <input id="inpDocumentacionRutaArchivo" asp-for="InputDocumentos.RutaArchivo" type="text" class="form-control" placeholder="@Localizer["RutaArchivoPlaceholder"]" />
+                                    <label asp-for="InputDocumentos.RutaArchivo" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.RutaArchivo" class="text-danger"></span>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="col-4">
+                            <div class="col-4">
                             <div class="form-floating mb-3">
                                 <input id="inpDocumentacionUbicacion" asp-for="InputDocumentos.Ubicacion" type="text" class="form-control" placeholder="@Localizer["UbicacionPlaceholder"]" />
                                 <label asp-for="InputDocumentos.Ubicacion" class="form-label required"></label>
                                 <span asp-validation-for="InputDocumentos.Ubicacion" class="text-danger"></span>
                             </div>
+                            </div>
+
                         </div>
 
-                        <div class="col-4">
+                        
+
+                        <!-- Grupo 3 -->
+                        <div class="row">
+                            <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpDocumentacionFechaCreacion"
                                            asp-for="InputDocumentos.FechaCreacion"
@@ -362,11 +370,6 @@
                                 </div>
                             </div>
 
-                         </div>
-                        
-
-                        <!-- Grupo 3 -->
-                        <div class="row">
                             <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpDocumentacionFechaModificacion"
@@ -375,6 +378,18 @@
                                            class="form-control" readonly />
                                     <label asp-for="InputDocumentos.FechaModificacion" class="form-label"></label>
                                     <span asp-validation-for="InputDocumentos.FechaModificacion" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="mb-3">
+                                    <label for="inpDocumentacionArchivo" class="form-label">Archivo (PDF)</label>
+                                    <input id="inpDocumentacionArchivo"
+                                           asp-for="InputDocumentos.Archivo"
+                                           type="file"
+                                           class="form-control"
+                                           accept=".pdf,application/pdf" />
+                                    <span asp-validation-for="InputDocumentos.Archivo" class="text-danger"></span>
                                 </div>
                             </div>
 
@@ -390,6 +405,7 @@
                                 <span asp-validation-for="InputDocumentos.Observaciones" class="text-danger"></span>
                             </div>
                         </div>
+
 
                         </div>
                     </div>
