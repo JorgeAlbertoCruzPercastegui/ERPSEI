@@ -147,4 +147,8 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\documentos\" />
+  </ItemGroup>
+
 </Project>

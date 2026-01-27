@@ -337,7 +337,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-4">
+                            <!--<div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpDocumentacionRutaArchivo" asp-for="InputDocumentos.RutaArchivo" type="text" class="form-control" placeholder="@Localizer["RutaArchivoPlaceholder"]" />
                                     <label asp-for="InputDocumentos.RutaArchivo" class="form-label required"></label>
@@ -352,13 +352,7 @@
                                 <span asp-validation-for="InputDocumentos.Ubicacion" class="text-danger"></span>
                             </div>
                             </div>
-
-                        </div>
-
-                        
-
-                        <!-- Grupo 3 -->
-                        <div class="row">
+                            -->
                             <div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpDocumentacionFechaCreacion"
@@ -380,9 +374,34 @@
                                     <span asp-validation-for="InputDocumentos.FechaModificacion" class="text-danger"></span>
                                 </div>
                             </div>
+                        </div>
 
+                        
+
+                        <!-- Grupo 3 -->
+                        <div class="row">
+                            
                             <div class="col-4">
-                                <div class="mb-3">
+
+                                <div id="docArchivoPreview"
+                                     class="border rounded-3 p-3 bg-light text-center mb-2"
+                                     style="display:none;">
+
+                                    <div id="docArchivoInfo"
+                                         class="fw-semibold text-truncate mb-3"
+                                         style="max-width:100%;">
+                                    </div>
+
+                                    <a id="docArchivoLink"
+                                       class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1"
+                                       target="_blank"
+                                       rel="noopener">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                        Ver PDF
+                                    </a>
+                                </div>
+
+                                <div id="docArchivoUpload" class="mb-3">
                                     <label for="inpDocumentacionArchivo" class="form-label">Archivo (PDF)</label>
                                     <input id="inpDocumentacionArchivo"
                                            asp-for="InputDocumentos.Archivo"
@@ -391,7 +410,10 @@
                                            accept=".pdf,application/pdf" />
                                     <span asp-validation-for="InputDocumentos.Archivo" class="text-danger"></span>
                                 </div>
+
                             </div>
+
+
 
                             <div class="form-floating mb-3">
                                 <textarea id="inpDocumentacionObservaciones"

@@ -211,7 +211,6 @@ function initDocumentacionDialog(action, row) {
     let fechaCreacionField = document.getElementById("inpDocumentacionFechaCreacion");
     let fechaModificacionField = document.getElementById("inpDocumentacionFechaModificacion");
 
-
     let btnGuardar = document.getElementById("dlgDocumentoBtnGuardar");
     let dlgTitle = document.getElementById("dlgDocumentacionTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
@@ -227,36 +226,61 @@ function initDocumentacionDialog(action, row) {
 
     const setTitleByAction = () => {
         if (!dlgTitle) return;
-        
         if (action === NUEVO) dlgTitle.innerHTML = (typeof dlgNuevoTitle !== "undefined") ? dlgNuevoTitle : "Nuevo Documento";
         else if (action === EDITAR) dlgTitle.innerHTML = (typeof dlgEditarTitle !== "undefined") ? dlgEditarTitle : "Editar Documento";
         else dlgTitle.innerHTML = (typeof dlgVerTitle !== "undefined") ? dlgVerTitle : "Ver Documento";
     };
 
     setTitleByAction();
-    
-    const esVer = !(action === NUEVO || action === EDITAR);
-    
+
+    const esVer = (action === VER);
+
+    // ==========================
+    // Habilitar / deshabilitar
+    // ==========================
     setDisabled(areaField, esVer);
     setDisabled(tipoDocumentoField, esVer);
     setDisabled(estatusField, esVer);
     setDisabled(tituloField, esVer);
     setDisabled(descripcionField, esVer);
     setDisabled(observacionesField, esVer);
-    
+
     setDisabled(creadoPorIdField, esVer);
     setDisabled(modificadoPorIdField, esVer);
     setDisabled(nombreArchivoField, esVer);
     setDisabled(responsableField, esVer);
     setDisabled(rutaArchivoField, esVer);
     setDisabled(ubicacionField, esVer);
-    
+
+    // El input file NO se puede precargar, solo habilitar/deshabilitar
     if (action === EDITAR) setDisabled(archivoField, false);
     else setDisabled(archivoField, esVer);
-    
+
     setDisabled(btnGuardar, esVer);
 
+    // ==========================
+    // ✅ UI de archivo (preview vs upload)
+    // ==========================
+    const preview = document.getElementById("docArchivoPreview");
+    const link = document.getElementById("docArchivoLink");
+    const info = document.getElementById("docArchivoInfo");
+    const upload = document.getElementById("docArchivoUpload");
+
+    // helper para limpiar preview
+    const resetArchivoUI = () => {
+        if (preview) preview.style.display = "none";
+        if (upload) upload.style.display = "block"; // default
+        if (link) link.href = "#";
+        if (info) info.textContent = "—";
+    };
+
+    resetArchivoUI();
+
+    // ==========================
+    // Asignación de valores
+    // ==========================
     if (action === NUEVO) {
+
         if (idField) idField.value = "Nuevo";
         if (areaField) areaField.value = "";
         if (tipoDocumentoField) tipoDocumentoField.value = "";
@@ -264,24 +288,28 @@ function initDocumentacionDialog(action, row) {
         if (tituloField) tituloField.value = "";
         if (descripcionField) descripcionField.value = "";
         if (observacionesField) observacionesField.value = "";
-        
+
         if (creadoPorIdField) creadoPorIdField.value = "";
         if (modificadoPorIdField) modificadoPorIdField.value = "";
         if (nombreArchivoField) nombreArchivoField.value = "";
         if (responsableField) responsableField.value = "";
         if (rutaArchivoField) rutaArchivoField.value = "";
         if (ubicacionField) ubicacionField.value = "";
-        
+
         if (archivoField) archivoField.value = "";
-        
+
         const hoy = new Date().toISOString().split('T')[0];
         if (fechaCreacionField) fechaCreacionField.value = hoy;
         if (fechaModificacionField) fechaModificacionField.value = "";
 
+        // NUEVO: solo upload, sin preview
+        if (preview) preview.style.display = "none";
+        if (upload) upload.style.display = "block";
+
     } else {
-        
+
         if (idField) idField.value = row?.id ?? "";
-        
+
         if (areaField) areaField.value = row?.areaId != null ? row.areaId.toString() : "";
         if (tipoDocumentoField) tipoDocumentoField.value = row?.tipoDocumentoId != null ? row.tipoDocumentoId.toString() : "";
         if (estatusField) estatusField.value = row?.estatusDocumentoId != null ? row.estatusDocumentoId.toString() : "";
@@ -290,14 +318,14 @@ function initDocumentacionDialog(action, row) {
         if (descripcionField) descripcionField.value = row?.descripcion ?? "";
         if (observacionesField) observacionesField.value = row?.observaciones ?? "";
 
-        
         if (creadoPorIdField) creadoPorIdField.value = row?.creadoPorId ?? "";
         if (modificadoPorIdField) modificadoPorIdField.value = row?.modificadoPorId ?? "";
         if (nombreArchivoField) nombreArchivoField.value = row?.nombreArchivo ?? "";
         if (responsableField) responsableField.value = row?.responsable ?? "";
         if (rutaArchivoField) rutaArchivoField.value = row?.rutaArchivo ?? "";
         if (ubicacionField) ubicacionField.value = row?.ubicacion ?? "";
-       
+
+        // File input NO se puede setear por seguridad
         if (archivoField) archivoField.value = "";
 
         const fc = row?.fechaCreacion ? row.fechaCreacion.toString().substring(0, 10) : "";
@@ -305,10 +333,37 @@ function initDocumentacionDialog(action, row) {
 
         if (fechaCreacionField) fechaCreacionField.value = fc;
         if (fechaModificacionField) fechaModificacionField.value = fm;
+
+        // ==========================
+        // ✅ Mostrar preview si hay ruta
+        // ==========================
+        const ruta = (row?.versionRutaArchivo || row?.rutaArchivo || "").trim();
+        const nombre = (row?.versionNombreArchivo || row?.nombreArchivo || "").trim();
+        const tieneArchivo = ruta !== "";
+
+        if (tieneArchivo) {
+            if (preview) preview.style.display = "block";
+            if (link) link.href = ruta;
+            if (info) info.textContent = nombre ? nombre : ruta;
+        } else {
+            if (preview) preview.style.display = "none";
+        }
+
+        // VER: ocultar upload SIEMPRE
+        if (action === VER) {
+            if (upload) upload.style.display = "none";
+        } else {
+            // EDITAR: tú decides
+            if (upload) upload.style.display = "block"; // recomendado para reemplazar PDF
+            // Si no quieres que se vea el selector en EDITAR cuando ya hay archivo:
+            // if (upload) upload.style.display = (tieneArchivo ? "none" : "block");
+        }
     }
-    
+
     dlgModal.show();
 }
+
+
 
 /*function onGuardarClick() {
     $("#theForm").validate();
