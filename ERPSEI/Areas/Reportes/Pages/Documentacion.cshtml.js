@@ -26,6 +26,8 @@ document.addEventListener("DOMContentLoaded", function (event) {
     }
 
     initTable();
+
+    bindCodigoAuto();
 });
 
 //Funcionalidad Tabla
@@ -201,7 +203,10 @@ function initDocumentacionDialog(action, row) {
     let descripcionField = document.getElementById("inpDocumentacionDescripcion");
     let creadoPorIdField = document.getElementById("inpDocumentacionCreadoPor");
     let modificadoPorIdField = document.getElementById("inpDocumentacionModificadoPor");
+
+    // ✅ Este ahora es "Código"
     let nombreArchivoField = document.getElementById("inpDocumentacionNombreArchivo");
+
     let responsableField = document.getElementById("inpDocumentacionRespoonsable");
     let rutaArchivoField = document.getElementById("inpDocumentacionRutaArchivo");
     let ubicacionField = document.getElementById("inpDocumentacionUbicacion");
@@ -216,7 +221,11 @@ function initDocumentacionDialog(action, row) {
     let summaryContainer = document.getElementById("saveValidationSummary");
     if (summaryContainer) summaryContainer.innerHTML = "";
 
+    // ✅ ID siempre disabled (no editable)
     if (idField) idField.setAttribute("disabled", true);
+
+    // ✅ "Código" siempre readonly (no editable, pero sí se envía)
+    if (nombreArchivoField) nombreArchivoField.readOnly = true;
 
     const setDisabled = (el, disabled) => {
         if (!el) return;
@@ -247,7 +256,10 @@ function initDocumentacionDialog(action, row) {
 
     setDisabled(creadoPorIdField, esVer);
     setDisabled(modificadoPorIdField, esVer);
-    setDisabled(nombreArchivoField, esVer);
+
+    // ⚠️ Código NO disabled (si no, no se postea)
+    // readonly ya se dejó arriba
+
     setDisabled(responsableField, esVer);
     setDisabled(rutaArchivoField, esVer);
     setDisabled(ubicacionField, esVer);
@@ -266,15 +278,45 @@ function initDocumentacionDialog(action, row) {
     const info = document.getElementById("docArchivoInfo");
     const upload = document.getElementById("docArchivoUpload");
 
-    // helper para limpiar preview
     const resetArchivoUI = () => {
         if (preview) preview.style.display = "none";
-        if (upload) upload.style.display = "block"; // default
+        if (upload) upload.style.display = "block";
         if (link) link.href = "#";
-        if (info) info.textContent = "—";
+        if (info) info.textContent = "";
     };
 
     resetArchivoUI();
+
+    // ==========================
+    // ✅ Generar código (solo en NUEVO)
+    // ==========================
+    const refreshCodigo = () => {
+        if (action !== NUEVO) return;
+        if (!nombreArchivoField) return;
+
+        const areaId = parseInt(areaField?.value || "0");
+        const tipoId = parseInt(tipoDocumentoField?.value || "0");
+
+        if (areaId <= 0 || tipoId <= 0) {
+            nombreArchivoField.value = "";
+            return;
+        }
+
+        $.ajax({
+            url: `/Reportes/Documentacion/SiguienteCodigoDocumento?areaId=${areaId}&tipoDocumentoId=${tipoId}`,
+            type: "GET",
+            success: function (resp) {
+                if (resp && resp.tieneError === false) {
+                    nombreArchivoField.value = resp.datos || "";
+                } else {
+                    nombreArchivoField.value = "";
+                }
+            },
+            error: function () {
+                nombreArchivoField.value = "";
+            }
+        });
+    };
 
     // ==========================
     // Asignación de valores
@@ -291,7 +333,7 @@ function initDocumentacionDialog(action, row) {
 
         if (creadoPorIdField) creadoPorIdField.value = "";
         if (modificadoPorIdField) modificadoPorIdField.value = "";
-        if (nombreArchivoField) nombreArchivoField.value = "";
+        if (nombreArchivoField) nombreArchivoField.value = ""; // ✅ Código
         if (responsableField) responsableField.value = "";
         if (rutaArchivoField) rutaArchivoField.value = "";
         if (ubicacionField) ubicacionField.value = "";
@@ -305,6 +347,13 @@ function initDocumentacionDialog(action, row) {
         // NUEVO: solo upload, sin preview
         if (preview) preview.style.display = "none";
         if (upload) upload.style.display = "block";
+
+        // ✅ listeners SOLO en NUEVO (sin duplicar)
+        if (areaField) areaField.onchange = () => refreshCodigo();
+        if (tipoDocumentoField) tipoDocumentoField.onchange = () => refreshCodigo();
+
+        // (opcional) si quieres que al abrir NUEVO genere cuando ya haya defaults
+        refreshCodigo();
 
     } else {
 
@@ -320,12 +369,14 @@ function initDocumentacionDialog(action, row) {
 
         if (creadoPorIdField) creadoPorIdField.value = row?.creadoPorId ?? "";
         if (modificadoPorIdField) modificadoPorIdField.value = row?.modificadoPorId ?? "";
+
+        // ✅ Código
         if (nombreArchivoField) nombreArchivoField.value = row?.nombreArchivo ?? "";
+
         if (responsableField) responsableField.value = row?.responsable ?? "";
         if (rutaArchivoField) rutaArchivoField.value = row?.rutaArchivo ?? "";
         if (ubicacionField) ubicacionField.value = row?.ubicacion ?? "";
 
-        // File input NO se puede setear por seguridad
         if (archivoField) archivoField.value = "";
 
         const fc = row?.fechaCreacion ? row.fechaCreacion.toString().substring(0, 10) : "";
@@ -334,9 +385,7 @@ function initDocumentacionDialog(action, row) {
         if (fechaCreacionField) fechaCreacionField.value = fc;
         if (fechaModificacionField) fechaModificacionField.value = fm;
 
-        // ==========================
         // ✅ Mostrar preview si hay ruta
-        // ==========================
         const ruta = (row?.versionRutaArchivo || row?.rutaArchivo || "").trim();
         const nombre = (row?.versionNombreArchivo || row?.nombreArchivo || "").trim();
         const tieneArchivo = ruta !== "";
@@ -344,7 +393,7 @@ function initDocumentacionDialog(action, row) {
         if (tieneArchivo) {
             if (preview) preview.style.display = "block";
             if (link) link.href = ruta;
-            if (info) info.textContent = nombre ? nombre : ruta;
+            if (info) info.textContent = nombre || "";
         } else {
             if (preview) preview.style.display = "none";
         }
@@ -353,15 +402,19 @@ function initDocumentacionDialog(action, row) {
         if (action === VER) {
             if (upload) upload.style.display = "none";
         } else {
-            // EDITAR: tú decides
-            if (upload) upload.style.display = "block"; // recomendado para reemplazar PDF
-            // Si no quieres que se vea el selector en EDITAR cuando ya hay archivo:
-            // if (upload) upload.style.display = (tieneArchivo ? "none" : "block");
+            // EDITAR: mostrar upload para reemplazar PDF
+            if (upload) upload.style.display = "block";
         }
+
+        // ✅ Limpia listeners para que NO calcule código en VER/EDITAR
+        if (areaField) areaField.onchange = null;
+        if (tipoDocumentoField) tipoDocumentoField.onchange = null;
     }
 
     dlgModal.show();
 }
+
+
 
 
 
@@ -439,6 +492,43 @@ function initDocumentacionDialog(action, row) {
         postOptions
     );
 }*/
+
+function bindCodigoAuto() {
+    const area = document.getElementById("inpDocumentacionArea");
+    const tipo = document.getElementById("inpDocumentacionTipoDocumento");
+    const codigo = document.getElementById("inpDocumentacionNombreArchivo");
+
+    async function refreshCodigo() {
+        const areaId = parseInt(area?.value || "0");
+        const tipoId = parseInt(tipo?.value || "0");
+
+        if (!codigo) return;
+        
+        if (areaId <= 0 || tipoId <= 0) {
+            codigo.value = "";
+            return;
+        }
+
+        $.ajax({
+            url: `/Reportes/Documentacion/SiguienteCodigoDocumento?areaId=${areaId}&tipoDocumentoId=${tipoId}`,
+            type: "GET",
+            success: function (resp) {
+                if (resp && resp.tieneError === false) {
+                    codigo.value = resp.datos || "";
+                } else {
+                    codigo.value = "";
+                }
+            },
+            error: function () {
+                codigo.value = "";
+            }
+        });
+    }
+
+    if (area) area.addEventListener("change", refreshCodigo);
+    if (tipo) tipo.addEventListener("change", refreshCodigo);
+}
+
 
 function onGuardarClick() {
     $("#theForm").validate();

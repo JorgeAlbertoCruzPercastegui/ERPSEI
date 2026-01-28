@@ -292,11 +292,17 @@
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
-                                    <input id="inpDocumentacionNombreArchivo" asp-for="InputDocumentos.NombreArchivo" type="text" class="form-control" placeholder="@Localizer["NombreArchivoPlaceholder"]" />
-                                    <label asp-for="InputDocumentos.NombreArchivo" class="form-label required"></label>
+                                    <input id="inpDocumentacionNombreArchivo"
+                                           asp-for="InputDocumentos.NombreArchivo"
+                                           type="text"
+                                           class="form-control"
+                                           placeholder="Código"
+                                           readonly />
+                                    <label for="inpDocumentacionNombreArchivo" class="form-label">Código</label>
                                     <span asp-validation-for="InputDocumentos.NombreArchivo" class="text-danger"></span>
                                 </div>
                             </div>
+
 
                             <!--<div class="col-4">
                                 <div class="form-floating mb-3">

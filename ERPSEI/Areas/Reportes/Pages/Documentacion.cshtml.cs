@@ -152,6 +152,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             [DataType(AnnoDataType.Text)]
             public string? NombreArchivo { get; set; }
 
+            [Display(Name = "Código")]
             [DataType(AnnoDataType.Text)]
             public string? Ubicacion { get; set; }
 
@@ -501,6 +502,70 @@ namespace ERPSEI.Areas.Reportes.Pages
             }
         }*/
 
+        public async Task<JsonResult> OnGetSiguienteCodigoDocumento(int tipoDocumentoId, int areaId)
+        {
+            var resp = new ServerResponse(true, "No se pudo generar el código.");
+
+            var area = await db.Areas.AsNoTracking().FirstOrDefaultAsync(a => a.Id == areaId);
+            if (area == null) return new JsonResult(resp);
+
+            string prefijo = tipoDocumentoId switch
+            {
+                1 => "MAN",
+                2 => "PRO",
+                3 => "POL",
+                4 => "REG",
+                5 => "FOR",
+                6 => "DIA",
+                _ => ""
+            };
+
+            if (string.IsNullOrWhiteSpace(prefijo))
+            {
+                resp.Mensaje = "Tipo de documento no válido para generar código.";
+                return new JsonResult(resp);
+            }
+
+            string siglasArea = ObtenerSiglas3(area.Nombre);
+            string baseCode = $"{prefijo}-{siglasArea}-";
+
+            var lastCode = await db.Documentos.AsNoTracking()
+                .Where(d => d.AreaId == areaId && d.TipoDocumentoId == tipoDocumentoId && d.NombreArchivo.StartsWith(baseCode))
+                .OrderByDescending(d => d.Id)
+                .Select(d => d.NombreArchivo)
+                .FirstOrDefaultAsync();
+
+            int next = 1;
+            if (!string.IsNullOrWhiteSpace(lastCode))
+            {
+                var parts = lastCode.Split('-');
+                if (parts.Length == 3 && int.TryParse(parts[2], out int n))
+                    next = n + 1;
+            }
+
+            string codigo = $"{baseCode}{next:00}";
+
+            resp.TieneError = false;
+            resp.Mensaje = "OK";
+            resp.Datos = codigo;
+            return new JsonResult(resp);
+        }
+
+        private static string ObtenerSiglas3(string? nombreArea)
+        {
+            if (string.IsNullOrWhiteSpace(nombreArea)) return "XXX";
+
+            var words = nombreArea.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (words.Length == 1)
+            {
+                var clean = new string(words[0].Where(char.IsLetterOrDigit).ToArray()).ToUpper();
+                return clean.Length >= 3 ? clean.Substring(0, 3) : clean.PadRight(3, 'X');
+            }
+
+            var initials = string.Concat(words.Select(w => char.ToUpper(w[0])));
+            return initials.Length >= 3 ? initials.Substring(0, 3) : initials.PadRight(3, 'X');
+        }
 
         public async Task<JsonResult> OnPostSaveDocumento(DcoumentacionTableModel input)
         {
@@ -516,6 +581,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                     return new JsonResult(resp);
                 }
 
+                // ✅ Validaciones mínimas
                 if (string.IsNullOrWhiteSpace(input.Titulo))
                 {
                     resp.Mensaje = "El título es obligatorio.";
@@ -540,6 +606,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                     return new JsonResult(resp);
                 }
 
+                // ✅ Catálogos existen
                 if (!await db.Areas.AnyAsync(a => a.Id == input.AreaId.Value))
                 {
                     resp.Mensaje = "El área seleccionada no existe en el catálogo.";
@@ -558,13 +625,16 @@ namespace ERPSEI.Areas.Reportes.Pages
                     return new JsonResult(resp);
                 }
 
-                // ✅ Usuario logeado (AspNetUsers.Id)
+                // ✅ Usuario logeado
                 var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrWhiteSpace(userId))
                 {
                     resp.Mensaje = "No se pudo identificar al usuario logeado.";
                     return new JsonResult(resp);
                 }
+
+                // ✅ Código (NombreArchivo ahora es "Código")
+                var codigo = string.IsNullOrWhiteSpace(input.NombreArchivo) ? null : input.NombreArchivo.Trim();
 
                 bool esNuevo = !input.Id.HasValue || input.Id.Value == 0;
 
@@ -594,10 +664,12 @@ namespace ERPSEI.Areas.Reportes.Pages
                         return new JsonResult(resp);
                     }
 
+                    // ✅ EDITAR: siempre marcar modificación (aunque no cambie PDF)
                     doc.ModificadoPorId = userId;
                     doc.FechaModificacion = DateTime.Now;
                 }
 
+                // ✅ Asignación de campos
                 doc.AreaId = input.AreaId.Value;
                 doc.TipoDocumentoId = input.TipoDocumentoId.Value;
                 doc.EstatusDocumentoId = input.EstatusDocumentoId.Value;
@@ -606,15 +678,21 @@ namespace ERPSEI.Areas.Reportes.Pages
                 doc.Descripcion = string.IsNullOrWhiteSpace(input.Descripcion) ? null : input.Descripcion.Trim();
                 doc.Responsable = string.IsNullOrWhiteSpace(input.Responsable) ? null : input.Responsable.Trim();
                 doc.Observaciones = string.IsNullOrWhiteSpace(input.Observaciones) ? null : input.Observaciones.Trim();
-                doc.Ubicacion = string.IsNullOrWhiteSpace(input.Ubicacion) ? null : input.Ubicacion.Trim();
 
                 if (input.Activo.HasValue)
                     doc.Activo = input.Activo.Value == 1;
+
+                // ✅ Guardar el CÓDIGO en Documento (si viene)
+                if (!string.IsNullOrWhiteSpace(codigo))
+                    doc.NombreArchivo = codigo;
 
                 await db.SaveChangesAsync();
 
                 DocumentoVersion? versionCreada = null;
 
+                // ==========================================
+                // ✅ Si viene PDF, se crea nueva versión
+                // ==========================================
                 if (input.Archivo != null && input.Archivo.Length > 0)
                 {
                     var ext = Path.GetExtension(input.Archivo.FileName);
@@ -624,12 +702,12 @@ namespace ERPSEI.Areas.Reportes.Pages
                         return new JsonResult(resp);
                     }
 
+                    // ✅ Desactivar versión actual
                     await db.DocumentosVersion
                         .Where(v => v.DocumentoId == doc.Id && v.EsActual)
                         .ExecuteUpdateAsync(setters => setters.SetProperty(v => v.EsActual, false));
 
-                    // - Nuevo: 1.0
-                    // - Editar: incrementa la parte menor (1.0 -> 1.1 -> 1.2)
+                    // ✅ Calcular siguiente versión
                     string nextVersion = "1.0";
                     if (!esNuevo)
                     {
@@ -642,12 +720,17 @@ namespace ERPSEI.Areas.Reportes.Pages
                         nextVersion = CalcularSiguienteVersion(last);
                     }
 
-                    // ✅ Ruta física: /wwwroot/documentos/{docId}/
-                    var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "documentos", doc.Id.ToString());
+                    // ✅ Guardar físicamente en /wwwroot/documentos/{docId}/
+                    var uploadsRoot = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        "documentos",
+                        doc.Id.ToString()
+                    );
+
                     if (!Directory.Exists(uploadsRoot))
                         Directory.CreateDirectory(uploadsRoot);
 
-                    var originalName = Path.GetFileName(input.Archivo.FileName);
                     var safeFileName = $"{Guid.NewGuid():N}{ext}";
                     var fullPath = Path.Combine(uploadsRoot, safeFileName);
 
@@ -658,7 +741,11 @@ namespace ERPSEI.Areas.Reportes.Pages
 
                     var rutaPublica = $"/documentos/{doc.Id}/{safeFileName}";
 
-                    // ✅ Crear versión
+                    // ✅ NombreArchivo en VERSION = CÓDIGO (fallback)
+                    var codigoFinal = !string.IsNullOrWhiteSpace(codigo)
+                        ? codigo
+                        : (!string.IsNullOrWhiteSpace(doc.NombreArchivo) ? doc.NombreArchivo : Path.GetFileNameWithoutExtension(input.Archivo.FileName));
+
                     versionCreada = new DocumentoVersion
                     {
                         DocumentoId = doc.Id,
@@ -667,7 +754,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                         FechaPublicacion = null,
                         Comentarios = null,
 
-                        NombreArchivo = originalName,
+                        NombreArchivo = codigoFinal,   // ✅ aquí guardamos el CÓDIGO
                         RutaArchivo = rutaPublica,
                         MimeType = input.Archivo.ContentType,
                         TamanoBytes = input.Archivo.Length,
@@ -680,15 +767,14 @@ namespace ERPSEI.Areas.Reportes.Pages
 
                     db.DocumentosVersion.Add(versionCreada);
 
-                    // ✅ Reflejar último archivo en Documento
-                    doc.NombreArchivo = originalName;
+                    // ✅ Reflejar ruta actual en Documento
                     doc.RutaArchivo = rutaPublica;
-
-                    // ✅ NUEVO: Ubicación = RutaArchivo
-                    doc.Ubicacion = rutaPublica;
+                    doc.Ubicacion = rutaPublica;      // ✅ Ubicación = RutaArchivo
+                    doc.NombreArchivo = codigoFinal;  // ✅ Documento también guarda el CÓDIGO
 
                     await db.SaveChangesAsync();
                 }
+                // else: sin PDF -> NO se toca doc.RutaArchivo / doc.Ubicacion / versiones
 
                 await db.Database.CommitTransactionAsync();
 
@@ -740,6 +826,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             minor += 1;
             return $"{major}.{minor}";
         }
+
 
 
 

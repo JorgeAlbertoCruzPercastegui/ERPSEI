@@ -272,7 +272,7 @@ namespace ERPSEI.Data
                 new TipoDocumento { Id = 5, Nombre = "Formatos", Activo = true },
                 new TipoDocumento { Id = 6, Nombre = "Diagramas", Activo = true },
                 new TipoDocumento { Id = 7, Nombre = "Referencias Normativas", Activo = true },
-                new TipoDocumento { Id = 8, Nombre = "Requerimientos", Activo = true },
+                //new TipoDocumento { Id = 8, Nombre = "Requerimientos", Activo = true },
                 new TipoDocumento { Id = 9, Nombre = "Manuales de Capacitación", Activo = true },
                 new TipoDocumento { Id = 10, Nombre = "Otros", Activo = true }
             );
