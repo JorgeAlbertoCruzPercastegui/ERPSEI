@@ -334,14 +334,28 @@
                             </div>-->
 
                             
-
                             <div class="col-4">
+                                <div class="form-floating mb-3">
+                                    <select id="inpDocumentacionRespoonsable"
+                                            asp-for="InputDocumentos.Responsable"
+                                            class="form-select"
+                                            disabled>
+                                        <option value="">Seleccione un área primero...</option>
+                                    </select>
+
+                                    <label asp-for="InputDocumentos.Responsable" class="form-label required">Responsable</label>
+                                    <span asp-validation-for="InputDocumentos.Responsable" class="text-danger"></span>
+                                </div>
+                            </div>
+
+
+                            <!--<div class="col-4">
                                 <div class="form-floating mb-3">
                                     <input id="inpDocumentacionRespoonsable" asp-for="InputDocumentos.Responsable" type="text" class="form-control" placeholder="@Localizer["ResponsablePlaceholder"]" />
                                     <label asp-for="InputDocumentos.Responsable" class="form-label required"></label>
                                     <span asp-validation-for="InputDocumentos.Responsable" class="text-danger"></span>
                                 </div>
-                            </div>
+                            </div>-->
 
                             <!--<div class="col-4">
                                 <div class="form-floating mb-3">

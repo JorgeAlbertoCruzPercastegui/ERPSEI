@@ -204,10 +204,10 @@ function initDocumentacionDialog(action, row) {
     let creadoPorIdField = document.getElementById("inpDocumentacionCreadoPor");
     let modificadoPorIdField = document.getElementById("inpDocumentacionModificadoPor");
 
-    // ✅ Este ahora es "Código"
     let nombreArchivoField = document.getElementById("inpDocumentacionNombreArchivo");
 
     let responsableField = document.getElementById("inpDocumentacionRespoonsable");
+
     let rutaArchivoField = document.getElementById("inpDocumentacionRutaArchivo");
     let ubicacionField = document.getElementById("inpDocumentacionUbicacion");
     let observacionesField = document.getElementById("inpDocumentacionObservaciones");
@@ -256,11 +256,16 @@ function initDocumentacionDialog(action, row) {
 
     setDisabled(creadoPorIdField, esVer);
     setDisabled(modificadoPorIdField, esVer);
+    setDisabled(modificadoPorIdField, esVer);
+    //setDisabled(responsableField, esVer);
+    
 
     // ⚠️ Código NO disabled (si no, no se postea)
     // readonly ya se dejó arriba
 
-    setDisabled(responsableField, esVer);
+    // ✅ Responsable: en VER debe estar disabled; en NUEVO/EDITAR se maneja abajo (según área)
+    if (responsableField) responsableField.disabled = esVer;
+
     setDisabled(rutaArchivoField, esVer);
     setDisabled(ubicacionField, esVer);
 
@@ -269,10 +274,7 @@ function initDocumentacionDialog(action, row) {
     else setDisabled(archivoField, esVer);
 
     setDisabled(btnGuardar, esVer);
-
-    // ==========================
-    // ✅ UI de archivo (preview vs upload)
-    // ==========================
+    
     const preview = document.getElementById("docArchivoPreview");
     const link = document.getElementById("docArchivoLink");
     const info = document.getElementById("docArchivoInfo");
@@ -286,10 +288,7 @@ function initDocumentacionDialog(action, row) {
     };
 
     resetArchivoUI();
-
-    // ==========================
-    // ✅ Generar código (solo en NUEVO)
-    // ==========================
+    
     const refreshCodigo = () => {
         if (action !== NUEVO) return;
         if (!nombreArchivoField) return;
@@ -317,10 +316,14 @@ function initDocumentacionDialog(action, row) {
             }
         });
     };
-
-    // ==========================
-    // Asignación de valores
-    // ==========================
+    
+    const resetResponsableUI = (msg) => {
+        if (!responsableField) return;
+        responsableField.innerHTML = "";
+        responsableField.appendChild(new Option(msg || "Seleccione un área primero...", ""));
+        responsableField.disabled = true;
+    };
+    
     if (action === NUEVO) {
 
         if (idField) idField.value = "Nuevo";
@@ -334,7 +337,10 @@ function initDocumentacionDialog(action, row) {
         if (creadoPorIdField) creadoPorIdField.value = "";
         if (modificadoPorIdField) modificadoPorIdField.value = "";
         if (nombreArchivoField) nombreArchivoField.value = ""; // ✅ Código
-        if (responsableField) responsableField.value = "";
+
+        // ✅ Responsable (select): inicia bloqueado
+        resetResponsableUI("Seleccione un área primero...");
+
         if (rutaArchivoField) rutaArchivoField.value = "";
         if (ubicacionField) ubicacionField.value = "";
 
@@ -349,8 +355,24 @@ function initDocumentacionDialog(action, row) {
         if (upload) upload.style.display = "block";
 
         // ✅ listeners SOLO en NUEVO (sin duplicar)
-        if (areaField) areaField.onchange = () => refreshCodigo();
-        if (tipoDocumentoField) tipoDocumentoField.onchange = () => refreshCodigo();
+        if (areaField) {
+            areaField.onchange = () => {
+                // 1) Cargar responsables según el área
+                const areaId = parseInt(areaField.value || "0");
+                if (areaId > 0) {
+                    cargarResponsablesPorArea(areaId, null);
+                } else {
+                    resetResponsableUI("Seleccione un área primero...");
+                }
+
+                // 2) Recalcular código
+                refreshCodigo();
+            };
+        }
+
+        if (tipoDocumentoField) {
+            tipoDocumentoField.onchange = () => refreshCodigo();
+        }
 
         // (opcional) si quieres que al abrir NUEVO genere cuando ya haya defaults
         refreshCodigo();
@@ -373,7 +395,6 @@ function initDocumentacionDialog(action, row) {
         // ✅ Código
         if (nombreArchivoField) nombreArchivoField.value = row?.nombreArchivo ?? "";
 
-        if (responsableField) responsableField.value = row?.responsable ?? "";
         if (rutaArchivoField) rutaArchivoField.value = row?.rutaArchivo ?? "";
         if (ubicacionField) ubicacionField.value = row?.ubicacion ?? "";
 
@@ -385,7 +406,7 @@ function initDocumentacionDialog(action, row) {
         if (fechaCreacionField) fechaCreacionField.value = fc;
         if (fechaModificacionField) fechaModificacionField.value = fm;
 
-        // ✅ Mostrar preview si hay ruta
+        // ✅ Preview si hay ruta
         const ruta = (row?.versionRutaArchivo || row?.rutaArchivo || "").trim();
         const nombre = (row?.versionNombreArchivo || row?.nombreArchivo || "").trim();
         const tieneArchivo = ruta !== "";
@@ -402,17 +423,49 @@ function initDocumentacionDialog(action, row) {
         if (action === VER) {
             if (upload) upload.style.display = "none";
         } else {
-            // EDITAR: mostrar upload para reemplazar PDF
             if (upload) upload.style.display = "block";
         }
 
-        // ✅ Limpia listeners para que NO calcule código en VER/EDITAR
-        if (areaField) areaField.onchange = null;
+        // ✅ Responsable: cargar lista según el área actual y seleccionar el valor del registro
+        const areaId = parseInt(areaField?.value || "0");
+        const responsableActual = row?.responsable || "";
+
+        if (areaId > 0) {
+            cargarResponsablesPorArea(areaId, responsableActual);
+        } else {
+            resetResponsableUI("Seleccione un área primero...");
+        }
+
+        if (areaId > 0) {
+            cargarResponsablesPorArea(areaId, responsableActual);
+
+            if (action === VER && responsableField) {
+                setTimeout(() => {
+                    responsableField.disabled = true;
+                }, 100);
+            }
+        } else {
+            resetResponsableUI("Seleccione un área primero...");
+        }
+
+
+        // ✅ Si es EDITAR y cambian área, recargar responsables
+        if (action === EDITAR && areaField) {
+            areaField.onchange = () => {
+                const newAreaId = parseInt(areaField.value || "0");
+                if (newAreaId > 0) cargarResponsablesPorArea(newAreaId, null);
+                else resetResponsableUI("Seleccione un área primero...");
+            };
+        }
+
+        // ✅ IMPORTANTE: en editar/ver quitamos onchange de código
         if (tipoDocumentoField) tipoDocumentoField.onchange = null;
+        // (y refreshCodigo no aplica porque solo se usa en NUEVO)
     }
 
     dlgModal.show();
 }
+
 
 
 
@@ -620,6 +673,66 @@ function onGuardarClick() {
         }
     });
 }
+
+async function cargarResponsablesPorArea(areaId, valorSeleccionado) {
+    const sel = document.getElementById("inpDocumentacionRespoonsable");
+    if (!sel) return;
+
+    // Reset UI
+    sel.innerHTML = "";
+    sel.disabled = true;
+
+    if (!areaId || areaId <= 0) {
+        sel.innerHTML = `<option value="">Seleccione un área primero...</option>`;
+        return;
+    }
+
+    sel.innerHTML = `<option value="">Cargando...</option>`;
+
+    $.ajax({
+        url: `/Reportes/Documentacion/ResponsablesByArea?areaId=${areaId}`,
+        type: "GET",
+        success: function (resp) {
+            sel.innerHTML = "";
+
+            if (!resp || resp.tieneError) {
+                sel.innerHTML = `<option value="">No se pudieron cargar responsables</option>`;
+                sel.disabled = true;
+                return;
+            }
+
+            const data = resp.datos || [];
+            if (data.length === 0) {
+                sel.innerHTML = `<option value="">No hay responsables para esta área</option>`;
+                sel.disabled = true;
+                return;
+            }
+
+            // Opción default
+            sel.innerHTML = `<option value="">Seleccione...</option>`;
+
+            // ✅ Guardaremos NOMBRE en value (lo que quieres persistir en Documento.Responsable)
+            data.forEach(x => {
+                const opt = document.createElement("option");
+                opt.value = x.nombre;         // <-- aquí va el NOMBRE
+                opt.textContent = x.nombre;   // <-- texto visible
+                sel.appendChild(opt);
+            });
+
+            sel.disabled = false;
+
+            // Seleccionar valor si viene (para EDITAR/VER)
+            if (valorSeleccionado) {
+                sel.value = valorSeleccionado;
+            }
+        },
+        error: function () {
+            sel.innerHTML = `<option value="">Error cargando responsables</option>`;
+            sel.disabled = true;
+        }
+    });
+}
+
 
 function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");
