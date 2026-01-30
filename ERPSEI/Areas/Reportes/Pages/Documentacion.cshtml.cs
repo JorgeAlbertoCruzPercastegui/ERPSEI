@@ -827,19 +827,14 @@ namespace ERPSEI.Areas.Reportes.Pages
             return $"{major}.{minor}";
         }
 
-
-
-
         public async Task<JsonResult> OnPostFiltrarDocumentos()
         {
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 
             try
             {
-                // [BindProperty] public InputFiltroModel? InputFiltro { get; set; }
                 var documentos = await documentoManager.GetAllAsync(InputFiltro);
 
-                // Solo activos (si aplica)
                 documentos = documentos.Where(d => d.Activo).ToList();
 
                 var result = documentos.Select(d => new
@@ -867,7 +862,6 @@ namespace ERPSEI.Areas.Reportes.Pages
                     creadoPorId = d.CreadoPorId ?? "-",
                     modificadoPorId = d.ModificadoPorId ?? "-",
 
-                    // ✅ Para tabla (texto) y para inputs date (yyyy-MM-dd)
                     fechaCreacion = d.FechaCreacion == DateTime.MinValue ? (DateTime?)null : d.FechaCreacion,
                     fechaCreacionJS = d.FechaCreacion == DateTime.MinValue ? "" : d.FechaCreacion.ToString("yyyy-MM-dd"),
 
@@ -881,10 +875,21 @@ namespace ERPSEI.Areas.Reportes.Pages
                 resp.TieneError = false;
                 resp.Mensaje = localizer["ConsultadoSuccessfully"];
             }
+            catch (InvalidOperationException ex)
+            {
+                logger.LogWarning(ex, "Rango de fechas inválido al filtrar documentos.");
+
+                resp.TieneError = true;
+                resp.Mensaje = "La fecha fin no puede ser menor que la fecha inicio. Selecciona un rango correcto.";
+                resp.Datos = null;
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error al filtrar documentos");
-                // resp queda con TieneError=true y mensaje unsuccessfully
+
+                resp.TieneError = true;
+                resp.Mensaje = localizer["ConsultadoUnsuccessfully"];
+                resp.Datos = null;
             }
 
             return new JsonResult(resp);

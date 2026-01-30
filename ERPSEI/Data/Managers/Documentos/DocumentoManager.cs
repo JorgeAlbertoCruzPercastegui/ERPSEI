@@ -105,30 +105,27 @@ namespace ERPSEI.Data.Managers.Documentos
             return await db.Documentos.Where(a => a.Descripcion.ToLower() == name.ToLower() || a.Descripcion.ToLower() == name.ToLower()).FirstOrDefaultAsync();
         }
 
-        public async Task<List<Documento>> GetAllAsync(ERPSEI.Areas.Reportes.Pages.DocumentacionModel.InputFiltroModel? filtro = null)
+        public async Task<List<Documento>> GetAllAsync(
+    ERPSEI.Areas.Reportes.Pages.DocumentacionModel.InputFiltroModel? filtro = null)
         {
             var query = db.Documentos
                 .Include(d => d.Area)
                 .Include(d => d.TipoDocumento)
-                .Include(d => d.Versiones)       // necesario para filtrar por estatus/versión actual
-                .Include(d => d.PalabrasClave)   // necesario para filtrar por palabra clave
+                .Include(d => d.Versiones)
+                .Include(d => d.PalabrasClave)
                 .AsQueryable();
 
             if (filtro != null)
             {
-                // Título
                 if (!string.IsNullOrWhiteSpace(filtro.Titulo))
                     query = query.Where(d => d.Titulo.Contains(filtro.Titulo));
 
-                // Área
                 if (filtro.AreaId.HasValue && filtro.AreaId.Value != 0)
                     query = query.Where(d => d.AreaId == filtro.AreaId.Value);
 
-                // TipoDocumento
                 if (filtro.TipoDocumentoId.HasValue && filtro.TipoDocumentoId.Value != 0)
                     query = query.Where(d => d.TipoDocumentoId == filtro.TipoDocumentoId.Value);
 
-                // EstatusDocumento (sobre la versión actual)
                 if (filtro.EstatusDocumentoId.HasValue && filtro.EstatusDocumentoId.Value != 0)
                 {
                     int estatusId = filtro.EstatusDocumentoId.Value;
@@ -137,7 +134,6 @@ namespace ERPSEI.Data.Managers.Documentos
                         d.Versiones.Any(v => v.EsActual && v.EstatusDocumentoId == estatusId));
                 }
 
-                // Palabra clave
                 if (!string.IsNullOrWhiteSpace(filtro.PalabraClave))
                 {
                     var kw = filtro.PalabraClave.Trim();
@@ -146,20 +142,30 @@ namespace ERPSEI.Data.Managers.Documentos
                         d.PalabrasClave.Any(p => p.Palabra.Contains(kw)));
                 }
 
-                // Fecha creación (cabecera Documento)
-                if (filtro.FechaCreacionInicio.HasValue)
-                    query = query.Where(d => d.FechaCreacion >= filtro.FechaCreacionInicio.Value);
+                if (filtro.FechaCreacionInicio.HasValue && !filtro.FechaCreacionFin.HasValue)
+                {
+                    var d1 = filtro.FechaCreacionInicio.Value.Date;
+                    query = query.Where(d => d.FechaCreacion >= d1 && d.FechaCreacion < d1.AddDays(1));
+                }
+                else if (filtro.FechaCreacionInicio.HasValue && filtro.FechaCreacionFin.HasValue)
+                {
+                    var d1 = filtro.FechaCreacionInicio.Value.Date;
+                    var d2 = filtro.FechaCreacionFin.Value.Date;
 
-                if (filtro.FechaCreacionFin.HasValue)
-                    query = query.Where(d => d.FechaCreacion <= filtro.FechaCreacionFin.Value);
+                    if (d2 < d1)
+                        throw new InvalidOperationException("La fecha fin no puede ser menor que la fecha inicio.");
 
-                // Activo/Inactivo (si lo agregas en el filtro; si no existe, quítalo)
-                // Ejemplo:
-                // if (filtro.Activo.HasValue)
-                //     query = query.Where(d => d.Activo == filtro.Activo.Value);
+                    query = query.Where(d => d.FechaCreacion >= d1 && d.FechaCreacion < d2.AddDays(1));
+                }
+                else if (!filtro.FechaCreacionInicio.HasValue && filtro.FechaCreacionFin.HasValue)
+                {
+                    var d2 = filtro.FechaCreacionFin.Value.Date;
+                    query = query.Where(d => d.FechaCreacion >= d2 && d.FechaCreacion < d2.AddDays(1));
+                }
             }
 
             return await query.AsNoTracking().ToListAsync();
         }
+
     }
 }

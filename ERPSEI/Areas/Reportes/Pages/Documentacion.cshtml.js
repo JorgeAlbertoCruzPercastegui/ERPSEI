@@ -621,8 +621,84 @@ function onGuardarClick() {
     });
 }
 
-
 function onBuscarClick() {
+    let btnBuscar = document.getElementById("btnBuscar");
+
+    let inpTitulo = document.getElementById("inpFiltroTitulo");
+    let selArea = document.getElementById("selFiltroArea");
+    let selTipoDocumento = document.getElementById("selFiltroTipoDocumento");
+    let selEstatusDocumento = document.getElementById("selFiltroEstatusDocumento");
+    let inpPalabraClave = document.getElementById("inpFiltroPalabraClave");
+
+    let inpFechaInicio = document.getElementById("inpFiltroFechaInicio");
+    let inpFechaFin = document.getElementById("inpFiltroFechaFin");
+    
+    const fi = (inpFechaInicio?.value || "").trim();
+    const ff = (inpFechaFin?.value || "").trim();
+    
+    if (fi && ff) {
+        const d1 = new Date(fi + "T00:00:00");
+        const d2 = new Date(ff + "T00:00:00");
+        if (d2 < d1) {
+            showError("Fechas inválidas", "La fecha fin no puede ser menor que la fecha inicio. Selecciona un rango correcto.");
+            return;
+        }
+    }
+
+    let fechaCreacionInicio = null;
+    let fechaCreacionFin = null;
+
+    if (fi && !ff) {
+        fechaCreacionInicio = fi;
+        fechaCreacionFin = null;
+    } else if (fi && ff) {
+        fechaCreacionInicio = fi;
+        fechaCreacionFin = ff;
+    } else if (!fi && ff) {
+
+        fechaCreacionInicio = ff;
+        fechaCreacionFin = null;
+    }
+
+    let oParams = {
+        titulo: inpTitulo?.value?.trim() || null,
+        areaId: (!selArea || selArea.value === "0" || selArea.value === "") ? null : parseInt(selArea.value),
+        tipoDocumentoId: (!selTipoDocumento || selTipoDocumento.value === "0" || selTipoDocumento.value === "") ? null : parseInt(selTipoDocumento.value),
+        estatusDocumentoId: (!selEstatusDocumento || selEstatusDocumento.value === "0" || selEstatusDocumento.value === "") ? null : parseInt(selEstatusDocumento.value),
+        palabraClave: inpPalabraClave?.value?.trim() || null,
+        
+        fechaCreacionInicio: fechaCreacionInicio,
+        fechaCreacionFin: fechaCreacionFin
+    };
+
+    doAjax(
+        "/Reportes/Documentacion/FiltrarDocumentos",
+        oParams,
+        function (resp) {
+            if (resp.tieneError) {
+                if (Array.isArray(resp.errores) && resp.errores.length > 0) {
+                    let summary = resp.errores.map(error => `<li>${error}</li>`).join("");
+                    let saveValidationSummary = document.getElementById("saveValidationSummary");
+                    if (saveValidationSummary) saveValidationSummary.innerHTML = `<ul>${summary}</ul>`;
+                }
+                showError(btnBuscar?.innerHTML ?? "Buscar", resp.mensaje);
+                return;
+            }
+
+            table.bootstrapTable('load', responseHandler(resp.datos));
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+
+    // ⚠️ Si no quieres borrar las fechas después de buscar, quita este reset o excluye los inputs date
+    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
+}
+
+
+/*function onBuscarClick() {
     let btnBuscar = document.getElementById("btnBuscar");
 
     let inpTitulo = document.getElementById("inpFiltroTitulo");
@@ -671,7 +747,7 @@ function onBuscarClick() {
 
     // Si quieres también resetear selects:
     // document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = "0"; });
-}
+}*/
 
 
 
