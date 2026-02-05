@@ -130,6 +130,7 @@ namespace ERPSEI.Areas.Reportes.Pages
             [DataType(AnnoDataType.Text)]
             [StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "PersonName")]
+            [Display(Name = "Conexión")]
             public string? Descripcion { get; set; } = string.Empty;
 
             [DataType(AnnoDataType.Text)]

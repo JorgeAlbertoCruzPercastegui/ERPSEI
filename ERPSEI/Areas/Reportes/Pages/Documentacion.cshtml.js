@@ -201,16 +201,13 @@ function initDocumentacionDialog(action, row) {
     let estatusField = document.getElementById("inpDocumentacionEstatusDocumento");
     let tituloField = document.getElementById("inpDocumentacionTitulo");
 
-    // ✅ SELECT (Descripción)
     let descripcionField = document.getElementById("inpDocumentacionDescripcion");
 
     let creadoPorIdField = document.getElementById("inpDocumentacionCreadoPor");
     let modificadoPorIdField = document.getElementById("inpDocumentacionModificadoPor");
-
-    // ✅ Código
+    
     let nombreArchivoField = document.getElementById("inpDocumentacionNombreArchivo");
-
-    // ✅ Responsable (select)
+    
     let responsableField = document.getElementById("inpDocumentacionRespoonsable");
 
     let rutaArchivoField = document.getElementById("inpDocumentacionRutaArchivo");
@@ -225,11 +222,9 @@ function initDocumentacionDialog(action, row) {
     let dlgTitle = document.getElementById("dlgDocumentacionTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     if (summaryContainer) summaryContainer.innerHTML = "";
-
-    // ✅ ID siempre disabled
+    
     if (idField) idField.setAttribute("disabled", true);
-
-    // ========= Helpers base =========
+    
     const setDisabled = (el, disabled) => {
         if (!el) return;
         if (disabled) el.setAttribute("disabled", true);
@@ -251,10 +246,7 @@ function initDocumentacionDialog(action, row) {
     setTitleByAction();
 
     const esVer = (action === VER);
-
-    // ==========================
-    // UI archivo (preview vs upload)
-    // ==========================
+    
     const preview = document.getElementById("docArchivoPreview");
     const link = document.getElementById("docArchivoLink");
     const info = document.getElementById("docArchivoInfo");
@@ -268,52 +260,39 @@ function initDocumentacionDialog(action, row) {
     };
 
     resetArchivoUI();
-
-    // ==========================
-    // Helpers: Código
-    // ==========================
+    
     const setCodigoModoAuto = () => {
-        // Automático: readonly true (no editable), NO disabled (se postea)
         if (!nombreArchivoField) return;
         nombreArchivoField.disabled = false;
         setReadonly(nombreArchivoField, true);
     };
 
     const setCodigoModoManual = () => {
-        // Manual: editable, NO disabled (se postea)
         if (!nombreArchivoField) return;
         nombreArchivoField.disabled = false;
         setReadonly(nombreArchivoField, false);
     };
-
-    // ✅ Si el usuario selecciona una opción válida de Descripción => Código manual
+    
     const aplicarReglaCodigoPorDescripcion = () => {
         if (!nombreArchivoField || !descripcionField) return;
 
         const val = (descripcionField.value || "").trim();
-
-        // Si seleccionó algo (no vacío) => manual
+        
         if (val !== "") {
             setCodigoModoManual();
-            // opcional: si estaba vacío, pon "-" como placeholder
             if (!nombreArchivoField.value || nombreArchivoField.value.trim() === "") {
-                nombreArchivoField.value = ""; // que el usuario lo capture
+                nombreArchivoField.value = "";
             }
         } else {
-            // Si no hay descripción seleccionada => auto (solo en NUEVO)
-            if (action === NUEVO) setCodigoModoAuto();
-            else {
-                // en EDITAR, normalmente se deja como venía (pero editable no conviene)
-                setCodigoModoAuto();
-            }
+            setCodigoModoAuto();
+            if (action === NUEVO) refreshCodigo();
         }
     };
 
     const refreshCodigo = () => {
-        // Solo aplica para NUEVO y cuando está en modo AUTO
         if (action !== NUEVO) return;
         if (!nombreArchivoField) return;
-        if (!nombreArchivoField.readOnly) return; // si está manual, NO recalcular
+        if (!nombreArchivoField.readOnly) return;
 
         const areaId = parseInt(areaField?.value || "0");
         const tipoId = parseInt(tipoDocumentoField?.value || "0");
@@ -338,20 +317,25 @@ function initDocumentacionDialog(action, row) {
             }
         });
     };
-
-    // ==========================
-    // Helpers: Responsable (select)
-    // ==========================
+    
     const resetResponsableUI = (msg) => {
         if (!responsableField) return;
         responsableField.innerHTML = "";
         responsableField.appendChild(new Option(msg || "Seleccione un área primero...", ""));
         responsableField.disabled = true;
     };
-
-    // ==========================
-    // Helpers: Descripción (select dependiente de TipoDocumento)
-    // ==========================
+    
+    const cargarResponsablesYAplicarBloqueo = (areaId, responsableActual) => {
+        if (areaId > 0) cargarResponsablesPorArea(areaId, responsableActual);
+        else resetResponsableUI("Seleccione un área primero...");
+        
+        if (esVer && responsableField) {
+            setTimeout(() => {
+                responsableField.disabled = true;
+            }, 300);
+        }
+    };
+    
     const getTipoDocumentoNombreSeleccionado = () => {
         if (!tipoDocumentoField) return "";
         const opt = tipoDocumentoField.options[tipoDocumentoField.selectedIndex];
@@ -363,7 +347,7 @@ function initDocumentacionDialog(action, row) {
         descripcionField.innerHTML = "";
         descripcionField.appendChild(new Option(msg || "Seleccione Tipo Documento...", ""));
         descripcionField.disabled = true;
-        // al resetear descripción, vuelve a modo auto en NUEVO
+
         if (action === NUEVO) {
             setCodigoModoAuto();
             refreshCodigo();
@@ -380,7 +364,6 @@ function initDocumentacionDialog(action, row) {
             return;
         }
 
-        // habilita en NUEVO/EDITAR, pero si es VER se deja deshabilitado
         descripcionField.disabled = (action === VER);
 
         descripcionField.appendChild(new Option("Seleccione...", ""));
@@ -402,48 +385,39 @@ function initDocumentacionDialog(action, row) {
         const opciones = getOpcionesDescripcionPorTipoDocumento(tipoNombre);
         setDescripcionOptions(opciones);
 
-        // limpia selección anterior si no es VER
         if (descripcionField && action !== VER) {
             descripcionField.value = "";
         }
 
-        // ✅ al cambiar tipo doc, por defecto código vuelve a auto (hasta que seleccionen descripción)
         if (action === NUEVO) {
             setCodigoModoAuto();
             refreshCodigo();
         }
     };
-
-    // ==========================
-    // Habilitar / deshabilitar (base)
-    // ==========================
+    
     setDisabled(areaField, esVer);
     setDisabled(tipoDocumentoField, esVer);
     setDisabled(estatusField, esVer);
     setDisabled(tituloField, esVer);
     setDisabled(observacionesField, esVer);
+    setDisabled(descripcionField, esVer);
+    
+    if (responsableField) responsableField.disabled = esVer;
 
-    // descripción: en VER siempre disabled; en NUEVO/EDITAR depende del tipo doc
     if (descripcionField) descripcionField.disabled = esVer;
 
     setDisabled(creadoPorIdField, esVer);
     setDisabled(modificadoPorIdField, esVer);
 
-    // responsable: en VER disabled
-    if (responsableField) responsableField.disabled = esVer;
-
     setDisabled(rutaArchivoField, esVer);
     setDisabled(ubicacionField, esVer);
 
-    // file input
+    
     if (action === EDITAR) setDisabled(archivoField, false);
     else setDisabled(archivoField, esVer);
 
     setDisabled(btnGuardar, esVer);
-
-    // ==========================
-    // Asignación de valores
-    // ==========================
+    
     if (action === NUEVO) {
 
         if (idField) idField.value = "Nuevo";
@@ -464,33 +438,26 @@ function initDocumentacionDialog(action, row) {
         const hoy = new Date().toISOString().split('T')[0];
         if (fechaCreacionField) fechaCreacionField.value = hoy;
         if (fechaModificacionField) fechaModificacionField.value = "";
-
-        // ✅ Responsable inicia bloqueado
+        
         resetResponsableUI("Seleccione un área primero...");
-
-        // ✅ Descripción inicia bloqueado
+        
         resetDescripcionSelect("Seleccione Tipo Documento...");
-
-        // ✅ Código inicia en modo AUTO (readonly)
+        
         if (nombreArchivoField) {
             nombreArchivoField.value = "";
             setCodigoModoAuto();
         }
-
-        // NUEVO: solo upload
+        
         if (preview) preview.style.display = "none";
         if (upload) upload.style.display = "block";
-
-        // ========= listeners (NUEVO) =========
+        
         if (areaField) {
             areaField.onchange = () => {
                 const areaId = parseInt(areaField.value || "0");
-
-                // responsables por área
+                
                 if (areaId > 0) cargarResponsablesPorArea(areaId, null);
                 else resetResponsableUI("Seleccione un área primero...");
 
-                // si código está en auto, refresca
                 refreshCodigo();
             };
         }
@@ -498,23 +465,19 @@ function initDocumentacionDialog(action, row) {
         if (tipoDocumentoField) {
             tipoDocumentoField.onchange = () => {
                 refreshDescripcionPorTipo();
-                // refreshCodigo ya está dentro de refreshDescripcionPorTipo para NUEVO
             };
         }
 
         if (descripcionField) {
             descripcionField.onchange = () => {
-                // ✅ si seleccionan descripción => código manual
                 aplicarReglaCodigoPorDescripcion();
             };
         }
 
-        // opcional: si ya hubiera defaults
         refreshCodigo();
 
     } else {
-
-        // EDITAR o VER
+        
         if (idField) idField.value = row?.id ?? "";
 
         if (areaField) areaField.value = row?.areaId != null ? row.areaId.toString() : "";
@@ -539,8 +502,7 @@ function initDocumentacionDialog(action, row) {
 
         if (fechaCreacionField) fechaCreacionField.value = fc;
         if (fechaModificacionField) fechaModificacionField.value = fm;
-
-        // Preview si hay ruta
+        
         const ruta = (row?.versionRutaArchivo || row?.rutaArchivo || "").trim();
         const nombre = (row?.versionNombreArchivo || row?.nombreArchivo || "").trim();
         const tieneArchivo = ruta !== "";
@@ -552,22 +514,17 @@ function initDocumentacionDialog(action, row) {
         } else {
             if (preview) preview.style.display = "none";
         }
-
-        // VER: ocultar upload
+        
         if (action === VER) {
             if (upload) upload.style.display = "none";
         } else {
             if (upload) upload.style.display = "block";
         }
-
-        // Responsable: cargar lista por área y seleccionar guardado
+        
         const areaId = parseInt(areaField?.value || "0");
         const responsableActual = row?.responsable || "";
-
-        if (areaId > 0) cargarResponsablesPorArea(areaId, responsableActual);
-        else resetResponsableUI("Seleccione un área primero...");
-
-        // Descripción: cargar opciones por tipo doc y seleccionar guardado
+        cargarResponsablesYAplicarBloqueo(areaId, responsableActual);
+        
         const tipoNombre = getTipoDocumentoNombreSeleccionado();
         const opciones = getOpcionesDescripcionPorTipoDocumento(tipoNombre);
         setDescripcionOptions(opciones);
@@ -576,23 +533,19 @@ function initDocumentacionDialog(action, row) {
             descripcionField.value = row?.descripcion ?? "";
             if (action === VER) descripcionField.disabled = true;
         }
-
-        // ✅ regla código en EDITAR/VER:
-        // - si hay descripción seleccionada => que el código sea MANUAL (editable) SOLO en EDITAR, en VER no.
+        
         if (descripcionField && (descripcionField.value || "").trim() !== "") {
             if (action === EDITAR) setCodigoModoManual();
-            else setCodigoModoAuto(); // VER no editable
+            else setCodigoModoAuto();
         } else {
             setCodigoModoAuto();
         }
 
         if (action === VER) {
-            // VER: código bloqueado siempre
             setCodigoModoAuto();
-            if (nombreArchivoField) nombreArchivoField.disabled = false; // solo por si, pero readonly
+            if (nombreArchivoField) nombreArchivoField.disabled = false;
         }
-
-        // ========= listeners (EDITAR) =========
+        
         if (action === EDITAR) {
 
             if (areaField) {
@@ -605,8 +558,7 @@ function initDocumentacionDialog(action, row) {
 
             if (tipoDocumentoField) {
                 tipoDocumentoField.onchange = () => {
-                    refreshDescripcionPorTipo(); // recarga lista de descripción
-                    // en EDITAR no recalculamos código automático; solo ajustamos modo
+                    refreshDescripcionPorTipo();
                     setCodigoModoAuto();
                 };
             }
@@ -618,22 +570,16 @@ function initDocumentacionDialog(action, row) {
             }
         }
         else {
-            // VER: sin listeners
             if (areaField) areaField.onchange = null;
             if (tipoDocumentoField) tipoDocumentoField.onchange = null;
             if (descripcionField) descripcionField.onchange = null;
+            
+            if (responsableField) responsableField.onchange = null;
         }
     }
 
     dlgModal.show();
 }
-
-
-
-
-
-
-
 
 /*function onGuardarClick() {
     $("#theForm").validate();
