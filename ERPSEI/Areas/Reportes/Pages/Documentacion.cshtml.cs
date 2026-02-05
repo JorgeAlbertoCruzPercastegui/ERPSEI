@@ -846,6 +846,8 @@ namespace ERPSEI.Areas.Reportes.Pages
         }
 
 
+
+
         public async Task<JsonResult> OnPostFiltrarDocumentos()
         {
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);

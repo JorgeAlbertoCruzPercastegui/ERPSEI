@@ -268,11 +268,25 @@
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
+                                    <select id="inpDocumentacionDescripcion"
+                                            asp-for="InputDocumentos.Descripcion"
+                                            class="form-select"
+                                            disabled>
+                                        <option value="">Seleccione Tipo Documento...</option>
+                                    </select>
+                                    <label asp-for="InputDocumentos.Descripcion" class="form-label required"></label>
+                                    <span asp-validation-for="InputDocumentos.Descripcion" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <!--<div class="col-4">
+                                <div class="form-floating mb-3">
                                     <input id="inpDocumentacionDescripcion" asp-for="InputDocumentos.Descripcion" type="text" class="form-control" placeholder="@Localizer["DescripcionPlaceholder"]" />
                                     <label asp-for="InputDocumentos.Descripcion" class="form-label required"></label>
                                     <span asp-validation-for="InputDocumentos.Descripcion" class="text-danger"></span>
                                 </div>
                             </div>
+                            -->
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
