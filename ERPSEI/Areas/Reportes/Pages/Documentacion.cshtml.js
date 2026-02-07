@@ -246,6 +246,9 @@ function initDocumentacionDialog(action, row) {
     setTitleByAction();
 
     const esVer = (action === VER);
+
+    resetAutorizacionesUI(action === NUEVO ? "NUEVO" : "CARGANDO");
+
     
     const preview = document.getElementById("docArchivoPreview");
     const link = document.getElementById("docArchivoLink");
@@ -579,6 +582,14 @@ function initDocumentacionDialog(action, row) {
     }
 
     dlgModal.show();
+
+    const documentoId =
+        (action !== NUEVO && row && row.id && row.id !== "Nuevo")
+            ? parseInt(row.id)
+            : 0;
+
+    cargarAutorizacionesDocumento(documentoId);
+
 }
 
 /*function onGuardarClick() {
@@ -723,12 +734,15 @@ function onGuardarClick() {
     let dlgTitle = document.getElementById("dlgDocumentacionTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     if (summaryContainer) summaryContainer.innerHTML = "";
-    
+
     const fd = new FormData();
-    
-    fd.append("Id", (idField.value === "Nuevo" ? "0" : idField.value));
-    fd.append("Titulo", tituloField.value || "");
-    fd.append("Descripcion", descripcionField.value || "");
+
+    const isNuevo = (idField?.value === "Nuevo" || idField?.value === "" || idField?.value === null);
+    const idValue = isNuevo ? "0" : (idField.value || "0");
+
+    fd.append("Id", idValue);
+    fd.append("Titulo", tituloField?.value || "");
+    fd.append("Descripcion", descripcionField?.value || "");
 
     fd.append("AreaId", (areaIdField?.value || "0"));
     fd.append("TipoDocumentoId", (tipoDcumentoField?.value || "0"));
@@ -756,10 +770,15 @@ function onGuardarClick() {
         url: "/Reportes/Documentacion/SaveDocumento",
         type: "POST",
         data: fd,
-        processData: false,   // ✅ clave para FormData
-        contentType: false,   // ✅ clave para FormData
-        headers: { "RequestVerificationToken": token }, // (si tu servidor lo lee por header)
+        processData: false,
+        contentType: false,
+        headers: token ? { "RequestVerificationToken": token } : {},
         success: function (resp) {
+            if (!resp) {
+                showError(dlgTitle?.innerHTML || "Error", "Respuesta vacía del servidor.");
+                return;
+            }
+
             if (resp.tieneError) {
                 if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
                     let summary = ``;
@@ -768,21 +787,31 @@ function onGuardarClick() {
                     });
                     if (summaryContainer) summaryContainer.innerHTML = `<ul>${summary}</ul>`;
                 }
-                showError(dlgTitle?.innerHTML || "Error", resp.mensaje);
+                showError(dlgTitle?.innerHTML || "Error", resp.mensaje || "No se pudo guardar.");
                 return;
             }
-        
+
+            // ✅ Si el backend regresó el ID, actualízalo (IMPORTANTE para autorizaciones)
+            const newId = parseInt(resp.id || "0") || 0;
+            if (newId > 0 && idField) idField.value = newId.toString();
+
+            // ✅ Refrescar autorizaciones (ya existirán porque el backend las crea al guardar nuevo)
+            if (newId > 0) {
+                cargarAutorizacionesDocumento(newId);
+            }
+
             if (btnClose) btnClose.click();
 
             if (table) table.bootstrapTable('refresh');
 
-            showSuccess(dlgTitle?.innerHTML || "OK", resp.mensaje);
+            showSuccess(dlgTitle?.innerHTML || "OK", resp.mensaje || "Guardado correctamente.");
         },
         error: function (xhr) {
             showError("Error", xhr?.responseText || "Error al guardar.");
         }
     });
 }
+
 
 async function cargarResponsablesPorArea(areaId, valorSeleccionado) {
     const sel = document.getElementById("inpDocumentacionRespoonsable");
@@ -1034,3 +1063,220 @@ function onCerrarClick() {
     //Removes danger text from fields
     $(".text-danger").children().remove()
 }
+
+// ==========================
+// AUTORIZACIONES UI (REEMPLAZO)
+// ==========================
+
+// Helper: URL de handler Razor Pages
+function _h(handler, qs) {
+    const q = qs ? `&${qs}` : "";
+    return `/Reportes/Documentacion?handler=${handler}${q}`;
+}
+
+function getAuthEls() {
+    return {
+        resumen: document.getElementById("authResumenBadge"),
+
+        badgeDirectivos: document.getElementById("authBadgeDirectivos"),
+        infoDirectivos: document.getElementById("authInfoDirectivos"),
+        btnsDirectivos: document.getElementById("authBtnsDirectivos"),
+
+        badgeReingenieria: document.getElementById("authBadgeReingenieria"),
+        infoReingenieria: document.getElementById("authInfoReingenieria"),
+        btnsReingenieria: document.getElementById("authBtnsReingenieria"),
+
+        badgeGerente: document.getElementById("authBadgeGerente"),
+        infoGerente: document.getElementById("authInfoGerente"),
+        btnsGerente: document.getElementById("authBtnsGerente"),
+    };
+}
+
+function _setBadge(el, estado) {
+    if (!el) return;
+
+    // esperado: "PENDIENTE" | "APROBADO" | "RECHAZADO" | "NA"
+    el.classList.remove("text-bg-secondary", "text-bg-success", "text-bg-danger", "text-bg-warning");
+
+    switch ((estado || "").toUpperCase()) {
+        case "APROBADO":
+            el.classList.add("text-bg-success");
+            el.textContent = "Aprobado";
+            break;
+        case "RECHAZADO":
+            el.classList.add("text-bg-danger");
+            el.textContent = "Rechazado";
+            break;
+        case "PENDIENTE":
+            el.classList.add("text-bg-secondary");
+            el.textContent = "Pendiente";
+            break;
+        case "NA":
+        default:
+            el.classList.add("text-bg-secondary");
+            el.textContent = "—";
+            break;
+    }
+}
+
+function _setInfo(el, texto) {
+    if (!el) return;
+    el.textContent = texto || "—";
+}
+
+function _showBtns(el, show) {
+    if (!el) return;
+    if (show) el.classList.remove("d-none");
+    else el.classList.add("d-none");
+}
+
+function resetAutorizacionesUI(modo) {
+    // modo: "NUEVO" | "CARGANDO" | "OK"
+    const a = getAuthEls();
+    if (!a.resumen && !a.badgeDirectivos && !a.badgeReingenieria && !a.badgeGerente) return;
+
+    if (a.resumen) {
+        a.resumen.className = "badge rounded-pill text-bg-secondary";
+        a.resumen.textContent =
+            (modo === "CARGANDO") ? "Autorización: Cargando..." :
+                (modo === "NUEVO") ? "Autorización: No aplica (nuevo)" :
+                    "Autorización: —";
+    }
+
+    _setBadge(a.badgeDirectivos, modo === "NUEVO" ? "NA" : "PENDIENTE");
+    _setBadge(a.badgeReingenieria, modo === "NUEVO" ? "NA" : "PENDIENTE");
+    _setBadge(a.badgeGerente, modo === "NUEVO" ? "NA" : "PENDIENTE");
+
+    _setInfo(a.infoDirectivos, "—");
+    _setInfo(a.infoReingenieria, "—");
+    _setInfo(a.infoGerente, "—");
+
+    _showBtns(a.btnsDirectivos, false);
+    _showBtns(a.btnsReingenieria, false);
+    _showBtns(a.btnsGerente, false);
+}
+
+function formatearInfoAuth(obj) {
+    if (!obj) return "—";
+
+    const estado = (obj.estado || "").toUpperCase();
+    if (!estado) return "—";
+
+    if (estado === "PENDIENTE") return "Pendiente de revisión";
+
+    if (estado === "APROBADO") {
+        const por = obj.por ? `Por: ${obj.por}` : "";
+        const fecha = obj.fecha ? `Fecha: ${obj.fecha}` : "";
+        return [por, fecha].filter(Boolean).join(" • ") || "Aprobado";
+    }
+
+    if (estado === "RECHAZADO") {
+        const por = obj.por ? `Por: ${obj.por}` : "";
+        const fecha = obj.fecha ? `Fecha: ${obj.fecha}` : "";
+        const com = obj.comentario ? `Motivo: ${obj.comentario}` : "";
+        return [por, fecha, com].filter(Boolean).join(" • ") || "Rechazado";
+    }
+
+    return "—";
+}
+
+function cargarAutorizacionesDocumento(documentoId) {
+    if (!documentoId || documentoId <= 0) {
+        resetAutorizacionesUI("NUEVO");
+        return;
+    }
+
+    resetAutorizacionesUI("CARGANDO");
+
+    $.ajax({
+        url: _h("Autorizaciones", `documentoId=${encodeURIComponent(documentoId)}`),
+        type: "GET",
+        success: function (resp) {
+            if (!resp || resp.tieneError) {
+                resetAutorizacionesUI("OK");
+                return;
+            }
+
+            //console.log("ROLES DEL USUARIO:", resp?.datos?.rolesUsuario);
+            //console.log("RESP COMPLETA:", resp);
+
+
+            const d = resp.datos || {};
+            const a = getAuthEls();
+
+            // resumen
+            if (a.resumen) {
+                const estado = (d.resumen || "PENDIENTE").toUpperCase();
+                a.resumen.className =
+                    "badge rounded-pill " + (estado === "APROBADO" ? "text-bg-success" :
+                        estado === "RECHAZADO" ? "text-bg-danger" : "text-bg-secondary");
+
+                a.resumen.textContent =
+                    `Autorización: ${estado === "APROBADO" ? "Aprobado" : estado === "RECHAZADO" ? "Rechazado" : "Pendiente"}`;
+            }
+
+            // estados
+            _setBadge(a.badgeDirectivos, d.directivos?.estado);
+            _setInfo(a.infoDirectivos, formatearInfoAuth(d.directivos));
+
+            _setBadge(a.badgeReingenieria, d.reingenieria?.estado);
+            _setInfo(a.infoReingenieria, formatearInfoAuth(d.reingenieria));
+
+            _setBadge(a.badgeGerente, d.gerente?.estado);
+            _setInfo(a.infoGerente, formatearInfoAuth(d.gerente));
+
+            // botones según permisos + pendiente
+            const p = d.permisos || {};
+            _showBtns(a.btnsDirectivos, !!p.puedeAutorizarDirectivos && (d.directivos?.estado || "").toUpperCase() === "PENDIENTE");
+            _showBtns(a.btnsReingenieria, !!p.puedeAutorizarReingenieria && (d.reingenieria?.estado || "").toUpperCase() === "PENDIENTE");
+            _showBtns(a.btnsGerente, !!p.puedeAutorizarGerente && (d.gerente?.estado || "").toUpperCase() === "PENDIENTE");
+        },
+        error: function () {
+            resetAutorizacionesUI("OK");
+        }
+    });
+}
+
+function onAutorizarClick(rol, aprobar) {
+    const idField = document.getElementById("inpDocumentacionId");
+    const raw = (idField?.value || "0").toString().trim();
+    const documentoId = (raw.toLowerCase() === "nuevo") ? 0 : (parseInt(raw) || 0);
+
+    if (!documentoId || documentoId <= 0) {
+        showError("Autorizar", "Primero guarda el documento antes de autorizar.");
+        return;
+    }
+
+    const token = $('input[name="__RequestVerificationToken"]').val();
+
+    const oParams = {
+        DocumentoId: documentoId,
+        Rol: rol,               // "DIRECTIVOS" | "REINGENIERIA" | "GERENTE_AREA"
+        Aprobar: !!aprobar,
+        Comentario: ""   
+    };
+
+    doAjax(
+        _h("Autorizar"),
+        oParams,
+        function (resp) {
+            if (!resp || resp.tieneError) {
+                showError("Autorizar", resp?.mensaje || "No se pudo autorizar.");
+                return;
+            }
+
+            showSuccess("Autorizar", resp?.mensaje || "Autorización actualizada.");
+
+            // refrescar UI del modal
+            cargarAutorizacionesDocumento(documentoId);
+
+            // refrescar tabla para ver cambios
+            if (table) table.bootstrapTable("refresh");
+        },
+        function (error) {
+            showError("Autorizar", error || "Error al autorizar.");
+        },
+        { headers: { "RequestVerificationToken": token } }
+    );
+}
+

@@ -226,6 +226,55 @@ namespace ERPSEI.Areas.Reportes.Pages
             public bool? Activo { get; set; }
         }
 
+        public enum RolAutorizacion
+        {
+            DIRECTIVOS = 1,
+            REINGENIERIA = 2,
+            GERENTE = 3
+        }
+
+        public enum EstadoAutorizacion
+        {
+            NA = 0,
+            PENDIENTE = 1,
+            APROBADO = 2,
+            RECHAZADO = 3
+        }
+
+        public class AutorizacionesDto
+        {
+            public string Resumen { get; set; } = "PENDIENTE";
+            public AutorizacionItemDto Directivos { get; set; } = new();
+            public AutorizacionItemDto Reingenieria { get; set; } = new();
+            public AutorizacionItemDto Gerente { get; set; } = new();
+            public PermisosAutorizacionDto Permisos { get; set; } = new();
+        }
+
+        public class AutorizacionItemDto
+        {
+            public string Estado { get; set; } = "PENDIENTE";
+            public string? Por { get; set; }
+            public string? Fecha { get; set; }
+            public string? Comentario { get; set; }
+        }
+
+        public class PermisosAutorizacionDto
+        {
+            public bool PuedeAutorizarDirectivos { get; set; }
+            public bool PuedeAutorizarReingenieria { get; set; }
+            public bool PuedeAutorizarGerente { get; set; }
+        }
+
+        public class AutorizarRequest
+        {
+            public int DocumentoId { get; set; }
+            public string Rol { get; set; } = "";
+            public bool Aprobar { get; set; }
+            public string? Comentario { get; set; }
+        }
+
+
+
         public DocumentacionModel
         (
         IStringLocalizer<DocumentacionModel> _stringLocalizer,
@@ -682,6 +731,48 @@ namespace ERPSEI.Areas.Reportes.Pages
 
                 await db.SaveChangesAsync();
 
+                // ==========================================================
+                // ✅ NUEVO: crear 3 registros iniciales en DocumentosAutorizaciones
+                //     (solo para documentos nuevos; si ya existieran no duplica)
+                // ==========================================================
+                if (esNuevo)
+                {
+                    var existenAuth = await db.DocumentosAutorizaciones
+                        .AnyAsync(a => a.DocumentoId == doc.Id);
+
+                    if (!existenAuth)
+                    {
+                        db.DocumentosAutorizaciones.AddRange(
+                            new DocumentoAutorizacion
+                            {
+                                DocumentoId = doc.Id,
+                                Rol = RolAutorizacion.DIRECTIVOS,
+                                Estado = "PENDIENTE",
+                                Activo = true,
+                                FechaCreacion = DateTime.Now
+                            },
+                            new DocumentoAutorizacion
+                            {
+                                DocumentoId = doc.Id,
+                                Rol = RolAutorizacion.REINGENIERIA,
+                                Estado = "PENDIENTE",
+                                Activo = true,
+                                FechaCreacion = DateTime.Now
+                            },
+                            new DocumentoAutorizacion
+                            {
+                                DocumentoId = doc.Id,
+                                Rol = RolAutorizacion.GERENTE,
+                                Estado = "PENDIENTE",
+                                Activo = true,
+                                FechaCreacion = DateTime.Now
+                            }
+                        );
+
+                        await db.SaveChangesAsync();
+                    }
+                }
+
                 DocumentoVersion? versionCreada = null;
 
                 if (input.Archivo != null && input.Archivo.Length > 0)
@@ -741,7 +832,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                         FechaPublicacion = null,
                         Comentarios = null,
 
-                        NombreArchivo = codigoFinal,   
+                        NombreArchivo = codigoFinal,
                         RutaArchivo = rutaPublica,
                         MimeType = input.Archivo.ContentType,
                         TamanoBytes = input.Archivo.Length,
@@ -755,8 +846,8 @@ namespace ERPSEI.Areas.Reportes.Pages
                     db.DocumentosVersion.Add(versionCreada);
 
                     doc.RutaArchivo = rutaPublica;
-                    doc.Ubicacion = rutaPublica;      
-                    doc.NombreArchivo = codigoFinal;  
+                    doc.Ubicacion = rutaPublica;
+                    doc.NombreArchivo = codigoFinal;
 
                     await db.SaveChangesAsync();
                 }
@@ -797,6 +888,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                 return new JsonResult(resp);
             }
         }
+
 
         private static string CalcularSiguienteVersion(string? lastVersion)
         {
@@ -846,6 +938,217 @@ namespace ERPSEI.Areas.Reportes.Pages
             return new JsonResult(resp);
         }
 
+        public async Task<JsonResult> OnGetAutorizaciones(int documentoId)
+        {
+            var resp = new ServerResponse(true, "No se pudieron consultar las autorizaciones.");
+
+            try
+            {
+                if (documentoId <= 0)
+                    return new JsonResult(resp);
+
+                var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    resp.Mensaje = "Usuario no identificado.";
+                    return new JsonResult(resp);
+                }
+
+                // ✅ Usuario + roles (para debug)
+                var user = await userManager.GetUserAsync(User);
+                var roles = (user != null)
+                    ? await userManager.GetRolesAsync(user)
+                    : new List<string>();
+
+                // ✅ Admin si tiene cualquiera de estos roles (ajusta a los reales)
+                bool esAdmin =
+                    roles.Any(r =>
+                        r.Equals("Administrador", StringComparison.OrdinalIgnoreCase) ||
+                        r.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                        r.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase)
+                    );
+
+                bool puedeDirectivos =
+                    esAdmin ||
+                    User.IsInRole("DirectorGeneral") ||
+                    User.IsInRole("Director") ||
+                    User.IsInRole("Socio");
+
+                bool puedeReingenieria =
+                    esAdmin ||
+                    User.IsInRole("ReingenieriaProcesos") ||
+                    User.IsInRole("Reingenieria");
+
+                bool puedeGerente =
+                    esAdmin ||
+                    User.IsInRole("Gerente") ||
+                    User.IsInRole("GerenteArea");
+
+                var auth = await db.DocumentosAutorizaciones
+                    .Include(x => x.AutorizadoPor)
+                    .Where(a => a.DocumentoId == documentoId && a.Activo)
+                    .ToListAsync();
+
+                AutorizacionItemDto Map(RolAutorizacion rol)
+                {
+                    var item = auth.FirstOrDefault(x => x.Rol == rol);
+
+                    if (item == null)
+                        return new AutorizacionItemDto { Estado = "PENDIENTE" };
+
+                    return new AutorizacionItemDto
+                    {
+                        Estado = item.Estado,
+                        Por = item.AutorizadoPor?.UserName,
+                        Fecha = item.Fecha?.ToString("yyyy-MM-dd"),
+                        Comentario = item.Comentario
+                    };
+                }
+
+                var dto = new AutorizacionesDto
+                {
+                    Directivos = Map(RolAutorizacion.DIRECTIVOS),
+                    Reingenieria = Map(RolAutorizacion.REINGENIERIA),
+                    Gerente = Map(RolAutorizacion.GERENTE),
+                    Permisos = new PermisosAutorizacionDto
+                    {
+                        PuedeAutorizarDirectivos = puedeDirectivos,
+                        PuedeAutorizarReingenieria = puedeReingenieria,
+                        PuedeAutorizarGerente = puedeGerente
+                    }
+                };
+
+                var estados = new[]
+                {
+            dto.Directivos.Estado,
+            dto.Reingenieria.Estado,
+            dto.Gerente.Estado
+        }
+                .Select(x => (x ?? "").ToUpper())
+                .ToList();
+
+                dto.Resumen =
+                    estados.Contains("RECHAZADO") ? "RECHAZADO" :
+                    estados.All(x => x == "APROBADO") ? "APROBADO" :
+                    "PENDIENTE";
+
+                resp.TieneError = false;
+                resp.Mensaje = "OK";
+
+                resp.Datos = new
+                {
+                    dto.Resumen,
+                    dto.Directivos,
+                    dto.Reingenieria,
+                    dto.Gerente,
+                    dto.Permisos,
+
+                    RolesUsuario = roles
+                };
+
+                return new JsonResult(resp);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al consultar autorizaciones.");
+                return new JsonResult(resp);
+            }
+        }
+
+
+        public async Task<JsonResult> OnPostAutorizar(AutorizarRequest input)
+        {
+            var resp = new ServerResponse(true, "No se pudo registrar la autorización.");
+
+            try
+            {
+                if (input == null || input.DocumentoId <= 0 || string.IsNullOrWhiteSpace(input.Rol))
+                    return new JsonResult(resp);
+
+                var userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    resp.Mensaje = "Usuario no identificado.";
+                    return new JsonResult(resp);
+                }
+
+                var user = await userManager.GetUserAsync(User);
+                var roles = (user != null)
+                    ? await userManager.GetRolesAsync(user)
+                    : new List<string>();
+
+                bool esAdmin =
+                    roles.Any(r =>
+                        r.Equals("Administrador", StringComparison.OrdinalIgnoreCase) ||
+                        r.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                        r.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase)
+                    );
+
+                string rol = input.Rol.Trim().ToUpper();
+
+                bool autorizado = esAdmin || rol switch
+                {
+                    "DIRECTIVOS" =>
+                        User.IsInRole("DirectorGeneral") ||
+                        User.IsInRole("Director") ||
+                        User.IsInRole("Socio"),
+
+                    "REINGENIERIA" =>
+                        User.IsInRole("ReingenieriaProcesos") ||
+                        User.IsInRole("Reingenieria"),
+
+                    "GERENTE" =>
+                        User.IsInRole("Gerente") ||
+                        User.IsInRole("GerenteArea"),
+
+                    _ => false
+                };
+
+                if (!autorizado)
+                {
+                    resp.Mensaje = "No tienes permisos para autorizar en este nivel.";
+                    return new JsonResult(resp);
+                }
+
+                RolAutorizacion rolEnum = Enum.Parse<RolAutorizacion>(rol);
+
+                var registro = await db.DocumentosAutorizaciones
+                    .FirstOrDefaultAsync(a =>
+                        a.DocumentoId == input.DocumentoId &&
+                        a.Rol == rolEnum);
+
+                if (registro == null)
+                {
+                    registro = new DocumentoAutorizacion
+                    {
+                        DocumentoId = input.DocumentoId,
+                        Rol = rolEnum,
+                        Activo = true,
+                        FechaCreacion = DateTime.Now
+                    };
+                    db.DocumentosAutorizaciones.Add(registro);
+                }
+
+                registro.Estado = input.Aprobar ? "APROBADO" : "RECHAZADO";
+                registro.Fecha = DateTime.Now;
+                registro.AutorizadoPorId = userId;
+                registro.Comentario = input.Comentario;
+
+                await db.SaveChangesAsync();
+
+                resp.TieneError = false;
+                resp.Mensaje = input.Aprobar
+                    ? "Autorizado correctamente."
+                    : "Rechazado correctamente.";
+
+                return new JsonResult(resp);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al autorizar documento.");
+                return new JsonResult(resp);
+            }
+        }
 
 
 

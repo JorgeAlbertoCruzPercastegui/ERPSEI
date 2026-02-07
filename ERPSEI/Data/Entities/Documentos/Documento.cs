@@ -60,5 +60,9 @@ namespace ERPSEI.Data.Entities.Documentos
         public EstatusDocumento? EstatusDocumento { get; set; }
         public ICollection<DocumentoVersion>? Versiones { get; set; }
         public ICollection<DocumentoPalabraClave>? PalabrasClave { get; set; }
+
+        public ICollection<DocumentoAutorizacion> Autorizaciones { get; set; } = new List<DocumentoAutorizacion>();
+
+
     }
 }

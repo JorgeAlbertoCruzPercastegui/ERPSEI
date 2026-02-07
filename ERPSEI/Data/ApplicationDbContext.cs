@@ -170,8 +170,12 @@ namespace ERPSEI.Data
 		public DbSet<DocumentoVersion> DocumentosVersion { get; set; }
 		public DbSet<EstatusDocumento> DocumentosEstatus { get; set; }
 
-		//Vacaciones
-		public DbSet<DiaFestivo> DiasFestivos { get; set; }
+        public DbSet<DocumentoAutorizacion> DocumentosAutorizaciones { get; set; } = null!;
+
+
+
+        //Vacaciones
+        public DbSet<DiaFestivo> DiasFestivos { get; set; }
         public DbSet<HistorialVacaciones> HistorialesVacaciones { get; set; }
         public DbSet<PeriodoVacacional> PeriodosVacacionales { get; set; }
         public DbSet<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
@@ -243,9 +247,6 @@ namespace ERPSEI.Data
 
         private static void BuildPoliticas(ModelBuilder b)
         {
-            // =========================
-            // TipoDocumento
-            // =========================
             b.Entity<TipoDocumento>(e =>
             {
                 e.ToTable("TiposDocumento");
@@ -277,9 +278,6 @@ namespace ERPSEI.Data
                 new TipoDocumento { Id = 10, Nombre = "Otros", Activo = true }
             );
 
-            // =========================
-            // EstatusDocumento
-            // =========================
             b.Entity<EstatusDocumento>(e =>
             {
                 e.ToTable("EstatusDocumento");
@@ -304,9 +302,6 @@ namespace ERPSEI.Data
                 new EstatusDocumento { Id = 3, Nombre = "En Revisión", Activo = true, EsPublicable = false }
             );
 
-            // =========================
-            // Documento (cabecera)
-            // =========================
             b.Entity<Documento>(e =>
             {
                 e.ToTable("Documentos");
@@ -370,9 +365,6 @@ namespace ERPSEI.Data
                 e.HasIndex(x => new { x.AreaId, x.TipoDocumentoId, x.EstatusDocumentoId, x.Activo });
             });
 
-            // =========================
-            // DocumentoVersion
-            // =========================
             b.Entity<DocumentoVersion>(e =>
             {
                 e.ToTable("DocumentoVersiones");
@@ -426,9 +418,6 @@ namespace ERPSEI.Data
                     .HasFilter("[EsActual] = 1");
             });
 
-            // =========================
-            // DocumentoPalabraClave
-            // =========================
             b.Entity<DocumentoPalabraClave>(e =>
             {
                 e.ToTable("DocumentoPalabrasClave");
@@ -449,6 +438,46 @@ namespace ERPSEI.Data
 
                 e.HasIndex(x => x.Palabra);
             });
+
+            b.Entity<DocumentoAutorizacion>(e =>
+            {
+                e.ToTable("DocumentosAutorizaciones");
+
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Rol)
+                    .HasConversion<string>()     // enum ⇄ string
+                    .HasMaxLength(20)
+                    .IsRequired();
+
+                e.Property(x => x.Estado)
+                    .HasMaxLength(20)
+                    .IsRequired()
+                    .HasDefaultValue("PENDIENTE");
+
+                e.Property(x => x.Comentario)
+                    .HasMaxLength(500);
+
+                e.Property(x => x.Activo)
+                    .HasDefaultValue(true);
+
+                e.Property(x => x.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                e.HasOne(x => x.Documento)
+                    .WithMany(d => d.Autorizaciones)
+                    .HasForeignKey(x => x.DocumentoId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                e.HasOne(x => x.AutorizadoPor)
+                    .WithMany()
+                    .HasForeignKey(x => x.AutorizadoPorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.DocumentoId, x.Rol })
+                    .IsUnique();
+            });
+
         }
 
 
