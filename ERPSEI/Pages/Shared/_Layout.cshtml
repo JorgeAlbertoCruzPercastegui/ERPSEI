@@ -423,11 +423,12 @@
                                                                     <i class="bi bi-fingerprint"></i> @Localizer["AsistenciaMenu"]
                                                                 </a>-->
                                                             }
-
+                                                            @if (permisos["sistemadocumentalcorporativo"])
+                                                            {
                                                             <a class="dropdown-item p-2 @_LayoutPages.PoliticaNavClass(ViewContext)" asp-area="Reportes" asp-page="/Documentacion">
                                                                     <i class="bi bi-journals"></i> @Localizer["PoliticaMenu"]
                                                                 </a>
-                                                            
+                                                            }
                                                         </div>
                                                     </div>
                                                 }
