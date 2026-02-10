@@ -1156,7 +1156,7 @@ function resetAutorizacionesUI(modo) {
     _showBtns(a.btnsGerente, false);
 }
 
-function formatearInfoAuth(obj) {
+/*function formatearInfoAuth(obj) {
     if (!obj) return "—";
 
     const estado = (obj.estado || "").toUpperCase();
@@ -1178,9 +1178,37 @@ function formatearInfoAuth(obj) {
     }
 
     return "—";
+}*/
+
+function formatearInfoAuth(obj) {
+    if (!obj) return "—";
+
+    const estado = (obj.estado || "").toUpperCase();
+    if (!estado) return "—";
+
+    if (estado === "PENDIENTE") return "Pendiente de revisión";
+
+    // ✅ Nuevo: prioriza PUESTO, fallback a "por" si existe
+    const puesto = obj.puesto ? `Autorizado Por: ${obj.puesto}` : "";
+    const por = obj.por ? `Por: ${obj.por}` : "";
+    const quien = puesto || por;
+
+    const fecha = obj.fecha ? `Fecha: ${obj.fecha}` : "";
+
+    if (estado === "APROBADO") {
+        return [quien, fecha].filter(Boolean).join(" • ") || "Aprobado";
+    }
+
+    if (estado === "RECHAZADO") {
+        const com = obj.comentario ? `Motivo: ${obj.comentario}` : "";
+        return [quien, fecha, com].filter(Boolean).join(" • ") || "Rechazado";
+    }
+
+    return "—";
 }
 
-function cargarAutorizacionesDocumento(documentoId) {
+
+/*function cargarAutorizacionesDocumento(documentoId) {
     if (!documentoId || documentoId <= 0) {
         resetAutorizacionesUI("NUEVO");
         return;
@@ -1235,7 +1263,70 @@ function cargarAutorizacionesDocumento(documentoId) {
             resetAutorizacionesUI("OK");
         }
     });
+}*/
+
+function cargarAutorizacionesDocumento(documentoId) {
+    if (!documentoId || documentoId <= 0) {
+        resetAutorizacionesUI("NUEVO");
+        return;
+    }
+
+    resetAutorizacionesUI("CARGANDO");
+
+    $.ajax({
+        url: _h("Autorizaciones", `documentoId=${encodeURIComponent(documentoId)}`),
+        type: "GET",
+        success: function (resp) {
+            if (!resp || resp.tieneError) {
+                resetAutorizacionesUI("OK");
+                return;
+            }
+
+            const d = resp.datos || {};
+            const a = getAuthEls();
+            
+            if (a.resumen) {
+                const estado = (d.resumen || "PENDIENTE").toUpperCase();
+                a.resumen.className =
+                    "badge rounded-pill " + (estado === "APROBADO" ? "text-bg-success" :
+                        estado === "RECHAZADO" ? "text-bg-danger" : "text-bg-secondary");
+
+                a.resumen.textContent =
+                    `Autorización: ${estado === "APROBADO" ? "Aprobado" : estado === "RECHAZADO" ? "Rechazado" : "Pendiente"}`;
+            }
+            
+            _setBadge(a.badgeDirectivos, d.directivos?.estado);
+            _setInfo(a.infoDirectivos, formatearInfoAuth(d.directivos));
+
+            _setBadge(a.badgeReingenieria, d.reingenieria?.estado);
+            _setInfo(a.infoReingenieria, formatearInfoAuth(d.reingenieria));
+
+            _setBadge(a.badgeGerente, d.gerente?.estado);
+            _setInfo(a.infoGerente, formatearInfoAuth(d.gerente));
+            
+            const p = d.permisos || {};
+
+            const estDir = (d.directivos?.estado || "").toUpperCase();
+            const estRei = (d.reingenieria?.estado || "").toUpperCase();
+            const estGer = (d.gerente?.estado || "").toUpperCase();
+            
+            _showBtns(a.btnsReingenieria, !!p.puedeAutorizarReingenieria && estRei === "PENDIENTE");
+            _showBtns(a.btnsGerente, !!p.puedeAutorizarGerente && estGer === "PENDIENTE");
+            
+            const habilitarDirectivos =
+                !!p.puedeAutorizarDirectivos &&
+                estDir === "PENDIENTE" &&
+                estRei === "APROBADO" &&
+                estGer === "APROBADO";
+
+            _showBtns(a.btnsDirectivos, habilitarDirectivos);
+        },
+        error: function () {
+            resetAutorizacionesUI("OK");
+        }
+    });
 }
+
 
 function onAutorizarClick(rol, aprobar) {
     const idField = document.getElementById("inpDocumentacionId");

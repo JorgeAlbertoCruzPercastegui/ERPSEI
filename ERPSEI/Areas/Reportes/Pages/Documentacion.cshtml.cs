@@ -254,6 +254,7 @@ namespace ERPSEI.Areas.Reportes.Pages
         {
             public string Estado { get; set; } = "PENDIENTE";
             public string? Por { get; set; }
+            public string? Puesto { get; set; }
             public string? Fecha { get; set; }
             public string? Comentario { get; set; }
         }
@@ -996,10 +997,24 @@ namespace ERPSEI.Areas.Reportes.Pages
                     if (item == null)
                         return new AutorizacionItemDto { Estado = "PENDIENTE" };
 
+                    var email = item.AutorizadoPor?.Email ?? item.AutorizadoPor?.UserName;
+
+                    string? puesto = null;
+                    if (!string.IsNullOrWhiteSpace(email))
+                    {
+                        puesto = db.Empleados
+                            .AsNoTracking()
+                            .Where(e => e.Email == email)
+                            .Select(e => e.Puesto.Nombre)                 // <-- ajusta si tu campo se llama Puesto/Posicion/Cargo
+                            .FirstOrDefault();
+                    }
+
+
                     return new AutorizacionItemDto
                     {
                         Estado = item.Estado,
                         Por = item.AutorizadoPor?.UserName,
+                        Puesto = puesto,
                         Fecha = item.Fecha?.ToString("yyyy-MM-dd"),
                         Comentario = item.Comentario
                     };
