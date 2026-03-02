@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity.UI.Services;
+﻿using System.Threading.Tasks;
+
 namespace ERPSEI.Email
 {
     public interface IEmailSender
     {
-        void SendEmailAsync(string email, string subject, string message);
+        Task SendEmailAsync(string email, string subject, string message);
     }
 }

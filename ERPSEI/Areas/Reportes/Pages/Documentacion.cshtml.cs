@@ -1005,7 +1005,7 @@ namespace ERPSEI.Areas.Reportes.Pages
                         puesto = db.Empleados
                             .AsNoTracking()
                             .Where(e => e.Email == email)
-                            .Select(e => e.Puesto.Nombre)                 // <-- ajusta si tu campo se llama Puesto/Posicion/Cargo
+                            .Select(e => e.Puesto.Nombre)
                             .FirstOrDefault();
                     }
 

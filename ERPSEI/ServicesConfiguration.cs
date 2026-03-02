@@ -50,46 +50,34 @@ namespace ERPSEI
         public static string MasterPassword { get; set; } = string.Empty;
         public static AppUser MasterUser { get; } = new AppUser() { EmailConfirmed = true, IsPreregisterAuthorized = true, PasswordResetNeeded = false, IsMaster = true };
 
-        public static void ConfigureEmail(WebApplicationBuilder _builder)
+
+    public static void ConfigureEmail(WebApplicationBuilder builder)
         {
-            //Obtiene la configuración del enviador de correos.
-            /*IConfigurationSection emailSection = _builder.Configuration.GetSection("Email");
-            string address = (string)(emailSection.GetValue(typeof(string), "address") ?? throw new InvalidOperationException("Email 'address' not found."));
-            string password = (string)(emailSection.GetValue(typeof(string), "password") ?? throw new InvalidOperationException("Email 'password' not found."));
-            string smtp = (string)(emailSection.GetValue(typeof(string), "smtp") ?? throw new InvalidOperationException("Email 'smtp' not found."));
-            int port = (int)(emailSection.GetValue(typeof(int), "port") ?? throw new InvalidOperationException("Email 'port' not found."));
+            // Validación mínima de configuración Graph
+            var graphSection = builder.Configuration.GetSection("Graph");
 
-            MasterUser.Email = address;
-            MasterUser.UserName = address;
+            var tenantId = graphSection.GetValue<string>("TenantId")
+                ?? throw new InvalidOperationException("Graph:TenantId not found.");
 
-            _builder.Services.AddTransient<IEmailSender, EmailSender>(x =>
-                new EmailSender(address, password, smtp, port)
-            );*/
-            IConfigurationSection emailSection = _builder.Configuration.GetSection("Email");
+            var clientId = graphSection.GetValue<string>("ClientId")
+                ?? throw new InvalidOperationException("Graph:ClientId not found.");
 
-            string address = emailSection.GetValue<string>("address")
-                ?? throw new InvalidOperationException("Email 'address' not found.");
+            var clientSecret = graphSection.GetValue<string>("ClientSecret")
+                ?? throw new InvalidOperationException("Graph:ClientSecret not found.");
 
-            string password = emailSection.GetValue<string>("password")
-                ?? throw new InvalidOperationException("Email 'password' not found.");
+            var fromEmail = graphSection.GetValue<string>("FromEmail")
+                ?? throw new InvalidOperationException("Graph:FromEmail not found.");
 
-            string smtp = emailSection.GetValue<string>("smtp")
-                ?? throw new InvalidOperationException("Email 'smtp' not found.");
+            // Registro DI: EmailSender (Graph)
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
 
-            int port = emailSection.GetValue<int>("port");
-
-            // El usuario master será este mismo correo
-            MasterUser.Email = address;
-            MasterUser.UserName = address;
-
-            // Registro CORRECTO del EmailSender
-            _builder.Services.AddTransient<IEmailSender>(x =>
-                new EmailSender(address, password, smtp, port)
-            );
-        }
+            // Si usas MasterUser en tu sistema, deja esto (opcional)
+            MasterUser.Email = fromEmail;
+            MasterUser.UserName = fromEmail;
+    }
 
 
-        public static void ConfigureDatabase(WebApplicationBuilder _builder)
+    public static void ConfigureDatabase(WebApplicationBuilder _builder)
         {
             var connectionString = _builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             _builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
