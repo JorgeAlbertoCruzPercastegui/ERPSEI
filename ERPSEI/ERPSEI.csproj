@@ -151,6 +151,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\documentos\" />
+    <Folder Include="wwwroot\uploads\header\" />
   </ItemGroup>
 
 </Project>

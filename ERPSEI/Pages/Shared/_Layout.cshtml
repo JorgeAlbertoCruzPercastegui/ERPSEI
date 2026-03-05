@@ -58,7 +58,7 @@
         ).Count >= 1;
         tieneReportesRH = accesos.FindAll(m =>
             (m.Modulo?.NombreNormalizado == "organigrama" ||
-            m.Modulo?.NombreNormalizado == "asistencia" || m.Modulo?.NombreNormalizado == "politica") &&
+            m.Modulo?.NombreNormalizado == "asistencia" || m.Modulo?.NombreNormalizado == "sistemadocumentalcorporativo") &&
             (m.PuedeTodo == 1 ||
             m.PuedeConsultar == 1 ||
             m.PuedeEditar == 1 ||
@@ -158,6 +158,11 @@
     if (!permisos.ContainsKey("generadorContrato"))
     {
         permisos["generadorContrato"] = false; // o true si quieres evitar el error y mostrarlo
+    }
+
+    if (!permisos.ContainsKey("banners"))
+    {
+        permisos["banners"] = false;
     }
 }
 <!DOCTYPE html>
@@ -542,6 +547,10 @@
                         <div class="quick-dd">
                             <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
                             <div class="quick-dd-menu quick-dd-menu-wide">
+                                @if (permisos["banners"])
+                                {
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Banners">Banners</a>
+                                }
                                 <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión de talento</a>
                                 <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
                                 <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>

@@ -6,41 +6,44 @@
 @{
     ViewData["Title"] = Localizer["Title"];
     ViewData["ActivePage"] = _LayoutPages.Inicio;
+
+    var banners = Model.BannersHome ?? new List<ERPSEI.Data.Entities.Intranet.Banner>();
 }
 
 <div class="text-center container-fluid">
-    <!--<h1 class="display-5"><b>E</b>nterprise <b>R</b>esource <b>P</b>lanner <b>SEI</b></h1>
-    <hr />
-    <p>
-        @Localizer["Welcome"]
-    </p>-->
-    <!--<img class="indeximage" src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/business2.jpg" />-->
-    <div id="bannerERP" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
 
+    @if (banners.Any())
+    {
+        <div id="bannerERP" class="carousel slide carousel-fade"
+             data-bs-ride="carousel"
+             data-bs-interval="5000">
+
+            <div class="carousel-inner rounded shadow">
+
+                @for (int i = 0; i < banners.Count; i++)
+                {
+                    var b = banners[i];
+
+                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                        <img src="@b.RutaArchivo"
+                             class="d-block w-100 banner-img"
+                             alt="banner">
+                    </div>
+                }
+
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- fallback si no hay banners -->
         <div class="carousel-inner rounded shadow">
-
             <div class="carousel-item active">
                 <img src="/img/banner3.jpg" class="d-block w-100 banner-img">
             </div>
-
-            <div class="carousel-item">
-                <img src="/img/banner5.jpg" class="d-block w-100 banner-img">
-            </div>
-
-            <div class="carousel-item">
-                <img src="/img/banner6.jpg" class="d-block w-100 banner-img">
-            </div>
-
         </div>
+    }
 
-    </div>
     <br />
     <br />
-    <!--
-    <p>
-        <i>
-            @Localizer["Instructions"]
-        </i>
-    </p>
-    -->
 </div>

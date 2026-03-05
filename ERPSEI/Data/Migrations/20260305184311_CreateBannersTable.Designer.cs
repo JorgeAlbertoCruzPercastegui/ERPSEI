@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260305184311_CreateBannersTable")]
+    partial class CreateBannersTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1146,63 +1149,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4050),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2164),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4062),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2178),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4063),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2179),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4064),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2180),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4065),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2181),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4066),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2182),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4067),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2183),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4068),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2184),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 5, 15, 41, 26, 182, DateTimeKind.Local).AddTicks(4070),
+                            FechaCreacion = new DateTime(2026, 3, 5, 12, 43, 9, 823, DateTimeKind.Local).AddTicks(2185),
                             Nombre = "Otros"
                         });
                 });
@@ -2269,79 +2272,6 @@ namespace ERPSEI.Data.Migrations
                     b.HasIndex("Activo", "EsPermanente", "Orden");
 
                     b.ToTable("Banners", (string)null);
-                });
-
-            modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.HeaderImagen", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("Descripcion")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("EsPermanente")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETDATE()");
-
-                    b.Property<string>("NombreArchivo")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<int>("Orden")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1);
-
-                    b.Property<string>("RutaArchivo")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Temporada")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
-                    b.Property<string>("Titulo")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
-
-                    b.Property<string>("UsuarioCreadorId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("VigenciaFin")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("VigenciaInicio")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioCreadorId");
-
-                    b.HasIndex("VigenciaFin");
-
-                    b.HasIndex("VigenciaInicio");
-
-                    b.HasIndex("Activo", "EsPermanente", "Orden", "Temporada");
-
-                    b.ToTable("HeaderImagenes", (string)null);
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Polizas.GrupoPoliza", b =>
@@ -6483,16 +6413,6 @@ namespace ERPSEI.Data.Migrations
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.Banner", b =>
-                {
-                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "UsuarioCreador")
-                        .WithMany()
-                        .HasForeignKey("UsuarioCreadorId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("UsuarioCreador");
-                });
-
-            modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.HeaderImagen", b =>
                 {
                     b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "UsuarioCreador")
                         .WithMany()

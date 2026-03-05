@@ -3,6 +3,7 @@ using ERPSEI.Data.Entities.Clientes;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.Reportes;
+using ERPSEI.Data.Entities.Intranet;
 using ERPSEI.Data.Entities.SAT;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
@@ -197,7 +198,13 @@ namespace ERPSEI.Data
 		public DbSet<AccesoModulo> AccesosModulos { get; set; }
 		public DbSet<Modulo> Modulos { get; set; }
 
-		public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        //Intranet
+        public DbSet<Banner> Banners { get; set; }
+
+        //Header
+        public DbSet<HeaderImagen> HeaderImagenes { get; set; }
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
 
@@ -243,7 +250,13 @@ namespace ERPSEI.Data
 			//Políticas
 			BuildPoliticas(modelBuilder);
 
-		}
+			//Intranet
+            BuildBanners(modelBuilder);
+
+			//Header
+            BuildHeaderImagenes(modelBuilder);
+
+        }
 
         private static void BuildPoliticas(ModelBuilder b)
         {
@@ -480,6 +493,66 @@ namespace ERPSEI.Data
 
         }
 
+        //Intranet
+        private static void BuildBanners(ModelBuilder b)
+        {
+            b.Entity<Banner>(e =>
+            {
+                e.ToTable("Banners");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Titulo).HasMaxLength(150);
+                e.Property(x => x.Descripcion).HasMaxLength(500);
+
+                e.Property(x => x.NombreArchivo).IsRequired().HasMaxLength(300);
+                e.Property(x => x.RutaArchivo).IsRequired().HasMaxLength(500);
+
+                e.Property(x => x.Activo).HasDefaultValue(true);
+                e.Property(x => x.EsPermanente).HasDefaultValue(false);
+                e.Property(x => x.Orden).HasDefaultValue(1);
+                e.Property(x => x.FechaCreacion).HasDefaultValueSql("GETDATE()");
+
+                e.HasOne(x => x.UsuarioCreador)
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioCreadorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.Activo, x.EsPermanente, x.Orden });
+                e.HasIndex(x => x.VigenciaInicio);
+                e.HasIndex(x => x.VigenciaFin);
+            });
+        }
+
+        //Header
+        private static void BuildHeaderImagenes(ModelBuilder b)
+        {
+            b.Entity<ERPSEI.Data.Entities.Intranet.HeaderImagen>(e =>
+            {
+                e.ToTable("HeaderImagenes");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Temporada).IsRequired().HasMaxLength(80);
+                e.Property(x => x.Titulo).HasMaxLength(150);
+                e.Property(x => x.Descripcion).HasMaxLength(500);
+
+                e.Property(x => x.NombreArchivo).IsRequired().HasMaxLength(300);
+                e.Property(x => x.RutaArchivo).IsRequired().HasMaxLength(500);
+
+                e.Property(x => x.Activo).HasDefaultValue(true);
+                e.Property(x => x.EsPermanente).HasDefaultValue(false);
+                e.Property(x => x.Orden).HasDefaultValue(1);
+                e.Property(x => x.FechaCreacion).HasDefaultValueSql("GETDATE()");
+
+                e.HasOne(x => x.UsuarioCreador)
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioCreadorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.Activo, x.EsPermanente, x.Orden, x.Temporada });
+                e.HasIndex(x => x.VigenciaInicio);
+                e.HasIndex(x => x.VigenciaFin);
+            });
+        }
 
 
         private static void BuildTipoContratos(ModelBuilder b)
@@ -1118,7 +1191,8 @@ namespace ERPSEI.Data
 					new Modulo() { Id = 17, Nombre = "Roles", NombreNormalizado = "roles", Deshabilitado = 0, Categoria = "catalogo" },
 					new Modulo() { Id = 18, Nombre = "Activos Fijos", NombreNormalizado = "activosfijos", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 19, Nombre = "Conciliaciones", NombreNormalizado = "conciliaciones", Deshabilitado = 0, Categoria = "erp" },
-					new Modulo() { Id = 20, Nombre = "Administrador de Comprobantes", NombreNormalizado = "administradordecomprobantes", Deshabilitado = 0, Categoria = "erp" }
+					new Modulo() { Id = 20, Nombre = "Administrador de Comprobantes", NombreNormalizado = "administradordecomprobantes", Deshabilitado = 0, Categoria = "erp" },
+                    new Modulo() { Id = 25, Nombre = "Banners", NombreNormalizado = "banners", Deshabilitado = 0, Categoria = "erp" }
                 );
 		}
 
