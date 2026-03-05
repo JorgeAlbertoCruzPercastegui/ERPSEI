@@ -27,6 +27,7 @@
     "httpsDev": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "Identity/Account/Login",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ERPSEI_ALPHA": "C&[ClTX~~8BL9wn!,{_;{T+Mq-a=(nm+",

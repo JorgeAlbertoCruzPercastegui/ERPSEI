@@ -166,11 +166,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ERPSEI</title>
+
+    <!-- CSS adicional por página -->
+    @RenderSection("Styles", required: false)
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Password-rules.css" />
     <link rel="stylesheet" href="~/css/SpaceMain.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ERPSEI.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
     <header>
@@ -463,81 +469,98 @@
                 </div>
 
                 <!-- Derecha -->
-                <nav class="quick-nav d-flex align-items-center gap-3">
+                <div class="quick-nav-wrap position-relative">
 
-                    <a class="quick-link" asp-area="" asp-page="/MiEspacio">Mi espacio</a>
+                    <!-- Botón hamburguesa (solo móvil) -->
+                    <button class="quick-nav-toggle d-lg-none"
+                            type="button"
+                            aria-expanded="false"
+                            aria-controls="quickNavMenu">
+                        ☰
+                    </button>
 
-                    <!-- Biblioteca corporativa -->
-                    <div class="quick-dd">
-                        <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca corporativa</a>
-                        <div class="quick-dd-menu">
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Manuales</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Documentacion">Políticas</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Reglamentos</a>
+                    <!-- Menú -->
+                    <!--<nav id="quickNavMenu" class="quick-nav d-flex align-items-center gap-3">-->
+                        <nav id="quickNavMenu" class="quick-nav align-items-center gap-3">
+                        
+
+                        <a class="quick-link" asp-area="" asp-page="">Mi espacio</a>
+
+                        <!-- Biblioteca corporativa -->
+                        <div class="quick-dd">
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca corporativa</a>
+                            <div class="quick-dd-menu">
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Manuales</a>
+                                <a class="quick-dd-item" asp-area="Reportes" asp-page="/Documentacion">Políticas</a>
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Reglamentos</a>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Incidencias -->
-                    <div class="quick-dd">
-                        <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
-                        <div class="quick-dd-menu">
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Permisos por enfermedad</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Incapacidades</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Vacaciones">Vacaciones</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Retardos</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Home Office</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Ausencias justificadas</a>
+                        <!-- Incidencias -->
+                        <div class="quick-dd">
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
+                            <div class="quick-dd-menu">
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Permisos por enfermedad</a>
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Incapacidades</a>
+                                <a class="quick-dd-item" asp-area="ERP" asp-page="/Vacaciones">Vacaciones</a>
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Retardos</a>
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Home Office</a>
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Ausencias justificadas</a>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Workspace corporativo -->
-                    <div class="quick-dd">
-                        <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace corporativo</a>
-                        <div class="quick-dd-menu">
-                            <a class="quick-dd-item" href="h" target="_blank" rel="noopener">Time</a>
-                            <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Kyndom Space</a>
-                            <a class="quick-dd-item" href="https://projectseiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Project</a>
-                            <a class="quick-dd-item" href="" target="_blank" rel="noopener">Friday</a>
+                        <!-- Workspace corporativo -->
+                        <div class="quick-dd">
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace corporativo</a>
+                            <div class="quick-dd-menu">
+                                <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Time</a>
+                                <a class="quick-dd-item" href="https://seiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Space</a>
+                                <a class="quick-dd-item" href="https://projectseiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Project</a>
+                                <a class="quick-dd-item" href="" target="_blank" rel="noopener">Friday</a>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Gestión corporativa -->
-                    <div class="quick-dd">
-                        <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión corporativa</a>
-                        <div class="quick-dd-menu">
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
-                            <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
+                        <!-- Gestión corporativa -->
+                        <div class="quick-dd">
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión corporativa</a>
+                            <div class="quick-dd-menu">
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
+                                <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Comunidad -->
-                    <div class="quick-dd">
-                        <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
-                        <div class="quick-dd-menu">
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Encuestas</a>
-                            <a class="quick-dd-item" asp-area="" asp-page="/Building">Eventos</a>
+                        <!-- Comunidad -->
+                        <div class="quick-dd">
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
+                            <div class="quick-dd-menu">
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Encuestas</a>
+                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Eventos</a>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Recursos Humanos -->
-                    <div class="quick-dd">
-                        <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
-                        <div class="quick-dd-menu quick-dd-menu-wide">
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión de talento</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Puestos">Puestos</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Areas">Áreas</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Subareas">Subáreas</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Oficinas">Oficinas</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Origenes">Orígenes</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Niveles">Niveles</a>
-                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Perfiles">Perfiles</a>
+                        <!-- Recursos Humanos -->
+                        <div class="quick-dd">
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
+                            <div class="quick-dd-menu quick-dd-menu-wide">
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión de talento</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Puestos">Puestos</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Areas">Áreas</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Subareas">Subáreas</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Oficinas">Oficinas</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Origenes">Orígenes</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Niveles">Niveles</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Perfiles">Perfiles</a>
+                            </div>
                         </div>
-                    </div>
-                </nav>
+
+                    </nav>
+                </div>
             </div>
         }
+
+        <br>
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
@@ -546,7 +569,7 @@
     <footer class="border-top footer text-muted">
         <div class="container">
             <div class="float-start">
-                &copy; @DateTime.Now.Year - ERPSEI - <a asp-area="" asp-page="/Privacy">@Localizer["PrivacyMenu"]</a> - <b>@Localizer["DevMenu"]</b>
+                &copy; @DateTime.Now.Year - ERPSEI - <a asp-area="" asp-page="/Privacy">@Localizer["PrivacyMenu"]</a> <!-- <b>@Localizer["DevMenu"]</b>-->
             </div>
             <div class="float-end d-none d-sm-inline-block d-md-inline-block d-lg-inline-block">
                 @Localizer["RightFooter"]
@@ -567,6 +590,82 @@
         }
     </script>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const btn = document.querySelector(".quick-nav-toggle");
+            const menu = document.getElementById("quickNavMenu");
+
+            if (!btn || !menu) return;
+
+            const isMobile = () => window.matchMedia("(max-width: 991.98px)").matches;
+
+            function closeMenu() {
+                menu.classList.remove("is-open");
+                btn.setAttribute("aria-expanded", "false");
+                if (isMobile()) menu.style.display = "none";
+                document.querySelectorAll(".quick-dd.open").forEach(x => x.classList.remove("open"));
+            }
+
+            function openMenu() {
+                menu.classList.add("is-open");
+                btn.setAttribute("aria-expanded", "true");
+                if (isMobile()) menu.style.display = "flex";
+            }
+
+            function toggleMenu(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // En desktop NO uses el panel móvil
+                if (!isMobile()) return;
+
+                menu.classList.contains("is-open") ? closeMenu() : openMenu();
+            }
+
+            // Arranca cerrado SOLO en móvil
+            if (isMobile()) closeMenu();
+
+            btn.addEventListener("click", toggleMenu);
+
+            // ✅ Cerrar al hacer click fuera SOLO en móvil
+            document.addEventListener("click", function (e) {
+                if (!isMobile()) return;
+                if (!menu.contains(e.target) && !btn.contains(e.target)) closeMenu();
+            });
+
+            // Dropdowns en móvil por tap (solo móvil)
+            document.querySelectorAll(".quick-dd-toggle").forEach(t => {
+                t.addEventListener("click", function (e) {
+                    if (!isMobile()) return;
+
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const parent = this.closest(".quick-dd");
+                    if (!parent) return;
+
+                    document.querySelectorAll(".quick-dd.open").forEach(x => {
+                        if (x !== parent) x.classList.remove("open");
+                    });
+
+                    parent.classList.toggle("open");
+                });
+            });
+
+            // Al redimensionar: limpia estados
+            window.addEventListener("resize", function () {
+                if (!isMobile()) {
+                    // Desktop: deja que tu menú funcione normal (sin panel)
+                    menu.style.display = "";
+                    menu.classList.remove("is-open");
+                    btn.setAttribute("aria-expanded", "false");
+                    document.querySelectorAll(".quick-dd.open").forEach(x => x.classList.remove("open"));
+                } else {
+                    closeMenu();
+                }
+            });
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
