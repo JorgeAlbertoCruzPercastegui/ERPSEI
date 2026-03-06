@@ -1,0 +1,56 @@
+﻿/* ===============================
+   HEADER DINÁMICO ERP / INTRANET
+   =============================== */
+
+.header-bg {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* elimina fondo blanco bootstrap */
+    background-color: transparent !important;
+    /* elimina bordes y sombras */
+    border-bottom: none !important;
+    box-shadow: none !important;
+    position: relative;
+}
+
+/* contenedor interno */
+.header-bg-inner {
+    background: transparent !important;
+}
+
+/* asegura que nada dentro tenga fondo blanco */
+.header-bg .container {
+    background: transparent !important;
+}
+
+/* opcional: overlay suave para mejorar lectura */
+.header-bg::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* transparencia del header */
+    background: rgba(255,255,255,0.15);
+    pointer-events: none;
+}
+
+/* asegura que el contenido quede arriba del overlay */
+.header-bg > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* tamaño del logo */
+.brandimage {
+    height: 45px;
+}
+
+/* navbar links visibles sobre imagen */
+.header-bg .nav-link {
+    color: #000 !important;
+}
+
+/* botón cerrar sesión */
+.header-bg .logout-link {
+    color: #000 !important;
+}
