@@ -1,8 +1,6 @@
 ﻿@using ERPSEI.Data.Entities.Usuarios
 @using Microsoft.AspNetCore.Mvc.Localization
 @using ERPSEI.Data.Managers.Usuarios;
-
-@* ✅ NUEVO *@
 @using ERPSEI.Data
 @using ERPSEI.Data.Entities.Intranet
 @using Microsoft.EntityFrameworkCore
@@ -13,8 +11,6 @@
 @inject AppRoleManager RolesManager;
 @inject AppUserManager UsuariosManager;
 @inject IModuloManager ModulosManager;
-
-@* ✅ NUEVO *@
 @inject ApplicationDbContext Db
 
 @{
@@ -60,6 +56,31 @@
         .FirstOrDefaultAsync();
 
     string headerBg = headerImg?.RutaArchivo ?? "";
+
+    // =========================================
+    // CUMPLEAÑOS DEL MES
+    // =========================================
+
+    var hoyCumple = DateTime.Today;
+    int mesActualCumple = hoyCumple.Month;
+    int diaActualCumple = hoyCumple.Day;
+
+    var cumpleaniosMes = await Db.Empleados
+     .AsNoTracking()
+     .Where(e => e.FechaNacimiento.Month == mesActualCumple)
+     .Select(e => new
+     {
+         NombreCompleto = (e.Nombre ?? "") + " " + (e.ApellidoPaterno ?? "") + " " + (e.ApellidoMaterno ?? ""),
+         Dia = e.FechaNacimiento.Day,
+         Puesto = e.Puesto != null ? e.Puesto.Nombre : ""
+     })
+     .OrderBy(e => e.Dia)
+     .ToListAsync();
+
+    string nombreMesActual = hoyCumple.ToString("MMMM", new System.Globalization.CultureInfo("es-MX"));
+
+    var paginaActual = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    bool esPaginaInicio = paginaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase);
 
     if (accesos.Count >= 0)
     {
@@ -218,6 +239,7 @@
     <link rel="stylesheet" href="~/css/SpaceMain.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/SpaceMain.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/Header.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Cumpleanios.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ERPSEI.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -277,10 +299,10 @@
 
                     <nav id="quickNavMenu" class="quick-nav align-items-center gap-3">
 
-                        <a class="quick-link" asp-area="" asp-page="">Mi espacio</a>
+                        <a class="quick-link" asp-area="" asp-page="">Mi Espacio</a>
 
                         <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca corporativa</a>
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
                             <div class="quick-dd-menu">
                                 <a class="quick-dd-item" asp-area="" asp-page="/Building">Manuales</a>
                                 <a class="quick-dd-item" asp-area="Reportes" asp-page="/Documentacion">Políticas</a>
@@ -301,7 +323,7 @@
                         </div>
 
                         <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace corporativo</a>
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace Corporativo</a>
                             <div class="quick-dd-menu">
                                 <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Time</a>
                                 <a class="quick-dd-item" href="https://seiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Space</a>
@@ -311,7 +333,7 @@
                         </div>
 
                         <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión corporativa</a>
+                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión Corporativa</a>
                             <div class="quick-dd-menu">
                                 <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
                                 <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
@@ -334,7 +356,7 @@
                                     <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Banners">Banners</a>
                                     <a class="quick-dd-item" asp-area="Catalogos" asp-page="/HeaderImagenes">Imágenes Header</a>
                                 }
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión de talento</a>
+                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión De Talento</a>
                                 <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
                                 <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>
                                 <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Puestos">Puestos</a>
@@ -357,6 +379,77 @@
             @RenderBody()
         </main>
     </div>
+
+    @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
+    {
+        <div class="birthday-wrapper">
+            <div class="birthday-card shadow-sm">
+                <div class="birthday-header">
+                    <div class="birthday-title-wrap">
+                        <span class="birthday-icon">🎉</span>
+                        <div>
+                            <div class="birthday-title">Cumpleaños del mes</div>
+                            <div class="birthday-subtitle">@nombreMesActual</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="birthday-body">
+                    @{
+                        int tamGrupo = 4;
+                        int total = cumpleaniosMes.Count;
+                        int totalColumnas = (int)Math.Ceiling(total / (double)tamGrupo);
+                    }
+
+                    <div class="birthday-columns columns-@totalColumnas">
+                        @for (int c = 0; c < totalColumnas; c++)
+                        {
+                            var grupo = cumpleaniosMes.Skip(c * tamGrupo).Take(tamGrupo).ToList();
+
+                            <div class="birthday-column">
+                                @foreach (var item in grupo)
+                                {
+                                    string estadoClase = item.Dia == diaActualCumple
+                                    ? "birthday-hoy"
+                                    : item.Dia < diaActualCumple
+                                    ? "birthday-pasado"
+                                    : "birthday-proximo";
+
+                                    <div class="birthday-item @estadoClase">
+                                        <div class="birthday-day">@item.Dia</div>
+
+                                        <div class="birthday-info">
+                                            <div class="birthday-name">@item.NombreCompleto</div>
+
+                                            @if (!string.IsNullOrWhiteSpace(item.Puesto))
+                                            {
+                                                <div class="birthday-role">@item.Puesto</div>
+                                            }
+                                        </div>
+
+                                        <div class="birthday-badge">
+                                            @if (item.Dia == diaActualCumple)
+                                            {
+                                                <span>Hoy 🎂</span>
+                                            }
+                                            else if (item.Dia < diaActualCumple)
+                                            {
+                                                <span>Pasó</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Próximo</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <footer class="border-top footer text-muted">
         <div class="container">
