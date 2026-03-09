@@ -204,6 +204,9 @@ namespace ERPSEI.Data
         //Header
         public DbSet<HeaderImagen> HeaderImagenes { get; set; }
 
+        //Políticas y Manuales
+        public DbSet<ManualPoliticaIntranet> ManualesPoliticasIntranet { get; set; }
+
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -255,6 +258,9 @@ namespace ERPSEI.Data
 
 			//Header
             BuildHeaderImagenes(modelBuilder);
+
+            //Políticas y manuales
+            BuildManualesPoliticasIntranet(modelBuilder);
 
         }
 
@@ -551,6 +557,60 @@ namespace ERPSEI.Data
                 e.HasIndex(x => new { x.Activo, x.EsPermanente, x.Orden, x.Temporada });
                 e.HasIndex(x => x.VigenciaInicio);
                 e.HasIndex(x => x.VigenciaFin);
+            });
+        }
+
+        //Políticas y manuales
+        private void BuildManualesPoliticasIntranet(ModelBuilder builder)
+        {
+            builder.Entity<ManualPoliticaIntranet>(entity =>
+            {
+                entity.ToTable("ManualesPoliticasIntranet");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Titulo)
+                    .IsRequired()
+                    .HasMaxLength(250);
+
+                entity.Property(e => e.Descripcion)
+                    .HasMaxLength(1000);
+
+                entity.Property(e => e.Tipo)
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.ModoVisualizacion)
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.CodigoHtml)
+                    .HasColumnType("nvarchar(max)");
+
+                entity.Property(e => e.UrlExterna)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.NombreArchivoPdf)
+                    .HasMaxLength(250);
+
+                entity.Property(e => e.RutaArchivoPdf)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.NombrePortada)
+                    .HasMaxLength(250);
+
+                entity.Property(e => e.RutaPortada)
+                    .HasMaxLength(500);
+
+                entity.Property(e => e.Activo)
+                    .HasDefaultValue(true);
+
+                entity.Property(e => e.Publicado)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.Orden)
+                    .HasDefaultValue(1);
+
+                entity.Property(e => e.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
             });
         }
 

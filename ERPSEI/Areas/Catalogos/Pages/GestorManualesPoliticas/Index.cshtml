@@ -1,0 +1,298 @@
+﻿@page
+@model ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas.IndexModel
+@{
+    ViewData["Title"] = "Gestor de Manuales, Políticas y Reglamentos";
+}
+
+<h2 class="mb-3">Gestor de Manuales y Políticas</h2>
+
+@if (TempData["Ok"] != null)
+{
+    <div class="alert alert-success">@TempData["Ok"]</div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@err.ErrorMessage</div>
+        }
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title mb-3">
+            @(Model.EsEdicion ? "Editar registro" : "Nuevo registro")
+        </h5>
+
+        <form method="post" enctype="multipart/form-data" asp-page-handler="Guardar">
+            <input type="hidden" asp-for="Input.Id" />
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="form-label">Título</label>
+                    <input class="form-control" asp-for="Input.Titulo" />
+                    <span class="text-danger" asp-validation-for="Input.Titulo"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-select" asp-for="Input.Tipo">
+                        <option value="Manual">Manual</option>
+                        <option value="Politica">Política</option>
+                        <option value="Reglamento">Reglamento</option>
+                    </select>
+                    <span class="text-danger" asp-validation-for="Input.Tipo"></span>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label">Descripción</label>
+                    <textarea class="form-control" asp-for="Input.Descripcion" rows="2"></textarea>
+                    <span class="text-danger" asp-validation-for="Input.Descripcion"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Modo de visualización</label>
+                    <select class="form-select" asp-for="Input.ModoVisualizacion" id="modoVisualizacion">
+                        <option value="Html">HTML incrustado</option>
+                        <option value="Link">Link externo</option>
+                        <option value="Pdf">PDF</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Orden</label>
+                    <input class="form-control" type="number" asp-for="Input.Orden" min="1" />
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="Input.Activo" />
+                        <label class="form-check-label" asp-for="Input.Activo">Activo</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" asp-for="Input.Publicado" />
+                        <label class="form-check-label" asp-for="Input.Publicado">Publicado</label>
+                    </div>
+                </div>
+
+                <div class="col-md-12" id="bloqueHtml">
+                    <label class="form-label">Código HTML / incrustado</label>
+                    <textarea class="form-control" asp-for="Input.CodigoHtml" rows="6" placeholder="Pega aquí el código HTML para visualización tipo revista"></textarea>
+                </div>
+
+                <div class="col-md-12 d-none" id="bloqueLink">
+                    <label class="form-label">URL externa</label>
+                    <input class="form-control" asp-for="Input.UrlExterna" placeholder="https://..." />
+                </div>
+
+                <div class="col-md-12 d-none" id="bloquePdf">
+                    <label class="form-label">Archivo PDF</label>
+                    <input class="form-control" type="file" asp-for="Input.ArchivoPdf" accept=".pdf" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Portada (JPG/PNG/WEBP)</label>
+                    <input class="form-control" type="file" asp-for="Input.Portada" accept=".jpg,.jpeg,.png,.webp" id="inputPortada" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Vista previa portada</label>
+                    <div class="border rounded p-2 text-center bg-light d-flex align-items-center justify-content-center"
+                         style="min-height:160px;">
+                        <img id="previewPortada" src="" style="max-height:160px; max-width:100%; display:none;" />
+                        <div id="previewPortadaTexto" class="text-muted">Selecciona una portada</div>
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex justify-content-end">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-save"></i> @(Model.EsEdicion ? "Actualizar" : "Guardar")
+                    </button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title mb-3">Registros cargados</h5>
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:140px;">Portada</th>
+                        <th>Título</th>
+                        <th>Tipo</th>
+                        <th>Modo</th>
+                        <th>Orden</th>
+                        <th>Publicado</th>
+                        <th style="width:260px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Lista.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-muted text-center">No hay registros cargados.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Lista)
+                        {
+                            <tr>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(item.RutaPortada))
+                                    {
+                                        <img src="@item.RutaPortada"
+                                             class="img-fluid rounded border"
+                                             style="max-height:80px;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Sin portada</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div class="fw-semibold">@item.Titulo</div>
+                                    <div class="text-muted small">@item.Descripcion</div>
+                                </td>
+
+                                <td>@item.Tipo</td>
+                                <td>@item.ModoVisualizacion</td>
+                                <td>@item.Orden</td>
+
+                                <td>
+                                    @if (item.Publicado)
+                                    {
+                                        <span class="badge text-bg-primary">Publicado</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-warning text-dark">No publicado</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <form method="post" asp-page-handler="ToggleActivo" class="d-inline">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button class="btn btn-sm @(item.Activo ? "btn-outline-secondary" : "btn-outline-success")"
+                                                    type="submit">
+                                                @(item.Activo ? "Desactivar" : "Activar")
+                                            </button>
+                                        </form>
+
+                                        <form method="post" asp-page-handler="TogglePublicado" class="d-inline">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button class="btn btn-sm @(item.Publicado ? "btn-outline-warning" : "btn-outline-primary")"
+                                                    type="submit">
+                                                @(item.Publicado ? "Despublicar" : "Publicar")
+                                            </button>
+                                        </form>
+
+                                        <a asp-page="./Index"
+                                           asp-route-id="@item.Id"
+                                           class="btn btn-sm btn-outline-info">
+                                            Editar
+                                        </a>
+
+                                        <form method="post"
+                                              asp-page-handler="Eliminar"
+                                              class="d-inline"
+                                              onsubmit="return confirm('¿Eliminar este registro?');">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button class="btn btn-sm btn-outline-danger" type="submit">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleModoVisualizacion() {
+            const selectModo = document.getElementById("modoVisualizacion");
+            if (!selectModo) return;
+
+            const modo = selectModo.value;
+
+            const bloqueHtml = document.getElementById("bloqueHtml");
+            const bloqueLink = document.getElementById("bloqueLink");
+            const bloquePdf = document.getElementById("bloquePdf");
+
+            if (bloqueHtml) bloqueHtml.classList.add("d-none");
+            if (bloqueLink) bloqueLink.classList.add("d-none");
+            if (bloquePdf) bloquePdf.classList.add("d-none");
+
+            if (modo === "Html") {
+                if (bloqueHtml) bloqueHtml.classList.remove("d-none");
+            }
+            else if (modo === "Link") {
+                if (bloqueLink) bloqueLink.classList.remove("d-none");
+            }
+            else if (modo === "Pdf") {
+                if (bloquePdf) bloquePdf.classList.remove("d-none");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const selectModo = document.getElementById("modoVisualizacion");
+            if (selectModo) {
+                selectModo.addEventListener("change", toggleModoVisualizacion);
+            }
+
+            // ejecuta al cargar la página
+            toggleModoVisualizacion();
+
+            const inputPortada = document.getElementById("inputPortada");
+            const previewPortada = document.getElementById("previewPortada");
+            const previewPortadaTexto = document.getElementById("previewPortadaTexto");
+
+            if (inputPortada) {
+                inputPortada.addEventListener("change", function () {
+                    const file = this.files && this.files[0];
+
+                    if (!file) {
+                        if (previewPortada) {
+                            previewPortada.style.display = "none";
+                            previewPortada.src = "";
+                        }
+                        if (previewPortadaTexto) {
+                            previewPortadaTexto.style.display = "block";
+                        }
+                        return;
+                    }
+
+                    const url = URL.createObjectURL(file);
+
+                    if (previewPortada) {
+                        previewPortada.src = url;
+                        previewPortada.style.display = "block";
+                    }
+
+                    if (previewPortadaTexto) {
+                        previewPortadaTexto.style.display = "none";
+                    }
+                });
+            }
+        });
+    </script>
+}

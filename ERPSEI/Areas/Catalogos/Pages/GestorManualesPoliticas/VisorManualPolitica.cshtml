@@ -1,0 +1,18 @@
+﻿@page
+@model ERPSEI.Pages.VisorManualPoliticaModel
+@{
+    ViewData["Title"] = Model.Item?.Titulo ?? "Visor";
+}
+
+<div class="container py-4">
+    <h2 class="mb-3">@Model.Item?.Titulo</h2>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Item?.Descripcion))
+    {
+        <p class="text-muted">@Model.Item.Descripcion</p>
+    }
+
+    <div>
+        @Html.Raw(Model.Item?.CodigoHtml)
+    </div>
+</div>

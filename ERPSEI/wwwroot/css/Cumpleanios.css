@@ -1,8 +1,4 @@
-﻿/* =========================
-   CUMPLEAÑOS DEL MES
-   ========================= */
-
-.birthday-wrapper {
+﻿.birthday-wrapper {
     width: 100%;
     display: flex;
     justify-content: center;

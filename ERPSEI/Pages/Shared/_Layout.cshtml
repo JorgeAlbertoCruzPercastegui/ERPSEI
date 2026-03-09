@@ -34,10 +34,6 @@
     tieneERPEmpresas = false,
     tieneReportesEmpresas = false;
 
-    // =========================================
-    // HEADER DINÁMICO
-    // =========================================
-
     var now = DateTime.Now;
 
     var headerImg = await Db.HeaderImagenes
@@ -56,10 +52,6 @@
         .FirstOrDefaultAsync();
 
     string headerBg = headerImg?.RutaArchivo ?? "";
-
-    // =========================================
-    // CUMPLEAÑOS DEL MES
-    // =========================================
 
     var hoyCumple = DateTime.Today;
     int mesActualCumple = hoyCumple.Month;
@@ -304,9 +296,35 @@
                         <div class="quick-dd">
                             <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
                             <div class="quick-dd-menu">
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Manuales</a>
-                                <a class="quick-dd-item" asp-area="Reportes" asp-page="/Documentacion">Políticas</a>
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Reglamentos</a>
+
+                                <a class="quick-dd-item" asp-area="" asp-page="/ManualesPoliticas">Manuales, Políticas y Reglamentos</a>
+
+                                <!--<a class="quick-dd-item"
+                                   asp-area=""
+                                   asp-page="/ManualesPoliticas"
+                                   asp-route-Tipo="Manual">
+                                    Manuales
+                                </a>
+
+                                <a class="quick-dd-item"
+                                   asp-area=""
+                                   asp-page="/ManualesPoliticas"
+                                   asp-route-Tipo="Politica">
+                                    Políticas
+                                </a>
+
+                                <a class="quick-dd-item"
+                                   asp-area=""
+                                   asp-page="/ManualesPoliticas"
+                                   asp-route-Tipo="Reglamento">
+                                    Reglamentos
+                                </a>-->
+
+                                <a class="quick-dd-item"
+                                   asp-area="Catalogos"
+                                   asp-page="/GestorManualesPoliticas/Index">
+                                    Gestor Manuales / Políticas / Reglamentos
+                                </a>
                             </div>
                         </div>
 
