@@ -8,16 +8,26 @@
     ViewData["ActivePage"] = _LayoutPages.AvisoPrivacidad;
 }
 
-<h1>@Localizer["SecondaryTitle"]</h1>
+@section Styles {
+    <link rel="stylesheet" href="~/css/Privacy.css" />
+}
 
-<h4>@Localizer["TertiaryTitle"]</h4>
+<div class="privacy-page">
+    <div class="privacy-card">
+        <div class="privacy-header">
+            <h1>@Localizer["SecondaryTitle"]</h1>
+            <h4>@Localizer["TertiaryTitle"]</h4>
+            <hr />
+        </div>
 
-<hr />
+        <div class="privacy-image-wrapper">
+            <img class="privacyimage" src="@HttpContext.Request.Scheme://@HttpContext.Request.Host/img/policy.jpg" />
+        </div>
 
-<center>
-    <img class="privacyimage" src="@HttpContext.Request.Scheme://@HttpContext.Request.Host/img/policy.jpg" />
-</center>
-
-<p>
-    @Localizer["PrivacyMessage"]
-</p>
+        <div class="privacy-content">
+            <p>
+                @Localizer["PrivacyMessage"]
+            </p>
+        </div>
+    </div>
+</div>

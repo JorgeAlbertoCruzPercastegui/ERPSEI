@@ -245,7 +245,7 @@
 
             <div class="container header-bg-inner">
                 <a class="navbar-brand d-flex flex-column align-items-start" asp-area="" asp-page="/Index">
-                    <img class="brandimage" src="@Context.Request.Scheme://@Context.Request.Host/img/brand_dark.png" />
+                    <img class="brandimage" src="@Context.Request.Scheme://@Context.Request.Host/img/logo_minimalist.png" />
                 </a>
 
                 <button class="navbar-toggler px-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarExample3"
@@ -257,11 +257,11 @@
                     <ul class="navbar-nav flex-grow-1">
                         @if (!SignInManager.IsSignedIn(User))
                         {
-                            <li class="nav-item">
+                            <!--<li class="nav-item">
                                 <a class="nav-link @_LayoutPages.InicioNavClass(ViewContext)" asp-area="" asp-page="/Index">
                                     <i class="bi bi-house-door-fill"></i> @Localizer["HomeMenu"]
                                 </a>
-                            </li>
+                            </li>-->
                             <li class="nav-item">
                                 <a class="nav-link @_LayoutPages.AvisoPrivacidadNavClass(ViewContext)" asp-area="" asp-page="/Privacy">
                                     <i class="bi bi-shield-fill-check"></i> @Localizer["PrivacyMenu"]
@@ -392,83 +392,84 @@
             </div>
         }
 
-        <br>
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    
+    <br />
 
-    @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
-    {
-        <div class="birthday-wrapper">
-            <div class="birthday-card shadow-sm">
-                <div class="birthday-header">
-                    <div class="birthday-title-wrap">
-                        <span class="birthday-icon">🎉</span>
-                        <div>
-                            <div class="birthday-title">Cumpleaños del mes</div>
-                            <div class="birthday-subtitle">@nombreMesActual</div>
+    <main role="main" class="pb-3 main-home-content">
+        @RenderBody()
+
+        @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
+        {
+            <div class="birthday-wrapper">
+                <div class="birthday-card shadow-sm">
+                    <div class="birthday-header">
+                        <div class="birthday-title-wrap">
+                            <span class="birthday-icon">🎉</span>
+                            <div>
+                                <div class="birthday-title">Cumpleaños del mes</div>
+                                <div class="birthday-subtitle">@nombreMesActual</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="birthday-body">
+                        @{
+                            int tamGrupo = 4;
+                            int total = cumpleaniosMes.Count;
+                            int totalColumnas = (int)Math.Ceiling(total / (double)tamGrupo);
+                        }
+
+                        <div class="birthday-columns columns-@totalColumnas">
+                            @for (int c = 0; c < totalColumnas; c++)
+                            {
+                                var grupo = cumpleaniosMes.Skip(c * tamGrupo).Take(tamGrupo).ToList();
+
+                                <div class="birthday-column">
+                                    @foreach (var item in grupo)
+                                    {
+                                        string estadoClase = item.Dia == diaActualCumple
+                                        ? "birthday-hoy"
+                                        : item.Dia < diaActualCumple
+                                        ? "birthday-pasado"
+                                        : "birthday-proximo";
+
+                                        <div class="birthday-item @estadoClase">
+                                            <div class="birthday-day">@item.Dia</div>
+
+                                            <div class="birthday-info">
+                                                <div class="birthday-name">@item.NombreCompleto</div>
+
+                                                @if (!string.IsNullOrWhiteSpace(item.Puesto))
+                                                {
+                                                    <div class="birthday-role">@item.Puesto</div>
+                                                }
+                                            </div>
+
+                                            <div class="birthday-badge">
+                                                @if (item.Dia == diaActualCumple)
+                                                {
+                                                    <span>Hoy 🎂</span>
+                                                }
+                                                else if (item.Dia < diaActualCumple)
+                                                {
+                                                    <span>Pasó</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>Próximo</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
-
-                <div class="birthday-body">
-                    @{
-                        int tamGrupo = 4;
-                        int total = cumpleaniosMes.Count;
-                        int totalColumnas = (int)Math.Ceiling(total / (double)tamGrupo);
-                    }
-
-                    <div class="birthday-columns columns-@totalColumnas">
-                        @for (int c = 0; c < totalColumnas; c++)
-                        {
-                            var grupo = cumpleaniosMes.Skip(c * tamGrupo).Take(tamGrupo).ToList();
-
-                            <div class="birthday-column">
-                                @foreach (var item in grupo)
-                                {
-                                    string estadoClase = item.Dia == diaActualCumple
-                                    ? "birthday-hoy"
-                                    : item.Dia < diaActualCumple
-                                    ? "birthday-pasado"
-                                    : "birthday-proximo";
-
-                                    <div class="birthday-item @estadoClase">
-                                        <div class="birthday-day">@item.Dia</div>
-
-                                        <div class="birthday-info">
-                                            <div class="birthday-name">@item.NombreCompleto</div>
-
-                                            @if (!string.IsNullOrWhiteSpace(item.Puesto))
-                                            {
-                                                <div class="birthday-role">@item.Puesto</div>
-                                            }
-                                        </div>
-
-                                        <div class="birthday-badge">
-                                            @if (item.Dia == diaActualCumple)
-                                            {
-                                                <span>Hoy 🎂</span>
-                                            }
-                                            else if (item.Dia < diaActualCumple)
-                                            {
-                                                <span>Pasó</span>
-                                            }
-                                            else
-                                            {
-                                                <span>Próximo</span>
-                                            }
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
             </div>
-        </div>
-    }
-
+        }
+    </main>
+    </div>
     <footer class="border-top footer text-muted">
         <div class="container">
             <div class="float-start">

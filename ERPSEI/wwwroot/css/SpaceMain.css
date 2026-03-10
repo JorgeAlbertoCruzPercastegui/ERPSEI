@@ -207,3 +207,194 @@
         height: 260px;
     }
 }
+
+/* =====================================================
+   DISEÑO HOME INTRANET SEI
+   ===================================================== */
+
+:root {
+    --sei-blue-deep: #070c3a;
+    --sei-blue-main: #0c1496;
+    --sei-blue-soft: #0b1380;
+    --sei-gold: #d0aa4b;
+    --sei-gold-soft: #e1c77a;
+    --sei-cream: #f4ecd7;
+    --sei-text-light: #ffffff;
+}
+
+/* Fondo general del home */
+.home-wrapper {
+    background: linear-gradient(135deg,#091040 0%,#0b1380 45%,#0d0f9c 100%);
+    min-height: 100vh;
+    padding-bottom: 60px;
+}
+
+/* ==========================================
+   HEADER SUPERIOR AZUL
+   ========================================== */
+
+.intranet-header {
+    background: linear-gradient(90deg,#1115a9 0%,#071f4f 100%);
+    padding: 22px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.intranet-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+    .intranet-logo img {
+        height: 60px;
+    }
+
+.intranet-title {
+    color: #fff;
+    font-family: Georgia,serif;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.intranet-user {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.intranet-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* ==========================================
+   BARRA DORADA DE NAVEGACIÓN
+   ========================================== */
+
+.gold-nav-bar {
+    background: var(--sei-gold);
+    padding: 10px 30px;
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    border-bottom: 10px solid var(--sei-blue-main);
+}
+
+    .gold-nav-bar a {
+        color: #1b1b3a !important;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: .9rem;
+    }
+
+        .gold-nav-bar a:hover {
+            color: #000 !important;
+        }
+
+/* ==========================================
+   BANNER PRINCIPAL
+   ========================================== */
+
+.hero-banner {
+    width: 100%;
+    height: 260px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* ==========================================
+   SECCIÓN CUMPLEAÑOS
+   ========================================== */
+
+.birthday-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.birthday-card {
+    background: var(--sei-cream);
+    border-radius: 25px;
+    padding: 30px 35px;
+    width: 650px;
+    box-shadow: 0 14px 35px rgba(0,0,0,.25);
+    text-align: center;
+}
+
+    /* Título */
+    .birthday-card h3 {
+        font-family: Georgia,serif;
+        color: #0c1496;
+        font-size: 1.9rem;
+        margin-bottom: 20px;
+    }
+
+/* Lista cumpleaños */
+.birthday-list {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.birthday-item {
+    text-align: center;
+}
+
+.birthday-date {
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #0c1496;
+    font-family: Georgia,serif;
+}
+
+.birthday-name {
+    font-size: .95rem;
+    color: #1c1c3b;
+}
+
+/* Mensaje */
+.birthday-message {
+    font-family: Georgia,serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0c1496;
+}
+
+/* Línea inferior */
+.home-divider {
+    width: 85%;
+    height: 4px;
+    background: #fff;
+    margin: 40px auto 0 auto;
+}
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+
+@media(max-width:991px) {
+
+    .birthday-card {
+        width: 90%;
+    }
+
+    .birthday-list {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+@media(max-width:768px) {
+
+    .gold-nav-bar {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+}

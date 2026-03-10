@@ -8,6 +8,7 @@
 }
 
 @section Styles {
+    <link rel="stylesheet" href="~/css/login.css" />
     <link rel="stylesheet" href="~/css/password-rules.css" />
 }
 
@@ -18,7 +19,7 @@
                 <div class="card-body p-0">
                     <div class="row">
                         <div class="col-lg-6 d-none d-lg-block">
-                            <img class="bg-login-image" src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/login.jpg" />
+                            <img class="bg-login-image" src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/intranet_SEI.png" />
                         </div>
                         <div class="col-lg-6">
                             <div class="p-5">
@@ -26,11 +27,13 @@
                                     <center><h2>@ViewData["Title"]</h2></center>
                                     <hr />
                                     <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
                                     <div class="form-floating mb-3">
                                         <input id="userEmail" asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="@Localizer["EmailPlaceholder"]" />
                                         <label asp-for="Input.Email" class="form-label"></label>
                                         <span asp-validation-for="Input.Email" class="text-danger"></span>
                                     </div>
+
                                     <div class="form-floating mb-3 position-relative">
                                         <input id="userPassword"
                                                asp-for="Input.Password"
@@ -52,52 +55,57 @@
                                         </button>
                                     </div>
 
-                            <div id="pwdRules" class="pwd-rules mt-3">
-                                <div class="pwd-rules-title">Contraseña</div>
+                                    <div id="pwdRules" class="pwd-rules mt-3">
+                                        <div class="pwd-rules-title">Contraseña</div>
 
-                                <ul class="pwd-rules-list mb-0">
-                                    <li id="rule-digit" class="rule">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                        un número de 0 a 9.
-                                    </li>
-                                    <li id="rule-special" class="rule">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                        un carácter especial <span class="muted">!#$%^&*</span>.
-                                    </li>
-                                    <li id="rule-upper" class="rule">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                        una letra en mayúscula.
-                                    </li>
-                                    <li id="rule-no-repeat" class="rule">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                        no debe tener letras iguales consecutivas.
-                                    </li>
-                                    <li id="rule-length" class="rule">
-                                        <i class="bi bi-check-circle-fill"></i>
-                                        mínimo 8 caracteres.
-                                    </li>
-                                </ul>
-                            </div>
+                                        <ul class="pwd-rules-list mb-0">
+                                            <li id="rule-digit" class="rule">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                un número de 0 a 9.
+                                            </li>
+                                            <li id="rule-special" class="rule">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                un carácter especial <span class="muted">!#$%^&*</span>.
+                                            </li>
+                                            <li id="rule-upper" class="rule">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                una letra en mayúscula.
+                                            </li>
+                                            <li id="rule-no-repeat" class="rule">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                no debe tener letras iguales consecutivas.
+                                            </li>
+                                            <li id="rule-length" class="rule">
+                                                <i class="bi bi-check-circle-fill"></i>
+                                                mínimo 8 caracteres.
+                                            </li>
+                                        </ul>
+                                    </div>
+
                                     <!--<div class="form-floating mb-3">
                                         <input id="userPassword" asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="@Localizer["PasswordPlaceholder"]" />
                                         <label asp-for="Input.Password" class="form-label"></label>
                                         <span asp-validation-for="Input.Password" class="text-danger"></span>
                                     </div>
                                     -->
+
                                     <div class="form-check mt-3 mb-3">
                                         <input class="form-check-input" asp-for="Input.RememberMe" id="rememberMe" />
                                         <label class="form-check-label" asp-for="Input.RememberMe"></label>
                                     </div>
+
                                     <!--<div class="checkbox mb-3">
                                         <label asp-for="Input.RememberMe" class="form-label">
                                             <input class="form-check-input" asp-for="Input.RememberMe" />
-                                            @Html.DisplayNameFor(m => m.Input.RememberMe)
+                                    @Html.DisplayNameFor(m => m.Input.RememberMe)
                                         </label>
                                     </div>
                                     -->
+
                                     <div class="mb-3">
                                         <button id="login-submit" type="submit" onclick="onLoginClick();" class="w-100 btn btn-lg btn-primary">@Localizer["LoginButton"]</button>
                                     </div>
+
                                     <div>
                                         <p>
                                             <a id="forgot-password" asp-page="./ForgotPassword">@Localizer["ForgotLink"]</a>
