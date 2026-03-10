@@ -398,76 +398,86 @@
     <main role="main" class="pb-3 main-home-content">
         @RenderBody()
 
-        @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
-        {
-            <div class="birthday-wrapper">
-                <div class="birthday-card shadow-sm">
-                    <div class="birthday-header">
-                        <div class="birthday-title-wrap">
-                            <span class="birthday-icon">🎉</span>
-                            <div>
-                                <div class="birthday-title">Cumpleaños del mes</div>
-                                <div class="birthday-subtitle">@nombreMesActual</div>
+            @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
+            {
+                <div class="birthday-showcase-wrapper">
+                    <div class="birthday-showcase birthday-showcase--compact">
+                        <div class="birthday-showcase__art">
+                            <div class="birthday-balloon"></div>
+
+                            <div class="birthday-cake">
+                                <span class="candle"></span>
+                                <span class="candle"></span>
+                                <span class="candle"></span>
+                                <span class="candle"></span>
+                                <span class="candle"></span>
+                            </div>
+
+                            <div class="birthday-gift"></div>
+                        </div>
+
+                        <div class="birthday-showcase__content">
+                            <div class="birthday-showcase__top">
+                                <h3 class="birthday-showcase__title">Cumpleaños del mes</h3>
+                                <div class="birthday-showcase__month">@nombreMesActual</div>
+                            </div>
+
+                            <div class="birthday-showcase__grid birthday-showcase__grid--four">
+                                @foreach (var item in cumpleaniosMes)
+                                {
+                                    string estadoClase = item.Dia == diaActualCumple
+                                    ? "birthday-person--today"
+                                    : item.Dia < diaActualCumple
+                                    ? "birthday-person--past"
+                                    : "birthday-person--upcoming";
+
+                                    <div class="birthday-person-card @estadoClase">
+                                        <div class="birthday-person-card__day">
+                                            @item.Dia
+                                        </div>
+
+                                        <div class="birthday-person-card__info">
+                                            <div class="birthday-person-card__date">
+                                                @item.Dia de @nombreMesActual
+                                            </div>
+
+                                            <div class="birthday-person-card__name">
+                                                @item.NombreCompleto
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(item.Puesto))
+                                            {
+                                                <div class="birthday-person-card__role">
+                                                    @item.Puesto
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <div class="birthday-person-card__badge">
+                                            @if (item.Dia == diaActualCumple)
+                                            {
+                                                <span>Hoy 🎂</span>
+                                            }
+                                            else if (item.Dia < diaActualCumple)
+                                            {
+                                                <span>Pasó</span>
+                                            }
+                                            else
+                                            {
+                                                <span>Próximo</span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="birthday-showcase__footer">
+                                ¡Muchas felicidades!
                             </div>
                         </div>
                     </div>
-
-                    <div class="birthday-body">
-                        @{
-                            int tamGrupo = 4;
-                            int total = cumpleaniosMes.Count;
-                            int totalColumnas = (int)Math.Ceiling(total / (double)tamGrupo);
-                        }
-
-                        <div class="birthday-columns columns-@totalColumnas">
-                            @for (int c = 0; c < totalColumnas; c++)
-                            {
-                                var grupo = cumpleaniosMes.Skip(c * tamGrupo).Take(tamGrupo).ToList();
-
-                                <div class="birthday-column">
-                                    @foreach (var item in grupo)
-                                    {
-                                        string estadoClase = item.Dia == diaActualCumple
-                                        ? "birthday-hoy"
-                                        : item.Dia < diaActualCumple
-                                        ? "birthday-pasado"
-                                        : "birthday-proximo";
-
-                                        <div class="birthday-item @estadoClase">
-                                            <div class="birthday-day">@item.Dia</div>
-
-                                            <div class="birthday-info">
-                                                <div class="birthday-name">@item.NombreCompleto</div>
-
-                                                @if (!string.IsNullOrWhiteSpace(item.Puesto))
-                                                {
-                                                    <div class="birthday-role">@item.Puesto</div>
-                                                }
-                                            </div>
-
-                                            <div class="birthday-badge">
-                                                @if (item.Dia == diaActualCumple)
-                                                {
-                                                    <span>Hoy 🎂</span>
-                                                }
-                                                else if (item.Dia < diaActualCumple)
-                                                {
-                                                    <span>Pasó</span>
-                                                }
-                                                else
-                                                {
-                                                    <span>Próximo</span>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    </div>
                 </div>
-            </div>
-        }
+            }
     </main>
     </div>
     <footer class="border-top footer text-muted">
