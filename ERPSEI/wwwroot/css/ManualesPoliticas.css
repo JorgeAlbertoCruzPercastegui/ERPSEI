@@ -1,28 +1,234 @@
-﻿.mp-front-wrapper {
+﻿/* =====================================================
+   MODULO MANUALES, POLITICAS Y REGLAMENTOS
+   SOLO PARA ESTA PAGINA
+   ===================================================== */
+
+body.module-main-theme.manuales-politicas-page {
+    background: radial-gradient(circle at 50% 18%, rgba(57,100,255,.20) 0%, rgba(57,100,255,0) 28%), linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%);
+}
+
+    /* =====================================================
+   HEADER SUPERIOR DEL LAYOUT
+   SOLO EN ESTE MODULO
+   ===================================================== */
+
+    body.module-main-theme.manuales-politicas-page .header-bg {
+        background: linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%) !important;
+        background-size: cover;
+        background-position: center;
+        min-height: 84px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    body.module-main-theme.manuales-politicas-page .header-bg-inner {
+        min-height: 84px;
+        display: flex;
+        align-items: center;
+        background: transparent !important;
+    }
+
+    body.module-main-theme.manuales-politicas-page .brandimage {
+        max-height: 44px;
+        width: auto;
+    }
+
+    body.module-main-theme.manuales-politicas-page .navbar .nav-link,
+    body.module-main-theme.manuales-politicas-page .navbar .navbar-brand,
+    body.module-main-theme.manuales-politicas-page .navbar .btn,
+    body.module-main-theme.manuales-politicas-page .navbar a,
+    body.module-main-theme.manuales-politicas-page .navbar form button {
+        color: #fff !important;
+        text-shadow: 0 1px 3px rgba(0,0,0,.30);
+    }
+
+    /* =====================================================
+   MENU RAPIDO DORADO
+   SOLO EN ESTE MODULO
+   ===================================================== */
+
+    body.module-main-theme.manuales-politicas-page .topbar-links {
+        max-width: 1280px;
+        margin: 0 auto 14px auto;
+        padding: 9px 14px !important;
+        min-height: 54px;
+        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
+        border: 2px solid #d4a941;
+        border-radius: 18px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        gap: 10px;
+    }
+
+        body.module-main-theme.manuales-politicas-page .topbar-links > .small {
+            display: flex !important;
+            align-items: center;
+            min-height: 100%;
+            margin: 0;
+            padding-right: 8px;
+            line-height: 1.1;
+            white-space: nowrap;
+            font-size: .92rem;
+        }
+
+        body.module-main-theme.manuales-politicas-page .topbar-links .small,
+        body.module-main-theme.manuales-politicas-page .topbar-links .text-muted,
+        body.module-main-theme.manuales-politicas-page .topbar-links b {
+            color: #0c1f60 !important;
+        }
+
+    body.module-main-theme.manuales-politicas-page .quick-nav-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 4px 10px !important;
+        white-space: nowrap;
+        font-size: .85rem;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-link {
+        color: #0c1f60 !important;
+        text-decoration: none !important;
+        font-weight: 700;
+        font-size: .88rem;
+        line-height: 1.05;
+        padding: 2px 4px;
+        border-radius: 8px;
+        transition: all .18s ease;
+        white-space: nowrap;
+    }
+
+        body.module-main-theme.manuales-politicas-page .quick-link:hover {
+            background: rgba(12, 31, 96, .08);
+            color: #09184a !important;
+        }
+
+    /* =====================================================
+   DROPDOWN DEL MENU
+   SOLO EN ESTE MODULO
+   ===================================================== */
+
+    body.module-main-theme.manuales-politicas-page .quick-dd {
+        position: relative;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        min-width: 260px;
+        background: rgba(10, 21, 80, .72);
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 14px;
+        box-shadow: 0 18px 35px rgba(0,0,0,.24);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 8px;
+        display: none;
+        z-index: 2000;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd-menu-wide {
+        min-width: 320px;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd:hover > .quick-dd-menu {
+        display: block;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd-item {
+        display: block;
+        color: rgba(255,255,255,.90) !important;
+        text-decoration: none !important;
+        font-size: .88rem;
+        font-weight: 600;
+        padding: 8px 10px;
+        border-radius: 10px;
+        transition: background .15s ease, color .15s ease;
+    }
+
+        body.module-main-theme.manuales-politicas-page .quick-dd-item:hover {
+            background: rgba(255,255,255,.10);
+            color: #ffffff !important;
+        }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd:hover > .quick-link,
+    body.module-main-theme.manuales-politicas-page .quick-dd.open > .quick-link {
+        color: #fff7d6 !important;
+        background: rgba(12, 31, 96, .18);
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-nav-toggle {
+        border: 1px solid #c89a2a;
+        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
+        color: #0c1f60;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-weight: 800;
+    }
+
+/* =====================================================
+   CONTENEDOR DEL MODULO
+   ===================================================== */
+
+.manuales-politicas-page .mp-front-wrapper {
+    min-height: calc(100vh - 150px);
+    padding: 10px 0 32px;
+}
+
+.manuales-politicas-page .module-shell {
     width: 100%;
     max-width: 1240px;
     margin: 0 auto;
-    padding: 10px 14px 30px;
+    padding: 0 14px;
 }
 
-.mp-front-header {
-    text-align: center;
+/* =====================================================
+   CABECERA DEL MODULO
+   ===================================================== */
+
+.manuales-politicas-page .module-header {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 10px 0 18px;
     margin-bottom: 18px;
+    text-align: center;
 }
 
-.mp-front-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #12213f;
-    margin-bottom: 4px;
+.manuales-politicas-page .module-title {
+    color: #ffffff;
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin: 0;
 }
 
-.mp-front-subtitle {
-    color: #6b7280;
+.manuales-politicas-page .module-subtitle {
+    color: rgba(255,255,255,.88);
+    font-size: .98rem;
+    margin-top: 6px;
     margin-bottom: 0;
 }
 
-.mp-front-filtros {
+/* =====================================================
+   TABS / FILTROS
+   ===================================================== */
+
+.manuales-politicas-page .mp-front-filtros {
     display: flex;
     justify-content: center;
     gap: 10px;
@@ -30,157 +236,260 @@
     margin-bottom: 22px;
 }
 
-.mp-tab {
+.manuales-politicas-page .mp-tab {
     text-decoration: none;
     padding: 8px 14px;
     border-radius: 999px;
-    background: #eef2f7;
+    background: #ffffff;
+    border: 1px solid #d4a941;
     color: #163b73;
-    font-weight: 600;
+    font-weight: 700;
     font-size: .92rem;
     transition: .2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
 }
 
-    .mp-tab.active,
-    .mp-tab:hover {
-        background: #163b73;
-        color: #fff;
+    .manuales-politicas-page .mp-tab.active,
+    .manuales-politicas-page .mp-tab:hover {
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+        color: #0c1f60;
+        border-color: #c89a2a;
     }
 
-.mp-grid {
+/* =====================================================
+   GRID
+   ===================================================== */
+
+.manuales-politicas-page .mp-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 22px;
 }
 
-.mp-card {
-    background: #fff;
-    border: 1px solid #e7eaf0;
-    border-radius: 16px;
+/* =====================================================
+   CARDS
+   ===================================================== */
+
+.manuales-politicas-page .mp-card {
+    background: rgba(255,255,255,.96);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 16px 34px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.55);
     transition: transform .2s ease, box-shadow .2s ease;
 }
 
-    .mp-card:hover {
+    .manuales-politicas-page .mp-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+        box-shadow: 0 22px 42px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.60);
     }
 
-.mp-card-image-wrap {
+.manuales-politicas-page .mp-card-image-wrap {
     width: 100%;
     aspect-ratio: 7 / 9;
     overflow: hidden;
-    background: #f5f7fb;
+    background: linear-gradient(180deg,#f8fbff,#eef4ff);
+    border-bottom: 1px solid #e7eaf0;
 }
 
-.mp-card-image {
+.manuales-politicas-page .mp-card-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
 }
 
-.mp-card-noimage {
+.manuales-politicas-page .mp-card-noimage {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #7b8794;
-    font-weight: 600;
+    font-weight: 700;
 }
 
-.mp-card-body {
+.manuales-politicas-page .mp-card-body {
     padding: 14px;
 }
 
-.mp-card-title {
+.manuales-politicas-page .mp-card-title {
     font-size: 1rem;
-    font-weight: 700;
+    font-weight: 800;
     color: #12213f;
     margin-bottom: 8px;
     min-height: 42px;
 }
 
-.mp-card-desc {
+.manuales-politicas-page .mp-card-desc {
     font-size: .86rem;
     color: #6b7280;
     min-height: 38px;
     margin-bottom: 12px;
 }
 
-.mp-card-footer {
+.manuales-politicas-page .mp-card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
 }
 
-.mp-badge {
+/* =====================================================
+   BADGE Y BOTON
+   ===================================================== */
+
+.manuales-politicas-page .mp-badge {
     display: inline-block;
-    background: #eef8ff;
-    color: #0b4f8a;
+    background: rgba(37,99,235,.14);
+    color: #1d4ed8;
+    border: 1px solid rgba(37,99,235,.20);
     font-size: .78rem;
     font-weight: 700;
     padding: 6px 10px;
     border-radius: 999px;
 }
 
-.mp-btn {
+.manuales-politicas-page .mp-btn {
     display: inline-block;
     text-decoration: none;
-    background: #0f9d8a;
-    color: #fff;
+    background: #ffffff;
+    color: #0c1f60;
+    border: 1px solid #d4a941;
     padding: 8px 12px;
     border-radius: 10px;
     font-size: .84rem;
     font-weight: 700;
     transition: .2s ease;
+    white-space: nowrap;
 }
 
-    .mp-btn:hover {
-        background: #0c7f70;
-        color: #fff;
+    .manuales-politicas-page .mp-btn:hover {
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+        color: #09184a;
+        border-color: #c89a2a;
     }
 
-.mp-empty {
+/* =====================================================
+   EMPTY
+   ===================================================== */
+
+.manuales-politicas-page .mp-empty {
     text-align: center;
     padding: 40px 20px;
-    border: 1px dashed #cfd8e3;
-    border-radius: 14px;
-    color: #6b7280;
-    background: #fafbfd;
+    border: 1px dashed rgba(255,255,255,.24);
+    border-radius: 16px;
+    color: rgba(255,255,255,.88);
+    background: rgba(255,255,255,.06);
+    backdrop-filter: blur(4px);
 }
 
+/* =====================================================
+   FOOTER
+   ===================================================== */
+
+.manuales-politicas-page .footer {
+    background: transparent !important;
+    border-top: 1px solid rgba(255,255,255,.14) !important;
+}
+
+    .manuales-politicas-page .footer,
+    .manuales-politicas-page .footer a,
+    .manuales-politicas-page .footer .text-muted,
+    .manuales-politicas-page .footer .float-start,
+    .manuales-politicas-page .footer .float-end {
+        color: rgba(255,255,255,.88) !important;
+    }
+
+        .manuales-politicas-page .footer a:hover {
+            color: #ffffff !important;
+        }
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
 @media (max-width: 1199.98px) {
-    .mp-grid {
+    .manuales-politicas-page .mp-grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 991.98px) {
-    .mp-grid {
+    body.module-main-theme.manuales-politicas-page .topbar-links {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-nav-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-nav {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px !important;
+        margin-top: 8px;
+    }
+
+        body.module-main-theme.manuales-politicas-page .quick-nav.is-open {
+            display: flex;
+        }
+
+    body.module-main-theme.manuales-politicas-page .quick-link {
+        width: 100%;
+        display: block;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd-menu {
+        position: static;
+        display: none;
+        min-width: 100%;
+        margin-top: 6px;
+        box-shadow: none;
+        border-radius: 12px;
+    }
+
+    body.module-main-theme.manuales-politicas-page .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    .manuales-politicas-page .mp-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .manuales-politicas-page .module-header {
+        padding: 16px 18px;
+    }
+
+    .manuales-politicas-page .module-title {
+        font-size: 1.45rem;
     }
 }
 
 @media (max-width: 575.98px) {
-    .mp-grid {
+    .manuales-politicas-page .mp-grid {
         grid-template-columns: 1fr;
     }
 
-    .mp-card-title,
-    .mp-card-desc {
+    .manuales-politicas-page .mp-card-title,
+    .manuales-politicas-page .mp-card-desc {
         min-height: auto;
     }
 
-    .mp-card-footer {
+    .manuales-politicas-page .mp-card-footer {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .mp-btn {
+    .manuales-politicas-page .mp-btn {
         text-align: center;
     }
 }

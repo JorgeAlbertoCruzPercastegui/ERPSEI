@@ -2,6 +2,7 @@
 @model ERPSEI.Pages.ManualesPoliticasModel
 @{
     ViewData["Title"] = "Documentación Interna";
+    ViewData["BodyClass"] = "manuales-politicas-page";
 }
 
 @section Styles {
@@ -9,90 +10,94 @@
 }
 
 <div class="mp-front-wrapper">
-    <div class="mp-front-header">
-        <h2 class="mp-front-title">Manuales, Políticas y Reglamentos</h2>
-        <p class="mp-front-subtitle">
-            Consulta los materiales activos publicados en la intranet.
-        </p>
-    </div>
+    <div class="module-shell">
 
-    <div class="mp-front-filtros">
-        <a class="mp-tab @(string.IsNullOrWhiteSpace(Model.Tipo) ? "active" : "")"
-           asp-area=""
-           asp-page="/ManualesPoliticas">
-            Todos (@Model.TotalTodos)
-        </a>
-
-        <a class="mp-tab @(string.Equals(Model.Tipo, "Manual", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-           asp-area=""
-           asp-page="/ManualesPoliticas"
-           asp-route-Tipo="Manual">
-            Manuales (@Model.TotalManuales)
-        </a>
-
-        <a class="mp-tab @(string.Equals(Model.Tipo, "Politica", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-           asp-area=""
-           asp-page="/ManualesPoliticas"
-           asp-route-Tipo="Politica">
-            Políticas (@Model.TotalPoliticas)
-        </a>
-
-        <a class="mp-tab @(string.Equals(Model.Tipo, "Reglamento", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
-           asp-area=""
-           asp-page="/ManualesPoliticas"
-           asp-route-Tipo="Reglamento">
-            Reglamentos (@Model.TotalReglamentos)
-        </a>
-    </div>
-
-    @if (Model.Lista.Count == 0)
-    {
-        <div class="mp-empty">
-            No hay materiales activos para mostrar.
+        <div class="module-header mb-4">
+            <h2 class="module-title mb-1">Manuales, Políticas y Reglamentos</h2>
+            <p class="module-subtitle mb-0">
+                Consulta los materiales activos publicados en la intranet.
+            </p>
         </div>
-    }
-    else
-    {
-        <div class="mp-grid">
-            @foreach (var item in Model.Lista)
-            {
-                var url = Model.ObtenerUrlVisualizacion(item);
 
-                <div class="mp-card">
-                    <div class="mp-card-image-wrap">
-                        @if (!string.IsNullOrWhiteSpace(item.RutaPortada))
-                        {
-                            <img src="@item.RutaPortada"
-                                 alt="@item.Titulo"
-                                 class="mp-card-image" />
-                        }
-                        else
-                        {
-                            <div class="mp-card-noimage">Sin portada</div>
-                        }
-                    </div>
+        <div class="mp-front-filtros">
+            <a class="mp-tab @(string.IsNullOrWhiteSpace(Model.Tipo) ? "active" : "")"
+               asp-area=""
+               asp-page="/ManualesPoliticas">
+                Todos (@Model.TotalTodos)
+            </a>
 
-                    <div class="mp-card-body">
-                        <h5 class="mp-card-title">@item.Titulo</h5>
+            <a class="mp-tab @(string.Equals(Model.Tipo, "Manual", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+               asp-area=""
+               asp-page="/ManualesPoliticas"
+               asp-route-Tipo="Manual">
+                Manuales (@Model.TotalManuales)
+            </a>
 
-                        @if (!string.IsNullOrWhiteSpace(item.Descripcion))
-                        {
-                            <p class="mp-card-desc">@item.Descripcion</p>
-                        }
+            <a class="mp-tab @(string.Equals(Model.Tipo, "Politica", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+               asp-area=""
+               asp-page="/ManualesPoliticas"
+               asp-route-Tipo="Politica">
+                Políticas (@Model.TotalPoliticas)
+            </a>
 
-                        <div class="mp-card-footer">
-                            <span class="mp-badge">@item.Tipo</span>
+            <a class="mp-tab @(string.Equals(Model.Tipo, "Reglamento", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+               asp-area=""
+               asp-page="/ManualesPoliticas"
+               asp-route-Tipo="Reglamento">
+                Reglamentos (@Model.TotalReglamentos)
+            </a>
+        </div>
 
-                            <a href="@url"
-                               target="_blank"
-                               rel="noopener"
-                               class="mp-btn">
-                                Consultar aquí
-                            </a>
+        @if (Model.Lista.Count == 0)
+        {
+            <div class="mp-empty">
+                No hay materiales activos para mostrar.
+            </div>
+        }
+        else
+        {
+            <div class="mp-grid">
+                @foreach (var item in Model.Lista)
+                {
+                    var url = Model.ObtenerUrlVisualizacion(item);
+
+                    <div class="mp-card">
+                        <div class="mp-card-image-wrap">
+                            @if (!string.IsNullOrWhiteSpace(item.RutaPortada))
+                            {
+                                <img src="@item.RutaPortada"
+                                     alt="@item.Titulo"
+                                     class="mp-card-image" />
+                            }
+                            else
+                            {
+                                <div class="mp-card-noimage">Sin portada</div>
+                            }
+                        </div>
+
+                        <div class="mp-card-body">
+                            <h5 class="mp-card-title">@item.Titulo</h5>
+
+                            @if (!string.IsNullOrWhiteSpace(item.Descripcion))
+                            {
+                                <p class="mp-card-desc">@item.Descripcion</p>
+                            }
+
+                            <div class="mp-card-footer">
+                                <span class="mp-badge">@item.Tipo</span>
+
+                                <a href="@url"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="mp-btn">
+                                    Consultar aquí
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
-    }
+                }
+            </div>
+        }
+
+    </div>
 </div>
