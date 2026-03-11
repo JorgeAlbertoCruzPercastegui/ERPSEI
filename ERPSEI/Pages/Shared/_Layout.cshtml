@@ -235,7 +235,7 @@
     @RenderSection("Styles", required: false)
 </head>
 
-<body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme")">
+<body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme") @(ViewData["BodyClass"] ?? "")">
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light header-bg shadow-none border-0"
              style="@(string.IsNullOrWhiteSpace(headerBg) ? "" : $"background-image:url('{headerBg}')")">

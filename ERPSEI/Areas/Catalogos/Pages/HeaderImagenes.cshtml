@@ -2,310 +2,251 @@
 @model ERPSEI.Areas.Catalogos.Pages.HeaderImagenes.HeaderImagenesModel
 @{
     ViewData["Title"] = "Imágenes del Header";
+    ViewData["BodyClass"] = "headerimagenes-page";
 }
 
-<h2 class="mb-3">Imágenes del Header</h2>
-
-@if (TempData["Ok"] != null)
-{
-    <div class="alert alert-success">@TempData["Ok"]</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/Header.css" asp-append-version="true" />
 }
 
-@if (TempData["Err"] != null)
-{
-    <div class="alert alert-danger">@TempData["Err"]</div>
-}
+<div class="headerimg-theme-page">
+    <div class="module-shell">
 
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="alert alert-danger">
-        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        <!--<div class="module-header mb-4">
+            <h2 class="module-title mb-1">Imágenes del Header</h2>
+            <p class="module-subtitle mb-0">Administra las imágenes visibles en el encabezado de la intranet.</p>
+        </div>
+        -->
+        @if (TempData["Ok"] != null)
         {
-            <div>@err.ErrorMessage</div>
+            <div class="alert alert-success module-alert-success">@TempData["Ok"]</div>
         }
-    </div>
-}
 
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
+        @if (TempData["Err"] != null)
+        {
+        }
 
-        <h5 class="card-title mb-3">Subir imagen del Header</h5>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger module-alert-danger">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@err.ErrorMessage</div>
+                }
+            </div>
+        }
 
-        <form method="post" enctype="multipart/form-data" asp-page-handler="Crear">
+        <div class="card module-card shadow-sm mb-4">
+            <div class="card-body">
 
-            <div class="row g-3">
+                <h5 class="card-title module-card-title mb-3">Subir imagen del Header</h5>
 
-                <div class="col-md-4">
-                    <label class="form-label">Temporada</label>
+                <form method="post" enctype="multipart/form-data" asp-page-handler="Crear">
+                    <div class="row g-3">
 
-                    <input class="form-control"
-                           asp-for="Input.Temporada"
-                           maxlength="80"
-                           placeholder="Ej: Navidad / Halloween / Principal" />
+                        <div class="col-md-4">
+                            <label class="form-label module-label">Temporada</label>
+                            <input class="form-control module-input"
+                                   asp-for="Input.Temporada"
+                                   maxlength="80"
+                                   placeholder="Ej: Navidad / Halloween / Principal" />
+                            <span class="text-danger" asp-validation-for="Input.Temporada"></span>
+                        </div>
 
-                    <span class="text-danger" asp-validation-for="Input.Temporada"></span>
-                </div>
+                        <div class="col-md-4">
+                            <label class="form-label module-label">Vigencia inicio</label>
+                            <input class="form-control module-input"
+                                   type="datetime-local"
+                                   asp-for="Input.VigenciaInicio"
+                                   id="vigInicio" />
+                            <span class="text-danger" asp-validation-for="Input.VigenciaInicio"></span>
+                        </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Vigencia inicio</label>
+                        <div class="col-md-4">
+                            <label class="form-label module-label">Vigencia fin</label>
+                            <input class="form-control module-input"
+                                   type="datetime-local"
+                                   asp-for="Input.VigenciaFin"
+                                   id="vigFin" />
+                            <span class="text-danger" asp-validation-for="Input.VigenciaFin"></span>
+                        </div>
 
-                    <input class="form-control"
-                           type="datetime-local"
-                           asp-for="Input.VigenciaInicio"
-                           id="vigInicio" />
+                        <div class="col-md-6">
+                            <label class="form-label module-label">Título (opcional)</label>
+                            <input class="form-control module-input" asp-for="Input.Titulo" />
+                            <span class="text-danger" asp-validation-for="Input.Titulo"></span>
+                        </div>
 
-                    <span class="text-danger" asp-validation-for="Input.VigenciaInicio"></span>
-                </div>
+                        <div class="col-md-6">
+                            <label class="form-label module-label">Descripción (opcional)</label>
+                            <input class="form-control module-input" asp-for="Input.Descripcion" />
+                            <span class="text-danger" asp-validation-for="Input.Descripcion"></span>
+                        </div>
 
-                <div class="col-md-4">
-                    <label class="form-label">Vigencia fin</label>
+                        <div class="col-md-3">
+                            <label class="form-label module-label">Orden</label>
+                            <input class="form-control module-input"
+                                   type="number"
+                                   asp-for="Input.Orden"
+                                   min="1" />
+                            <span class="text-danger" asp-validation-for="Input.Orden"></span>
+                        </div>
 
-                    <input class="form-control"
-                           type="datetime-local"
-                           asp-for="Input.VigenciaFin"
-                           id="vigFin" />
+                        <div class="col-md-3 d-flex align-items-end gap-3">
+                            <div class="form-check module-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       asp-for="Input.EsPermanente"
+                                       id="chkPermanente" />
+                                <label class="form-check-label module-label mb-0" for="chkPermanente">
+                                    Imagen permanente
+                                </label>
+                            </div>
 
-                    <span class="text-danger" asp-validation-for="Input.VigenciaFin"></span>
-                </div>
+                            <div class="form-check module-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       asp-for="Input.Activo" />
+                                <label class="form-check-label module-label mb-0">
+                                    Activo
+                                </label>
+                            </div>
+                        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">Título (opcional)</label>
+                        <div class="col-md-6">
+                            <label class="form-label module-label">Imagen</label>
+                            <input class="form-control module-input"
+                                   type="file"
+                                   asp-for="Input.Archivo"
+                                   accept=".jpg,.jpeg,.png,.webp"
+                                   id="hdrFile" />
+                            <span class="text-danger" asp-validation-for="Input.Archivo"></span>
+                            <small class="module-help">
+                                Formatos permitidos: JPG, PNG o WEBP.
+                            </small>
+                        </div>
 
-                    <input class="form-control"
-                           asp-for="Input.Titulo" />
+                        <div class="col-md-6">
+                            <label class="form-label module-label">Vista previa</label>
 
-                    <span class="text-danger" asp-validation-for="Input.Titulo"></span>
-                </div>
+                            <div class="header-preview-box">
+                                <img id="hdrPreview"
+                                     src=""
+                                     class="header-preview-img" />
 
-                <div class="col-md-6">
-                    <label class="form-label">Descripción (opcional)</label>
+                                <div id="hdrPreviewEmpty" class="header-preview-empty">
+                                    Selecciona una imagen para previsualizar
+                                </div>
+                            </div>
+                        </div>
 
-                    <input class="form-control"
-                           asp-for="Input.Descripcion" />
-
-                    <span class="text-danger" asp-validation-for="Input.Descripcion"></span>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Orden</label>
-
-                    <input class="form-control"
-                           type="number"
-                           asp-for="Input.Orden"
-                           min="1" />
-
-                    <span class="text-danger" asp-validation-for="Input.Orden"></span>
-                </div>
-
-                <div class="col-md-3 d-flex align-items-end gap-3">
-
-                    <div class="form-check">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               asp-for="Input.EsPermanente"
-                               id="chkPermanente" />
-
-                        <label class="form-check-label" for="chkPermanente">
-                            Imagen permanente
-                        </label>
-                    </div>
-
-                    <div class="form-check">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               asp-for="Input.Activo" />
-
-                        <label class="form-check-label">
-                            Activo
-                        </label>
-                    </div>
-
-                </div>
-
-                <div class="col-md-6">
-
-                    <label class="form-label">Imagen</label>
-
-                    <input class="form-control"
-                           type="file"
-                           asp-for="Input.Archivo"
-                           accept=".jpg,.jpeg,.png,.webp"
-                           id="hdrFile" />
-
-                    <span class="text-danger" asp-validation-for="Input.Archivo"></span>
-
-                    <small class="text-muted">
-                        Formatos permitidos: JPG, PNG o WEBP.
-                    </small>
-
-                </div>
-
-                <div class="col-md-6">
-
-                    <label class="form-label">Vista previa</label>
-
-                    <div class="border rounded p-2 text-center bg-light">
-
-                        <img id="hdrPreview"
-                             src=""
-                             style="max-height:140px; max-width:100%; display:none;" />
-
-                        <div id="hdrPreviewEmpty" class="text-muted">
-                            Selecciona una imagen para previsualizar
+                        <div class="col-12 d-flex justify-content-end">
+                            <button class="btn module-btn-primary" type="submit">
+                                <i class="bi bi-upload"></i> Guardar imagen
+                            </button>
                         </div>
 
                     </div>
+                </form>
 
-                </div>
+            </div>
+        </div>
 
-                <div class="col-12 d-flex justify-content-end">
+        <div class="card module-card shadow-sm">
+            <div class="card-body">
 
-                    <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-upload"></i> Guardar imagen
-                    </button>
+                <h5 class="card-title module-card-title mb-3">Imágenes registradas</h5>
 
+                <div class="table-responsive module-table-wrap">
+                    <table class="table table-sm align-middle module-table">
+                        <thead>
+                            <tr>
+                                <th>Preview</th>
+                                <th>Temporada</th>
+                                <th>Vigencia</th>
+                                <th>Orden</th>
+                                <th>Activo</th>
+                                <th style="width:180px;">Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @if (Model.Lista.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="6" class="module-empty">No hay imágenes cargadas.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var h in Model.Lista)
+                                {
+                                    <tr>
+                                        <td style="width:220px;">
+                                            <img src="@h.RutaArchivo"
+                                                 class="img-fluid rounded border module-preview-table"
+                                                 style="max-height:70px;" />
+                                        </td>
+
+                                        <td>
+                                            <div class="fw-semibold module-main-text">@h.Temporada</div>
+                                            <div class="module-muted small">@h.NombreArchivo</div>
+                                        </td>
+
+                                        <td class="small module-main-text">
+                                            @if (h.EsPermanente)
+                                            {
+                                                <span class="badge module-badge-gray">Permanente</span>
+                                            }
+                                            else
+                                            {
+                                                <div><b>Inicio:</b> @(h.VigenciaInicio?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                                <div><b>Fin:</b> @(h.VigenciaFin?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                            }
+                                        </td>
+
+                                        <td class="module-main-text">@h.Orden</td>
+
+                                        <td>
+                                            @if (h.Activo)
+                                            {
+                                                <span class="badge module-badge-success">Sí</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge module-badge-danger">No</span>
+                                            }
+                                        </td>
+
+                                        <td>
+                                            <form method="post"
+                                                  class="d-inline"
+                                                  asp-page-handler="ToggleActivo">
+                                                <input type="hidden" name="id" value="@h.Id" />
+                                                <button class="btn btn-sm module-btn-secondary" type="submit">
+                                                    <i class="bi bi-toggle-on"></i> Activar/Desactivar
+                                                </button>
+                                            </form>
+
+                                            <form method="post"
+                                                  class="d-inline"
+                                                  asp-page-handler="Eliminar"
+                                                  onsubmit="return confirm('¿Eliminar esta imagen?');">
+                                                <input type="hidden" name="id" value="@h.Id" />
+                                                <button class="btn btn-sm module-btn-danger" type="submit">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
                 </div>
 
             </div>
-
-        </form>
-
-    </div>
-</div>
-
-<div class="card shadow-sm">
-    <div class="card-body">
-
-        <h5 class="card-title mb-3">Imágenes registradas</h5>
-
-        <div class="table-responsive">
-
-            <table class="table table-sm align-middle">
-
-                <thead>
-                    <tr>
-                        <th>Preview</th>
-                        <th>Temporada</th>
-                        <th>Vigencia</th>
-                        <th>Orden</th>
-                        <th>Activo</th>
-                        <th style="width:180px;">Acciones</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                    @if (Model.Lista.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="6" class="text-muted">
-                                No hay imágenes cargadas.
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var h in Model.Lista)
-                        {
-                            <tr>
-
-                                <td style="width:220px;">
-                                    <img src="@h.RutaArchivo"
-                                         class="img-fluid rounded border"
-                                         style="max-height:70px;" />
-                                </td>
-
-                                <td>
-                                    <div class="fw-semibold">@h.Temporada</div>
-                                    <div class="text-muted small">@h.NombreArchivo</div>
-                                </td>
-
-                                <td class="small">
-
-                                    @if (h.EsPermanente)
-                                    {
-                                        <span class="badge text-bg-secondary">Permanente</span>
-                                    }
-                                    else
-                                    {
-                                        <div>
-                                            <b>Inicio:</b>
-                                            @(h.VigenciaInicio?.ToString("dd/MM/yyyy HH:mm") ?? "-")
-                                        </div>
-
-                                        <div>
-                                            <b>Fin:</b>
-                                            @(h.VigenciaFin?.ToString("dd/MM/yyyy HH:mm") ?? "-")
-                                        </div>
-                                    }
-
-                                </td>
-
-                                <td>@h.Orden</td>
-
-                                <td>
-
-                                    @if (h.Activo)
-                                    {
-                                        <span class="badge text-bg-success">Sí</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge text-bg-danger">No</span>
-                                    }
-
-                                </td>
-
-                                <td>
-
-                                    <form method="post"
-                                          class="d-inline"
-                                          asp-page-handler="ToggleActivo">
-
-                                        <input type="hidden"
-                                               name="id"
-                                               value="@h.Id" />
-
-                                        <button class="btn btn-sm btn-outline-secondary"
-                                                type="submit">
-
-                                            <i class="bi bi-toggle-on"></i>
-                                            Activar / Desactivar
-
-                                        </button>
-
-                                    </form>
-
-                                    <form method="post"
-                                          class="d-inline"
-                                          asp-page-handler="Eliminar"
-                                          onsubmit="return confirm('¿Eliminar esta imagen?');">
-
-                                        <input type="hidden"
-                                               name="id"
-                                               value="@h.Id" />
-
-                                        <button class="btn btn-sm btn-outline-danger"
-                                                type="submit">
-
-                                            <i class="bi bi-trash"></i>
-
-                                        </button>
-
-                                    </form>
-
-                                </td>
-
-                            </tr>
-                        }
-                    }
-
-                </tbody>
-
-            </table>
-
         </div>
-
     </div>
 </div>
 
@@ -314,13 +255,11 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-
         const file = document.getElementById("hdrFile");
         const img = document.getElementById("hdrPreview");
         const empty = document.getElementById("hdrPreviewEmpty");
 
         file?.addEventListener("change", function () {
-
             const f = this.files && this.files[0];
 
             if (!f) {
@@ -331,32 +270,24 @@
             }
 
             const url = URL.createObjectURL(f);
-
             img.src = url;
             img.style.display = "block";
             empty.style.display = "none";
-
         });
-
     </script>
 
     <script>
-
         const chk = document.getElementById("chkPermanente");
         const i1 = document.getElementById("vigInicio");
         const i2 = document.getElementById("vigFin");
 
         function syncVigencias() {
-            const on = chk.checked;
-
-            i1.disabled = on;
-            i2.disabled = on;
+            const on = chk && chk.checked;
+            if (i1) i1.disabled = on;
+            if (i2) i2.disabled = on;
         }
 
         chk?.addEventListener("change", syncVigencias);
-
         syncVigencias();
-
     </script>
-
 }
