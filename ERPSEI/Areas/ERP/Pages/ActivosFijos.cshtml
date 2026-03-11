@@ -23,6 +23,7 @@
 @inject IConfiguration Configuration;
 @{
     ViewData["Title"] = Localizer["Title"];
+    ViewData["BodyClass"] = "activosfijos-page";
 
     // Retrieves the requested culture
     IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -42,6 +43,10 @@
     bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
     bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
     bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ActivosFijos.css" asp-append-version="true" />
 }
 
 <h3 class="title mb-3">@ViewData["Title"]</h3>
