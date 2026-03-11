@@ -1,12 +1,179 @@
 ﻿/* =====================================================
-   MODULO BANNERS - SOLO CONTENIDO
-   EL MENU LO HEREDA DEL LAYOUT PRINCIPAL
+   MODULO BANNERS
    ===================================================== */
 
-/* Fondo azul del módulo */
-body {
+body.module-main-theme {
     background: radial-gradient(circle at 50% 18%, rgba(57,100,255,.20) 0%, rgba(57,100,255,0) 28%), linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%);
 }
+
+    /* =====================================================
+   HEADER SUPERIOR
+   ===================================================== */
+
+    body.module-main-theme .header-bg {
+        background: linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%) !important;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        background-size: cover;
+        background-position: center;
+        min-height: 84px;
+    }
+
+    body.module-main-theme .header-bg-inner {
+        min-height: 84px;
+        display: flex;
+        align-items: center;
+    }
+
+    body.module-main-theme .brandimage {
+        max-height: 44px;
+        width: auto;
+    }
+
+    body.module-main-theme .navbar .nav-link,
+    body.module-main-theme .navbar .navbar-brand,
+    body.module-main-theme .navbar .btn,
+    body.module-main-theme .navbar a,
+    body.module-main-theme .navbar form button {
+        color: #fff !important;
+    }
+
+    /* =====================================================
+   BARRA DEL MENU RAPIDO
+   ===================================================== */
+
+    body.module-main-theme .topbar-links {
+        max-width: 1280px;
+        margin: 0 auto 14px auto;
+        padding: 9px 14px !important;
+        min-height: 54px;
+        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
+        border: 2px solid #d4a941;
+        border-radius: 18px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        gap: 10px;
+    }
+
+        body.module-main-theme .topbar-links > .small {
+            display: flex !important;
+            align-items: center;
+            min-height: 100%;
+            margin: 0;
+            padding-right: 8px;
+            line-height: 1.1;
+            white-space: nowrap;
+            font-size: .92rem;
+        }
+
+        body.module-main-theme .topbar-links .small,
+        body.module-main-theme .topbar-links .text-muted,
+        body.module-main-theme .topbar-links b {
+            color: #0c1f60 !important;
+        }
+
+    body.module-main-theme .quick-nav-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    body.module-main-theme .quick-nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 4px 10px !important;
+        white-space: nowrap;
+        font-size: .85rem;
+    }
+
+    body.module-main-theme .quick-link {
+        color: #0c1f60 !important;
+        text-decoration: none !important;
+        font-weight: 700;
+        font-size: .88rem;
+        line-height: 1.05;
+        padding: 2px 4px;
+        border-radius: 8px;
+        transition: all .18s ease;
+        white-space: nowrap;
+    }
+
+        body.module-main-theme .quick-link:hover {
+            background: rgba(12, 31, 96, .08);
+            color: #09184a !important;
+        }
+
+    /* =====================================================
+   DROPDOWN DEL MENU
+   ===================================================== */
+
+    body.module-main-theme .quick-dd {
+        position: relative;
+    }
+
+    body.module-main-theme .quick-dd-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        min-width: 260px;
+        background: rgba(10, 21, 80, .72);
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 14px;
+        box-shadow: 0 18px 35px rgba(0,0,0,.24);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 8px;
+        display: none;
+        z-index: 2000;
+    }
+
+    body.module-main-theme .quick-dd-menu-wide {
+        min-width: 320px;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    body.module-main-theme .quick-dd:hover > .quick-dd-menu {
+        display: block;
+    }
+
+    body.module-main-theme .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    body.module-main-theme .quick-dd-item {
+        display: block;
+        color: rgba(255,255,255,.90) !important;
+        text-decoration: none !important;
+        font-size: .88rem;
+        font-weight: 600;
+        padding: 8px 10px;
+        border-radius: 10px;
+        transition: background .15s ease, color .15s ease;
+    }
+
+        body.module-main-theme .quick-dd-item:hover {
+            background: rgba(255,255,255,.10);
+            color: #ffffff !important;
+        }
+
+    body.module-main-theme .quick-dd:hover > .quick-link,
+    body.module-main-theme .quick-dd.open > .quick-link {
+        color: #fff7d6 !important;
+        background: rgba(12, 31, 96, .18);
+    }
+
+    /* botón hamburguesa */
+    body.module-main-theme .quick-nav-toggle {
+        border: 1px solid #c89a2a;
+        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
+        color: #0c1f60;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-weight: 800;
+    }
 
 /* =====================================================
    CONTENEDOR DEL MODULO
@@ -20,6 +187,7 @@ body {
 .module-shell {
     max-width: 1280px;
     margin: 0 auto;
+    padding: 0 12px;
 }
 
 /* =====================================================
@@ -146,51 +314,91 @@ body {
 }
 
 /* =====================================================
-   BOTONES DORADOS
+   BOTONES
    ===================================================== */
 
 .module-btn-primary {
-    background: linear-gradient(145deg,#f3e3b3,#dcb95e);
-    color: #0c1f60;
-    border: 1px solid #c89a2a;
-    border-radius: 12px;
-    padding: .72rem 1rem;
-    font-weight: 800;
-    box-shadow: 0 8px 18px rgba(0,0,0,.18), inset 0 1px 2px rgba(255,255,255,.4);
-}
-
-    .module-btn-primary:hover {
-        background: linear-gradient(145deg,#f0dc9e,#d1a949);
-        color: #09184a;
-        border-color: #b78616;
-    }
-
-.module-btn-secondary {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+    background: #ffffff;
     color: #0c1f60;
     border: 1px solid #d4a941;
     border-radius: 10px;
+    padding: .5rem .85rem;
+    font-size: .92rem;
     font-weight: 700;
-    box-shadow: inset 0 1px 2px rgba(255,255,255,.35);
+    transition: all .18s ease;
+}
+
+    .module-btn-primary:hover {
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+        color: #09184a;
+        border-color: #c89a2a;
+    }
+
+.module-btn-secondary {
+    background: #ffffff;
+    color: #0c1f60;
+    border: 1px solid #d4a941;
+    border-radius: 8px;
+    padding: .38rem .68rem;
+    font-size: .84rem;
+    font-weight: 700;
 }
 
     .module-btn-secondary:hover {
-        background: linear-gradient(145deg,#efd995,#d8b65b);
-        color: #09184a;
-        border-color: #c69126;
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+        border-color: #c89a2a;
     }
 
 .module-btn-danger {
     background: linear-gradient(145deg,#f9d0c8,#ef9b8d);
     color: #8f1b13;
     border: 1px solid rgba(184,51,37,.28);
-    border-radius: 10px;
+    border-radius: 8px;
+    padding: .34rem .55rem;
+    font-size: .82rem;
+    line-height: 1;
     font-weight: 700;
 }
 
     .module-btn-danger:hover {
         background: linear-gradient(145deg,#f4b9ad,#e87e6a);
         color: #74140f;
+    }
+
+.module-table .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.module-table .module-btn-secondary {
+    min-height: 32px;
+}
+
+.module-table .module-btn-danger {
+    min-height: 30px;
+    min-width: 30px;
+    padding: .3rem .45rem;
+}
+
+/* =====================================================
+   BOTONES DE ACCIONES EN TABLA (MISMA FILA)
+   ===================================================== */
+
+.module-table td:last-child {
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .module-table td:last-child .btn,
+    .module-table td:last-child .module-btn-secondary,
+    .module-table td:last-child .module-btn-danger {
+        display: inline-flex;
+        align-items: center;
     }
 
 /* =====================================================
@@ -272,50 +480,6 @@ body {
 }
 
 /* =====================================================
-   DROP ZONE
-   ===================================================== */
-
-.banner-drop {
-    border: 2px dashed #b8c9f3;
-    border-radius: 16px;
-    padding: 28px;
-    text-align: center;
-    background: linear-gradient(180deg,#f8fbff,#eef4ff);
-    cursor: pointer;
-    transition: .15s ease-in-out;
-    min-height: 160px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-    .banner-drop:hover {
-        border-color: #7e9cff;
-        box-shadow: 0 0 0 4px rgba(126,156,255,0.15);
-    }
-
-    .banner-drop .hint {
-        color: #667085;
-        font-size: .95rem;
-    }
-
-        .banner-drop .hint strong {
-            color: #0c1f60;
-        }
-
-.banner-preview {
-    width: 100%;
-    max-height: 180px;
-    object-fit: cover;
-    border-radius: 12px;
-    display: none;
-}
-
-.banner-meta small {
-    color: #667085;
-}
-
-/* =====================================================
    FOOTER
    ===================================================== */
 
@@ -341,6 +505,54 @@ body {
    ===================================================== */
 
 @media (max-width: 991.98px) {
+    body.module-main-theme .topbar-links {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+
+    body.module-main-theme .quick-nav-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    body.module-main-theme .quick-nav {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px !important;
+        margin-top: 8px;
+    }
+
+        body.module-main-theme .quick-nav.is-open {
+            display: flex;
+        }
+
+    body.module-main-theme .quick-link {
+        width: 100%;
+        body .module-main-theme .quick-dd-menu
+
+{
+    display: block;
+}
+
+    body.module-main-theme .quick-dd-menu {
+        position: static;
+        display: none;
+        min-width: 100%;
+        margin-top: 6px;
+        box-shadow: none;
+        border-radius: 12px;
+    }
+
+    body.module-main-theme .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
     .module-header {
         padding: 16px 18px;
     }

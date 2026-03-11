@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="~/css/Banners.css" asp-append-version="true" />
 }
 
-
 <div class="banners-theme-page">
     <div class="module-shell">
-        <div class="module-header mb-4">
+        <!--<div class="module-header mb-4">
             <h2 class="module-title mb-1">Banners</h2>
             <p class="module-subtitle mb-0">Administra los banners visibles en la intranet.</p>
         </div>
+        -->
 
         @if (TempData["Ok"] != null)
         {
@@ -33,7 +33,7 @@
 
         <div class="card module-card shadow-sm mb-4">
             <div class="card-body">
-                <h5 class="card-title module-card-title mb-3">Subir banner</h5>
+                <h5 class="card-title module-card-title mb-3">Subir Banner</h5>
 
                 <form method="post" enctype="multipart/form-data" asp-page-handler="Crear">
                     <div class="row g-3">
@@ -84,7 +84,7 @@
 
                         <div class="col-12 d-flex justify-content-end">
                             <button class="btn module-btn-primary" type="submit">
-                                <i class="bi bi-cloud-arrow-up"></i> Guardar banner
+                                <i class="bi bi-cloud-arrow-up"></i> Guardar Banner
                             </button>
                         </div>
 
@@ -95,7 +95,7 @@
 
         <div class="card module-card shadow-sm">
             <div class="card-body">
-                <h5 class="card-title module-card-title mb-3">Banners cargados</h5>
+                <h5 class="card-title module-card-title mb-3">Banners Cargados</h5>
 
                 <div class="table-responsive module-table-wrap">
                     <table class="table table-sm align-middle module-table">

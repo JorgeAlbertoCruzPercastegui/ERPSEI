@@ -213,7 +213,6 @@
     {
         permisos["banners"] = false;
     }
-
 }
 
 <!DOCTYPE html>
@@ -222,8 +221,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Intranet SEI</title>
-
-    @RenderSection("Styles", required: false)
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -234,11 +231,12 @@
     <link rel="stylesheet" href="~/ERPSEI.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    @RenderSection("Styles", required: false)
 </head>
 
 <body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme")">
     <header>
-
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light header-bg shadow-none border-0"
              style="@(string.IsNullOrWhiteSpace(headerBg) ? "" : $"background-image:url('{headerBg}')")">
 
@@ -256,11 +254,6 @@
                     <ul class="navbar-nav flex-grow-1">
                         @if (!SignInManager.IsSignedIn(User))
                         {
-                            <!--<li class="nav-item">
-                                <a class="nav-link @_LayoutPages.InicioNavClass(ViewContext)" asp-area="" asp-page="/Index">
-                                    <i class="bi bi-house-door-fill"></i> @Localizer["HomeMenu"]
-                                </a>
-                            </li>-->
                             <li class="nav-item">
                                 <a class="nav-link @_LayoutPages.AvisoPrivacidadNavClass(ViewContext)" asp-area="" asp-page="/Privacy">
                                     <i class="bi bi-shield-fill-check"></i> @Localizer["PrivacyMenu"]
@@ -295,30 +288,7 @@
                         <div class="quick-dd">
                             <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
                             <div class="quick-dd-menu">
-
                                 <a class="quick-dd-item" asp-area="" asp-page="/ManualesPoliticas">Manuales, Políticas y Reglamentos</a>
-
-                                <!--<a class="quick-dd-item"
-                                   asp-area=""
-                                   asp-page="/ManualesPoliticas"
-                                   asp-route-Tipo="Manual">
-                                    Manuales
-                                </a>
-
-                                <a class="quick-dd-item"
-                                   asp-area=""
-                                   asp-page="/ManualesPoliticas"
-                                   asp-route-Tipo="Politica">
-                                    Políticas
-                                </a>
-
-                                <a class="quick-dd-item"
-                                   asp-area=""
-                                   asp-page="/ManualesPoliticas"
-                                   asp-route-Tipo="Reglamento">
-                                    Reglamentos
-                                </a>-->
-
                                 <a class="quick-dd-item"
                                    asp-area="Catalogos"
                                    asp-page="/GestorManualesPoliticas/Index">
@@ -394,7 +364,7 @@
         <br />
 
         <main role="main" class="pb-3 main-home-content">
-        @RenderBody()
+            @RenderBody()
 
             @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
             {
@@ -476,8 +446,9 @@
                     </div>
                 </div>
             }
-    </main>
+        </main>
     </div>
+
     <footer class="border-top footer text-muted">
         <div class="container">
             <div class="float-start">
