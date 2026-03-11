@@ -2,9 +2,14 @@
 @model ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas.IndexModel
 @{
     ViewData["Title"] = "Gestor de Manuales, Políticas y Reglamentos";
+    ViewData["BodyClass"] = "gestor-manuales-page";
 }
 
-<h2 class="mb-3">Gestor de Manuales y Políticas</h2>
+@section Styles {
+    <link rel="stylesheet" href="~/css/GestorManualesPoliticas.css" asp-append-version="true" />
+}
+
+<!--<h2 class="mb-3">Gestor de Manuales y Políticas</h2>-->
 
 @if (TempData["Ok"] != null)
 {
