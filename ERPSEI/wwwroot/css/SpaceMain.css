@@ -1,400 +1,413 @@
-﻿.topbar-links {
-    white-space: nowrap;
+﻿/* =====================================================
+   SOLO HOME PRINCIPAL
+   ===================================================== */
+
+.home-main-theme {
+    min-height: 100vh;
+    background: radial-gradient(circle at 50% 18%, rgba(57,100,255,.20) 0%, rgba(57,100,255,0) 28%), linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%);
+    color: #fff;
 }
 
-.quick-nav {
-    white-space: nowrap;
-}
-
-/* Links estilo texto + subrayado animado */
-.quick-link {
-    position: relative;
-    display: inline-block;
-    padding: .15rem .1rem;
-    text-decoration: none !important;
-    color: rgba(0,0,0,.65);
-    font-size: .875rem;
-    font-weight: 600;
-    transition: color .15s ease;
-}
-
-    /* Raya debajo (oculta por default) */
-    .quick-link::after {
+    .home-main-theme::before {
         content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 20% 25%, rgba(255,255,255,.06) 0%, transparent 22%), radial-gradient(circle at 80% 18%, rgba(255,255,255,.05) 0%, transparent 20%), radial-gradient(circle at 75% 70%, rgba(255,255,255,.04) 0%, transparent 24%);
+        z-index: 0;
+    }
+
+    .home-main-theme > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ==========================================
+   HEADER SOLO HOME
+   ========================================== */
+
+    .home-main-theme .header-bg {
+        background: transparent !important;
+        border: 0 !important;
+    }
+
+    .home-main-theme .header-bg-inner {
+        background: transparent;
+        padding-top: 12px;
+        padding-bottom: 6px;
+    }
+
+    .home-main-theme .navbar-brand img.brandimage {
+        height: 52px;
+        width: auto;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,.18));
+    }
+
+    /* cerrar sesión / links del header */
+    .home-main-theme header .nav-link,
+    .home-main-theme header .navbar .nav-link,
+    .home-main-theme header .navbar .dropdown-toggle,
+    .home-main-theme header .navbar .btn-link,
+    .home-main-theme header .navbar a {
+        color: rgba(255,255,255,.95) !important;
+    }
+
+        .home-main-theme header .nav-link:hover,
+        .home-main-theme header .navbar a:hover {
+            color: #ffffff !important;
+        }
+
+    /* ==========================================
+   CONTENEDOR SOLO HOME
+   ========================================== */
+
+    .home-main-theme .container {
+        max-width: 1280px;
+    }
+
+    /* ==========================================
+   TOPBAR SOLO HOME
+   ========================================== */
+
+    .home-main-theme .topbar-links {
+        white-space: nowrap;
+        margin-top: 2px;
+        margin-bottom: 12px;
+        padding: 12px 14px !important;
+        border-radius: 18px;
+        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.10);
+        box-shadow: 0 10px 24px rgba(0,0,0,.14);
+        backdrop-filter: blur(4px);
+    }
+
+        .home-main-theme .topbar-links .small,
+        .home-main-theme .topbar-links .text-muted,
+        .home-main-theme .topbar-links b {
+            color: #0c1f60 !important;
+        }
+
+    /* ==========================================
+   NAVEGACIÓN RÁPIDA SOLO HOME
+   ========================================== */
+
+    .home-main-theme .quick-nav {
+        white-space: nowrap;
+    }
+
+    .home-main-theme .quick-link {
+        position: relative;
+        display: inline-block;
+        padding: .2rem .18rem;
+        text-decoration: none !important;
+        color: rgba(255,255,255,.86);
+        font-size: .92rem;
+        font-weight: 600;
+        transition: color .15s ease;
+    }
+
+        .home-main-theme .quick-link::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -5px;
+            height: 2px;
+            width: 100%;
+            transform: scaleX(0);
+            transform-origin: left;
+            background: #9db8ff;
+            transition: transform .18s ease;
+            opacity: .95;
+        }
+
+        .home-main-theme .quick-link:hover {
+            color: #ffffff;
+        }
+
+            .home-main-theme .quick-link:hover::after {
+                transform: scaleX(1);
+            }
+
+        .home-main-theme .quick-link.active {
+            color: #ffffff;
+        }
+
+            .home-main-theme .quick-link.active::after {
+                transform: scaleX(1);
+            }
+
+    .home-main-theme .quick-dd {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .home-main-theme .quick-dd-menu {
         position: absolute;
-        left: 0;
-        bottom: -4px;
-        height: 2px;
+        top: calc(100% + 12px);
+        right: 0;
+        min-width: 260px;
+        background: rgba(9, 20, 70, .96);
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 14px;
+        padding: .55rem;
+        box-shadow: 0 18px 35px rgba(0,0,0,.28);
+        display: none;
+        z-index: 2000;
+        backdrop-filter: blur(10px);
+    }
+
+    .home-main-theme .quick-dd-menu-wide {
+        min-width: 330px;
+        max-height: 320px;
+        overflow: auto;
+    }
+
+    .home-main-theme .quick-dd-item {
+        display: block;
+        padding: .6rem .8rem;
+        border-radius: 10px;
+        text-decoration: none !important;
+        color: rgba(255,255,255,.86);
+        font-size: .875rem;
+        font-weight: 600;
+        transition: background .15s ease, color .15s ease;
+    }
+
+        .home-main-theme .quick-dd-item:hover {
+            background: rgba(255,255,255,.10);
+            color: #ffffff;
+        }
+
+    .home-main-theme .quick-dd:hover > .quick-dd-menu {
+        display: block;
+    }
+
+    .home-main-theme .quick-dd:hover > .quick-dd-toggle::after {
+        transform: scaleX(1);
+    }
+
+    .home-main-theme .quick-dd:hover > .quick-dd-toggle {
+        color: #ffffff;
+    }
+
+    .home-main-theme .quick-nav-wrap {
+        position: relative;
+    }
+
+    .home-main-theme .quick-nav-toggle {
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(255,255,255,.08);
+        color: #fff;
+        border-radius: 10px;
+        padding: .35rem .65rem;
+    }
+
+    .home-main-theme #quickNavMenu {
+        display: flex;
+    }
+
+    /* ==========================================
+   BANNER SOLO HOME
+   ========================================== */
+
+    .home-main-theme .main-home-content {
+        padding-top: 6px;
+    }
+
+    .home-main-theme .banner-img,
+    .home-main-theme .home-banner-img {
         width: 100%;
-        transform: scaleX(0);
-        transform-origin: left;
-        background: currentColor;
-        transition: transform .18s ease;
-        opacity: .95;
+        height: 350px;
+        object-fit: cover;
+        border-radius: 18px;
+        display: block;
+        border: 1px solid rgba(255,255,255,.18);
+        box-shadow: 0 16px 34px rgba(0,0,0,.22);
+        background: rgba(255,255,255,.04);
     }
 
-    /* Hover */
-    .quick-link:hover {
-        color: rgba(0,0,0,.95);
+    /* ==========================================
+   FOOTER SOLO HOME
+   ========================================== */
+
+    .home-main-theme .footer {
+        background: transparent !important;
+        border-top: 1px solid rgba(255,255,255,.14) !important;
+        margin-top: 26px;
+        padding-top: 14px;
+        padding-bottom: 12px;
     }
 
-        .quick-link:hover::after {
-            transform: scaleX(1);
+        .home-main-theme .footer,
+        .home-main-theme .footer .text-muted,
+        .home-main-theme .footer a,
+        .home-main-theme .footer .float-start,
+        .home-main-theme .footer .float-end {
+            color: rgba(255,255,255,.88) !important;
         }
 
-    /* Activo */
-    .quick-link.active {
-        color: rgba(0,0,0,.95);
-    }
+            .home-main-theme .footer a:hover {
+                color: #ffffff !important;
+            }
 
-        .quick-link.active::after {
-            transform: scaleX(1);
-        }
+/* ==========================================
+   MOBILE SOLO HOME
+   ========================================== */
 
-/* Contenedor de dropdown */
-.quick-dd {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-}
-
-/* Menú dropdown */
-.quick-dd-menu {
-    position: absolute;
-    top: calc(100% + 10px);
-    right: 0; /* alinea a la derecha del item */
-    min-width: 240px;
-    background: #fff;
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: 12px;
-    padding: .5rem;
-    box-shadow: 0 12px 30px rgba(0,0,0,.12);
-    display: none;
-    z-index: 2000;
-}
-
-/* Menú “ancho” para RH (muchos items) */
-.quick-dd-menu-wide {
-    min-width: 320px;
-    max-height: 320px;
-    overflow: auto;
-}
-
-/* Items */
-.quick-dd-item {
-    display: block;
-    padding: .55rem .75rem;
-    border-radius: 10px;
-    text-decoration: none !important;
-    color: rgba(0,0,0,.75);
-    font-size: .875rem;
-    font-weight: 600;
-    transition: background .15s ease, color .15s ease;
-}
-
-    /* Hover item */
-    .quick-dd-item:hover {
-        background: rgba(0,0,0,.06);
-        color: rgba(0,0,0,.95);
-    }
-
-/* Mostrar menú al pasar cursor */
-.quick-dd:hover > .quick-dd-menu {
-    display: block;
-}
-
-/* Mantener el subrayado del “padre” cuando está abierto */
-.quick-dd:hover > .quick-dd-toggle::after {
-    transform: scaleX(1);
-}
-
-.quick-dd:hover > .quick-dd-toggle {
-    color: rgba(0,0,0,.95);
-}
-
-.profile-header {
-    text-align: center;
-}
-
-.medium-profile-pic {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    display: block;
-    margin: 0 auto;
-}
-
-/* Contenedor para toggle */
-.quick-nav-wrap {
-    position: relative;
-}
-
-/* Desktop normal */
-#quickNavMenu {
-    display: flex;
-}
-
-/* Mobile panel flotante */
 @media (max-width: 991.98px) {
-    .topbar-links {
+    .home-main-theme .topbar-links {
         position: relative;
         flex-direction: row !important;
         align-items: center !important;
+        white-space: normal;
     }
 
-    /* Empuja el menú (botón) hacia la derecha */
-    .quick-nav-wrap {
+    .home-main-theme .quick-nav-wrap {
         margin-left: auto;
     }
 
-    @media (max-width: 991.98px) {
-        #quickNavMenu {
-            display: none !important;
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            width: 260px;
-            z-index: 1050;
-            flex-direction: column;
-            align-items: stretch;
-            gap: .25rem;
-            background: #fff;
-            border: 1px solid rgba(0,0,0,.10);
-            border-radius: .75rem;
-            box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.12);
-            padding: .5rem;
-        }
-
-            #quickNavMenu.is-open {
-                display: flex !important;
-            }
+    .home-main-theme #quickNavMenu {
+        display: none !important;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 280px;
+        z-index: 1050;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .3rem;
+        background: rgba(10, 21, 74, .98);
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: .9rem;
+        box-shadow: 0 1rem 2rem rgba(0,0,0,.28);
+        padding: .55rem;
+        backdrop-filter: blur(12px);
     }
 
-        .quick-link {
-            display: block;
-            width: 100%;
-            padding: .45rem .5rem;
-            border-radius: .5rem;
+        .home-main-theme #quickNavMenu.is-open {
+            display: flex !important;
         }
 
-        .quick-dd, .quick-dd-menu {
-            width: 100%;
-        }
-
-        /* dropdowns: en móvil como submenú */
-        .quick-dd-menu {
-            position: static !important;
-            box-shadow: none !important;
-            border: 0 !important;
-            margin-top: .25rem;
-            padding-left: .75rem;
-            display: none;
-        }
-
-        .quick-dd.open > .quick-dd-menu {
-            display: block;
-        }
+    .home-main-theme .quick-link {
+        display: block;
+        width: 100%;
+        padding: .48rem .55rem;
+        border-radius: .55rem;
     }
 
-.banner-img {
-    width: 100%;
-    height: 420px;
-    object-fit: cover;
-}
+    .home-main-theme .quick-dd,
+    .home-main-theme .quick-dd-menu {
+        width: 100%;
+    }
 
-@media (max-width:768px) {
-    .banner-img {
-        height: 260px;
+    .home-main-theme .quick-dd-menu {
+        position: static !important;
+        box-shadow: none !important;
+        border: 0 !important;
+        margin-top: .2rem;
+        padding-left: .55rem;
+        background: transparent;
+        display: none;
+    }
+
+    .home-main-theme .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    .home-main-theme .banner-img,
+    .home-main-theme .home-banner-img {
+        height: 220px;
     }
 }
 
 /* =====================================================
-   DISEÑO HOME INTRANET SEI
+   MENU DORADO SOLO HOME
    ===================================================== */
 
-:root {
-    --sei-blue-deep: #070c3a;
-    --sei-blue-main: #0c1496;
-    --sei-blue-soft: #0b1380;
-    --sei-gold: #d0aa4b;
-    --sei-gold-soft: #e1c77a;
-    --sei-cream: #f4ecd7;
-    --sei-text-light: #ffffff;
+.home-main-theme .topbar-links {
+    white-space: nowrap;
+    margin-top: 2px;
+    margin-bottom: 12px;
+    padding: 12px 14px !important;
+    border-radius: 18px;
+    /* dorado */
+    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+    border: 2px solid #d4a941;
+    box-shadow: 0 6px 18px rgba(0,0,0,.25), inset 0 2px 4px rgba(255,255,255,.4);
 }
 
-/* Fondo general del home */
-.home-wrapper {
-    background: linear-gradient(135deg,#091040 0%,#0b1380 45%,#0d0f9c 100%);
-    min-height: 100vh;
-    padding-bottom: 60px;
-}
-
-/* ==========================================
-   HEADER SUPERIOR AZUL
-   ========================================== */
-
-.intranet-header {
-    background: linear-gradient(90deg,#1115a9 0%,#071f4f 100%);
-    padding: 22px 28px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.intranet-logo {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-    .intranet-logo img {
-        height: 60px;
-    }
-
-.intranet-title {
-    color: #fff;
-    font-family: Georgia,serif;
-    font-size: 2rem;
+/* texto del menú */
+.home-main-theme .quick-link {
+    color: #0c1f60;
     font-weight: 700;
-    line-height: 1;
 }
 
-.intranet-user {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-}
-
-.intranet-avatar {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-/* ==========================================
-   BARRA DORADA DE NAVEGACIÓN
-   ========================================== */
-
-.gold-nav-bar {
-    background: var(--sei-gold);
-    padding: 10px 30px;
-    display: flex;
-    gap: 28px;
-    align-items: center;
-    border-bottom: 10px solid var(--sei-blue-main);
-}
-
-    .gold-nav-bar a {
-        color: #1b1b3a !important;
-        font-weight: 600;
-        text-decoration: none;
-        font-size: .9rem;
+    .home-main-theme .quick-link:hover {
+        color: #0a1d66;
     }
 
-        .gold-nav-bar a:hover {
-            color: #000 !important;
-        }
-
-/* ==========================================
-   BANNER PRINCIPAL
-   ========================================== */
-
-.hero-banner {
-    width: 100%;
-    height: 260px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-/* ==========================================
-   SECCIÓN CUMPLEAÑOS
-   ========================================== */
-
-.birthday-section {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-}
-
-.birthday-card {
-    background: var(--sei-cream);
-    border-radius: 25px;
-    padding: 30px 35px;
-    width: 650px;
-    box-shadow: 0 14px 35px rgba(0,0,0,.25);
-    text-align: center;
-}
-
-    /* Título */
-    .birthday-card h3 {
-        font-family: Georgia,serif;
-        color: #0c1496;
-        font-size: 1.9rem;
-        margin-bottom: 20px;
+    /* subrayado */
+    .home-main-theme .quick-link::after {
+        background: #0a1d66;
     }
 
-/* Lista cumpleaños */
-.birthday-list {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
+/* =====================================================
+   DROPDOWN DEL MENU ENCIMA DEL BANNER
+   ===================================================== */
+
+/* El contenedor del menú no debe recortar el dropdown */
+.home-main-theme .topbar-links,
+.home-main-theme .quick-nav-wrap,
+.home-main-theme #quickNavMenu,
+.home-main-theme .quick-dd {
+    overflow: visible !important;
 }
 
-.birthday-item {
-    text-align: center;
+/* Asegura contexto de apilado correcto */
+.home-main-theme .topbar-links {
+    position: relative;
+    z-index: 5000;
 }
 
-.birthday-date {
-    font-weight: 700;
-    font-size: 1.4rem;
-    color: #0c1496;
-    font-family: Georgia,serif;
+.home-main-theme .quick-nav-wrap {
+    position: relative;
+    z-index: 5001;
 }
 
-.birthday-name {
-    font-size: .95rem;
-    color: #1c1c3b;
+.home-main-theme #quickNavMenu {
+    position: relative;
+    z-index: 5002;
 }
 
-/* Mensaje */
-.birthday-message {
-    font-family: Georgia,serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #0c1496;
+.home-main-theme .quick-dd {
+    position: relative;
+    z-index: 5003;
 }
 
-/* Línea inferior */
-.home-divider {
-    width: 85%;
-    height: 4px;
-    background: #fff;
-    margin: 40px auto 0 auto;
+/* El dropdown arriba de todo */
+.home-main-theme .quick-dd-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 99999 !important;
 }
 
-/* ==========================================
-   RESPONSIVE
-   ========================================== */
-
-@media(max-width:991px) {
-
-    .birthday-card {
-        width: 90%;
-    }
-
-    .birthday-list {
-        flex-direction: column;
-        gap: 12px;
-    }
+/* El banner debe quedar abajo */
+.home-main-theme .main-home-content,
+.home-main-theme .home-banner-carousel,
+.home-main-theme .home-banner-inner,
+.home-main-theme .carousel-inner,
+.home-main-theme .carousel-item,
+.home-main-theme .home-banner-img,
+.home-main-theme .banner-img {
+    position: relative;
+    z-index: 1 !important;
 }
 
-@media(max-width:768px) {
-
-    .gold-nav-bar {
-        flex-wrap: wrap;
-        gap: 12px;
-    }
+/* Muy importante: que el banner no tape visualmente */
+.home-main-theme .home-banner-carousel,
+.home-main-theme .carousel-inner,
+.home-main-theme .carousel-item {
+    overflow: visible !important;
 }

@@ -4,163 +4,175 @@
     ViewData["Title"] = "Banners";
 }
 
-<h2 class="mb-3">Banners</h2>
-
-@if (TempData["Ok"] != null)
-{
-    <div class="alert alert-success">@TempData["Ok"]</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/Banners.css" asp-append-version="true" />
 }
 
-@if (!ViewData.ModelState.IsValid)
-{
-    <div class="alert alert-danger">
-        @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+
+<div class="banners-theme-page">
+    <div class="module-shell">
+        <div class="module-header mb-4">
+            <h2 class="module-title mb-1">Banners</h2>
+            <p class="module-subtitle mb-0">Administra los banners visibles en la intranet.</p>
+        </div>
+
+        @if (TempData["Ok"] != null)
         {
-            <div>@err.ErrorMessage</div>
+            <div class="alert alert-success module-alert-success">@TempData["Ok"]</div>
         }
-    </div>
-}
 
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <h5 class="card-title mb-3">Subir banner</h5>
-
-        <form method="post" enctype="multipart/form-data" asp-page-handler="Crear">
-            <div class="row g-3">
-
-                <div class="col-md-6">
-                    <label class="form-label">Imagen</label>
-                    <input class="form-control" type="file" asp-for="Input.Archivo" accept=".jpg,.jpeg,.png,.webp" />
-                    <span class="text-danger" asp-validation-for="Input.Archivo"></span>
-                    <small class="text-muted">Recomendado: 1920x400 aprox. (JPG/PNG/WEBP)</small>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Orden</label>
-                    <input class="form-control" type="number" asp-for="Input.Orden" min="1" />
-                    <span class="text-danger" asp-validation-for="Input.Orden"></span>
-                </div>
-
-                <div class="col-md-3 d-flex align-items-end">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" asp-for="Input.EsPermanente" id="chkPermanente" />
-                        <label class="form-check-label" for="chkPermanente">Banner permanente</label>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Título (opcional)</label>
-                    <input class="form-control" asp-for="Input.Titulo" />
-                    <span class="text-danger" asp-validation-for="Input.Titulo"></span>
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label">Descripción (opcional)</label>
-                    <input class="form-control" asp-for="Input.Descripcion" />
-                    <span class="text-danger" asp-validation-for="Input.Descripcion"></span>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Vigencia inicio</label>
-                    <input class="form-control" type="datetime-local" asp-for="Input.VigenciaInicio" id="vigInicio" />
-                    <span class="text-danger" asp-validation-for="Input.VigenciaInicio"></span>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Vigencia fin</label>
-                    <input class="form-control" type="datetime-local" asp-for="Input.VigenciaFin" id="vigFin" />
-                    <span class="text-danger" asp-validation-for="Input.VigenciaFin"></span>
-                </div>
-
-                <div class="col-12 d-flex justify-content-end">
-                    <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-cloud-arrow-up"></i> Guardar banner
-                    </button>
-                </div>
-
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger module-alert-danger">
+                @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <div>@err.ErrorMessage</div>
+                }
             </div>
-        </form>
-    </div>
-</div>
+        }
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h5 class="card-title mb-3">Banners cargados</h5>
+        <div class="card module-card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title module-card-title mb-3">Subir banner</h5>
 
-        <div class="table-responsive">
-            <table class="table table-sm align-middle">
-                <thead>
-                    <tr>
-                        <th>Preview</th>
-                        <th>Título</th>
-                        <th>Vigencia</th>
-                        <th>Orden</th>
-                        <th>Activo</th>
-                        <th style="width:180px;">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Lista.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="6" class="text-muted">No hay banners cargados.</td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var b in Model.Lista)
-                        {
+                <form method="post" enctype="multipart/form-data" asp-page-handler="Crear">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label class="form-label module-label">Imagen</label>
+                            <input class="form-control module-input" type="file" asp-for="Input.Archivo" accept=".jpg,.jpeg,.png,.webp" />
+                            <span class="text-danger" asp-validation-for="Input.Archivo"></span>
+                            <small class="module-help">Recomendado: 1920x400 aprox. (JPG/PNG/WEBP)</small>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label module-label">Orden</label>
+                            <input class="form-control module-input" type="number" asp-for="Input.Orden" min="1" />
+                            <span class="text-danger" asp-validation-for="Input.Orden"></span>
+                        </div>
+
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check module-check">
+                                <input class="form-check-input" type="checkbox" asp-for="Input.EsPermanente" id="chkPermanente" />
+                                <label class="form-check-label module-label" for="chkPermanente">Banner permanente</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label module-label">Título (opcional)</label>
+                            <input class="form-control module-input" asp-for="Input.Titulo" />
+                            <span class="text-danger" asp-validation-for="Input.Titulo"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label module-label">Descripción (opcional)</label>
+                            <input class="form-control module-input" asp-for="Input.Descripcion" />
+                            <span class="text-danger" asp-validation-for="Input.Descripcion"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label module-label">Vigencia inicio</label>
+                            <input class="form-control module-input" type="datetime-local" asp-for="Input.VigenciaInicio" id="vigInicio" />
+                            <span class="text-danger" asp-validation-for="Input.VigenciaInicio"></span>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label module-label">Vigencia fin</label>
+                            <input class="form-control module-input" type="datetime-local" asp-for="Input.VigenciaFin" id="vigFin" />
+                            <span class="text-danger" asp-validation-for="Input.VigenciaFin"></span>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end">
+                            <button class="btn module-btn-primary" type="submit">
+                                <i class="bi bi-cloud-arrow-up"></i> Guardar banner
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card module-card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title module-card-title mb-3">Banners cargados</h5>
+
+                <div class="table-responsive module-table-wrap">
+                    <table class="table table-sm align-middle module-table">
+                        <thead>
                             <tr>
-                                <td style="width:220px;">
-                                    <img src="@b.RutaArchivo" class="img-fluid rounded border" style="max-height:70px;" />
-                                </td>
-                                <td>
-                                    <div class="fw-semibold">@b.Titulo</div>
-                                    <div class="text-muted small">@b.Descripcion</div>
-                                    <div class="text-muted small">@b.NombreArchivo</div>
-                                </td>
-                                <td class="small">
-                                    @if (b.EsPermanente)
-                                    {
-                                        <span class="badge text-bg-secondary">Permanente</span>
-                                    }
-                                    else
-                                    {
-                                        <div><b>Inicio:</b> @(b.VigenciaInicio?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
-                                        <div><b>Fin:</b> @(b.VigenciaFin?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
-                                    }
-                                </td>
-                                <td>@b.Orden</td>
-                                <td>
-                                    @if (b.Activo)
-                                    {
-                                        <span class="badge text-bg-success">Sí</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge text-bg-danger">No</span>
-                                    }
-                                </td>
-                                <td>
-                                    <form method="post" class="d-inline" asp-page-handler="ToggleActivo">
-                                        <input type="hidden" name="id" value="@b.Id" />
-                                        <button class="btn btn-sm btn-outline-secondary" type="submit">
-                                            <i class="bi bi-toggle-on"></i> Activar/Desactivar
-                                        </button>
-                                    </form>
-
-                                    <form method="post" class="d-inline" asp-page-handler="Eliminar" onsubmit="return confirm('¿Eliminar este banner?');">
-                                        <input type="hidden" name="id" value="@b.Id" />
-                                        <button class="btn btn-sm btn-outline-danger" type="submit">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
+                                <th>Preview</th>
+                                <th>Título</th>
+                                <th>Vigencia</th>
+                                <th>Orden</th>
+                                <th>Activo</th>
+                                <th style="width:180px;">Acciones</th>
                             </tr>
-                        }
-                    }
-                </tbody>
-            </table>
+                        </thead>
+                        <tbody>
+                            @if (Model.Lista.Count == 0)
+                            {
+                                <tr>
+                                    <td colspan="6" class="module-empty">No hay banners cargados.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var b in Model.Lista)
+                                {
+                                    <tr>
+                                        <td style="width:220px;">
+                                            <img src="@b.RutaArchivo" class="img-fluid rounded border module-preview-table" style="max-height:70px;" />
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold module-main-text">@b.Titulo</div>
+                                            <div class="module-muted small">@b.Descripcion</div>
+                                            <div class="module-muted small">@b.NombreArchivo</div>
+                                        </td>
+                                        <td class="small module-main-text">
+                                            @if (b.EsPermanente)
+                                            {
+                                                <span class="badge module-badge-gray">Permanente</span>
+                                            }
+                                            else
+                                            {
+                                                <div><b>Inicio:</b> @(b.VigenciaInicio?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                                <div><b>Fin:</b> @(b.VigenciaFin?.ToString("dd/MM/yyyy HH:mm") ?? "-")</div>
+                                            }
+                                        </td>
+                                        <td class="module-main-text">@b.Orden</td>
+                                        <td>
+                                            @if (b.Activo)
+                                            {
+                                                <span class="badge module-badge-success">Sí</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge module-badge-danger">No</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <form method="post" class="d-inline" asp-page-handler="ToggleActivo">
+                                                <input type="hidden" name="id" value="@b.Id" />
+                                                <button class="btn btn-sm module-btn-secondary" type="submit">
+                                                    <i class="bi bi-toggle-on"></i> Activar/Desactivar
+                                                </button>
+                                            </form>
+
+                                            <form method="post" class="d-inline" asp-page-handler="Eliminar" onsubmit="return confirm('¿Eliminar este banner?');">
+                                                <input type="hidden" name="id" value="@b.Id" />
+                                                <button class="btn btn-sm module-btn-danger" type="submit">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -169,7 +181,6 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        // ✅ BANNERS: si es permanente, deshabilita vigencias
         (function () {
             const chk = document.getElementById("chkPermanente");
             const i1 = document.getElementById("vigInicio");
