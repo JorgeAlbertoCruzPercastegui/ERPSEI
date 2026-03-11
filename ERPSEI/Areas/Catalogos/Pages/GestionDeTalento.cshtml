@@ -20,6 +20,7 @@
 @inject IHorariosManager HorariosManager;
 @{
 	ViewData["Title"] = Localizer["Title"];
+	ViewData["BodyClass"] = "gestiontalento-page";
 
 	// Retrieves the requested culture
 	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -37,6 +38,10 @@
 	List<Oficina> oficinas = await OficinasManager.GetAllAsync();
 	List<Horario> horarios = await HorariosManager.GetAllAsync();
 }
+@section Styles {
+    <link rel="stylesheet" href="~/css/GestionDeTalento.css" asp-append-version="true" />
+}
+
 <h3 class="title mb-3">@ViewData["Title"]</h3>
 
 <!-- --------------------------- -->
@@ -580,7 +585,7 @@
 	<script src="~/lib/bootstrap-table/locale/bootstrap-table-en-US.min.js"></script>
 	<script src="~/lib/bootstrap-table/extensions/export/bootstrap-table-export.min.js"></script>
 
-	<link rel="stylesheet" href="~/css/GestionDeTalento.css" />
+	<!--<link rel="stylesheet" href="~/css/GestionDeTalento.css" />-->
 	<script src="~/../Areas/Catalogos/Pages/GestionDeTalento.cshtml.js"></script>
 
 	<script type="text/javascript">
