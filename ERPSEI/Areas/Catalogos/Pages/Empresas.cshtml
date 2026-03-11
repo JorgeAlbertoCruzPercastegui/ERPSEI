@@ -20,6 +20,7 @@
 @inject IAccesoModuloManager AccesosModulosManager;
 @{
 	ViewData["Title"] = Localizer["Title"];
+	ViewData["BodyClass"] = "empresas-page";
 
 	// Retrieves the requested culture
 	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -49,6 +50,11 @@
 	bool tieneAccesoEmpresas = puedeTodo || puedeConsultar || puedeEditar;
 	bool tieneAccesoBancos = puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
 }
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Empresas.css" asp-append-version="true" />
+}
+
 <h3 class="title mb-3">@ViewData["Title"]</h3>
 
 <!-- --------------------------- -->
