@@ -121,8 +121,9 @@ body.module-main-theme.gestor-manuales-page {
 
     body.module-main-theme.gestor-manuales-page .quick-dd-menu {
         position: absolute;
-        top: calc(100% + 10px);
+        top: 100%;
         left: 0;
+        margin-top: 2px;
         min-width: 260px;
         background: rgba(10, 21, 80, .72);
         border: 1px solid rgba(255,255,255,.12);
@@ -141,10 +142,7 @@ body.module-main-theme.gestor-manuales-page {
         overflow-y: auto;
     }
 
-    body.module-main-theme.gestor-manuales-page .quick-dd:hover > .quick-dd-menu {
-        display: block;
-    }
-
+    body.module-main-theme.gestor-manuales-page .quick-dd:hover > .quick-dd-menu,
     body.module-main-theme.gestor-manuales-page .quick-dd.open > .quick-dd-menu {
         display: block;
     }

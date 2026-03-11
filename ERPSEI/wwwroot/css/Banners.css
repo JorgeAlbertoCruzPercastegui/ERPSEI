@@ -113,10 +113,15 @@ body.module-main-theme {
         position: relative;
     }
 
+    body.module-main-theme .quick-dd {
+        position: relative;
+    }
+
     body.module-main-theme .quick-dd-menu {
         position: absolute;
-        top: calc(100% + 10px);
+        top: 100%;
         left: 0;
+        margin-top: 2px;
         min-width: 260px;
         background: rgba(10, 21, 80, .72);
         border: 1px solid rgba(255,255,255,.12);
@@ -135,10 +140,7 @@ body.module-main-theme {
         overflow-y: auto;
     }
 
-    body.module-main-theme .quick-dd:hover > .quick-dd-menu {
-        display: block;
-    }
-
+    body.module-main-theme .quick-dd:hover > .quick-dd-menu,
     body.module-main-theme .quick-dd.open > .quick-dd-menu {
         display: block;
     }
@@ -534,11 +536,8 @@ body.module-main-theme {
 
     body.module-main-theme .quick-link {
         width: 100%;
-        body .module-main-theme .quick-dd-menu
-
-{
-    display: block;
-}
+        display: block;
+    }
 
     body.module-main-theme .quick-dd-menu {
         position: static;
@@ -570,3 +569,4 @@ body.module-main-theme {
         white-space: nowrap;
     }
 }
+
