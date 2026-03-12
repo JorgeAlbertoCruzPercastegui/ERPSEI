@@ -4,7 +4,16 @@
    ===================================================== */
 
 body.module-main-theme.gestor-manuales-page {
-    background: radial-gradient(circle at 50% 18%, rgba(57,100,255,.20) 0%, rgba(57,100,255,0) 28%), linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%);
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+    background-color: #07133f;
 }
 
     /* =====================================================
@@ -13,9 +22,7 @@ body.module-main-theme.gestor-manuales-page {
    ===================================================== */
 
     body.module-main-theme.gestor-manuales-page .header-bg {
-        background: linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%) !important;
-        background-size: cover;
-        background-position: center;
+        background: transparent !important;
         min-height: 84px;
         border-bottom: 1px solid rgba(255,255,255,.08);
     }
@@ -183,7 +190,7 @@ body.module-main-theme.gestor-manuales-page {
    ===================================================== */
 
 .gestor-manuales-page .gestor-theme-page {
-    min-height: calc(100vh - 150px);
+    flex: 1 0 auto;
     padding: 10px 0 32px;
 }
 
@@ -538,8 +545,12 @@ body.module-main-theme.gestor-manuales-page {
    ===================================================== */
 
 .gestor-manuales-page .footer {
-    background: transparent !important;
-    border-top: 1px solid rgba(255,255,255,.14) !important;
+    margin-top: auto;
+    flex-shrink: 0;
+    background: rgba(0,0,0,.35) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-top: 1px solid rgba(255,255,255,.18) !important;
 }
 
     .gestor-manuales-page .footer,
@@ -547,7 +558,7 @@ body.module-main-theme.gestor-manuales-page {
     .gestor-manuales-page .footer .text-muted,
     .gestor-manuales-page .footer .float-start,
     .gestor-manuales-page .footer .float-end {
-        color: rgba(255,255,255,.88) !important;
+        color: rgba(255,255,255,.92) !important;
     }
 
         .gestor-manuales-page .footer a:hover {
@@ -559,50 +570,55 @@ body.module-main-theme.gestor-manuales-page {
    ===================================================== */
 
 @media (max-width: 991.98px) {
-    body.module-main-theme.gestor-manuales-page .topbar-links {
-        flex-direction: column;
-        align-items: stretch !important;
-        gap: 10px;
+    body.module-main-theme.gestor-manuales-page {
+        background-attachment: scroll;
+        background-position: center top;
     }
 
-    body.module-main-theme.gestor-manuales-page .quick-nav-wrap {
-        flex: 1 1 0;
-        min-width: 0;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-    }
-
-    body.module-main-theme.gestor-manuales-page .quick-nav {
-        display: none;
-        width: 100%;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px !important;
-        margin-top: 8px;
-    }
-
-        body.module-main-theme.gestor-manuales-page .quick-nav.is-open {
-            display: flex;
+        body.module-main-theme.gestor-manuales-page .topbar-links {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 10px;
         }
 
-    body.module-main-theme.gestor-manuales-page .quick-link {
-        width: 100%;
-        display: block;
-    }
+        body.module-main-theme.gestor-manuales-page .quick-nav-wrap {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
 
-    body.module-main-theme.gestor-manuales-page .quick-dd-menu {
-        position: static;
-        display: none;
-        min-width: 100%;
-        margin-top: 6px;
-        box-shadow: none;
-        border-radius: 12px;
-    }
+        body.module-main-theme.gestor-manuales-page .quick-nav {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px !important;
+            margin-top: 8px;
+        }
 
-    body.module-main-theme.gestor-manuales-page .quick-dd.open > .quick-dd-menu {
-        display: block;
-    }
+            body.module-main-theme.gestor-manuales-page .quick-nav.is-open {
+                display: flex;
+            }
+
+        body.module-main-theme.gestor-manuales-page .quick-link {
+            width: 100%;
+            display: block;
+        }
+
+        body.module-main-theme.gestor-manuales-page .quick-dd-menu {
+            position: static;
+            display: none;
+            min-width: 100%;
+            margin-top: 6px;
+            box-shadow: none;
+            border-radius: 12px;
+        }
+
+        body.module-main-theme.gestor-manuales-page .quick-dd.open > .quick-dd-menu {
+            display: block;
+        }
 
     .gestor-manuales-page .module-header {
         padding: 16px 18px;

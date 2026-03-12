@@ -16,9 +16,21 @@ html, body {
 }
 
 body {
-    background: linear-gradient(135deg, var(--bg-main-2) 0%, var(--bg-main) 45%, #f7f1e6 100%);
+    background-image: url('/img/Intranetfondotamaño2copia.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+    background-color: #efe6d3;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--blue-dark);
+}
+
+@media (max-width: 991.98px) {
+    body {
+        background-attachment: scroll;
+        background-position: center top;
+    }
 }
 
 /* Navbar superior */

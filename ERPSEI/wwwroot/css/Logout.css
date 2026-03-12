@@ -6,10 +6,70 @@
 body.module-main-theme.logout-page,
 body.logout-page {
     min-height: 100vh;
-    background: linear-gradient(180deg, #ddd3bf 0%, #e7dfcf 100%);
+    position: relative;
+    background-image: url('/img/Intranetfondotamaño2copia.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+    background-color: #ddd3bf;
     color: #1b237e;
 }
 
+    body.module-main-theme.logout-page::before,
+    body.logout-page::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.10);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    body.logout-page .header-bg,
+    body.module-main-theme.logout-page .header-bg,
+    .logout-page-shell,
+    .logout-card,
+    .logout-page .footer,
+    body.module-main-theme.logout-page .footer {
+        position: relative;
+        z-index: 1;
+    }
+
+@media (max-width: 991.98px) {
+    body.module-main-theme.logout-page,
+    body.logout-page {
+        background-attachment: scroll;
+        background-position: center top;
+    }
+
+    .logout-card {
+        padding: 26px 22px;
+    }
+
+    .logout-card-inner {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .logout-brand-panel {
+        min-height: auto;
+    }
+
+    .logout-brand-logo {
+        width: 260px;
+        margin: 0 auto;
+    }
+
+    .logout-title {
+        font-size: 1.8rem;
+    }
+
+    body.logout-page .header-bg-inner,
+    body.module-main-theme.logout-page .header-bg-inner {
+        min-height: 68px;
+    }
+}
     /* =====================================================
    HEADER SUPERIOR
    ===================================================== */

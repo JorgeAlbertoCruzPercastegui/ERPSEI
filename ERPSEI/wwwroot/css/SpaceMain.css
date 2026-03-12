@@ -4,7 +4,13 @@
 
 .home-main-theme {
     min-height: 100vh;
-    background: radial-gradient(circle at 50% 18%, rgba(57,100,255,.20) 0%, rgba(57,100,255,0) 28%), linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%);
+    position: relative;
+    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+    background-color: #07133f;
     color: #fff;
 }
 
@@ -13,7 +19,7 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        background: radial-gradient(circle at 20% 25%, rgba(255,255,255,.06) 0%, transparent 22%), radial-gradient(circle at 80% 18%, rgba(255,255,255,.05) 0%, transparent 20%), radial-gradient(circle at 75% 70%, rgba(255,255,255,.04) 0%, transparent 24%);
+        background: linear-gradient(135deg, rgba(7,19,63,.55) 0%, rgba(10,29,102,.45) 45%, rgba(17,46,161,.35) 100%), radial-gradient(circle at 20% 25%, rgba(255,255,255,.06) 0%, transparent 22%), radial-gradient(circle at 80% 18%, rgba(255,255,255,.05) 0%, transparent 20%), radial-gradient(circle at 75% 70%, rgba(255,255,255,.04) 0%, transparent 24%);
         z-index: 0;
     }
 
@@ -21,6 +27,77 @@
         position: relative;
         z-index: 1;
     }
+
+@media (max-width: 991.98px) {
+    .home-main-theme {
+        background-attachment: scroll;
+        background-position: center top;
+    }
+
+        .home-main-theme .topbar-links {
+            position: relative;
+            flex-direction: row !important;
+            align-items: center !important;
+            white-space: normal;
+        }
+
+        .home-main-theme .quick-nav-wrap {
+            margin-left: auto;
+        }
+
+        .home-main-theme #quickNavMenu {
+            display: none !important;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 280px;
+            z-index: 1050;
+            flex-direction: column;
+            align-items: stretch;
+            gap: .3rem;
+            background: rgba(10, 21, 74, .98);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: .9rem;
+            box-shadow: 0 1rem 2rem rgba(0,0,0,.28);
+            padding: .55rem;
+            backdrop-filter: blur(12px);
+        }
+
+            .home-main-theme #quickNavMenu.is-open {
+                display: flex !important;
+            }
+
+        .home-main-theme .quick-link {
+            display: block;
+            width: 100%;
+            padding: .48rem .55rem;
+            border-radius: .55rem;
+        }
+
+        .home-main-theme .quick-dd,
+        .home-main-theme .quick-dd-menu {
+            width: 100%;
+        }
+
+        .home-main-theme .quick-dd-menu {
+            position: static !important;
+            box-shadow: none !important;
+            border: 0 !important;
+            margin-top: .2rem;
+            padding-left: .55rem;
+            background: transparent;
+            display: none;
+        }
+
+        .home-main-theme .quick-dd.open > .quick-dd-menu {
+            display: block;
+        }
+
+        .home-main-theme .banner-img,
+        .home-main-theme .home-banner-img {
+            height: 220px;
+        }
+}
 
     /* ==========================================
    HEADER SOLO HOME
@@ -423,4 +500,36 @@
 .home-main-theme .carousel-inner,
 .home-main-theme .carousel-item {
     overflow: visible !important;
+}
+
+body.module-main-theme.manuales-politicas-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+    body.module-main-theme.manuales-politicas-page .layout-content {
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+        body.module-main-theme.manuales-politicas-page .layout-content > .container {
+            flex: 1 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+    body.module-main-theme.manuales-politicas-page .main-home-content {
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+.manuales-politicas-page .mp-front-wrapper {
+    flex: 1 0 auto;
+}
+
+.manuales-politicas-page .footer {
+    margin-top: auto;
 }

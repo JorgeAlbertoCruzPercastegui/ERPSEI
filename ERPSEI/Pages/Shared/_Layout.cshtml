@@ -74,6 +74,16 @@
     var paginaActual = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
     bool esPaginaInicio = paginaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase);
 
+    bool esLogin = paginaActual.Equals("/Account/Login", StringComparison.OrdinalIgnoreCase);
+    bool esLogout = paginaActual.Equals("/Account/Logout", StringComparison.OrdinalIgnoreCase);
+    bool esPrivacy = paginaActual.Equals("/Privacy", StringComparison.OrdinalIgnoreCase);
+
+    bool esAuthPage = esLogin || esLogout || esPrivacy;
+
+    string logoHeader = esAuthPage
+    ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/intranet_SEI.png"
+    : $"{Context.Request.Scheme}://{Context.Request.Host}/img/intranet_SEI_blanco.png";
+
     if (accesos.Count >= 0)
     {
         tieneCatalogosRH = accesos.FindAll(m =>
@@ -242,7 +252,8 @@
 
             <div class="container header-bg-inner">
                 <a class="navbar-brand d-flex flex-column align-items-start" asp-area="" asp-page="/Index">
-                    <img class="brandimage" src="@Context.Request.Scheme://@Context.Request.Host/img/intranet_SEI_blanco.png" />
+                    <!--<img class="brandimage" src="@Context.Request.Scheme://@Context.Request.Host/img/intranet_SEI_blanco.png" />-->
+                    <img class="brandimage" src="@logoHeader" />
                 </a>
 
                 <button class="navbar-toggler px-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarExample3"
@@ -268,188 +279,190 @@
         </nav>
     </header>
 
-    <div class="container">
-        @if (SignInManager.IsSignedIn(User))
-        {
-            <div class="topbar-links d-flex align-items-center justify-content-between py-1">
-                <div class="small text-muted d-flex align-items-center gap-2">
-                    Hola, <b>@(usr?.UserName ?? User.Identity?.Name)</b>
-                </div>
-
-                <div class="quick-nav-wrap position-relative">
-                    <button class="quick-nav-toggle d-lg-none" type="button" aria-expanded="false" aria-controls="quickNavMenu">
-                        ☰
-                    </button>
-
-                    <nav id="quickNavMenu" class="quick-nav align-items-center gap-3">
-
-                        <a class="quick-link" asp-area="" asp-page="">Mi Espacio</a>
-
-                        <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
-                            <div class="quick-dd-menu">
-                                <a class="quick-dd-item" asp-area="" asp-page="/ManualesPoliticas">Manuales, Políticas y Reglamentos</a>
-                                <a class="quick-dd-item"
-                                   asp-area="Catalogos"
-                                   asp-page="/GestorManualesPoliticas/Index">
-                                    Gestor Manuales / Políticas / Reglamentos
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
-                            <div class="quick-dd-menu">
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Permisos por enfermedad</a>
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Incapacidades</a>
-                                <a class="quick-dd-item" asp-area="ERP" asp-page="/Vacaciones">Vacaciones</a>
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Retardos</a>
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Home Office</a>
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Ausencias justificadas</a>
-                            </div>
-                        </div>
-
-                        <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace Corporativo</a>
-                            <div class="quick-dd-menu">
-                                <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Time</a>
-                                <a class="quick-dd-item" href="https://seiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Space</a>
-                                <a class="quick-dd-item" href="https://projectseiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Project</a>
-                                <a class="quick-dd-item" href="https://fridayapp.top/login" target="_blank" rel="noopener">Friday</a>
-                            </div>
-                        </div>
-
-                        <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión Corporativa</a>
-                            <div class="quick-dd-menu">
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
-                                <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
-                            </div>
-                        </div>
-
-                        <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
-                            <div class="quick-dd-menu">
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Encuestas</a>
-                                <a class="quick-dd-item" asp-area="" asp-page="/Building">Eventos</a>
-                            </div>
-                        </div>
-
-                        <div class="quick-dd">
-                            <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
-                            <div class="quick-dd-menu quick-dd-menu-wide">
-                                @if (permisos["banners"])
-                                {
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Banners">Banners</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/HeaderImagenes">Imágenes Header</a>
-                                }
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión De Talento</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Puestos">Puestos</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Areas">Áreas</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Subareas">Subáreas</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Oficinas">Oficinas</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Origenes">Orígenes</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Niveles">Niveles</a>
-                                <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Perfiles">Perfiles</a>
-                            </div>
-                        </div>
-
-                    </nav>
-                </div>
-            </div>
-        }
-
-        <br />
-
-        <main role="main" class="pb-3 main-home-content">
-            @RenderBody()
-
-            @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
+    <div class="layout-content">
+        <div class="container">
+            @if (SignInManager.IsSignedIn(User))
             {
-                <div class="birthday-showcase-wrapper">
-                    <div class="birthday-showcase birthday-showcase--compact">
-                        <div class="birthday-showcase__art">
-                            <div class="birthday-balloon"></div>
+                <div class="topbar-links d-flex align-items-center justify-content-between py-1">
+                    <div class="small text-muted d-flex align-items-center gap-2">
+                        Hola, <b>@(usr?.UserName ?? User.Identity?.Name)</b>
+                    </div>
 
-                            <div class="birthday-cake">
-                                <span class="candle"></span>
-                                <span class="candle"></span>
-                                <span class="candle"></span>
-                                <span class="candle"></span>
-                                <span class="candle"></span>
+                    <div class="quick-nav-wrap position-relative">
+                        <button class="quick-nav-toggle d-lg-none" type="button" aria-expanded="false" aria-controls="quickNavMenu">
+                            ☰
+                        </button>
+
+                        <nav id="quickNavMenu" class="quick-nav align-items-center gap-3">
+
+                            <a class="quick-link" asp-area="" asp-page="">Mi Espacio</a>
+
+                            <div class="quick-dd">
+                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
+                                <div class="quick-dd-menu">
+                                    <a class="quick-dd-item" asp-area="" asp-page="/ManualesPoliticas">Manuales, Políticas y Reglamentos</a>
+                                    <a class="quick-dd-item"
+                                       asp-area="Catalogos"
+                                       asp-page="/GestorManualesPoliticas/Index">
+                                        Gestor Manuales / Políticas / Reglamentos
+                                    </a>
+                                </div>
                             </div>
 
-                            <div class="birthday-gift"></div>
-                        </div>
-
-                        <div class="birthday-showcase__content">
-                            <div class="birthday-showcase__top">
-                                <h3 class="birthday-showcase__title">Cumpleaños del mes</h3>
-                                <div class="birthday-showcase__month">@nombreMesActual</div>
+                            <div class="quick-dd">
+                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
+                                <div class="quick-dd-menu">
+                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Permisos por enfermedad</a>
+                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Incapacidades</a>
+                                    <a class="quick-dd-item" asp-area="ERP" asp-page="/Vacaciones">Vacaciones</a>
+                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Retardos</a>
+                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Home Office</a>
+                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Ausencias justificadas</a>
+                                </div>
                             </div>
 
-                            <div class="birthday-showcase__grid birthday-showcase__grid--four">
-                                @foreach (var item in cumpleaniosMes)
-                                {
-                                    string estadoClase = item.Dia == diaActualCumple
-                                    ? "birthday-person--today"
-                                    : item.Dia < diaActualCumple
-                                    ? "birthday-person--past"
-                                    : "birthday-person--upcoming";
-
-                                    <div class="birthday-person-card @estadoClase">
-                                        <div class="birthday-person-card__day">
-                                            @item.Dia
-                                        </div>
-
-                                        <div class="birthday-person-card__info">
-                                            <div class="birthday-person-card__date">
-                                                @item.Dia de @nombreMesActual
-                                            </div>
-
-                                            <div class="birthday-person-card__name">
-                                                @item.NombreCompleto
-                                            </div>
-
-                                            @if (!string.IsNullOrWhiteSpace(item.Puesto))
-                                            {
-                                                <div class="birthday-person-card__role">
-                                                    @item.Puesto
-                                                </div>
-                                            }
-                                        </div>
-
-                                        <div class="birthday-person-card__badge">
-                                            @if (item.Dia == diaActualCumple)
-                                            {
-                                                <span>Hoy 🎂</span>
-                                            }
-                                            else if (item.Dia < diaActualCumple)
-                                            {
-                                                <span>Pasó</span>
-                                            }
-                                            else
-                                            {
-                                                <span>Próximo</span>
-                                            }
-                                        </div>
-                                    </div>
-                                }
+                            <div class="quick-dd">
+                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace Corporativo</a>
+                                <div class="quick-dd-menu">
+                                    <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Time</a>
+                                    <a class="quick-dd-item" href="https://seiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Space</a>
+                                    <a class="quick-dd-item" href="https://projectseiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Project</a>
+                                    <a class="quick-dd-item" href="https://fridayapp.top/login" target="_blank" rel="noopener">Friday</a>
+                                </div>
                             </div>
 
-                            <div class="birthday-showcase__footer">
-                                ¡Muchas felicidades!
+                            <div class="quick-dd">
+                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión Corporativa</a>
+                                <div class="quick-dd-menu">
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
+                                    <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
+                                </div>
                             </div>
-                        </div>
+
+                            <div class="quick-dd">
+                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
+                                <div class="quick-dd-menu">
+                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Encuestas</a>
+                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Eventos</a>
+                                </div>
+                            </div>
+
+                            <div class="quick-dd">
+                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
+                                <div class="quick-dd-menu quick-dd-menu-wide">
+                                    @if (permisos["banners"])
+                                    {
+                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Banners">Banners</a>
+                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/HeaderImagenes">Imágenes Header</a>
+                                    }
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión De Talento</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Puestos">Puestos</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Areas">Áreas</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Subareas">Subáreas</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Oficinas">Oficinas</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Origenes">Orígenes</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Niveles">Niveles</a>
+                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Perfiles">Perfiles</a>
+                                </div>
+                            </div>
+
+                        </nav>
                     </div>
                 </div>
             }
-        </main>
+
+            <br />
+
+            <main role="main" class="pb-3 main-home-content">
+                @RenderBody()
+
+                @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
+                {
+                    <div class="birthday-showcase-wrapper">
+                        <div class="birthday-showcase birthday-showcase--compact">
+                            <div class="birthday-showcase__art">
+                                <div class="birthday-balloon"></div>
+
+                                <div class="birthday-cake">
+                                    <span class="candle"></span>
+                                    <span class="candle"></span>
+                                    <span class="candle"></span>
+                                    <span class="candle"></span>
+                                    <span class="candle"></span>
+                                </div>
+
+                                <div class="birthday-gift"></div>
+                            </div>
+
+                            <div class="birthday-showcase__content">
+                                <div class="birthday-showcase__top">
+                                    <h3 class="birthday-showcase__title">Cumpleaños del mes</h3>
+                                    <div class="birthday-showcase__month">@nombreMesActual</div>
+                                </div>
+
+                                <div class="birthday-showcase__grid birthday-showcase__grid--four">
+                                    @foreach (var item in cumpleaniosMes)
+                                    {
+                                        string estadoClase = item.Dia == diaActualCumple
+                                        ? "birthday-person--today"
+                                        : item.Dia < diaActualCumple
+                                        ? "birthday-person--past"
+                                        : "birthday-person--upcoming";
+
+                                        <div class="birthday-person-card @estadoClase">
+                                            <div class="birthday-person-card__day">
+                                                @item.Dia
+                                            </div>
+
+                                            <div class="birthday-person-card__info">
+                                                <div class="birthday-person-card__date">
+                                                    @item.Dia de @nombreMesActual
+                                                </div>
+
+                                                <div class="birthday-person-card__name">
+                                                    @item.NombreCompleto
+                                                </div>
+
+                                                @if (!string.IsNullOrWhiteSpace(item.Puesto))
+                                                {
+                                                    <div class="birthday-person-card__role">
+                                                        @item.Puesto
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <div class="birthday-person-card__badge">
+                                                @if (item.Dia == diaActualCumple)
+                                                {
+                                                    <span>Hoy 🎂</span>
+                                                }
+                                                else if (item.Dia < diaActualCumple)
+                                                {
+                                                    <span>Pasó</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>Próximo</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="birthday-showcase__footer">
+                                    ¡Muchas felicidades!
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </main>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <!--<footer class="border-top footer text-muted">
         <div class="container">
             <div class="float-start">
                 &copy; @DateTime.Now.Year - ERPSEI - <a asp-area="" asp-page="/Privacy">@Localizer["PrivacyMenu"]</a>
@@ -459,6 +472,7 @@
             </div>
         </div>
     </footer>
+    -->
 
     <script src="@Context.Request.Scheme://@Context.Request.Host/lib/jquery/dist/jquery.min.js"></script>
     <script src="@Context.Request.Scheme://@Context.Request.Host/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

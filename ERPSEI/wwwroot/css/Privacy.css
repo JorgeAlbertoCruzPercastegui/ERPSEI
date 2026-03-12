@@ -15,13 +15,25 @@ body {
     min-height: 100%;
 }
 
+/* =====================================================
+   FONDO GENERAL
+   ===================================================== */
+
 body {
-    background: linear-gradient(135deg, var(--bg-main-2) 0%, var(--bg-main) 45%, #f7f1e6 100%);
+    background-image: url('/img/Intranetfondotamaño2copia.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+    background-color: #efe6d3;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--blue-dark);
 }
 
-/* Navbar superior */
+/* =====================================================
+   HEADER
+   ===================================================== */
+
 header,
 .navbar,
 nav.navbar {
@@ -37,14 +49,20 @@ nav.navbar {
         font-weight: 600;
     }
 
-/* Página */
+/* =====================================================
+   CONTENEDOR DE PAGINA
+   ===================================================== */
+
 .privacy-page {
     max-width: 1200px;
     margin: 0 auto;
     padding: 3rem 1.5rem 4rem 1.5rem;
 }
 
-/* Tarjeta principal */
+/* =====================================================
+   TARJETA PRINCIPAL
+   ===================================================== */
+
 .privacy-card {
     background: var(--bg-card);
     border-radius: 34px;
@@ -53,7 +71,10 @@ nav.navbar {
     border: none;
 }
 
-/* Encabezado */
+/* =====================================================
+   ENCABEZADO
+   ===================================================== */
+
 .privacy-header h1 {
     color: var(--blue-dark);
     font-size: 2.6rem;
@@ -75,7 +96,10 @@ nav.navbar {
     margin-bottom: 1.8rem;
 }
 
-/* Imagen */
+/* =====================================================
+   IMAGEN
+   ===================================================== */
+
 .privacy-image-wrapper {
     display: flex;
     justify-content: center;
@@ -92,7 +116,10 @@ nav.navbar {
     border-radius: 20px;
 }
 
-/* Contenido */
+/* =====================================================
+   CONTENIDO
+   ===================================================== */
+
 .privacy-content {
     max-width: 1000px;
     margin: 0 auto;
@@ -106,7 +133,6 @@ nav.navbar {
         text-align: justify;
     }
 
-    /* Si llegas a usar listas después */
     .privacy-content ul,
     .privacy-content ol {
         color: #3f3f46;
@@ -119,8 +145,39 @@ nav.navbar {
         margin-bottom: 0.65rem;
     }
 
-/* Responsive */
+/* =====================================================
+   FOOTER
+   ===================================================== */
+
+.footer {
+    background: rgba(0,0,0,.35) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-top: 1px solid rgba(255,255,255,.18) !important;
+}
+
+    .footer,
+    .footer a,
+    .footer .text-muted,
+    .footer .float-start,
+    .footer .float-end {
+        color: rgba(255,255,255,.92) !important;
+    }
+
+        .footer a:hover {
+            color: #ffffff !important;
+        }
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
 @media (max-width: 991.98px) {
+    body {
+        background-attachment: scroll;
+        background-position: center top;
+    }
+
     .privacy-page {
         padding: 2rem 1rem 3rem 1rem;
     }

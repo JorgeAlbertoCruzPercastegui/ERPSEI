@@ -133,3 +133,35 @@ select {
     object-fit: cover;
     border-radius: 10px;
 }
+
+body.module-main-theme.manuales-politicas-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+    body.module-main-theme.manuales-politicas-page .layout-content {
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+        body.module-main-theme.manuales-politicas-page .layout-content > .container {
+            flex: 1 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+    body.module-main-theme.manuales-politicas-page .main-home-content {
+        flex: 1 0 auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+.manuales-politicas-page .mp-front-wrapper {
+    flex: 1 0 auto;
+}
+
+.manuales-politicas-page .footer {
+    margin-top: auto;
+}
