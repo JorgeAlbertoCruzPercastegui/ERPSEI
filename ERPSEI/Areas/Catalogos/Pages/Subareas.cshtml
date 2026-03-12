@@ -9,6 +9,7 @@
 @inject IViewLocalizer Localizer;
 @{
 	ViewData["Title"] = Localizer["Title"];
+	ViewData["BodyClass"] = "catalogo-page";
 
 	// Retrieves the requested culture
 	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -19,6 +20,9 @@
 	string cultureName = culture.Name;
 
 	List<Area> areas = await AreasManager.GetAllAsync();
+}
+@section Styles {
+	<link rel="stylesheet" href="~/css/CatalogosBase.css" asp-append-version="true" />
 }
 
 <h3 class="title mb-3">@ViewData["Title"]</h3>

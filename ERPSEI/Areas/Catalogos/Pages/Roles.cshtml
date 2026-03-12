@@ -13,6 +13,7 @@
 @inject IModuloManager ModulosManager;
 @{
 	ViewData["Title"] = Localizer["Title"];
+	ViewData["BodyClass"] = "catalogo-page";
 
 	// Retrieves the requested culture
 	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -28,6 +29,10 @@
 
 	string moduleList = string.Join(',', (from Modulo m in modulos select m.NombreNormalizado));
 }
+@section Styles {
+	<link rel="stylesheet" href="~/css/CatalogosBase.css" asp-append-version="true" />
+}
+
 <h3 class="title mb-3">@ViewData["Title"]</h3>
 
 <!-- --------------------------- -->

@@ -6,6 +6,7 @@
 @inject IViewLocalizer Localizer;
 @{
 	ViewData["Title"] = Localizer["Title"];
+	ViewData["BodyClass"] = "catalogo-page";
 
 	// Retrieves the requested culture
 	IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -14,6 +15,10 @@
 	System.Globalization.CultureInfo? culture = rqf != null ? rqf.RequestCulture.Culture : new System.Globalization.CultureInfo("es-MX");
 
 	string cultureName = culture.Name;
+}
+
+@section Styles {
+	<link rel="stylesheet" href="~/css/CatalogosBase.css" asp-append-version="true" />
 }
 
 <h3 class="title mb-3">@ViewData["Title"]</h3>

@@ -4,8 +4,12 @@
 @model LogoutModel
 @{
     ViewData["Title"] = Localizer["Title"];
+    ViewData["BodyClass"] = "logout-page";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/Logout.css" asp-append-version="true" />
+}
 <header>
     <div class="container">
         <div class="row justify-content-center">
