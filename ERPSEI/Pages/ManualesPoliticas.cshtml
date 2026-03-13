@@ -86,9 +86,8 @@
                             <div class="mp-card-footer">
                                 <span class="mp-badge">@item.Tipo</span>
 
-                                <a href="@url"
-                                   target="_blank"
-                                   rel="noopener"
+                                <a asp-page="/LibroPdf"
+                                   asp-route-pdfUrl="@url"
                                    class="mp-btn">
                                     Consultar aquí
                                 </a>

@@ -1,0 +1,108 @@
+﻿@page "/LibroPdf"
+@model ERPSEI.Pages.LibroPdfModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Visor de documento";
+    ViewData["BodyClass"] = "manuales-politicas-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ManualesPoliticas.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/dearflip/css/dflip.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/dearflip/css/themify-icons.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/LibroPdf.css" asp-append-version="true" />
+}
+
+<div class="pdf-book-page">
+    <div class="pdf-book-toolbar">
+        <div class="pdf-book-toolbar-left">
+            <a asp-page="/ManualesPoliticas" class="book-btn">← Volver</a>
+            <span class="book-status" id="bookStatus">Cargando documento...</span>
+        </div>
+
+        <div class="pdf-book-toolbar-right">
+            <span class="book-counter">Solo visualización</span>
+        </div>
+    </div>
+
+    <div class="pdf-book-shell">
+        <div class="pdf-book-wrap">
+            <div class="dearflip-host">
+                <div id="visorPdf"
+                     class="_df_book"
+                     source="@Model.PdfUrl">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const pdfUrl = @Html.Raw(JsonSerializer.Serialize(Model.PdfUrl ?? ""));
+
+        var option_visorPdf = {
+            // cambia a false si quieres un efecto más plano/estable
+            webgl: false,
+
+            backgroundColor: "rgba(0,0,0,0)",
+            autoEnableOutline: false,
+            autoEnableThumbnail: false,
+
+            showDownloadControl: false,
+            showPrintControl: false,
+            showShareControl: false,
+            showSearchControl: true,
+            showPageModeControl: false,
+            showSoundControl: false,
+            showFullScreenControl: true,
+            showMoreControls: false,
+
+            // clave para mantener dos páginas visibles
+            pageMode: DFLIP.PAGE_MODE.DOUBLE,
+
+            // deja el ajuste interno activo
+            forceFit: true,
+            hard: "none",
+            duration: 700
+        };
+    </script>
+
+    <script src="~/lib/dearflip/js/libs/jquery.min.js" asp-append-version="true"></script>
+    <script src="~/lib/dearflip/js/dflip.min.js" asp-append-version="true"></script>
+
+    <script>
+        (function () {
+            const statusEl = document.getElementById('bookStatus');
+            const visor = document.getElementById('visorPdf');
+
+            if (!pdfUrl || !pdfUrl.trim()) {
+                statusEl.textContent = 'No se recibió la URL del PDF.';
+                return;
+            }
+
+            visor.setAttribute('source', pdfUrl);
+            statusEl.textContent = 'Documento cargado';
+        })();
+
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('dragstart', function (e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            const key = (e.key || '').toUpperCase();
+
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(key)) ||
+                (e.ctrlKey && ['S', 'P', 'U'].includes(key))
+            ) {
+                e.preventDefault();
+            }
+        });
+    </script>
+}
