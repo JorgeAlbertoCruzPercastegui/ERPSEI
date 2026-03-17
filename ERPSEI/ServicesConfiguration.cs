@@ -160,7 +160,7 @@ namespace ERPSEI
         {
             //Vacaciones
             _builder.Services.AddScoped<ISolicitudVacacionesManager, SolicitudVacacionesManager>();
-
+            _builder.Services.AddScoped<IPoliticaVacacionManager, PoliticaVacacionManager>();
         }
 
         private static void ConfigureDIDocumentos(WebApplicationBuilder _builder)

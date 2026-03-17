@@ -634,3 +634,50 @@ body.module-main-theme.vacaciones-page {
         margin: 1rem;
     }
 }
+
+#dlgVacaciones .card-header .btn {
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 4px 12px;
+}
+
+#modalVerPoliticas .modal-header,
+#modalAsignacionVacaciones .modal-header {
+    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
+    color: #fff !important;
+}
+
+#modalVerPoliticas .table th,
+#modalAsignacionVacaciones .table th {
+    white-space: nowrap;
+}
+
+#modalAsignacionVacaciones .card {
+    border-radius: 14px;
+}
+
+#modalAsignacionVacaciones .nav-tabs .nav-link.active {
+    font-weight: 600;
+}
+/* HEADER DORADO PARA MODALES */
+.modal-header-gold {
+    background: linear-gradient(135deg, #d4af37 0%, #f5d77a 50%, #c9a227 100%);
+    color: #1a1a1a;
+    border-bottom: 1px solid rgba(0,0,0,.15);
+}
+
+    /* Título */
+    .modal-header-gold .modal-title {
+        font-weight: 700;
+        letter-spacing: .3px;
+    }
+
+    /* Botón cerrar */
+    .modal-header-gold .btn-close {
+        filter: invert(0); /* oscuro */
+        opacity: .8;
+    }
+
+        .modal-header-gold .btn-close:hover {
+            opacity: 1;
+        }

@@ -180,6 +180,8 @@ namespace ERPSEI.Data
         public DbSet<HistorialVacaciones> HistorialesVacaciones { get; set; }
         public DbSet<PeriodoVacacional> PeriodosVacacionales { get; set; }
         public DbSet<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
+        public DbSet<PoliticaVacacion> PoliticasVacaciones { get; set; }
+        public DbSet<PoliticaVacacionDetalle> PoliticasVacacionesDetalles { get; set; }
 
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
@@ -821,6 +823,52 @@ namespace ERPSEI.Data
                 .WithMany(s => s.Historiales)
                 .HasForeignKey(h => h.SolicitudVacacionesId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            b.Entity<PoliticaVacacion>()
+                .HasMany(p => p.Detalles)
+                .WithOne(d => d.PoliticaVacacion)
+                .HasForeignKey(d => d.PoliticaVacacionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.Entity<PoliticaVacacion>().HasData(
+                new PoliticaVacacion
+                {
+                    Id = 1,
+                    Nombre = "Legal 2023",
+                    TipoVacacion = "Legales",
+                    Descripcion = "Política legal vigente 2023",
+                    Activo = true,
+                    FechaCreacion = new DateTime(2026, 3, 17)
+                },
+                new PoliticaVacacion
+                {
+                    Id = 2,
+                    Nombre = "Anual 2023",
+                    TipoVacacion = "Anuales",
+                    Descripcion = "Política anual interna 2023",
+                    Activo = true,
+                    FechaCreacion = new DateTime(2026, 3, 17)
+                }
+            );
+
+            b.Entity<PoliticaVacacionDetalle>().HasData(
+                new PoliticaVacacionDetalle { Id = 1, PoliticaVacacionId = 1, AniosAntiguedad = 1.0m, DiasVacaciones = 12.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 1 },
+                new PoliticaVacacionDetalle { Id = 2, PoliticaVacacionId = 1, AniosAntiguedad = 2.0m, DiasVacaciones = 14.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 2 },
+                new PoliticaVacacionDetalle { Id = 3, PoliticaVacacionId = 1, AniosAntiguedad = 3.0m, DiasVacaciones = 16.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 3 },
+                new PoliticaVacacionDetalle { Id = 4, PoliticaVacacionId = 1, AniosAntiguedad = 4.0m, DiasVacaciones = 18.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 4 },
+                new PoliticaVacacionDetalle { Id = 5, PoliticaVacacionId = 1, AniosAntiguedad = 5.0m, DiasVacaciones = 20.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 5 },
+                new PoliticaVacacionDetalle { Id = 6, PoliticaVacacionId = 1, AniosAntiguedad = 6.0m, DiasVacaciones = 22.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 6 },
+                new PoliticaVacacionDetalle { Id = 7, PoliticaVacacionId = 1, AniosAntiguedad = 11.0m, DiasVacaciones = 24.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 7 },
+                new PoliticaVacacionDetalle { Id = 8, PoliticaVacacionId = 1, AniosAntiguedad = 16.0m, DiasVacaciones = 26.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 8 },
+                new PoliticaVacacionDetalle { Id = 9, PoliticaVacacionId = 1, AniosAntiguedad = 21.0m, DiasVacaciones = 28.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 9 },
+                new PoliticaVacacionDetalle { Id = 10, PoliticaVacacionId = 1, AniosAntiguedad = 26.0m, DiasVacaciones = 30.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 10 },
+                new PoliticaVacacionDetalle { Id = 11, PoliticaVacacionId = 1, AniosAntiguedad = 31.0m, DiasVacaciones = 32.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 11 },
+                new PoliticaVacacionDetalle { Id = 12, PoliticaVacacionId = 1, AniosAntiguedad = 36.0m, DiasVacaciones = 34.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 12 },
+
+                new PoliticaVacacionDetalle { Id = 13, PoliticaVacacionId = 2, AniosAntiguedad = 1.0m, DiasVacaciones = 12.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 1 },
+                new PoliticaVacacionDetalle { Id = 14, PoliticaVacacionId = 2, AniosAntiguedad = 2.0m, DiasVacaciones = 12.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 2 },
+                new PoliticaVacacionDetalle { Id = 15, PoliticaVacacionId = 2, AniosAntiguedad = 3.0m, DiasVacaciones = 12.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 3 }
+            );
         }
 
         private static void BuildPolizas(ModelBuilder b) 

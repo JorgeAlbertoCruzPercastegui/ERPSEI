@@ -51,6 +51,7 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly IStringLocalizer<VacacionesModel> localizer;
         private readonly ISolicitudVacacionesManager solicitudVacacionesManager;
         private readonly IEmailSender _emailSender;
+        private readonly IPoliticaVacacionManager politicaVacacionManager;
 
         //private readonly IActivoFijoManager activoFijoManager;
         //private readonly ICategoriaActivosFijosManager categoriaActivoFijoManager;
@@ -190,6 +191,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 AppUserManager _userManager,
                 IEmpleadoManager empleadoManager,
                 ISolicitudVacacionesManager _solicitudVacacionesManager,
+                IPoliticaVacacionManager _politicaVacacionManager,
                 IEmailSender emailSender
 
             //IActivoFijoManager _activoFijoManager,
@@ -207,6 +209,7 @@ namespace ERPSEI.Areas.ERP.Pages
             userManager = _userManager;
             empleadoActivoFijoManager = empleadoManager;
             solicitudVacacionesManager = _solicitudVacacionesManager;
+            politicaVacacionManager = _politicaVacacionManager;
             _emailSender = emailSender;
 
             InputFiltro = new InputFiltroVacacionesModel();
@@ -286,6 +289,51 @@ namespace ERPSEI.Areas.ERP.Pages
             }).ToList();
 
             return new JsonResult(jsonVacaciones);
+        }
+
+        public async Task<JsonResult> OnGetPoliticaVacaciones(string tipoVacacion = "Legales")
+        {
+            try
+            {
+                var politica = await politicaVacacionManager.GetPorTipoAsync(tipoVacacion);
+
+                if (politica == null)
+                {
+                    return new JsonResult(new
+                    {
+                        error = true,
+                        mensaje = "No se encontró una política activa para el tipo de vacaciones solicitado."
+                    });
+                }
+
+                var result = new
+                {
+                    error = false,
+                    politicaId = politica.Id,
+                    nombre = politica.Nombre,
+                    tipoVacacion = politica.TipoVacacion,
+                    detalles = politica.Detalles
+                        .OrderBy(d => d.Orden)
+                        .Select(d => new
+                        {
+                            aniosAntiguedad = d.AniosAntiguedad,
+                            diasVacaciones = d.DiasVacaciones,
+                            primaVacacional = d.PrimaVacacional,
+                            diasAguinaldo = d.DiasAguinaldo
+                        }).ToList()
+                };
+
+                return new JsonResult(result);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al consultar la política de vacaciones");
+                return new JsonResult(new
+                {
+                    error = true,
+                    mensaje = "Ocurrió un error al consultar la política."
+                });
+            }
         }
 
         /*public async Task<JsonResult> OnGetVacacionesList()

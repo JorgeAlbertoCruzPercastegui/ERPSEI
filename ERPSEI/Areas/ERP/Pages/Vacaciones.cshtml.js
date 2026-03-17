@@ -549,6 +549,75 @@ function onGuardarClick() {
     );
 }
 
+async function cargarPoliticaVacaciones(tipoVacacion = "Legales") {
+    try {
+        const response = await fetch(`/ERP/Vacaciones?handler=PoliticaVacaciones&tipoVacacion=${encodeURIComponent(tipoVacacion)}`);
+        const data = await response.json();
+
+        const tbody = document.getElementById("tbodyPoliticasVacaciones");
+        const lblNombrePolitica = document.getElementById("lblNombrePolitica");
+
+        if (!tbody || !lblNombrePolitica) return;
+
+        tbody.innerHTML = "";
+
+        if (data.error) {
+            lblNombrePolitica.innerText = "Sin política";
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${data.mensaje}</td></tr>`;
+            return;
+        }
+
+        lblNombrePolitica.innerText = data.nombre;
+
+        if (!data.detalles || data.detalles.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No hay renglones configurados para esta política.</td></tr>`;
+            return;
+        }
+
+        data.detalles.forEach(item => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${parseFloat(item.aniosAntiguedad).toFixed(1)}</td>
+                <td>${parseFloat(item.diasVacaciones).toFixed(1).replace('.0', '')}</td>
+                <td>${parseFloat(item.primaVacacional).toFixed(2)}</td>
+                <td>${parseFloat(item.diasAguinaldo).toFixed(1).replace('.0', '')}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Error al cargar política de vacaciones:", error);
+
+        const tbody = document.getElementById("tbodyPoliticasVacaciones");
+        const lblNombrePolitica = document.getElementById("lblNombrePolitica");
+
+        if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error al cargar la política.</td></tr>`;
+        }
+
+        if (lblNombrePolitica) {
+            lblNombrePolitica.innerText = "Error";
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const selTipoPolitica = document.getElementById("selTipoPolitica");
+    const modalVerPoliticas = document.getElementById("modalVerPoliticas");
+
+    if (modalVerPoliticas) {
+        modalVerPoliticas.addEventListener("shown.bs.modal", function () {
+            const tipo = selTipoPolitica ? selTipoPolitica.value : "Legales";
+            cargarPoliticaVacaciones(tipo);
+        });
+    }
+
+    if (selTipoPolitica) {
+        selTipoPolitica.addEventListener("change", function () {
+            cargarPoliticaVacaciones(this.value);
+        });
+    }
+});
+
 function cargarVacacionesAcumuladas() {
     fetch("/ERP/Vacaciones/VacacionesAcumuladas")
         .then(resp => resp.json())
@@ -731,6 +800,21 @@ $(document).ready(function () {
             }
         });
     });
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const selTipoPolitica = document.getElementById("selTipoPolitica");
+
+    if (selTipoPolitica) {
+        selTipoPolitica.addEventListener("change", function () {
+            const tipo = this.value;
+            const titulo = document.querySelector("#modalVerPoliticas h5.mb-3.text-primary");
+
+            if (titulo) {
+                titulo.textContent = tipo === "Anuales" ? "Política Anual" : "Legal 2023";
+            }
+        });
+    }
 });
 
 
