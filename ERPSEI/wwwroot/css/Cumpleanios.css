@@ -34,7 +34,7 @@
 
 /* Globo más uniforme */
 
-.birthday-balloon {
+/*.birthday-balloon {
     position: absolute;
     top: 14px;
     left: 18px;
@@ -45,7 +45,6 @@
     box-shadow: inset -4px -6px 0 rgba(0,0,0,0.15);
 }
 
-    /* punta del globo */
 
     .birthday-balloon::before {
         content: "";
@@ -59,7 +58,6 @@
         border-top: 6px solid #0b1380;
     }
 
-    /* cuerda */
 
     .birthday-balloon::after {
         content: "";
@@ -71,7 +69,6 @@
         background: linear-gradient(#d0aa4b,#caa548);
     }
 
-/* Punto decorativo */
 .birthday-showcase__art::before {
     content: "";
     position: absolute;
@@ -82,7 +79,7 @@
     border-radius: 50%;
     background: #0b1380;
 }
-
+*/
 .birthday-showcase__art::after {
     content: "";
     position: absolute;

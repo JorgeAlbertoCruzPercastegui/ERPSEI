@@ -244,6 +244,53 @@ namespace ERPSEI.Areas.ERP.Pages
         public async Task<JsonResult> OnGetVacacionesList()
         {
             var userEmail = User.Identity?.Name;
+
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario?.Empleado == null)
+                return new JsonResult(new List<object>());
+
+            int empleadoIdActual = usuario.Empleado.Id;
+            bool esAdmin = User.IsInRole("Administrador");
+
+            var solicitudesQuery = db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                .Include(s => s.Autorizador)
+                .AsQueryable();
+
+            if (!esAdmin)
+            {
+                solicitudesQuery = solicitudesQuery.Where(s =>
+                    s.EmpleadoId == empleadoIdActual ||
+                    s.AutorizadorId == empleadoIdActual
+                );
+            }
+
+            var solicitudes = await solicitudesQuery
+                .OrderByDescending(s => s.FechaSolicitud)
+                .ToListAsync();
+
+            var jsonVacaciones = solicitudes.Select(s => new
+            {
+                id = s.Id,
+                empleado = s.Empleado?.NombreCompleto ?? "-",
+                empleadoId = s.EmpleadoId,
+                fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                diasSolicitados = s.DiasSolicitados,
+                estado = s.Estado.ToString(),
+                autorizador = s.Autorizador?.NombreCompleto ?? "-",
+                autorizadorId = s.AutorizadorId,
+                comentarioEmpleado = s.ComentarioEmpleado ?? ""
+            }).ToList();
+
+            return new JsonResult(jsonVacaciones);
+        }
+
+        /*public async Task<JsonResult> OnGetVacacionesList()
+        {
+            var userEmail = User.Identity?.Name;
             var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
 
             var esAdmin = User.IsInRole("ADMINISTRADOR");
@@ -273,7 +320,7 @@ namespace ERPSEI.Areas.ERP.Pages
             }).ToList();
 
             return new JsonResult(jsonVacaciones);
-        }
+        }*/
 
 
         /*public async Task<JsonResult> OnPostFiltrarVacaciones()
@@ -307,7 +354,64 @@ namespace ERPSEI.Areas.ERP.Pages
 
             return new JsonResult(resp);
         }*/
+
         public async Task<JsonResult> OnPostFiltrarVacaciones()
+        {
+            ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
+
+            try
+            {
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario?.Empleado == null)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "No se pudo identificar al empleado actual.";
+                    return new JsonResult(resp);
+                }
+
+                int empleadoIdActual = usuario.Empleado.Id;
+                bool esAdmin = User.IsInRole("Administrador");
+
+                var solicitudes = await solicitudVacacionesManager.GetAllAsync(InputFiltro);
+
+                if (!esAdmin)
+                {
+                    solicitudes = solicitudes.Where(s =>
+                        s.EmpleadoId == empleadoIdActual ||
+                        s.AutorizadorId == empleadoIdActual
+                    ).ToList();
+                }
+
+                var result = solicitudes.Select(s => new
+                {
+                    id = s.Id,
+                    empleado = s.Empleado?.NombreCompleto ?? "-",
+                    empleadoId = s.EmpleadoId,
+                    fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                    fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                    fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                    diasSolicitados = s.DiasSolicitados,
+                    estado = s.Estado.ToString(),
+                    autorizador = s.Autorizador?.NombreCompleto ?? "-",
+                    autorizadorId = s.AutorizadorId,
+                    comentarioEmpleado = s.ComentarioEmpleado ?? ""
+                }).ToList();
+
+                resp.Datos = result;
+                resp.TieneError = false;
+                resp.Mensaje = localizer["ConsultadoSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al filtrar solicitudes de vacaciones");
+            }
+
+            return new JsonResult(resp);
+        }
+
+        /*public async Task<JsonResult> OnPostFiltrarVacaciones()
         {
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
             try
@@ -343,7 +447,7 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(resp);
-        }
+        }*/
 
         /*public async Task<JsonResult> OnPostGuardarSolicitud()
         {
@@ -684,6 +788,77 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(new { exito = false, mensaje = "Usuario no encontrado." });
                 }
 
+                var empleadoIdActual = usuario.Empleado.Id;
+                var esAdmin = User.IsInRole("ADMINISTRADOR");
+
+                if (!esAdmin && solicitud.AutorizadorId != empleadoIdActual)
+                {
+                    return new JsonResult(new
+                    {
+                        exito = false,
+                        mensaje = "No tienes permiso para autorizar esta solicitud."
+                    });
+                }
+
+                if (solicitud.Estado != EstadoSolicitud.Pendiente)
+                {
+                    return new JsonResult(new
+                    {
+                        exito = false,
+                        mensaje = "La solicitud ya fue procesada."
+                    });
+                }
+
+                solicitud.Estado = autorizar ? EstadoSolicitud.Aprobado : EstadoSolicitud.Rechazado;
+                solicitud.FechaRespuesta = DateTime.Now;
+
+                db.SolicitudesVacaciones.Update(solicitud);
+                await db.SaveChangesAsync();
+
+                var historial = new HistorialVacaciones
+                {
+                    EmpleadoId = solicitud.EmpleadoId,
+                    FechaInicio = solicitud.FechaInicio,
+                    FechaFin = solicitud.FechaFin,
+                    DiasTomados = solicitud.DiasSolicitados,
+                    Observaciones = solicitud.ComentarioEmpleado ?? "",
+                    SolicitudVacacionesId = solicitud.Id,
+                    AutorizadorId = empleadoIdActual
+                };
+
+                db.HistorialesVacaciones.Add(historial);
+                await db.SaveChangesAsync();
+
+                return new JsonResult(new { exito = true });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al actualizar el estado de la solicitud");
+                return new JsonResult(new { exito = false, mensaje = "Error inesperado." });
+            }
+        }
+
+        /*public async Task<IActionResult> OnPostAutorizarSolicitudAsync(int idSolicitud, bool autorizar)
+        {
+            try
+            {
+                var solicitud = await db.SolicitudesVacaciones
+                    .Include(s => s.Empleado)
+                    .FirstOrDefaultAsync(s => s.Id == idSolicitud);
+
+                if (solicitud == null)
+                {
+                    return new JsonResult(new { exito = false, mensaje = "Solicitud no encontrada." });
+                }
+
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario?.Empleado == null)
+                {
+                    return new JsonResult(new { exito = false, mensaje = "Usuario no encontrado." });
+                }
+
                 solicitud.Estado = autorizar ? EstadoSolicitud.Aprobado : EstadoSolicitud.Rechazado;
                 solicitud.FechaRespuesta = DateTime.Now;
 
@@ -712,7 +887,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 logger.LogError(ex, "Error al actualizar el estado de la solicitud");
                 return new JsonResult(new { exito = false, mensaje = "Error inesperado." });
             }
-        }
+        }*/
 
 
         //Autocompletado Empleado y Autorizador
