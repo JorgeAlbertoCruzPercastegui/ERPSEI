@@ -1,0 +1,477 @@
+﻿/* =====================================================
+   MODULO AUSENCIAS
+   ===================================================== */
+
+body.ausencias-page {
+    background: radial-gradient(circle at 50% 18%, rgba(57,100,255,.20) 0%, rgba(57,100,255,0) 28%), linear-gradient(135deg, #07133f 0%, #0a1d66 42%, #112ea1 100%);
+    min-height: 100vh;
+}
+
+/* SUBMENU PROPIO DE AUSENCIAS */
+.ausencias-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 0 0 22px 0;
+    padding: 12px 16px;
+    min-height: 56px;
+    background: linear-gradient(145deg, #f3e3b3, #e3c97b);
+    border: 2px solid #d4a941;
+    border-radius: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+}
+
+.ausencias-topbar-user {
+    color: #0c1f60;
+    font-size: .95rem;
+    white-space: nowrap;
+}
+
+    .ausencias-topbar-user strong {
+        color: #09184a;
+        font-weight: 800;
+    }
+
+.ausencias-topbar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    flex: 1;
+}
+
+.ausencias-topbar-link {
+    color: #0c1f60;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: .90rem;
+    line-height: 1.1;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: all .18s ease;
+    white-space: nowrap;
+}
+
+    .ausencias-topbar-link:hover {
+        background: rgba(12, 31, 96, .08);
+        color: #09184a;
+    }
+
+    .ausencias-topbar-link.active {
+        background: rgba(12, 31, 96, .12);
+        color: #09184a;
+    }
+
+/* TITULO */
+body.ausencias-page .title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 2rem;
+}
+
+/* CARDS */
+body.ausencias-page .card,
+body.ausencias-page .modal-content {
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(201,162,39,.45);
+    box-shadow: 0 10px 28px rgba(0,0,0,.12);
+}
+
+body.ausencias-page .card-header {
+    background: #e8d49a;
+    color: #102b79;
+    font-weight: 700;
+    border: none;
+}
+
+body.ausencias-page .card-body,
+body.ausencias-page .modal-body,
+body.ausencias-page .modal-footer {
+    background: #f7f2df;
+}
+
+/* BOTONES */
+body.ausencias-page .btn-primary {
+    background: #fff;
+    color: #0c1f60;
+    border: 1px solid #d4a941;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+    body.ausencias-page .btn-primary:hover {
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+        color: #09184a;
+        border-color: #c89a2a;
+    }
+
+body.ausencias-page .btn-outline-secondary {
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+/* MODAL HEADER */
+.modal-header-gold {
+    background: linear-gradient(135deg, #d4af37 0%, #f5d77a 50%, #c9a227 100%);
+    color: #102b79;
+    border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+    .modal-header-gold .modal-title {
+        font-weight: 800;
+    }
+
+    .modal-header-gold .btn-close {
+        opacity: .85;
+    }
+
+/* TABLAS */
+#tableAusenciasDias,
+#tableAusenciasHoras {
+    background: transparent;
+}
+
+    #tableAusenciasDias thead th,
+    #tableAusenciasHoras thead th {
+        background: #2446b8 !important;
+        color: #fff !important;
+        border-color: #d8c27a !important;
+    }
+
+    #tableAusenciasDias tbody td,
+    #tableAusenciasHoras tbody td {
+        background: #fffdf7;
+        border-color: #e7d8a4;
+        vertical-align: middle;
+    }
+
+.alert-info {
+    background: #dfe7ff;
+    border: none;
+    color: #2446b8;
+}
+
+/* RESPONSIVE */
+@media (max-width: 991.98px) {
+    .ausencias-topbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ausencias-topbar-user {
+        text-align: left;
+    }
+
+    .ausencias-topbar-nav {
+        justify-content: flex-start;
+    }
+}
+
+body.module-main-theme.catalogo-page.ausencias-page {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+    background-color: #07133f;
+}
+
+    /* =====================================================
+   CONTENEDOR DEL MODULO
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .ausencias-module {
+        padding-bottom: 24px;
+    }
+
+    /* =====================================================
+   TITULO
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .title {
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 2rem;
+        text-shadow: 0 2px 10px rgba(0,0,0,.18);
+        margin-bottom: 1.25rem !important;
+    }
+
+    /* =====================================================
+   CARDS / CONTENEDORES
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .card {
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.14);
+        background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
+        box-shadow: 0 16px 34px rgba(0,0,0,.18);
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .card-header {
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b) !important;
+        color: #0c1f60 !important;
+        font-weight: 800;
+        border: 0 !important;
+        padding: 1rem 1.2rem;
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .card-body {
+        background: rgba(255,255,255,.97);
+        padding: 1rem;
+    }
+
+    /* =====================================================
+   BOTONES
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .btn-primary {
+        background: #ffffff;
+        color: #0c1f60;
+        border: 1px solid #d4a941;
+        border-radius: 10px;
+        font-weight: 700;
+        transition: all .18s ease;
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .btn-primary:hover,
+        body.module-main-theme.catalogo-page.ausencias-page .btn-primary:focus {
+            background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+            color: #09184a;
+            border-color: #c89a2a;
+            box-shadow: none;
+        }
+
+    body.module-main-theme.catalogo-page.ausencias-page .btn-outline-secondary {
+        background: #ffffff;
+        color: #0c1f60;
+        border: 1px solid #d4a941;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .btn-outline-secondary:hover {
+            background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+            color: #09184a;
+            border-color: #c89a2a;
+        }
+
+    /* =====================================================
+   DROPDOWN
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .dropdown-menu {
+        border-radius: 14px;
+        border: 1px solid rgba(212,169,65,.35);
+        box-shadow: 0 18px 35px rgba(0,0,0,.18);
+        overflow: hidden;
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .dropdown-item {
+        font-weight: 600;
+        color: #1f2b5c;
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .dropdown-item:hover {
+            background: #f7f0d5;
+            color: #0c1f60;
+        }
+
+    /* =====================================================
+   TABLAS BOOTSTRAP TABLE
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table,
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-container,
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-toolbar,
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-pagination,
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-footer {
+        background: transparent;
+        color: inherit;
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-container {
+        border: 0 !important;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: none;
+        background: rgba(255,255,255,.96);
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .table {
+        margin-bottom: 0;
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .table thead th,
+        body.module-main-theme.catalogo-page.ausencias-page #tableAusenciasDias thead th,
+        body.module-main-theme.catalogo-page.ausencias-page #tableAusenciasHoras thead th {
+            background: linear-gradient(135deg,#102f8c,#1f4cd3) !important;
+            color: #fff !important;
+            border: 0 !important;
+            font-weight: 700;
+            padding: .95rem .85rem;
+            font-size: .9rem;
+        }
+
+        body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .table tbody tr {
+            background: #fff;
+            transition: background .15s ease;
+        }
+
+            body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .table tbody tr:nth-child(even) {
+                background: #f7faff;
+            }
+
+            body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .table tbody tr:hover {
+                background: #eef4ff;
+            }
+
+        body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .table td,
+        body.module-main-theme.catalogo-page.ausencias-page #tableAusenciasDias tbody td,
+        body.module-main-theme.catalogo-page.ausencias-page #tableAusenciasHoras tbody td {
+            border-color: #e4ebfb !important;
+            padding: .9rem .85rem;
+            vertical-align: middle;
+            background: transparent;
+        }
+
+    /* =====================================================
+   BUSQUEDA / PAGINACION
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .search input,
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-pagination .btn,
+    body.module-main-theme.catalogo-page.ausencias-page .columns .btn,
+    body.module-main-theme.catalogo-page.ausencias-page .keep-open .btn,
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-toolbar .btn {
+        border-radius: 10px !important;
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-toolbar .btn,
+    body.module-main-theme.catalogo-page.ausencias-page .columns .btn,
+    body.module-main-theme.catalogo-page.ausencias-page .keep-open .btn,
+    body.module-main-theme.catalogo-page.ausencias-page .fixed-table-pagination .btn {
+        background: #ffffff;
+        color: #0c1f60;
+        border: 1px solid #d4a941;
+        font-weight: 700;
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .fixed-table-toolbar .btn:hover,
+        body.module-main-theme.catalogo-page.ausencias-page .columns .btn:hover,
+        body.module-main-theme.catalogo-page.ausencias-page .keep-open .btn:hover,
+        body.module-main-theme.catalogo-page.ausencias-page .fixed-table-pagination .btn:hover {
+            background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+            color: #09184a;
+            border-color: #c89a2a;
+        }
+
+    body.module-main-theme.catalogo-page.ausencias-page .bootstrap-table .search input {
+        border: 1px solid #c7d3f2;
+        background: #f8fbff;
+        color: #1f2b5c;
+        border-radius: 10px !important;
+    }
+
+    /* =====================================================
+   MODALES
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .modal-content {
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 22px;
+        background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
+        box-shadow: 0 22px 42px rgba(0,0,0,.24);
+        overflow: hidden;
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .modal-header-gold {
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+        color: #0c1f60;
+        border-bottom: 1px solid rgba(212,169,65,.45);
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .modal-header-gold .modal-title {
+            font-weight: 800;
+        }
+
+    body.module-main-theme.catalogo-page.ausencias-page .modal-body {
+        background: transparent;
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .modal-footer {
+        border-top: 1px solid #e7eaf0;
+        background: rgba(255,255,255,.72);
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .btn-close {
+        filter: saturate(.1);
+    }
+
+    /* =====================================================
+   INPUTS
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .form-control,
+    body.module-main-theme.catalogo-page.ausencias-page .form-select,
+    body.module-main-theme.catalogo-page.ausencias-page textarea.form-control {
+        border-radius: 12px;
+        border: 1px solid #c7d3f2;
+        background: #f8fbff;
+        color: #1f2b5c;
+        box-shadow: none;
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .form-control:focus,
+        body.module-main-theme.catalogo-page.ausencias-page .form-select:focus,
+        body.module-main-theme.catalogo-page.ausencias-page textarea.form-control:focus {
+            border-color: #7e9cff;
+            box-shadow: 0 0 0 .2rem rgba(67, 97, 238, 0.15);
+            background: #fff;
+        }
+
+    body.module-main-theme.catalogo-page.ausencias-page .form-floating > label,
+    body.module-main-theme.catalogo-page.ausencias-page .form-label {
+        color: #4b587c;
+    }
+
+    /* =====================================================
+   ALERTAS
+   ===================================================== */
+
+    body.module-main-theme.catalogo-page.ausencias-page .alert {
+        border-radius: 14px;
+    }
+
+    body.module-main-theme.catalogo-page.ausencias-page .alert-info {
+        background: rgba(37,99,235,.10);
+        color: #0c3b9a;
+        border: 1px solid rgba(37,99,235,.18);
+    }
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 991.98px) {
+    body.module-main-theme.catalogo-page.ausencias-page {
+        background-attachment: scroll;
+        background-position: center top;
+    }
+
+        body.module-main-theme.catalogo-page.ausencias-page .title {
+            font-size: 1.45rem;
+        }
+
+        body.module-main-theme.catalogo-page.ausencias-page .modal-dialog {
+            margin: 1rem;
+        }
+}

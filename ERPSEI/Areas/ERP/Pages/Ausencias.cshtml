@@ -1,0 +1,438 @@
+﻿@page "{handler?}"
+@model ERPSEI.Areas.ERP.Pages.AusenciasModel
+@using Microsoft.AspNetCore.Localization
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IViewLocalizer Localizer
+
+@{
+    ViewData["Title"] = "Ausencias";
+   //ViewData["BodyClass"] = "module-main-theme catalogo-page ausencias-page";
+    //ViewData["BodyClass"] = "ausencias-page";
+    ViewData["BodyClass"] = "vacaciones-page";
+
+    IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
+    System.Globalization.CultureInfo? culture = rqf != null
+        ? rqf.RequestCulture.Culture
+        : new System.Globalization.CultureInfo("es-MX");
+
+    string cultureName = culture.Name;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Vacaciones.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/CatalogosBase.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Ausencias.css" asp-append-version="true" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css" />
+    <link rel="stylesheet" href="~/lib/jquery-ui/jquery-ui.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+}
+
+<div class="ausencias-module">
+    <h3 class="title mb-4">Ausencias</h3>
+
+    <div class="d-flex justify-content-end gap-2 mb-3 flex-wrap">
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Registrar Ausencia
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="abrirModalInasistencia()">Inasistencia</a></li>
+                <li><a class="dropdown-item" href="#" onclick="abrirModalIncapacidad()">Incapacidades</a></li>
+                <li><a class="dropdown-item" href="#" onclick="abrirModalPermiso()">Permisos</a></li>
+            </ul>
+        </div>
+
+        <button class="btn btn-primary" type="button" onclick="abrirModalSolicitarPermiso()">
+            Solicitar Permiso
+        </button>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Días</span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="card-body">
+            <table id="tableAusenciasDias"
+                   class="table-sm"
+                   data-unique-id="id"
+                   data-search="false"
+                   data-pagination="true"
+                   data-page-list="[10,25,50,100,all]"
+                   data-side-pagination="client"
+                   data-url="/ERP/Ausencias?handler=AusenciasDias">
+                <thead>
+                    <tr></tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Horas</span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="card-body">
+            <table id="tableAusenciasHoras"
+                   class="table-sm"
+                   data-unique-id="id"
+                   data-search="true"
+                   data-pagination="true"
+                   data-page-list="[10,25,50,100,all]"
+                   data-side-pagination="client"
+                   data-url="/ERP/Ausencias?handler=AusenciasHoras">
+                <thead>
+                    <tr></tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Inasistencia -->
+<div class="modal fade" id="modalInasistencia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Registrar Inasistencia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formInasistencia">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpInasistenciaFechaInicio" class="form-control" />
+                                <label>Fecha Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpInasistenciaFechaFin" class="form-control" />
+                                <label>Fecha Término</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="number" step="0.1" id="inpInasistenciaDias" class="form-control" />
+                                <label>Días Aporte</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpInasistenciaFechaAplicacion" class="form-control" />
+                                <label>Inicio Fecha Aplicación</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="chkSuplenciaInasistencia">
+                                <label class="form-check-label" for="chkSuplenciaInasistencia">Activar Suplencia</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Estás registrando <span id="lblDiasInasistencia">0</span> días de inasistencia
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-floating mb-3">
+                                <textarea id="txtComentarioInasistencia" class="form-control" style="height:120px;"></textarea>
+                                <label>Comentario</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" type="button" onclick="guardarInasistencia()">Agregar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Incapacidad -->
+<div class="modal fade" id="modalIncapacidad" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Registrar Incapacidades</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formIncapacidad">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpIncapacidadFechaInicio" class="form-control" />
+                                <label>Fecha Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpIncapacidadFechaFin" class="form-control" />
+                                <label>Fecha Término</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select id="selTipoIncapacidad" class="form-select">
+                                    <option value="">Seleccionar</option>
+                                    <option value="General">General</option>
+                                    <option value="Riesgo de trabajo">Riesgo de trabajo</option>
+                                    <option value="Maternidad">Maternidad</option>
+                                </select>
+                                <label>Tipo de incapacidad</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" id="inpNumeroFolioIncapacidad" class="form-control" />
+                                <label>Número de Folio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="number" step="0.1" id="inpDiasIncapacidad" class="form-control" />
+                                <label>Días Aporte</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpFechaAplicacionIncapacidad" class="form-control" />
+                                <label>Inicio Fecha Aplicación</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="chkSuplenciaIncapacidad">
+                                <label class="form-check-label" for="chkSuplenciaIncapacidad">Activar Suplencia</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Estás registrando <span id="lblDiasIncapacidad">0</span> días de incapacidad
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-floating mb-3">
+                                <textarea id="txtComentarioIncapacidad" class="form-control" style="height:120px;"></textarea>
+                                <label>Comentario</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" type="button" onclick="guardarIncapacidad()">Agregar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Registrar Permiso -->
+<div class="modal fade" id="modalPermiso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Registrar Permisos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formPermiso">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select id="selTipoAusenciaPermiso" class="form-select">
+                                    <option value="">Seleccionar</option>
+                                    <option>Checada fuera de tiempo por instalación cerrada</option>
+                                    <option>Permiso llegada tardía</option>
+                                    <option>Permiso salida temprana</option>
+                                    <option>Permiso de ausencia</option>
+                                    <option>Permiso salida diligencia con regreso</option>
+                                    <option>Omisión de checada</option>
+                                    <option>Permiso de paternidad</option>
+                                    <option>Cambio de hora de comida</option>
+                                    <option>Permiso de ausencia por Fallecimiento de familiar</option>
+                                    <option>Permiso de ausencia médica justificada</option>
+                                    <option>Permiso diligencia sin regreso</option>
+                                    <option>Permiso de ausencia personal justificada</option>
+                                    <option>Permiso de ausencia por accidente justificado</option>
+                                    <option>Permiso para trabajar desde casa (HO)</option>
+                                    <option>Sin registro por falla de biométrico</option>
+                                    <option>Permiso sin goce de sueldo</option>
+                                </select>
+                                <label>Tipo de ausencia</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6"></div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpPermisoFechaInicio" class="form-control" />
+                                <label>Fecha Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpPermisoFechaFin" class="form-control" />
+                                <label>Fecha Término</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="number" step="0.1" id="inpPermisoDiasAporte" class="form-control" />
+                                <label>Días Aporte</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpPermisoFechaAplicacion" class="form-control" />
+                                <label>Inicio Fecha Aplicación</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="chkSuplenciaPermiso">
+                                <label class="form-check-label" for="chkSuplenciaPermiso">Activar Suplencia</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Estás registrando <span id="lblDiasPermiso">0</span> días de permiso
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-floating mb-3">
+                                <textarea id="txtComentarioPermiso" class="form-control" style="height:120px;"></textarea>
+                                <label>Comentario</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" type="button" onclick="guardarPermiso()">Agregar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Solicitar Permiso -->
+<div class="modal fade" id="modalSolicitarPermiso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Solicitar Permisos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formSolicitarPermiso">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select id="selTipoAusenciaSolicitud" class="form-select">
+                                    <option value="">Seleccionar</option>
+                                    <option>Checada fuera de tiempo por instalación cerrada</option>
+                                    <option>Permiso llegada tardía</option>
+                                    <option>Permiso salida temprana</option>
+                                    <option>Permiso de ausencia</option>
+                                    <option>Permiso salida diligencia con regreso</option>
+                                    <option>Omisión de checada</option>
+                                    <option>Permiso de paternidad</option>
+                                    <option>Cambio de hora de comida</option>
+                                    <option>Permiso de ausencia por Fallecimiento de familiar</option>
+                                    <option>Permiso de ausencia médica justificada</option>
+                                    <option>Permiso diligencia sin regreso</option>
+                                    <option>Permiso de ausencia personal justificada</option>
+                                    <option>Permiso de ausencia por accidente justificado</option>
+                                    <option>Permiso para trabajar desde casa (HO)</option>
+                                    <option>Sin registro por falla de biométrico</option>
+                                    <option>Permiso sin goce de sueldo</option>
+                                </select>
+                                <label>Tipo de ausencia</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6"></div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpSolicitudPermisoFechaInicio" class="form-control" />
+                                <label>Fecha Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpSolicitudPermisoFechaFin" class="form-control" />
+                                <label>Fecha Término</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="inpSolicitudPermisoFechaAplicacion" class="form-control" />
+                                <label>Inicio Fecha Aplicación</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> Estás registrando 0 días de permiso
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-floating mb-3">
+                                <textarea id="txtComentarioSolicitudPermiso" class="form-control" style="height:120px;"></textarea>
+                                <label>Comentario</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" type="button" onclick="solicitarPermiso()">Solicitar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
+    <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+    <script src="~/../Areas/ERP/Pages/Ausencias.cshtml.js"></script>
+
+    <script type="text/javascript">
+        var cultureName = "@cultureName";
+    </script>
+}
