@@ -707,6 +707,7 @@ function cargarVacacionesTomadas() {
     var modal = new bootstrap.Modal(document.getElementById("modalAutorizar"));
     modal.show();
 }*/
+
 function onAutorizarVacacionesClick() {
     var selectedRow = $("input[type='checkbox']:checked").closest("tr");
 
@@ -730,6 +731,57 @@ function onAutorizarVacacionesClick() {
     modal.show();
 }
 
+async function cargarAsignacionVacacionesActual() {
+    try {
+        const response = await fetch("/ERP/Vacaciones?handler=ObtenerAsignacionVacaciones");
+        const data = await response.json();
+
+        if (data.error) {
+            showError("Asignación", data.mensaje);
+            return;
+        }
+
+        const sel = document.getElementById("selTipoAsignacionVacaciones");
+
+        if (sel) {
+            sel.value = data.tipoAsignacion || "LegalesProporcionales";
+        }
+    } catch (error) {
+        console.error("Error al cargar asignación de vacaciones:", error);
+    }
+}
+
+function guardarAsignacionVacaciones() {
+    const sel = document.getElementById("selTipoAsignacionVacaciones");
+    const tipoAsignacion = sel ? sel.value : "LegalesProporcionales";
+
+    doAjax(
+        "/ERP/Vacaciones?handler=GuardarAsignacionVacaciones",
+        { tipoAsignacion: tipoAsignacion },
+        function (resp) {
+            if (resp.tieneError) {
+                showError("Asignación de vacaciones", resp.mensaje);
+                return;
+            }
+
+            const modalElement = document.getElementById("modalAsignacionVacaciones");
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+
+            cargarResumenVacaciones();
+            obtenerDiasDisponibles();
+            cargarVacacionesAcumuladas();
+
+            showSuccess("Asignación de vacaciones", resp.mensaje);
+        },
+        function (error) {
+            showError("Error", error);
+        },
+        postOptions
+    );
+}
 $(document).ready(function () {
     $('#tableVacaciones tbody tr').each(function () {
         var estado = $(this).find("td").eq(7).text().trim(); // ← TAMBIÉN CORREGIDO A 7

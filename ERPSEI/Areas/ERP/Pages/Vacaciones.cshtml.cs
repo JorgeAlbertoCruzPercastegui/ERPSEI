@@ -34,7 +34,6 @@ using MathNet.Numerics.Distributions;
 using ERPSEI.Data.Entities.Vacaciones;
 using ERPSEI.Data.Managers.Vacaciones;
 using ERPSEI.Areas.ERP.Pages;
-using ERPSEI.Data.Migrations;
 using ERPSEI.Data.Managers.ActivosFijos;
 using System.Security.Claims;
 using iText.Commons.Actions.Contexts;
@@ -334,6 +333,97 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Ocurrió un error al consultar la política."
                 });
             }
+        }
+
+        private async Task<string> ObtenerTipoVisualizacionVacacionesAsync()
+        {
+            var config = await db.ConfiguracionesVacaciones.FirstOrDefaultAsync(c => c.Id == 1);
+
+            if (config == null || string.IsNullOrWhiteSpace(config.TipoVisualizacion))
+                return "LegalesProporcionales";
+
+            return config.TipoVisualizacion;
+        }
+
+        public async Task<JsonResult> OnGetObtenerAsignacionVacaciones()
+        {
+            try
+            {
+                var config = await db.ConfiguracionesVacaciones.FirstOrDefaultAsync(c => c.Id == 1);
+
+                if (config == null)
+                {
+                    return new JsonResult(new
+                    {
+                        error = false,
+                        tipoAsignacion = "LegalesProporcionales"
+                    });
+                }
+
+                return new JsonResult(new
+                {
+                    error = false,
+                    tipoAsignacion = config.TipoVisualizacion
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al obtener configuración global de vacaciones");
+                return new JsonResult(new
+                {
+                    error = true,
+                    mensaje = "No se pudo obtener la configuración."
+                });
+            }
+        }
+
+        public async Task<JsonResult> OnPostGuardarAsignacionVacaciones(string tipoAsignacion)
+        {
+            ServerResponse resp = new(true, "No se pudo guardar la configuración.");
+
+            try
+            {
+                if (tipoAsignacion != "Legales" && tipoAsignacion != "LegalesProporcionales")
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "Tipo de asignación inválido.";
+                    return new JsonResult(resp);
+                }
+
+                var config = await db.ConfiguracionesVacaciones.FirstOrDefaultAsync(c => c.Id == 1);
+
+                if (config == null)
+                {
+                    config = new ConfiguracionVacacion
+                    {
+                        Id = 1,
+                        TipoVisualizacion = tipoAsignacion,
+                        FechaActualizacion = DateTime.Now
+                    };
+
+                    db.ConfiguracionesVacaciones.Add(config);
+                }
+                else
+                {
+                    config.TipoVisualizacion = tipoAsignacion;
+                    config.FechaActualizacion = DateTime.Now;
+
+                    db.ConfiguracionesVacaciones.Update(config);
+                }
+
+                await db.SaveChangesAsync();
+
+                resp.TieneError = false;
+                resp.Mensaje = "Configuración guardada correctamente.";
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al guardar la configuración global de vacaciones");
+                resp.TieneError = true;
+                resp.Mensaje = "Ocurrió un error inesperado.";
+            }
+
+            return new JsonResult(resp);
         }
 
         /*public async Task<JsonResult> OnGetVacacionesList()
@@ -685,6 +775,55 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             var userEmail = User.Identity?.Name;
             var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario == null || usuario.Empleado == null)
+                return new JsonResult(new { error = "Empleado no encontrado." });
+
+            var empleado = usuario.Empleado;
+            var fechaHoy = DateTime.Now.Date;
+
+            string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
+
+            decimal diasLegales = 0m;
+            decimal diasProporcionales = 0m;
+
+            if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
+            {
+                diasLegales = 12m;
+                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
+            }
+            else
+            {
+                diasLegales = 0m;
+                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+            }
+
+            decimal acumuladas = tipoAsignacion == "Legales"
+                ? diasLegales
+                : diasLegales + diasProporcionales;
+
+            var diasTomados = await db.SolicitudesVacaciones
+                .Where(s => s.EmpleadoId == empleado.Id && s.Estado != EstadoSolicitud.Rechazado)
+                .SumAsync(s => s.DiasSolicitados);
+
+            decimal saldo = Math.Max(acumuladas - diasTomados, 0);
+
+            return new JsonResult(new
+            {
+                Acumuladas = acumuladas,
+                Tomadas = diasTomados,
+                Vencidas = 0,
+                Futuras = 0,
+                Saldo = saldo,
+                Fecha = DateTime.Now.ToString("dd-MM-yyyy"),
+                TipoAsignacion = tipoAsignacion
+            });
+        }
+
+        /*public async Task<JsonResult> OnGetResumenVacaciones()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
             if (usuario == null || usuario.Empleado == null)
                 return new JsonResult(new { error = "Empleado no encontrado." });
 
@@ -711,10 +850,49 @@ namespace ERPSEI.Areas.ERP.Pages
                 Saldo = saldo,
                 Fecha = DateTime.Now.ToString("dd-MM-yyyy")
             });
-        }
-
+        }*/
 
         public async Task<JsonResult> OnGetObtenerDiasDisponibles()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario == null || usuario.Empleado == null)
+                return new JsonResult(0);
+
+            var empleado = usuario.Empleado;
+            var fechaHoy = DateTime.Today;
+
+            string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
+
+            decimal diasLegales = 0m;
+            decimal diasProporcionales = 0m;
+
+            if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
+            {
+                diasLegales = 12m;
+                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
+            }
+            else
+            {
+                diasLegales = 0m;
+                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+            }
+
+            decimal acumuladas = tipoAsignacion == "Legales"
+                ? diasLegales
+                : diasLegales + diasProporcionales;
+
+            var diasTomados = await db.SolicitudesVacaciones
+                .Where(s => s.EmpleadoId == empleado.Id && s.Estado != EstadoSolicitud.Rechazado)
+                .SumAsync(s => s.DiasSolicitados);
+
+            decimal saldo = Math.Max(acumuladas - diasTomados, 0);
+
+            return new JsonResult(saldo);
+        }
+
+        /*public async Task<JsonResult> OnGetObtenerDiasDisponibles()
         {
             var userEmail = User.Identity?.Name;
             var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
@@ -724,9 +902,78 @@ namespace ERPSEI.Areas.ERP.Pages
 
             decimal dias = await solicitudVacacionesManager.CalcularDiasDisponiblesAsync(usuario.Empleado.Id);
             return new JsonResult(dias);
-        }
+        }*/
 
         public async Task<JsonResult> OnGetVacacionesAcumuladas()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario?.Empleado == null)
+                return new JsonResult(new { error = "Empleado no encontrado." });
+
+            var empleado = usuario.Empleado;
+            var fechaIngreso = empleado.FechaIngreso.Date;
+            var fechaActual = DateTime.Today;
+
+            string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
+
+            const decimal diasLegales = 12m;
+            ListaVacacionesAcumuladas.Clear();
+
+            if (fechaActual >= fechaIngreso.AddYears(1))
+            {
+                var fechaAniversario = fechaIngreso.AddYears(1);
+                var vencimiento = fechaAniversario.AddMonths(18);
+
+                ListaVacacionesAcumuladas.Add(new VacacionesAcumuladasModel
+                {
+                    Fecha = fechaAniversario,
+                    NumeroDias = diasLegales,
+                    Tipo = "Legales",
+                    Vencimiento = vencimiento,
+                    Periodo = $"{fechaAniversario.Year}-{vencimiento.Year}"
+                });
+
+                if (tipoAsignacion == "LegalesProporcionales")
+                {
+                    var diasProporcionales = Math.Round((diasLegales / 365) * (decimal)(fechaActual - fechaAniversario).TotalDays, 1);
+
+                    if (diasProporcionales > 0)
+                    {
+                        ListaVacacionesAcumuladas.Add(new VacacionesAcumuladasModel
+                        {
+                            Fecha = fechaActual,
+                            NumeroDias = diasProporcionales,
+                            Tipo = "Legales (Proporcionales)",
+                            Vencimiento = null,
+                            Periodo = ""
+                        });
+                    }
+                }
+            }
+            else
+            {
+                if (tipoAsignacion == "LegalesProporcionales")
+                {
+                    var diasTrabajados = (fechaActual - fechaIngreso).TotalDays;
+                    var diasProporcionales = Math.Round((diasLegales / 365) * (decimal)diasTrabajados, 1);
+
+                    ListaVacacionesAcumuladas.Add(new VacacionesAcumuladasModel
+                    {
+                        Fecha = fechaActual,
+                        NumeroDias = diasProporcionales,
+                        Tipo = "Legales (Proporcionales)",
+                        Vencimiento = null,
+                        Periodo = ""
+                    });
+                }
+            }
+
+            return new JsonResult(ListaVacacionesAcumuladas);
+        }
+
+        /*public async Task<JsonResult> OnGetVacacionesAcumuladas()
         {
             var userEmail = User.Identity?.Name;
             var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
@@ -786,7 +1033,7 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(ListaVacacionesAcumuladas);
-        }
+        }*/
 
         public async Task<JsonResult> OnGetVacacionesTomadas()
         {

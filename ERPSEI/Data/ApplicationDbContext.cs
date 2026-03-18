@@ -182,6 +182,7 @@ namespace ERPSEI.Data
         public DbSet<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
         public DbSet<PoliticaVacacion> PoliticasVacaciones { get; set; }
         public DbSet<PoliticaVacacionDetalle> PoliticasVacacionesDetalles { get; set; }
+        public DbSet<ConfiguracionVacacion> ConfiguracionesVacaciones { get; set; }
 
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
@@ -868,6 +869,15 @@ namespace ERPSEI.Data
                 new PoliticaVacacionDetalle { Id = 13, PoliticaVacacionId = 2, AniosAntiguedad = 1.0m, DiasVacaciones = 12.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 1 },
                 new PoliticaVacacionDetalle { Id = 14, PoliticaVacacionId = 2, AniosAntiguedad = 2.0m, DiasVacaciones = 12.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 2 },
                 new PoliticaVacacionDetalle { Id = 15, PoliticaVacacionId = 2, AniosAntiguedad = 3.0m, DiasVacaciones = 12.0m, PrimaVacacional = 0.25m, DiasAguinaldo = 15.0m, Orden = 3 }
+            );
+
+            b.Entity<ConfiguracionVacacion>().HasData(
+                new ConfiguracionVacacion
+                {
+                    Id = 1,
+                    TipoVisualizacion = "LegalesProporcionales",
+                    FechaActualizacion = new DateTime(2026, 3, 17)
+                }
             );
         }
 
