@@ -67,11 +67,12 @@ namespace ERPSEI.Data.Entities.Empleados
 
 		public ICollection<ArchivoEmpleado>? ArchivosEmpleado { get; }
 
-		//Referencia a esta misma tabla para el jefe del empleado
-		public int? JefeId { get; set; }
+        //Referencia a esta misma tabla para el jefe del empleado
+        public int? JefeId { get; set; }
+        public Empleado? Jefe { get; set; }
 
-		//Empleados de los que el empleado es jefe
-		[NotMapped]
+        //Empleados de los que el empleado es jefe
+        [NotMapped]
 		public List<Empleado>? Empleados { get; set; }
 
 		public ICollection<Asistencia>? Asistencias { get; }
@@ -86,6 +87,8 @@ namespace ERPSEI.Data.Entities.Empleados
         public ICollection<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
         public ICollection<SolicitudVacaciones> SolicitudesAutorizadas { get; set; }
         public ICollection<HistorialVacaciones> HistorialVacaciones { get; set; }
+        //Empleados de los que el empleado es jefe
+        public ICollection<Empleado>? Subordinados { get; set; }
 
     }
 }

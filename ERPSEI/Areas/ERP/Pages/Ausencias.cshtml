@@ -6,8 +6,6 @@
 
 @{
     ViewData["Title"] = "Ausencias";
-   //ViewData["BodyClass"] = "module-main-theme catalogo-page ausencias-page";
-    //ViewData["BodyClass"] = "ausencias-page";
     ViewData["BodyClass"] = "vacaciones-page";
 
     IRequestCultureFeature? rqf = Request.HttpContext.Features.Get<IRequestCultureFeature>();
@@ -59,12 +57,10 @@
                    data-unique-id="id"
                    data-search="false"
                    data-pagination="true"
-                   data-page-list="[10,25,50,100,all]"
+                   data-page-list="[10,25,50,100,'all']"
                    data-side-pagination="client"
                    data-url="/ERP/Ausencias?handler=AusenciasDias">
-                <thead>
-                    <tr></tr>
-                </thead>
+                <thead><tr></tr></thead>
             </table>
         </div>
     </div>
@@ -83,9 +79,7 @@
                    data-page-list="[10,25,50,100,all]"
                    data-side-pagination="client"
                    data-url="/ERP/Ausencias?handler=AusenciasHoras">
-                <thead>
-                    <tr></tr>
-                </thead>
+                <thead><tr></tr></thead>
             </table>
         </div>
     </div>
@@ -100,7 +94,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formInasistencia">
+                <form id="formInasistencia" method="post">
+                    @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
@@ -108,41 +103,36 @@
                                 <label>Fecha Inicio</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="date" id="inpInasistenciaFechaFin" class="form-control" />
                                 <label>Fecha Término</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="number" step="0.1" id="inpInasistenciaDias" class="form-control" />
                                 <label>Días Aporte</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="date" id="inpInasistenciaFechaAplicacion" class="form-control" />
                                 <label>Inicio Fecha Aplicación</label>
                             </div>
                         </div>
-
                         <div class="col-12 mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="chkSuplenciaInasistencia">
                                 <label class="form-check-label" for="chkSuplenciaInasistencia">Activar Suplencia</label>
                             </div>
                         </div>
-
                         <div class="col-12 mb-3">
                             <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i> Estás registrando <span id="lblDiasInasistencia">0</span> días de inasistencia
+                                <i class="bi bi-info-circle"></i>
+                                Estás registrando <span id="lblDiasInasistencia">0</span> días de inasistencia
                             </div>
                         </div>
-
                         <div class="col-12">
                             <div class="form-floating mb-3">
                                 <textarea id="txtComentarioInasistencia" class="form-control" style="height:120px;"></textarea>
@@ -153,7 +143,7 @@
                 </form>
             </div>
             <div class="modal-footer d-flex justify-content-between">
-                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
                 <button class="btn btn-primary" type="button" onclick="guardarInasistencia()">Agregar</button>
             </div>
         </div>
@@ -169,7 +159,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formIncapacidad">
+                <form id="formIncapacidad" method="post">
+                    @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
@@ -177,60 +168,54 @@
                                 <label>Fecha Inicio</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="date" id="inpIncapacidadFechaFin" class="form-control" />
                                 <label>Fecha Término</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <select id="selTipoIncapacidad" class="form-select">
                                     <option value="">Seleccionar</option>
-                                    <option value="General">General</option>
-                                    <option value="Riesgo de trabajo">Riesgo de trabajo</option>
-                                    <option value="Maternidad">Maternidad</option>
+                                    @foreach (var item in Model.TiposIncapacidad)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
                                 </select>
                                 <label>Tipo de incapacidad</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="text" id="inpNumeroFolioIncapacidad" class="form-control" />
                                 <label>Número de Folio</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="number" step="0.1" id="inpDiasIncapacidad" class="form-control" />
                                 <label>Días Aporte</label>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="date" id="inpFechaAplicacionIncapacidad" class="form-control" />
                                 <label>Inicio Fecha Aplicación</label>
                             </div>
                         </div>
-
                         <div class="col-12 mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="chkSuplenciaIncapacidad">
                                 <label class="form-check-label" for="chkSuplenciaIncapacidad">Activar Suplencia</label>
                             </div>
                         </div>
-
                         <div class="col-12 mb-3">
                             <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i> Estás registrando <span id="lblDiasIncapacidad">0</span> días de incapacidad
+                                <i class="bi bi-info-circle"></i>
+                                Estás registrando <span id="lblDiasIncapacidad">0</span> días de incapacidad
                             </div>
                         </div>
-
                         <div class="col-12">
                             <div class="form-floating mb-3">
                                 <textarea id="txtComentarioIncapacidad" class="form-control" style="height:120px;"></textarea>
@@ -241,7 +226,7 @@
                 </form>
             </div>
             <div class="modal-footer d-flex justify-content-between">
-                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
                 <button class="btn btn-primary" type="button" onclick="guardarIncapacidad()">Agregar</button>
             </div>
         </div>
@@ -257,28 +242,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formPermiso">
+                <form id="formPermiso" method="post">
+                    @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <select id="selTipoAusenciaPermiso" class="form-select">
                                     <option value="">Seleccionar</option>
-                                    <option>Checada fuera de tiempo por instalación cerrada</option>
-                                    <option>Permiso llegada tardía</option>
-                                    <option>Permiso salida temprana</option>
-                                    <option>Permiso de ausencia</option>
-                                    <option>Permiso salida diligencia con regreso</option>
-                                    <option>Omisión de checada</option>
-                                    <option>Permiso de paternidad</option>
-                                    <option>Cambio de hora de comida</option>
-                                    <option>Permiso de ausencia por Fallecimiento de familiar</option>
-                                    <option>Permiso de ausencia médica justificada</option>
-                                    <option>Permiso diligencia sin regreso</option>
-                                    <option>Permiso de ausencia personal justificada</option>
-                                    <option>Permiso de ausencia por accidente justificado</option>
-                                    <option>Permiso para trabajar desde casa (HO)</option>
-                                    <option>Sin registro por falla de biométrico</option>
-                                    <option>Permiso sin goce de sueldo</option>
+                                    @foreach (var item in Model.TiposAusencia)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
                                 </select>
                                 <label>Tipo de ausencia</label>
                             </div>
@@ -300,7 +274,21 @@
                             </div>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6 campo-horas-permiso">
+                            <div class="form-floating mb-3">
+                                <input type="time" id="inpPermisoHoraInicio" class="form-control" />
+                                <label>Hora Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 campo-horas-permiso">
+                            <div class="form-floating mb-3">
+                                <input type="time" id="inpPermisoHoraTermino" class="form-control" />
+                                <label>Hora Término</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 campo-dias-permiso">
                             <div class="form-floating mb-3">
                                 <input type="number" step="0.1" id="inpPermisoDiasAporte" class="form-control" />
                                 <label>Días Aporte</label>
@@ -323,7 +311,8 @@
 
                         <div class="col-12 mb-3">
                             <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i> Estás registrando <span id="lblDiasPermiso">0</span> días de permiso
+                                <i class="bi bi-info-circle"></i>
+                                Estás registrando <span id="lblDiasPermiso">0</span> días de permiso
                             </div>
                         </div>
 
@@ -337,7 +326,7 @@
                 </form>
             </div>
             <div class="modal-footer d-flex justify-content-between">
-                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
                 <button class="btn btn-primary" type="button" onclick="guardarPermiso()">Agregar</button>
             </div>
         </div>
@@ -353,28 +342,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formSolicitarPermiso">
+                <form id="formSolicitarPermiso" method="post">
+                    @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <select id="selTipoAusenciaSolicitud" class="form-select">
                                     <option value="">Seleccionar</option>
-                                    <option>Checada fuera de tiempo por instalación cerrada</option>
-                                    <option>Permiso llegada tardía</option>
-                                    <option>Permiso salida temprana</option>
-                                    <option>Permiso de ausencia</option>
-                                    <option>Permiso salida diligencia con regreso</option>
-                                    <option>Omisión de checada</option>
-                                    <option>Permiso de paternidad</option>
-                                    <option>Cambio de hora de comida</option>
-                                    <option>Permiso de ausencia por Fallecimiento de familiar</option>
-                                    <option>Permiso de ausencia médica justificada</option>
-                                    <option>Permiso diligencia sin regreso</option>
-                                    <option>Permiso de ausencia personal justificada</option>
-                                    <option>Permiso de ausencia por accidente justificado</option>
-                                    <option>Permiso para trabajar desde casa (HO)</option>
-                                    <option>Sin registro por falla de biométrico</option>
-                                    <option>Permiso sin goce de sueldo</option>
+                                    @foreach (var item in Model.TiposAusencia)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
                                 </select>
                                 <label>Tipo de ausencia</label>
                             </div>
@@ -396,6 +374,20 @@
                             </div>
                         </div>
 
+                        <div class="col-md-6 campo-horas-solicitud">
+                            <div class="form-floating mb-3">
+                                <input type="time" id="inpSolicitudPermisoHoraInicio" class="form-control" />
+                                <label>Hora Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 campo-horas-solicitud">
+                            <div class="form-floating mb-3">
+                                <input type="time" id="inpSolicitudPermisoHoraTermino" class="form-control" />
+                                <label>Hora Término</label>
+                            </div>
+                        </div>
+
                         <div class="col-md-6">
                             <div class="form-floating mb-3">
                                 <input type="date" id="inpSolicitudPermisoFechaAplicacion" class="form-control" />
@@ -405,7 +397,8 @@
 
                         <div class="col-12 mb-3">
                             <div class="alert alert-info">
-                                <i class="bi bi-info-circle"></i> Estás registrando 0 días de permiso
+                                <i class="bi bi-info-circle"></i>
+                                Estás registrando <span id="lblDiasSolicitudPermiso">0</span> días de permiso
                             </div>
                         </div>
 
@@ -419,12 +412,182 @@
                 </form>
             </div>
             <div class="modal-footer d-flex justify-content-between">
-                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
                 <button class="btn btn-primary" type="button" onclick="solicitarPermiso()">Solicitar</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal detalle -->
+<div class="modal fade" id="modalDetalleAusencia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Detalle de ausencia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>Empleado:</strong> <span id="detEmpleado"></span></div>
+                    <div class="col-md-6"><strong>Categoría:</strong> <span id="detCategoria"></span></div>
+                    <div class="col-md-6"><strong>Tipo:</strong> <span id="detTipo"></span></div>
+                    <div class="col-md-6"><strong>Estado:</strong> <span id="detEstado"></span></div>
+                    <div class="col-md-6"><strong>Fecha inicio:</strong> <span id="detFechaInicio"></span></div>
+                    <div class="col-md-6"><strong>Fecha fin:</strong> <span id="detFechaFin"></span></div>
+                    <div class="col-md-6"><strong>Hora inicio:</strong> <span id="detHoraInicio"></span></div>
+                    <div class="col-md-6"><strong>Hora término:</strong> <span id="detHoraTermino"></span></div>
+                    <div class="col-md-6"><strong>Días:</strong> <span id="detDias"></span></div>
+                    <div class="col-md-6"><strong>Horas:</strong> <span id="detHoras"></span></div>
+                    <div class="col-md-6"><strong>Fecha aplicación:</strong> <span id="detFechaAplicacion"></span></div>
+                    <div class="col-md-6"><strong>Suplencia:</strong> <span id="detSuplencia"></span></div>
+                    <div class="col-md-6"><strong>Folio:</strong> <span id="detFolio"></span></div>
+                    <div class="col-md-6"><strong>Creado por:</strong> <span id="detUsuarioCreador"></span></div>
+                    <div class="col-12"><strong>Comentario:</strong> <div id="detComentario" class="border rounded p-3 bg-light mt-1"></div></div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div id="detalleAccionesAprobacion" class="d-flex gap-2 flex-wrap"></div>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal editar -->
+<div class="modal fade" id="modalEditarAusencia" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Editar ausencia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarAusencia" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="editId" />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select id="editTipoAusenciaId" class="form-select">
+                                    <option value="">Seleccionar</option>
+                                    @foreach (var item in Model.TiposAusencia)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                </select>
+                                <label>Tipo de ausencia</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <select id="editTipoIncapacidadId" class="form-select">
+                                    <option value="">Seleccionar</option>
+                                    @foreach (var item in Model.TiposIncapacidad)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                </select>
+                                <label>Tipo de incapacidad</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="editFechaInicio" class="form-control" />
+                                <label>Fecha Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="editFechaFin" class="form-control" />
+                                <label>Fecha Término</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 edit-horas">
+                            <div class="form-floating mb-3">
+                                <input type="time" id="editHoraInicio" class="form-control" />
+                                <label>Hora Inicio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 edit-horas">
+                            <div class="form-floating mb-3">
+                                <input type="time" id="editHoraTermino" class="form-control" />
+                                <label>Hora Término</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 edit-dias">
+                            <div class="form-floating mb-3">
+                                <input type="number" step="0.1" id="editDias" class="form-control" />
+                                <label>Días</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="date" id="editFechaAplicacion" class="form-control" />
+                                <label>Fecha Aplicación</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" id="editNumeroFolio" class="form-control" />
+                                <label>Número de Folio</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-center mb-3">
+                            <div class="form-check mt-3">
+                                <input class="form-check-input" type="checkbox" id="editSuplencia">
+                                <label class="form-check-label" for="editSuplencia">Activar Suplencia</label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-floating mb-3">
+                                <textarea id="editComentario" class="form-control" style="height:120px;"></textarea>
+                                <label>Comentario</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+                <button class="btn btn-primary" type="button" onclick="guardarEdicionAusencia()">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal resultado -->
+<div class="modal fade" id="modalResultado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content text-center">
+            <div class="modal-header border-0 justify-content-center pb-0">
+                <h5 class="modal-title" id="modalResultadoTitulo">Resultado</h5>
+            </div>
+            <div class="modal-body">
+                <div id="modalResultadoIcono" class="fs-1 mb-3"></div>
+                <div id="modalResultadoMensaje" class="fw-semibold"></div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pt-0">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="formAntiForgeryAusencias" method="post" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
 
 @section Scripts {
     <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
@@ -434,5 +597,8 @@
 
     <script type="text/javascript">
         var cultureName = "@cultureName";
+        var puedeAprobarJefeDirecto = @(Model.PuedeAprobarJefeDirecto.ToString().ToLower());
+        var puedeAprobarTH = @(Model.PuedeAprobarTH.ToString().ToLower());
+        var puedeVerTodasAusencias = @(Model.PuedeVerTodasAusencias.ToString().ToLower());
     </script>
 }

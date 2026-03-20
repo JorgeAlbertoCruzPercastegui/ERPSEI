@@ -21,6 +21,7 @@ using ERPSEI.Data.Entities.Vacaciones;
 using System.Reflection.Emit;
 using ERPSEI.Data.Entities.TipoContratos;
 using ERPSEI.Data.Entities.Documentos;
+using ERPSEI.Data.Entities.RH;
 
 namespace ERPSEI.Data
 {
@@ -174,7 +175,6 @@ namespace ERPSEI.Data
         public DbSet<DocumentoAutorizacion> DocumentosAutorizaciones { get; set; } = null!;
 
 
-
         //Vacaciones
         public DbSet<DiaFestivo> DiasFestivos { get; set; }
         public DbSet<HistorialVacaciones> HistorialesVacaciones { get; set; }
@@ -183,6 +183,11 @@ namespace ERPSEI.Data
         public DbSet<PoliticaVacacion> PoliticasVacaciones { get; set; }
         public DbSet<PoliticaVacacionDetalle> PoliticasVacacionesDetalles { get; set; }
         public DbSet<ConfiguracionVacacion> ConfiguracionesVacaciones { get; set; }
+
+        //Ausencias
+        public DbSet<TipoAusencia> TiposAusencias { get; set; }
+        public DbSet<TipoIncapacidad> TiposIncapacidades { get; set; }
+        public DbSet<Ausencia> Ausencias { get; set; }
 
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
@@ -250,6 +255,9 @@ namespace ERPSEI.Data
             //Vacaciones
             BuildVacaciones(modelBuilder);
 
+            //Ausencias
+            BuildAusencias(modelBuilder);
+
             //Contratos
             BuildTipoContratos(modelBuilder);
 
@@ -267,7 +275,73 @@ namespace ERPSEI.Data
 
         }
 
-        private static void BuildPoliticas(ModelBuilder b)
+        private static void BuildAusencias(ModelBuilder b)
+        {
+            b.Entity<TipoAusencia>(entity =>
+            {
+                entity.Property(x => x.Nombre).HasMaxLength(250);
+                entity.HasData(
+                    new TipoAusencia { Id = 1, Nombre = "Checada fuera de tiempo por instalación cerrada", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 1 },
+                    new TipoAusencia { Id = 2, Nombre = "Permiso llegada tardía", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 2 },
+                    new TipoAusencia { Id = 3, Nombre = "Permiso salida temprana", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 3 },
+                    new TipoAusencia { Id = 4, Nombre = "Permiso de ausencia", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 4 },
+                    new TipoAusencia { Id = 5, Nombre = "Permiso salida diligencia con regreso", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 5 },
+                    new TipoAusencia { Id = 6, Nombre = "Omisión de checada (no aplica para casos en donde se incumplan horarios laborales)", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 6 },
+                    new TipoAusencia { Id = 7, Nombre = "Permiso de paternidad", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 7 },
+                    new TipoAusencia { Id = 8, Nombre = "Cambio de hora de comida (especificar razón y horario tomado)", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 8 },
+                    new TipoAusencia { Id = 9, Nombre = "Permiso de ausencia por Fallecimiento de familiar", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 9 },
+                    new TipoAusencia { Id = 10, Nombre = "Permiso de ausencia médica justificada", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 10 },
+                    new TipoAusencia { Id = 11, Nombre = "Permiso diligencia sin regreso", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 11 },
+                    new TipoAusencia { Id = 12, Nombre = "Permiso de ausencia personal justificada", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 12 },
+                    new TipoAusencia { Id = 13, Nombre = "Permiso de ausencia por accidente justificado", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 13 },
+                    new TipoAusencia { Id = 14, Nombre = "Permiso para trabajar desde casa (HO)", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 14 },
+                    new TipoAusencia { Id = 15, Nombre = "Sin registro por falla de biométrico (sin luz y/o descompuesto)", Activo = true, ManejaHoras = true, ManejaDias = false, Orden = 15 },
+                    new TipoAusencia { Id = 16, Nombre = "Permiso sin goce de sueldo", Activo = true, ManejaHoras = false, ManejaDias = true, Orden = 16 }
+                );
+            });
+
+            b.Entity<TipoIncapacidad>(entity =>
+            {
+                entity.Property(x => x.Nombre).HasMaxLength(150);
+                entity.HasData(
+                    new TipoIncapacidad { Id = 1, Nombre = "Riesgo de trabajo", Activo = true, Orden = 1 },
+                    new TipoIncapacidad { Id = 2, Nombre = "Enfermedad en general", Activo = true, Orden = 2 },
+                    new TipoIncapacidad { Id = 3, Nombre = "Maternidad", Activo = true, Orden = 3 },
+                    new TipoIncapacidad { Id = 4, Nombre = "Licencia por cuidados médicos de hijos diagnosticados con cáncer", Activo = true, Orden = 4 }
+                );
+            });
+
+            b.Entity<Ausencia>(entity =>
+            {
+                entity.Property(x => x.Categoria).HasMaxLength(50);
+                entity.Property(x => x.TipoCaptura).HasMaxLength(20);
+                entity.Property(x => x.NumeroFolio).HasMaxLength(100);
+                entity.Property(x => x.EstadoJefeDirecto).HasMaxLength(30);
+                entity.Property(x => x.EstadoTH).HasMaxLength(30);
+                entity.Property(x => x.Comentario).HasMaxLength(1000);
+                entity.Property(x => x.Dias).HasPrecision(10, 2);
+                entity.Property(x => x.Horas).HasPrecision(10, 2);
+
+                entity.HasOne(x => x.TipoAusencia)
+                    .WithMany()
+                    .HasForeignKey(x => x.TipoAusenciaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.TipoIncapacidad)
+                    .WithMany()
+                    .HasForeignKey(x => x.TipoIncapacidadId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.JefeDirectoEmpleado)
+                    .WithMany()
+                    .HasForeignKey(x => x.JefeDirectoEmpleadoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            
+        }
+
+            private static void BuildPoliticas(ModelBuilder b)
         {
             b.Entity<TipoDocumento>(e =>
             {
@@ -879,6 +953,7 @@ namespace ERPSEI.Data
                     FechaActualizacion = new DateTime(2026, 3, 17)
                 }
             );
+
         }
 
         private static void BuildPolizas(ModelBuilder b) 
@@ -1012,9 +1087,15 @@ namespace ERPSEI.Data
 			b.Entity<Empleado>().HasOne(e => e.Oficina).WithMany(o => o.Empleados).OnDelete(DeleteBehavior.NoAction);
 			b.Entity<Empleado>().HasMany(e => e.ContactosEmergencia).WithOne(ce => ce.Empleado).OnDelete(DeleteBehavior.NoAction);
 			b.Entity<Empleado>().HasMany(e => e.ArchivosEmpleado).WithOne(ae => ae.Empleado).OnDelete(DeleteBehavior.NoAction);
-			
 
-			b.Entity<TipoArchivo>()
+            b.Entity<Empleado>()
+            .HasOne(e => e.Jefe)
+            .WithMany(j => j.Subordinados)
+            .HasForeignKey(e => e.JefeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
+            b.Entity<TipoArchivo>()
 				.HasData(
 					new TipoArchivo((int)Entities.Empleados.FileTypes.ImagenPerfil, "Imagen de perfil"),
 					new TipoArchivo((int)Entities.Empleados.FileTypes.ActaNacimiento, "Acta de nacimiento"),

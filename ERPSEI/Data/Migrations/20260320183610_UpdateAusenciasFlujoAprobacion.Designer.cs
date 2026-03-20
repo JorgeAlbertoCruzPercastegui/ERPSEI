@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260320183610_UpdateAusenciasFlujoAprobacion")]
+    partial class UpdateAusenciasFlujoAprobacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1146,63 +1149,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(116),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(792),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(134),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(814),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(136),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(817),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(137),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(819),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(139),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(822),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(141),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(825),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(143),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(827),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(145),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(830),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 3, 20, 14, 10, 13, 63, DateTimeKind.Local).AddTicks(146),
+                            FechaCreacion = new DateTime(2026, 3, 20, 12, 36, 5, 231, DateTimeKind.Local).AddTicks(833),
                             Nombre = "Otros"
                         });
                 });
@@ -1450,8 +1453,6 @@ namespace ERPSEI.Data.Migrations
                     b.HasIndex("GeneroId");
 
                     b.HasIndex("HorarioId");
-
-                    b.HasIndex("JefeId");
 
                     b.HasIndex("OficinaId");
 
@@ -2596,9 +2597,6 @@ namespace ERPSEI.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<int?>("JefeDirectoEmpleadoId")
-                        .HasColumnType("int");
-
                     b.Property<string>("NumeroFolio")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -2629,8 +2627,6 @@ namespace ERPSEI.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EmpleadoId");
-
-                    b.HasIndex("JefeDirectoEmpleadoId");
 
                     b.HasIndex("TipoAusenciaId");
 
@@ -7034,11 +7030,6 @@ namespace ERPSEI.Data.Migrations
                         .HasForeignKey("HorarioId")
                         .OnDelete(DeleteBehavior.NoAction);
 
-                    b.HasOne("ERPSEI.Data.Entities.Empleados.Empleado", "Jefe")
-                        .WithMany("Subordinados")
-                        .HasForeignKey("JefeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("ERPSEI.Data.Entities.Empleados.Oficina", "Oficina")
                         .WithMany("Empleados")
                         .HasForeignKey("OficinaId")
@@ -7065,8 +7056,6 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("Genero");
 
                     b.Navigation("Horario");
-
-                    b.Navigation("Jefe");
 
                     b.Navigation("Oficina");
 
@@ -7268,11 +7257,6 @@ namespace ERPSEI.Data.Migrations
                         .WithMany()
                         .HasForeignKey("EmpleadoId");
 
-                    b.HasOne("ERPSEI.Data.Entities.Empleados.Empleado", "JefeDirectoEmpleado")
-                        .WithMany()
-                        .HasForeignKey("JefeDirectoEmpleadoId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("ERPSEI.Data.Entities.RH.TipoAusencia", "TipoAusencia")
                         .WithMany()
                         .HasForeignKey("TipoAusenciaId")
@@ -7296,8 +7280,6 @@ namespace ERPSEI.Data.Migrations
                         .HasForeignKey("UsuarioTHId");
 
                     b.Navigation("Empleado");
-
-                    b.Navigation("JefeDirectoEmpleado");
 
                     b.Navigation("TipoAusencia");
 
@@ -8110,8 +8092,6 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("SolicitudesAutorizadas");
 
                     b.Navigation("SolicitudesVacaciones");
-
-                    b.Navigation("Subordinados");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Empleados.EstadoCivil", b =>
