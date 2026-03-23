@@ -84,6 +84,31 @@
     ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/intranet_SEI.png"
     : $"{Context.Request.Scheme}://{Context.Request.Host}/img/intranet_SEI_blanco.png";
 
+    var empleadoActual = usr != null
+        ? await Db.Empleados
+            .AsNoTracking()
+            .Include(e => e.Area)
+            .Include(e => e.Puesto)
+            .Include(e => e.Jefe)
+            .FirstOrDefaultAsync(e => e.UserId == usr.Id)
+        : null;
+
+    string nombreEmpleadoCard = !string.IsNullOrWhiteSpace(empleadoActual?.NombreCompleto)
+        ? empleadoActual!.NombreCompleto
+        : (usr?.UserName ?? User.Identity?.Name ?? "Usuario");
+
+    string areaEmpleado = empleadoActual?.Area?.Nombre ?? "Sin asignar";
+    string puestoEmpleado = empleadoActual?.Puesto?.Nombre ?? "Sin asignar";
+    string jefeEmpleado = !string.IsNullOrWhiteSpace(empleadoActual?.Jefe?.NombreCompleto)
+        ? empleadoActual!.Jefe!.NombreCompleto
+        : (!string.IsNullOrWhiteSpace(empleadoActual?.Jefe?.Nombre)
+            ? empleadoActual!.Jefe!.Nombre
+            : "Sin asignar");
+
+    string fechaIngresoEmpleado = empleadoActual != null
+        ? empleadoActual.FechaIngreso.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-MX"))
+        : "Sin asignar";
+
     if (accesos.Count >= 0)
     {
         tieneCatalogosRH = accesos.FindAll(m =>
@@ -252,7 +277,6 @@
 
             <div class="container header-bg-inner">
                 <a class="navbar-brand d-flex flex-column align-items-start" asp-area="" asp-page="/Index">
-                    <!--<img class="brandimage" src="@Context.Request.Scheme://@Context.Request.Host/img/intranet_SEI_blanco.png" />-->
                     <img class="brandimage" src="@logoHeader" />
                 </a>
 
@@ -313,13 +337,7 @@
                                 <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
                                 <div class="quick-dd-menu">
                                     <a class="quick-dd-item" asp-area="ERP" asp-page="/Ausencias">Ausencias</a>
-                                    <!--<a class="quick-dd-item" asp-area="" asp-page="/Building">Permisos por enfermedad</a>-->
-                                    <!--<a class="quick-dd-item" asp-area="" asp-page="/Building">Incapacidades</a>-->
-
                                     <a class="quick-dd-item" asp-area="ERP" asp-page="/Vacaciones">Vacaciones</a>
-                                    <!--<a class="quick-dd-item" asp-area="" asp-page="/Building">Retardos</a>-->
-                                    <!--<a class="quick-dd-item" asp-area="" asp-page="/Building">Home Office</a>-->
-                                    <!--<a class="quick-dd-item" asp-area="" asp-page="/Building">Ausencias justificadas</a>-->
                                 </div>
                             </div>
 
@@ -375,10 +393,47 @@
                 </div>
             }
 
-            <br />
-
             <main role="main" class="pb-3 main-home-content">
                 @RenderBody()
+
+                @if (SignInManager.IsSignedIn(User) && esPaginaInicio && empleadoActual != null)
+                {
+                    <div class="employee-hero-wrapper">
+                                <div class="employee-hero-grid">
+                                    <article class="employee-info-box">
+                                        <div class="employee-info-label">
+                                            <i class="bi bi-briefcase-fill"></i>
+                                            <span>Área</span>
+                                        </div>
+                                <div class="employee-info-value employee-info-value--sm">@areaEmpleado</div>
+                                    </article>
+
+                                    <article class="employee-info-box">
+                                        <div class="employee-info-label">
+                                            <i class="bi bi-person-workspace"></i>
+                                            <span>Puesto</span>
+                                        </div>
+                                <div class="employee-info-value  employee-info-value--sm">@puestoEmpleado</div>
+                                    </article>
+
+                                    <article class="employee-info-box">
+                                        <div class="employee-info-label">
+                                            <i class="bi bi-person-badge-fill"></i>
+                                            <span>Jefe Inmediato</span>
+                                        </div>
+                                        <div class="employee-info-value employee-info-value--sm">@jefeEmpleado</div>
+                                    </article>
+
+                                    <article class="employee-info-box">
+                                        <div class="employee-info-label">
+                                            <i class="bi bi-calendar-event-fill"></i>
+                                            <span>Fecha de Ingreso</span>
+                                        </div>
+                                        <div class="employee-info-value employee-info-value--sm">@fechaIngresoEmpleado</div>
+                                    </article>
+                                </div>
+                    </div>
+                }
 
                 @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
                 {
@@ -463,18 +518,6 @@
             </main>
         </div>
     </div>
-
-    <!--<footer class="border-top footer text-muted">
-        <div class="container">
-            <div class="float-start">
-                &copy; @DateTime.Now.Year - ERPSEI - <a asp-area="" asp-page="/Privacy">@Localizer["PrivacyMenu"]</a>
-            </div>
-            <div class="float-end d-none d-sm-inline-block d-md-inline-block d-lg-inline-block">
-                @Localizer["RightFooter"]
-            </div>
-        </div>
-    </footer>
-    -->
 
     <script src="@Context.Request.Scheme://@Context.Request.Host/lib/jquery/dist/jquery.min.js"></script>
     <script src="@Context.Request.Scheme://@Context.Request.Host/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

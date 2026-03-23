@@ -115,9 +115,15 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            PuedeAprobarJefeDirecto = roles.Contains("JefeDirecto") || roles.Contains("Administrador");
-            PuedeAprobarTH = roles.Contains("TH") || roles.Contains("Administrador");
-            PuedeVerTodasAusencias = PuedeAprobarJefeDirecto || PuedeAprobarTH || roles.Contains("Administrador");
+            bool esAdministrador = roles.Contains("Administrador");
+            bool esJefeDirecto = roles.Contains("Jefe Directo");
+            bool esAdministradorTH = roles.Contains("Administrador TH");
+
+            PuedeAprobarJefeDirecto = esJefeDirecto || esAdministrador;
+            PuedeAprobarTH = esAdministradorTH || esAdministrador;
+
+            // Quién puede ver más que solo lo suyo
+            PuedeVerTodasAusencias = esJefeDirecto || esAdministradorTH || esAdministrador;
         }
 
         private async Task CargarCatalogosAsync()
@@ -185,8 +191,17 @@ namespace ERPSEI.Areas.ERP.Pages
             await ConfigurarPermisosAsync();
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null || user.EmpleadoId == null)
+            if (user == null)
                 return new JsonResult(new List<object>());
+
+            int? empleadoIdActual = await ObtenerEmpleadoIdDelUsuarioActualAsync();
+            if (empleadoIdActual == null)
+                return new JsonResult(new List<object>());
+
+            var roles = await _userManager.GetRolesAsync(user);
+            bool esAdministrador = roles.Contains("Administrador");
+            bool esJefeDirecto = roles.Contains("Jefe Directo");
+            bool esAdministradorTH = roles.Contains("Administrador TH");
 
             var query = _db.Ausencias
                 .Include(x => x.TipoAusencia)
@@ -196,25 +211,24 @@ namespace ERPSEI.Areas.ERP.Pages
                 .Where(x => x.TipoCaptura == "Dias")
                 .AsQueryable();
 
-            // Administrador ve todo
-            if (User.IsInRole("Administrador") || User.IsInRole("Administrador TH"))
+            if (esAdministrador)
             {
-                // no filtramos
+                // ve todo
             }
-            // Jefe directo ve solo lo que le toca autorizar
-            else if (PuedeAprobarJefeDirecto)
+            else if (esAdministradorTH)
             {
-                query = query.Where(x => x.JefeDirectoEmpleadoId == user.EmpleadoId);
-            }
-            // TH ve lo que ya aprobó jefe directo
-            else if (PuedeAprobarTH)
-            {
+                // TH solo ve registros listos para TH
                 query = query.Where(x => x.EstadoJefeDirecto == "Aprobado");
             }
-            // Empleado normal ve solo lo suyo
+            else if (esJefeDirecto)
+            {
+                // jefe directo solo ve lo suyo como jefe
+                query = query.Where(x => x.JefeDirectoEmpleadoId == empleadoIdActual);
+            }
             else
             {
-                query = query.Where(x => x.EmpleadoId == user.EmpleadoId);
+                // empleado normal solo ve lo suyo
+                query = query.Where(x => x.EmpleadoId == empleadoIdActual);
             }
 
             var lista = await query
@@ -240,20 +254,22 @@ namespace ERPSEI.Areas.ERP.Pages
                     estado = estadoVisual,
 
                     puedeEditar =
-                        User.IsInRole("Administrador") ||
-                        (!PuedeAprobarJefeDirecto && !PuedeAprobarTH && x.EmpleadoId == user.EmpleadoId && x.EstadoJefeDirecto == "Pendiente"),
+                        esAdministrador ||
+                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
                     puedeEliminar =
-                        User.IsInRole("Administrador") ||
-                        (!PuedeAprobarJefeDirecto && !PuedeAprobarTH && x.EmpleadoId == user.EmpleadoId && x.EstadoJefeDirecto == "Pendiente"),
+                        esAdministrador ||
+                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
+                    // SOLO JEFE DIRECTO
                     puedeAprobarJefe =
-                        PuedeAprobarJefeDirecto &&
-                        x.JefeDirectoEmpleadoId == user.EmpleadoId &&
+                        (esJefeDirecto || esAdministrador) &&
+                        x.JefeDirectoEmpleadoId == empleadoIdActual &&
                         x.EstadoJefeDirecto == "Pendiente",
 
+                    // SOLO ADMINISTRADOR TH
                     puedeAprobarTH =
-                        PuedeAprobarTH &&
+                        (esAdministradorTH || esAdministrador) &&
                         x.EstadoJefeDirecto == "Aprobado" &&
                         x.EstadoTH == "Pendiente"
                 };
@@ -267,8 +283,17 @@ namespace ERPSEI.Areas.ERP.Pages
             await ConfigurarPermisosAsync();
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null || user.EmpleadoId == null)
+            if (user == null)
                 return new JsonResult(new List<object>());
+
+            int? empleadoIdActual = await ObtenerEmpleadoIdDelUsuarioActualAsync();
+            if (empleadoIdActual == null)
+                return new JsonResult(new List<object>());
+
+            var roles = await _userManager.GetRolesAsync(user);
+            bool esAdministrador = roles.Contains("Administrador");
+            bool esJefeDirecto = roles.Contains("Jefe Directo");
+            bool esAdministradorTH = roles.Contains("Administrador TH");
 
             var query = _db.Ausencias
                 .Include(x => x.TipoAusencia)
@@ -277,25 +302,24 @@ namespace ERPSEI.Areas.ERP.Pages
                 .Where(x => x.TipoCaptura == "Horas")
                 .AsQueryable();
 
-            // Administrador ve todo
-            if (User.IsInRole("Administrador"))
+            if (esAdministrador)
             {
-                // no filtramos
+                // ve todo
             }
-            // Jefe directo ve solo lo que le toca autorizar
-            else if (PuedeAprobarJefeDirecto)
+            else if (esAdministradorTH)
             {
-                query = query.Where(x => x.JefeDirectoEmpleadoId == user.EmpleadoId);
-            }
-            // TH ve lo que ya aprobó jefe directo
-            else if (PuedeAprobarTH)
-            {
+                // TH ve solo lo que ya aprobó jefe directo, tanto días como horas
                 query = query.Where(x => x.EstadoJefeDirecto == "Aprobado");
             }
-            // Empleado normal ve solo lo suyo
+            else if (esJefeDirecto)
+            {
+                // jefe directo ve solo lo suyo
+                query = query.Where(x => x.JefeDirectoEmpleadoId == empleadoIdActual);
+            }
             else
             {
-                query = query.Where(x => x.EmpleadoId == user.EmpleadoId);
+                // empleado normal ve solo lo suyo
+                query = query.Where(x => x.EmpleadoId == empleadoIdActual);
             }
 
             var lista = await query
@@ -317,26 +341,40 @@ namespace ERPSEI.Areas.ERP.Pages
                     estado = estadoVisual,
 
                     puedeEditar =
-                        User.IsInRole("Administrador") ||
-                        (!PuedeAprobarJefeDirecto && !PuedeAprobarTH && x.EmpleadoId == user.EmpleadoId && x.EstadoJefeDirecto == "Pendiente"),
+                        esAdministrador ||
+                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
                     puedeEliminar =
-                        User.IsInRole("Administrador") ||
-                        (!PuedeAprobarJefeDirecto && !PuedeAprobarTH && x.EmpleadoId == user.EmpleadoId && x.EstadoJefeDirecto == "Pendiente"),
+                        esAdministrador ||
+                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
                     puedeAprobarJefe =
-                        PuedeAprobarJefeDirecto &&
-                        x.JefeDirectoEmpleadoId == user.EmpleadoId &&
+                        (esJefeDirecto || esAdministrador) &&
+                        x.JefeDirectoEmpleadoId == empleadoIdActual &&
                         x.EstadoJefeDirecto == "Pendiente",
 
                     puedeAprobarTH =
-                        PuedeAprobarTH &&
+                        (esAdministradorTH || esAdministrador) &&
                         x.EstadoJefeDirecto == "Aprobado" &&
                         x.EstadoTH == "Pendiente"
                 };
             }).ToList();
 
             return new JsonResult(data);
+        }
+
+        private async Task<int?> ObtenerEmpleadoIdDelUsuarioActualAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            if (user == null)
+                return null;
+
+            var empleado = await _db.Empleados
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.UserId == user.Id);
+
+            return empleado?.Id;
         }
 
         public async Task<JsonResult> OnGetDetalleAsync(int id)
@@ -575,10 +613,17 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 await ConfigurarPermisosAsync();
 
-                if (!PuedeAprobarTH)
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
+
+                var roles = await _userManager.GetRolesAsync(user);
+                bool esAdministrador = roles.Contains("Administrador");
+                bool esAdministradorTH = roles.Contains("Administrador TH");
+
+                if (!esAdministradorTH && !esAdministrador)
                     return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para aprobar como Talento Humano." });
 
-                var user = await _userManager.GetUserAsync(User);
                 var item = await _db.Ausencias.FirstOrDefaultAsync(x => x.Id == id);
 
                 if (item == null)
@@ -587,13 +632,20 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (item.EstadoJefeDirecto != "Aprobado")
                     return new JsonResult(new { tieneError = true, mensaje = "Primero debe aprobar el jefe directo." });
 
+                if (item.EstadoTH != "Pendiente")
+                    return new JsonResult(new { tieneError = true, mensaje = "Este registro ya fue revisado por TH." });
+
                 item.EstadoTH = "Aprobado";
-                item.UsuarioTHId = user?.Id;
+                item.UsuarioTHId = user.Id;
                 item.FechaRevisionTH = DateTime.Now;
 
                 await _db.SaveChangesAsync();
 
-                return new JsonResult(new { tieneError = false, mensaje = "Talento Humano aprobó correctamente el permiso." });
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "Talento Humano aprobó correctamente el registro."
+                });
             }
             catch (Exception ex)
             {
@@ -607,10 +659,17 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 await ConfigurarPermisosAsync();
 
-                if (!PuedeAprobarTH)
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
+
+                var roles = await _userManager.GetRolesAsync(user);
+                bool esAdministrador = roles.Contains("Administrador");
+                bool esAdministradorTH = roles.Contains("Administrador TH");
+
+                if (!esAdministradorTH && !esAdministrador)
                     return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para rechazar como Talento Humano." });
 
-                var user = await _userManager.GetUserAsync(User);
                 var item = await _db.Ausencias.FirstOrDefaultAsync(x => x.Id == id);
 
                 if (item == null)
@@ -619,13 +678,20 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (item.EstadoJefeDirecto != "Aprobado")
                     return new JsonResult(new { tieneError = true, mensaje = "Primero debe aprobar el jefe directo." });
 
+                if (item.EstadoTH != "Pendiente")
+                    return new JsonResult(new { tieneError = true, mensaje = "Este registro ya fue revisado por TH." });
+
                 item.EstadoTH = "Rechazado";
-                item.UsuarioTHId = user?.Id;
+                item.UsuarioTHId = user.Id;
                 item.FechaRevisionTH = DateTime.Now;
 
                 await _db.SaveChangesAsync();
 
-                return new JsonResult(new { tieneError = false, mensaje = "Talento Humano rechazó correctamente el permiso." });
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "Talento Humano rechazó correctamente el registro."
+                });
             }
             catch (Exception ex)
             {

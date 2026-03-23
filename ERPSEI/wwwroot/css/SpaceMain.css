@@ -99,246 +99,377 @@
         }
 }
 
-    /* ==========================================
+/* ==========================================
    HEADER SOLO HOME
    ========================================== */
 
-    .home-main-theme .header-bg {
-        background: transparent !important;
-        border: 0 !important;
+.home-main-theme .header-bg {
+    background: transparent !important;
+    border: 0 !important;
+}
+
+.home-main-theme .header-bg-inner {
+    background: transparent;
+    padding-top: 12px;
+    padding-bottom: 6px;
+}
+
+.home-main-theme .navbar-brand {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    line-height: 1;
+}
+
+    .home-main-theme .navbar-brand img.brandimage {
+        display: block;
+        height: 44px;
+        width: auto;
+        max-height: 44px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,.18));
     }
 
-    .home-main-theme .header-bg-inner {
-        background: transparent;
-        padding-top: 12px;
-        padding-bottom: 6px;
+.home-main-theme header .nav-link,
+.home-main-theme header .navbar .nav-link,
+.home-main-theme header .navbar .dropdown-toggle,
+.home-main-theme header .navbar .btn-link,
+.home-main-theme header .navbar a {
+    color: rgba(255,255,255,.95) !important;
+}
+
+    .home-main-theme header .nav-link:hover,
+    .home-main-theme header .navbar a:hover {
+        color: #ffffff !important;
     }
 
-    .home-main-theme .navbar-brand {
-        display: flex;
-        align-items: center;
-        padding: 0;
-        margin: 0;
-        line-height: 1;
-    }
-
-        .home-main-theme .navbar-brand img.brandimage {
-            display: block;
-            height: 44px;
-            width: auto;
-            max-height: 44px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 6px rgba(0,0,0,.18));
-        }
-
-    /* cerrar sesión / links del header */
-    .home-main-theme header .nav-link,
-    .home-main-theme header .navbar .nav-link,
-    .home-main-theme header .navbar .dropdown-toggle,
-    .home-main-theme header .navbar .btn-link,
-    .home-main-theme header .navbar a {
-        color: rgba(255,255,255,.95) !important;
-    }
-
-        .home-main-theme header .nav-link:hover,
-        .home-main-theme header .navbar a:hover {
-            color: #ffffff !important;
-        }
-
-    /* ==========================================
+/* ==========================================
    CONTENEDOR SOLO HOME
    ========================================== */
 
-    .home-main-theme .container {
-        max-width: 1280px;
-    }
+.home-main-theme .container {
+    max-width: 1280px;
+}
 
-    /* ==========================================
+/* ==========================================
    TOPBAR SOLO HOME
    ========================================== */
 
-    .home-main-theme .topbar-links {
-        white-space: nowrap;
-        margin-top: 2px;
-        margin-bottom: 12px;
-        padding: 12px 14px !important;
-        border-radius: 18px;
-        background: rgba(255,255,255,.06);
-        border: 1px solid rgba(255,255,255,.10);
-        box-shadow: 0 10px 24px rgba(0,0,0,.14);
-        backdrop-filter: blur(4px);
+.home-main-theme .topbar-links {
+    white-space: nowrap;
+    margin-top: 2px;
+    margin-bottom: 12px;
+    padding: 12px 14px !important;
+    border-radius: 18px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 10px 24px rgba(0,0,0,.14);
+    backdrop-filter: blur(4px);
+}
+
+    .home-main-theme .topbar-links .small,
+    .home-main-theme .topbar-links .text-muted,
+    .home-main-theme .topbar-links b {
+        color: #0c1f60 !important;
     }
 
-        .home-main-theme .topbar-links .small,
-        .home-main-theme .topbar-links .text-muted,
-        .home-main-theme .topbar-links b {
-            color: #0c1f60 !important;
-        }
-
-    /* ==========================================
+/* ==========================================
    NAVEGACIÓN RÁPIDA SOLO HOME
    ========================================== */
 
-    .home-main-theme .quick-nav {
-        white-space: nowrap;
-    }
+.home-main-theme .quick-nav {
+    white-space: nowrap;
+}
 
-    .home-main-theme .quick-link {
-        position: relative;
-        display: inline-block;
-        padding: .2rem .18rem;
-        text-decoration: none !important;
-        color: rgba(255,255,255,.86);
-        font-size: .92rem;
-        font-weight: 600;
-        transition: color .15s ease;
-    }
+.home-main-theme .quick-link {
+    position: relative;
+    display: inline-block;
+    padding: .2rem .18rem;
+    text-decoration: none !important;
+    color: rgba(255,255,255,.86);
+    font-size: .92rem;
+    font-weight: 600;
+    transition: color .15s ease;
+}
 
-        .home-main-theme .quick-link::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -5px;
-            height: 2px;
-            width: 100%;
-            transform: scaleX(0);
-            transform-origin: left;
-            background: #9db8ff;
-            transition: transform .18s ease;
-            opacity: .95;
-        }
-
-        .home-main-theme .quick-link:hover {
-            color: #ffffff;
-        }
-
-            .home-main-theme .quick-link:hover::after {
-                transform: scaleX(1);
-            }
-
-        .home-main-theme .quick-link.active {
-            color: #ffffff;
-        }
-
-            .home-main-theme .quick-link.active::after {
-                transform: scaleX(1);
-            }
-
-    .home-main-theme .quick-dd {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-    }
-
-    .home-main-theme .quick-dd-menu {
+    .home-main-theme .quick-link::after {
+        content: "";
         position: absolute;
-        top: 100%;
-        right: 0;
-        margin-top: 2px;
-        min-width: 260px;
-        background: rgba(9, 20, 70, .96);
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 14px;
-        padding: .55rem;
-        box-shadow: 0 18px 35px rgba(0,0,0,.28);
-        display: none;
-        z-index: 2000;
-        backdrop-filter: blur(10px);
+        left: 0;
+        bottom: -5px;
+        height: 2px;
+        width: 100%;
+        transform: scaleX(0);
+        transform-origin: left;
+        background: #9db8ff;
+        transition: transform .18s ease;
+        opacity: .95;
     }
 
-    .home-main-theme .quick-dd-menu-wide {
-        min-width: 330px;
-        max-height: 320px;
-        overflow: auto;
-    }
-
-    .home-main-theme .quick-dd-item {
-        display: block;
-        padding: .6rem .8rem;
-        border-radius: 10px;
-        text-decoration: none !important;
-        color: rgba(255,255,255,.86);
-        font-size: .875rem;
-        font-weight: 600;
-        transition: background .15s ease, color .15s ease;
-    }
-
-        .home-main-theme .quick-dd-item:hover {
-            background: rgba(255,255,255,.10);
-            color: #ffffff;
-        }
-
-    .home-main-theme .quick-dd:hover > .quick-dd-menu {
-        display: block;
-    }
-
-    .home-main-theme .quick-dd:hover > .quick-dd-toggle::after {
-        transform: scaleX(1);
-    }
-
-    .home-main-theme .quick-dd:hover > .quick-dd-toggle {
+    .home-main-theme .quick-link:hover {
         color: #ffffff;
     }
 
-    .home-main-theme .quick-nav-wrap {
-        position: relative;
+        .home-main-theme .quick-link:hover::after {
+            transform: scaleX(1);
+        }
+
+    .home-main-theme .quick-link.active {
+        color: #ffffff;
     }
 
-    .home-main-theme .quick-nav-toggle {
-        border: 1px solid rgba(255,255,255,.18);
-        background: rgba(255,255,255,.08);
-        color: #fff;
-        border-radius: 10px;
-        padding: .35rem .65rem;
+        .home-main-theme .quick-link.active::after {
+            transform: scaleX(1);
+        }
+
+.home-main-theme .quick-dd {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.home-main-theme .quick-dd-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 2px;
+    min-width: 260px;
+    background: rgba(9, 20, 70, .96);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px;
+    padding: .55rem;
+    box-shadow: 0 18px 35px rgba(0,0,0,.28);
+    display: none;
+    z-index: 2000;
+    backdrop-filter: blur(10px);
+}
+
+.home-main-theme .quick-dd-menu-wide {
+    min-width: 330px;
+    max-height: 320px;
+    overflow: auto;
+}
+
+.home-main-theme .quick-dd-item {
+    display: block;
+    padding: .6rem .8rem;
+    border-radius: 10px;
+    text-decoration: none !important;
+    color: rgba(255,255,255,.86);
+    font-size: .875rem;
+    font-weight: 600;
+    transition: background .15s ease, color .15s ease;
+}
+
+    .home-main-theme .quick-dd-item:hover {
+        background: rgba(255,255,255,.10);
+        color: #ffffff;
     }
 
-    .home-main-theme #quickNavMenu {
-        display: flex;
-    }
+.home-main-theme .quick-dd:hover > .quick-dd-menu {
+    display: block;
+}
 
-    /* ==========================================
+.home-main-theme .quick-dd:hover > .quick-dd-toggle::after {
+    transform: scaleX(1);
+}
+
+.home-main-theme .quick-dd:hover > .quick-dd-toggle {
+    color: #ffffff;
+}
+
+.home-main-theme .quick-nav-wrap {
+    position: relative;
+}
+
+.home-main-theme .quick-nav-toggle {
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.08);
+    color: #fff;
+    border-radius: 10px;
+    padding: .35rem .65rem;
+}
+
+.home-main-theme #quickNavMenu {
+    display: flex;
+}
+
+/* ==========================================
    BANNER SOLO HOME
    ========================================== */
 
-    .home-main-theme .main-home-content {
-        padding-top: 6px;
+.home-main-theme .main-home-content {
+    padding-top: 6px;
+}
+
+.home-main-theme .banner-img,
+.home-main-theme .home-banner-img {
+    width: 100%;
+    height: 350px;
+    object-fit: cover;
+    border-radius: 18px;
+    display: block;
+    border: 1px solid rgba(255,255,255,.18);
+    box-shadow: 0 16px 34px rgba(0,0,0,.22);
+    background: rgba(255,255,255,.04);
+}
+
+/* ==========================================
+   TARJETA DATOS DEL USUARIO
+   ========================================== */
+
+.home-main-theme .employee-hero-wrapper {
+    margin: 26px auto 26px;
+    max-width: 1280px;
+}
+
+.home-main-theme .employee-hero-shell {
+    position: relative;
+    border-radius: 28px;
+    padding: 18px;
+    background: linear-gradient(180deg, rgba(214,181,93,.58) 0%, rgba(185,149,61,.42) 100%);
+    border: 1px solid rgba(232, 201, 115, .45);
+    box-shadow: 0 18px 40px rgba(0,0,0,.22);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.home-main-theme .employee-hero-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    padding: 26px 28px 24px;
+    border: 1px solid rgba(232, 201, 115, .50);
+    background: radial-gradient(circle at 75% 30%, rgba(255,255,255,.08), transparent 22%), radial-gradient(circle at 20% 80%, rgba(255,255,255,.05), transparent 20%), linear-gradient(135deg, rgba(7,19,63,.62) 0%, rgba(16,36,115,.56) 55%, rgba(22,43,129,.50) 100%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04), 0 14px 28px rgba(2, 8, 35, .20);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+    .home-main-theme .employee-hero-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.06) 50%, transparent 100%);
+        opacity: .45;
     }
 
-    .home-main-theme .banner-img,
-    .home-main-theme .home-banner-img {
-        width: 100%;
-        height: 350px;
-        object-fit: cover;
-        border-radius: 18px;
-        display: block;
-        border: 1px solid rgba(255,255,255,.18);
-        box-shadow: 0 16px 34px rgba(0,0,0,.22);
-        background: rgba(255,255,255,.04);
+.home-main-theme .employee-hero-header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(232, 201, 115, .55);
+}
+
+.home-main-theme .employee-hero-title {
+    margin: 0;
+    font-size: clamp(1.9rem, 2.6vw, 3rem);
+    font-weight: 800;
+    line-height: 1.05;
+    color: #ffffff;
+    letter-spacing: -.02em;
+    text-shadow: 0 2px 10px rgba(0,0,0,.18);
+}
+
+.home-main-theme .employee-hero-subtitle {
+    margin-top: 8px;
+    font-size: 1rem;
+    color: rgba(255,255,255,.86);
+    font-weight: 500;
+}
+
+.home-main-theme .employee-hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+/* =====================================================
+   CAJAS INFO USUARIO - SOLO BORDE (SIN FONDO)
+   ===================================================== */
+
+.home-main-theme .employee-info-box {
+    min-height: 118px;
+    border-radius: 20px;
+    padding: 18px 20px;
+    /* 🔥 SOLO CONTORNO DORADO */
+    border: 2px solid rgba(232, 201, 115, .75);
+    /* ❌ QUITAMOS FONDO */
+    background: transparent !important;
+    /* quitamos sombras pesadas */
+    box-shadow: none;
+    /* efecto glass ligero */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all .25s ease;
+}
+
+    /* ✨ HOVER ELEGANTE */
+    .home-main-theme .employee-info-box:hover {
+        border-color: #f1d88c;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,.25);
     }
 
-    /* ==========================================
+.home-main-theme .employee-info-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #f0c868;
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+    .home-main-theme .employee-info-label i {
+        font-size: 1.25rem;
+    }
+
+.home-main-theme .employee-info-value {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.home-main-theme .employee-info-value--sm {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* ==========================================
    FOOTER SOLO HOME
    ========================================== */
 
-    .home-main-theme .footer {
-        background: transparent !important;
-        border-top: 1px solid rgba(255,255,255,.14) !important;
-        margin-top: 26px;
-        padding-top: 14px;
-        padding-bottom: 12px;
+.home-main-theme .footer {
+    background: transparent !important;
+    border-top: 1px solid rgba(255,255,255,.14) !important;
+    margin-top: 26px;
+    padding-top: 14px;
+    padding-bottom: 12px;
+}
+
+    .home-main-theme .footer,
+    .home-main-theme .footer .text-muted,
+    .home-main-theme .footer a,
+    .home-main-theme .footer .float-start,
+    .home-main-theme .footer .float-end {
+        color: rgba(255,255,255,.88) !important;
     }
 
-        .home-main-theme .footer,
-        .home-main-theme .footer .text-muted,
-        .home-main-theme .footer a,
-        .home-main-theme .footer .float-start,
-        .home-main-theme .footer .float-end {
-            color: rgba(255,255,255,.88) !important;
+        .home-main-theme .footer a:hover {
+            color: #ffffff !important;
         }
-
-            .home-main-theme .footer a:hover {
-                color: #ffffff !important;
-            }
 
 /* ==========================================
    MOBILE SOLO HOME
@@ -408,6 +539,48 @@
     .home-main-theme .home-banner-img {
         height: 220px;
     }
+
+    .home-main-theme .employee-hero-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .home-main-theme .employee-hero-wrapper {
+        margin: 18px auto 22px;
+    }
+
+    .home-main-theme .employee-hero-shell {
+        padding: 12px;
+        border-radius: 22px;
+    }
+
+    .home-main-theme .employee-hero-card {
+        padding: 20px 18px 18px;
+        border-radius: 20px;
+    }
+
+    .home-main-theme .employee-hero-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .home-main-theme .employee-info-box {
+        min-height: 96px;
+        padding: 16px;
+    }
+
+    .home-main-theme .employee-hero-title {
+        font-size: 2rem;
+    }
+
+    .home-main-theme .employee-info-label {
+        color: #e3c97b;
+    }
+
+    .home-main-theme .employee-info-value {
+        color: #ffffff;
+    }
 }
 
 /* =====================================================
@@ -420,13 +593,11 @@
     margin-bottom: 12px;
     padding: 12px 14px !important;
     border-radius: 18px;
-    /* dorado */
     background: linear-gradient(145deg,#f3e3b3,#e3c97b);
     border: 2px solid #d4a941;
     box-shadow: 0 6px 18px rgba(0,0,0,.25), inset 0 2px 4px rgba(255,255,255,.4);
 }
 
-/* texto del menú */
 .home-main-theme .quick-link {
     color: #0c1f60;
     font-weight: 700;
@@ -436,7 +607,6 @@
         color: #0a1d66;
     }
 
-    /* subrayado */
     .home-main-theme .quick-link::after {
         background: #0a1d66;
     }
@@ -445,7 +615,6 @@
    DROPDOWN DEL MENU ENCIMA DEL BANNER
    ===================================================== */
 
-/* El contenedor del menú no debe recortar el dropdown */
 .home-main-theme .topbar-links,
 .home-main-theme .quick-nav-wrap,
 .home-main-theme #quickNavMenu,
@@ -453,7 +622,6 @@
     overflow: visible !important;
 }
 
-/* Asegura contexto de apilado correcto */
 .home-main-theme .topbar-links {
     position: relative;
     z-index: 5000;
@@ -474,7 +642,6 @@
     z-index: 5003;
 }
 
-/* El dropdown arriba de todo */
 .home-main-theme .quick-dd-menu {
     position: absolute;
     top: 100%;
@@ -483,7 +650,6 @@
     z-index: 99999 !important;
 }
 
-/* El banner debe quedar abajo */
 .home-main-theme .main-home-content,
 .home-main-theme .home-banner-carousel,
 .home-main-theme .home-banner-inner,
@@ -495,7 +661,6 @@
     z-index: 1 !important;
 }
 
-/* Muy importante: que el banner no tape visualmente */
 .home-main-theme .home-banner-carousel,
 .home-main-theme .carousel-inner,
 .home-main-theme .carousel-item {
