@@ -297,7 +297,16 @@
                         }
                     </ul>
 
-                    <partial name="_LoginPartial" />
+                    <div class="header-right-tools">
+                        @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
+                        {
+                            <div class="header-side-visual">
+                                <img src="@headerBg" alt="Header visual" class="header-side-image" />
+                            </div>
+                        }
+
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
             </div>
         </nav>
@@ -398,41 +407,49 @@
 
                 @if (SignInManager.IsSignedIn(User) && esPaginaInicio && empleadoActual != null)
                 {
-                    <div class="employee-hero-wrapper">
-                                <div class="employee-hero-grid">
-                                    <article class="employee-info-box">
-                                        <div class="employee-info-label">
-                                            <i class="bi bi-briefcase-fill"></i>
-                                            <span>Área</span>
-                                        </div>
-                                <div class="employee-info-value employee-info-value--sm">@areaEmpleado</div>
-                                    </article>
+                    <section class="employee-profile-strip">
+                        <div class="employee-profile-strip__inner">
 
-                                    <article class="employee-info-box">
-                                        <div class="employee-info-label">
-                                            <i class="bi bi-person-workspace"></i>
-                                            <span>Puesto</span>
-                                        </div>
-                                <div class="employee-info-value  employee-info-value--sm">@puestoEmpleado</div>
-                                    </article>
+                            <div class="employee-profile-strip__header">
+                                <h3 class="employee-profile-strip__title">Perfil del usuario</h3>
+                            </div>
 
-                                    <article class="employee-info-box">
-                                        <div class="employee-info-label">
-                                            <i class="bi bi-person-badge-fill"></i>
-                                            <span>Jefe Inmediato</span>
-                                        </div>
-                                        <div class="employee-info-value employee-info-value--sm">@jefeEmpleado</div>
-                                    </article>
+                            <div class="employee-profile-strip__grid">
+                                <article class="employee-profile-strip__item">
+                                    <div class="employee-profile-strip__label">
+                                        <i class="bi bi-briefcase-fill"></i>
+                                        <span>Área</span>
+                                    </div>
+                                    <div class="employee-profile-strip__value">@areaEmpleado</div>
+                                </article>
 
-                                    <article class="employee-info-box">
-                                        <div class="employee-info-label">
-                                            <i class="bi bi-calendar-event-fill"></i>
-                                            <span>Fecha de Ingreso</span>
-                                        </div>
-                                        <div class="employee-info-value employee-info-value--sm">@fechaIngresoEmpleado</div>
-                                    </article>
-                                </div>
-                    </div>
+                                <article class="employee-profile-strip__item">
+                                    <div class="employee-profile-strip__label">
+                                        <i class="bi bi-person-workspace"></i>
+                                        <span>Puesto</span>
+                                    </div>
+                                    <div class="employee-profile-strip__value">@puestoEmpleado</div>
+                                </article>
+
+                                <article class="employee-profile-strip__item">
+                                    <div class="employee-profile-strip__label">
+                                        <i class="bi bi-person-badge-fill"></i>
+                                        <span>Jefe Inmediato</span>
+                                    </div>
+                                    <div class="employee-profile-strip__value">@jefeEmpleado</div>
+                                </article>
+
+                                <article class="employee-profile-strip__item">
+                                    <div class="employee-profile-strip__label">
+                                        <i class="bi bi-calendar-event-fill"></i>
+                                        <span>Fecha de Ingreso</span>
+                                    </div>
+                                    <div class="employee-profile-strip__value">@fechaIngresoEmpleado</div>
+                                </article>
+                            </div>
+
+                        </div>
+                    </section>
                 }
 
                 @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
