@@ -18,6 +18,24 @@
     IList<string> rolesUsuario = usr != null ? await UsuariosManager.GetRolesAsync(usr) : new List<string>();
     List<AccesoModulo> accesos = new List<AccesoModulo>();
 
+    bool esAdministrador = rolesUsuario.Any(r =>
+    r.Equals("Administrador", StringComparison.OrdinalIgnoreCase));
+
+    bool esAdministradorTH = rolesUsuario.Any(r =>
+        r.Equals("Administrador TH", StringComparison.OrdinalIgnoreCase));
+
+    bool esUsuario = rolesUsuario.Any(r =>
+        r.Equals("Usuario", StringComparison.OrdinalIgnoreCase));
+
+    // Si tiene rol admin o admin TH, manda sobre Usuario
+    bool esAdminMenu = esAdministrador || esAdministradorTH;
+
+    bool esAdministradorTI = rolesUsuario.Any(r =>
+    r.Equals("Administrador TI", StringComparison.OrdinalIgnoreCase));
+
+    bool esAdministradorEmpresas = rolesUsuario.Any(r =>
+        r.Equals("Administrador Empresas", StringComparison.OrdinalIgnoreCase));
+
     foreach (string rol in rolesUsuario)
     {
         AppRole? foundRole = await RolesManager.GetByNameAsync(rol);
@@ -248,6 +266,43 @@
     {
         permisos["banners"] = false;
     }
+
+    bool mostrarBibliotecaCorporativa = true;
+    bool mostrarBibliotecaFront = true;
+    bool mostrarGestorBiblioteca = esAdminMenu;
+
+    bool mostrarIncidencias = true;
+    bool mostrarWorkspace = true;
+    bool mostrarComunidad = true;
+
+    // Solo administradores y administradores TH
+    //bool mostrarGestionCorporativa = esAdminMenu;
+    //bool mostrarGestionCorporativa = esAdministrador;
+    bool mostrarGestionCorporativa = esAdministrador || esAdministradorTI || esAdministradorEmpresas;
+    bool mostrarRecursosHumanos = esAdminMenu;
+
+    // Subopciones internas de RH
+    bool mostrarBannersMenu = esAdminMenu || permisos["banners"];
+    bool mostrarGestionTalentoMenu = esAdminMenu || (permisos.ContainsKey("gestiondetalento") && permisos["gestiondetalento"]);
+    bool mostrarUsuariosMenu = esAdminMenu || (permisos.ContainsKey("usuarios") && permisos["usuarios"]);
+    bool mostrarRolesMenu = esAdminMenu || (permisos.ContainsKey("roles") && permisos["roles"]);
+    bool mostrarPuestosMenu = esAdminMenu || (permisos.ContainsKey("puestos") && permisos["puestos"]);
+    bool mostrarAreasMenu = esAdminMenu || (permisos.ContainsKey("areas") && permisos["areas"]);
+    bool mostrarSubareasMenu = esAdminMenu || (permisos.ContainsKey("subareas") && permisos["subareas"]);
+    bool mostrarOficinasMenu = esAdminMenu || (permisos.ContainsKey("oficinas") && permisos["oficinas"]);
+    bool mostrarOrigenesMenu = esAdminMenu || (permisos.ContainsKey("origenes") && permisos["origenes"]);
+    bool mostrarNivelesMenu = esAdminMenu || (permisos.ContainsKey("niveles") && permisos["niveles"]);
+    bool mostrarPerfilesMenu = esAdminMenu || (permisos.ContainsKey("perfiles") && permisos["perfiles"]);
+
+    // Por si después quieres controlar empresas/activos con permisos
+    bool mostrarEmpresasMenu =
+    esAdministrador ||
+    esAdministradorEmpresas;
+
+    bool mostrarActivosFijosMenu =
+        esAdministrador ||
+        esAdministradorTI ||
+        esAdministradorEmpresas;
 }
 
 <!DOCTYPE html>
@@ -330,72 +385,146 @@
 
                             <a class="quick-link" asp-area="" asp-page="">Mi Espacio</a>
 
-                            <div class="quick-dd">
-                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
-                                <div class="quick-dd-menu">
-                                    <a class="quick-dd-item" asp-area="" asp-page="/ManualesPoliticas">Manuales, Políticas y Reglamentos</a>
-                                    <a class="quick-dd-item"
-                                       asp-area="Catalogos"
-                                       asp-page="/GestorManualesPoliticas/Index">
-                                        Gestor Manuales / Políticas / Reglamentos
-                                    </a>
-                                </div>
-                            </div>
+                            @if (mostrarBibliotecaCorporativa)
+                            {
+                                <div class="quick-dd">
+                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
+                                    <div class="quick-dd-menu">
+                                        @if (mostrarBibliotecaFront)
+                                        {
+                                            <a class="quick-dd-item" asp-area="" asp-page="/ManualesPoliticas">
+                                                Manuales / Políticas / Reglamentos
+                                            </a>
+                                        }
 
-                            <div class="quick-dd">
-                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
-                                <div class="quick-dd-menu">
-                                    <a class="quick-dd-item" asp-area="ERP" asp-page="/Ausencias">Ausencias</a>
-                                    <a class="quick-dd-item" asp-area="ERP" asp-page="/Vacaciones">Vacaciones</a>
+                                        @if (mostrarGestorBiblioteca)
+                                        {
+                                            <a class="quick-dd-item"
+                                               asp-area="Catalogos"
+                                               asp-page="/GestorManualesPoliticas/Index">
+                                                Gestor Manuales / Políticas / Reglamentos
+                                            </a>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
+                            }
 
-                            <div class="quick-dd">
-                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace Corporativo</a>
-                                <div class="quick-dd-menu">
-                                    <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Time</a>
-                                    <a class="quick-dd-item" href="https://seiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Space</a>
-                                    <a class="quick-dd-item" href="https://projectseiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Project</a>
-                                    <a class="quick-dd-item" href="https://fridayapp.top/login" target="_blank" rel="noopener">Friday</a>
+                            @if (mostrarIncidencias)
+                            {
+                                <div class="quick-dd">
+                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
+                                    <div class="quick-dd-menu">
+                                        <a class="quick-dd-item" asp-area="ERP" asp-page="/Ausencias">Ausencias</a>
+                                        <a class="quick-dd-item" asp-area="ERP" asp-page="/Vacaciones">Vacaciones</a>
+                                    </div>
                                 </div>
-                            </div>
+                            }
 
-                            <div class="quick-dd">
-                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión Corporativa</a>
-                                <div class="quick-dd-menu">
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
-                                    <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
+                            @if (mostrarWorkspace)
+                            {
+                                <div class="quick-dd">
+                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace Corporativo</a>
+                                    <div class="quick-dd-menu">
+                                        <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Time</a>
+                                        <a class="quick-dd-item" href="https://seiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Space</a>
+                                        <a class="quick-dd-item" href="https://projectseiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Project</a>
+                                        <a class="quick-dd-item" href="https://fridayapp.top/login" target="_blank" rel="noopener">Friday</a>
+                                    </div>
                                 </div>
-                            </div>
+                            }
 
-                            <div class="quick-dd">
-                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
-                                <div class="quick-dd-menu">
-                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Encuestas</a>
-                                    <a class="quick-dd-item" asp-area="" asp-page="/Building">Eventos</a>
-                                </div>
-                            </div>
+                            @if (mostrarGestionCorporativa)
+                            {
+                                <div class="quick-dd">
+                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión Corporativa</a>
+                                    <div class="quick-dd-menu">
+                                        @if (mostrarEmpresasMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
+                                        }
 
-                            <div class="quick-dd">
-                                <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
-                                <div class="quick-dd-menu quick-dd-menu-wide">
-                                    @if (permisos["banners"])
-                                    {
-                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Banners">Banners</a>
-                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/HeaderImagenes">Imágenes Header</a>
-                                    }
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión De Talento</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Puestos">Puestos</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Areas">Áreas</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Subareas">Subáreas</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Oficinas">Oficinas</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Origenes">Orígenes</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Niveles">Niveles</a>
-                                    <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Perfiles">Perfiles</a>
+                                        @if (mostrarActivosFijosMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
+                            }
+
+                            @if (mostrarComunidad)
+                            {
+                                <div class="quick-dd">
+                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
+                                    <div class="quick-dd-menu">
+                                        <a class="quick-dd-item" asp-area="" asp-page="/Building">Encuestas</a>
+                                        <a class="quick-dd-item" asp-area="" asp-page="/Building">Eventos</a>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (mostrarRecursosHumanos)
+                            {
+                                <div class="quick-dd">
+                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
+                                    <div class="quick-dd-menu quick-dd-menu-wide">
+                                        @if (mostrarBannersMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Banners">Banners</a>
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/HeaderImagenes">Imágenes Header</a>
+                                        }
+
+                                        @if (mostrarGestionTalentoMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestionDeTalento">Gestión De Talento</a>
+                                        }
+
+                                        @if (mostrarUsuariosMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Usuarios">Usuarios</a>
+                                        }
+
+                                        @if (mostrarRolesMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Roles">Roles</a>
+                                        }
+
+                                        @if (mostrarPuestosMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Puestos">Puestos</a>
+                                        }
+
+                                        @if (mostrarAreasMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Areas">Áreas</a>
+                                        }
+
+                                        @if (mostrarSubareasMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Subareas">Subáreas</a>
+                                        }
+
+                                        @if (mostrarOficinasMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Oficinas">Oficinas</a>
+                                        }
+
+                                        @if (mostrarOrigenesMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Origenes">Orígenes</a>
+                                        }
+
+                                        @if (mostrarNivelesMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Niveles">Niveles</a>
+                                        }
+
+                                        @if (mostrarPerfilesMenu)
+                                        {
+                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Perfiles">Perfiles</a>
+                                        }
+                                    </div>
+                                </div>
+                            }
 
                         </nav>
                     </div>
@@ -410,10 +539,10 @@
                     <section class="employee-profile-strip">
                         <div class="employee-profile-strip__inner">
 
-                            <div class="employee-profile-strip__header">
+                            <!--<div class="employee-profile-strip__header">
                                 <h3 class="employee-profile-strip__title">Perfil del usuario</h3>
                             </div>
-
+                            -->
                             <div class="employee-profile-strip__grid">
                                 <article class="employee-profile-strip__item">
                                     <div class="employee-profile-strip__label">

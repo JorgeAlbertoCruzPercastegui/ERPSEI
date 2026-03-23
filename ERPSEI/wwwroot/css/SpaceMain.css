@@ -765,3 +765,40 @@ body.module-main-theme.manuales-politicas-page {
 .manuales-politicas-page .footer {
     margin-top: auto;
 }
+
+/* ==========================================
+   AJUSTE DINÁMICO DEL MENÚ SEGÚN OPCIONES
+   ========================================== */
+
+.home-main-theme .topbar-links {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+    .home-main-theme .topbar-links .small {
+        flex: 0 0 auto;
+    }
+
+.home-main-theme .quick-nav-wrap {
+    margin-left: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.home-main-theme .quick-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    row-gap: .5rem;
+    white-space: normal;
+}
+
+.home-main-theme .quick-dd,
+.home-main-theme .quick-link {
+    flex: 0 0 auto;
+}
