@@ -167,7 +167,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 return "Pendiente jefe directo";
 
             if (x.EstadoJefeDirecto == "Aprobado" && x.EstadoTH == "Pendiente")
-                return "Aprobado por jefe directo";
+                return "Pendiente TH";
 
             if (x.EstadoJefeDirecto == "Aprobado" && x.EstadoTH == "Aprobado")
                 return "Aprobado";
@@ -395,6 +395,11 @@ namespace ERPSEI.Areas.ERP.Pages
                     dias = x.Dias.HasValue ? x.Dias.Value.ToString("0.##") : "",
                     horas = x.Horas.HasValue ? x.Horas.Value.ToString("0.##") + " hrs." : "",
                     estado = ObtenerEstadoVisual(x),
+
+                    mensajeTH =
+                        (esAdministradorTH && x.EstadoJefeDirecto == "Pendiente")
+                            ? "En espera de aprobación del jefe directo"
+                            : "",
 
                     puedeEditar = false,
                     puedeEliminar = false,
