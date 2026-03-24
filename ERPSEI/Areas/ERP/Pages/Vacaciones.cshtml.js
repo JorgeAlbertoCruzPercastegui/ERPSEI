@@ -1,4 +1,5 @@
 ﻿var table;
+var tableSolicitudesAutorizar;
 var buttonRemove;
 var selections = [];
 var dlg = null;
@@ -13,8 +14,8 @@ const postOptions = { headers: { "RequestVerificationToken": $('input[name="__Re
 
 document.addEventListener("DOMContentLoaded", function (event) {
     table = $("#table");
+    tableSolicitudesAutorizar = $("#tableSolicitudesAutorizar");
     buttonRemove = $("#remove");
-    //buttonExportAll = $("#exportAll");
     dlg = document.getElementById('dlgVacaciones');
 
     if (dlg) {
@@ -29,13 +30,14 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     initTable();
 
+    if (tableSolicitudesAutorizar.length) {
+        initTableSolicitudesAutorizar();
+    }
+
     obtenerDiasDisponibles();
-
     cargarResumenVacaciones();
-    
     cargarVacacionesAcumuladas();
-
-    cargarVacacionesTomadas()
+    cargarVacacionesTomadas();
 });
 
 function getIdSelections() {
@@ -49,6 +51,65 @@ function responseHandler(res) {
     })
     return res
 }
+
+function estadoFormatter(value) {
+    if (value === "Pendiente jefe directo") {
+        return `<span class="badge bg-warning-subtle text-warning border border-warning-subtle">${value}</span>`;
+    }
+    if (value === "Pendiente TH") {
+        return `<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">${value}</span>`;
+    }
+    if (value === "Aprobado") {
+        return `<span class="badge bg-success-subtle text-success border border-success-subtle">✔ ${value}</span>`;
+    }
+    if ((value || "").includes("Rechazado")) {
+        return `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">${value}</span>`;
+    }
+    return `<span class="badge bg-secondary">${value || ""}</span>`;
+}
+
+function accionesFormatter(value, row) {
+    let html = `<div class="d-flex justify-content-center gap-2 flex-wrap">`;
+
+    html += `<a href="javascript:void(0)" class="accion-ver" title="Ver"><i class="bi bi-search text-primary"></i></a>`;
+
+    if (row.puedeEditar) {
+        html += `<a href="javascript:void(0)" class="accion-editar" title="Editar"><i class="bi bi-pencil text-primary"></i></a>`;
+    }
+
+    if (row.puedeAprobarJefe) {
+        html += `<a href="javascript:void(0)" class="accion-aprobar-jefe" title="Aprobar jefe directo"><i class="bi bi-check-circle text-secondary"></i></a>`;
+        html += `<a href="javascript:void(0)" class="accion-rechazar-jefe" title="Rechazar jefe directo"><i class="bi bi-x-circle text-danger"></i></a>`;
+    }
+
+    if (row.puedeAprobarTH) {
+        html += `<a href="javascript:void(0)" class="accion-aprobar-th" title="Aprobar TH"><i class="bi bi-check-circle text-success"></i></a>`;
+        html += `<a href="javascript:void(0)" class="accion-rechazar-th" title="Rechazar TH"><i class="bi bi-x-circle text-danger"></i></a>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+window.accionesEventsVacaciones = {
+    'click .accion-ver': function (e, value, row) {
+        verDetalleVacacion(row.id);
+    },
+    'click .accion-editar': function (e, value, row) {
+        initSolicitudVacacionesDialog(EDITAR, row);
+    },
+    'click .accion-aprobar-jefe': function (e, value, row) {
+        aprobarJefeDirectoVacacion(row.id);
+    },
+    'click .accion-rechazar-jefe': function (e, value, row) {
+        rechazarJefeDirectoVacacion(row.id);
+    },
+    'click .accion-aprobar-th': function (e, value, row) {
+        aprobarTHVacacion(row.id);
+    },
+    'click .accion-rechazar-th': function (e, value, row) {
+        rechazarTHVacacion(row.id);
+    }
+};
 
 function operateFormatter(value, row, index) {
     let icons = [];
@@ -87,22 +148,7 @@ function initTable() {
         locale: cultureName,
         exportDataType: 'all',
         exportTypes: ['excel'],
-        rowStyle: function (row, index) {
-            if (row.estado === "Aprobado" || row.estado === "Rechazado") {
-                return { classes: 'table-secondary' };
-            }
-            return {};
-        },
         columns: [
-            {
-                field: "state",
-                checkbox: true,
-                align: "center",
-                valign: "middle",
-                checkboxDisabled: function (row, index) {
-                    return row.estado === "Aprobado" || row.estado === "Rechazado";
-                }
-            },
             {
                 title: "Id",
                 field: "id",
@@ -116,32 +162,31 @@ function initTable() {
                 field: "empleado",
                 align: "center",
                 valign: "middle",
-                sortable: true,
-                width: "80px"
+                sortable: true
             },
             {
-                title: "FechaSolicitud",
+                title: "Fecha Solicitud",
                 field: "fechaSolicitud",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
-                title: "FechaInicio",
+                title: "Fecha Inicio",
                 field: "fechaInicio",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
-                title: "FechaFin",
+                title: "Fecha Fin",
                 field: "fechaFin",
                 align: "center",
                 valign: "middle",
                 sortable: true
             },
             {
-                title: "DiasSolicitados",
+                title: "Días Solicitados",
                 field: "diasSolicitados",
                 align: "center",
                 valign: "middle",
@@ -152,7 +197,8 @@ function initTable() {
                 field: "estado",
                 align: "center",
                 valign: "middle",
-                sortable: true
+                sortable: true,
+                formatter: estadoFormatter
             },
             {
                 title: "Autorizador",
@@ -162,69 +208,247 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "ComentarioEmpleado",
+                title: "Comentario Empleado",
                 field: "comentarioEmpleado",
                 align: "center",
                 valign: "middle",
                 sortable: true
-            }/*,
+            },
             {
-                title: colAccionesHeader,
-                field: "operate",
-                align: 'center',
-                width: "100px",
+                title: "Acciones",
+                field: "acciones",
+                align: "center",
                 clickToSelect: false,
-                events: window.operateEvents,
-                formatter: operateFormatter
-            }*/
+                events: window.accionesEventsVacaciones,
+                formatter: accionesFormatter
+            }
         ]
-    })
-    table.on('check.bs.table uncheck.bs.table ' +
-        'check-all.bs.table uncheck-all.bs.table',
-        function () {
-            buttonRemove.prop('disabled', !table.bootstrapTable('getSelections').length)
-            buttonExportAll.prop('disabled', !table.bootstrapTable('getSelections').length)
+    });
+}
 
-            // save your data, here just save the current page
-            selections = getIdSelections()
-            // push or splice the selections if you want to save all data selections
-        })
-    table.on('all.bs.table', function (e, name, args) {
-        console.log(name, args)
-    })
-    buttonRemove.click(function () {
-        askConfirmation(dlgDeleteTitle, dlgDeleteQuestion, function () {
-            let oParams = { ids: selections };
+function initTableSolicitudesAutorizar() {
+    tableSolicitudesAutorizar.bootstrapTable('destroy').bootstrapTable({
+        height: 350,
+        locale: cultureName,
+        columns: [
+            {
+                title: "Id",
+                field: "id",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                width: "80px"
+            },
+            {
+                title: "Empleado",
+                field: "empleado",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Fecha Solicitud",
+                field: "fechaSolicitud",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Fecha Inicio",
+                field: "fechaInicio",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Fecha Fin",
+                field: "fechaFin",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Días Solicitados",
+                field: "diasSolicitados",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Estatus",
+                field: "estado",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                formatter: estadoFormatter
+            },
+            {
+                title: "Autorizador",
+                field: "autorizador",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Comentario Empleado",
+                field: "comentarioEmpleado",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Acciones",
+                field: "acciones",
+                align: "center",
+                clickToSelect: false,
+                events: window.accionesEventsVacaciones,
+                formatter: accionesFormatter
+            }
+        ]
+    });
+}
 
-            doAjax(
-                "/ERP/Vacaciones/DeleteVacaciones",
-                oParams,
-                function (resp) {
-                    if (resp.tieneError) {
-                        showError(dlgDeleteTitle, resp.mensaje);
-                        return;
-                    }
+function refrescarTablasVacaciones() {
+    if (table && table.length) {
+        table.bootstrapTable('refresh');
+    }
 
-                    table.bootstrapTable('remove', {
-                        field: 'id',
-                        values: selections
-                    })
-                    selections = [];
-                    buttonRemove.prop('disabled', true);
-                    buttonExportAll.prop('disabled', true);
+    if (tableSolicitudesAutorizar && tableSolicitudesAutorizar.length) {
+        tableSolicitudesAutorizar.bootstrapTable('refresh');
+    }
+}
 
-                    let e = document.querySelector("[name='refresh']");
-                    e.click();
+function aprobarJefeDirectoVacacion(idSolicitud) {
+    $.ajax({
+        url: `/ERP/Vacaciones?handler=AprobarJefeDirecto&idSolicitud=${idSolicitud}`,
+        type: "POST",
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function (resp) {
+            if (resp.tieneError) {
+                showError("Vacaciones", resp.mensaje);
+                return;
+            }
 
-                    showSuccess(dlgDeleteTitle, resp.mensaje);
-                }, function (error) {
-                    showError(dlgDeleteTitle, error);
-                },
-                postOptions
-            );
+            showSuccess("Vacaciones", resp.mensaje);
+            refrescarTablasVacaciones();
+            cargarVacacionesTomadas();
+            cargarResumenVacaciones();
+        },
+        error: function () {
+            showError("Vacaciones", "No se pudo aprobar la solicitud.");
+        }
+    });
+}
 
-        });
-    })
+function verDetalleVacacion(id) {
+    $.get(`/ERP/Vacaciones?handler=DetalleVacacion&id=${id}`, function (resp) {
+        if (resp.tieneError) {
+            showError("Vacaciones", resp.mensaje);
+            return;
+        }
+
+        $("#detVacEmpleado").text(resp.empleado || "");
+        $("#detVacEstado").text(resp.estado || "");
+        $("#detVacFechaSolicitud").text(resp.fechaSolicitud || "");
+        $("#detVacAutorizador").text(resp.autorizador || "");
+        $("#detVacFechaInicio").text(resp.fechaInicio || "");
+        $("#detVacFechaFin").text(resp.fechaFin || "");
+        $("#detVacDias").text(resp.diasSolicitados || "");
+        $("#detVacComentario").text(resp.comentario || "");
+
+        const contenedor = $("#detalleAccionesVacacion");
+        contenedor.empty();
+
+        if (resp.puedeAprobarJefe) {
+            contenedor.append(`
+                <button type="button" class="btn btn-secondary" onclick="aprobarJefeDirectoVacacion(${resp.id})">Aprobar jefe directo</button>
+                <button type="button" class="btn btn-outline-danger" onclick="rechazarJefeDirectoVacacion(${resp.id})">Rechazar jefe directo</button>
+            `);
+        }
+
+        if (resp.puedeAprobarTH) {
+            contenedor.append(`
+                <button type="button" class="btn btn-success" onclick="aprobarTHVacacion(${resp.id})">Aprobar TH</button>
+                <button type="button" class="btn btn-outline-danger" onclick="rechazarTHVacacion(${resp.id})">Rechazar TH</button>
+            `);
+        }
+
+        new bootstrap.Modal(document.getElementById("modalDetalleVacacion")).show();
+    });
+}
+
+function rechazarJefeDirectoVacacion(idSolicitud) {
+    $.ajax({
+        url: `/ERP/Vacaciones?handler=RechazarJefeDirecto&idSolicitud=${idSolicitud}`,
+        type: "POST",
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function (resp) {
+            if (resp.tieneError) {
+                showError("Vacaciones", resp.mensaje);
+                return;
+            }
+
+            showSuccess("Vacaciones", resp.mensaje);
+            refrescarTablasVacaciones();
+            cargarVacacionesTomadas();
+            cargarResumenVacaciones();
+        },
+        error: function () {
+            showError("Vacaciones", "No se pudo rechazar la solicitud.");
+        }
+    });
+}
+
+function aprobarTHVacacion(idSolicitud) {
+    $.ajax({
+        url: `/ERP/Vacaciones?handler=AprobarTH&idSolicitud=${idSolicitud}`,
+        type: "POST",
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function (resp) {
+            if (resp.tieneError) {
+                showError("Vacaciones", resp.mensaje);
+                return;
+            }
+
+            showSuccess("Vacaciones", resp.mensaje);
+            refrescarTablasVacaciones();
+            cargarVacacionesTomadas();
+            cargarResumenVacaciones();
+        },
+        error: function () {
+            showError("Vacaciones", "No se pudo aprobar la solicitud en TH.");
+        }
+    });
+}
+
+function rechazarTHVacacion(idSolicitud) {
+    $.ajax({
+        url: `/ERP/Vacaciones?handler=RechazarTH&idSolicitud=${idSolicitud}`,
+        type: "POST",
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function (resp) {
+            if (resp.tieneError) {
+                showError("Vacaciones", resp.mensaje);
+                return;
+            }
+
+            showSuccess("Vacaciones", resp.mensaje);
+            refrescarTablasVacaciones();
+            cargarVacacionesTomadas();
+            cargarResumenVacaciones();
+        },
+        error: function () {
+            showError("Vacaciones", "No se pudo rechazar la solicitud en TH.");
+        }
+    });
 }
 
 function initSolicitudVacacionesDialog(action, row) {
@@ -708,7 +932,7 @@ function cargarVacacionesTomadas() {
     modal.show();
 }*/
 
-function onAutorizarVacacionesClick() {
+/*function onAutorizarVacacionesClick() {
     var selectedRow = $("input[type='checkbox']:checked").closest("tr");
 
     if (selectedRow.length === 0) {
@@ -729,7 +953,7 @@ function onAutorizarVacacionesClick() {
 
     var modal = new bootstrap.Modal(document.getElementById("modalAutorizar"));
     modal.show();
-}
+}*/
 
 async function cargarAsignacionVacacionesActual() {
     try {
@@ -792,7 +1016,7 @@ $(document).ready(function () {
     });
 });
 
-function enviarAccionSolicitud(estado) {
+/*function enviarAccionSolicitud(estado) {
     var id = $("#modalSolicitudId").val();
     var autorizar = estado === "Aprobado";
 
@@ -813,7 +1037,7 @@ function enviarAccionSolicitud(estado) {
         },
         postOptions
     );
-}
+}*/
 
 function mostrarConfirmacion(mensaje) {
     $("#modalConfirmacion").remove();

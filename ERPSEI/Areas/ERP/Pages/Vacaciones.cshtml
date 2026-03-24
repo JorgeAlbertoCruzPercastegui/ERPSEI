@@ -127,9 +127,9 @@
     <button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgVacacion" onclick="onAgregarClick();">
         <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
     </button>
-    <button id="btnAbrirModalAutorizar" class="btn btn-success" onclick="onAutorizarVacacionesClick();">
+    <!--<button id="btnAbrirModalAutorizar" class="btn btn-success" onclick="onAutorizarVacacionesClick();">
         <i class="bi bi-check-circle"></i> <span class="d-none d-sm-inline">@Localizer["AutorizarVacButton"]</span>
-    </button>
+    </button>-->
     <button id="remove" class="btn btn-danger" disabled>
         <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
     </button>
@@ -161,6 +161,30 @@
         </tr>
     </thead>
 </table>
+
+@if (Model.PuedeAprobarJefeDirecto || Model.PuedeAprobarTH)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Solicitudes por autorizar</span>
+            <i class="bi bi-chevron-down"></i>
+        </div>
+        <div class="card-body">
+            <table id="tableSolicitudesAutorizar"
+                   class="table-sm"
+                   data-unique-id="id"
+                   data-search="true"
+                   data-pagination="true"
+                   data-page-list="[10,25,50,100,'all']"
+                   data-side-pagination="client"
+                   data-url="/ERP/Vacaciones?handler=SolicitudesAutorizar">
+                <thead>
+                    <tr></tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+}
 
 <!-- --------------------------- -->
 <!-- --------------------------- -->
@@ -316,6 +340,39 @@
         </div>
     </div>
 </form>
+
+<div class="modal fade" id="modalDetalleVacacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Detalle de vacaciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>Empleado:</strong> <span id="detVacEmpleado"></span></div>
+                    <div class="col-md-6"><strong>Estado:</strong> <span id="detVacEstado"></span></div>
+                    <div class="col-md-6"><strong>Fecha solicitud:</strong> <span id="detVacFechaSolicitud"></span></div>
+                    <div class="col-md-6"><strong>Autorizador:</strong> <span id="detVacAutorizador"></span></div>
+                    <div class="col-md-6"><strong>Fecha inicio:</strong> <span id="detVacFechaInicio"></span></div>
+                    <div class="col-md-6"><strong>Fecha fin:</strong> <span id="detVacFechaFin"></span></div>
+                    <div class="col-md-6"><strong>Días solicitados:</strong> <span id="detVacDias"></span></div>
+                    <div class="col-12">
+                        <strong>Comentario:</strong>
+                        <div id="detVacComentario" class="border rounded p-3 bg-light mt-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <div id="detalleAccionesVacacion" class="d-flex gap-2 flex-wrap"></div>
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal" type="button">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- Modal Ver Políticas -->
 <div class="modal fade" id="modalVerPoliticas" tabindex="-1" aria-hidden="true">

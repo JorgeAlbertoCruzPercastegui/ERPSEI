@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data.Entities.Empleados;
+using ERPSEI.Data.Entities.Usuarios;
 
 namespace ERPSEI.Data.Entities.Vacaciones
 {
@@ -24,6 +25,20 @@ namespace ERPSEI.Data.Entities.Vacaciones
         public Empleado? Autorizador { get; set; }
 
         public DateTime? FechaRespuesta { get; set; }
+
+        public string EstadoJefeDirecto { get; set; } = "Pendiente";
+        public string EstadoTH { get; set; } = "Pendiente";
+
+        public int? JefeDirectoEmpleadoId { get; set; }
+        public Empleado? JefeDirectoEmpleado { get; set; }
+
+        public string? UsuarioJefeDirectoId { get; set; }
+        public AppUser? UsuarioJefeDirecto { get; set; }
+        public DateTime? FechaRevisionJefeDirecto { get; set; }
+
+        public string? UsuarioTHId { get; set; }
+        public AppUser? UsuarioTH { get; set; }
+        public DateTime? FechaRevisionTH { get; set; }
         public ICollection<HistorialVacaciones> Historiales { get; set; }
     }
 }

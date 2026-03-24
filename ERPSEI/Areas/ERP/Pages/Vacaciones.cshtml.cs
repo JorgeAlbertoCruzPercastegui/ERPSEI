@@ -61,6 +61,10 @@ namespace ERPSEI.Areas.ERP.Pages
         //private readonly Data.ApplicationDbContext db;
         ApplicationDbContext db;
 
+        public bool EsJefeInmediato { get; set; }
+        public bool PuedeAprobarJefeDirecto { get; set; }
+        public bool PuedeAprobarTH { get; set; }
+
 
         [BindProperty]
         public SolicitudVacaciones? SolicitudVacacionesList { get; set; }
@@ -245,49 +249,285 @@ namespace ERPSEI.Areas.ERP.Pages
         }*/
         public async Task<JsonResult> OnGetVacacionesList()
         {
-            var userEmail = User.Identity?.Name;
+            await ConfigurarPermisosVacacionesAsync();
 
+            var userEmail = User.Identity?.Name;
             var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
 
             if (usuario?.Empleado == null)
                 return new JsonResult(new List<object>());
 
             int empleadoIdActual = usuario.Empleado.Id;
-            bool esAdmin = User.IsInRole("Administrador");
 
-            var solicitudesQuery = db.SolicitudesVacaciones
+            var solicitudes = await db.SolicitudesVacaciones
                 .Include(s => s.Empleado)
                 .Include(s => s.Autorizador)
-                .AsQueryable();
-
-            if (!esAdmin)
-            {
-                solicitudesQuery = solicitudesQuery.Where(s =>
-                    s.EmpleadoId == empleadoIdActual ||
-                    s.AutorizadorId == empleadoIdActual
-                );
-            }
-
-            var solicitudes = await solicitudesQuery
+                .Where(s => s.EmpleadoId == empleadoIdActual)
                 .OrderByDescending(s => s.FechaSolicitud)
                 .ToListAsync();
 
-            var jsonVacaciones = solicitudes.Select(s => new
+            var jsonVacaciones = solicitudes.Select(s =>
+            {
+                string estadoVisual = ObtenerEstadoVisualVacaciones(s);
+
+                return new
+                {
+                    id = s.Id,
+                    empleado = s.Empleado?.NombreCompleto ?? "-",
+                    empleadoId = s.EmpleadoId,
+                    fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                    fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                    fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                    diasSolicitados = s.DiasSolicitados,
+                    estado = estadoVisual,
+                    autorizador = s.Autorizador?.NombreCompleto ?? "-",
+                    autorizadorId = s.AutorizadorId,
+                    comentarioEmpleado = s.ComentarioEmpleado ?? "",
+
+                    puedeEditar = s.EstadoJefeDirecto == "Pendiente",
+                    puedeEliminar = s.EstadoJefeDirecto == "Pendiente",
+
+                    // En la tabla personal NO se autoriza
+                    puedeAprobarJefe = false,
+                    puedeAprobarTH = false
+                };
+            }).ToList();
+
+            return new JsonResult(jsonVacaciones);
+        }
+
+        private async Task ConfigurarPermisosVacacionesAsync()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario == null)
+            {
+                EsJefeInmediato = false;
+                PuedeAprobarJefeDirecto = false;
+                PuedeAprobarTH = false;
+                return;
+            }
+
+            var roles = await userManager.GetRolesAsync(usuario);
+
+            bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
+            bool esAdministradorTH = roles.Contains("Administrador TH");
+
+            int? empleadoIdActual = usuario.Empleado?.Id;
+
+            EsJefeInmediato = empleadoIdActual.HasValue &&
+                await db.Empleados
+                    .AsNoTracking()
+                    .AnyAsync(e => e.JefeId == empleadoIdActual.Value);
+
+            PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
+            PuedeAprobarTH = esAdministradorTH || esAdministrador;
+        }
+
+        public async Task OnGetAsync()
+        {
+            await ConfigurarPermisosVacacionesAsync();
+        }
+
+        public async Task<JsonResult> OnGetMisVacacionesListAsync()
+        {
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario?.Empleado == null)
+                return new JsonResult(new List<object>());
+
+            int empleadoIdActual = usuario.Empleado.Id;
+
+            var solicitudes = await db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                .Include(s => s.Autorizador)
+                .Where(s => s.EmpleadoId == empleadoIdActual)
+                .OrderByDescending(s => s.FechaSolicitud)
+                .ToListAsync();
+
+            var json = solicitudes.Select(s => new
             {
                 id = s.Id,
                 empleado = s.Empleado?.NombreCompleto ?? "-",
-                empleadoId = s.EmpleadoId,
                 fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
                 fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
                 fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
                 diasSolicitados = s.DiasSolicitados,
-                estado = s.Estado.ToString(),
+                estado = ObtenerEstadoVisualVacaciones(s),
                 autorizador = s.Autorizador?.NombreCompleto ?? "-",
-                autorizadorId = s.AutorizadorId,
-                comentarioEmpleado = s.ComentarioEmpleado ?? ""
+                comentarioEmpleado = s.ComentarioEmpleado ?? "",
+                puedeEditar = s.EstadoJefeDirecto == "Pendiente",
+                puedeEliminar = s.EstadoJefeDirecto == "Pendiente",
+                puedeAprobarJefe = false,
+                puedeAprobarTH = false
             }).ToList();
 
-            return new JsonResult(jsonVacaciones);
+            return new JsonResult(json);
+        }
+
+        public async Task<JsonResult> OnGetSolicitudesAutorizarAsync()
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario == null)
+                return new JsonResult(new List<object>());
+
+            int? empleadoIdActual = usuario.Empleado?.Id;
+
+            var roles = await userManager.GetRolesAsync(usuario);
+            bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
+            bool esTH = roles.Contains("Administrador TH");
+
+            var query = db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                .Include(s => s.Autorizador)
+                .AsQueryable();
+
+            if (esAdministrador)
+            {
+                // Administrador/Master ve todo el flujo
+            }
+            else if (esTH)
+            {
+                // TH ve todo el flujo
+            }
+            else if (EsJefeInmediato && empleadoIdActual.HasValue)
+            {
+                // Solo lo de su personal
+                query = query.Where(s => s.JefeDirectoEmpleadoId == empleadoIdActual.Value);
+            }
+            else
+            {
+                return new JsonResult(new List<object>());
+            }
+
+            var solicitudes = await query
+                .OrderByDescending(s => s.FechaSolicitud)
+                .ToListAsync();
+
+            var result = solicitudes.Select(s =>
+            {
+                string estadoVisual = ObtenerEstadoVisualVacaciones(s);
+
+                return new
+                {
+                    id = s.Id,
+                    empleado = s.Empleado?.NombreCompleto ?? "-",
+                    empleadoId = s.EmpleadoId,
+                    fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                    fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                    fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                    diasSolicitados = s.DiasSolicitados,
+                    estado = estadoVisual,
+                    autorizador = s.Autorizador?.NombreCompleto ?? "-",
+                    autorizadorId = s.AutorizadorId,
+                    comentarioEmpleado = s.ComentarioEmpleado ?? "",
+
+                    puedeEditar = false,
+                    puedeEliminar = false,
+
+                    puedeAprobarJefe =
+                        (esAdministrador || (empleadoIdActual.HasValue && s.JefeDirectoEmpleadoId == empleadoIdActual.Value)) &&
+                        s.EstadoJefeDirecto == "Pendiente",
+
+                    puedeAprobarTH =
+                        (esAdministrador || esTH) &&
+                        s.EstadoJefeDirecto == "Aprobado" &&
+                        s.EstadoTH == "Pendiente"
+                };
+            }).ToList();
+
+            return new JsonResult(result);
+        }
+
+        public async Task<JsonResult> OnGetDetalleVacacionAsync(int id)
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            if (usuario == null)
+                return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
+
+            int? empleadoIdActual = usuario.Empleado?.Id;
+
+            var roles = await userManager.GetRolesAsync(usuario);
+            bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
+            bool esAdministradorTH = roles.Contains("Administrador TH");
+
+            var query = db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                .Include(s => s.Autorizador)
+                .AsQueryable();
+
+            if (!esAdministrador && !esAdministradorTH)
+            {
+                if (EsJefeInmediato && empleadoIdActual.HasValue)
+                {
+                    query = query.Where(s =>
+                        s.EmpleadoId == empleadoIdActual.Value ||
+                        s.JefeDirectoEmpleadoId == empleadoIdActual.Value);
+                }
+                else if (empleadoIdActual.HasValue)
+                {
+                    query = query.Where(s => s.EmpleadoId == empleadoIdActual.Value);
+                }
+            }
+
+            var item = await query.FirstOrDefaultAsync(s => s.Id == id);
+
+            if (item == null)
+                return new JsonResult(new { tieneError = true, mensaje = "Solicitud no encontrada." });
+
+            return new JsonResult(new
+            {
+                tieneError = false,
+                id = item.Id,
+                empleado = item.Empleado?.NombreCompleto ?? "",
+                estado = ObtenerEstadoVisualVacaciones(item),
+                fechaSolicitud = item.FechaSolicitud.ToString("dd/MM/yyyy"),
+                fechaInicio = item.FechaInicio.ToString("dd/MM/yyyy"),
+                fechaFin = item.FechaFin.ToString("dd/MM/yyyy"),
+                diasSolicitados = item.DiasSolicitados,
+                autorizador = item.Autorizador?.NombreCompleto ?? "",
+                comentario = item.ComentarioEmpleado ?? "",
+
+                puedeAprobarJefe =
+                    (esAdministrador || EsJefeInmediato) &&
+                    item.EstadoJefeDirecto == "Pendiente" &&
+                    (esAdministrador || (empleadoIdActual.HasValue && item.JefeDirectoEmpleadoId == empleadoIdActual.Value)),
+
+                puedeAprobarTH =
+                    (esAdministrador || esAdministradorTH) &&
+                    item.EstadoJefeDirecto == "Aprobado" &&
+                    item.EstadoTH == "Pendiente"
+            });
+        }
+
+        private string ObtenerEstadoVisualVacaciones(SolicitudVacaciones s)
+        {
+            if (s.EstadoJefeDirecto == "Rechazado")
+                return "Rechazado por jefe directo";
+
+            if (s.EstadoTH == "Rechazado")
+                return "Rechazado por TH";
+
+            if (s.EstadoJefeDirecto == "Pendiente")
+                return "Pendiente jefe directo";
+
+            if (s.EstadoJefeDirecto == "Aprobado" && s.EstadoTH == "Pendiente")
+                return "Pendiente TH";
+
+            if (s.EstadoJefeDirecto == "Aprobado" && s.EstadoTH == "Aprobado")
+                return "Aprobado";
+
+            return "Pendiente";
         }
 
         public async Task<JsonResult> OnGetPoliticaVacaciones(string tipoVacacion = "Legales")
@@ -495,6 +735,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
         public async Task<JsonResult> OnPostFiltrarVacaciones()
         {
+            await ConfigurarPermisosVacacionesAsync();
+
             ServerResponse resp = new(true, localizer["ConsultadoUnsuccessfully"]);
 
             try
@@ -510,31 +752,52 @@ namespace ERPSEI.Areas.ERP.Pages
                 }
 
                 int empleadoIdActual = usuario.Empleado.Id;
-                bool esAdmin = User.IsInRole("Administrador");
+
+                var roles = await userManager.GetRolesAsync(usuario);
+                bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
+                bool esAdministradorTH = roles.Contains("Administrador TH");
 
                 var solicitudes = await solicitudVacacionesManager.GetAllAsync(InputFiltro);
 
-                if (!esAdmin)
-                {
-                    solicitudes = solicitudes.Where(s =>
-                        s.EmpleadoId == empleadoIdActual ||
-                        s.AutorizadorId == empleadoIdActual
-                    ).ToList();
-                }
+                // La tabla superior siempre debe mostrar SOLO las vacaciones del usuario logueado
+                solicitudes = solicitudes.Where(s => s.EmpleadoId == empleadoIdActual).ToList();
 
-                var result = solicitudes.Select(s => new
+                var result = solicitudes.Select(s =>
                 {
-                    id = s.Id,
-                    empleado = s.Empleado?.NombreCompleto ?? "-",
-                    empleadoId = s.EmpleadoId,
-                    fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
-                    fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
-                    fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
-                    diasSolicitados = s.DiasSolicitados,
-                    estado = s.Estado.ToString(),
-                    autorizador = s.Autorizador?.NombreCompleto ?? "-",
-                    autorizadorId = s.AutorizadorId,
-                    comentarioEmpleado = s.ComentarioEmpleado ?? ""
+                    string estadoVisual = ObtenerEstadoVisualVacaciones(s);
+
+                    return new
+                    {
+                        id = s.Id,
+                        empleado = s.Empleado?.NombreCompleto ?? "-",
+                        empleadoId = s.EmpleadoId,
+                        fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                        fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                        fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                        diasSolicitados = s.DiasSolicitados,
+                        estado = estadoVisual,
+                        autorizador = s.Autorizador?.NombreCompleto ?? "-",
+                        autorizadorId = s.AutorizadorId,
+                        comentarioEmpleado = s.ComentarioEmpleado ?? "",
+
+                        puedeEditar =
+                            esAdministrador ||
+                            (s.EmpleadoId == empleadoIdActual && s.EstadoJefeDirecto == "Pendiente"),
+
+                        puedeEliminar =
+                            esAdministrador ||
+                            (s.EmpleadoId == empleadoIdActual && s.EstadoJefeDirecto == "Pendiente"),
+
+                        puedeAprobarJefe =
+                            (esAdministrador || EsJefeInmediato) &&
+                            s.EstadoJefeDirecto == "Pendiente" &&
+                            (esAdministrador || s.JefeDirectoEmpleadoId == empleadoIdActual),
+
+                        puedeAprobarTH =
+                            (esAdministrador || esAdministradorTH) &&
+                            s.EstadoJefeDirecto == "Aprobado" &&
+                            s.EstadoTH == "Pendiente"
+                    };
                 }).ToList();
 
                 resp.Datos = result;
@@ -683,10 +946,13 @@ namespace ERPSEI.Areas.ERP.Pages
                     FechaFin = InputSolicitud.FechaFin,
                     DiasSolicitados = diasSolicitados,
                     ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
-                    ComentarioAutorizador = null,
+
+                    JefeDirectoEmpleadoId = empleado.JefeId,
+                    AutorizadorId = empleado.JefeId, // si quieres conservar compatibilidad
                     Estado = EstadoSolicitud.Pendiente,
-                    AutorizadorId = empleado.JefeId,
-                    FechaRespuesta = fechaActual
+
+                    EstadoJefeDirecto = "Pendiente",
+                    EstadoTH = "Pendiente"
                 };
 
                 await solicitudVacacionesManager.CreateAsync(solicitud);
@@ -1062,7 +1328,303 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(lista);
         }
 
-        public async Task<IActionResult> OnPostAutorizarSolicitudAsync(int idSolicitud, bool autorizar)
+        public async Task<JsonResult> OnPostAprobarJefeDirectoAsync(int idSolicitud)
+        {
+            try
+            {
+                await ConfigurarPermisosVacacionesAsync();
+
+                if (!PuedeAprobarJefeDirecto)
+                    return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para aprobar como jefe directo." });
+
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario?.Empleado == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado del usuario actual." });
+
+                var solicitud = await db.SolicitudesVacaciones
+                    .Include(s => s.Empleado)
+                    .FirstOrDefaultAsync(s => s.Id == idSolicitud);
+
+                if (solicitud == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Solicitud no encontrada." });
+
+                var roles = await userManager.GetRolesAsync(usuario);
+                bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
+
+                if (!esAdministrador)
+                {
+                    if (!solicitud.JefeDirectoEmpleadoId.HasValue || solicitud.JefeDirectoEmpleadoId.Value != usuario.Empleado.Id)
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje = "No eres el jefe directo asignado a esta solicitud."
+                        });
+                    }
+                }
+
+                if (solicitud.EstadoJefeDirecto != "Pendiente")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "La solicitud ya fue revisada por jefe directo."
+                    });
+                }
+
+                solicitud.EstadoJefeDirecto = "Aprobado";
+                solicitud.UsuarioJefeDirectoId = usuario.Id;
+                solicitud.FechaRevisionJefeDirecto = DateTime.Now;
+
+                // Sigue pendiente para TH
+                solicitud.Estado = EstadoSolicitud.Pendiente;
+
+                db.SolicitudesVacaciones.Update(solicitud);
+                await db.SaveChangesAsync();
+
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "La solicitud fue aprobada por jefe directo."
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al aprobar solicitud de vacaciones por jefe directo");
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un error al aprobar la solicitud."
+                });
+            }
+        }
+
+        public async Task<JsonResult> OnPostRechazarJefeDirectoAsync(int idSolicitud)
+        {
+            try
+            {
+                await ConfigurarPermisosVacacionesAsync();
+
+                if (!PuedeAprobarJefeDirecto)
+                    return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para rechazar como jefe directo." });
+
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario?.Empleado == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado del usuario actual." });
+
+                var solicitud = await db.SolicitudesVacaciones
+                    .Include(s => s.Empleado)
+                    .FirstOrDefaultAsync(s => s.Id == idSolicitud);
+
+                if (solicitud == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Solicitud no encontrada." });
+
+                var roles = await userManager.GetRolesAsync(usuario);
+                bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
+
+                if (!esAdministrador)
+                {
+                    if (!solicitud.JefeDirectoEmpleadoId.HasValue || solicitud.JefeDirectoEmpleadoId.Value != usuario.Empleado.Id)
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje = "No eres el jefe directo asignado a esta solicitud."
+                        });
+                    }
+                }
+
+                if (solicitud.EstadoJefeDirecto != "Pendiente")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "La solicitud ya fue revisada por jefe directo."
+                    });
+                }
+
+                solicitud.EstadoJefeDirecto = "Rechazado";
+                solicitud.UsuarioJefeDirectoId = usuario.Id;
+                solicitud.FechaRevisionJefeDirecto = DateTime.Now;
+                solicitud.Estado = EstadoSolicitud.Rechazado;
+
+                db.SolicitudesVacaciones.Update(solicitud);
+                await db.SaveChangesAsync();
+
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "La solicitud fue rechazada por jefe directo."
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al rechazar solicitud de vacaciones por jefe directo");
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un error al rechazar la solicitud."
+                });
+            }
+        }
+
+        public async Task<JsonResult> OnPostAprobarTHAsync(int idSolicitud)
+        {
+            try
+            {
+                await ConfigurarPermisosVacacionesAsync();
+
+                if (!PuedeAprobarTH)
+                    return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para aprobar como TH." });
+
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
+
+                var solicitud = await db.SolicitudesVacaciones
+                    .Include(s => s.Empleado)
+                    .FirstOrDefaultAsync(s => s.Id == idSolicitud);
+
+                if (solicitud == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Solicitud no encontrada." });
+
+                if (solicitud.EstadoJefeDirecto != "Aprobado")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "El jefe directo aún no ha aprobado esta solicitud."
+                    });
+                }
+
+                if (solicitud.EstadoTH != "Pendiente")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "La solicitud ya fue revisada por TH."
+                    });
+                }
+
+                solicitud.EstadoTH = "Aprobado";
+                solicitud.UsuarioTHId = usuario.Id;
+                solicitud.FechaRevisionTH = DateTime.Now;
+                solicitud.Estado = EstadoSolicitud.Aprobado;
+
+                db.SolicitudesVacaciones.Update(solicitud);
+
+                var historialExiste = await db.HistorialesVacaciones
+                    .AnyAsync(h => h.SolicitudVacacionesId == solicitud.Id);
+
+                if (!historialExiste)
+                {
+                    var autorizadorId = usuario.Empleado?.Id ?? solicitud.AutorizadorId ?? 0;
+
+                    var historial = new HistorialVacaciones
+                    {
+                        EmpleadoId = solicitud.EmpleadoId,
+                        FechaInicio = solicitud.FechaInicio,
+                        FechaFin = solicitud.FechaFin,
+                        DiasTomados = solicitud.DiasSolicitados,
+                        Observaciones = solicitud.ComentarioEmpleado ?? "",
+                        SolicitudVacacionesId = solicitud.Id,
+                        AutorizadorId = autorizadorId
+                    };
+
+                    db.HistorialesVacaciones.Add(historial);
+                }
+
+                await db.SaveChangesAsync();
+
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "La solicitud fue aprobada por TH."
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al aprobar solicitud de vacaciones por TH");
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un error al aprobar la solicitud."
+                });
+            }
+        }
+
+        public async Task<JsonResult> OnPostRechazarTHAsync(int idSolicitud)
+        {
+            try
+            {
+                await ConfigurarPermisosVacacionesAsync();
+
+                if (!PuedeAprobarTH)
+                    return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para rechazar como TH." });
+
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
+
+                var solicitud = await db.SolicitudesVacaciones
+                    .Include(s => s.Empleado)
+                    .FirstOrDefaultAsync(s => s.Id == idSolicitud);
+
+                if (solicitud == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Solicitud no encontrada." });
+
+                if (solicitud.EstadoJefeDirecto != "Aprobado")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "El jefe directo aún no ha aprobado esta solicitud."
+                    });
+                }
+
+                if (solicitud.EstadoTH != "Pendiente")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "La solicitud ya fue revisada por TH."
+                    });
+                }
+
+                solicitud.EstadoTH = "Rechazado";
+                solicitud.UsuarioTHId = usuario.Id;
+                solicitud.FechaRevisionTH = DateTime.Now;
+                solicitud.Estado = EstadoSolicitud.Rechazado;
+
+                db.SolicitudesVacaciones.Update(solicitud);
+                await db.SaveChangesAsync();
+
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "La solicitud fue rechazada por TH."
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al rechazar solicitud de vacaciones por TH");
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un error al rechazar la solicitud."
+                });
+            }
+        }
+
+        /*public async Task<IActionResult> OnPostAutorizarSolicitudAsync(int idSolicitud, bool autorizar)
         {
             try
             {
@@ -1131,7 +1693,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 logger.LogError(ex, "Error al actualizar el estado de la solicitud");
                 return new JsonResult(new { exito = false, mensaje = "Error inesperado." });
             }
-        }
+        }*/
 
         /*public async Task<IActionResult> OnPostAutorizarSolicitudAsync(int idSolicitud, bool autorizar)
         {
