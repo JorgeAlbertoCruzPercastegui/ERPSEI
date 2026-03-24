@@ -19,22 +19,22 @@
     List<AccesoModulo> accesos = new List<AccesoModulo>();
 
     bool esAdministrador = rolesUsuario.Any(r =>
-    r.Equals("Administrador", StringComparison.OrdinalIgnoreCase));
+        r.Equals("Administrador", StringComparison.OrdinalIgnoreCase) ||
+        r.Equals("Master", StringComparison.OrdinalIgnoreCase));
 
     bool esAdministradorTH = rolesUsuario.Any(r =>
         r.Equals("Administrador TH", StringComparison.OrdinalIgnoreCase));
 
-    bool esUsuario = rolesUsuario.Any(r =>
-        r.Equals("Usuario", StringComparison.OrdinalIgnoreCase));
-
-    // Si tiene rol admin o admin TH, manda sobre Usuario
-    bool esAdminMenu = esAdministrador || esAdministradorTH;
-
     bool esAdministradorTI = rolesUsuario.Any(r =>
-    r.Equals("Administrador TI", StringComparison.OrdinalIgnoreCase));
+        r.Equals("Administrador TI", StringComparison.OrdinalIgnoreCase));
 
     bool esAdministradorEmpresas = rolesUsuario.Any(r =>
         r.Equals("Administrador Empresas", StringComparison.OrdinalIgnoreCase));
+
+    bool esUsuario = rolesUsuario.Any(r =>
+        r.Equals("Usuario", StringComparison.OrdinalIgnoreCase));
+
+    bool esAdminMenu = esAdministrador || esAdministradorTH;
 
     foreach (string rol in rolesUsuario)
     {

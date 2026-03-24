@@ -27,6 +27,7 @@ namespace ERPSEI.Areas.ERP.Pages
         public bool PuedeAprobarJefeDirecto { get; set; }
         public bool PuedeAprobarTH { get; set; }
         public bool PuedeVerTodasAusencias { get; set; }
+        public bool EsJefeInmediato { get; set; }
 
         [BindProperty] public GuardarInasistenciaInput InasistenciaInput { get; set; } = new();
         [BindProperty] public GuardarIncapacidadInput IncapacidadInput { get; set; } = new();
@@ -107,6 +108,7 @@ namespace ERPSEI.Areas.ERP.Pages
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {
+                EsJefeInmediato = false;
                 PuedeAprobarJefeDirecto = false;
                 PuedeAprobarTH = false;
                 PuedeVerTodasAusencias = false;
@@ -115,15 +117,19 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            bool esAdministrador = roles.Contains("Administrador");
-            bool esJefeDirecto = roles.Contains("Jefe Directo");
+            bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
             bool esAdministradorTH = roles.Contains("Administrador TH");
 
-            PuedeAprobarJefeDirecto = esJefeDirecto || esAdministrador;
+            int? empleadoIdActual = await ObtenerEmpleadoIdDelUsuarioActualAsync();
+
+            EsJefeInmediato = empleadoIdActual.HasValue &&
+                await _db.Empleados.AsNoTracking().AnyAsync(e => e.JefeId == empleadoIdActual.Value);
+
+            PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
             PuedeAprobarTH = esAdministradorTH || esAdministrador;
 
-            // Quién puede ver más que solo lo suyo
-            PuedeVerTodasAusencias = esJefeDirecto || esAdministradorTH || esAdministrador;
+            // Solo para control interno de visualización y detalle
+            PuedeVerTodasAusencias = EsJefeInmediato || esAdministradorTH || esAdministrador;
         }
 
         private async Task CargarCatalogosAsync()
@@ -211,25 +217,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 .Where(x => x.TipoCaptura == "Dias")
                 .AsQueryable();
 
-            if (esAdministrador)
-            {
-                // ve todo
-            }
-            else if (esAdministradorTH)
-            {
-                // TH solo ve registros listos para TH
-                query = query.Where(x => x.EstadoJefeDirecto == "Aprobado");
-            }
-            else if (esJefeDirecto)
-            {
-                // jefe directo solo ve lo suyo como jefe
-                query = query.Where(x => x.JefeDirectoEmpleadoId == empleadoIdActual);
-            }
-            else
-            {
-                // empleado normal solo ve lo suyo
-                query = query.Where(x => x.EmpleadoId == empleadoIdActual);
-            }
+            // En Días siempre se muestran SOLO los registros del usuario logueado
+            query = query.Where(x => x.EmpleadoId == empleadoIdActual);
 
             var lista = await query
                 .OrderByDescending(x => x.FechaInicio)
@@ -254,24 +243,15 @@ namespace ERPSEI.Areas.ERP.Pages
                     estado = estadoVisual,
 
                     puedeEditar =
-                        esAdministrador ||
-                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
+                    esAdministrador ||
+                    (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
-                    puedeEliminar =
-                        esAdministrador ||
-                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
+                                    puedeEliminar =
+                    esAdministrador ||
+                    (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
-                    // SOLO JEFE DIRECTO
-                    puedeAprobarJefe =
-                        (esJefeDirecto || esAdministrador) &&
-                        x.JefeDirectoEmpleadoId == empleadoIdActual &&
-                        x.EstadoJefeDirecto == "Pendiente",
-
-                    // SOLO ADMINISTRADOR TH
-                    puedeAprobarTH =
-                        (esAdministradorTH || esAdministrador) &&
-                        x.EstadoJefeDirecto == "Aprobado" &&
-                        x.EstadoTH == "Pendiente"
+                    puedeAprobarJefe = false,
+                    puedeAprobarTH = false
                 };
             }).ToList();
 
@@ -302,25 +282,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 .Where(x => x.TipoCaptura == "Horas")
                 .AsQueryable();
 
-            if (esAdministrador)
-            {
-                // ve todo
-            }
-            else if (esAdministradorTH)
-            {
-                // TH ve solo lo que ya aprobó jefe directo, tanto días como horas
-                query = query.Where(x => x.EstadoJefeDirecto == "Aprobado");
-            }
-            else if (esJefeDirecto)
-            {
-                // jefe directo ve solo lo suyo
-                query = query.Where(x => x.JefeDirectoEmpleadoId == empleadoIdActual);
-            }
-            else
-            {
-                // empleado normal ve solo lo suyo
-                query = query.Where(x => x.EmpleadoId == empleadoIdActual);
-            }
+            // En Horas siempre se muestran SOLO los registros del usuario logueado
+            query = query.Where(x => x.EmpleadoId == empleadoIdActual);
 
             var lista = await query
                 .OrderByDescending(x => x.FechaInicio)
@@ -341,20 +304,110 @@ namespace ERPSEI.Areas.ERP.Pages
                     estado = estadoVisual,
 
                     puedeEditar =
-                        esAdministrador ||
-                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
+                    esAdministrador ||
+                    (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
-                    puedeEliminar =
-                        esAdministrador ||
-                        (!esJefeDirecto && !esAdministradorTH && x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
+                                    puedeEliminar =
+                    esAdministrador ||
+                    (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
+                    puedeAprobarJefe = false,
+                    puedeAprobarTH = false
+                };
+            }).ToList();
+
+            return new JsonResult(data);
+        }
+
+        public async Task<JsonResult> OnGetAusenciasPendientesJefeAsync()
+        {
+            await ConfigurarPermisosAsync();
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return new JsonResult(new List<object>());
+
+            int? empleadoIdActual = await ObtenerEmpleadoIdDelUsuarioActualAsync();
+
+            var roles = await _userManager.GetRolesAsync(user);
+            bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
+            bool esAdministradorTH = roles.Contains("Administrador TH");
+
+            bool esJefeInmediato = empleadoIdActual.HasValue &&
+                await _db.Empleados.AsNoTracking().AnyAsync(e => e.JefeId == empleadoIdActual.Value);
+
+            var query = _db.Ausencias
+                .Include(x => x.TipoAusencia)
+                .Include(x => x.TipoIncapacidad)
+                .Include(x => x.Empleado)
+                .Include(x => x.JefeDirectoEmpleado)
+                .AsQueryable();
+
+            if (esAdministrador)
+            {
+                // El administrador ve todo lo que entre en el flujo de autorizaciones
+                query = query.Where(x =>
+                    x.EstadoJefeDirecto == "Pendiente" ||
+                    x.EstadoJefeDirecto == "Aprobado" ||
+                    x.EstadoJefeDirecto == "Rechazado");
+            }
+            else if (esAdministradorTH)
+            {
+                // TH ve todos los registros que ya están en seguimiento del flujo
+                query = query.Where(x =>
+                    x.EstadoJefeDirecto == "Pendiente" ||
+                    x.EstadoJefeDirecto == "Aprobado" ||
+                    x.EstadoJefeDirecto == "Rechazado");
+            }
+            else if (esJefeInmediato && empleadoIdActual.HasValue)
+            {
+                // El jefe ve todos los registros de su personal, no solo los pendientes
+                query = query.Where(x => x.JefeDirectoEmpleadoId == empleadoIdActual.Value);
+            }
+            else
+            {
+                return new JsonResult(new List<object>());
+            }
+
+            var lista = await query
+                .OrderByDescending(x => x.FechaCreacion)
+                .ToListAsync();
+
+            var data = lista.Select(x =>
+            {
+                string tipoVisual = x.Categoria == "Inasistencia"
+                    ? "Inasistencia"
+                    : x.Categoria == "Incapacidad"
+                        ? "Incapacidad - " + (x.TipoIncapacidad != null ? x.TipoIncapacidad.Nombre : "")
+                        : (x.TipoAusencia != null ? x.TipoAusencia.Nombre : x.Categoria);
+
+                return new
+                {
+                    id = x.Id,
+                    empleado = x.Empleado != null ? x.Empleado.NombreCompleto : "",
+                    categoria = x.Categoria,
+                    tipo = tipoVisual,
+                    captura = x.TipoCaptura,
+                    fechaInicio = x.FechaInicio.HasValue ? x.FechaInicio.Value.ToString("dd-MM-yyyy") : "",
+                    fechaFin = x.FechaFin.HasValue ? x.FechaFin.Value.ToString("dd-MM-yyyy") : "",
+                    horaInicio = x.HoraInicio.HasValue ? x.HoraInicio.Value.ToString(@"hh\:mm") + " hrs." : "",
+                    horaTermino = x.HoraTermino.HasValue ? x.HoraTermino.Value.ToString(@"hh\:mm") + " hrs." : "",
+                    dias = x.Dias.HasValue ? x.Dias.Value.ToString("0.##") : "",
+                    horas = x.Horas.HasValue ? x.Horas.Value.ToString("0.##") + " hrs." : "",
+                    estado = ObtenerEstadoVisual(x),
+
+                    puedeEditar = false,
+                    puedeEliminar = false,
+
+                    // Solo puede aprobar jefe si sigue pendiente con jefe
                     puedeAprobarJefe =
-                        (esJefeDirecto || esAdministrador) &&
-                        x.JefeDirectoEmpleadoId == empleadoIdActual &&
-                        x.EstadoJefeDirecto == "Pendiente",
+                        (esAdministrador || esJefeInmediato) &&
+                        x.EstadoJefeDirecto == "Pendiente" &&
+                        (esAdministrador || (empleadoIdActual.HasValue && x.JefeDirectoEmpleadoId == empleadoIdActual.Value)),
 
+                    // Solo puede aprobar TH si ya aprobó jefe y sigue pendiente TH
                     puedeAprobarTH =
-                        (esAdministradorTH || esAdministrador) &&
+                        (esAdministrador || esAdministradorTH) &&
                         x.EstadoJefeDirecto == "Aprobado" &&
                         x.EstadoTH == "Pendiente"
                 };
@@ -384,6 +437,8 @@ namespace ERPSEI.Areas.ERP.Pages
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
                 return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
+
+            int? empleadoIdActual = await ObtenerEmpleadoIdDelUsuarioActualAsync();
 
             var query = _db.Ausencias
                 .Include(x => x.Empleado)
@@ -422,8 +477,17 @@ namespace ERPSEI.Areas.ERP.Pages
                 tipoAusenciaId = item.TipoAusenciaId,
                 tipoIncapacidadId = item.TipoIncapacidadId,
                 usuarioCreador = item.UsuarioCreador != null ? item.UsuarioCreador.UserName : "",
-                puedeAprobarJefe = PuedeAprobarJefeDirecto && item.EstadoJefeDirecto == "Pendiente",
-                puedeAprobarTH = PuedeAprobarTH && item.EstadoJefeDirecto == "Aprobado" && item.EstadoTH == "Pendiente"
+
+                puedeAprobarJefe =
+                    PuedeAprobarJefeDirecto &&
+                    item.EstadoJefeDirecto == "Pendiente" &&
+                    empleadoIdActual.HasValue &&
+                    item.JefeDirectoEmpleadoId == empleadoIdActual.Value,
+
+                puedeAprobarTH =
+                    PuedeAprobarTH &&
+                    item.EstadoJefeDirecto == "Aprobado" &&
+                    item.EstadoTH == "Pendiente"
             });
         }
 

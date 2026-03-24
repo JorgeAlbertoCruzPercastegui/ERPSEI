@@ -1,13 +1,20 @@
 ﻿var tableDias;
 var tableHoras;
+var tableAutorizar;
 var tiposAusenciaCache = [];
 
 document.addEventListener("DOMContentLoaded", function () {
     tableDias = $("#tableAusenciasDias");
     tableHoras = $("#tableAusenciasHoras");
+    tableAutorizar = $("#tableAusenciasAutorizar");
 
     initTableDias();
     initTableHoras();
+
+    if (tableAutorizar.length) {
+        initTableAutorizar();
+    }
+
     cargarTiposAusencia();
     configurarEventos();
 
@@ -71,6 +78,42 @@ function initTableHoras() {
             { field: "horaInicio", title: "Hora inicio", align: "center" },
             { field: "horaTermino", title: "Hora término", align: "center" },
             { field: "horas", title: "Horas", align: "center" },
+            { field: "estado", title: "Estado", align: "center", formatter: estadoFormatter },
+            { field: "acciones", title: "Acciones", align: "center", formatter: accionesFormatter, events: accionesEvents }
+        ]
+    });
+}
+
+function initTableAutorizar() {
+    tableAutorizar.bootstrapTable('destroy').bootstrapTable({
+        height: 260,
+        locale: cultureName,
+        columns: [
+            { field: "empleado", title: "Empleado", align: "left" },
+            { field: "categoria", title: "Categoría", align: "center" },
+            { field: "tipo", title: "Tipo", align: "left" },
+            {
+                field: "periodo",
+                title: "Periodo",
+                align: "center",
+                formatter: function (value, row) {
+                    if (row.captura === "Horas") {
+                        return `${row.horaInicio || ""} ${row.horaTermino ? " - " + row.horaTermino : ""}`;
+                    }
+                    return `${row.fechaInicio || ""} ${row.fechaFin ? " al " + row.fechaFin : ""}`;
+                }
+            },
+            {
+                field: "duracion",
+                title: "Duración",
+                align: "center",
+                formatter: function (value, row) {
+                    if (row.captura === "Horas") {
+                        return row.horas || "";
+                    }
+                    return row.dias || "";
+                }
+            },
             { field: "estado", title: "Estado", align: "center", formatter: estadoFormatter },
             { field: "acciones", title: "Acciones", align: "center", formatter: accionesFormatter, events: accionesEvents }
         ]
@@ -167,6 +210,10 @@ function getToken(formId) {
 function refrescarTablas() {
     tableDias.bootstrapTable('refresh');
     tableHoras.bootstrapTable('refresh');
+
+    if (tableAutorizar && tableAutorizar.length) {
+        tableAutorizar.bootstrapTable('refresh');
+    }
 }
 
 function mostrarResultado(esError, mensaje, titulo = null) {
