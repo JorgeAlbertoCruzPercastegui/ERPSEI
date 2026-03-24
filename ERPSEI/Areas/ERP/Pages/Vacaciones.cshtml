@@ -373,6 +373,65 @@
     </div>
 </div>
 
+<!--Modal para editar Vacacion por registro-->
+<form id="theFormEditarVacacion" method="post">
+    <div id="dlgEditarVacacion" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header modal-header-gold">
+                    <h5 class="modal-title">Editar solicitud de vacaciones</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div id="editValidationSummary" class="text-danger mb-3" role="alert"></div>
+
+                        <input type="hidden" id="editSolicitudId" />
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-floating mb-3">
+                                    <input id="editFechaInicio" type="date" class="form-control" />
+                                    <label for="editFechaInicio">Fecha Inicio</label>
+                                </div>
+                            </div>
+
+                            <div class="col-6">
+                                <div class="form-floating mb-3">
+                                    <input id="editFechaFin" type="date" class="form-control" />
+                                    <label for="editFechaFin">Fecha Fin</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-light border">
+                                    Estás editando <strong id="editDiasSolicitadosTexto">0</strong> días laborales
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <textarea id="editComentarioEmpleado" class="form-control" style="height:100px;"></textarea>
+                                    <label for="editComentarioEmpleado">Comentario</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionVacacion()">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 
 <!-- Modal Ver Políticas -->
 <div class="modal fade" id="modalVerPoliticas" tabindex="-1" aria-hidden="true">

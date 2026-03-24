@@ -70,6 +70,17 @@ namespace ERPSEI.Areas.ERP.Pages
         public SolicitudVacaciones? SolicitudVacacionesList { get; set; }
 
         [BindProperty]
+        public EditarSolicitudVacacionesModel InputEditarSolicitud { get; set; } = new();
+
+        public class EditarSolicitudVacacionesModel
+        {
+            public int Id { get; set; }
+            public DateTime FechaInicio { get; set; }
+            public DateTime FechaFin { get; set; }
+            public string? ComentarioEmpleado { get; set; }
+        }
+
+        [BindProperty]
         public InputFiltroVacacionesModel InputFiltro { get; set; }
         public class InputFiltroVacacionesModel
         {
@@ -365,6 +376,61 @@ namespace ERPSEI.Areas.ERP.Pages
             }).ToList();
 
             return new JsonResult(json);
+        }
+
+        public async Task<JsonResult> OnPostEditarSolicitudAsync()
+        {
+            try
+            {
+                var userEmail = User.Identity?.Name;
+                var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+                if (usuario?.Empleado == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado actual." });
+
+                var solicitud = await db.SolicitudesVacaciones
+                    .FirstOrDefaultAsync(s => s.Id == InputEditarSolicitud.Id);
+
+                if (solicitud == null)
+                    return new JsonResult(new { tieneError = true, mensaje = "Solicitud no encontrada." });
+
+                if (solicitud.EmpleadoId != usuario.Empleado.Id)
+                    return new JsonResult(new { tieneError = true, mensaje = "No puedes editar esta solicitud." });
+
+                if (solicitud.EstadoJefeDirecto != "Pendiente")
+                    return new JsonResult(new { tieneError = true, mensaje = "Solo puedes editar solicitudes pendientes." });
+
+                if (InputEditarSolicitud.FechaFin < InputEditarSolicitud.FechaInicio)
+                    return new JsonResult(new { tieneError = true, mensaje = "La fecha fin no puede ser menor que la fecha inicio." });
+
+                var diasSolicitados = Enumerable
+                    .Range(0, (InputEditarSolicitud.FechaFin - InputEditarSolicitud.FechaInicio).Days + 1)
+                    .Select(offset => InputEditarSolicitud.FechaInicio.AddDays(offset))
+                    .Count(date => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday);
+
+                solicitud.FechaInicio = InputEditarSolicitud.FechaInicio;
+                solicitud.FechaFin = InputEditarSolicitud.FechaFin;
+                solicitud.DiasSolicitados = diasSolicitados;
+                solicitud.ComentarioEmpleado = InputEditarSolicitud.ComentarioEmpleado;
+
+                db.SolicitudesVacaciones.Update(solicitud);
+                await db.SaveChangesAsync();
+
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "La solicitud se actualizó correctamente."
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al editar solicitud de vacaciones");
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un error al editar la solicitud."
+                });
+            }
         }
 
         public async Task<JsonResult> OnGetSolicitudesAutorizarAsync()

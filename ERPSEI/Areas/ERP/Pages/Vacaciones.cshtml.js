@@ -95,7 +95,7 @@ window.accionesEventsVacaciones = {
         verDetalleVacacion(row.id);
     },
     'click .accion-editar': function (e, value, row) {
-        initSolicitudVacacionesDialog(EDITAR, row);
+        abrirEditarVacacion(row);
     },
     'click .accion-aprobar-jefe': function (e, value, row) {
         aprobarJefeDirectoVacacion(row.id);
@@ -338,6 +338,86 @@ function aprobarJefeDirectoVacacion(idSolicitud) {
         },
         error: function () {
             showError("Vacaciones", "No se pudo aprobar la solicitud.");
+        }
+    });
+}
+
+function abrirEditarVacacion(row) {
+    const modal = new bootstrap.Modal(document.getElementById("dlgEditarVacacion"));
+
+    $("#editValidationSummary").html("");
+    $("#editSolicitudId").val(row.id || "");
+
+    if (row.fechaInicio && row.fechaInicio.includes("/")) {
+        const [dia, mes, anio] = row.fechaInicio.split("/");
+        $("#editFechaInicio").val(`${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`);
+    } else {
+        $("#editFechaInicio").val("");
+    }
+
+    if (row.fechaFin && row.fechaFin.includes("/")) {
+        const [dia, mes, anio] = row.fechaFin.split("/");
+        $("#editFechaFin").val(`${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`);
+    } else {
+        $("#editFechaFin").val("");
+    }
+
+    $("#editComentarioEmpleado").val(row.comentarioEmpleado || "");
+    calcularDiasEditarVacacion();
+
+    modal.show();
+}
+
+function calcularDiasEditarVacacion() {
+    const inicio = new Date($("#editFechaInicio").val());
+    const fin = new Date($("#editFechaFin").val());
+
+    if (isNaN(inicio) || isNaN(fin) || fin < inicio) {
+        $("#editDiasSolicitadosTexto").text("0");
+        return;
+    }
+
+    let totalDias = 0;
+    let fecha = new Date(inicio);
+
+    while (fecha <= fin) {
+        const dia = fecha.getDay();
+        if (dia !== 0 && dia !== 6) {
+            totalDias++;
+        }
+        fecha.setDate(fecha.getDate() + 1);
+    }
+
+    $("#editDiasSolicitadosTexto").text(totalDias);
+}
+
+function guardarEdicionVacacion() {
+    $.ajax({
+        url: "/ERP/Vacaciones?handler=EditarSolicitud",
+        type: "POST",
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        },
+        data: {
+            "InputEditarSolicitud.Id": $("#editSolicitudId").val(),
+            "InputEditarSolicitud.FechaInicio": $("#editFechaInicio").val(),
+            "InputEditarSolicitud.FechaFin": $("#editFechaFin").val(),
+            "InputEditarSolicitud.ComentarioEmpleado": $("#editComentarioEmpleado").val()
+        },
+        success: function (resp) {
+            if (resp.tieneError) {
+                showError("Editar Vacación", resp.mensaje);
+                return;
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById("dlgEditarVacacion"))?.hide();
+            showSuccess("Editar Vacación", resp.mensaje);
+            refrescarTablasVacaciones();
+            cargarVacacionesTomadas();
+            cargarResumenVacaciones();
+        },
+        error: function () {
+            showError("Editar Vacación", "No se pudo guardar la edición.");
         }
     });
 }
@@ -1093,6 +1173,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const editFechaInicio = document.getElementById("editFechaInicio");
+    const editFechaFin = document.getElementById("editFechaFin");
+
+    if (editFechaInicio) editFechaInicio.addEventListener("change", calcularDiasEditarVacacion);
+    if (editFechaFin) editFechaFin.addEventListener("change", calcularDiasEditarVacacion);
+});
 
 function onCerrarClick() {
     //Removes validation from input-fields
