@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
+using System.Drawing;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -28,6 +31,7 @@ namespace ERPSEI.Areas.ERP.Pages
         public bool PuedeAprobarTH { get; set; }
         public bool PuedeVerTodasAusencias { get; set; }
         public bool EsJefeInmediato { get; set; }
+        public bool PuedeExportarDetalleAusencias { get; set; }
 
         [BindProperty] public GuardarInasistenciaInput InasistenciaInput { get; set; } = new();
         [BindProperty] public GuardarIncapacidadInput IncapacidadInput { get; set; } = new();
@@ -112,6 +116,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 PuedeAprobarJefeDirecto = false;
                 PuedeAprobarTH = false;
                 PuedeVerTodasAusencias = false;
+                PuedeExportarDetalleAusencias = false;
                 return;
             }
 
@@ -127,9 +132,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
             PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
             PuedeAprobarTH = esAdministradorTH || esAdministrador;
-
-            // Solo para control interno de visualización y detalle
             PuedeVerTodasAusencias = EsJefeInmediato || esAdministradorTH || esAdministrador;
+
+            // Solo estos roles pueden exportar
+            PuedeExportarDetalleAusencias = esAdministrador || esAdministradorTH;
         }
 
         private async Task CargarCatalogosAsync()
@@ -1007,6 +1013,121 @@ namespace ERPSEI.Areas.ERP.Pages
                 .Where(x => x.Id == empleadoId)
                 .Select(x => x.JefeId)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<IActionResult> OnGetExportarDetalleAusenciasAsync()
+        {
+            await ConfigurarPermisosAsync();
+
+            if (!PuedeExportarDetalleAusencias)
+                return Forbid();
+
+            ExcelPackage.License.SetNonCommercialOrganization("SEI Consulting Group");
+
+            var ausencias = await _db.Ausencias
+                .Include(x => x.Empleado)
+                .Include(x => x.TipoAusencia)
+                .Include(x => x.TipoIncapacidad)
+                .Include(x => x.JefeDirectoEmpleado)
+                .Include(x => x.UsuarioCreador)
+                .OrderBy(x => x.Empleado != null ? x.Empleado.NombreCompleto : "")
+                .ThenByDescending(x => x.FechaCreacion)
+                .ToListAsync();
+
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Detalle Ausencias");
+
+            ws.Cells["A1"].Value = "Detalle de Ausencias";
+            ws.Cells["A1:Q1"].Merge = true;
+            ws.Cells["A1"].Style.Font.Bold = true;
+            ws.Cells["A1"].Style.Font.Size = 16;
+            ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            ws.Cells["A2"].Value = "Generado:";
+            ws.Cells["B2"].Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+
+            int row = 4;
+
+            ws.Cells[row, 1].Value = "Id";
+            ws.Cells[row, 2].Value = "Empleado";
+            ws.Cells[row, 3].Value = "Categoría";
+            ws.Cells[row, 4].Value = "Tipo";
+            ws.Cells[row, 5].Value = "Tipo Captura";
+            ws.Cells[row, 6].Value = "Fecha Inicio";
+            ws.Cells[row, 7].Value = "Fecha Fin";
+            ws.Cells[row, 8].Value = "Hora Inicio";
+            ws.Cells[row, 9].Value = "Hora Término";
+            ws.Cells[row, 10].Value = "Días";
+            ws.Cells[row, 11].Value = "Horas";
+            ws.Cells[row, 12].Value = "Fecha Aplicación";
+            ws.Cells[row, 13].Value = "Suplencia";
+            ws.Cells[row, 14].Value = "Número Folio";
+            ws.Cells[row, 15].Value = "Estado Visual";
+            ws.Cells[row, 16].Value = "Estado Jefe Directo";
+            ws.Cells[row, 17].Value = "Estado TH";
+            ws.Cells[row, 18].Value = "Jefe Directo";
+            ws.Cells[row, 19].Value = "Creado por";
+            ws.Cells[row, 20].Value = "Comentario";
+
+            using (var headerRange = ws.Cells[row, 1, row, 20])
+            {
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                headerRange.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(31, 76, 211));
+                headerRange.Style.Font.Color.SetColor(Color.White);
+                headerRange.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            }
+
+            row++;
+
+            foreach (var x in ausencias)
+            {
+                string tipoVisual = x.Categoria == "Inasistencia"
+                    ? "Inasistencia"
+                    : x.Categoria == "Incapacidad"
+                        ? "Incapacidad - " + (x.TipoIncapacidad != null ? x.TipoIncapacidad.Nombre : "")
+                        : (x.TipoAusencia != null ? x.TipoAusencia.Nombre : x.Categoria);
+
+                ws.Cells[row, 1].Value = x.Id;
+                ws.Cells[row, 2].Value = x.Empleado?.NombreCompleto ?? "";
+                ws.Cells[row, 3].Value = x.Categoria ?? "";
+                ws.Cells[row, 4].Value = tipoVisual;
+                ws.Cells[row, 5].Value = x.TipoCaptura ?? "";
+                ws.Cells[row, 6].Value = x.FechaInicio?.ToString("dd/MM/yyyy") ?? "";
+                ws.Cells[row, 7].Value = x.FechaFin?.ToString("dd/MM/yyyy") ?? "";
+                ws.Cells[row, 8].Value = x.HoraInicio?.ToString(@"hh\:mm") ?? "";
+                ws.Cells[row, 9].Value = x.HoraTermino?.ToString(@"hh\:mm") ?? "";
+                ws.Cells[row, 10].Value = x.Dias;
+                ws.Cells[row, 11].Value = x.Horas;
+                ws.Cells[row, 12].Value = x.FechaAplicacion?.ToString("dd/MM/yyyy") ?? "";
+                ws.Cells[row, 13].Value = x.Suplencia ? "Sí" : "No";
+                ws.Cells[row, 14].Value = x.NumeroFolio ?? "";
+                ws.Cells[row, 15].Value = ObtenerEstadoVisual(x);
+                ws.Cells[row, 16].Value = x.EstadoJefeDirecto ?? "";
+                ws.Cells[row, 17].Value = x.EstadoTH ?? "";
+                ws.Cells[row, 18].Value = x.JefeDirectoEmpleado?.NombreCompleto ?? "";
+                ws.Cells[row, 19].Value = x.UsuarioCreador?.UserName ?? "";
+                ws.Cells[row, 20].Value = x.Comentario ?? "";
+
+                for (int col = 1; col <= 20; col++)
+                {
+                    ws.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                    ws.Cells[row, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                row++;
+            }
+
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            var bytes = package.GetAsByteArray();
+            var fileName = $"DetalleAusencias_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName
+            );
         }
     }
 }

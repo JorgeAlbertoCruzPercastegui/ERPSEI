@@ -44,6 +44,13 @@
         <button class="btn btn-primary" type="button" onclick="abrirModalSolicitarPermiso()">
             Solicitar Permiso
         </button>
+
+        @if (Model.PuedeExportarDetalleAusencias)
+        {
+            <button class="btn btn-success" type="button" onclick="exportarDetalleAusencias()">
+                <i class="bi bi-file-earmark-excel"></i> Exportar detalle
+            </button>
+        }
     </div>
 
     <div class="card shadow-sm mb-3">

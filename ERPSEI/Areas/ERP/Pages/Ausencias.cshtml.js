@@ -620,6 +620,10 @@ function aprobarTH(id) {
     });
 }
 
+function exportarDetalleAusencias() {
+    window.location.href = "/ERP/Ausencias?handler=ExportarDetalleAusencias";
+}
+
 function rechazarTH(id) {
     $.ajax({
         url: `/ERP/Ausencias?handler=RechazarTH&id=${id}`,
