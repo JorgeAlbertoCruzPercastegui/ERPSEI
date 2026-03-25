@@ -37,6 +37,8 @@ using ERPSEI.Areas.ERP.Pages;
 using ERPSEI.Data.Managers.ActivosFijos;
 using System.Security.Claims;
 using iText.Commons.Actions.Contexts;
+using OfficeOpenXml.Style;
+using System.Drawing;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -64,6 +66,7 @@ namespace ERPSEI.Areas.ERP.Pages
         public bool EsJefeInmediato { get; set; }
         public bool PuedeAprobarJefeDirecto { get; set; }
         public bool PuedeAprobarTH { get; set; }
+        public bool PuedeExportarDetalleVacaciones { get; set; }
 
 
         [BindProperty]
@@ -317,6 +320,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 EsJefeInmediato = false;
                 PuedeAprobarJefeDirecto = false;
                 PuedeAprobarTH = false;
+                PuedeExportarDetalleVacaciones = false;
                 return;
             }
 
@@ -328,12 +332,13 @@ namespace ERPSEI.Areas.ERP.Pages
             int? empleadoIdActual = usuario.Empleado?.Id;
 
             EsJefeInmediato = empleadoIdActual.HasValue &&
-                await db.Empleados
-                    .AsNoTracking()
-                    .AnyAsync(e => e.JefeId == empleadoIdActual.Value);
+                await db.Empleados.AsNoTracking().AnyAsync(e => e.JefeId == empleadoIdActual.Value);
 
             PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
             PuedeAprobarTH = esAdministradorTH || esAdministrador;
+
+            // Solo estos roles ven el botón de exportación
+            PuedeExportarDetalleVacaciones = esAdministrador || esAdministradorTH;
         }
 
         public async Task OnGetAsync()
@@ -1854,6 +1859,117 @@ namespace ERPSEI.Areas.ERP.Pages
             jsonResponse = $"[{string.Join(",", jsonUsuarios)}]";
 
             return jsonResponse;
+        }
+
+        public async Task<IActionResult> OnGetExportarDetalleVacacionesAsync()
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            if (!PuedeExportarDetalleVacaciones)
+                return Forbid();
+
+            ExcelPackage.License.SetNonCommercialOrganization("SEI Consulting Group");
+
+            var solicitudes = await db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                .Include(s => s.Autorizador)
+                .OrderBy(s => s.Empleado != null ? s.Empleado.NombreCompleto : "")
+                .ThenByDescending(s => s.FechaSolicitud)
+                .ToListAsync();
+
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Detalle Vacaciones");
+
+            // Título
+            ws.Cells["A1"].Value = "Detalle de Vacaciones";
+            ws.Cells["A1:L1"].Merge = true;
+            ws.Cells["A1"].Style.Font.Bold = true;
+            ws.Cells["A1"].Style.Font.Size = 16;
+            ws.Cells["A1"].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+            // Fecha de generación
+            ws.Cells["A2"].Value = "Generado:";
+            ws.Cells["B2"].Value = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+
+            // Encabezados
+            int row = 4;
+            ws.Cells[row, 1].Value = "Id";
+            ws.Cells[row, 2].Value = "Empleado";
+            ws.Cells[row, 3].Value = "Fecha Solicitud";
+            ws.Cells[row, 4].Value = "Fecha Inicio";
+            ws.Cells[row, 5].Value = "Fecha Fin";
+            ws.Cells[row, 6].Value = "Días Solicitados";
+            ws.Cells[row, 7].Value = "Comentario Empleado";
+            ws.Cells[row, 8].Value = "Estado Visual";
+            ws.Cells[row, 9].Value = "Estado Jefe Directo";
+            ws.Cells[row, 10].Value = "Estado TH";
+            ws.Cells[row, 11].Value = "Autorizador";
+            ws.Cells[row, 12].Value = "Jefe Directo Id";
+
+            using (var range = ws.Cells[row, 1, row, 12])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(31, 76, 211));
+                range.Style.Font.Color.SetColor(Color.White);
+                range.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                range.Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            }
+
+            row++;
+
+            string empleadoActual = string.Empty;
+            int inicioGrupo = row;
+
+            foreach (var s in solicitudes)
+            {
+                string nombreEmpleado = s.Empleado?.NombreCompleto ?? "-";
+
+                if (!string.IsNullOrWhiteSpace(empleadoActual) && empleadoActual != nombreEmpleado)
+                {
+                    // Línea separadora visual entre empleados
+                    using (var separator = ws.Cells[row, 1, row, 12])
+                    {
+                        separator.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        separator.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(242, 242, 242));
+                    }
+                    row++;
+                }
+
+                empleadoActual = nombreEmpleado;
+
+                ws.Cells[row, 1].Value = s.Id;
+                ws.Cells[row, 2].Value = nombreEmpleado;
+                ws.Cells[row, 3].Value = s.FechaSolicitud.ToString("dd/MM/yyyy");
+                ws.Cells[row, 4].Value = s.FechaInicio.ToString("dd/MM/yyyy");
+                ws.Cells[row, 5].Value = s.FechaFin.ToString("dd/MM/yyyy");
+                ws.Cells[row, 6].Value = s.DiasSolicitados;
+                ws.Cells[row, 7].Value = s.ComentarioEmpleado ?? "";
+                ws.Cells[row, 8].Value = ObtenerEstadoVisualVacaciones(s);
+                ws.Cells[row, 9].Value = s.EstadoJefeDirecto ?? "";
+                ws.Cells[row, 10].Value = s.EstadoTH ?? "";
+                ws.Cells[row, 11].Value = s.Autorizador?.NombreCompleto ?? "-";
+                ws.Cells[row, 12].Value = s.JefeDirectoEmpleadoId;
+
+                for (int col = 1; col <= 12; col++)
+                {
+                    ws.Cells[row, col].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                    ws.Cells[row, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                }
+
+                row++;
+            }
+
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            var bytes = package.GetAsByteArray();
+            var fileName = $"DetalleVacaciones_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName
+            );
         }
     }
 }

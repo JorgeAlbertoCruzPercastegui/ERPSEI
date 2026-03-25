@@ -1181,6 +1181,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (editFechaFin) editFechaFin.addEventListener("change", calcularDiasEditarVacacion);
 });
 
+function exportarDetalleVacaciones() {
+    window.location.href = "/ERP/Vacaciones?handler=ExportarDetalleVacaciones";
+}
+
 function onCerrarClick() {
     //Removes validation from input-fields
     $('.input-validation-error').addClass('input-validation-valid');

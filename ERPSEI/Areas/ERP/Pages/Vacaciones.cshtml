@@ -125,14 +125,20 @@
 <!-- Sección tabla de resultados -->
 <div id="toolbar" class="col-xl-12">
     <button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgVacacion" onclick="onAgregarClick();">
-        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
+        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Solicitar Vacaciones</span>
     </button>
-    <!--<button id="btnAbrirModalAutorizar" class="btn btn-success" onclick="onAutorizarVacacionesClick();">
-        <i class="bi bi-check-circle"></i> <span class="d-none d-sm-inline">@Localizer["AutorizarVacButton"]</span>
-    </button>-->
+
     <button id="remove" class="btn btn-danger" disabled>
-        <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
+        <i class="bi bi-trash"></i> <span class="d-none d-sm-inline">Dar de baja</span>
     </button>
+
+    @if (Model.PuedeExportarDetalleVacaciones)
+    {
+        <button id="btnExportarDetalleVacaciones" type="button" class="btn btn-success" onclick="exportarDetalleVacaciones();">
+            <i class="bi bi-file-earmark-excel"></i>
+            <span class="d-none d-sm-inline">Exportar detalle</span>
+        </button>
+    }
 </div>
 
 <table id="table" class="table-sm"
