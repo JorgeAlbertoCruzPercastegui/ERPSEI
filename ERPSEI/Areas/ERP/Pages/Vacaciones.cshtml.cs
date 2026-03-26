@@ -336,8 +336,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
             PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
             PuedeAprobarTH = esAdministradorTH || esAdministrador;
-
-            // Solo estos roles ven el botón de exportación
             PuedeExportarDetalleVacaciones = esAdministrador || esAdministradorTH;
         }
 
@@ -461,15 +459,14 @@ namespace ERPSEI.Areas.ERP.Pages
 
             if (esAdministrador)
             {
-                // Administrador/Master ve todo el flujo
+                // ve todo
             }
             else if (esTH)
             {
-                // TH ve todo el flujo
+                // ve todo
             }
             else if (EsJefeInmediato && empleadoIdActual.HasValue)
             {
-                // Solo lo de su personal
                 query = query.Where(s => s.JefeDirectoEmpleadoId == empleadoIdActual.Value);
             }
             else
@@ -481,36 +478,29 @@ namespace ERPSEI.Areas.ERP.Pages
                 .OrderByDescending(s => s.FechaSolicitud)
                 .ToListAsync();
 
-            var result = solicitudes.Select(s =>
+            var result = solicitudes.Select(s => new
             {
-                string estadoVisual = ObtenerEstadoVisualVacaciones(s);
+                id = s.Id,
+                empleado = s.Empleado?.NombreCompleto ?? "-",
+                fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
+                fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
+                fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
+                diasSolicitados = s.DiasSolicitados,
+                estado = ObtenerEstadoVisualVacaciones(s),
+                autorizador = s.Autorizador?.NombreCompleto ?? "-",
+                comentarioEmpleado = s.ComentarioEmpleado ?? "",
 
-                return new
-                {
-                    id = s.Id,
-                    empleado = s.Empleado?.NombreCompleto ?? "-",
-                    empleadoId = s.EmpleadoId,
-                    fechaSolicitud = s.FechaSolicitud.ToString("dd/MM/yyyy"),
-                    fechaInicio = s.FechaInicio.ToString("dd/MM/yyyy"),
-                    fechaFin = s.FechaFin.ToString("dd/MM/yyyy"),
-                    diasSolicitados = s.DiasSolicitados,
-                    estado = estadoVisual,
-                    autorizador = s.Autorizador?.NombreCompleto ?? "-",
-                    autorizadorId = s.AutorizadorId,
-                    comentarioEmpleado = s.ComentarioEmpleado ?? "",
+                puedeEditar = false,
+                puedeEliminar = false,
 
-                    puedeEditar = false,
-                    puedeEliminar = false,
+                puedeAprobarJefe =
+                    (esAdministrador || (empleadoIdActual.HasValue && s.JefeDirectoEmpleadoId == empleadoIdActual.Value)) &&
+                    s.EstadoJefeDirecto == "Pendiente",
 
-                    puedeAprobarJefe =
-                        (esAdministrador || (empleadoIdActual.HasValue && s.JefeDirectoEmpleadoId == empleadoIdActual.Value)) &&
-                        s.EstadoJefeDirecto == "Pendiente",
-
-                    puedeAprobarTH =
-                        (esAdministrador || esTH) &&
-                        s.EstadoJefeDirecto == "Aprobado" &&
-                        s.EstadoTH == "Pendiente"
-                };
+                puedeAprobarTH =
+                    (esAdministrador || esTH) &&
+                    s.EstadoJefeDirecto == "Aprobado" &&
+                    s.EstadoTH == "Pendiente"
             }).ToList();
 
             return new JsonResult(result);
@@ -999,7 +989,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (empleado.JefeId == null || empleado.JefeId == 0)
                 {
                     resp.TieneError = true;
-                    resp.Mensaje = "No se pudo identificar al jefe directo del empleado. Verifica la información del empleado.";
+                    resp.Mensaje = "No se pudo identificar al jefe directo del empleado.";
                     return new JsonResult(resp);
                 }
 
@@ -1019,7 +1009,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
 
                     JefeDirectoEmpleadoId = empleado.JefeId,
-                    AutorizadorId = empleado.JefeId, // si quieres conservar compatibilidad
+                    AutorizadorId = empleado.JefeId,
                     Estado = EstadoSolicitud.Pendiente,
 
                     EstadoJefeDirecto = "Pendiente",
@@ -1028,73 +1018,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 await solicitudVacacionesManager.CreateAsync(solicitud);
 
-                var autorizador = await db.Empleados
-                    .Include(e => e.Usuario)
-                    .FirstOrDefaultAsync(e => e.Id == solicitud.AutorizadorId);
-
-                if (autorizador != null && !string.IsNullOrWhiteSpace(autorizador.Usuario?.Email))
-                {
-                    var fechaHoy = DateTime.Now;
-                    decimal diasAcumulados = Math.Round((12m / 365m) * (fechaHoy - empleado.FechaIngreso).Days, 1);
-
-                    var diasTomados = await db.SolicitudesVacaciones
-                        .Where(s => s.EmpleadoId == empleado.Id && s.Estado != EstadoSolicitud.Rechazado)
-                        .SumAsync(s => s.DiasSolicitados);
-
-                    decimal diasDisponibles = Math.Max(diasAcumulados - diasTomados, 0);
-
-                    string subject = "Solicitud de vacaciones pendiente de autorización";
-
-                    var request = HttpContext.Request;
-                    string baseUrl = $"{request.Scheme}://{request.Host}";
-                    string urlAutorizacion = $"{baseUrl}/ERP/Vacaciones/Autorizar?id={solicitud.Id}";
-                    string urlCancelar = $"{baseUrl}/ERP/Vacaciones/Cancelar?id={solicitud.Id}";
-
-                    string message = $@"
-                <p>Estimado(a) {autorizador.NombreCompleto},</p>
-                <p>Se ha generado una nueva solicitud de vacaciones por parte del empleado:</p>
-                <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
-                    <tr>
-                        <th style='background-color:#f2f2f2;'>Solicitante</th>
-                        <td>{empleado.NombreCompleto}</td>
-                    </tr>
-                    <tr>
-                        <th style='background-color:#f2f2f2;'>Rango de vacaciones</th>
-                        <td>{InputSolicitud.FechaInicio:dd/MM/yyyy} al {InputSolicitud.FechaFin:dd/MM/yyyy}</td>
-                    </tr>
-                    <tr>
-                        <th style='background-color:#f2f2f2;'>Días solicitados</th>
-                        <td>{diasSolicitados} día(s)</td>
-                    </tr>
-                    <tr>
-                        <th style='background-color:#f2f2f2;'>Días disponibles (saldo)</th>
-                        <td>{diasDisponibles:0.0} día(s)</td>
-                    </tr>
-                    <tr>
-                        <th style='background-color:#f2f2f2;'>Comentario</th>
-                        <td>{(string.IsNullOrWhiteSpace(InputSolicitud.ComentarioEmpleado) ? "Ninguno" : InputSolicitud.ComentarioEmpleado)}</td>
-                    </tr>
-                </table>
-                <br>
-                <p style='font-weight:bold;'>Acciones disponibles:</p>
-                <div style='margin-top:20px; display: flex; gap: 20px;'>
-                    <a href='{urlAutorizacion}' style='padding: 10px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>
-                        ✅ Autorizar solicitud
-                    </a>
-                    <font color='white'>.........</font>
-                    <a href='{urlCancelar}' style='padding: 10px 20px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;'>
-                        ❌ Cancelar solicitud
-                    </a>
-                </div>
-                <br>
-                <p style='color:gray;'>Este es un mensaje automático del sistema ERP.</p>";
-
-                    _emailSender.SendEmailAsync(
-                        autorizador.Usuario.Email,
-                        subject,
-                        message
-                    );
-                }
+                await EnviarCorreoSolicitudVacacionesAJefeAsync(solicitud.Id);
 
                 resp.TieneError = false;
                 resp.Mensaje = localizer["SolicitudVacacionesSavedSuccessfully"];
@@ -1106,6 +1030,195 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return new JsonResult(resp);
+        }
+
+        private async Task EnviarCorreoSolicitudVacacionesAJefeAsync(int solicitudId)
+        {
+            var solicitud = await db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                    .ThenInclude(e => e.Usuario)
+                .Include(s => s.Autorizador)
+                    .ThenInclude(a => a.Usuario)
+                .FirstOrDefaultAsync(s => s.Id == solicitudId);
+
+            if (solicitud == null)
+                return;
+
+            if (solicitud.Autorizador?.Usuario == null || string.IsNullOrWhiteSpace(solicitud.Autorizador.Usuario.Email))
+                return;
+
+            var request = HttpContext.Request;
+            string baseUrl = $"{request.Scheme}://{request.Host}";
+            string urlAprobar = $"{baseUrl}/ERP/Vacaciones?solicitudId={solicitud.Id}&accionCorreo=aprobarJefe";
+            string urlRechazar = $"{baseUrl}/ERP/Vacaciones?solicitudId={solicitud.Id}&accionCorreo=rechazarJefe";
+
+            string subject = $"Solicitud de vacaciones pendiente - {solicitud.Empleado?.NombreCompleto}";
+
+            string body = $@"
+        <p>Estimado(a) {solicitud.Autorizador?.NombreCompleto},</p>
+
+        <p>Se generó una nueva solicitud de vacaciones en la intranet.</p>
+
+        <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Empleado</th>
+                <td>{solicitud.Empleado?.NombreCompleto}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Fecha solicitud</th>
+                <td>{solicitud.FechaSolicitud:dd/MM/yyyy}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Fecha inicio</th>
+                <td>{solicitud.FechaInicio:dd/MM/yyyy}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Fecha fin</th>
+                <td>{solicitud.FechaFin:dd/MM/yyyy}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Días solicitados</th>
+                <td>{solicitud.DiasSolicitados}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Comentario</th>
+                <td>{(string.IsNullOrWhiteSpace(solicitud.ComentarioEmpleado) ? "Sin comentario" : solicitud.ComentarioEmpleado)}</td>
+            </tr>
+        </table>
+
+        <br>
+
+        <div style='margin-top:20px; display:flex; gap:20px; flex-wrap:wrap;'>
+            <a href='{urlAprobar}' style='padding:10px 20px; background-color:#28a745; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                ✅ Revisar para aprobar
+            </a>
+
+            <a href='{urlRechazar}' style='padding:10px 20px; background-color:#dc3545; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                ❌ Revisar para rechazar
+            </a>
+        </div>
+
+        <br>
+        <p style='color:gray;'>Este es un mensaje automático de la Intranet SEI Consulting Group.</p>";
+
+            await _emailSender.SendEmailAsync(
+                solicitud.Autorizador.Usuario.Email,
+                subject,
+                body
+            );
+        }
+
+        private async Task EnviarCorreoSeguimientoVacacionesAsync(int solicitudId, string etapa, string accion)
+        {
+            var solicitud = await db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                    .ThenInclude(e => e.Usuario)
+                .Include(s => s.Autorizador)
+                    .ThenInclude(a => a.Usuario)
+                .FirstOrDefaultAsync(s => s.Id == solicitudId);
+
+            if (solicitud == null)
+                return;
+
+            var request = HttpContext.Request;
+            string baseUrl = $"{request.Scheme}://{request.Host}";
+            string urlModulo = $"{baseUrl}/ERP/Vacaciones";
+
+            string estadoVisual = ObtenerEstadoVisualVacaciones(solicitud);
+
+            // correo al colaborador
+            if (solicitud.Empleado?.Usuario != null && !string.IsNullOrWhiteSpace(solicitud.Empleado.Usuario.Email))
+            {
+                string subjectEmpleado = etapa == "JefeDirecto"
+                    ? $"Tu solicitud de vacaciones fue {(accion == "Aprobado" ? "aprobada" : "rechazada")} por tu jefe directo"
+                    : $"Tu solicitud de vacaciones fue {(accion == "Aprobado" ? "aprobada" : "rechazada")} por Talento Humano";
+
+                string bodyEmpleado = $@"
+            <p>Hola {solicitud.Empleado?.NombreCompleto},</p>
+
+            <p>Tu solicitud de vacaciones fue <strong>{accion}</strong> en la etapa de <strong>{(etapa == "JefeDirecto" ? "Jefe Directo" : "Talento Humano")}</strong>.</p>
+
+            <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Fecha inicio</th>
+                    <td>{solicitud.FechaInicio:dd/MM/yyyy}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Fecha fin</th>
+                    <td>{solicitud.FechaFin:dd/MM/yyyy}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Días solicitados</th>
+                    <td>{solicitud.DiasSolicitados}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Estado actual</th>
+                    <td>{estadoVisual}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Comentario</th>
+                    <td>{(string.IsNullOrWhiteSpace(solicitud.ComentarioEmpleado) ? "Sin comentario" : solicitud.ComentarioEmpleado)}</td>
+                </tr>
+            </table>
+
+            <br>
+            <a href='{urlModulo}' style='padding:10px 20px; background-color:#1f4cd3; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                Ver en intranet
+            </a>
+
+            <br><br>
+            <p style='color:gray;'>Este es un mensaje automático de la Intranet SEI Consulting Group.</p>";
+
+                await _emailSender.SendEmailAsync(
+                    solicitud.Empleado.Usuario.Email,
+                    subjectEmpleado,
+                    bodyEmpleado
+                );
+            }
+
+            // si fue TH, también avisar al jefe/autorizador
+            if (etapa == "TH" && solicitud.Autorizador?.Usuario != null && !string.IsNullOrWhiteSpace(solicitud.Autorizador.Usuario.Email))
+            {
+                string subjectJefe = $"Talento Humano {(accion == "Aprobado" ? "aprobó" : "rechazó")} la solicitud de {solicitud.Empleado?.NombreCompleto}";
+
+                string bodyJefe = $@"
+            <p>Hola {solicitud.Autorizador?.NombreCompleto},</p>
+
+            <p>Talento Humano ha <strong>{(accion == "Aprobado" ? "aprobado" : "rechazado")}</strong> la solicitud de vacaciones del colaborador <strong>{solicitud.Empleado?.NombreCompleto}</strong>.</p>
+
+            <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Fecha inicio</th>
+                    <td>{solicitud.FechaInicio:dd/MM/yyyy}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Fecha fin</th>
+                    <td>{solicitud.FechaFin:dd/MM/yyyy}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Días solicitados</th>
+                    <td>{solicitud.DiasSolicitados}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Estado actual</th>
+                    <td>{estadoVisual}</td>
+                </tr>
+            </table>
+
+            <br>
+            <a href='{urlModulo}' style='padding:10px 20px; background-color:#1f4cd3; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                Ver en intranet
+            </a>
+
+            <br><br>
+            <p style='color:gray;'>Este es un mensaje automático de la Intranet SEI Consulting Group.</p>";
+
+                await _emailSender.SendEmailAsync(
+                    solicitud.Autorizador.Usuario.Email,
+                    subjectJefe,
+                    bodyJefe
+                );
+            }
         }
 
         public async Task<JsonResult> OnGetResumenVacaciones()
@@ -1454,6 +1567,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 db.SolicitudesVacaciones.Update(solicitud);
                 await db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoVacacionesAsync(solicitud.Id, "JefeDirecto", "Aprobado");
 
                 return new JsonResult(new
                 {
@@ -1525,6 +1639,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 db.SolicitudesVacaciones.Update(solicitud);
                 await db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoVacacionesAsync(solicitud.Id, "JefeDirecto", "Rechazado");
 
                 return new JsonResult(new
                 {
@@ -1612,6 +1727,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 }
 
                 await db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoVacacionesAsync(solicitud.Id, "TH", "Aprobado");
 
                 return new JsonResult(new
                 {
@@ -1677,6 +1793,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 db.SolicitudesVacaciones.Update(solicitud);
                 await db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoVacacionesAsync(solicitud.Id, "TH", "Rechazado");
 
                 return new JsonResult(new
                 {

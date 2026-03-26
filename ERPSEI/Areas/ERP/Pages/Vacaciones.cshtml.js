@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     table = $("#table");
     tableSolicitudesAutorizar = $("#tableSolicitudesAutorizar");
     buttonRemove = $("#remove");
+
     dlg = document.getElementById('dlgVacaciones');
 
     if (dlg) {
@@ -38,6 +39,24 @@ document.addEventListener("DOMContentLoaded", function (event) {
     cargarResumenVacaciones();
     cargarVacacionesAcumuladas();
     cargarVacacionesTomadas();
+
+    const params = new URLSearchParams(window.location.search);
+    const solicitudId = params.get("solicitudId");
+    const accionCorreo = params.get("accionCorreo");
+
+    if (solicitudId) {
+        setTimeout(() => {
+            verDetalleVacacion(parseInt(solicitudId));
+
+            if (accionCorreo === "aprobarJefe") {
+                console.log("Abrir desde correo para aprobación jefe");
+            }
+
+            if (accionCorreo === "rechazarJefe") {
+                console.log("Abrir desde correo para rechazo jefe");
+            }
+        }, 700);
+    }
 });
 
 function getIdSelections() {
