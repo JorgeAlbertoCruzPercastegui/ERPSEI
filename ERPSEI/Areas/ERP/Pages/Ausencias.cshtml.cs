@@ -1,6 +1,7 @@
 ﻿using ERPSEI.Data;
 using ERPSEI.Data.Entities.RH;
 using ERPSEI.Data.Managers.Usuarios;
+using ERPSEI.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -17,13 +18,17 @@ namespace ERPSEI.Areas.ERP.Pages
     {
         private readonly ApplicationDbContext _db;
         private readonly AppUserManager _userManager;
+        private readonly IEmailSender _emailSender;
 
-        public AusenciasModel(ApplicationDbContext db, AppUserManager userManager)
+
+        public AusenciasModel(ApplicationDbContext db, AppUserManager userManager, IEmailSender emailSender)
         {
             _db = db;
             _userManager = userManager;
+            _emailSender = emailSender;
         }
 
+       
         public List<SelectListItem> TiposAusencia { get; set; } = new();
         public List<SelectListItem> TiposIncapacidad { get; set; } = new();
 
@@ -626,6 +631,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 item.FechaRevisionJefeDirecto = DateTime.Now;
 
                 await _db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoAusenciaAsync(item.Id, "JefeDirecto", "Aprobado");
 
                 return new JsonResult(new
                 {
@@ -669,6 +675,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 item.FechaRevisionJefeDirecto = DateTime.Now;
 
                 await _db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoAusenciaAsync(item.Id, "JefeDirecto", "Rechazado");
 
                 return new JsonResult(new
                 {
@@ -715,6 +722,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 item.FechaRevisionTH = DateTime.Now;
 
                 await _db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoAusenciaAsync(item.Id, "TH", "Aprobado");
 
                 return new JsonResult(new
                 {
@@ -761,6 +769,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 item.FechaRevisionTH = DateTime.Now;
 
                 await _db.SaveChangesAsync();
+                await EnviarCorreoSeguimientoAusenciaAsync(item.Id, "TH", "Rechazado");
 
                 return new JsonResult(new
                 {
@@ -810,6 +819,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
+
+                await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
 
                 return new JsonResult(new
                 {
@@ -861,6 +872,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
+
+                await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
 
                 return new JsonResult(new
                 {
@@ -929,6 +942,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
 
+                await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
+                //await EnviarCorreoPermisoAJefeDirectoAsync(ausencia.Id, user.EmpleadoId.Value);
+
                 return new JsonResult(new
                 {
                     tieneError = false,
@@ -995,6 +1011,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
 
+                await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
+                //await EnviarCorreoPermisoAJefeDirectoAsync(ausencia.Id, user.EmpleadoId.Value);
+
                 return new JsonResult(new
                 {
                     tieneError = false,
@@ -1005,6 +1024,346 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 return new JsonResult(new { tieneError = true, mensaje = ex.Message });
             }
+        }
+
+        private async Task EnviarCorreoPermisoAJefeDirectoAsync(int ausenciaId, int empleadoId)
+        {
+            var ausencia = await _db.Ausencias
+                .Include(x => x.Empleado)
+                .Include(x => x.TipoAusencia)
+                .Include(x => x.TipoIncapacidad)
+                .Include(x => x.JefeDirectoEmpleado)
+                    .ThenInclude(j => j.Usuario)
+                .FirstOrDefaultAsync(x => x.Id == ausenciaId);
+
+            if (ausencia == null)
+                return;
+
+            var jefe = ausencia.JefeDirectoEmpleado;
+            if (jefe?.Usuario == null || string.IsNullOrWhiteSpace(jefe.Usuario.Email))
+                return;
+
+            string tipoVisual = ausencia.Categoria == "Inasistencia"
+                ? "Inasistencia"
+                : ausencia.Categoria == "Incapacidad"
+                    ? "Incapacidad - " + (ausencia.TipoIncapacidad != null ? ausencia.TipoIncapacidad.Nombre : "")
+                    : (ausencia.TipoAusencia != null ? ausencia.TipoAusencia.Nombre : ausencia.Categoria);
+
+            var request = HttpContext.Request;
+            string baseUrl = $"{request.Scheme}://{request.Host}";
+
+            // Ambos botones llevan al módulo, pero con el registro identificado
+            string urlAutorizar = $"{baseUrl}/ERP/Ausencias?ausenciaId={ausencia.Id}&accionCorreo=aprobarJefe";
+            string urlRechazar = $"{baseUrl}/ERP/Ausencias?ausenciaId={ausencia.Id}&accionCorreo=rechazarJefe";
+
+            string fechaInicio = ausencia.FechaInicio?.ToString("dd/MM/yyyy") ?? "";
+            string fechaFin = ausencia.FechaFin?.ToString("dd/MM/yyyy") ?? "";
+            string horaInicio = ausencia.HoraInicio?.ToString(@"hh\:mm") ?? "";
+            string horaFin = ausencia.HoraTermino?.ToString(@"hh\:mm") ?? "";
+            string dias = ausencia.Dias?.ToString("0.##") ?? "";
+            string horas = ausencia.Horas?.ToString("0.##") ?? "";
+            string comentario = string.IsNullOrWhiteSpace(ausencia.Comentario) ? "Sin comentario" : ausencia.Comentario;
+
+            string detalleDuracion = ausencia.TipoCaptura == "Horas"
+                ? $"{horaInicio} - {horaFin} ({horas} horas)"
+                : $"{fechaInicio} al {fechaFin} ({dias} días)";
+
+            string subject = $"Permiso pendiente de autorización - {ausencia.Empleado?.NombreCompleto}";
+
+            string body = $@"
+        <p>Estimado(a) {jefe.NombreCompleto},</p>
+
+        <p>Tienes una solicitud pendiente de revisión en el módulo de <strong>Ausencias</strong>.</p>
+
+        <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Empleado</th>
+                <td>{ausencia.Empleado?.NombreCompleto}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Categoría</th>
+                <td>{ausencia.Categoria}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Tipo</th>
+                <td>{tipoVisual}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Captura</th>
+                <td>{ausencia.TipoCaptura}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Detalle</th>
+                <td>{detalleDuracion}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Fecha de aplicación</th>
+                <td>{ausencia.FechaAplicacion?.ToString("dd/MM/yyyy") ?? ""}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Comentario</th>
+                <td>{comentario}</td>
+            </tr>
+        </table>
+
+        <br>
+
+        <p style='font-weight:bold;'>Acciones disponibles:</p>
+
+        <div style='margin-top:20px; display:flex; gap:20px; flex-wrap:wrap;'>
+            <a href='{urlAutorizar}' style='padding:10px 20px; background-color:#28a745; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                ✅ Autorizar en intranet
+            </a>
+
+            <a href='{urlRechazar}' style='padding:10px 20px; background-color:#dc3545; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                ❌ Rechazar en intranet
+            </a>
+        </div>
+
+        <br>
+        <p style='color:gray;'>Este es un mensaje automático de la intranet SEI Consulting Group.</p>";
+
+            await _emailSender.SendEmailAsync(jefe.Usuario.Email, subject, body);
+        }
+
+        private async Task EnviarCorreoSeguimientoAusenciaAsync(int ausenciaId, string etapa, string accion)
+        {
+            var ausencia = await _db.Ausencias
+                .Include(x => x.Empleado)
+                    .ThenInclude(e => e.Usuario)
+                .Include(x => x.TipoAusencia)
+                .Include(x => x.TipoIncapacidad)
+                .Include(x => x.JefeDirectoEmpleado)
+                    .ThenInclude(j => j.Usuario)
+                .FirstOrDefaultAsync(x => x.Id == ausenciaId);
+
+            if (ausencia == null)
+                return;
+
+            string tipoVisual = ausencia.Categoria == "Inasistencia"
+                ? "Inasistencia"
+                : ausencia.Categoria == "Incapacidad"
+                    ? "Incapacidad - " + (ausencia.TipoIncapacidad != null ? ausencia.TipoIncapacidad.Nombre : "")
+                    : (ausencia.TipoAusencia != null ? ausencia.TipoAusencia.Nombre : ausencia.Categoria);
+
+            string fechaInicio = ausencia.FechaInicio?.ToString("dd/MM/yyyy") ?? "";
+            string fechaFin = ausencia.FechaFin?.ToString("dd/MM/yyyy") ?? "";
+            string horaInicio = ausencia.HoraInicio?.ToString(@"hh\:mm") ?? "";
+            string horaFin = ausencia.HoraTermino?.ToString(@"hh\:mm") ?? "";
+            string dias = ausencia.Dias?.ToString("0.##") ?? "";
+            string horas = ausencia.Horas?.ToString("0.##") ?? "";
+            string comentario = string.IsNullOrWhiteSpace(ausencia.Comentario) ? "Sin comentario" : ausencia.Comentario;
+            string estadoVisual = ObtenerEstadoVisual(ausencia);
+
+            string detalleDuracion = ausencia.TipoCaptura == "Horas"
+                ? $"{horaInicio} - {horaFin} ({horas} horas)"
+                : $"{fechaInicio} al {fechaFin} ({dias} días)";
+
+            var request = HttpContext.Request;
+            string baseUrl = $"{request.Scheme}://{request.Host}";
+            string urlModulo = $"{baseUrl}/ERP/Ausencias";
+
+            // =========================
+            // 1. CORREO AL USUARIO
+            // =========================
+            if (!string.IsNullOrWhiteSpace(ausencia.Empleado?.Usuario?.Email))
+            {
+                string subjectUsuario = etapa == "JefeDirecto"
+                    ? $"Tu solicitud fue {(accion == "Aprobado" ? "aprobada" : "rechazada")} por tu jefe directo"
+                    : $"Tu solicitud fue {(accion == "Aprobado" ? "aprobada" : "rechazada")} por Talento Humano";
+
+                string bodyUsuario = $@"
+            <p>Hola {ausencia.Empleado?.NombreCompleto},</p>
+
+            <p>Tu solicitud en el módulo de <strong>Ausencias</strong> fue <strong>{accion}</strong> en la etapa de <strong>{(etapa == "JefeDirecto" ? "Jefe Directo" : "Talento Humano")}</strong>.</p>
+
+            <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Categoría</th>
+                    <td>{ausencia.Categoria}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Tipo</th>
+                    <td>{tipoVisual}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Detalle</th>
+                    <td>{detalleDuracion}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Fecha de aplicación</th>
+                    <td>{ausencia.FechaAplicacion?.ToString("dd/MM/yyyy") ?? ""}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Estado actual</th>
+                    <td>{estadoVisual}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Comentario</th>
+                    <td>{comentario}</td>
+                </tr>
+            </table>
+
+            <br>
+
+            <a href='{urlModulo}' style='padding:10px 20px; background-color:#1f4cd3; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                Ver en intranet
+            </a>
+
+            <br><br>
+            <p style='color:gray;'>Este es un mensaje automático de la intranet SEI Consulting Group..</p>";
+
+                await _emailSender.SendEmailAsync(
+                    ausencia.Empleado.Usuario.Email,
+                    subjectUsuario,
+                    bodyUsuario
+                );
+            }
+
+            // =========================
+            // 2. SI FUE TH, TAMBIÉN AL JEFE
+            // =========================
+            if (etapa == "TH" && !string.IsNullOrWhiteSpace(ausencia.JefeDirectoEmpleado?.Usuario?.Email))
+            {
+                string subjectJefe = $"Talento Humano {(accion == "Aprobado" ? "aprobó" : "rechazó")} la solicitud de {ausencia.Empleado?.NombreCompleto}";
+
+                string bodyJefe = $@"
+            <p>Hola {ausencia.JefeDirectoEmpleado?.NombreCompleto},</p>
+
+            <p>Talento Humano ha <strong>{(accion == "Aprobado" ? "aprobado" : "rechazado")}</strong> la solicitud del colaborador <strong>{ausencia.Empleado?.NombreCompleto}</strong>.</p>
+
+            <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Categoría</th>
+                    <td>{ausencia.Categoria}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Tipo</th>
+                    <td>{tipoVisual}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Detalle</th>
+                    <td>{detalleDuracion}</td>
+                </tr>
+                <tr>
+                    <th style='background-color:#f2f2f2;'>Estado actual</th>
+                    <td>{estadoVisual}</td>
+                </tr>
+            </table>
+
+            <br>
+
+            <a href='{urlModulo}' style='padding:10px 20px; background-color:#1f4cd3; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                Ver en intranet
+            </a>
+
+            <br><br>
+            <p style='color:gray;'>Este es un mensaje automático de la intranet SEI Consulting Group..</p>";
+
+                await _emailSender.SendEmailAsync(
+                    ausencia.JefeDirectoEmpleado.Usuario.Email,
+                    subjectJefe,
+                    bodyJefe
+                );
+            }
+        }
+
+        private async Task EnviarCorreoAusenciaAJefeDirectoAsync(int ausenciaId)
+        {
+            var ausencia = await _db.Ausencias
+                .Include(x => x.Empleado)
+                .Include(x => x.TipoAusencia)
+                .Include(x => x.TipoIncapacidad)
+                .Include(x => x.JefeDirectoEmpleado)
+                    .ThenInclude(j => j.Usuario)
+                .FirstOrDefaultAsync(x => x.Id == ausenciaId);
+
+            if (ausencia == null)
+                return;
+
+            var jefe = ausencia.JefeDirectoEmpleado;
+            if (jefe?.Usuario == null || string.IsNullOrWhiteSpace(jefe.Usuario.Email))
+                return;
+
+            string tipoVisual = ausencia.Categoria == "Inasistencia"
+                ? "Inasistencia"
+                : ausencia.Categoria == "Incapacidad"
+                    ? "Incapacidad - " + (ausencia.TipoIncapacidad != null ? ausencia.TipoIncapacidad.Nombre : "")
+                    : (ausencia.TipoAusencia != null ? ausencia.TipoAusencia.Nombre : ausencia.Categoria);
+
+            var request = HttpContext.Request;
+            string baseUrl = $"{request.Scheme}://{request.Host}";
+            string urlAutorizar = $"{baseUrl}/ERP/Ausencias?ausenciaId={ausencia.Id}&accionCorreo=aprobarJefe";
+            string urlRechazar = $"{baseUrl}/ERP/Ausencias?ausenciaId={ausencia.Id}&accionCorreo=rechazarJefe";
+
+            string fechaInicio = ausencia.FechaInicio?.ToString("dd/MM/yyyy") ?? "";
+            string fechaFin = ausencia.FechaFin?.ToString("dd/MM/yyyy") ?? "";
+            string horaInicio = ausencia.HoraInicio?.ToString(@"hh\:mm") ?? "";
+            string horaFin = ausencia.HoraTermino?.ToString(@"hh\:mm") ?? "";
+            string dias = ausencia.Dias?.ToString("0.##") ?? "";
+            string horas = ausencia.Horas?.ToString("0.##") ?? "";
+            string comentario = string.IsNullOrWhiteSpace(ausencia.Comentario) ? "Sin comentario" : ausencia.Comentario;
+
+            string detalleDuracion = ausencia.TipoCaptura == "Horas"
+                ? $"{horaInicio} - {horaFin} ({horas} horas)"
+                : $"{fechaInicio} al {fechaFin} ({dias} días)";
+
+            string subject = $"{ausencia.Categoria} pendiente de autorización - {ausencia.Empleado?.NombreCompleto}";
+
+            string body = $@"
+        <p>Estimado(a) {jefe.NombreCompleto},</p>
+
+        <p>Tienes una nueva solicitud pendiente de revisión en el módulo de <strong>Ausencias</strong>.</p>
+
+        <table border='1' cellpadding='8' cellspacing='0' style='border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px;'>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Empleado</th>
+                <td>{ausencia.Empleado?.NombreCompleto}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Categoría</th>
+                <td>{ausencia.Categoria}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Tipo</th>
+                <td>{tipoVisual}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Captura</th>
+                <td>{ausencia.TipoCaptura}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Detalle</th>
+                <td>{detalleDuracion}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Fecha de aplicación</th>
+                <td>{ausencia.FechaAplicacion?.ToString("dd/MM/yyyy") ?? ""}</td>
+            </tr>
+            <tr>
+                <th style='background-color:#f2f2f2;'>Comentario</th>
+                <td>{comentario}</td>
+            </tr>
+        </table>
+
+        <br>
+
+        <p style='font-weight:bold;'>Acciones disponibles:</p>
+
+        <div style='margin-top:20px; display:flex; gap:20px; flex-wrap:wrap;'>
+            <a href='{urlAutorizar}' style='padding:10px 20px; background-color:#28a745; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                ✅ Autorizar en intranet
+            </a>
+
+            <a href='{urlRechazar}' style='padding:10px 20px; background-color:#dc3545; color:white; text-decoration:none; border-radius:5px; font-weight:bold;'>
+                ❌ Rechazar en intranet
+            </a>
+        </div>
+
+        <br>
+        <p style='color:gray;'>Este es un mensaje automático de la intranet SEI Consulting Group.</p>";
+
+            await _emailSender.SendEmailAsync(jefe.Usuario.Email, subject, body);
         }
 
         private async Task<int?> ObtenerJefeDirectoEmpleadoIdAsync(int empleadoId)

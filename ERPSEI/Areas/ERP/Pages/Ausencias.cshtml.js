@@ -21,6 +21,25 @@ document.addEventListener("DOMContentLoaded", function () {
     $(".campo-horas-permiso").show();
     $(".campo-dias-permiso").show();
     $(".campo-horas-solicitud").show();
+
+    // 🔥 NUEVO BLOQUE (AGREGAR AQUÍ)
+    const params = new URLSearchParams(window.location.search);
+    const ausenciaId = params.get("ausenciaId");
+    const accionCorreo = params.get("accionCorreo");
+
+    if (ausenciaId) {
+        setTimeout(() => {
+            verDetalle(ausenciaId);
+
+            if (accionCorreo === "aprobarJefe") {
+                console.log("Abrir detalle para aprobar como jefe");
+            }
+
+            if (accionCorreo === "rechazarJefe") {
+                console.log("Abrir detalle para rechazar como jefe");
+            }
+        }, 700);
+    }
 });
 
 function configurarEventos() {
