@@ -52,6 +52,7 @@ namespace ERPSEI.Areas.ERP.Pages
             public DateTime? FechaAplicacion { get; set; }
             public bool Suplencia { get; set; }
             public string? Comentario { get; set; }
+            public List<IFormFile> Documentos { get; set; } = new();
         }
 
         public class GuardarIncapacidadInput
@@ -64,6 +65,7 @@ namespace ERPSEI.Areas.ERP.Pages
             public DateTime? FechaAplicacion { get; set; }
             public bool Suplencia { get; set; }
             public string? Comentario { get; set; }
+            public List<IFormFile> Documentos { get; set; } = new();
         }
 
         public class GuardarPermisoInput
@@ -77,6 +79,7 @@ namespace ERPSEI.Areas.ERP.Pages
             public DateTime? FechaAplicacion { get; set; }
             public bool Suplencia { get; set; }
             public string? Comentario { get; set; }
+            public List<IFormFile> Documentos { get; set; } = new();
         }
 
         public class SolicitarPermisoInput
@@ -88,6 +91,7 @@ namespace ERPSEI.Areas.ERP.Pages
             public string? HoraTermino { get; set; }
             public DateTime? FechaAplicacion { get; set; }
             public string? Comentario { get; set; }
+            public List<IFormFile> Documentos { get; set; } = new();
         }
 
         public class EditarAusenciaInput
@@ -104,6 +108,7 @@ namespace ERPSEI.Areas.ERP.Pages
             public string? NumeroFolio { get; set; }
             public bool Suplencia { get; set; }
             public string? Comentario { get; set; }
+            public List<IFormFile> Documentos { get; set; } = new();
         }
 
         public async Task OnGetAsync()
@@ -201,6 +206,51 @@ namespace ERPSEI.Areas.ERP.Pages
                 .ToListAsync();
 
             return new JsonResult(data);
+        }
+
+        private async Task GuardarDocumentosAusenciaAsync(int ausenciaId, IEnumerable<IFormFile>? archivos, string usuarioId)
+        {
+            if (archivos == null || !archivos.Any())
+                return;
+
+            string carpetaFisica = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "documentos", "ausencias");
+            if (!Directory.Exists(carpetaFisica))
+                Directory.CreateDirectory(carpetaFisica);
+
+            foreach (var archivo in archivos)
+            {
+                if (archivo == null || archivo.Length <= 0)
+                    continue;
+
+                var extension = Path.GetExtension(archivo.FileName)?.ToLowerInvariant();
+                if (extension != ".pdf")
+                    continue;
+
+                string nombreGuardado = $"{Guid.NewGuid()}{extension}";
+                string rutaFisica = Path.Combine(carpetaFisica, nombreGuardado);
+                string rutaRelativa = $"/documentos/ausencias/{nombreGuardado}";
+
+                using (var stream = new FileStream(rutaFisica, FileMode.Create))
+                {
+                    await archivo.CopyToAsync(stream);
+                }
+
+                var doc = new AusenciaDocumento
+                {
+                    AusenciaId = ausenciaId,
+                    NombreOriginal = archivo.FileName,
+                    NombreGuardado = nombreGuardado,
+                    RutaArchivo = rutaRelativa,
+                    Extension = extension,
+                    TamanioBytes = archivo.Length,
+                    UsuarioCreadorId = usuarioId,
+                    FechaCreacion = DateTime.Now
+                };
+
+                _db.AusenciasDocumentos.Add(doc);
+            }
+
+            await _db.SaveChangesAsync();
         }
 
         public async Task<JsonResult> OnGetAusenciasDiasAsync()
@@ -461,6 +511,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 .Include(x => x.TipoAusencia)
                 .Include(x => x.TipoIncapacidad)
                 .Include(x => x.UsuarioCreador)
+                .Include(x => x.Documentos)
                 .AsQueryable();
 
             if (!PuedeVerTodasAusencias && user.EmpleadoId != null)
@@ -490,6 +541,15 @@ namespace ERPSEI.Areas.ERP.Pages
                 suplencia = item.Suplencia,
                 numeroFolio = item.NumeroFolio,
                 comentario = item.Comentario,
+                documentos = item.Documentos
+                .OrderBy(d => d.FechaCreacion)
+                .Select(d => new
+                {
+                    id = d.Id,
+                    nombre = d.NombreOriginal,
+                    ruta = d.RutaArchivo
+                })
+                .ToList(),
                 tipoAusenciaId = item.TipoAusenciaId,
                 tipoIncapacidadId = item.TipoIncapacidadId,
                 usuarioCreador = item.UsuarioCreador != null ? item.UsuarioCreador.UserName : "",
@@ -820,6 +880,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
 
+                await GuardarDocumentosAusenciaAsync(
+                    ausencia.Id,
+                    InasistenciaInput.Documentos, // cambia según el método
+                    user.Id
+                );
+
                 await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
 
                 return new JsonResult(new
@@ -872,6 +938,12 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
+
+                await GuardarDocumentosAusenciaAsync(
+                    ausencia.Id,
+                    IncapacidadInput.Documentos,
+                    user.Id
+                );
 
                 await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
 
@@ -942,8 +1014,13 @@ namespace ERPSEI.Areas.ERP.Pages
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
 
+                await GuardarDocumentosAusenciaAsync(
+                    ausencia.Id,
+                    PermisoInput.Documentos,
+                    user.Id
+                );
+
                 await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
-                //await EnviarCorreoPermisoAJefeDirectoAsync(ausencia.Id, user.EmpleadoId.Value);
 
                 return new JsonResult(new
                 {
@@ -1011,8 +1088,13 @@ namespace ERPSEI.Areas.ERP.Pages
                 _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
 
+                await GuardarDocumentosAusenciaAsync(
+                    ausencia.Id,
+                    SolicitudPermisoInput.Documentos,
+                    user.Id
+                );
+
                 await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
-                //await EnviarCorreoPermisoAJefeDirectoAsync(ausencia.Id, user.EmpleadoId.Value);
 
                 return new JsonResult(new
                 {

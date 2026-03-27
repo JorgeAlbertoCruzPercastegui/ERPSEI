@@ -168,6 +168,16 @@
                                 <label>Comentario</label>
                             </div>
                         </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Justificantes (PDF)</label>
+                            <input type="file"
+                                   id="inpDocumentosInasistencia"
+                                   class="form-control"
+                                   accept=".pdf,application/pdf"
+                                   multiple />
+                            <small class="text-muted">Puedes adjuntar uno o varios archivos PDF.</small>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -250,6 +260,16 @@
                                 <textarea id="txtComentarioIncapacidad" class="form-control" style="height:120px;"></textarea>
                                 <label>Comentario</label>
                             </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Justificantes (PDF)</label>
+                            <input type="file"
+                                   id="inpDocumentosIncapacidad"
+                                   class="form-control"
+                                   accept=".pdf,application/pdf"
+                                   multiple />
+                            <small class="text-muted">Puedes adjuntar uno o varios archivos PDF.</small>
                         </div>
                     </div>
                 </form>
@@ -351,6 +371,16 @@
                                 <label>Comentario</label>
                             </div>
                         </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Justificantes (PDF)</label>
+                            <input type="file"
+                                   id="inpDocumentosPermiso"
+                                   class="form-control"
+                                   accept=".pdf,application/pdf"
+                                   multiple />
+                            <small class="text-muted">Puedes adjuntar uno o varios archivos PDF.</small>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -437,6 +467,16 @@
                                 <label>Comentario</label>
                             </div>
                         </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Justificantes (PDF)</label>
+                            <input type="file"
+                                   id="inpDocumentosSolicitudPermiso"
+                                   class="form-control"
+                                   accept=".pdf,application/pdf"
+                                   multiple />
+                            <small class="text-muted">Puedes adjuntar uno o varios archivos PDF.</small>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -473,6 +513,12 @@
                     <div class="col-md-6"><strong>Folio:</strong> <span id="detFolio"></span></div>
                     <div class="col-md-6"><strong>Creado por:</strong> <span id="detUsuarioCreador"></span></div>
                     <div class="col-12"><strong>Comentario:</strong> <div id="detComentario" class="border rounded p-3 bg-light mt-1"></div></div>
+                    <div class="col-12">
+                        <strong>Documentos adjuntos:</strong>
+                        <div id="detDocumentos" class="border rounded p-3 bg-light mt-1">
+                            Sin documentos adjuntos.
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer justify-content-between">

@@ -350,111 +350,170 @@ function alternarCamposEdicion(tipoAusenciaId) {
     }
 }
 
-function guardarInasistencia() {
-    $.ajax({
-        url: "/ERP/Ausencias?handler=GuardarInasistencia",
-        type: "POST",
-        headers: { "RequestVerificationToken": getToken("formInasistencia") },
-        data: {
-            "InasistenciaInput.FechaInicio": $("#inpInasistenciaFechaInicio").val(),
-            "InasistenciaInput.FechaFin": $("#inpInasistenciaFechaFin").val(),
-            "InasistenciaInput.Dias": $("#inpInasistenciaDias").val(),
-            "InasistenciaInput.FechaAplicacion": $("#inpInasistenciaFechaAplicacion").val(),
-            "InasistenciaInput.Suplencia": $("#chkSuplenciaInasistencia").is(":checked"),
-            "InasistenciaInput.Comentario": $("#txtComentarioInasistencia").val()
-        },
-        success: function (resp) {
-            if (!resp.tieneError) {
-                bootstrap.Modal.getInstance(document.getElementById("modalInasistencia"))?.hide();
-                $("#formInasistencia")[0].reset();
-                $("#lblDiasInasistencia").text("0");
-                refrescarTablas();
-            }
-            mostrarResultado(resp.tieneError, resp.mensaje);
-        }
-    });
-}
-
 function guardarIncapacidad() {
+    const formData = new FormData();
+
+    formData.append("IncapacidadInput.FechaInicio", $("#inpIncapacidadFechaInicio").val());
+    formData.append("IncapacidadInput.FechaFin", $("#inpIncapacidadFechaFin").val());
+    formData.append("IncapacidadInput.TipoIncapacidadId", $("#selTipoIncapacidad").val());
+    formData.append("IncapacidadInput.NumeroFolio", $("#inpNumeroFolioIncapacidad").val());
+    formData.append("IncapacidadInput.Dias", $("#inpDiasIncapacidad").val());
+    formData.append("IncapacidadInput.FechaAplicacion", $("#inpFechaAplicacionIncapacidad").val());
+    formData.append("IncapacidadInput.Suplencia", $("#chkSuplenciaIncapacidad").is(":checked"));
+    formData.append("IncapacidadInput.Comentario", $("#txtComentarioIncapacidad").val());
+
+    const archivos = $("#inpDocumentosIncapacidad")[0].files;
+    for (let i = 0; i < archivos.length; i++) {
+        formData.append("IncapacidadInput.Documentos", archivos[i]);
+    }
+
     $.ajax({
         url: "/ERP/Ausencias?handler=GuardarIncapacidad",
         type: "POST",
         headers: { "RequestVerificationToken": getToken("formIncapacidad") },
-        data: {
-            "IncapacidadInput.FechaInicio": $("#inpIncapacidadFechaInicio").val(),
-            "IncapacidadInput.FechaFin": $("#inpIncapacidadFechaFin").val(),
-            "IncapacidadInput.TipoIncapacidadId": $("#selTipoIncapacidad").val(),
-            "IncapacidadInput.NumeroFolio": $("#inpNumeroFolioIncapacidad").val(),
-            "IncapacidadInput.Dias": $("#inpDiasIncapacidad").val(),
-            "IncapacidadInput.FechaAplicacion": $("#inpFechaAplicacionIncapacidad").val(),
-            "IncapacidadInput.Suplencia": $("#chkSuplenciaIncapacidad").is(":checked"),
-            "IncapacidadInput.Comentario": $("#txtComentarioIncapacidad").val()
-        },
+        data: formData,
+        processData: false,
+        contentType: false,
         success: function (resp) {
             if (!resp.tieneError) {
                 bootstrap.Modal.getInstance(document.getElementById("modalIncapacidad"))?.hide();
                 $("#formIncapacidad")[0].reset();
+                $("#inpDocumentosIncapacidad").val("");
                 $("#lblDiasIncapacidad").text("0");
                 refrescarTablas();
             }
             mostrarResultado(resp.tieneError, resp.mensaje);
+        },
+        error: function (xhr) {
+            mostrarResultado(true, `Error ${xhr.status}: no fue posible guardar la incapacidad.`);
+        }
+    });
+}
+
+function guardarInasistencia() {
+    const formData = new FormData();
+
+    formData.append("InasistenciaInput.FechaInicio", $("#inpInasistenciaFechaInicio").val());
+    formData.append("InasistenciaInput.FechaFin", $("#inpInasistenciaFechaFin").val());
+    formData.append("InasistenciaInput.Dias", $("#inpInasistenciaDias").val());
+    formData.append("InasistenciaInput.FechaAplicacion", $("#inpInasistenciaFechaAplicacion").val());
+    formData.append("InasistenciaInput.Suplencia", $("#chkSuplenciaInasistencia").is(":checked"));
+    formData.append("InasistenciaInput.Comentario", $("#txtComentarioInasistencia").val());
+
+    const archivos = $("#inpDocumentosInasistencia")[0].files;
+    for (let i = 0; i < archivos.length; i++) {
+        formData.append("InasistenciaInput.Documentos", archivos[i]);
+    }
+
+    $.ajax({
+        url: "/ERP/Ausencias?handler=GuardarInasistencia",
+        type: "POST",
+        headers: { "RequestVerificationToken": getToken("formInasistencia") },
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (resp) {
+            if (!resp.tieneError) {
+                bootstrap.Modal.getInstance(document.getElementById("modalInasistencia"))?.hide();
+                $("#formInasistencia")[0].reset();
+                $("#inpDocumentosInasistencia").val("");
+                $("#lblDiasInasistencia").text("0");
+                refrescarTablas();
+            }
+            mostrarResultado(resp.tieneError, resp.mensaje);
+        },
+        error: function (xhr) {
+            mostrarResultado(true, `Error ${xhr.status}: no fue posible guardar la inasistencia.`);
         }
     });
 }
 
 function guardarPermiso() {
+    const formData = new FormData();
+
+    formData.append("PermisoInput.TipoAusenciaId", $("#selTipoAusenciaPermiso").val());
+    formData.append("PermisoInput.FechaInicio", $("#inpPermisoFechaInicio").val());
+    formData.append("PermisoInput.FechaFin", $("#inpPermisoFechaFin").val());
+    formData.append("PermisoInput.HoraInicio", $("#inpPermisoHoraInicio").val());
+    formData.append("PermisoInput.HoraTermino", $("#inpPermisoHoraTermino").val());
+    formData.append("PermisoInput.Dias", $("#inpPermisoDiasAporte").val());
+    formData.append("PermisoInput.FechaAplicacion", $("#inpPermisoFechaAplicacion").val());
+    formData.append("PermisoInput.Suplencia", $("#chkSuplenciaPermiso").is(":checked"));
+    formData.append("PermisoInput.Comentario", $("#txtComentarioPermiso").val());
+
+    const archivos = $("#inpDocumentosPermiso")[0].files;
+    for (let i = 0; i < archivos.length; i++) {
+        formData.append("PermisoInput.Documentos", archivos[i]);
+    }
+
     $.ajax({
         url: "/ERP/Ausencias?handler=GuardarPermiso",
         type: "POST",
         headers: { "RequestVerificationToken": getToken("formPermiso") },
-        data: {
-            "PermisoInput.TipoAusenciaId": $("#selTipoAusenciaPermiso").val(),
-            "PermisoInput.FechaInicio": $("#inpPermisoFechaInicio").val(),
-            "PermisoInput.FechaFin": $("#inpPermisoFechaFin").val(),
-            "PermisoInput.HoraInicio": $("#inpPermisoHoraInicio").val(),
-            "PermisoInput.HoraTermino": $("#inpPermisoHoraTermino").val(),
-            "PermisoInput.Dias": $("#inpPermisoDiasAporte").val(),
-            "PermisoInput.FechaAplicacion": $("#inpPermisoFechaAplicacion").val(),
-            "PermisoInput.Suplencia": $("#chkSuplenciaPermiso").is(":checked"),
-            "PermisoInput.Comentario": $("#txtComentarioPermiso").val()
-        },
+        data: formData,
+        processData: false,
+        contentType: false,
         success: function (resp) {
             if (!resp.tieneError) {
                 bootstrap.Modal.getInstance(document.getElementById("modalPermiso"))?.hide();
                 $("#formPermiso")[0].reset();
+                $("#inpDocumentosPermiso").val("");
                 $("#lblDiasPermiso").text("0");
                 $(".campo-horas-permiso").show();
                 $(".campo-dias-permiso").show();
                 refrescarTablas();
             }
             mostrarResultado(resp.tieneError, resp.mensaje);
+        },
+        error: function (xhr) {
+            mostrarResultado(true, `Error ${xhr.status}: no fue posible guardar el permiso.`);
         }
     });
 }
 
 function solicitarPermiso() {
+    const formData = new FormData();
+
+    formData.append("SolicitudPermisoInput.TipoAusenciaId", $("#selTipoAusenciaSolicitud").val());
+    formData.append("SolicitudPermisoInput.FechaInicio", $("#inpSolicitudPermisoFechaInicio").val());
+    formData.append("SolicitudPermisoInput.FechaFin", $("#inpSolicitudPermisoFechaFin").val());
+    formData.append("SolicitudPermisoInput.HoraInicio", $("#inpSolicitudPermisoHoraInicio").val());
+    formData.append("SolicitudPermisoInput.HoraTermino", $("#inpSolicitudPermisoHoraTermino").val());
+    formData.append("SolicitudPermisoInput.FechaAplicacion", $("#inpSolicitudPermisoFechaAplicacion").val());
+    formData.append("SolicitudPermisoInput.Comentario", $("#txtComentarioSolicitudPermiso").val());
+
+    const inputArchivos = document.getElementById("inpDocumentosSolicitudPermiso");
+    if (inputArchivos && inputArchivos.files && inputArchivos.files.length > 0) {
+        for (let i = 0; i < inputArchivos.files.length; i++) {
+            formData.append("SolicitudPermisoInput.Documentos", inputArchivos.files[i]);
+        }
+    }
+
     $.ajax({
         url: "/ERP/Ausencias?handler=SolicitarPermiso",
         type: "POST",
         headers: { "RequestVerificationToken": getToken("formSolicitarPermiso") },
-        data: {
-            "SolicitudPermisoInput.TipoAusenciaId": $("#selTipoAusenciaSolicitud").val(),
-            "SolicitudPermisoInput.FechaInicio": $("#inpSolicitudPermisoFechaInicio").val(),
-            "SolicitudPermisoInput.FechaFin": $("#inpSolicitudPermisoFechaFin").val(),
-            "SolicitudPermisoInput.HoraInicio": $("#inpSolicitudPermisoHoraInicio").val(),
-            "SolicitudPermisoInput.HoraTermino": $("#inpSolicitudPermisoHoraTermino").val(),
-            "SolicitudPermisoInput.FechaAplicacion": $("#inpSolicitudPermisoFechaAplicacion").val(),
-            "SolicitudPermisoInput.Comentario": $("#txtComentarioSolicitudPermiso").val()
-        },
+        data: formData,
+        processData: false,
+        contentType: false,
         success: function (resp) {
             if (!resp.tieneError) {
                 bootstrap.Modal.getInstance(document.getElementById("modalSolicitarPermiso"))?.hide();
                 $("#formSolicitarPermiso")[0].reset();
+
+                if ($("#inpDocumentosSolicitudPermiso").length) {
+                    $("#inpDocumentosSolicitudPermiso").val("");
+                }
+
                 $("#lblDiasSolicitudPermiso").text("0");
                 $(".campo-horas-solicitud").show();
                 refrescarTablas();
             }
+
             mostrarResultado(resp.tieneError, resp.mensaje);
+        },
+        error: function (xhr) {
+            mostrarResultado(true, `Error ${xhr.status}: no fue posible solicitar el permiso.`);
         }
     });
 }
@@ -481,6 +540,23 @@ function verDetalle(id) {
         $("#detFolio").text(resp.numeroFolio || "");
         $("#detUsuarioCreador").text(resp.usuarioCreador || "");
         $("#detComentario").text(resp.comentario || "");
+
+        const contenedorDocs = $("#detDocumentos");
+        contenedorDocs.empty();
+
+        if (resp.documentos && resp.documentos.length > 0) {
+            resp.documentos.forEach(doc => {
+                contenedorDocs.append(`
+                    <div class="mb-2">
+                        <a href="${doc.ruta}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-file-earmark-pdf"></i> ${doc.nombre}
+                        </a>
+                    </div>
+                `);
+            });
+        } else {
+            contenedorDocs.html(`<span class="text-muted">Sin documentos adjuntos.</span>`);
+        }
 
         const contenedor = $("#detalleAccionesAprobacion");
         contenedor.empty();

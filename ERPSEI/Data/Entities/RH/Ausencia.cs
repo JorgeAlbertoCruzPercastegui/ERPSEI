@@ -56,5 +56,6 @@ namespace ERPSEI.Data.Entities.RH
 
         public string? UsuarioCreadorId { get; set; }
         public AppUser? UsuarioCreador { get; set; }
+        public ICollection<AusenciaDocumento> Documentos { get; set; } = new List<AusenciaDocumento>();
     }
 }

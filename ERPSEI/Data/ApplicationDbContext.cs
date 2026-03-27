@@ -188,6 +188,7 @@ namespace ERPSEI.Data
         public DbSet<TipoAusencia> TiposAusencias { get; set; }
         public DbSet<TipoIncapacidad> TiposIncapacidades { get; set; }
         public DbSet<Ausencia> Ausencias { get; set; }
+        public DbSet<AusenciaDocumento> AusenciasDocumentos { get; set; }
 
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
@@ -338,7 +339,21 @@ namespace ERPSEI.Data
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            
+            b.Entity<AusenciaDocumento>(entity =>
+            {
+                entity.Property(x => x.NombreOriginal).HasMaxLength(260);
+                entity.Property(x => x.NombreGuardado).HasMaxLength(260);
+                entity.Property(x => x.RutaArchivo).HasMaxLength(500);
+                entity.Property(x => x.Extension).HasMaxLength(10);
+                entity.Property(x => x.UsuarioCreadorId).HasMaxLength(450);
+
+                entity.HasOne(x => x.Ausencia)
+                    .WithMany(x => x.Documentos)
+                    .HasForeignKey(x => x.AusenciaId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+
         }
 
             private static void BuildPoliticas(ModelBuilder b)
