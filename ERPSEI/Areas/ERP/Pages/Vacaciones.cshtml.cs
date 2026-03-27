@@ -175,6 +175,7 @@ namespace ERPSEI.Areas.ERP.Pages
             public string? ComentarioEmpleado { get; set; }
 
             public int EmpleadoId { get; set; }
+            public bool EsVacacionAnticipada { get; set; }
         }
 
         public List<VacacionesAcumuladasModel> ListaVacacionesAcumuladas { get; set; } = new();
@@ -588,7 +589,7 @@ namespace ERPSEI.Areas.ERP.Pages
             if (s.EstadoJefeDirecto == "Aprobado" && s.EstadoTH == "Aprobado")
                 return "Aprobado";
 
-            return "Pendiente";
+            return s.Estado.ToString();
         }
 
         public async Task<JsonResult> OnGetPoliticaVacaciones(string tipoVacacion = "Legales")
@@ -967,6 +968,91 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }*/
 
+        private async Task<decimal> OnGetObtenerDiasDisponiblesInternoAsync(int empleadoId)
+        {
+            var empleado = await db.Empleados.FirstOrDefaultAsync(e => e.Id == empleadoId);
+
+            if (empleado == null)
+                return 0m;
+
+            var fechaHoy = DateTime.Today;
+            string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
+
+            decimal diasLegales = 0m;
+            decimal diasProporcionales = 0m;
+
+            if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
+            {
+                diasLegales = 12m;
+                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
+            }
+            else
+            {
+                diasLegales = 0m;
+                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+            }
+
+            decimal acumuladas = tipoAsignacion == "Legales"
+                ? diasLegales
+                : diasLegales + diasProporcionales;
+
+            var diasTomados = await db.SolicitudesVacaciones
+                .Where(s =>
+                    s.EmpleadoId == empleadoId &&
+                    s.Estado != EstadoSolicitud.Rechazado &&
+                    !s.EsVacacionAnticipada)
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+            return Math.Max(acumuladas - diasTomados, 0m);
+        }
+
+        private async Task AplicarDescuentoVacacionesAnticipadasAsync(int empleadoId)
+        {
+            var empleado = await db.Empleados.FirstOrDefaultAsync(e => e.Id == empleadoId);
+
+            if (empleado == null)
+                return;
+
+            var fechaHoy = DateTime.Today;
+
+            if (fechaHoy < empleado.FechaIngreso.Date.AddYears(1))
+                return;
+
+            var solicitudesAnticipadasPendientes = await db.SolicitudesVacaciones
+                .Where(s =>
+                    s.EmpleadoId == empleadoId &&
+                    s.EsVacacionAnticipada &&
+                    s.Estado == EstadoSolicitud.Aprobado &&
+                    !s.DescuentoAnticipadoAplicado &&
+                    s.DiasAnticipadosPendientesDescuento > 0)
+                .ToListAsync();
+
+            if (!solicitudesAnticipadasPendientes.Any())
+                return;
+
+            foreach (var solicitud in solicitudesAnticipadasPendientes)
+            {
+                var historial = new HistorialVacaciones
+                {
+                    EmpleadoId = solicitud.EmpleadoId,
+                    FechaInicio = solicitud.FechaInicio,
+                    FechaFin = solicitud.FechaFin,
+                    DiasTomados = Convert.ToInt32(solicitud.DiasAnticipadosPendientesDescuento),
+                    Observaciones = $"Descuento automático por vacaciones anticipadas aprobadas. Solicitud #{solicitud.Id}",
+                    SolicitudVacacionesId = solicitud.Id,
+                    AutorizadorId = solicitud.AutorizadorId ?? 0
+                };
+
+                db.HistorialesVacaciones.Add(historial);
+
+                solicitud.DescuentoAnticipadoAplicado = true;
+                solicitud.FechaAplicacionDescuentoAnticipado = fechaHoy;
+                solicitud.DiasAnticipadosPendientesDescuento = 0m;
+            }
+
+            await db.SaveChangesAsync();
+        }
+
         public async Task<JsonResult> OnPostGuardarSolicitud()
         {
             ServerResponse resp = new(false, localizer["SolicitudVacacionesSavedUnsuccessfully"]);
@@ -985,6 +1071,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 var empleado = usuario.Empleado;
                 var fechaActual = DateTime.Now;
+                var fechaHoy = DateTime.Today;
 
                 if (empleado.JefeId == null || empleado.JefeId == 0)
                 {
@@ -993,10 +1080,64 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
+                if (InputSolicitud.FechaFin < InputSolicitud.FechaInicio)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "La fecha fin no puede ser menor que la fecha inicio.";
+                    return new JsonResult(resp);
+                }
+
                 var diasSolicitados = Enumerable
                     .Range(0, (InputSolicitud.FechaFin - InputSolicitud.FechaInicio).Days + 1)
                     .Select(offset => InputSolicitud.FechaInicio.AddDays(offset))
                     .Count(date => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday);
+
+                if (diasSolicitados <= 0)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "Debes seleccionar al menos un día hábil.";
+                    return new JsonResult(resp);
+                }
+
+                bool cumpleAnio = fechaHoy >= empleado.FechaIngreso.Date.AddYears(1);
+
+                if (InputSolicitud.EsVacacionAnticipada)
+                {
+                    if (cumpleAnio)
+                    {
+                        resp.TieneError = true;
+                        resp.Mensaje = "Las vacaciones anticipadas solo aplican para colaboradores que aún no cumplen un año.";
+                        return new JsonResult(resp);
+                    }
+
+                    if (diasSolicitados > 12)
+                    {
+                        resp.TieneError = true;
+                        resp.Mensaje = "No puedes solicitar más de 12 días de vacaciones anticipadas.";
+                        return new JsonResult(resp);
+                    }
+
+                    var diasAnticipadosPendientes = await ObtenerDiasAnticipadosPendientesAsync(empleado.Id);
+
+                    if ((diasAnticipadosPendientes + diasSolicitados) > 12)
+                    {
+                        resp.TieneError = true;
+                        resp.Mensaje = $"Ya tienes {diasAnticipadosPendientes:0.##} día(s) de vacaciones anticipadas pendientes. El máximo acumulado es 12.";
+                        return new JsonResult(resp);
+                    }
+                }
+                else
+                {
+                    // Aquí se valida el flujo normal de vacaciones
+                    decimal diasDisponibles = await OnGetObtenerDiasDisponiblesInternoAsync(empleado.Id);
+
+                    if (diasSolicitados > diasDisponibles)
+                    {
+                        resp.TieneError = true;
+                        resp.Mensaje = $"No cuentas con saldo suficiente. Saldo disponible: {diasDisponibles:0.##} día(s).";
+                        return new JsonResult(resp);
+                    }
+                }
 
                 var solicitud = new SolicitudVacaciones
                 {
@@ -1013,7 +1154,12 @@ namespace ERPSEI.Areas.ERP.Pages
                     Estado = EstadoSolicitud.Pendiente,
 
                     EstadoJefeDirecto = "Pendiente",
-                    EstadoTH = "Pendiente"
+                    EstadoTH = "Pendiente",
+
+                    EsVacacionAnticipada = InputSolicitud.EsVacacionAnticipada,
+                    DiasAnticipadosPendientesDescuento = InputSolicitud.EsVacacionAnticipada ? diasSolicitados : 0m,
+                    FechaAplicacionDescuentoAnticipado = null,
+                    DescuentoAnticipadoAplicado = false
                 };
 
                 await solicitudVacacionesManager.CreateAsync(solicitud);
@@ -1230,8 +1376,10 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(new { error = "Empleado no encontrado." });
 
             var empleado = usuario.Empleado;
-            var fechaHoy = DateTime.Now.Date;
 
+            await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
+
+            var fechaHoy = DateTime.Now.Date;
             string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
 
             decimal diasLegales = 0m;
@@ -1240,30 +1388,61 @@ namespace ERPSEI.Areas.ERP.Pages
             if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
             {
                 diasLegales = 12m;
-                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
+                diasProporcionales = Math.Round(
+                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
             }
             else
             {
                 diasLegales = 0m;
-                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+                diasProporcionales = Math.Round(
+                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
             }
 
             decimal acumuladas = tipoAsignacion == "Legales"
                 ? diasLegales
                 : diasLegales + diasProporcionales;
 
+            // Tomadas reales:
+            // - normales aprobadas
+            // - anticipadas ya aplicadas al cumplir el año
             var diasTomados = await db.SolicitudesVacaciones
-                .Where(s => s.EmpleadoId == empleado.Id && s.Estado != EstadoSolicitud.Rechazado)
-                .SumAsync(s => s.DiasSolicitados);
+                .Where(s =>
+                    s.EmpleadoId == empleado.Id &&
+                    (
+                        (!s.EsVacacionAnticipada && s.Estado == EstadoSolicitud.Aprobado)
+                        ||
+                        (s.EsVacacionAnticipada && s.DescuentoAnticipadoAplicado)
+                    ))
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
-            decimal saldo = Math.Max(acumuladas - diasTomados, 0);
+            // Futuras visuales:
+            // anticipadas solicitadas o aprobadas, mientras no estén rechazadas ni aplicadas
+            var diasFuturasVisuales = await db.SolicitudesVacaciones
+                .Where(s =>
+                    s.EmpleadoId == empleado.Id &&
+                    s.EsVacacionAnticipada &&
+                    s.Estado != EstadoSolicitud.Rechazado &&
+                    !s.DescuentoAnticipadoAplicado)
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+            // Futuras que sí descuentan saldo:
+            // solo las aprobadas y aún no aplicadas
+            var diasFuturasDescontables = await db.SolicitudesVacaciones
+                .Where(s =>
+                    s.EmpleadoId == empleado.Id &&
+                    s.EsVacacionAnticipada &&
+                    s.Estado == EstadoSolicitud.Aprobado &&
+                    !s.DescuentoAnticipadoAplicado)
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+            decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturasDescontables, 0m);
 
             return new JsonResult(new
             {
                 Acumuladas = acumuladas,
                 Tomadas = diasTomados,
                 Vencidas = 0,
-                Futuras = 0,
+                Futuras = diasFuturasVisuales,
                 Saldo = saldo,
                 Fecha = DateTime.Now.ToString("dd-MM-yyyy"),
                 TipoAsignacion = tipoAsignacion
@@ -1311,8 +1490,11 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(0);
 
             var empleado = usuario.Empleado;
-            var fechaHoy = DateTime.Today;
 
+            // 🔥 Aplica descuentos automáticos si ya cumplió el año
+            await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
+
+            var fechaHoy = DateTime.Today;
             string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
 
             decimal diasLegales = 0m;
@@ -1321,12 +1503,14 @@ namespace ERPSEI.Areas.ERP.Pages
             if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
             {
                 diasLegales = 12m;
-                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
+                diasProporcionales = Math.Round(
+                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
             }
             else
             {
                 diasLegales = 0m;
-                diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+                diasProporcionales = Math.Round(
+                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
             }
 
             decimal acumuladas = tipoAsignacion == "Legales"
@@ -1334,10 +1518,24 @@ namespace ERPSEI.Areas.ERP.Pages
                 : diasLegales + diasProporcionales;
 
             var diasTomados = await db.SolicitudesVacaciones
-                .Where(s => s.EmpleadoId == empleado.Id && s.Estado != EstadoSolicitud.Rechazado)
-                .SumAsync(s => s.DiasSolicitados);
+                .Where(s =>
+                    s.EmpleadoId == empleado.Id &&
+                    s.Estado == EstadoSolicitud.Aprobado &&
+                    (
+                        !s.EsVacacionAnticipada ||
+                        (s.EsVacacionAnticipada && s.DescuentoAnticipadoAplicado)
+                    ))
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
-            decimal saldo = Math.Max(acumuladas - diasTomados, 0);
+            var diasFuturas = await db.SolicitudesVacaciones
+                .Where(s =>
+                    s.EmpleadoId == empleado.Id &&
+                    s.EsVacacionAnticipada &&
+                    s.Estado == EstadoSolicitud.Aprobado &&
+                    !s.DescuentoAnticipadoAplicado)
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+            decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturas, 0m);
 
             return new JsonResult(saldo);
         }
@@ -1495,6 +1693,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var empleado = usuario.Empleado;
 
+            await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
+
             var solicitudes = await db.SolicitudesVacaciones
                 .Where(s => s.EmpleadoId == empleado.Id)
                 .OrderByDescending(s => s.FechaInicio)
@@ -1505,8 +1705,10 @@ namespace ERPSEI.Areas.ERP.Pages
                 inicio = s.FechaInicio.ToString("dd/MM/yyyy"),
                 fin = s.FechaFin.ToString("dd/MM/yyyy"),
                 dias = s.DiasSolicitados,
-                tipo = "Legales",
-                estado = s.Estado.ToString()
+                tipo = s.EsVacacionAnticipada
+                    ? (s.DescuentoAnticipadoAplicado ? "Anticipadas (descontadas)" : "Anticipadas")
+                    : "Legales",
+                estado = ObtenerEstadoVisualVacaciones(s)
             }).ToList();
 
             return new JsonResult(lista);
@@ -1744,6 +1946,17 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Ocurrió un error al aprobar la solicitud."
                 });
             }
+        }
+
+        private async Task<decimal> ObtenerDiasAnticipadosPendientesAsync(int empleadoId)
+        {
+            return await db.SolicitudesVacaciones
+                .Where(s =>
+                    s.EmpleadoId == empleadoId &&
+                    s.EsVacacionAnticipada &&
+                    s.Estado != EstadoSolicitud.Rechazado &&
+                    !s.DescuentoAnticipadoAplicado)
+                .SumAsync(s => (decimal?)s.DiasAnticipadosPendientesDescuento) ?? 0m;
         }
 
         public async Task<JsonResult> OnPostRechazarTHAsync(int idSolicitud)

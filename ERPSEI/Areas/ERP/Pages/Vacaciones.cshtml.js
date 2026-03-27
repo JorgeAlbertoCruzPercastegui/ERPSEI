@@ -40,6 +40,19 @@ document.addEventListener("DOMContentLoaded", function (event) {
     cargarVacacionesAcumuladas();
     cargarVacacionesTomadas();
 
+    // Eventos para calcular días
+    const inpFechaInicio = document.getElementById("inpFechaInicio");
+    const inpFechaFin = document.getElementById("inpFechaFin");
+
+    if (inpFechaInicio) inpFechaInicio.addEventListener("change", calcularDiasSolicitados);
+    if (inpFechaFin) inpFechaFin.addEventListener("change", calcularDiasSolicitados);
+
+    // Evento para vacaciones anticipadas
+    $("#chkVacacionesAnticipadas").on("change", function () {
+        toggleVacacionesAnticipadasAviso();
+    });
+
+    // Abrir detalle desde correo
     const params = new URLSearchParams(window.location.search);
     const solicitudId = params.get("solicitudId");
     const accionCorreo = params.get("accionCorreo");
@@ -571,6 +584,10 @@ function initSolicitudVacacionesDialog(action, row) {
     diasSolicitadosTexto.innerText = "0";
     summaryContainer.innerHTML = "";
 
+    // ✅ Limpiar vacaciones anticipadas
+    $("#chkVacacionesAnticipadas").prop("checked", false);
+    $("#rowAvisoVacacionesAnticipadas").addClass("d-none");
+
     // ✅ Obtener resumen actualizado (acumuladas, tomadas, saldo, disponibles)
     diasDisponiblesActuales = 0;
     cargarResumenVacaciones(); // esto también actualiza lblDiasDisponibles
@@ -690,21 +707,41 @@ function calcularDiasSolicitados() {
 
         const restante = Math.max(diasDisponiblesActuales - totalDias, 0);
 
-        if (totalDias > diasDisponiblesActuales) {
+        if (totalDias > diasDisponiblesActuales && !$("#chkVacacionesAnticipadas").is(":checked")) {
+            output.innerHTML = `<span class="text-danger">${totalDias} días (excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)</span>`;
+        } else {
+            if ($("#chkVacacionesAnticipadas").is(":checked")) {
+                output.innerHTML = `<span class="text-warning fw-bold">${totalDias} días (vacaciones anticipadas)</span>`;
+            } else {
+                output.innerText = `${totalDias}`;
+            }
+        }
+
+        /*if (totalDias > diasDisponiblesActuales) {
             output.innerHTML = `<span class="text-danger">${totalDias} días (excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)</span>`;
         } else {
             output.innerText = `${totalDias}`;
-        }
+        }*/
 
-        // ✅ Actualizar "Tienes X días disponibles"
+        // Actualizar "Tienes X días disponibles"
         lblDisponibles.innerText = restante.toFixed(1);
 
-        // ✅ Actualizar "Total Saldo"
+        // Actualizar "Total Saldo"
         tdSaldo.innerText = `${restante.toFixed(1)} días`;
     } else {
         output.innerText = "0";
         lblDisponibles.innerText = diasDisponiblesActuales.toFixed(1);
         tdSaldo.innerText = `${diasDisponiblesActuales.toFixed(1)} días`;
+    }
+}
+
+function toggleVacacionesAnticipadasAviso() {
+    const checked = $("#chkVacacionesAnticipadas").is(":checked");
+
+    if (checked) {
+        $("#rowAvisoVacacionesAnticipadas").removeClass("d-none");
+    } else {
+        $("#rowAvisoVacacionesAnticipadas").addClass("d-none");
     }
 }
 
@@ -821,7 +858,8 @@ function onGuardarClick() {
             FechaInicio: fechaInicio,
             FechaFin: fechaFin,
             ComentarioEmpleado: comentario,
-            EmpleadoId: parseInt(empleadoId)
+            EmpleadoId: parseInt(empleadoId),
+            EsVacacionAnticipada: $("#chkVacacionesAnticipadas").is(":checked")
         }
     };
 
@@ -851,6 +889,9 @@ function onGuardarClick() {
             document.getElementById("inpFechaFin").value = "";
             document.getElementById("inpComentarioEmpleado").value = "";
             document.getElementById("diasSolicitadosTexto").innerText = "0";
+            
+            $("#chkVacacionesAnticipadas").prop("checked", false);
+            $("#rowAvisoVacacionesAnticipadas").addClass("d-none");
 
             // Refrescar tabla principal
             document.querySelector("[name='refresh']").click();
