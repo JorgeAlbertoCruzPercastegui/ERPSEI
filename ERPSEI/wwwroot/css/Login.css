@@ -87,10 +87,9 @@ nav.navbar {
     height: auto;
     display: block;
     object-fit: contain;
-    background-position: center;
-    background-size: cover;
     border-radius: 20px;
     opacity: 0.95;
+    margin-left: 65px; /* 👈 AJUSTA ESTE VALOR */
 }
 
 /* Columna derecha */
