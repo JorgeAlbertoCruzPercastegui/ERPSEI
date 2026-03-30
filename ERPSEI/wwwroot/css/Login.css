@@ -89,7 +89,7 @@ nav.navbar {
     object-fit: contain;
     border-radius: 20px;
     opacity: 0.95;
-    margin-left: 65px; /* 👈 AJUSTA ESTE VALOR */
+    margin-left: 50px; /* 👈 AJUSTA ESTE VALOR */
 }
 
 /* Columna derecha */
