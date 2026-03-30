@@ -14,8 +14,8 @@ var builder = WebApplication.CreateBuilder(args);
 // DataProtection (claves)
 // =======================
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtectionKeys\ERPSEI")) // Asegúrate de crear esta carpeta en el servidor                                                 // Opcional pero recomendado
-    .SetApplicationName("ERPSEI");
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtectionKeys\IntranetSEI")) // Asegúrate de crear esta carpeta en el servidor                                                 // Opcional pero recomendado
+    .SetApplicationName("IntranetSEI");
 
 //Email configuration
 ServicesConfiguration.ConfigureEmail(builder);
@@ -148,6 +148,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
