@@ -906,104 +906,114 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					$"sobrecargue la página de registro en /Areas/Identity/Pages/Account/Register.cshtml");
 			}
 		}
-		public async Task<IActionResult> OnPostInvitarEmpleado(int id)
-		{
-			ServerResponse resp = new(true, _strLocalizer["EmpleadoInvitadoUnsuccessfully"]);
-			try
-			{
-				//Se busca al empleado por Id
-				Empleado? emp = await _empleadoManager.GetByIdAsync(id);
-				if (emp != null)
-				{
-					string password = _userManager.GenerateRandomPassword(10);
-					AppUser ? user;
+        public async Task<IActionResult> OnPostInvitarEmpleado(int id)
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpleadoInvitadoUnsuccessfully"]);
 
-					if ((emp.UserId??"").Length <= 0)
-					{
-						//Si el empleado NO tiene usuario, entonces procede a crearlo.
-						user = CreateUser();
-						user.Email = emp.Email;
-						user.EmpleadoId = emp.Id;
-						user.NormalizedEmail = emp.Email.ToUpper();
-						user.NormalizedUserName = emp.Email.ToUpper();
-						user.PasswordResetNeeded = true;
-						user.IsPreregisterAuthorized = true;
-						user.PhoneNumber = emp.Telefono;
-						user.UserName = emp.Email;
+            try
+            {
+                Empleado? emp = await _empleadoManager.GetByIdAsync(id);
+                if (emp == null)
+                {
+                    resp.Mensaje = "No se encontró el empleado.";
+                    return new JsonResult(resp);
+                }
 
-						//Crea el usuario.
-						await _userStore.SetUserNameAsync(user, emp.Email, CancellationToken.None);
-						await _emailStore.SetEmailAsync(user, emp.Email, CancellationToken.None);
-						var result = await _userManager.CreateAsync(user, password);
+                string password = _userManager.GenerateRandomPassword(10);
+                AppUser? user = null;
 
-						if (result.Succeeded)
-						{
-							//Se asigna rol de usuario
-							await _userManager.AddToRoleAsync(user, ServicesConfiguration.RolUsuario);
+                if (string.IsNullOrWhiteSpace(emp.UserId))
+                {
+                    user = CreateUser();
+                    user.Email = emp.Email;
+                    user.EmpleadoId = emp.Id;
+                    user.NormalizedEmail = emp.Email.ToUpper();
+                    user.NormalizedUserName = emp.Email.ToUpper();
+                    user.PasswordResetNeeded = true;
+                    user.IsPreregisterAuthorized = true;
+                    user.PhoneNumber = emp.Telefono;
+                    user.UserName = emp.Email;
 
-							//Asigna el usuario al empleado.
-							emp.UserId = user.Id;
-							await _empleadoManager.UpdateAsync(emp);
-						}
-					}
-					else
-					{
+                    await _userStore.SetUserNameAsync(user, emp.Email, CancellationToken.None);
+                    await _emailStore.SetEmailAsync(user, emp.Email, CancellationToken.None);
 
-						//De lo contrario, obtiene al usuario por Id
-						user = await _userManager.FindByIdAsync(emp.UserId??"");
+                    var result = await _userManager.CreateAsync(user, password);
 
-						if (user != null)
-						{
-							//Cambia el password del usuario.
-							await _userManager.RemovePasswordAsync(user);
-							await _userManager.AddPasswordAsync(user, password);
-						}
-					}
+                    if (!result.Succeeded)
+                    {
+                        resp.Mensaje = string.Join(" | ", result.Errors.Select(e => e.Description));
+                        return new JsonResult(resp);
+                    }
 
-					if(user != null)
-					{
-						//Envía una invitación al empleado mediante correo electrónico.
-						string userCode = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-						userCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(userCode));
+                    var roleResult = await _userManager.AddToRoleAsync(user, ServicesConfiguration.RolUsuario);
+                    if (!roleResult.Succeeded)
+                    {
+                        resp.Mensaje = string.Join(" | ", roleResult.Errors.Select(e => e.Description));
+                        return new JsonResult(resp);
+                    }
 
-						//El usuario tendrá que confirmar su correo para poder iniciar sesión.
-						string userURL = Url.Page(
-							"/Account/ConfirmEmail",
-							pageHandler: null,
-							values: new { area = "Identity", userId = user.Id, code = userCode },
-							protocol: Request.Scheme)??string.Empty;
+                    emp.UserId = user.Id;
+                    await _empleadoManager.UpdateAsync(emp);
+                }
+                else
+                {
+                    user = await _userManager.FindByIdAsync(emp.UserId ?? "");
+                    if (user == null)
+                    {
+                        resp.Mensaje = "No se encontró el usuario relacionado al empleado.";
+                        return new JsonResult(resp);
+                    }
 
-						string emailBody = $"" +
-							$"{_strLocalizer["EmailBodyFP"]} <a href='{userURL}'>{_strLocalizer["EmailBodySP"]}</a>" +
-							$"<br />" +
-							$"<br />" +
-							$"{_strLocalizer["EmailBodyTP"]}" +
-							$"<br />" +
-							$"<br />" +
-							$"User: {emp.Email}" +
-							$"<br />" +
-							$"Password: {password}" +
-							$"<br />" +
-							$"<br />" +
-							$"{_strLocalizer["EmailBodyFOP"]}";
+                    var removePwd = await _userManager.RemovePasswordAsync(user);
+                    if (!removePwd.Succeeded)
+                    {
+                        resp.Mensaje = string.Join(" | ", removePwd.Errors.Select(e => e.Description));
+                        return new JsonResult(resp);
+                    }
 
-                        _emailSender.SendEmailAsync(emp.Email,_strLocalizer["EmailSubject"], emailBody);
+                    var addPwd = await _userManager.AddPasswordAsync(user, password);
+                    if (!addPwd.Succeeded)
+                    {
+                        resp.Mensaje = string.Join(" | ", addPwd.Errors.Select(e => e.Description));
+                        return new JsonResult(resp);
+                    }
+                }
 
-						resp.TieneError = false;
-						resp.Mensaje = _strLocalizer["EmpleadoInvitadoSuccessfully"];
-					}
+                string userCode = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                userCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(userCode));
 
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex.Message);
-			}
+                string userURL = Url.Page(
+                    "/Account/ConfirmEmail",
+                    pageHandler: null,
+                    values: new { area = "Identity", userId = user.Id, code = userCode },
+                    protocol: Request.Scheme) ?? string.Empty;
 
-			return new JsonResult(resp);
-		}
+                string emailBody =
+                    $"{_strLocalizer["EmailBodyFP"]} <a href='{userURL}'>{_strLocalizer["EmailBodySP"]}</a>" +
+                    $"<br /><br />" +
+                    $"{_strLocalizer["EmailBodyTP"]}" +
+                    $"<br /><br />" +
+                    $"User: {emp.Email}" +
+                    $"<br />" +
+                    $"Password: {password}" +
+                    $"<br /><br />" +
+                    $"{_strLocalizer["EmailBodyFOP"]}";
 
-		public async Task<JsonResult> OnPostGetEmpleadosSuggestion(string texto)
+                await _emailSender.SendEmailAsync(emp.Email, _strLocalizer["EmailSubject"], emailBody);
+
+                resp.TieneError = false;
+                resp.Mensaje = _strLocalizer["EmpleadoInvitadoSuccessfully"];
+                return new JsonResult(resp);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al invitar empleado");
+                resp.Mensaje = ex.ToString();
+                return new JsonResult(resp);
+            }
+        }
+
+        public async Task<JsonResult> OnPostGetEmpleadosSuggestion(string texto)
 		{
 			ServerResponse resp = new(true, _strLocalizer["ConsultadoUnsuccessfully"]);
 			try
