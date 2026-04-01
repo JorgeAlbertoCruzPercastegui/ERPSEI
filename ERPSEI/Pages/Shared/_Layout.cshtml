@@ -375,7 +375,13 @@
             {
                 <div class="topbar-links d-flex align-items-center justify-content-between py-1">
                     <div class="small text-muted d-flex align-items-center gap-2">
-                        Hola, <b>@(usr?.UserName ?? User.Identity?.Name)</b>
+                        Hola, <b>
+                            @(
+                                empleadoActual != null
+                                ? $"{empleadoActual.Nombre} {empleadoActual.ApellidoPaterno} {empleadoActual.ApellidoMaterno}"
+                                : (usr?.UserName ?? User.Identity?.Name)
+                                )
+                        </b>
                     </div>
 
                     <div class="quick-nav-wrap position-relative">
