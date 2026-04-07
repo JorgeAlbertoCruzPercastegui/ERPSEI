@@ -1,0 +1,75 @@
+﻿@page
+@model ERPSEI.Areas.Intranet.Pages.Eventos.IndexModel
+@{
+    ViewData["Title"] = "Eventos";
+    ViewData["BodyClass"] = "eventos-public-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/EventosPublico.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+}
+
+<div class="eventos-public-theme-page">
+    <div class="module-shell">
+
+        <div class="eventos-hero">
+            <h1 class="hero-title">Eventos</h1>
+        </div>
+
+        <div class="eventos-grid">
+            @foreach (var item in Model.Eventos)
+            {
+                <div class="evento-card">
+                    <div class="evento-info">
+                        <h3 class="evento-title">@item.Titulo</h3>
+
+                        <button type="button"
+                                class="btn-consultar-evento"
+                                onclick="verEvento(@item.Id)">
+                            @item.TextoBoton
+                        </button>
+                    </div>
+
+                    <div class="evento-thumb">
+                        <img src="@item.RutaPortada" alt="@item.Titulo" />
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eventoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg evento-modal-dialog">
+        <div class="modal-content evento-modal-content">
+            <div class="modal-header evento-modal-header">
+                <button type="button" class="btn-cerrar-evento" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="modal-body evento-modal-body">
+                <div class="evento-modal-layout">
+                    <div class="evento-modal-text">
+                        <h3 id="eventoModalTitle"></h3>
+                        <div id="eventoModalDescripcion"></div>
+                    </div>
+
+                    <div class="evento-modal-image">
+                        <img id="eventoModalImg" src="" alt="Evento" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.eventosConfig = {
+            detalleUrl: '@Url.Page("/Eventos/Index", "Detalle", new { area = "Catalogos" })'
+        };
+    </script>
+    <script src="~/js/EventosPublico.js" asp-append-version="true"></script>
+}

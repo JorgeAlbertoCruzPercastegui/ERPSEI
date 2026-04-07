@@ -115,6 +115,14 @@ namespace ERPSEI
             ConfigureDIDocumentos(_builder);
 
             ConfigureDIComunicadosInteros(_builder);
+
+            ConfigureDIEventos(_builder);
+        }
+
+        private static void ConfigureDIEventos(WebApplicationBuilder _builder)
+        {
+            //Eventos
+            _builder.Services.AddScoped<IEventoIntranetManager, EventoIntranetManager>();
         }
 
         private static void ConfigureDIComunicadosInteros(WebApplicationBuilder _builder)

@@ -1,0 +1,586 @@
+﻿/* =====================================================
+   MODULO GESTOR EVENTOS
+   SOLO PARA ESTE MODULO
+   ===================================================== */
+
+body.module-main-theme.gestoreventos-page {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover;
+    background-attachment: fixed;
+    background-color: #07133f;
+}
+
+    /* =====================================================
+   HEADER SUPERIOR DEL LAYOUT
+   ===================================================== */
+
+    body.module-main-theme.gestoreventos-page .header-bg {
+        background: transparent !important;
+        min-height: 84px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    body.module-main-theme.gestoreventos-page .header-bg-inner {
+        min-height: 84px;
+        display: flex;
+        align-items: center;
+        background: transparent !important;
+    }
+
+    body.module-main-theme.gestoreventos-page .brandimage {
+        max-height: 44px;
+        width: auto;
+    }
+
+    body.module-main-theme.gestoreventos-page .navbar .nav-link,
+    body.module-main-theme.gestoreventos-page .navbar .navbar-brand,
+    body.module-main-theme.gestoreventos-page .navbar .btn,
+    body.module-main-theme.gestoreventos-page .navbar a,
+    body.module-main-theme.gestoreventos-page .navbar form button {
+        color: #fff !important;
+        text-shadow: 0 1px 3px rgba(0,0,0,.30);
+    }
+
+    /* =====================================================
+   MENU RAPIDO DORADO
+   ===================================================== */
+
+    body.module-main-theme.gestoreventos-page .topbar-links {
+        max-width: 1280px;
+        margin: 0 auto 14px auto;
+        padding: 9px 14px !important;
+        min-height: 54px;
+        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
+        border: 2px solid #d4a941;
+        border-radius: 18px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        gap: 10px;
+    }
+
+        body.module-main-theme.gestoreventos-page .topbar-links > .small {
+            display: flex !important;
+            align-items: center;
+            min-height: 100%;
+            margin: 0;
+            padding-right: 8px;
+            line-height: 1.1;
+            white-space: nowrap;
+            font-size: .92rem;
+        }
+
+        body.module-main-theme.gestoreventos-page .topbar-links .small,
+        body.module-main-theme.gestoreventos-page .topbar-links .text-muted,
+        body.module-main-theme.gestoreventos-page .topbar-links b {
+            color: #0c1f60 !important;
+        }
+
+    body.module-main-theme.gestoreventos-page .quick-nav-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    body.module-main-theme.gestoreventos-page .quick-nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 4px 10px !important;
+        white-space: nowrap;
+        font-size: .85rem;
+    }
+
+    body.module-main-theme.gestoreventos-page .quick-link {
+        color: #0c1f60 !important;
+        text-decoration: none !important;
+        font-weight: 700;
+        font-size: .88rem;
+        line-height: 1.05;
+        padding: 2px 4px;
+        border-radius: 8px;
+        transition: all .18s ease;
+        white-space: nowrap;
+    }
+
+        body.module-main-theme.gestoreventos-page .quick-link:hover {
+            background: rgba(12, 31, 96, .08);
+            color: #09184a !important;
+        }
+
+    /* =====================================================
+   DROPDOWN DEL MENU
+   ===================================================== */
+
+    body.module-main-theme.gestoreventos-page .quick-dd {
+        position: relative;
+    }
+
+    body.module-main-theme.gestoreventos-page .quick-dd-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 2px;
+        min-width: 260px;
+        background: rgba(10, 21, 80, .72);
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 14px;
+        box-shadow: 0 18px 35px rgba(0,0,0,.24);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 8px;
+        display: none;
+        z-index: 2000;
+    }
+
+    body.module-main-theme.gestoreventos-page .quick-dd-menu-wide {
+        min-width: 320px;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    body.module-main-theme.gestoreventos-page .quick-dd:hover > .quick-dd-menu,
+    body.module-main-theme.gestoreventos-page .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    body.module-main-theme.gestoreventos-page .quick-dd-item {
+        display: block;
+        color: rgba(255,255,255,.90) !important;
+        text-decoration: none !important;
+        font-size: .88rem;
+        font-weight: 600;
+        padding: 8px 10px;
+        border-radius: 10px;
+        transition: background .15s ease, color .15s ease;
+    }
+
+        body.module-main-theme.gestoreventos-page .quick-dd-item:hover {
+            background: rgba(255,255,255,.10);
+            color: #ffffff !important;
+        }
+
+    body.module-main-theme.gestoreventos-page .quick-dd:hover > .quick-link,
+    body.module-main-theme.gestoreventos-page .quick-dd.open > .quick-link {
+        color: #fff7d6 !important;
+        background: rgba(12, 31, 96, .18);
+    }
+
+    body.module-main-theme.gestoreventos-page .quick-nav-toggle {
+        border: 1px solid #c89a2a;
+        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
+        color: #0c1f60;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-weight: 800;
+    }
+
+/* =====================================================
+   CONTENEDOR DEL MODULO
+   ===================================================== */
+
+.gestoreventos-page .gestoreventos-theme-page {
+    flex: 1 0 auto;
+    padding: 10px 0 32px;
+}
+
+.gestoreventos-page .module-shell {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 12px;
+}
+
+/* =====================================================
+   CABECERA DEL MODULO
+   ===================================================== */
+
+.gestoreventos-page .module-header {
+    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+    border: 2px solid #d4a941;
+    border-radius: 18px;
+    padding: 18px 22px;
+    box-shadow: 0 10px 24px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+}
+
+.gestoreventos-page .module-title {
+    color: #0c1f60;
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.gestoreventos-page .module-subtitle {
+    color: #2a376d;
+    font-size: .98rem;
+    margin-top: 3px;
+}
+
+/* =====================================================
+   TARJETAS
+   ===================================================== */
+
+.gestoreventos-page .module-card,
+.gestoreventos-page .card {
+    border: 1px solid rgba(255,255,255,.14) !important;
+    border-radius: 22px !important;
+    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%) !important;
+    box-shadow: 0 18px 36px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.70) !important;
+    overflow: hidden;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+    .gestoreventos-page .module-card:hover,
+    .gestoreventos-page .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 22px 42px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.72) !important;
+    }
+
+    .gestoreventos-page .module-card .card-body {
+        padding: 1.35rem 1.35rem;
+    }
+
+.gestoreventos-page .module-card-title {
+    color: #0c1f60;
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+/* =====================================================
+   FORMULARIOS
+   ===================================================== */
+
+.gestoreventos-page .form-label {
+    color: #0c1f60;
+    font-weight: 700;
+    margin-bottom: .35rem;
+}
+
+.gestoreventos-page .form-control,
+.gestoreventos-page .form-select,
+.gestoreventos-page textarea.form-control {
+    border-radius: 12px;
+    border: 1px solid #c7d3f2;
+    background: #f8fbff;
+    color: #1f2b5c;
+    box-shadow: none;
+}
+
+    .gestoreventos-page .form-control:focus,
+    .gestoreventos-page .form-select:focus,
+    .gestoreventos-page textarea.form-control:focus {
+        border-color: #7e9cff;
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.15);
+        background: #fff;
+    }
+
+.gestoreventos-page .form-check-input:checked {
+    background-color: #0c1f60;
+    border-color: #0c1f60;
+}
+
+/* =====================================================
+   BOTONES
+   ===================================================== */
+
+.gestoreventos-page .btn-outline-secondary,
+.gestoreventos-page .btn-outline-success,
+.gestoreventos-page .btn-outline-warning,
+.gestoreventos-page .btn-outline-primary,
+.gestoreventos-page .btn-outline-info {
+    background: #ffffff;
+    color: #0c1f60;
+    border: 1px solid #d4a941;
+    border-radius: 8px;
+    padding: .36rem .62rem;
+    font-size: .80rem;
+    line-height: 1.05;
+    font-weight: 700;
+    transition: all .18s ease;
+}
+
+    .gestoreventos-page .btn-outline-secondary:hover,
+    .gestoreventos-page .btn-outline-success:hover,
+    .gestoreventos-page .btn-outline-warning:hover,
+    .gestoreventos-page .btn-outline-primary:hover,
+    .gestoreventos-page .btn-outline-info:hover {
+        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+        color: #09184a;
+        border-color: #c89a2a;
+    }
+
+.gestoreventos-page .btn-outline-danger {
+    background: linear-gradient(145deg,#f9d0c8,#ef9b8d);
+    color: #8f1b13;
+    border: 1px solid rgba(184,51,37,.28);
+    border-radius: 8px;
+    padding: .34rem .55rem;
+    font-size: .80rem;
+    line-height: 1;
+    font-weight: 700;
+}
+
+    .gestoreventos-page .btn-outline-danger:hover {
+        background: linear-gradient(145deg,#f4b9ad,#e87e6a);
+        color: #74140f;
+        border-color: rgba(184,51,37,.35);
+    }
+
+.gestoreventos-page .btn-delete-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .gestoreventos-page .btn-delete-icon i {
+        font-size: .9rem;
+    }
+
+/* =====================================================
+   PREVIEW
+   ===================================================== */
+
+.gestoreventos-page .preview-box {
+    border: 1px solid #d6def3 !important;
+    border-radius: 14px !important;
+    padding: 10px !important;
+    text-align: center;
+    background: linear-gradient(180deg,#f8fbff,#eef4ff) !important;
+    min-height: 180px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.gestoreventos-page #previewPortadaEvento {
+    max-height: 160px;
+    max-width: 100%;
+    display: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+
+.gestoreventos-page #previewPortadaEventoTexto {
+    color: #7b89aa;
+    font-weight: 600;
+}
+
+
+/* =====================================================
+   TABLA
+   ===================================================== */
+
+.gestoreventos-page .table-responsive {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.gestoreventos-page .table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+    .gestoreventos-page .table thead th {
+        background: linear-gradient(135deg,#102f8c,#1f4cd3);
+        color: #fff;
+        font-weight: 700;
+        border: 0 !important;
+        padding: .95rem .85rem;
+        font-size: .9rem;
+    }
+
+    .gestoreventos-page .table tbody tr {
+        background: #fff;
+        transition: background .15s ease;
+    }
+
+        .gestoreventos-page .table tbody tr:nth-child(even) {
+            background: #f7faff;
+        }
+
+        .gestoreventos-page .table tbody tr:hover {
+            background: #eef4ff;
+        }
+
+    .gestoreventos-page .table td {
+        border-color: #e4ebfb !important;
+        padding: .9rem .85rem;
+        vertical-align: middle;
+    }
+
+        .gestoreventos-page .table td:last-child {
+            white-space: nowrap;
+        }
+
+            .gestoreventos-page .table td:last-child .d-flex {
+                flex-wrap: nowrap !important;
+                gap: 6px !important;
+                align-items: center;
+            }
+
+/* =====================================================
+   BADGES
+   ===================================================== */
+
+.gestoreventos-page .badge {
+    font-weight: 700;
+    border-radius: 999px;
+}
+
+/* =====================================================
+   BUSCADOR
+   ===================================================== */
+
+.gestoreventos-page .fixed-table-toolbar {
+    padding: 10px 12px 0 12px;
+}
+
+    .gestoreventos-page .fixed-table-toolbar .search {
+        width: 280px;
+        max-width: 100%;
+    }
+
+        .gestoreventos-page .fixed-table-toolbar .search input {
+            border-radius: 14px !important;
+            border: 1px solid #c7d3f2 !important;
+            background: linear-gradient(180deg,#f8fbff,#eef4ff) !important;
+            color: #1f2b5c !important;
+            padding: .6rem .85rem !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,.05);
+        }
+
+            .gestoreventos-page .fixed-table-toolbar .search input:focus {
+                border-color: #7e9cff !important;
+                box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.12) !important;
+            }
+
+/* =====================================================
+   MODAL MENSAJE
+   ===================================================== */
+
+.gestoreventos-page .custom-modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+    border: none;
+}
+
+.gestoreventos-page .modal-header-gold {
+    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
+    color: #0c1f60;
+}
+
+.gestoreventos-page #resultadoEventoMensaje {
+    color: #0c1f60;
+    font-size: 1rem;
+}
+
+.gestoreventos-page .modal-sm {
+    max-width: 380px;
+}
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+
+.gestoreventos-page .footer {
+    margin-top: auto;
+    flex-shrink: 0;
+    background: rgba(0,0,0,.35) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-top: 1px solid rgba(255,255,255,.18) !important;
+}
+
+    .gestoreventos-page .footer,
+    .gestoreventos-page .footer a,
+    .gestoreventos-page .footer .text-muted,
+    .gestoreventos-page .footer .float-start,
+    .gestoreventos-page .footer .float-end {
+        color: rgba(255,255,255,.92) !important;
+    }
+
+        .gestoreventos-page .footer a:hover {
+            color: #ffffff !important;
+        }
+
+/* =====================================================
+   RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 991.98px) {
+    body.module-main-theme.gestoreventos-page {
+        background-attachment: scroll;
+        background-position: center top;
+    }
+
+        body.module-main-theme.gestoreventos-page .topbar-links {
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 10px;
+        }
+
+        body.module-main-theme.gestoreventos-page .quick-nav-wrap {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        body.module-main-theme.gestoreventos-page .quick-nav {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 6px !important;
+            margin-top: 8px;
+        }
+
+            body.module-main-theme.gestoreventos-page .quick-nav.is-open {
+                display: flex;
+            }
+
+        body.module-main-theme.gestoreventos-page .quick-link {
+            width: 100%;
+            display: block;
+        }
+
+        body.module-main-theme.gestoreventos-page .quick-dd-menu {
+            position: static;
+            display: none;
+            min-width: 100%;
+            margin-top: 6px;
+            box-shadow: none;
+            border-radius: 12px;
+        }
+
+        body.module-main-theme.gestoreventos-page .quick-dd.open > .quick-dd-menu {
+            display: block;
+        }
+
+    .gestoreventos-page .module-header {
+        padding: 16px 18px;
+    }
+
+    .gestoreventos-page .module-title {
+        font-size: 1.45rem;
+    }
+
+    .gestoreventos-page .table thead th,
+    .gestoreventos-page .table td {
+        white-space: nowrap;
+    }
+}
+

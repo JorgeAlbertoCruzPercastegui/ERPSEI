@@ -193,6 +193,9 @@ namespace ERPSEI.Data
         //Comunicados Internos
         public DbSet<ComunicadoInterno> ComunicadosInternos { get; set; }
 
+        //Eventos
+        public DbSet<EventoIntranet> EventosIntranet { get; set; }
+
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
 		public DbSet<CuentaContableTipo> CuentaContableTipos { get; set; }
@@ -280,6 +283,76 @@ namespace ERPSEI.Data
             //Comunicados Internos
             BuildComunicadosInternos(modelBuilder);
 
+            //Eventos
+            BuildEventosIntranet(modelBuilder);
+
+        }
+
+        private static void BuildEventosIntranet(ModelBuilder b)
+        {
+            b.Entity<EventoIntranet>(e =>
+            {
+                e.ToTable("EventosIntranet");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Titulo)
+                    .IsRequired()
+                    .HasMaxLength(250);
+
+                e.Property(x => x.Descripcion)
+                    .HasMaxLength(2000);
+
+                e.Property(x => x.TipoEvento)
+                    .HasMaxLength(100);
+
+                e.Property(x => x.Region)
+                    .HasMaxLength(200);
+
+                e.Property(x => x.UrlFormulario)
+                    .HasMaxLength(500);
+
+                e.Property(x => x.TextoBoton)
+                    .HasMaxLength(50);
+
+                e.Property(x => x.RutaPortada)
+                    .HasMaxLength(500);
+
+                e.Property(x => x.NombrePortada)
+                    .HasMaxLength(255);
+
+                e.Property(x => x.Publicado)
+                    .HasDefaultValue(false);
+
+                e.Property(x => x.Activo)
+                    .HasDefaultValue(true);
+
+                e.Property(x => x.EsProgramado)
+                    .HasDefaultValue(false);
+
+                e.Property(x => x.RequiereGeolocalizacion)
+                    .HasDefaultValue(false);
+
+                e.Property(x => x.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                e.Property(x => x.CreadoPorId)
+                    .HasMaxLength(450);
+
+                e.Property(x => x.ModificadoPorId)
+                    .HasMaxLength(450);
+
+                e.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.CreadoPorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.ModificadoPorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.Activo, x.Publicado, x.FechaEvento });
+            });
         }
 
         private static void BuildComunicadosInternos(ModelBuilder b)
