@@ -1,0 +1,167 @@
+﻿@page "{handler?}"
+@model ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos.IndexModel
+@{
+    ViewData["Title"] = "Gestor Comunicados Internos";
+    ViewData["BodyClass"] = "gestorcomunicados-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/GestorComunicadosInternos.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.22.6/dist/bootstrap-table.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+}
+
+<div class="gestorcomunicados-theme-page">
+    <div class="module-shell">
+
+        <!--<div class="module-header mb-4">
+            <h2 class="module-title mb-1">Gestor Comunicados Internos</h2>
+            <p class="module-subtitle mb-0">
+                Administra los comunicados que se mostrarán en la intranet.
+            </p>
+        </div>-->
+
+        <div class="module-card mb-4">
+            <div class="card-body">
+                <form id="formComunicado" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" id="Input_Id" name="Input.Id" value="0" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Título</label>
+                            <input type="text" class="form-control" id="Input_Titulo" name="Input.Titulo" maxlength="250" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Archivo (PDF o imagen)</label>
+                            <input type="file" class="form-control" id="Input_Archivo" name="Input.Archivo" accept=".pdf,.jpg,.jpeg,.png,.webp" />
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="Input_Descripcion" name="Input.Descripcion" rows="3"></textarea>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Fecha de publicación</label>
+                            <input type="date" class="form-control" id="Input_FechaPublicacion" name="Input.FechaPublicacion" required />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Hora de publicación</label>
+                            <input type="time" class="form-control" id="Input_HoraPublicacion" name="Input.HoraPublicacion" />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Estatus</label>
+                            <select class="form-select" id="Input_Activo" name="Input.Activo">
+                                <option value="true">Activo</option>
+                                <option value="false">Inactivo</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="form-check form-switch pt-2">
+                                <input class="form-check-input" type="checkbox" id="Input_EsPermanente" name="Input.EsPermanente" value="true">
+                                <label class="form-check-label" for="Input_EsPermanente">
+                                    Permanente
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Portada (JPG/PNG/WEBP)</label>
+                            <input type="file"
+                                   class="form-control"
+                                   id="Input_Portada"
+                                   name="Input.Portada"
+                                   accept=".jpg,.jpeg,.png,.webp"
+                                   onchange="previewPortada(this)" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Vista previa portada</label>
+                            <div class="preview-box" id="previewPortadaBox">
+                                <img id="previewPortada" alt="Vista previa portada" />
+                                <span id="previewPortadaTexto">Selecciona una portada</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12" id="archivoActualContainer" style="display:none;">
+                            <label class="form-label">Archivo actual</label>
+                            <div>
+                                <a id="archivoActualLink" href="#" target="_blank" class="btn btn-outline-primary btn-sm">
+                                    Ver archivo actual
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-outline-secondary" onclick="limpiarFormularioComunicado()">
+                                Limpiar
+                            </button>
+                            <button type="button" class="btn btn-outline-primary" onclick="guardarComunicado(false)">
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="module-card">
+            <div class="card-body pb-0">
+                <h5 class="module-card-title mb-3">Registros cargados</h5>
+            </div>
+            <div class="table-responsive">
+                <table id="tableComunicados"
+                       class="table table-hover align-middle"
+                       data-toggle="table"
+                       data-search="true"
+                       data-pagination="true"
+                       data-page-size="10"
+                       data-page-list="[10, 25, 50, 100]"
+                       data-url="/Catalogos/GestorComunicadosInternos/ComunicadosList">
+                    <thead>
+                        <tr>
+                            <th data-field="id" data-visible="false">Id</th>
+                            <th data-field="titulo">Título</th>
+                            <th data-field="fechaPublicacion">Fecha</th>
+                            <th data-field="horaPublicacion">Hora</th>
+                            <th data-field="nombreArchivo">Archivo</th>
+                            <th data-field="estatus" data-formatter="estatusFormatter">Estatus</th>
+                            <th data-field="estadoPublicacion" data-formatter="publicacionFormatter">Publicación</th>
+                            <th data-field="esPermanente" data-formatter="permanenteFormatter">Permanente</th>
+                            <th data-field="rutaArchivo" data-formatter="archivoFormatter">Vista</th>
+                            <th data-field="id" data-formatter="accionesFormatter">Acciones</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="modal fade" id="resultadoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content custom-modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">Confirmación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div id="resultadoMensaje" class="fw-semibold"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.22.6/dist/bootstrap-table.min.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.22.6/dist/locale/bootstrap-table-es-MX.min.js"></script>
+    <script src="~/js/GestorComunicadosInternos.js" asp-append-version="true"></script>
+}

@@ -496,3 +496,82 @@ body.module-main-theme.gestorcomunicados-page {
         white-space: nowrap;
     }
 }
+
+.gestorcomunicados-page .module-card .card-body {
+    padding: 1.35rem 1.35rem;
+}
+
+.gestorcomunicados-page #archivoActualContainer .btn {
+    margin-top: 4px;
+}
+
+.gestorcomunicados-page #resultadoMensaje {
+    color: #0c1f60;
+    font-size: 1rem;
+}
+
+.gestorcomunicados-page .modal-sm {
+    max-width: 380px;
+}
+
+.gestorcomunicados-page .preview-box {
+    border: 1px solid #d6def3 !important;
+    border-radius: 14px !important;
+    padding: 10px !important;
+    text-align: center;
+    background: linear-gradient(180deg,#f8fbff,#eef4ff) !important;
+    min-height: 160px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.gestorcomunicados-page #previewPortada {
+    max-height: 140px;
+    max-width: 100%;
+    display: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+}
+
+.gestorcomunicados-page #previewPortadaTexto {
+    color: #7b89aa;
+    font-weight: 600;
+}
+
+.gestorcomunicados-page .btn-delete-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .gestorcomunicados-page .btn-delete-icon i {
+        font-size: .9rem;
+    }
+
+.gestorcomunicados-page .fixed-table-toolbar {
+    padding: 10px 12px 0 12px;
+}
+
+    .gestorcomunicados-page .fixed-table-toolbar .search {
+        width: 280px;
+        max-width: 100%;
+    }
+
+        .gestorcomunicados-page .fixed-table-toolbar .search input {
+            border-radius: 14px !important;
+            border: 1px solid #c7d3f2 !important;
+            background: linear-gradient(180deg,#f8fbff,#eef4ff) !important;
+            color: #1f2b5c !important;
+            padding: .6rem .85rem !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,.05);
+        }
+
+            .gestorcomunicados-page .fixed-table-toolbar .search input:focus {
+                border-color: #7e9cff !important;
+                box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.12) !important;
+            }

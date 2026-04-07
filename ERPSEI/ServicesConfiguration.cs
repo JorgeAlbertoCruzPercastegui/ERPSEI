@@ -35,6 +35,7 @@ using Microsoft.AspNetCore.Http.Features;
 using ERPSEI.Data.Managers.TipoContratos;
 using ERPSEI.Data.Managers.Documentos;
 using ERPSEI.Data.Entities.Documentos;
+using ERPSEI.Data.Managers.Intranet;
 
 namespace ERPSEI
 {
@@ -112,6 +113,14 @@ namespace ERPSEI
             ConfigureDITipoContratos(_builder);
 
             ConfigureDIDocumentos(_builder);
+
+            ConfigureDIComunicadosInteros(_builder);
+        }
+
+        private static void ConfigureDIComunicadosInteros(WebApplicationBuilder _builder)
+        {
+            //ComunicadosIInternos
+            _builder.Services.AddScoped<IComunicadoInternoManager, ComunicadoInternoManager>();
         }
 
         private static void ConfigureDITipoContratos(WebApplicationBuilder _builder)

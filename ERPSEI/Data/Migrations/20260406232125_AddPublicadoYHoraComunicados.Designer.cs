@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260406232125_AddPublicadoYHoraComunicados")]
+    partial class AddPublicadoYHoraComunicados
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1146,63 +1149,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4847),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(166),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4860),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(180),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4861),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(181),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4862),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(182),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4862),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(183),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4863),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(183),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4864),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(184),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4865),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(185),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 4, 6, 18, 19, 53, 399, DateTimeKind.Local).AddTicks(4866),
+                            FechaCreacion = new DateTime(2026, 4, 6, 17, 21, 23, 136, DateTimeKind.Local).AddTicks(186),
                             Nombre = "Otros"
                         });
                 });
@@ -2294,11 +2297,6 @@ namespace ERPSEI.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<bool>("EsPermanente")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<string>("ExtensionArchivo")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -2325,10 +2323,6 @@ namespace ERPSEI.Data.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("NombrePortada")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<bool>("Publicado")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -2336,10 +2330,6 @@ namespace ERPSEI.Data.Migrations
 
                     b.Property<string>("RutaArchivo")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("RutaPortada")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 

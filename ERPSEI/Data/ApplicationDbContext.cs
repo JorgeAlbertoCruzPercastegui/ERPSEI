@@ -190,6 +190,9 @@ namespace ERPSEI.Data
         public DbSet<Ausencia> Ausencias { get; set; }
         public DbSet<AusenciaDocumento> AusenciasDocumentos { get; set; }
 
+        //Comunicados Internos
+        public DbSet<ComunicadoInterno> ComunicadosInternos { get; set; }
+
         //Cuentas contables
         public DbSet<CuentaContable> CuentasContables { get; set; }
 		public DbSet<CuentaContableTipo> CuentaContableTipos { get; set; }
@@ -274,6 +277,78 @@ namespace ERPSEI.Data
             //Políticas y manuales
             BuildManualesPoliticasIntranet(modelBuilder);
 
+            //Comunicados Internos
+            BuildComunicadosInternos(modelBuilder);
+
+        }
+
+        private static void BuildComunicadosInternos(ModelBuilder b)
+        {
+            b.Entity<ComunicadoInterno>(e =>
+            {
+                e.ToTable("ComunicadosInternos");
+                e.HasKey(x => x.Id);
+
+                e.Property(x => x.Titulo)
+                    .IsRequired()
+                    .HasMaxLength(250);
+
+                e.Property(x => x.Descripcion)
+                    .HasMaxLength(1000);
+
+                e.Property(x => x.FechaPublicacion)
+                    .IsRequired();
+
+                e.Property(x => x.HoraPublicacion);
+
+                e.Property(x => x.Publicado)
+                    .HasDefaultValue(false);
+
+                e.Property(x => x.EsPermanente)
+                    .HasDefaultValue(false);
+
+                e.Property(x => x.RutaArchivo)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                e.Property(x => x.NombreArchivo)
+                    .HasMaxLength(255);
+
+                e.Property(x => x.ExtensionArchivo)
+                    .HasMaxLength(20);
+
+                e.Property(x => x.Activo)
+                    .HasDefaultValue(true);
+
+                e.Property(x => x.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                e.Property(x => x.CreadoPorId)
+                    .HasMaxLength(450);
+
+                e.Property(x => x.ModificadoPorId)
+                    .HasMaxLength(450);
+
+                e.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.CreadoPorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.ModificadoPorId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasIndex(x => new { x.Activo, x.Publicado, x.FechaPublicacion });
+                e.HasIndex(x => x.FechaPublicacion);
+                e.HasIndex(x => x.Titulo);
+
+                e.Property(x => x.RutaPortada)
+                    .HasMaxLength(500);
+
+                e.Property(x => x.NombrePortada)
+                    .HasMaxLength(255);
+            });
         }
 
         private static void BuildAusencias(ModelBuilder b)

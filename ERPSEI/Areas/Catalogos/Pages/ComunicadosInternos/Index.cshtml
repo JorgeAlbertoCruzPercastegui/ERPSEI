@@ -1,0 +1,116 @@
+﻿@page
+@model ERPSEI.Areas.Intranet.Pages.ComunicadosInternos.IndexModel
+@{
+    ViewData["Title"] = "Comunicados Internos";
+    ViewData["BodyClass"] = "comunicadosinternos-public-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ComunicadosInternosPublico.css" asp-append-version="true" />
+}
+
+<div class="comunicados-public-theme-page">
+    <div class="module-shell">
+
+        <div class="comunicados-hero-layout">
+
+            <div class="hero-left">
+                <h1 class="hero-title">Comunicados Internos</h1>
+
+                <p class="hero-subtitle">
+                    Consulta los comunicados activos publicados en la intranet.
+                </p>
+            </div>
+
+            <div class="hero-right">
+                <div class="month-filter-inline">
+                    <label for="selMes" class="month-filter-label">Mes</label>
+                    <select id="selMes" class="form-select month-select">
+                        <option value="">Todos</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div id="comunicadosGrid" class="comunicados-grid">
+            @if (Model.Comunicados.Any())
+            {
+                foreach (var item in Model.Comunicados)
+                {
+                    <div class="comunicado-card moderno">
+                        <div class="comunicado-cover">
+                            <img src="@item.RutaPortada" alt="@item.Titulo" />
+                        </div>
+
+                        <div class="comunicado-card-body">
+                            <h3 class="comunicado-title">@item.Titulo</h3>
+
+                            <div class="comunicado-meta">
+                                @item.FechaPublicacion
+                            </div>
+
+                            <div class="comunicado-actions">
+                                <span class="comunicado-chip">
+                                    @(item.EsPdf ? "Manual" : "Info")
+                                </span>
+
+                                <button type="button" class="btn-consultar" onclick="verComunicado(@item.Id)">
+                                    Consultar aquí
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    No hay comunicados disponibles para el filtro seleccionado.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="comunicadoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl comunicado-modal-dialog">
+        <div class="modal-content comunicado-modal-content">
+            <div class="modal-header comunicado-modal-header">
+                <div>
+                    <h5 class="modal-title" id="comunicadoModalTitle">Comunicado Interno</h5>
+                    <div class="comunicado-modal-subtitle" id="comunicadoModalFecha"></div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body comunicado-modal-body">
+                <div id="comunicadoModalViewer"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.comunicadosPublicConfig = {
+            listaUrl: '@Url.Page("/ComunicadosInternos/Index", "Lista", new { area = "Catalogos" })',
+            detalleUrl: '@Url.Page("/ComunicadosInternos/Index", "Detalle", new { area = "Catalogos" })',
+            mesActual: '@(Model.Mes?.ToString() ?? "")'
+        };
+    </script>
+    <script src="~/js/ComunicadosInternosPublico.js" asp-append-version="true"></script>
+}
