@@ -127,7 +127,7 @@
     <value>Considere que la primera vez que inicie sesión, por seguridad deberá cambiar la contraseña proporcionada por el sistema.</value>
   </data>
   <data name="EmailBodyFP" xml:space="preserve">
-    <value>Usted ha recibido una invitación al sistema ERPSEI, por favor confirme su cuenta dando</value>
+    <value>Usted ha recibido una invitación al sistema Intranet, por favor confirme su cuenta dando</value>
   </data>
   <data name="EmailBodySP" xml:space="preserve">
     <value>clic en este enlace</value>
@@ -136,7 +136,7 @@
     <value>Para iniciar sesión, use la siguiente información:</value>
   </data>
   <data name="EmailSubject" xml:space="preserve">
-    <value>¡Bienvenido a ERPSEI! Por favor confirme su correo</value>
+    <value>¡Bienvenido a Intranet! Por favor confirme su correo</value>
   </data>
   <data name="EmpleadoConsultadoSuccessfully" xml:space="preserve">
     <value>¡Empleado consultado satisfactoriamente!</value>
