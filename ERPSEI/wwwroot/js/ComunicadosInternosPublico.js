@@ -125,3 +125,10 @@ function escapeHtml(text) {
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 }
+
+const openId = window.comunicadosPublicConfig.openId;
+if (openId) {
+    setTimeout(() => {
+        verComunicado(openId);
+    }, 500);
+}

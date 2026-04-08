@@ -25,6 +25,9 @@ namespace ERPSEI.Areas.Intranet.Pages.ComunicadosInternos
         [BindProperty(SupportsGet = true)]
         public int? Mes { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int? OpenId { get; set; }
+
         public List<ComunicadoCardVm> Comunicados { get; set; } = new();
 
         public class ComunicadoCardVm

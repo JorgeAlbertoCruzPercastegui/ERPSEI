@@ -12,15 +12,18 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorEventos
         private readonly IEventoIntranetManager _eventoManager;
         private readonly IWebHostEnvironment _environment;
         private readonly AppUserManager _userManager;
+        private readonly IIntranetNotificationService _notificationService;
 
         public IndexModel(
             IEventoIntranetManager eventoManager,
             IWebHostEnvironment environment,
-            AppUserManager userManager)
+            AppUserManager userManager,
+            IIntranetNotificationService notificationService)
         {
             _eventoManager = eventoManager;
             _environment = environment;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         [BindProperty]
@@ -41,6 +44,9 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorEventos
             //public string? TextoBoton { get; set; }
             public bool Activo { get; set; } = true;
             public IFormFile? Portada { get; set; }
+
+            public bool NotificacionEnviada { get; set; } = false;
+            public DateTime? FechaNotificacion { get; set; }
         }
 
         public void OnGet() { }
@@ -224,10 +230,42 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorEventos
             }
         }
 
+        /*public async Task<IActionResult> OnPostPublicarAsync(int id)
+        {
+            AppUser? usr = await _userManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
+            bool ok = await _eventoManager.PublicarAsync(id, usr?.Id);
+
+            return new JsonResult(new
+            {
+                tieneError = !ok,
+                mensaje = ok ? "Evento publicado correctamente." : "No se pudo publicar el evento."
+            });
+        }*/
+
         public async Task<IActionResult> OnPostPublicarAsync(int id)
         {
             AppUser? usr = await _userManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
             bool ok = await _eventoManager.PublicarAsync(id, usr?.Id);
+
+            if (ok)
+            {
+                var entity = await _eventoManager.GetByIdAsync(id);
+
+                if (entity != null && !entity.NotificacionEnviada)
+                {
+                    string baseUrl = $"{Request.Scheme}://{Request.Host}";
+                    string urlDestino = $"{baseUrl}/Catalogos/Eventos?openId={entity.Id}";
+
+                    await _notificationService.EnviarNotificacionEventoPruebaAsync(
+                        entity.Titulo,
+                        entity.Descripcion,
+                        urlDestino);
+
+                    entity.NotificacionEnviada = true;
+                    entity.FechaNotificacion = DateTime.Now;
+                    await _eventoManager.UpdateAsync(entity);
+                }
+            }
 
             return new JsonResult(new
             {

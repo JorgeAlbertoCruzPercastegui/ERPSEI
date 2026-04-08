@@ -109,7 +109,8 @@
         window.comunicadosPublicConfig = {
             listaUrl: '@Url.Page("/ComunicadosInternos/Index", "Lista", new { area = "Catalogos" })',
             detalleUrl: '@Url.Page("/ComunicadosInternos/Index", "Detalle", new { area = "Catalogos" })',
-            mesActual: '@(Model.Mes?.ToString() ?? "")'
+            mesActual: '@(Model.Mes?.ToString() ?? "")',
+            openId: '@(Model.OpenId?.ToString() ?? "")'
         };
     </script>
     <script src="~/js/ComunicadosInternosPublico.js" asp-append-version="true"></script>

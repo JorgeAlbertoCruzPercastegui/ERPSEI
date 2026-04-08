@@ -68,7 +68,8 @@
 @section Scripts {
     <script>
         window.eventosConfig = {
-            detalleUrl: '@Url.Page("/Eventos/Index", "Detalle", new { area = "Catalogos" })'
+            detalleUrl: '@Url.Page("/Eventos/Index", "Detalle", new { area = "Catalogos" })',
+            openId: '@(Model.OpenId?.ToString() ?? "")'
         };
     </script>
     <script src="~/js/EventosPublico.js" asp-append-version="true"></script>

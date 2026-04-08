@@ -12,16 +12,22 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
         private readonly IComunicadoInternoManager _comunicadoManager;
         private readonly IWebHostEnvironment _environment;
         private readonly AppUserManager _userManager;
+        private readonly IIntranetNotificationService _notificationService;
 
         public IndexModel(
             IComunicadoInternoManager comunicadoManager,
             IWebHostEnvironment environment,
-            AppUserManager userManager)
+            AppUserManager userManager,
+            IIntranetNotificationService notificationService)
         {
             _comunicadoManager = comunicadoManager;
             _environment = environment;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
+
+        [BindProperty(SupportsGet = true)]
+        public int? OpenId { get; set; }
 
         [BindProperty]
         public InputModel Input { get; set; } = new();
@@ -283,10 +289,41 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
             });
         }
 
+        /*public async Task<IActionResult> OnPostPublicarAsync(int id)
+        {
+            AppUser? usr = await _userManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
+            bool ok = await _comunicadoManager.PublicarAsync(id, usr?.Id);
+
+            return new JsonResult(new
+            {
+                tieneError = !ok,
+                mensaje = ok ? "Comunicado publicado correctamente." : "No se pudo publicar el comunicado."
+            });
+        }*/
         public async Task<IActionResult> OnPostPublicarAsync(int id)
         {
             AppUser? usr = await _userManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
             bool ok = await _comunicadoManager.PublicarAsync(id, usr?.Id);
+
+            if (ok)
+            {
+                var entity = await _comunicadoManager.GetByIdAsync(id);
+
+                if (entity != null && !entity.NotificacionEnviada)
+                {
+                    string baseUrl = $"{Request.Scheme}://{Request.Host}";
+                    string urlDestino = $"{baseUrl}/Catalogos/ComunicadosInternos?openId={entity.Id}";
+
+                    await _notificationService.EnviarNotificacionComunicadoPruebaAsync(
+                        entity.Titulo,
+                        entity.Descripcion,
+                        urlDestino);
+
+                    entity.NotificacionEnviada = true;
+                    entity.FechaNotificacion = DateTime.Now;
+                    await _comunicadoManager.UpdateAsync(entity);
+                }
+            }
 
             return new JsonResult(new
             {

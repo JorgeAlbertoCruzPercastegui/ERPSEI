@@ -24,6 +24,9 @@ namespace ERPSEI.Data.Entities.Intranet
 
         public bool Publicado { get; set; } = false;
 
+        public bool NotificacionEnviada { get; set; } = false;
+        public DateTime? FechaNotificacion { get; set; }
+
         public bool Activo { get; set; } = true;
 
         public bool EsProgramado { get; set; } = false;

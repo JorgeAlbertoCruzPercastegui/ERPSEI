@@ -16,6 +16,8 @@ namespace ERPSEI.Areas.Intranet.Pages.Eventos
             _userManager = userManager;
         }
 
+        [BindProperty(SupportsGet = true)]
+        public int? OpenId { get; set; }
         public string NombreColaborador { get; set; } = "colaborador";
         public List<EventoVm> Eventos { get; set; } = new();
 

@@ -36,6 +36,8 @@ using ERPSEI.Data.Managers.TipoContratos;
 using ERPSEI.Data.Managers.Documentos;
 using ERPSEI.Data.Entities.Documentos;
 using ERPSEI.Data.Managers.Intranet;
+using Azure.Identity;
+using Microsoft.Graph;
 
 namespace ERPSEI
 {
@@ -52,9 +54,33 @@ namespace ERPSEI
         public static AppUser MasterUser { get; } = new AppUser() { EmailConfirmed = true, IsPreregisterAuthorized = true, PasswordResetNeeded = false, IsMaster = true };
 
 
-    public static void ConfigureEmail(WebApplicationBuilder builder)
+        /*public static void ConfigureEmail(WebApplicationBuilder builder)
+            {
+                // Validación mínima de configuración Graph
+                var graphSection = builder.Configuration.GetSection("Graph");
+
+                var tenantId = graphSection.GetValue<string>("TenantId")
+                    ?? throw new InvalidOperationException("Graph:TenantId not found.");
+
+                var clientId = graphSection.GetValue<string>("ClientId")
+                    ?? throw new InvalidOperationException("Graph:ClientId not found.");
+
+                var clientSecret = graphSection.GetValue<string>("ClientSecret")
+                    ?? throw new InvalidOperationException("Graph:ClientSecret not found.");
+
+                var fromEmail = graphSection.GetValue<string>("FromEmail")
+                    ?? throw new InvalidOperationException("Graph:FromEmail not found.");
+
+                // Registro DI: EmailSender (Graph)
+                builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+                // Si usas MasterUser en tu sistema, deja esto (opcional)
+                MasterUser.Email = fromEmail;
+                MasterUser.UserName = fromEmail;
+        }*/
+
+        public static void ConfigureEmail(WebApplicationBuilder builder)
         {
-            // Validación mínima de configuración Graph
             var graphSection = builder.Configuration.GetSection("Graph");
 
             var tenantId = graphSection.GetValue<string>("TenantId")
@@ -69,16 +95,24 @@ namespace ERPSEI
             var fromEmail = graphSection.GetValue<string>("FromEmail")
                 ?? throw new InvalidOperationException("Graph:FromEmail not found.");
 
-            // Registro DI: EmailSender (Graph)
+            var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+
+            builder.Services.AddSingleton(credential);
+
+            builder.Services.AddSingleton<GraphServiceClient>(sp =>
+            {
+                var cred = sp.GetRequiredService<ClientSecretCredential>();
+                return new GraphServiceClient(cred);
+            });
+
             builder.Services.AddTransient<IEmailSender, EmailSender>();
 
-            // Si usas MasterUser en tu sistema, deja esto (opcional)
             MasterUser.Email = fromEmail;
             MasterUser.UserName = fromEmail;
-    }
+        }
 
 
-    public static void ConfigureDatabase(WebApplicationBuilder _builder)
+        public static void ConfigureDatabase(WebApplicationBuilder _builder)
         {
             var connectionString = _builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             _builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
@@ -117,7 +151,16 @@ namespace ERPSEI
             ConfigureDIComunicadosInteros(_builder);
 
             ConfigureDIEventos(_builder);
+
+            ConfigureDINotificacionesEventosComunicados(_builder);
         }
+
+        private static void ConfigureDINotificacionesEventosComunicados(WebApplicationBuilder _builder)
+        {
+            //Eventos
+            _builder.Services.AddScoped<IIntranetNotificationService, IntranetNotificationService>();
+        }
+
 
         private static void ConfigureDIEventos(WebApplicationBuilder _builder)
         {

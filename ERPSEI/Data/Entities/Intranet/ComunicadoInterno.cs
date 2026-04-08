@@ -20,6 +20,9 @@ namespace ERPSEI.Data.Entities.Intranet
 
         public bool Publicado { get; set; } = false;
 
+        public bool NotificacionEnviada { get; set; } = false;
+        public DateTime? FechaNotificacion { get; set; }
+
         public bool EsPermanente { get; set; } = false;
 
         [StringLength(500)]

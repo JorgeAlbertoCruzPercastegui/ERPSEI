@@ -323,6 +323,11 @@ namespace ERPSEI.Data
                 e.Property(x => x.Publicado)
                     .HasDefaultValue(false);
 
+                e.Property(x => x.NotificacionEnviada)
+                    .HasDefaultValue(false);
+
+                e.Property(x => x.FechaNotificacion);
+
                 e.Property(x => x.Activo)
                     .HasDefaultValue(true);
 
@@ -376,6 +381,11 @@ namespace ERPSEI.Data
 
                 e.Property(x => x.Publicado)
                     .HasDefaultValue(false);
+
+                e.Property(x => x.NotificacionEnviada)
+                    .HasDefaultValue(false);
+
+                e.Property(x => x.FechaNotificacion);
 
                 e.Property(x => x.EsPermanente)
                     .HasDefaultValue(false);

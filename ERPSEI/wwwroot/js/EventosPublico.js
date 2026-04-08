@@ -34,3 +34,10 @@ function verEvento(id) {
             console.error("Error al abrir el evento:", error);
         });
 }
+
+const openId = window.eventosConfig.openId;
+if (openId) {
+    setTimeout(() => {
+        verEvento(openId);
+    }, 500);
+}
