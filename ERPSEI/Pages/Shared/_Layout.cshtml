@@ -281,6 +281,20 @@
     bool mostrarGestionCorporativa = esAdministrador || esAdministradorTI || esAdministradorEmpresas;
     bool mostrarRecursosHumanos = esAdminMenu;
 
+
+    /* Comunidad por rol */
+    bool mostrarGestorComunicadosInternosMenu = esAdministrador || esAdministradorTH;
+    bool mostrarGestorEventosMenu = esAdministrador || esAdministradorTH;
+
+    bool mostrarComunicadosInternosMenu = esUsuario || esAdministrador || esAdministradorTH;
+    bool mostrarEventosMenu = esUsuario || esAdministrador || esAdministradorTH;
+
+    mostrarComunidad =
+        mostrarGestorComunicadosInternosMenu ||
+        mostrarGestorEventosMenu ||
+        mostrarComunicadosInternosMenu ||
+        mostrarEventosMenu;
+
     // Subopciones internas de RH
     bool mostrarBannersMenu = esAdminMenu || permisos["banners"];
     bool mostrarGestionTalentoMenu = esAdminMenu || (permisos.ContainsKey("gestiondetalento") && permisos["gestiondetalento"]);
@@ -464,10 +478,43 @@
                                 <div class="quick-dd">
                                     <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
                                     <div class="quick-dd-menu">
-                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestorComunicadosInternos/Index">Gestor Comunicados Internos</a>
-                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/ComunicadosInternos/Index">Comunicados</a>
-                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/GestorEventos/Index">Gestor Eventos</a>
-                                        <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Eventos/Index">Eventos</a>
+
+                                        @if (mostrarGestorComunicadosInternosMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                               asp-area="Catalogos"
+                                               asp-page="/GestorComunicadosInternos/Index">
+                                                Gestor Comunicados Internos
+                                            </a>
+                                        }
+
+                                        @if (mostrarComunicadosInternosMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                               asp-area="Catalogos"
+                                               asp-page="/ComunicadosInternos/Index">
+                                                Comunicados Internos
+                                            </a>
+                                        }
+
+                                        @if (mostrarGestorEventosMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                               asp-area="Catalogos"
+                                               asp-page="/GestorEventos/Index">
+                                                Gestor Eventos
+                                            </a>
+                                        }
+
+                                        @if (mostrarEventosMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                               asp-area="Catalogos"
+                                               asp-page="/Eventos/Index">
+                                                Eventos
+                                            </a>
+                                        }
+
                                     </div>
                                 </div>
                             }
