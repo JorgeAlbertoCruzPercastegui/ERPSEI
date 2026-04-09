@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Mvc.Localization
 @inject IViewLocalizer Localizer
 @model LogoutModel
+
 @{
     ViewData["Title"] = Localizer["Title"];
     ViewData["BodyClass"] = "logout-page";
@@ -10,44 +11,67 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/Logout.css" asp-append-version="true" />
 }
-<header>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-xl-10 col-lg-12 col-md-9">
-                <div class="card o-hidden border-0 shadow-lg my-5">
-                    <div class="card-body p-0">
-                        <div class="row">
-                            <div class="col-lg-6 d-none d-lg-block">
-                                <img class="bg-login-image" src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/logout.jpg" />
+
+<div class="logout-page-shell">
+    <div class="logout-card">
+        <div class="logout-card-inner">
+
+            <div class="logout-brand-panel">
+                <img class="logout-brand-logo"
+                     src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/intranet_SEI.png"
+                     alt="Intranet SEI" />
+            </div>
+
+            <div class="logout-form-panel">
+                @if (User.Identity?.IsAuthenticated ?? false)
+                {
+                    <form asp-area="Identity"
+                          asp-page="/Account/Logout"
+                          asp-route-returnUrl="@Url.Page("/", new { area = "" })"
+                          method="post"
+                          class="logout-form">
+
+                        <h2 class="logout-title">@ViewData["Title"]</h2>
+                        <div class="logout-title-line"></div>
+
+                        <div class="logout-message-box">
+                            <div class="logout-main-text">
+                                @Localizer["LogoutInstructionA"]
                             </div>
-                            <div class="col-lg-6">
-                                <div class="p-5 text-center row">
-                                    @if (User.Identity?.IsAuthenticated ?? false)
-                                    {
-                                        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/", new { area = "" })" method="post">
-                                            <h2>@ViewData["Title"]</h2>
-                                            <hr />
-                                            <div class="h4 pt-5">
-                                                @Localizer["LogoutInstructionA"]
-                                                <div class="h6 pt-4 text-muted">
-                                                    @Localizer["LogoutInstructionB"]
-                                                </div>
-                                            </div>
-                                            <div class="mb-3 p-5">
-                                                <button type="submit" class="btn btn-lg btn-danger">@Localizer["LogoutButton"]</button>
-                                            </div>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <p>@Localizer["LogoutMessage"].</p>
-                                    }
-                                </div>
+
+                            <div class="logout-sub-text">
+                                @Localizer["LogoutInstructionB"]
                             </div>
                         </div>
+
+                        <div class="logout-actions">
+                            <button type="submit" class="w-100 btn btn-lg btn-primary logout-submit-btn">
+                                @Localizer["LogoutButton"]
+                            </button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="logout-form">
+                        <h2 class="logout-title">@ViewData["Title"]</h2>
+                        <div class="logout-title-line"></div>
+
+                        <div class="logout-message-box">
+                            <div class="logout-main-text">
+                                @Localizer["LogoutMessage"].
+                            </div>
+                        </div>
+
+                        <div class="logout-actions">
+                            <a asp-page="/Account/Login" class="w-100 btn btn-lg btn-primary logout-submit-btn">
+                                Iniciar sesión
+                            </a>
+                        </div>
                     </div>
-                </div>
+                }
             </div>
+
         </div>
     </div>
-</header>
+</div>
