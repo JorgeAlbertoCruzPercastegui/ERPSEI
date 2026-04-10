@@ -16,14 +16,14 @@
         const hasDigit = /[0-9]/.test(pwd);
         const hasSpecial = /[!@#$%^&*]/.test(pwd);
         const hasUpper = /[A-ZÁÉÍÓÚÑ]/.test(pwd);
-        const noRepeatConsecutive = !/(.)\1/.test(pwd);
+        //const noRepeatConsecutive = !/(.)\1/.test(pwd);
         const minLen = pwd.length >= 8;
 
         return {
             hasDigit,
             hasSpecial,
             hasUpper,
-            noRepeatConsecutive,
+            //noRepeatConsecutive,
             minLen,
             isValid: hasDigit && hasSpecial && hasUpper && noRepeatConsecutive && minLen
         };
@@ -35,7 +35,7 @@
         setRule("rule-digit", result.hasDigit);
         setRule("rule-special", result.hasSpecial);
         setRule("rule-upper", result.hasUpper);
-        setRule("rule-no-repeat", result.noRepeatConsecutive);
+        //setRule("rule-no-repeat", result.noRepeatConsecutive);
         setRule("rule-length", result.minLen);
 
         return result.isValid;
