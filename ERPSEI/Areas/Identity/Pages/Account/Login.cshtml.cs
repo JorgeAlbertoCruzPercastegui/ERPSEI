@@ -183,6 +183,7 @@ namespace ERPSEI.Areas.Identity.Pages.Account
                         return Page();
                     }
                 }
+
             }
 
             //Si el código llegó hasta este punto, algo salió mal. Vuelve a mostrar la pantalla de inicio de sesión.

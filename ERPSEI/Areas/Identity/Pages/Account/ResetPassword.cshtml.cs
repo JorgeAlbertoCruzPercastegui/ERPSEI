@@ -52,8 +52,14 @@ namespace ERPSEI.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required(ErrorMessage = "Required")]
+            /*[Required(ErrorMessage = "Required")]
             [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 6)]
+            [DataType(DataType.Password)]
+            [Display(Name = "PasswordField")]
+            public string Password { get; set; }*/
+            [Required(ErrorMessage = "Required")]
+            [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 8)]
+            [RegularExpression(@"^(?=.*[A-ZÁÉÍÓÚÑ])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$", ErrorMessage = "PasswordComplexity")]
             [DataType(DataType.Password)]
             [Display(Name = "PasswordField")]
             public string Password { get; set; }
