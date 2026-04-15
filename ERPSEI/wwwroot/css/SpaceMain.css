@@ -802,3 +802,208 @@ body.module-main-theme.manuales-politicas-page {
 .home-main-theme .quick-link {
     flex: 0 0 auto;
 }
+
+.employee-profile-card {
+    margin-top: 20px;
+}
+
+.employee-card {
+    background: linear-gradient(145deg, #0d1b4c, #162a7a);
+    border-radius: 20px;
+    padding: 20px;
+    color: #fff;
+    max-width: 350px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.employee-card__header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.employee-card__avatar i {
+    font-size: 50px;
+    color: #d4af37;
+}
+
+.employee-card__fullname {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.employee-card__role {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.employee-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.employee-card__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+    .employee-card__item i {
+        font-size: 18px;
+        color: #d4af37;
+    }
+
+    .employee-card__item span {
+        font-size: 12px;
+        opacity: 0.7;
+        display: block;
+    }
+
+    .employee-card__item strong {
+        font-size: 14px;
+    }
+
+.home-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* IZQUIERDA */
+.home-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+}
+
+/* DERECHA */
+.home-main {
+    flex: 1;
+}
+
+/* que la tarjeta se quede fija (pro) */
+.home-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+/* responsive */
+@media (max-width: 991px) {
+    .home-layout {
+        flex-direction: column;
+    }
+
+    .home-sidebar {
+        width: 100%;
+        position: relative;
+    }
+}
+
+.sidebar-toggle {
+    position: fixed;
+    top: 80px; /* más arriba */
+    left: 22px;
+    z-index: 1200;
+    width: 58px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 0;
+    color: #ffffff;
+    font-size: 22px;
+    cursor: pointer;
+    transition: all 0.35s ease;
+}
+
+    /* hover */
+    .sidebar-toggle:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255,255,255,0.22);
+    }
+
+    /* cuando abre, la X queda dentro de la tarjeta */
+    .sidebar-toggle.active {
+        top: 22px;
+        left: 248px;
+        background: none;
+        border: none;
+        box-shadow: none;
+        backdrop-filter: none;
+        padding: 0; /* 🔥 elimina espacio interno */
+        width: auto; /* 🔥 elimina caja */
+        height: auto;
+        display: inline-flex;
+        color: #ffffff;
+    }
+        .sidebar-toggle.active i {
+            font-size: 23px; /* tamaño de la X */
+            line-height: 1;
+        }
+        .sidebar-toggle.active:hover {
+            background: none;
+        }
+        .sidebar-toggle.active i {
+            opacity: 0.9;
+        }
+
+/* SIDEBAR */
+.sidebar-profile {
+    position: fixed;
+    top: 0;
+    left: -320px;
+    width: 300px;
+    height: 100vh;
+    background: linear-gradient(145deg, #0d1b4c, #162a7a);
+    padding: 20px;
+    z-index: 1100;
+    transition: all 0.3s ease;
+}
+
+    .sidebar-profile.active {
+        left: 0;
+    }
+
+/* mover layout */
+#layoutWrapper {
+    transition: margin-left 0.3s ease;
+}
+
+    #layoutWrapper.shifted {
+        margin-left: 300px;
+    }
+
+/* responsive */
+@media (max-width: 991px) {
+    #layoutWrapper.shifted {
+        margin-left: 0;
+    }
+
+    .sidebar-profile {
+        width: 80%;
+        left: -100%;
+    }
+
+        .sidebar-profile.active {
+            left: 0;
+        }
+
+    .sidebar-toggle {
+        top: 68px;
+        left: 16px;
+        width: 54px;
+        height: 54px;
+    }
+
+        .sidebar-toggle.active {
+            top: 16px;
+            left: calc(80% - 66px); /* la X queda dentro del panel en móvil */
+        }
+}

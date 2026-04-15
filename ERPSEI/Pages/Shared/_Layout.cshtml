@@ -339,7 +339,9 @@
     @RenderSection("Styles", required: false)
 </head>
 
-<body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme") @(ViewData["BodyClass"] ?? "")">
+    <body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme") @(ViewData["BodyClass"] ?? "")">
+
+        <div id="layoutWrapper">
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light header-bg shadow-none border-0"
              style="@(string.IsNullOrWhiteSpace(headerBg) ? "" : $"background-image:url('{headerBg}')")">
@@ -587,61 +589,80 @@
                     </div>
                 </div>
             }
-
-            <main role="main" class="pb-3 main-home-content">
-                @RenderBody()
+            <main id="mainContent" role="main" class="pb-3 main-home-content">
 
                 @if (SignInManager.IsSignedIn(User) && esPaginaInicio && empleadoActual != null)
                 {
-                    <section class="employee-profile-strip">
-                        <div class="employee-profile-strip__inner">
+                    <!-- 🔥 BOTÓN -->
+                    <button id="btnSidebar" class="sidebar-toggle">
+                        <i class="bi bi-list"></i>
+                    </button>
 
-                            <!--<div class="employee-profile-strip__header">
-                                <h3 class="employee-profile-strip__title">Perfil del usuario</h3>
+                    <!-- 🔵 SIDEBAR -->
+                    <aside id="sidebarProfile" class="sidebar-profile">
+
+                        <div class="employee-card">
+
+                            <div class="employee-card__header">
+                                <div class="employee-card__avatar">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+
+                                <div class="employee-card__name">
+                                    <div class="employee-card__fullname">@nombreEmpleadoCard</div>
+                                    <div class="employee-card__role">@puestoEmpleado</div>
+                                </div>
                             </div>
-                            -->
-                            <div class="employee-profile-strip__grid">
-                                <article class="employee-profile-strip__item">
-                                    <div class="employee-profile-strip__label">
-                                        <i class="bi bi-briefcase-fill"></i>
+
+                            <div class="employee-card__body">
+
+                                <div class="employee-card__item">
+                                    <i class="bi bi-briefcase-fill"></i>
+                                    <div>
                                         <span>Área</span>
+                                        <strong>@areaEmpleado</strong>
                                     </div>
-                                    <div class="employee-profile-strip__value">@areaEmpleado</div>
-                                </article>
+                                </div>
 
-                                <article class="employee-profile-strip__item">
-                                    <div class="employee-profile-strip__label">
-                                        <i class="bi bi-person-workspace"></i>
+                                <div class="employee-card__item">
+                                    <i class="bi bi-person-workspace"></i>
+                                    <div>
                                         <span>Puesto</span>
+                                        <strong>@puestoEmpleado</strong>
                                     </div>
-                                    <div class="employee-profile-strip__value">@puestoEmpleado</div>
-                                </article>
+                                </div>
 
-                                <article class="employee-profile-strip__item">
-                                    <div class="employee-profile-strip__label">
-                                        <i class="bi bi-person-badge-fill"></i>
+                                <div class="employee-card__item">
+                                    <i class="bi bi-person-badge-fill"></i>
+                                    <div>
                                         <span>Jefe Inmediato</span>
+                                        <strong>@jefeEmpleado</strong>
                                     </div>
-                                    <div class="employee-profile-strip__value">@jefeEmpleado</div>
-                                </article>
+                                </div>
 
-                                <article class="employee-profile-strip__item">
-                                    <div class="employee-profile-strip__label">
-                                        <i class="bi bi-calendar-event-fill"></i>
+                                <div class="employee-card__item">
+                                    <i class="bi bi-calendar-event-fill"></i>
+                                    <div>
                                         <span>Fecha de Ingreso</span>
+                                        <strong>@fechaIngresoEmpleado</strong>
                                     </div>
-                                    <div class="employee-profile-strip__value">@fechaIngresoEmpleado</div>
-                                </article>
+                                </div>
+
                             </div>
 
                         </div>
-                    </section>
+
+                    </aside>
                 }
+
+                <!-- 🔴 CONTENIDO NORMAL -->
+                @RenderBody()
 
                 @if (SignInManager.IsSignedIn(User) && esPaginaInicio && cumpleaniosMes.Any())
                 {
                     <div class="birthday-showcase-wrapper">
                         <div class="birthday-showcase birthday-showcase--compact">
+
                             <div class="birthday-showcase__art">
                                 <div class="birthday-balloon"></div>
 
@@ -657,6 +678,7 @@
                             </div>
 
                             <div class="birthday-showcase__content">
+
                                 <div class="birthday-showcase__top">
                                     <h3 class="birthday-showcase__title">Cumpleaños del mes</h3>
                                     <div class="birthday-showcase__month">@nombreMesActual</div>
@@ -714,10 +736,13 @@
                                 <div class="birthday-showcase__footer">
                                     ¡Muchas felicidades!
                                 </div>
+
                             </div>
+
                         </div>
                     </div>
                 }
+
             </main>
         </div>
     </div>
@@ -803,6 +828,37 @@
         });
     </script>
 
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+
+                const btn = document.getElementById("btnSidebar");
+                const sidebar = document.getElementById("sidebarProfile");
+                const layout = document.getElementById("layoutWrapper");
+
+                if (!btn || !sidebar || !layout) return;
+
+                btn.addEventListener("click", function () {
+
+                    sidebar.classList.toggle("active");
+                    layout.classList.toggle("shifted");
+                    btn.classList.toggle("active");
+
+                    const icon = btn.querySelector("i");
+
+                    if (sidebar.classList.contains("active")) {
+                        icon.classList.remove("bi-list");
+                        icon.classList.add("bi-x-lg");
+                    } else {
+                        icon.classList.remove("bi-x-lg");
+                        icon.classList.add("bi-list");
+                    }
+
+                });
+
+            });
+        </script>
+
     @await RenderSectionAsync("Scripts", required: false)
+    </div>
 </body>
 </html>
