@@ -76,16 +76,19 @@
     int diaActualCumple = hoyCumple.Day;
 
     var cumpleaniosMes = await Db.Empleados
-     .AsNoTracking()
-     .Where(e => e.FechaNacimiento.Month == mesActualCumple)
-     .Select(e => new
-     {
-         NombreCompleto = (e.Nombre ?? "") + " " + (e.ApellidoPaterno ?? "") + " " + (e.ApellidoMaterno ?? ""),
-         Dia = e.FechaNacimiento.Day,
-         Puesto = e.Puesto != null ? e.Puesto.Nombre : ""
-     })
-     .OrderBy(e => e.Dia)
-     .ToListAsync();
+        .AsNoTracking()
+        .Where(e =>
+            e.FechaNacimiento.Month == mesActualCumple &&
+            e.Deshabilitado == 0
+        )
+        .Select(e => new
+        {
+            NombreCompleto = (e.Nombre ?? "") + " " + (e.ApellidoPaterno ?? "") + " " + (e.ApellidoMaterno ?? ""),
+            Dia = e.FechaNacimiento.Day,
+            Puesto = e.Puesto != null ? e.Puesto.Nombre : ""
+        })
+        .OrderBy(e => e.Dia)
+        .ToListAsync();
 
     string nombreMesActual = hoyCumple.ToString("MMMM", new System.Globalization.CultureInfo("es-MX"));
 
