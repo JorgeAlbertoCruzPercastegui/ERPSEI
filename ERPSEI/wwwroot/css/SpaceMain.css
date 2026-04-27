@@ -5,13 +5,8 @@
 .home-main-theme {
     min-height: 100vh;
     position: relative;
-    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-    background-attachment: fixed;
-    background-color: #07133f;
-    color: #fff;
+    background: #ffffff !important;
+    color: #21166f;
 }
 
     .home-main-theme::before {
@@ -19,7 +14,7 @@
         position: fixed;
         inset: 0;
         pointer-events: none;
-        background: linear-gradient(135deg, rgba(7,19,63,.55) 0%, rgba(10,29,102,.45) 45%, rgba(17,46,161,.35) 100%), radial-gradient(circle at 20% 25%, rgba(255,255,255,.06) 0%, transparent 22%), radial-gradient(circle at 80% 18%, rgba(255,255,255,.05) 0%, transparent 20%), radial-gradient(circle at 75% 70%, rgba(255,255,255,.04) 0%, transparent 24%);
+        background: radial-gradient(circle at 20% 20%, rgba(33,22,111,.035) 0%, transparent 25%), radial-gradient(circle at 85% 70%, rgba(33,22,111,.025) 0%, transparent 24%);
         z-index: 0;
     }
 
@@ -55,10 +50,10 @@
             flex-direction: column;
             align-items: stretch;
             gap: .3rem;
-            background: rgba(10, 21, 74, .98);
+            background: #21166f;
             border: 1px solid rgba(255,255,255,.12);
             border-radius: .9rem;
-            box-shadow: 0 1rem 2rem rgba(0,0,0,.28);
+            box-shadow: 0 1rem 2rem rgba(0,0,0,.18);
             padding: .55rem;
             backdrop-filter: blur(12px);
         }
@@ -106,12 +101,13 @@
 .home-main-theme .header-bg {
     background: transparent !important;
     border: 0 !important;
+    box-shadow: none !important;
 }
 
 .home-main-theme .header-bg-inner {
     background: transparent;
-    padding-top: 12px;
-    padding-bottom: 6px;
+    padding-top: 22px;
+    padding-bottom: 12px;
 }
 
 .home-main-theme .navbar-brand {
@@ -124,11 +120,11 @@
 
     .home-main-theme .navbar-brand img.brandimage {
         display: block;
-        height: 44px;
+        height: 54px;
         width: auto;
-        max-height: 44px;
+        max-height: 54px;
         object-fit: contain;
-        filter: drop-shadow(0 2px 6px rgba(0,0,0,.18));
+        filter: none;
     }
 
 .home-main-theme header .nav-link,
@@ -136,12 +132,13 @@
 .home-main-theme header .navbar .dropdown-toggle,
 .home-main-theme header .navbar .btn-link,
 .home-main-theme header .navbar a {
-    color: rgba(255,255,255,.95) !important;
+    color: #21166f !important;
+    font-weight: 600;
 }
 
     .home-main-theme header .nav-link:hover,
     .home-main-theme header .navbar a:hover {
-        color: #ffffff !important;
+        color: #d4ad45 !important;
     }
 
 /* ==========================================
@@ -158,20 +155,21 @@
 
 .home-main-theme .topbar-links {
     white-space: nowrap;
-    margin-top: 2px;
-    margin-bottom: 12px;
-    padding: 12px 14px !important;
-    border-radius: 18px;
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.10);
-    box-shadow: 0 10px 24px rgba(0,0,0,.14);
-    backdrop-filter: blur(4px);
+    margin-top: 6px;
+    margin-bottom: 90px;
+    padding: 14px 24px !important;
+    border-radius: 10px;
+    background: #21166f;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
     .home-main-theme .topbar-links .small,
     .home-main-theme .topbar-links .text-muted,
     .home-main-theme .topbar-links b {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
+        font-weight: 700;
     }
 
 /* ==========================================
@@ -187,7 +185,7 @@
     display: inline-block;
     padding: .2rem .18rem;
     text-decoration: none !important;
-    color: rgba(255,255,255,.86);
+    color: #ffffff;
     font-size: .92rem;
     font-weight: 600;
     transition: color .15s ease;
@@ -202,13 +200,13 @@
         width: 100%;
         transform: scaleX(0);
         transform-origin: left;
-        background: #9db8ff;
+        background: #d4ad45;
         transition: transform .18s ease;
         opacity: .95;
     }
 
     .home-main-theme .quick-link:hover {
-        color: #ffffff;
+        color: #d4ad45;
     }
 
         .home-main-theme .quick-link:hover::after {
@@ -216,7 +214,7 @@
         }
 
     .home-main-theme .quick-link.active {
-        color: #ffffff;
+        color: #d4ad45;
     }
 
         .home-main-theme .quick-link.active::after {
@@ -233,16 +231,16 @@
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 2px;
+    margin-top: 8px;
     min-width: 260px;
-    background: rgba(9, 20, 70, .96);
-    border: 1px solid rgba(255,255,255,.12);
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
     border-radius: 14px;
     padding: .55rem;
-    box-shadow: 0 18px 35px rgba(0,0,0,.28);
+    box-shadow: 0 18px 35px rgba(0,0,0,.14);
     display: none;
     z-index: 2000;
-    backdrop-filter: blur(10px);
+    backdrop-filter: none;
 }
 
 .home-main-theme .quick-dd-menu-wide {
@@ -256,15 +254,15 @@
     padding: .6rem .8rem;
     border-radius: 10px;
     text-decoration: none !important;
-    color: rgba(255,255,255,.86);
+    color: #21166f;
     font-size: .875rem;
     font-weight: 600;
     transition: background .15s ease, color .15s ease;
 }
 
     .home-main-theme .quick-dd-item:hover {
-        background: rgba(255,255,255,.10);
-        color: #ffffff;
+        background: rgba(33,22,111,.08);
+        color: #21166f;
     }
 
 .home-main-theme .quick-dd:hover > .quick-dd-menu {
@@ -276,7 +274,7 @@
 }
 
 .home-main-theme .quick-dd:hover > .quick-dd-toggle {
-    color: #ffffff;
+    color: #d4ad45;
 }
 
 .home-main-theme .quick-nav-wrap {
@@ -284,8 +282,8 @@
 }
 
 .home-main-theme .quick-nav-toggle {
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(255,255,255,.08);
+    border: none;
+    background: #21166f;
     color: #fff;
     border-radius: 10px;
     padding: .35rem .65rem;
@@ -300,7 +298,7 @@
    ========================================== */
 
 .home-main-theme .main-home-content {
-    padding-top: 6px;
+    padding-top: 0;
 }
 
 .home-main-theme .banner-img,
@@ -308,11 +306,11 @@
     width: 100%;
     height: 350px;
     object-fit: cover;
-    border-radius: 18px;
+    border-radius: 12px;
     display: block;
-    border: 1px solid rgba(255,255,255,.18);
-    box-shadow: 0 16px 34px rgba(0,0,0,.22);
-    background: rgba(255,255,255,.04);
+    border: none;
+    box-shadow: none;
+    background: #ffffff;
 }
 
 /* ==========================================
@@ -329,11 +327,11 @@
     overflow: hidden;
     border-radius: 22px;
     padding: 16px 18px;
-    border: 1px solid rgba(232, 201, 115, .55);
-    background: transparent !important;
+    border: 1px solid rgba(212, 173, 69, .75);
+    background: #ffffff !important;
     box-shadow: none;
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
 }
 
     .home-main-theme .employee-profile-strip__inner::before {
@@ -345,14 +343,14 @@
     z-index: 1;
     margin-bottom: 14px;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(232, 201, 115, .35);
+    border-bottom: 1px solid rgba(33,22,111,.15);
 }
 
 .home-main-theme .employee-profile-strip__title {
     margin: 0;
     font-size: 1.75rem;
     font-weight: 800;
-    color: #f0c868;
+    color: #21166f;
     line-height: 1.1;
 }
 
@@ -373,7 +371,7 @@
 }
 
     .home-main-theme .employee-profile-strip__item:not(:last-child) {
-        border-right: 1px solid rgba(232, 201, 115, .28);
+        border-right: 1px solid rgba(33,22,111,.14);
     }
 
 .home-main-theme .employee-profile-strip__label {
@@ -381,7 +379,7 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 6px;
-    color: #f0c868;
+    color: #21166f;
     font-size: 1.05rem;
     font-weight: 800;
     line-height: 1.1;
@@ -392,7 +390,7 @@
     }
 
 .home-main-theme .employee-profile-strip__value {
-    color: #ffffff;
+    color: #21166f;
     font-size: 1rem;
     font-weight: 600;
     line-height: 1.35;
@@ -414,7 +412,7 @@
 
     .home-main-theme .employee-profile-strip__item:nth-child(1),
     .home-main-theme .employee-profile-strip__item:nth-child(2) {
-        border-bottom: 1px solid rgba(232, 201, 115, .22);
+        border-bottom: 1px solid rgba(33,22,111,.14);
         padding-bottom: 14px;
     }
 }
@@ -444,7 +442,7 @@
     }
 
         .home-main-theme .employee-profile-strip__item:not(:last-child) {
-            border-bottom: 1px solid rgba(232, 201, 115, .18);
+            border-bottom: 1px solid rgba(33,22,111,.14);
         }
 
     .home-main-theme .employee-profile-strip__label {
@@ -457,33 +455,28 @@
 }
 
 /* =====================================================
-   CAJAS INFO USUARIO - SOLO BORDE (SIN FONDO)
+   CAJAS INFO USUARIO
    ===================================================== */
 
 .home-main-theme .employee-info-box {
     min-height: 118px;
     border-radius: 20px;
     padding: 18px 20px;
-    /* 🔥 SOLO CONTORNO DORADO */
-    border: 2px solid rgba(232, 201, 115, .75);
-    /* ❌ QUITAMOS FONDO */
-    background: transparent !important;
-    /* quitamos sombras pesadas */
+    border: 1px solid rgba(212, 173, 69, .75);
+    background: #ffffff !important;
     box-shadow: none;
-    /* efecto glass ligero */
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     display: flex;
     flex-direction: column;
     justify-content: center;
     transition: all .25s ease;
 }
 
-    /* ✨ HOVER ELEGANTE */
     .home-main-theme .employee-info-box:hover {
-        border-color: #f1d88c;
+        border-color: #d4ad45;
         transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0,0,0,.25);
+        box-shadow: 0 8px 20px rgba(33,22,111,.12);
     }
 
 .home-main-theme .employee-info-label {
@@ -491,7 +484,7 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
-    color: #f0c868;
+    color: #21166f;
     font-size: 1.15rem;
     font-weight: 800;
     line-height: 1.1;
@@ -502,7 +495,7 @@
     }
 
 .home-main-theme .employee-info-value {
-    color: #ffffff;
+    color: #21166f;
     font-size: 1.1rem;
     font-weight: 700;
     line-height: 1.3;
@@ -520,7 +513,7 @@
 
 .home-main-theme .footer {
     background: transparent !important;
-    border-top: 1px solid rgba(255,255,255,.14) !important;
+    border-top: 1px solid rgba(33,22,111,.12) !important;
     margin-top: 26px;
     padding-top: 14px;
     padding-bottom: 12px;
@@ -531,11 +524,11 @@
     .home-main-theme .footer a,
     .home-main-theme .footer .float-start,
     .home-main-theme .footer .float-end {
-        color: rgba(255,255,255,.88) !important;
+        color: #21166f !important;
     }
 
         .home-main-theme .footer a:hover {
-            color: #ffffff !important;
+            color: #d4ad45 !important;
         }
 
 /* ==========================================
@@ -564,10 +557,10 @@
         flex-direction: column;
         align-items: stretch;
         gap: .3rem;
-        background: rgba(10, 21, 74, .98);
+        background: #21166f;
         border: 1px solid rgba(255,255,255,.12);
         border-radius: .9rem;
-        box-shadow: 0 1rem 2rem rgba(0,0,0,.28);
+        box-shadow: 0 1rem 2rem rgba(0,0,0,.18);
         padding: .55rem;
         backdrop-filter: blur(12px);
     }
@@ -581,6 +574,7 @@
         width: 100%;
         padding: .48rem .55rem;
         border-radius: .55rem;
+        color: #ffffff;
     }
 
     .home-main-theme .quick-dd,
@@ -601,6 +595,15 @@
     .home-main-theme .quick-dd.open > .quick-dd-menu {
         display: block;
     }
+
+    .home-main-theme .quick-dd-item {
+        color: #ffffff;
+    }
+
+        .home-main-theme .quick-dd-item:hover {
+            background: rgba(255,255,255,.12);
+            color: #d4ad45;
+        }
 
     .home-main-theme .banner-img,
     .home-main-theme .home-banner-img {
@@ -639,43 +642,44 @@
 
     .home-main-theme .employee-hero-title {
         font-size: 2rem;
+        color: #21166f;
     }
 
     .home-main-theme .employee-info-label {
-        color: #e3c97b;
+        color: #21166f;
     }
 
     .home-main-theme .employee-info-value {
-        color: #ffffff;
+        color: #21166f;
     }
 }
 
 /* =====================================================
-   MENU DORADO SOLO HOME
+   MENU AZUL SOLO HOME
    ===================================================== */
 
 .home-main-theme .topbar-links {
     white-space: nowrap;
     margin-top: 2px;
-    margin-bottom: 12px;
-    padding: 12px 14px !important;
-    border-radius: 18px;
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-    border: 2px solid #d4a941;
-    box-shadow: 0 6px 18px rgba(0,0,0,.25), inset 0 2px 4px rgba(255,255,255,.4);
+    margin-bottom: 20px;
+    padding: 14px 24px !important;
+    border-radius: 10px;
+    background: #21166f;
+    border: none;
+    box-shadow: none;
 }
 
 .home-main-theme .quick-link {
-    color: #0c1f60;
+    color: #ffffff;
     font-weight: 700;
 }
 
     .home-main-theme .quick-link:hover {
-        color: #0a1d66;
+        color: #d4ad45;
     }
 
     .home-main-theme .quick-link::after {
-        background: #0a1d66;
+        background: #d4ad45;
     }
 
 /* =====================================================
@@ -713,7 +717,7 @@
     position: absolute;
     top: 100%;
     right: 0;
-    margin-top: 2px;
+    margin-top: 8px;
     z-index: 99999 !important;
 }
 
@@ -808,12 +812,12 @@ body.module-main-theme.manuales-politicas-page {
 }
 
 .employee-card {
-    background: linear-gradient(145deg, #0d1b4c, #162a7a);
+    background: #21166f;
     border-radius: 20px;
     padding: 20px;
     color: #fff;
     max-width: 350px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 25px rgba(33,22,111,0.18);
 }
 
 .employee-card__header {
@@ -827,7 +831,7 @@ body.module-main-theme.manuales-politicas-page {
 
 .employee-card__avatar i {
     font-size: 50px;
-    color: #d4af37;
+    color: #d4ad45;
 }
 
 .employee-card__fullname {
@@ -854,7 +858,7 @@ body.module-main-theme.manuales-politicas-page {
 
     .employee-card__item i {
         font-size: 18px;
-        color: #d4af37;
+        color: #d4ad45;
     }
 
     .employee-card__item span {
@@ -904,7 +908,7 @@ body.module-main-theme.manuales-politicas-page {
 
 .sidebar-toggle {
     position: fixed;
-    top: 80px; /* más arriba */
+    top: 80px;
     left: 22px;
     z-index: 1200;
     width: 58px;
@@ -912,9 +916,9 @@ body.module-main-theme.manuales-politicas-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.15);
+    background: #21166f;
+    backdrop-filter: none;
+    border: none;
     border-radius: 14px;
     padding: 0;
     color: #ffffff;
@@ -923,13 +927,11 @@ body.module-main-theme.manuales-politicas-page {
     transition: all 0.35s ease;
 }
 
-    /* hover */
     .sidebar-toggle:hover {
-        background: rgba(255, 255, 255, 0.14);
-        border-color: rgba(255,255,255,0.22);
+        background: #2f2390;
+        border-color: transparent;
     }
 
-    /* cuando abre, la X queda dentro de la tarjeta */
     .sidebar-toggle.active {
         top: 22px;
         left: 248px;
@@ -937,19 +939,22 @@ body.module-main-theme.manuales-politicas-page {
         border: none;
         box-shadow: none;
         backdrop-filter: none;
-        padding: 0; /* 🔥 elimina espacio interno */
-        width: auto; /* 🔥 elimina caja */
+        padding: 0;
+        width: auto;
         height: auto;
         display: inline-flex;
         color: #ffffff;
     }
+
         .sidebar-toggle.active i {
-            font-size: 23px; /* tamaño de la X */
+            font-size: 23px;
             line-height: 1;
         }
+
         .sidebar-toggle.active:hover {
             background: none;
         }
+
         .sidebar-toggle.active i {
             opacity: 0.9;
         }
@@ -961,7 +966,7 @@ body.module-main-theme.manuales-politicas-page {
     left: -320px;
     width: 300px;
     height: 100vh;
-    background: linear-gradient(145deg, #0d1b4c, #162a7a);
+    background: #21166f;
     padding: 20px;
     z-index: 1100;
     transition: all 0.3s ease;
@@ -1004,6 +1009,184 @@ body.module-main-theme.manuales-politicas-page {
 
         .sidebar-toggle.active {
             top: 16px;
-            left: calc(80% - 66px); /* la X queda dentro del panel en móvil */
+            left: calc(80% - 66px);
+        }
+}
+
+/* =====================================================
+   AJUSTE FINAL CUMPLEAÑOS - FONDO BLANCO / BORDE DORADO
+   ===================================================== */
+
+.home-main-theme .birthday-showcase,
+.home-main-theme .birthday-showcase--compact {
+    background: #ffffff !important;
+    border: 2px solid #d4ad45 !important;
+    border-radius: 22px !important;
+    box-shadow: none !important;
+    overflow: hidden;
+}
+
+    .home-main-theme .birthday-showcase::before,
+    .home-main-theme .birthday-showcase::after,
+    .home-main-theme .birthday-showcase--compact::before,
+    .home-main-theme .birthday-showcase--compact::after {
+        display: none !important;
+        content: none !important;
+    }
+
+.home-main-theme .birthday-showcase__title,
+.home-main-theme .birthday-showcase__month,
+.home-main-theme .birthday-showcase__footer {
+    color: #21166f !important;
+}
+
+/* Tarjetas de cumpleaños en azul */
+.home-main-theme .birthday-person-card {
+    background: #eaf2ff !important;
+    border: 1px solid #c9daf5 !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+}
+
+.home-main-theme .birthday-person-card__date,
+.home-main-theme .birthday-person-card__name,
+.home-main-theme .birthday-person-card__role {
+    color: #06185f !important;
+}
+
+.home-main-theme .birthday-person-card__day {
+    background: #21166f !important;
+    color: #ffffff !important;
+}
+
+.home-main-theme .birthday-person-card__badge span {
+    background: #dcecff !important;
+    color: #064a9b !important;
+}
+
+/* Cumpleaños pasados */
+.home-main-theme .birthday-person--past {
+    background: #f1f5fb !important;
+}
+
+    .home-main-theme .birthday-person--past .birthday-person-card__day {
+        background: #aeb8c6 !important;
+        color: #ffffff !important;
+    }
+
+/* Próximos cumpleaños */
+.home-main-theme .birthday-person--upcoming {
+    background: #eaf2ff !important;
+}
+
+    .home-main-theme .birthday-person--upcoming .birthday-person-card__day {
+        background: #21166f !important;
+        color: #ffffff !important;
+    }
+
+
+/* =====================================================
+   AJUSTE FINAL SIDEBAR PERFIL - ICONOS BLANCOS
+   ===================================================== */
+
+/* Fondo menú izquierdo */
+.sidebar-profile {
+    background: #21166f !important;
+}
+
+/* Ícono de foto/perfil se queda dorado */
+.employee-card__avatar i {
+    color: #d4ad45 !important;
+}
+
+/* Todos los demás íconos blancos */
+.employee-card__item i {
+    color: #ffffff !important;
+}
+
+/* Textos del sidebar */
+.employee-card__fullname,
+.employee-card__role,
+.employee-card__item span,
+.employee-card__item strong {
+    color: #ffffff !important;
+}
+
+/* Línea divisoria */
+.employee-card__header {
+    border-bottom: 1px solid rgba(255,255,255,0.25) !important;
+}
+
+/* Card interior sin degradado extra */
+.employee-card {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* ==========================================
+   LOGO HORIZONTAL
+   ========================================== */
+
+.home-main-theme .navbar-brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px;
+    padding: 0 !important;
+}
+
+    .home-main-theme .navbar-brand img.brandimage {
+        height: 58px !important;
+        width: auto !important;
+        max-height: 58px !important;
+        object-fit: contain;
+    }
+
+    .home-main-theme .navbar-brand::before {
+        content: "Intranet";
+        font-size: 1.15rem;
+        font-weight: 500;
+        color: #21166f;
+        margin-right: 4px;
+    }
+
+/* ==========================================
+   BOTÓN HAMBURGUESA ALINEADO AL MENU
+   ========================================== */
+
+.sidebar-toggle {
+    top: 110px !important; /* misma altura del menu */
+    left: 28px !important;
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+}
+
+    /* cuando abre */
+    .sidebar-toggle.active {
+        top: 24px !important;
+        left: 248px !important;
+    }
+
+@media (max-width: 991px) {
+
+    .home-main-theme .navbar-brand::before {
+        font-size: 1rem;
+    }
+
+    .home-main-theme .navbar-brand img.brandimage {
+        height: 48px !important;
+    }
+
+    .sidebar-toggle {
+        top: 72px !important;
+        left: 14px !important;
+        width: 52px;
+        height: 52px;
+    }
+
+        .sidebar-toggle.active {
+            top: 14px !important;
+            left: calc(80% - 64px) !important;
         }
 }

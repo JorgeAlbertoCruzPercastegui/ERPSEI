@@ -102,8 +102,8 @@
     bool esAuthPage = esLogin || esLogout || esPrivacy;
 
     string logoHeader = esAuthPage
-    ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/intranet_SEI.png"
-    : $"{Context.Request.Scheme}://{Context.Request.Host}/img/intranet_SEI_blanco.png";
+    ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/Logo.png"
+    : $"{Context.Request.Scheme}://{Context.Request.Host}/img/Logo.png";
 
     var empleadoActual = usr != null
         ? await Db.Empleados
