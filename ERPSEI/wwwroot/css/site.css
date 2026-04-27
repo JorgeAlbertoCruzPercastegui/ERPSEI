@@ -1,24 +1,25 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #21166f;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
 }
 
 select {
@@ -26,7 +27,7 @@ select {
 }
 
 .highlightcolor {
-    background-color: skyblue 
+    background-color: skyblue;
 }
 
 @media (max-width: 767px) {
@@ -46,93 +47,168 @@ select {
     color: red;
 }
 
-.bd-callout {
-    padding: 1.25rem;
-    margin-top: 1.25rem;
-    margin-bottom: 1.25rem;
-    border: 1px solid #eee;
-    border-left-width: .25rem;
-    border-radius: .25rem
-}
-
-    .bd-callout h4 {
-        margin-top: 0;
-        margin-bottom: .25rem
-    }
-
-    .bd-callout p:last-child {
-        margin-bottom: 0
-    }
-
-    .bd-callout code {
-        border-radius: .25rem
-    }
-
-    .bd-callout + .bd-callout {
-        margin-top: -.25rem
-    }
-
-.bd-callout-info {
-    border-left-color: #5bc0de
-}
-
-.bd-callout-info h4 {
-    color: #5bc0de
-}
-
-.bd-callout-warning {
-    border-left-color: #f0ad4e
-}
-
-.bd-callout-warning h4 {
-    color: #f0ad4e
-}
-
-.bd-callout-danger {
-    border-left-color: #d9534f
-}
-
-.bd-callout-danger h4 {
-    color: #d9534f
-}
-
-.bd-callout-primary {
-    border-left-color: #007bff
-}
-
-.bd-callout-primaryh4 {
-    color: #007bff
-}
-
-.bd-callout-success {
-    border-left-color: #28a745
-}
-
-.bd-callout-successh4 {
-    color: #28a745
-}
-
-.bd-callout-default {
-    border-left-color: #6c757d
-}
-
-.bd-callout-defaulth4 {
-    color: #6c757d
-}
-
-.autocompleteLoading {
-    padding-right: calc(1.5em + 0.75rem)!important;
-    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='gray' d='M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13s.866-1.299 3-1.48zm1 0v3.17c2.134.181 3 1.48 3 1.48a3.5 3.5 0 0 0-1.989-3.158C8.978 9.586 8.5 9.052 8.5 8.351z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right calc(0.375em + 0.1875rem) center;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-}
+/* ==================================================
+   GENERALES
+   ================================================== */
 
 .banner-img {
     height: 380px;
     object-fit: cover;
     border-radius: 10px;
 }
+
+/* ==================================================
+   LOGOUT PAGE NUEVO DISEÑO
+   ================================================== */
+
+body.logout-page {
+    min-height: 100vh;
+    margin-bottom: 0;
+    background: #ffffff !important;
+    color: #21166f;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+    body.logout-page::before {
+        display: none !important;
+    }
+
+    /* HEADER SUPERIOR */
+    body.logout-page .header-bg,
+    body.logout-page header,
+    body.logout-page .navbar {
+        background: #ffffff !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    body.logout-page .header-bg-inner {
+        padding-top: 20px;
+        padding-bottom: 10px;
+    }
+
+    /* LOGO HORIZONTAL */
+    body.logout-page .navbar-brand {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+        body.logout-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #21166f;
+        }
+
+        body.logout-page .navbar-brand img.brandimage {
+            height: 58px !important;
+            width: auto !important;
+            max-height: 58px !important;
+        }
+
+    /* BOTÓN SUPERIOR CERRAR SESIÓN (SOLO TEXTO) */
+    body.logout-page header a,
+    body.logout-page .nav-link,
+    body.logout-page .btn-link {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #21166f !important;
+        font-weight: 700;
+        padding: 0 !important;
+    }
+
+        body.logout-page header a:hover,
+        body.logout-page .nav-link:hover,
+        body.logout-page .btn-link:hover {
+            color: #d4ad45 !important;
+        }
+
+    /* CONTENEDOR CENTRAL */
+    body.logout-page .layout-content {
+        background: #ffffff !important;
+    }
+
+        body.logout-page .layout-content > .container {
+            max-width: 1280px;
+        }
+
+    /* TARJETA CENTRAL AZUL CLARO */
+    body.logout-page .card,
+    body.logout-page .card.o-hidden,
+    body.logout-page .shadow-lg,
+    body.logout-page .border-0 {
+        background: linear-gradient(135deg, #eef3ff, #dce7ff) !important;
+        border: 1px solid rgba(33,22,111,.10) !important;
+        border-radius: 22px !important;
+        box-shadow: 0 15px 35px rgba(33,22,111,.08) !important;
+    }
+
+    /* IMAGEN IZQUIERDA */
+    body.logout-page .bg-login-image,
+    body.logout-page img {
+        max-width: 420px;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    /* TITULOS */
+    body.logout-page h1,
+    body.logout-page h2,
+    body.logout-page h3,
+    body.logout-page h4 {
+        color: #21166f !important;
+        font-weight: 800;
+    }
+
+    /* TEXTO */
+    body.logout-page p,
+    body.logout-page label,
+    body.logout-page span,
+    body.logout-page .text-muted {
+        color: #21166f !important;
+    }
+
+    /* LÍNEA */
+    body.logout-page hr {
+        border-top: 2px solid rgba(33,22,111,.18) !important;
+        opacity: 1;
+    }
+
+    /* BOTÓN CENTRAL CERRAR SESIÓN */
+    body.logout-page button[type="submit"],
+    body.logout-page .btn-primary {
+        background: #21166f !important;
+        border: none !important;
+        color: #ffffff !important;
+        border-radius: 12px !important;
+        min-height: 58px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        box-shadow: none !important;
+    }
+
+        body.logout-page button[type="submit"]:hover,
+        body.logout-page .btn-primary:hover {
+            background: #3124a5 !important;
+        }
+
+    /* LINKS */
+    body.logout-page a {
+        color: #21166f !important;
+    }
+
+        body.logout-page a:hover {
+            color: #d4ad45 !important;
+        }
+
+/* ==================================================
+   MANUALES / POLITICAS
+   ================================================== */
 
 body.module-main-theme.manuales-politicas-page {
     min-height: 100vh;
@@ -164,4 +240,100 @@ body.module-main-theme.manuales-politicas-page {
 
 .manuales-politicas-page .footer {
     margin-top: auto;
+}
+
+/* ==================================================
+   RESPONSIVE
+   ================================================== */
+
+@media (max-width: 576px) {
+
+    body.logout-page .navbar-brand img.brandimage {
+        height: 48px !important;
+    }
+
+    body.logout-page .navbar-brand::before {
+        font-size: 1rem;
+    }
+
+    body.logout-page .card,
+    body.logout-page .card.o-hidden {
+        padding: 20px !important;
+    }
+}
+
+/* ==================================================
+   FIX FINAL LOGOUT
+   ================================================== */
+
+/* Botón/link superior: SIN fondo azul, solo texto */
+body.logout-page .header-right-tools form button,
+body.logout-page .header-right-tools .btn,
+body.logout-page header form button,
+body.logout-page header .btn,
+body.logout-page header .btn-primary,
+body.logout-page header .nav-link,
+body.logout-page header a {
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #21166f !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    border-radius: 0 !important;
+    font-weight: 700 !important;
+}
+
+    body.logout-page .header-right-tools form button:hover,
+    body.logout-page .header-right-tools .btn:hover,
+    body.logout-page header form button:hover,
+    body.logout-page header .btn:hover,
+    body.logout-page header .btn-primary:hover,
+    body.logout-page header .nav-link:hover,
+    body.logout-page header a:hover {
+        background: transparent !important;
+        background-color: transparent !important;
+        color: #d4ad45 !important;
+    }
+
+/* Recuadro central: azul claro en lugar de crema */
+body.logout-page .card,
+body.logout-page .card-body,
+body.logout-page .card.o-hidden,
+body.logout-page .o-hidden,
+body.logout-page .shadow-lg {
+    background: #eef4ff !important;
+    background-color: #eef4ff !important;
+    border-radius: 22px !important;
+}
+
+    /* Si quieres un azul un poquito más intenso usa este en vez del anterior:
+body.logout-page .card,
+body.logout-page .card-body,
+body.logout-page .card.o-hidden,
+body.logout-page .o-hidden,
+body.logout-page .shadow-lg {
+    background: #e4edff !important;
+    background-color: #e4edff !important;
+}
+*/
+
+    /* Evita que columnas internas vuelvan a poner fondo crema */
+    body.logout-page .card .row,
+    body.logout-page .card [class*="col-"],
+    body.logout-page .card .p-5 {
+        background: transparent !important;
+    }
+
+/* Botón central del formulario sí queda azul */
+body.logout-page main button[type="submit"],
+body.logout-page main .btn-primary {
+    background: #21166f !important;
+    background-color: #21166f !important;
+    border-color: #21166f !important;
+    color: #ffffff !important;
+    border-radius: 12px !important;
+    min-height: 58px !important;
+    font-weight: 700 !important;
 }
