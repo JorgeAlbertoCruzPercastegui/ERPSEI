@@ -8,132 +8,91 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/login.css" />
-    <!--<link rel="stylesheet" href="~/css/password-rules.css" />-->
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
 }
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-xl-10 col-lg-12 col-md-9">
-            <div class="card o-hidden border-0 shadow-lg my-5">
-                <div class="card-body p-0">
-                    <div class="row">
-                        <div class="col-lg-6 d-none d-lg-block">
-                            <img class="bg-login-image" src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/intranet_SEI.png" />
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="p-5">
-                                <form id="account" method="post">
-                                    <center><h2>@ViewData["Title"]</h2></center>
-                                    <hr />
-                                    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+<div class="login-page">
 
-                                    <div class="form-floating mb-3">
-                                        <input id="userEmail" asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="@Localizer["EmailPlaceholder"]" />
-                                        <label asp-for="Input.Email" class="form-label"></label>
-                                        <span asp-validation-for="Input.Email" class="text-danger"></span>
-                                    </div>
+    <section class="login-brand">
 
-                                    <div class="form-floating mb-3 position-relative">
-                                        <input id="userPassword"
-                                               asp-for="Input.Password"
-                                               type="password"
-                                               class="form-control pe-5"
-                                               autocomplete="current-password"
-                                               aria-required="true"
-                                               placeholder="@Localizer["PasswordPlaceholder"]" />
+        <div class="brand-wrap">
+            <h1 class="brand-title">INTRANET</h1>
 
-                                        <label asp-for="Input.Password" class="form-label"></label>
-                                        <span asp-validation-for="Input.Password" class="text-danger"></span>
-
-                                        <button type="button"
-                                                id="btnTogglePwd"
-                                                class="btn btn-link position-absolute top-50 end-0 translate-middle-y me-2 p-0"
-                                                aria-label="Mostrar u ocultar contraseña"
-                                                tabindex="-1">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                    </div>
-
-                                    <!--<div id="pwdRules" class="pwd-rules mt-3 d-none">
-                                        <div class="pwd-rules-title">Contraseña</div>
-
-                                        <ul class="pwd-rules-list mb-0">
-                                            <li id="rule-digit" class="rule">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                                un número de 0 a 9.
-                                            </li>
-                                            <li id="rule-special" class="rule">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                                un carácter especial <span class="muted">!#$%^&*</span>.
-                                            </li>
-                                            <li id="rule-upper" class="rule">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                                una letra en mayúscula.
-                                            </li>
-                                            <li id="rule-no-repeat" class="rule">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                                no debe tener letras iguales consecutivas.
-                                            </li>
-                                            <li id="rule-length" class="rule">
-                                                <i class="bi bi-check-circle-fill"></i>
-                                                mínimo 8 caracteres.
-                                            </li>
-                                        </ul>
-                            </div>-->
-
-                                    <!--<div class="form-floating mb-3">
-                                        <input id="userPassword" asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="@Localizer["PasswordPlaceholder"]" />
-                                        <label asp-for="Input.Password" class="form-label"></label>
-                                        <span asp-validation-for="Input.Password" class="text-danger"></span>
-                                    </div>
-                                    -->
-
-                                    <div class="form-check mt-3 mb-3">
-                                        <input class="form-check-input" asp-for="Input.RememberMe" id="rememberMe" />
-                                        <label class="form-check-label" asp-for="Input.RememberMe"></label>
-                                    </div>
-
-                                    <!--<div class="checkbox mb-3">
-                                        <label asp-for="Input.RememberMe" class="form-label">
-                                            <input class="form-check-input" asp-for="Input.RememberMe" />
-                                    @Html.DisplayNameFor(m => m.Input.RememberMe)
-                                        </label>
-                                    </div>
-                                    -->
-
-                                    <div class="mb-3">
-                                        <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">
-                                            @Localizer["LoginButton"]
-                                        </button>
-                                    </div>
-                                    <!--<div class="mb-3">
-                                        <button id="login-submit" type="submit" onclick="onLoginClick();" class="w-100 btn btn-lg btn-primary">@Localizer["LoginButton"]</button>
-                                    </div>-->
-
-                                    <div>
-                                        <p>
-                                            <a id="forgot-password" asp-page="./ForgotPassword">@Localizer["ForgotLink"]</a>
-                                        </p>
-                                        <!--
-                                            <p>
-                                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">@Localizer["RegisterLink"]</a>
-                                        </p>-->
-                                        <p>
-                                            <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">@Localizer["ResendLink"]</a>
-                                        </p>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <img class="login-logo"
+                 src="~/img/Logo.png"
+                 asp-append-version="true" />
         </div>
-    </div>
+        <a class="privacy-link" asp-area="" asp-page="/Privacy">
+            <i class="bi bi-shield-fill-check"></i>
+            Aviso de privacidad
+        </a>
+    </section>
+
+    <section class="login-panel">
+        <div class="login-top-link">
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span>Iniciar Sesión</span>
+        </div>
+
+        <form id="account" method="post" class="login-form">
+            <h1>@ViewData["Title"]</h1>
+            <div class="login-line"></div>
+
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+            <div class="form-floating mb-4">
+                <input id="userEmail"
+                       asp-for="Input.Email"
+                       class="form-control"
+                       autocomplete="username"
+                       aria-required="true"
+                       placeholder="@Localizer["EmailPlaceholder"]" />
+                <label asp-for="Input.Email"></label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3 position-relative">
+                <input id="userPassword"
+                       asp-for="Input.Password"
+                       type="password"
+                       class="form-control pe-5"
+                       autocomplete="current-password"
+                       aria-required="true"
+                       placeholder="@Localizer["PasswordPlaceholder"]" />
+
+                <label asp-for="Input.Password"></label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+
+                <button type="button"
+                        id="btnTogglePwd"
+                        class="btn btn-link position-absolute top-50 end-0 translate-middle-y me-3 p-0"
+                        aria-label="Mostrar u ocultar contraseña"
+                        tabindex="-1">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+
+            <div class="form-check mb-4">
+                <input class="form-check-input" asp-for="Input.RememberMe" id="rememberMe" />
+                <label class="form-check-label" asp-for="Input.RememberMe"></label>
+            </div>
+
+            <button id="login-submit" type="submit" class="btn login-btn w-100">
+                @Localizer["LoginButton"]
+            </button>
+
+            <div class="login-links mt-4">
+                <p>
+                    <a id="forgot-password" asp-page="./ForgotPassword">@Localizer["ForgotLink"]</a>
+                </p>
+                <p>
+                    <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">@Localizer["ResendLink"]</a>
+                </p>
+            </div>
+        </form>
+    </section>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <!--<script src="~/js/password-rules.js"></script>-->
 }
