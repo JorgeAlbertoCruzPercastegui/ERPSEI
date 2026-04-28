@@ -1,13 +1,10 @@
 ﻿:root {
-    --bg-main: #efe6d3;
-    --bg-main-2: #e6d6b4;
-    --bg-card: #f4edde;
-    --blue-main: #0d0aa8;
-    --blue-dark: #1c1875;
-    --gold-main: #caa347;
-    --gold-hover: #b79036;
-    --danger: #d93025;
-    --soft-shadow: 0 12px 30px rgba(90, 70, 20, 0.12);
+    --blue-dark: #21166f;
+    --blue-hover: #2f2390;
+    --blue-soft: #eef4ff;
+    --gold-main: #d4ad45;
+    --text-main: #2f2f3a;
+    --soft-shadow: 0 15px 35px rgba(33, 22, 111, 0.08);
 }
 
 html,
@@ -15,91 +12,97 @@ body {
     min-height: 100%;
 }
 
-/* =====================================================
-   FONDO GENERAL
-   ===================================================== */
-
 body {
-    background-image: url('/img/Intranetfondotamaño2copia.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-    background-attachment: fixed;
-    background-color: #efe6d3;
+    background: #ffffff !important;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--blue-dark);
 }
 
-/* =====================================================
-   HEADER
-   ===================================================== */
-
+/* Header blanco */
 header,
 .navbar,
 nav.navbar {
-    background: transparent !important;
+    background: #ffffff !important;
+    background-image: none !important;
     box-shadow: none !important;
     border-bottom: none !important;
 }
 
     .navbar .navbar-brand,
     .navbar .nav-link,
-    .navbar .navbar-nav .nav-link {
+    .navbar .navbar-nav .nav-link,
+    .navbar a {
         color: var(--blue-dark) !important;
-        font-weight: 600;
+        font-weight: 700;
     }
 
-/* =====================================================
-   CONTENEDOR DE PAGINA
-   ===================================================== */
+        .navbar .nav-link:hover,
+        .navbar a:hover {
+            color: var(--gold-main) !important;
+        }
 
+/* Logo horizontal: Intranet + logo */
+.navbar-brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px;
+}
+
+    .navbar-brand::before {
+        content: "Intranet";
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--blue-dark);
+    }
+
+    .navbar-brand img.brandimage {
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
+    }
+
+/* Contenedor */
 .privacy-page {
     max-width: 1200px;
     margin: 0 auto;
     padding: 3rem 1.5rem 4rem 1.5rem;
 }
 
-/* =====================================================
-   TARJETA PRINCIPAL
-   ===================================================== */
-
+/* Tarjeta principal azul claro */
 .privacy-card {
-    background: var(--bg-card);
-    border-radius: 34px;
+    background: var(--blue-soft) !important;
+    border-radius: 28px;
     box-shadow: var(--soft-shadow);
     padding: 2.8rem 3rem;
-    border: none;
+    border: 1px solid rgba(33, 22, 111, 0.10);
 }
 
-/* =====================================================
-   ENCABEZADO
-   ===================================================== */
-
+/* Encabezado */
 .privacy-header h1 {
     color: var(--blue-dark);
     font-size: 2.6rem;
-    font-weight: 700;
+    font-weight: 800;
     margin-bottom: 0.4rem;
 }
 
 .privacy-header h4 {
     color: var(--blue-dark);
     font-size: 1.45rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 1rem;
 }
 
 .privacy-header hr {
     border: 0;
-    border-top: 1px solid rgba(28, 24, 117, 0.18);
+    border-top: 2px solid rgba(33, 22, 111, 0.18);
     margin-top: 0.6rem;
     margin-bottom: 1.8rem;
+    opacity: 1;
 }
 
-/* =====================================================
-   IMAGEN
-   ===================================================== */
-
+/* Imagen */
 .privacy-image-wrapper {
     display: flex;
     justify-content: center;
@@ -113,20 +116,17 @@ nav.navbar {
     height: auto;
     display: block;
     object-fit: contain;
-    border-radius: 20px;
+    border-radius: 18px;
 }
 
-/* =====================================================
-   CONTENIDO
-   ===================================================== */
-
+/* Contenido */
 .privacy-content {
     max-width: 1000px;
     margin: 0 auto;
 }
 
     .privacy-content p {
-        color: #3f3f46;
+        color: var(--text-main);
         font-size: 1.08rem;
         line-height: 1.9;
         margin-bottom: 1.2rem;
@@ -135,7 +135,7 @@ nav.navbar {
 
     .privacy-content ul,
     .privacy-content ol {
-        color: #3f3f46;
+        color: var(--text-main);
         font-size: 1.05rem;
         line-height: 1.85;
         padding-left: 1.5rem;
@@ -145,15 +145,10 @@ nav.navbar {
         margin-bottom: 0.65rem;
     }
 
-/* =====================================================
-   FOOTER
-   ===================================================== */
-
+/* Footer */
 .footer {
-    background: rgba(0,0,0,.35) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(255,255,255,.18) !important;
+    background: #ffffff !important;
+    border-top: 1px solid rgba(33, 22, 111, 0.10) !important;
 }
 
     .footer,
@@ -161,23 +156,15 @@ nav.navbar {
     .footer .text-muted,
     .footer .float-start,
     .footer .float-end {
-        color: rgba(255,255,255,.92) !important;
+        color: var(--blue-dark) !important;
     }
 
         .footer a:hover {
-            color: #ffffff !important;
+            color: var(--gold-main) !important;
         }
 
-/* =====================================================
-   RESPONSIVE
-   ===================================================== */
-
+/* Responsive */
 @media (max-width: 991.98px) {
-    body {
-        background-attachment: scroll;
-        background-position: center top;
-    }
-
     .privacy-page {
         padding: 2rem 1rem 3rem 1rem;
     }
@@ -206,6 +193,15 @@ nav.navbar {
 }
 
 @media (max-width: 575.98px) {
+    .navbar-brand img.brandimage {
+        height: 48px !important;
+        max-height: 48px !important;
+    }
+
+    .navbar-brand::before {
+        font-size: 1rem;
+    }
+
     .privacy-card {
         border-radius: 20px;
         padding: 1.5rem 1rem;
