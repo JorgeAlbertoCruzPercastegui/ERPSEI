@@ -8,12 +8,14 @@ body.module-main-theme.headerimagenes-page {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
+    background: #ffffff !important;
+    background-image: none !important;
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
     background-attachment: fixed;
-    background-color: #07133f;
+    background-color: #ffffff;
+    color: #21166f;
 }
 
     /* =====================================================
@@ -21,11 +23,11 @@ body.module-main-theme.headerimagenes-page {
    ===================================================== */
 
     body.module-main-theme.headerimagenes-page .header-bg {
-        background: transparent !important;
+        background: #ffffff !important;
         background-size: cover;
         background-position: center;
         min-height: 84px;
-        border-bottom: 1px solid rgba(255,255,255,.08);
+        border-bottom: 1px solid rgba(33,22,111,.08);
     }
 
     body.module-main-theme.headerimagenes-page .header-bg-inner {
@@ -35,9 +37,28 @@ body.module-main-theme.headerimagenes-page {
         background: transparent !important;
     }
 
+    /* LOGO + TEXTO INTRANET */
+    body.module-main-theme.headerimagenes-page .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+        body.module-main-theme.headerimagenes-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 550;
+            color: #21166f;
+            order: 1;
+        }
+
     body.module-main-theme.headerimagenes-page .brandimage {
-        max-height: 44px;
-        width: auto;
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
+        order: 2;
     }
 
     body.module-main-theme.headerimagenes-page .navbar .nav-link,
@@ -45,8 +66,8 @@ body.module-main-theme.headerimagenes-page {
     body.module-main-theme.headerimagenes-page .navbar .btn,
     body.module-main-theme.headerimagenes-page .navbar a,
     body.module-main-theme.headerimagenes-page .navbar form button {
-        color: #fff !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,.30);
+        color: #21166f !important;
+        text-shadow: none !important;
     }
 
     /* =====================================================
@@ -58,10 +79,10 @@ body.module-main-theme.headerimagenes-page {
         margin: 0 auto 14px auto;
         padding: 9px 14px !important;
         min-height: 54px;
-        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
-        border: 2px solid #d4a941;
+        background: #21166f;
+        border: none;
         border-radius: 18px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        box-shadow: none;
         gap: 10px;
     }
 
@@ -79,7 +100,7 @@ body.module-main-theme.headerimagenes-page {
         body.module-main-theme.headerimagenes-page .topbar-links .small,
         body.module-main-theme.headerimagenes-page .topbar-links .text-muted,
         body.module-main-theme.headerimagenes-page .topbar-links b {
-            color: #0c1f60 !important;
+            color: #ffffff !important;
         }
 
     body.module-main-theme.headerimagenes-page .quick-nav-wrap {
@@ -101,7 +122,7 @@ body.module-main-theme.headerimagenes-page {
     }
 
     body.module-main-theme.headerimagenes-page .quick-link {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         text-decoration: none !important;
         font-weight: 700;
         font-size: .88rem;
@@ -113,8 +134,8 @@ body.module-main-theme.headerimagenes-page {
     }
 
         body.module-main-theme.headerimagenes-page .quick-link:hover {
-            background: rgba(12, 31, 96, .08);
-            color: #09184a !important;
+            background: rgba(255,255,255,.08);
+            color: #d4ad45 !important;
         }
 
     /* =====================================================
@@ -131,12 +152,12 @@ body.module-main-theme.headerimagenes-page {
         left: 0;
         margin-top: 2px;
         min-width: 260px;
-        background: rgba(10, 21, 80, .72);
-        border: 1px solid rgba(255,255,255,.12);
+        background: #ffffff;
+        border: 1px solid rgba(33,22,111,.12);
         border-radius: 14px;
-        box-shadow: 0 18px 35px rgba(0,0,0,.24);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 35px rgba(33,22,111,.14);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
         padding: 8px;
         display: none;
         z-index: 2000;
@@ -155,7 +176,7 @@ body.module-main-theme.headerimagenes-page {
 
     body.module-main-theme.headerimagenes-page .quick-dd-item {
         display: block;
-        color: rgba(255,255,255,.90) !important;
+        color: #21166f !important;
         text-decoration: none !important;
         font-size: .88rem;
         font-weight: 600;
@@ -165,21 +186,21 @@ body.module-main-theme.headerimagenes-page {
     }
 
         body.module-main-theme.headerimagenes-page .quick-dd-item:hover {
-            background: rgba(255,255,255,.10);
-            color: #ffffff !important;
+            background: #eef2ff;
+            color: #21166f !important;
         }
 
     body.module-main-theme.headerimagenes-page .quick-dd:hover > .quick-link,
     body.module-main-theme.headerimagenes-page .quick-dd.open > .quick-link {
-        color: #fff7d6 !important;
-        background: rgba(12, 31, 96, .18);
+        color: #d4ad45 !important;
+        background: rgba(255,255,255,.08);
     }
 
     /* botón hamburguesa */
     body.module-main-theme.headerimagenes-page .quick-nav-toggle {
-        border: 1px solid #c89a2a;
-        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
-        color: #0c1f60;
+        border: none;
+        background: #21166f;
+        color: #ffffff;
         border-radius: 10px;
         padding: 6px 10px;
         font-weight: 800;
@@ -192,6 +213,7 @@ body.module-main-theme.headerimagenes-page {
 .headerimg-theme-page {
     flex: 1 0 auto;
     padding: 10px 0 32px;
+    background: #ffffff;
 }
 
 .module-shell {
@@ -205,22 +227,22 @@ body.module-main-theme.headerimagenes-page {
    ===================================================== */
 
 .module-header {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-    border: 2px solid #d4a941;
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.10);
     border-radius: 18px;
     padding: 18px 22px;
-    box-shadow: 0 10px 24px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+    box-shadow: 0 10px 24px rgba(33,22,111,.08);
 }
 
 .module-title {
-    color: #0c1f60;
+    color: #21166f;
     font-size: 1.9rem;
     font-weight: 800;
     margin: 0;
 }
 
 .module-subtitle {
-    color: #2a376d;
+    color: #475569;
     font-size: .98rem;
     margin-top: 3px;
 }
@@ -231,18 +253,18 @@ body.module-main-theme.headerimagenes-page {
 
 .module-alert-success {
     border-radius: 14px;
-    border: 1px solid rgba(16,185,129,.22);
-    background: rgba(16,185,129,.12);
-    color: #0f6d4d;
-    box-shadow: 0 6px 14px rgba(0,0,0,.10);
+    border: 1px solid #bbf7d0;
+    background: #ecfdf5;
+    color: #166534;
+    box-shadow: 0 6px 14px rgba(33,22,111,.06);
 }
 
 .module-alert-danger {
     border-radius: 14px;
-    border: 1px solid rgba(239,68,68,.22);
-    background: rgba(239,68,68,.12);
+    border: 1px solid #fecaca;
+    background: #fef2f2;
     color: #991b1b;
-    box-shadow: 0 6px 14px rgba(0,0,0,.10);
+    box-shadow: 0 6px 14px rgba(33,22,111,.06);
 }
 
 /* =====================================================
@@ -250,10 +272,10 @@ body.module-main-theme.headerimagenes-page {
    ===================================================== */
 
 .module-card {
-    border: 1px solid rgba(255,255,255,.14) !important;
+    border: 1px solid rgba(33,22,111,.10) !important;
     border-radius: 20px !important;
-    background: rgba(255,255,255,.95) !important;
-    box-shadow: 0 16px 34px rgba(0,0,0,.18) !important;
+    background: #ffffff !important;
+    box-shadow: 0 16px 34px rgba(33,22,111,.08) !important;
     overflow: hidden;
 }
 
@@ -262,7 +284,7 @@ body.module-main-theme.headerimagenes-page {
     }
 
 .module-card-title {
-    color: #0c1f60;
+    color: #21166f;
     font-weight: 800;
     font-size: 1.1rem;
 }
@@ -272,26 +294,26 @@ body.module-main-theme.headerimagenes-page {
    ===================================================== */
 
 .module-label {
-    color: #0c1f60;
+    color: #21166f;
     font-weight: 700;
     margin-bottom: .35rem;
 }
 
 .module-help {
-    color: #667085;
+    color: #64748b;
     font-size: .82rem;
 }
 
 .module-main-text {
-    color: #1b2b63;
+    color: #334155;
 }
 
 .module-muted {
-    color: #667085;
+    color: #64748b;
 }
 
 .module-empty {
-    color: #667085;
+    color: #64748b;
     padding: 1.2rem !important;
     text-align: center;
 }
@@ -304,23 +326,23 @@ body.module-main-theme.headerimagenes-page {
 .headerimg-theme-page .form-control,
 .headerimg-theme-page .form-select {
     border-radius: 12px;
-    border: 1px solid #c7d3f2;
-    background: #f8fbff;
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.14);
+    background: #f8f9ff;
+    color: #21166f;
     box-shadow: none;
 }
 
     .module-input:focus,
     .headerimg-theme-page .form-control:focus,
     .headerimg-theme-page .form-select:focus {
-        border-color: #7e9cff;
-        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.15);
-        background: #fff;
+        border-color: #21166f;
+        box-shadow: 0 0 0 0.2rem rgba(33,22,111,.12);
+        background: #ffffff;
     }
 
 .module-check .form-check-input:checked {
-    background-color: #0c1f60;
-    border-color: #0c1f60;
+    background-color: #21166f;
+    border-color: #21166f;
 }
 
 /* =====================================================
@@ -329,8 +351,8 @@ body.module-main-theme.headerimagenes-page {
 
 .module-btn-primary {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
     border-radius: 10px;
     padding: .5rem .85rem;
     font-size: .92rem;
@@ -339,15 +361,15 @@ body.module-main-theme.headerimagenes-page {
 }
 
     .module-btn-primary:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 .module-btn-secondary {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
     border-radius: 8px;
     padding: .38rem .68rem;
     font-size: .84rem;
@@ -357,15 +379,15 @@ body.module-main-theme.headerimagenes-page {
 }
 
     .module-btn-secondary:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 .module-btn-danger {
-    background: linear-gradient(145deg,#f9d0c8,#ef9b8d);
-    color: #8f1b13;
-    border: 1px solid rgba(184,51,37,.28);
+    background: #ffffff;
+    color: #c62828;
+    border: 1px solid #c62828;
     border-radius: 8px;
     padding: .34rem .55rem;
     font-size: .82rem;
@@ -374,8 +396,8 @@ body.module-main-theme.headerimagenes-page {
 }
 
     .module-btn-danger:hover {
-        background: linear-gradient(145deg,#f4b9ad,#e87e6a);
-        color: #74140f;
+        background: #c62828;
+        color: #ffffff;
     }
 
 .module-table .btn {
@@ -430,8 +452,8 @@ body.module-main-theme.headerimagenes-page {
 }
 
     .module-table thead th {
-        background: linear-gradient(135deg,#102f8c,#1f4cd3);
-        color: #fff;
+        background: #21166f;
+        color: #ffffff;
         font-weight: 700;
         border: 0 !important;
         padding: .95rem .85rem;
@@ -439,16 +461,16 @@ body.module-main-theme.headerimagenes-page {
     }
 
     .module-table tbody tr {
-        background: #fff;
+        background: #ffffff;
         transition: background .15s ease;
     }
 
         .module-table tbody tr:nth-child(even) {
-            background: #f7faff;
+            background: #f8f9ff;
         }
 
         .module-table tbody tr:hover {
-            background: #eef4ff;
+            background: #eef2ff;
         }
 
     .module-table td {
@@ -463,16 +485,16 @@ body.module-main-theme.headerimagenes-page {
 
 .module-preview-table {
     border-color: #d6def3 !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+    box-shadow: 0 4px 10px rgba(33,22,111,.08);
     border-radius: 10px;
 }
 
 .header-preview-box {
-    border: 1px solid #d6def3;
+    border: 1px solid rgba(33,22,111,.12);
     border-radius: 14px;
     padding: 10px;
     text-align: center;
-    background: linear-gradient(180deg,#f8fbff,#eef4ff);
+    background: #f8f9ff;
     min-height: 160px;
     display: flex;
     align-items: center;
@@ -485,11 +507,11 @@ body.module-main-theme.headerimagenes-page {
     max-width: 100%;
     display: none;
     border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+    box-shadow: 0 4px 10px rgba(33,22,111,.08);
 }
 
 .header-preview-empty {
-    color: #667085;
+    color: #64748b;
     font-size: .92rem;
 }
 
@@ -498,23 +520,23 @@ body.module-main-theme.headerimagenes-page {
    ===================================================== */
 
 .module-badge-success {
-    background: rgba(16,185,129,.14);
-    color: #047857;
-    border: 1px solid rgba(16,185,129,.22);
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
     font-weight: 700;
 }
 
 .module-badge-danger {
-    background: rgba(239,68,68,.14);
-    color: #b42318;
-    border: 1px solid rgba(239,68,68,.22);
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
     font-weight: 700;
 }
 
 .module-badge-gray {
-    background: rgba(107,114,128,.12);
+    background: #f1f5f9;
     color: #374151;
-    border: 1px solid rgba(107,114,128,.20);
+    border: 1px solid #cbd5e1;
     font-weight: 700;
 }
 
@@ -525,10 +547,10 @@ body.module-main-theme.headerimagenes-page {
 .footer {
     margin-top: auto;
     flex-shrink: 0;
-    background: rgba(0,0,0,.35) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(255,255,255,.18) !important;
+    background: #ffffff !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-top: 1px solid rgba(33,22,111,.08) !important;
 }
 
     .footer,
@@ -536,11 +558,11 @@ body.module-main-theme.headerimagenes-page {
     .footer .text-muted,
     .footer .float-start,
     .footer .float-end {
-        color: rgba(255,255,255,.92) !important;
+        color: #21166f !important;
     }
 
         .footer a:hover {
-            color: #ffffff !important;
+            color: #d4ad45 !important;
         }
 
 /* =====================================================
@@ -631,7 +653,7 @@ body.module-main-theme.headerimagenes-page {
     display: flex;
     align-items: center;
     justify-content: center;
-    max-height: 70px; /* ⬅️ Aumenta límite */
+    max-height: 70px;
     padding: 6px 0;
 }
 
@@ -642,22 +664,22 @@ body.module-main-theme.headerimagenes-page {
 
 .header-side-image {
     display: block;
-    height: 60px; /* ⬅️ Aumenta tamaño */
+    height: 60px;
     width: auto;
-    max-width: 280px; /* ⬅️ Permite que crezca más */
+    max-width: 280px;
     object-fit: contain;
     border-radius: 12px;
-    box-shadow: 0 6px 16px rgba(0,0,0,.25);
+    box-shadow: 0 4px 12px rgba(33,22,111,.12);
 }
 
 /* Si quieres que en home combine mejor */
 .home-main-theme .header-side-image {
-    box-shadow: 0 4px 12px rgba(0,0,0,.18);
+    box-shadow: 0 4px 12px rgba(33,22,111,.10);
 }
 
 /* En módulos */
 body.module-main-theme .header-side-image {
-    box-shadow: 0 4px 12px rgba(0,0,0,.22);
+    box-shadow: 0 4px 12px rgba(33,22,111,.12);
 }
 
 @media (max-width: 991.98px) {
