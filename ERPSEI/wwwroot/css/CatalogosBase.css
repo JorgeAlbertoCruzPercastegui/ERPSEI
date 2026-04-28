@@ -14,12 +14,14 @@ body.module-main-theme.catalogo-page {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
+    background: #ffffff !important;
+    background-image: none !important;
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
     background-attachment: fixed;
-    background-color: #07133f;
+    background-color: #ffffff;
+    color: #21166f;
 }
 
     /* =====================================================
@@ -28,11 +30,11 @@ body.module-main-theme.catalogo-page {
    ===================================================== */
 
     body.module-main-theme.catalogo-page .header-bg {
-        background: transparent !important;
+        background: #ffffff !important;
         background-size: cover;
         background-position: center;
         min-height: 84px;
-        border-bottom: 1px solid rgba(255,255,255,.08);
+        border-bottom: 1px solid rgba(33,22,111,.08);
     }
 
     body.module-main-theme.catalogo-page .header-bg-inner {
@@ -42,9 +44,28 @@ body.module-main-theme.catalogo-page {
         background: transparent !important;
     }
 
+    /* LOGO + TEXTO INTRANET */
+    body.module-main-theme.catalogo-page .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+        body.module-main-theme.catalogo-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 550;
+            color: #21166f;
+            order: 1;
+        }
+
     body.module-main-theme.catalogo-page .brandimage {
-        max-height: 44px;
-        width: auto;
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
+        order: 2;
     }
 
     body.module-main-theme.catalogo-page .navbar .nav-link,
@@ -52,12 +73,12 @@ body.module-main-theme.catalogo-page {
     body.module-main-theme.catalogo-page .navbar .btn,
     body.module-main-theme.catalogo-page .navbar a,
     body.module-main-theme.catalogo-page .navbar form button {
-        color: #fff !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,.30);
+        color: #21166f !important;
+        text-shadow: none !important;
     }
 
     /* =====================================================
-   MENU RAPIDO DORADO
+   MENU RAPIDO
    ===================================================== */
 
     body.module-main-theme.catalogo-page .topbar-links {
@@ -65,10 +86,10 @@ body.module-main-theme.catalogo-page {
         margin: 0 auto 14px auto;
         padding: 9px 14px !important;
         min-height: 54px;
-        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
-        border: 2px solid #d4a941;
+        background: #21166f;
+        border: none;
         border-radius: 18px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        box-shadow: none;
         gap: 10px;
     }
 
@@ -86,7 +107,7 @@ body.module-main-theme.catalogo-page {
         body.module-main-theme.catalogo-page .topbar-links .small,
         body.module-main-theme.catalogo-page .topbar-links .text-muted,
         body.module-main-theme.catalogo-page .topbar-links b {
-            color: #0c1f60 !important;
+            color: #ffffff !important;
         }
 
     body.module-main-theme.catalogo-page .quick-nav-wrap {
@@ -108,7 +129,7 @@ body.module-main-theme.catalogo-page {
     }
 
     body.module-main-theme.catalogo-page .quick-link {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         text-decoration: none !important;
         font-weight: 700;
         font-size: .88rem;
@@ -120,8 +141,8 @@ body.module-main-theme.catalogo-page {
     }
 
         body.module-main-theme.catalogo-page .quick-link:hover {
-            background: rgba(12, 31, 96, .08);
-            color: #09184a !important;
+            background: rgba(255,255,255,.08);
+            color: #d4ad45 !important;
         }
 
     /* =====================================================
@@ -139,12 +160,12 @@ body.module-main-theme.catalogo-page {
         left: 0;
         margin-top: 2px;
         min-width: 260px;
-        background: rgba(10, 21, 80, .72);
-        border: 1px solid rgba(255,255,255,.12);
+        background: #ffffff;
+        border: 1px solid rgba(33,22,111,.12);
         border-radius: 14px;
-        box-shadow: 0 18px 35px rgba(0,0,0,.24);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 35px rgba(33,22,111,.14);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
         padding: 8px;
         display: none;
         z-index: 2000;
@@ -163,7 +184,7 @@ body.module-main-theme.catalogo-page {
 
     body.module-main-theme.catalogo-page .quick-dd-item {
         display: block;
-        color: rgba(255,255,255,.90) !important;
+        color: #21166f !important;
         text-decoration: none !important;
         font-size: .88rem;
         font-weight: 600;
@@ -173,20 +194,20 @@ body.module-main-theme.catalogo-page {
     }
 
         body.module-main-theme.catalogo-page .quick-dd-item:hover {
-            background: rgba(255,255,255,.10);
-            color: #ffffff !important;
+            background: #eef2ff;
+            color: #21166f !important;
         }
 
     body.module-main-theme.catalogo-page .quick-dd:hover > .quick-link,
     body.module-main-theme.catalogo-page .quick-dd.open > .quick-link {
-        color: #fff7d6 !important;
-        background: rgba(12, 31, 96, .18);
+        color: #d4ad45 !important;
+        background: rgba(255,255,255,.08);
     }
 
     body.module-main-theme.catalogo-page .quick-nav-toggle {
-        border: 1px solid #c89a2a;
-        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
-        color: #0c1f60;
+        border: none;
+        background: #21166f;
+        color: #ffffff;
         border-radius: 10px;
         padding: 6px 10px;
         font-weight: 800;
@@ -197,11 +218,11 @@ body.module-main-theme.catalogo-page {
    ===================================================== */
 
 .catalogo-page .title {
-    color: #ffffff;
+    color: #21166f;
     font-size: 1.9rem;
     font-weight: 800;
     margin-bottom: 1rem !important;
-    text-shadow: 0 2px 10px rgba(0,0,0,.18);
+    text-shadow: none;
 }
 
 /* =====================================================
@@ -211,12 +232,13 @@ body.module-main-theme.catalogo-page {
 .catalogo-page .accordion {
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.18);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    border: 1px solid rgba(33,22,111,.10);
 }
 
 .catalogo-page .accordion-item {
-    border: 1px solid rgba(255,255,255,.14) !important;
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
+    border: 1px solid rgba(33,22,111,.08) !important;
+    background: #ffffff;
 }
 
 .catalogo-page .accordion-header {
@@ -224,24 +246,24 @@ body.module-main-theme.catalogo-page {
 }
 
 .catalogo-page .accordion-button {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b) !important;
-    color: #0c1f60 !important;
+    background: #21166f !important;
+    color: #ffffff !important;
     box-shadow: none !important;
     border: 0 !important;
     font-weight: 800;
 }
 
     .catalogo-page .accordion-button:not(.collapsed) {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         box-shadow: none !important;
     }
 
     .catalogo-page .accordion-button::after {
-        filter: saturate(.35) contrast(1.1);
+        filter: brightness(0) invert(1);
     }
 
 .catalogo-page .accordion-body {
-    background: rgba(255,255,255,.97);
+    background: #ffffff;
     padding: 1.25rem 1.1rem;
 }
 
@@ -253,23 +275,23 @@ body.module-main-theme.catalogo-page {
 .catalogo-page .form-select,
 .catalogo-page textarea.form-control {
     border-radius: 12px;
-    border: 1px solid #c7d3f2;
-    background: #f8fbff;
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.14);
+    background: #f8f9ff;
+    color: #21166f;
     box-shadow: none;
 }
 
     .catalogo-page .form-control:focus,
     .catalogo-page .form-select:focus,
     .catalogo-page textarea.form-control:focus {
-        border-color: #7e9cff;
-        box-shadow: 0 0 0 .2rem rgba(67, 97, 238, 0.15);
-        background: #fff;
+        border-color: #21166f;
+        box-shadow: 0 0 0 .2rem rgba(33,22,111,.12);
+        background: #ffffff;
     }
 
 .catalogo-page .form-floating > label,
 .catalogo-page .form-label {
-    color: #4b587c;
+    color: #21166f;
 }
 
 .catalogo-page .formInput,
@@ -293,42 +315,42 @@ body.module-main-theme.catalogo-page {
 .catalogo-page .btn-primary,
 .catalogo-page .formButton,
 .catalogo-page .btn-success {
-    background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    background: #21166f;
+    color: #ffffff;
+    border: 1px solid #21166f;
 }
 
     .catalogo-page .btn-primary:hover,
     .catalogo-page .formButton:hover,
     .catalogo-page .btn-success:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #2f2390;
+        color: #ffffff;
+        border-color: #2f2390;
     }
 
 .catalogo-page .btn-danger {
-    background: linear-gradient(145deg,#f9d0c8,#ef9b8d);
-    color: #8f1b13;
-    border: 1px solid rgba(184,51,37,.28);
+    background: #ffffff;
+    color: #c62828;
+    border: 1px solid #c62828;
     border-radius: 10px;
     font-weight: 700;
 }
 
     .catalogo-page .btn-danger:hover {
-        background: linear-gradient(145deg,#f4b9ad,#e87e6a);
-        color: #74140f;
+        background: #c62828;
+        color: #ffffff;
     }
 
 .catalogo-page .btn-secondary {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
 }
 
     .catalogo-page .btn-secondary:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 /* =====================================================
@@ -357,11 +379,11 @@ body.module-main-theme.catalogo-page {
 }
 
 .catalogo-page .fixed-table-container {
-    border: 0 !important;
+    border: 1px solid rgba(33,22,111,.10) !important;
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.18);
-    background: rgba(255,255,255,.96);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .catalogo-page .bootstrap-table .table {
@@ -369,8 +391,8 @@ body.module-main-theme.catalogo-page {
 }
 
     .catalogo-page .bootstrap-table .table thead th {
-        background: linear-gradient(135deg,#102f8c,#1f4cd3) !important;
-        color: #fff !important;
+        background: #21166f !important;
+        color: #ffffff !important;
         font-weight: 700;
         border: 0 !important;
         padding: .95rem .85rem;
@@ -378,22 +400,23 @@ body.module-main-theme.catalogo-page {
     }
 
     .catalogo-page .bootstrap-table .table tbody tr {
-        background: #fff;
+        background: #ffffff;
         transition: background .15s ease;
     }
 
         .catalogo-page .bootstrap-table .table tbody tr:nth-child(even) {
-            background: #f7faff;
+            background: #f8f9ff;
         }
 
         .catalogo-page .bootstrap-table .table tbody tr:hover {
-            background: #eef4ff;
+            background: #eef2ff;
         }
 
     .catalogo-page .bootstrap-table .table td {
-        border-color: #e4ebfb !important;
+        border-color: rgba(33,22,111,.08) !important;
         padding: .9rem .85rem;
         vertical-align: middle;
+        color: #21166f;
     }
 
 /* =====================================================
@@ -413,8 +436,8 @@ body.module-main-theme.catalogo-page {
 .catalogo-page .keep-open .btn,
 .catalogo-page .fixed-table-pagination .btn {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
     font-weight: 700;
 }
 
@@ -422,15 +445,15 @@ body.module-main-theme.catalogo-page {
     .catalogo-page .columns .btn:hover,
     .catalogo-page .keep-open .btn:hover,
     .catalogo-page .fixed-table-pagination .btn:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 .catalogo-page .bootstrap-table .search input {
-    border: 1px solid #c7d3f2;
-    background: #f8fbff;
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.14);
+    background: #f8f9ff;
+    color: #21166f;
 }
 
 /* =====================================================
@@ -438,34 +461,34 @@ body.module-main-theme.catalogo-page {
    ===================================================== */
 
 .catalogo-page .modal-content {
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid rgba(33,22,111,.10);
     border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
-    box-shadow: 0 22px 42px rgba(0,0,0,.24);
+    background: #ffffff;
+    box-shadow: 0 22px 42px rgba(33,22,111,.14);
     overflow: hidden;
 }
 
 .catalogo-page .modal-header {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-    border-bottom: 1px solid rgba(212,169,65,.45);
+    background: #21166f;
+    border-bottom: none;
 }
 
 .catalogo-page .modal-title {
-    color: #0c1f60;
+    color: #ffffff;
     font-weight: 800;
 }
 
 .catalogo-page .modal-body {
-    background: transparent;
+    background: #ffffff;
 }
 
 .catalogo-page .modal-footer {
-    border-top: 1px solid #e7eaf0;
-    background: rgba(255,255,255,.72);
+    border-top: 1px solid rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .catalogo-page .btn-close {
-    filter: saturate(.1);
+    filter: invert(1);
 }
 
 /* =====================================================
@@ -477,9 +500,9 @@ body.module-main-theme.catalogo-page {
 }
 
 .catalogo-page .alert-primary {
-    background: rgba(37,99,235,.10);
-    color: #0c3b9a;
-    border: 1px solid rgba(37,99,235,.18);
+    background: #eef2ff;
+    color: #21166f;
+    border: 1px solid rgba(33,22,111,.10);
 }
 
 .catalogo-page .text-danger {
@@ -492,24 +515,24 @@ body.module-main-theme.catalogo-page {
 
 .catalogo-page .document-container-empty {
     min-width: 200px;
-    background: #f5f7fb;
-    border: 1px dashed #98a3b8;
+    background: #ffffff;
+    border: 1px dashed rgba(33,22,111,.28);
     border-radius: 14px;
     padding: 12px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+    box-shadow: none;
 }
 
 .catalogo-page .document-container-filled {
     min-width: 200px;
-    background: linear-gradient(180deg,#eef6ff,#f9fbff);
-    border: 1px solid #7ea9ff;
+    background: #f8f9ff;
+    border: 1px solid rgba(33,22,111,.18);
     border-radius: 14px;
     padding: 12px;
-    box-shadow: 0 6px 18px rgba(15,23,42,.08);
+    box-shadow: 0 6px 18px rgba(33,22,111,.08);
 }
 
 .catalogo-page .document-icon-filled {
-    color: #2563eb;
+    color: #21166f;
 }
 
 .catalogo-page .overflowed-text {
@@ -525,10 +548,10 @@ body.module-main-theme.catalogo-page {
 .catalogo-page .footer {
     margin-top: auto;
     flex-shrink: 0;
-    background: rgba(0,0,0,.35) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(255,255,255,.18) !important;
+    background: #ffffff !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-top: 1px solid rgba(33,22,111,.08) !important;
 }
 
     .catalogo-page .footer,
@@ -536,11 +559,11 @@ body.module-main-theme.catalogo-page {
     .catalogo-page .footer .text-muted,
     .catalogo-page .footer .float-start,
     .catalogo-page .footer .float-end {
-        color: rgba(255,255,255,.92) !important;
+        color: #21166f !important;
     }
 
         .catalogo-page .footer a:hover {
-            color: #ffffff !important;
+            color: #d4ad45 !important;
         }
 
 /* =====================================================
