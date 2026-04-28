@@ -8,12 +8,14 @@ body.module-main-theme.gestiontalento-page {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
+    background: #ffffff !important;
+    background-image: none !important;
     background-repeat: no-repeat;
     background-position: center center;
     background-size: cover;
     background-attachment: fixed;
-    background-color: #07133f;
+    background-color: #ffffff;
+    color: #21166f;
 }
 
     /* =====================================================
@@ -22,11 +24,11 @@ body.module-main-theme.gestiontalento-page {
    ===================================================== */
 
     body.module-main-theme.gestiontalento-page .header-bg {
-        background: transparent !important;
+        background: #ffffff !important;
         background-size: cover;
         background-position: center;
         min-height: 84px;
-        border-bottom: 1px solid rgba(255,255,255,.08);
+        border-bottom: 1px solid rgba(33,22,111,.08);
     }
 
     body.module-main-theme.gestiontalento-page .header-bg-inner {
@@ -36,9 +38,28 @@ body.module-main-theme.gestiontalento-page {
         background: transparent !important;
     }
 
+    /* LOGO + TEXTO INTRANET */
+    body.module-main-theme.gestiontalento-page .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+        body.module-main-theme.gestiontalento-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 550;
+            color: #21166f;
+            order: 1;
+        }
+
     body.module-main-theme.gestiontalento-page .brandimage {
-        max-height: 44px;
-        width: auto;
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
+        order: 2;
     }
 
     body.module-main-theme.gestiontalento-page .navbar .nav-link,
@@ -46,12 +67,12 @@ body.module-main-theme.gestiontalento-page {
     body.module-main-theme.gestiontalento-page .navbar .btn,
     body.module-main-theme.gestiontalento-page .navbar a,
     body.module-main-theme.gestiontalento-page .navbar form button {
-        color: #fff !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,.30);
+        color: #21166f !important;
+        text-shadow: none !important;
     }
 
     /* =====================================================
-   MENU RAPIDO DORADO
+   MENU RAPIDO
    SOLO EN ESTE MODULO
    ===================================================== */
 
@@ -60,10 +81,10 @@ body.module-main-theme.gestiontalento-page {
         margin: 0 auto 14px auto;
         padding: 9px 14px !important;
         min-height: 54px;
-        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
-        border: 2px solid #d4a941;
+        background: #21166f;
+        border: none;
         border-radius: 18px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        box-shadow: none;
         gap: 10px;
     }
 
@@ -81,7 +102,7 @@ body.module-main-theme.gestiontalento-page {
         body.module-main-theme.gestiontalento-page .topbar-links .small,
         body.module-main-theme.gestiontalento-page .topbar-links .text-muted,
         body.module-main-theme.gestiontalento-page .topbar-links b {
-            color: #0c1f60 !important;
+            color: #ffffff !important;
         }
 
     body.module-main-theme.gestiontalento-page .quick-nav-wrap {
@@ -103,7 +124,7 @@ body.module-main-theme.gestiontalento-page {
     }
 
     body.module-main-theme.gestiontalento-page .quick-link {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         text-decoration: none !important;
         font-weight: 700;
         font-size: .88rem;
@@ -115,8 +136,8 @@ body.module-main-theme.gestiontalento-page {
     }
 
         body.module-main-theme.gestiontalento-page .quick-link:hover {
-            background: rgba(12, 31, 96, .08);
-            color: #09184a !important;
+            background: rgba(255,255,255,.08);
+            color: #d4ad45 !important;
         }
 
     /* =====================================================
@@ -134,12 +155,12 @@ body.module-main-theme.gestiontalento-page {
         left: 0;
         margin-top: 2px;
         min-width: 260px;
-        background: rgba(10, 21, 80, .72);
-        border: 1px solid rgba(255,255,255,.12);
+        background: #ffffff;
+        border: 1px solid rgba(33,22,111,.12);
         border-radius: 14px;
-        box-shadow: 0 18px 35px rgba(0,0,0,.24);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 35px rgba(33,22,111,.14);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
         padding: 8px;
         display: none;
         z-index: 2000;
@@ -158,7 +179,7 @@ body.module-main-theme.gestiontalento-page {
 
     body.module-main-theme.gestiontalento-page .quick-dd-item {
         display: block;
-        color: rgba(255,255,255,.90) !important;
+        color: #21166f !important;
         text-decoration: none !important;
         font-size: .88rem;
         font-weight: 600;
@@ -168,20 +189,20 @@ body.module-main-theme.gestiontalento-page {
     }
 
         body.module-main-theme.gestiontalento-page .quick-dd-item:hover {
-            background: rgba(255,255,255,.10);
-            color: #ffffff !important;
+            background: #eef2ff;
+            color: #21166f !important;
         }
 
     body.module-main-theme.gestiontalento-page .quick-dd:hover > .quick-link,
     body.module-main-theme.gestiontalento-page .quick-dd.open > .quick-link {
-        color: #fff7d6 !important;
-        background: rgba(12, 31, 96, .18);
+        color: #d4ad45 !important;
+        background: rgba(255,255,255,.08);
     }
 
     body.module-main-theme.gestiontalento-page .quick-nav-toggle {
-        border: 1px solid #c89a2a;
-        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
-        color: #0c1f60;
+        border: none;
+        background: #21166f;
+        color: #ffffff;
         border-radius: 10px;
         padding: 6px 10px;
         font-weight: 800;
@@ -192,11 +213,11 @@ body.module-main-theme.gestiontalento-page {
    ===================================================== */
 
 .gestiontalento-page .title {
-    color: #ffffff;
+    color: #21166f;
     font-size: 1.9rem;
     font-weight: 800;
     margin-bottom: 1rem !important;
-    text-shadow: 0 2px 10px rgba(0,0,0,.18);
+    text-shadow: none;
 }
 
 /* =====================================================
@@ -206,12 +227,13 @@ body.module-main-theme.gestiontalento-page {
 .gestiontalento-page .accordion {
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.18);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    border: 1px solid rgba(33,22,111,.10);
 }
 
 .gestiontalento-page .accordion-item {
-    border: 1px solid rgba(255,255,255,.14) !important;
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
+    border: 1px solid rgba(33,22,111,.08) !important;
+    background: #ffffff;
 }
 
 .gestiontalento-page .accordion-header {
@@ -219,24 +241,24 @@ body.module-main-theme.gestiontalento-page {
 }
 
 .gestiontalento-page .accordion-button {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b) !important;
-    color: #0c1f60 !important;
+    background: #21166f !important;
+    color: #ffffff !important;
     box-shadow: none !important;
     border: 0 !important;
     font-weight: 800;
 }
 
     .gestiontalento-page .accordion-button:not(.collapsed) {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         box-shadow: none !important;
     }
 
     .gestiontalento-page .accordion-button::after {
-        filter: saturate(.35) contrast(1.1);
+        filter: brightness(0) invert(1);
     }
 
 .gestiontalento-page .accordion-body {
-    background: rgba(255,255,255,.97);
+    background: #ffffff;
     padding: 1.25rem 1.1rem;
 }
 
@@ -248,23 +270,23 @@ body.module-main-theme.gestiontalento-page {
 .gestiontalento-page .form-select,
 .gestiontalento-page textarea.form-control {
     border-radius: 12px;
-    border: 1px solid #c7d3f2;
-    background: #f8fbff;
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.14);
+    background: #f8f9ff;
+    color: #21166f;
     box-shadow: none;
 }
 
     .gestiontalento-page .form-control:focus,
     .gestiontalento-page .form-select:focus,
     .gestiontalento-page textarea.form-control:focus {
-        border-color: #7e9cff;
-        box-shadow: 0 0 0 .2rem rgba(67, 97, 238, 0.15);
-        background: #fff;
+        border-color: #21166f;
+        box-shadow: 0 0 0 .2rem rgba(33,22,111,.12);
+        background: #ffffff;
     }
 
 .gestiontalento-page .form-floating > label,
 .gestiontalento-page .form-label {
-    color: #4b587c;
+    color: #21166f;
 }
 
 .gestiontalento-page .formInput,
@@ -286,41 +308,41 @@ body.module-main-theme.gestiontalento-page {
 
 .gestiontalento-page .btn-primary,
 .gestiontalento-page .formButton {
-    background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    background: #21166f;
+    color: #ffffff;
+    border: 1px solid #21166f;
 }
 
     .gestiontalento-page .btn-primary:hover,
     .gestiontalento-page .formButton:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #2f2390;
+        color: #ffffff;
+        border-color: #2f2390;
     }
 
 .gestiontalento-page .btn-danger {
-    background: linear-gradient(145deg,#f9d0c8,#ef9b8d);
-    color: #8f1b13;
-    border: 1px solid rgba(184,51,37,.28);
+    background: #ffffff;
+    color: #c62828;
+    border: 1px solid #c62828;
     border-radius: 10px;
     font-weight: 700;
 }
 
     .gestiontalento-page .btn-danger:hover {
-        background: linear-gradient(145deg,#f4b9ad,#e87e6a);
-        color: #74140f;
+        background: #c62828;
+        color: #ffffff;
     }
 
 .gestiontalento-page .btn-secondary {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
 }
 
     .gestiontalento-page .btn-secondary:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 /* =====================================================
@@ -348,11 +370,11 @@ body.module-main-theme.gestiontalento-page {
 }
 
 .gestiontalento-page .fixed-table-container {
-    border: 0 !important;
+    border: 1px solid rgba(33,22,111,.10) !important;
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.18);
-    background: rgba(255,255,255,.96);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .gestiontalento-page .bootstrap-table .table {
@@ -360,8 +382,8 @@ body.module-main-theme.gestiontalento-page {
 }
 
     .gestiontalento-page .bootstrap-table .table thead th {
-        background: linear-gradient(135deg,#102f8c,#1f4cd3) !important;
-        color: #fff !important;
+        background: #21166f !important;
+        color: #ffffff !important;
         font-weight: 700;
         border: 0 !important;
         padding: .95rem .85rem;
@@ -369,22 +391,23 @@ body.module-main-theme.gestiontalento-page {
     }
 
     .gestiontalento-page .bootstrap-table .table tbody tr {
-        background: #fff;
+        background: #ffffff;
         transition: background .15s ease;
     }
 
         .gestiontalento-page .bootstrap-table .table tbody tr:nth-child(even) {
-            background: #f7faff;
+            background: #f8f9ff;
         }
 
         .gestiontalento-page .bootstrap-table .table tbody tr:hover {
-            background: #eef4ff;
+            background: #eef2ff;
         }
 
     .gestiontalento-page .bootstrap-table .table td {
-        border-color: #e4ebfb !important;
+        border-color: rgba(33,22,111,.08) !important;
         padding: .9rem .85rem;
         vertical-align: middle;
+        color: #21166f;
     }
 
 /* =====================================================
@@ -404,8 +427,8 @@ body.module-main-theme.gestiontalento-page {
 .gestiontalento-page .keep-open .btn,
 .gestiontalento-page .fixed-table-pagination .btn {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
     font-weight: 700;
 }
 
@@ -413,15 +436,15 @@ body.module-main-theme.gestiontalento-page {
     .gestiontalento-page .columns .btn:hover,
     .gestiontalento-page .keep-open .btn:hover,
     .gestiontalento-page .fixed-table-pagination .btn:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 .gestiontalento-page .bootstrap-table .search input {
-    border: 1px solid #c7d3f2;
-    background: #f8fbff;
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.14);
+    background: #f8f9ff;
+    color: #21166f;
 }
 
 /* =====================================================
@@ -429,34 +452,34 @@ body.module-main-theme.gestiontalento-page {
    ===================================================== */
 
 .gestiontalento-page .modal-content {
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid rgba(33,22,111,.10);
     border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
-    box-shadow: 0 22px 42px rgba(0,0,0,.24);
+    background: #ffffff;
+    box-shadow: 0 22px 42px rgba(33,22,111,.14);
     overflow: hidden;
 }
 
 .gestiontalento-page .modal-header {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-    border-bottom: 1px solid rgba(212,169,65,.45);
+    background: #21166f;
+    border-bottom: none;
 }
 
 .gestiontalento-page .modal-title {
-    color: #0c1f60;
+    color: #ffffff;
     font-weight: 800;
 }
 
 .gestiontalento-page .modal-body {
-    background: transparent;
+    background: #ffffff;
 }
 
 .gestiontalento-page .modal-footer {
-    border-top: 1px solid #e7eaf0;
-    background: rgba(255,255,255,.72);
+    border-top: 1px solid rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .gestiontalento-page .btn-close {
-    filter: saturate(.1);
+    filter: invert(1);
 }
 
 /* =====================================================
@@ -468,10 +491,10 @@ body.module-main-theme.gestiontalento-page {
     max-width: 100%;
     object-fit: cover;
     border-radius: 18px;
-    box-shadow: 0 10px 24px rgba(0,0,0,.18);
+    box-shadow: 0 10px 24px rgba(33,22,111,.12);
     padding: 6px;
-    background: #fff;
-    border: 1px solid #d6def3;
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
 }
 
 /* =====================================================
@@ -480,24 +503,24 @@ body.module-main-theme.gestiontalento-page {
 
 .gestiontalento-page .document-container-empty {
     min-width: 200px;
-    background: #f5f7fb;
-    border: 1px dashed #98a3b8;
+    background: #ffffff;
+    border: 1px dashed rgba(33,22,111,.28);
     border-radius: 14px;
     padding: 12px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+    box-shadow: none;
 }
 
 .gestiontalento-page .document-container-filled {
     min-width: 200px;
-    background: linear-gradient(180deg,#eef6ff,#f9fbff);
-    border: 1px solid #7ea9ff;
+    background: #f8f9ff;
+    border: 1px solid rgba(33,22,111,.18);
     border-radius: 14px;
     padding: 12px;
-    box-shadow: 0 6px 18px rgba(15,23,42,.08);
+    box-shadow: 0 6px 18px rgba(33,22,111,.08);
 }
 
 .gestiontalento-page .document-icon-filled {
-    color: #2563eb;
+    color: #21166f;
 }
 
 .gestiontalento-page .overflowed-text {
@@ -519,9 +542,9 @@ body.module-main-theme.gestiontalento-page {
 }
 
 .gestiontalento-page .alert-primary {
-    background: rgba(37,99,235,.10);
-    color: #0c3b9a;
-    border: 1px solid rgba(37,99,235,.18);
+    background: #eef2ff;
+    color: #21166f;
+    border: 1px solid rgba(33,22,111,.10);
 }
 
 .gestiontalento-page .text-danger {
@@ -535,10 +558,10 @@ body.module-main-theme.gestiontalento-page {
 .gestiontalento-page .footer {
     margin-top: auto;
     flex-shrink: 0;
-    background: rgba(0,0,0,.35) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(255,255,255,.18) !important;
+    background: #ffffff !important;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-top: 1px solid rgba(33,22,111,.08) !important;
 }
 
     .gestiontalento-page .footer,
@@ -546,11 +569,11 @@ body.module-main-theme.gestiontalento-page {
     .gestiontalento-page .footer .text-muted,
     .gestiontalento-page .footer .float-start,
     .gestiontalento-page .footer .float-end {
-        color: rgba(255,255,255,.92) !important;
+        color: #21166f !important;
     }
 
         .gestiontalento-page .footer a:hover {
-            color: #ffffff !important;
+            color: #d4ad45 !important;
         }
 
 /* =====================================================
