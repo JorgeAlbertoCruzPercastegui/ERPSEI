@@ -1,8 +1,10 @@
 ﻿:root {
     --blue-dark: #20166f;
     --blue-panel: #21166f;
+    --blue-light: #eef4ff;
+    --blue-soft: #dfe8ff;
+    --input-bg: #f4f7ff;
     --gold-main: #d4ad45;
-    --input-bg: #eef4ff;
     --danger: #ff6b6b;
 }
 
@@ -19,14 +21,17 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-    /* Oculta el header/navbar del layout solo en login */
+    /* Oculta navbar solo login */
     body:has(.login-page) header,
     body:has(.login-page) .navbar,
     body:has(.login-page) nav.navbar {
         display: none !important;
     }
 
-/* Layout principal */
+/* =====================================
+   LAYOUT PRINCIPAL
+===================================== */
+
 .login-page {
     min-height: 100vh;
     display: grid;
@@ -37,7 +42,10 @@ body {
     position: relative;
 }
 
-/* Aviso privacidad abajo izquierda */
+/* =====================================
+   LINK PRIVACIDAD
+===================================== */
+
 .privacy-link {
     position: absolute;
     left: 40px;
@@ -54,6 +62,7 @@ body {
 
     .privacy-link i {
         font-size: 1rem;
+        color: var(--blue-dark) !important;
     }
 
     .privacy-link:hover {
@@ -61,7 +70,14 @@ body {
         text-decoration: underline;
     }
 
-/* Lado izquierdo */
+        .privacy-link:hover i {
+            color: var(--gold-main) !important;
+        }
+
+/* =====================================
+   LADO IZQUIERDO
+===================================== */
+
 .login-brand {
     min-height: calc(100vh - 32px);
     display: flex;
@@ -70,14 +86,35 @@ body {
     padding: 3rem;
 }
 
-.login-logo {
-    width: min(520px, 78%);
-    max-height: 520px;
-    height: auto;
-    object-fit: contain;
+.brand-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Lado derecho */
+.brand-title {
+    margin: 0 0 18px 0;
+    font-size: 5rem;
+    font-weight: 400;
+    letter-spacing: 6px;
+    color: var(--blue-dark);
+    line-height: 1;
+    text-align: center;
+}
+
+.login-logo {
+    width: 290px;
+    max-width: 70%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* =====================================
+   PANEL DERECHO
+===================================== */
+
 .login-panel {
     position: relative;
     min-height: calc(100vh - 32px);
@@ -87,8 +124,9 @@ body {
     align-items: center;
     justify-content: center;
     padding: 4rem 5.5rem;
-    border-radius: 10px;
+    border-radius: 14px;
     box-sizing: border-box;
+    box-shadow: 0 15px 35px rgba(32,22,111,.12);
 }
 
 .login-top-link {
@@ -106,6 +144,10 @@ body {
     .login-top-link i {
         font-size: 1.2rem;
     }
+
+/* =====================================
+   FORMULARIO
+===================================== */
 
 .login-form {
     width: 100%;
@@ -128,13 +170,16 @@ body {
     border-radius: 20px;
 }
 
-/* Inputs */
+/* =====================================
+   INPUTS
+===================================== */
+
 .form-floating > .form-control {
     height: 64px;
     min-height: 64px;
     background: var(--input-bg) !important;
     color: #111111 !important;
-    border: none !important;
+    border: 1px solid transparent !important;
     border-radius: 8px !important;
     box-shadow: none !important;
     font-size: 1rem;
@@ -147,14 +192,17 @@ body {
 }
 
 .form-control:focus {
-    background: var(--input-bg) !important;
-    border: none !important;
-    box-shadow: 0 0 0 0.18rem rgba(212, 173, 69, 0.35) !important;
+    background: #ffffff !important;
+    border: 1px solid #6b7cff !important;
+    box-shadow: 0 0 0 0.18rem rgba(107,124,255,.22) !important;
 }
 
-/* Botón ojo contraseña */
+/* =====================================
+   BOTON OJITO
+===================================== */
+
 #btnTogglePwd {
-    color: rgba(32, 22, 111, 0.45) !important;
+    color: rgba(32,22,111,.45) !important;
     text-decoration: none !important;
     border: none !important;
     background: transparent !important;
@@ -172,7 +220,10 @@ body {
         box-shadow: none !important;
     }
 
-/* Remember */
+/* =====================================
+   REMEMBER ME
+===================================== */
+
 .form-check {
     color: #ffffff;
 }
@@ -196,26 +247,49 @@ body {
     font-size: 0.95rem;
 }
 
-/* Botón iniciar sesión */
-.login-btn {
+/* =====================================
+   BOTONES
+===================================== */
+
+.login-btn,
+button[type="submit"],
+.btn-primary {
     height: 56px;
-    background: #ffffff !important;
-    color: #4a4a4a !important;
-    border: none !important;
+    background: var(--blue-dark) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--blue-dark) !important;
     border-radius: 8px !important;
     font-size: 1rem;
-    font-weight: 400;
+    font-weight: 600;
     box-shadow: none !important;
-    transition: all 0.2s ease-in-out;
+    transition: all .2s ease-in-out;
 }
 
-    .login-btn:hover {
+    .login-btn:hover,
+    button[type="submit"]:hover,
+    .btn-primary:hover {
         background: var(--gold-main) !important;
         color: #ffffff !important;
+        border-color: var(--gold-main) !important;
         transform: translateY(-1px);
     }
 
-/* Links */
+/* En el panel azul, el botón de login se mantiene blanco */
+.login-panel .login-btn {
+    background: #ffffff !important;
+    color: var(--blue-dark) !important;
+    border: none !important;
+}
+
+    .login-panel .login-btn:hover {
+        background: var(--gold-main) !important;
+        color: #ffffff !important;
+    }
+
+/* =====================================
+   LINKS
+===================================== */
+
 .login-links p {
     margin-bottom: 0.8rem;
 }
@@ -232,7 +306,10 @@ body {
         text-decoration: underline;
     }
 
-/* Errores */
+/* =====================================
+   ERRORES
+===================================== */
+
 .text-danger,
 .field-validation-error,
 .validation-summary-errors {
@@ -241,8 +318,64 @@ body {
     margin-top: 0.35rem;
 }
 
-/* Responsive */
+/* =====================================
+   PÁGINAS FORGOT / RESEND
+===================================== */
+
+body:not(:has(.login-page)) {
+    background: #ffffff !important;
+    color: var(--blue-dark);
+}
+
+    body:not(:has(.login-page)) h1,
+    body:not(:has(.login-page)) h2,
+    body:not(:has(.login-page)) h3,
+    body:not(:has(.login-page)) h4 {
+        color: var(--blue-dark);
+        font-weight: 700;
+    }
+
+    body:not(:has(.login-page)) hr {
+        border-color: rgba(32,22,111,.18);
+    }
+
+    body:not(:has(.login-page)) .form-control {
+        min-height: 58px;
+        background: var(--input-bg) !important;
+        color: #111111 !important;
+        border: 1px solid transparent !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+        font-size: 1rem;
+    }
+
+        body:not(:has(.login-page)) .form-control:focus {
+            background: #ffffff !important;
+            border: 1px solid #6b7cff !important;
+            box-shadow: 0 0 0 0.18rem rgba(107,124,255,.22) !important;
+        }
+
+    body:not(:has(.login-page)) .form-floating > label {
+        color: #666666 !important;
+    }
+
+    body:not(:has(.login-page)) a {
+        color: var(--blue-dark) !important;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        body:not(:has(.login-page)) a:hover {
+            color: var(--gold-main) !important;
+            text-decoration: underline;
+        }
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
 @media (max-width: 991.98px) {
+
     .login-page {
         grid-template-columns: 1fr;
         padding: 0;
@@ -271,6 +404,7 @@ body {
 }
 
 @media (max-width: 575.98px) {
+
     .login-panel {
         padding: 4rem 1.3rem 2rem;
     }
@@ -286,32 +420,9 @@ body {
     .privacy-link {
         font-size: 0.88rem;
     }
-}
 
-/* Contenedor izquierdo */
-.brand-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Texto INTRANET azul */
-.brand-title {
-    margin: 0 0 18px 0;
-    font-size: 5rem;
-    font-weight: 400; /* 🔥 negritas */
-    letter-spacing: 6px;
-    color: #20166f;
-    line-height: 1;
-    text-align: center;
-}
-
-/* Logo más pequeño */
-.login-logo {
-    width: 290px; /* antes estaba más grande */
-    max-width: 70%;
-    height: auto;
-    object-fit: contain;
-    display: block;
+    .brand-title {
+        font-size: 3rem;
+        letter-spacing: 3px;
+    }
 }

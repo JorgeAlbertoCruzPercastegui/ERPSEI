@@ -95,4 +95,23 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const btn = document.getElementById("btnTogglePwd");
+            const input = document.getElementById("userPassword");
+            const icon = btn?.querySelector("i");
+
+            if (!btn || !input || !icon) return;
+
+            btn.addEventListener("click", function () {
+                const isPassword = input.type === "password";
+
+                input.type = isPassword ? "text" : "password";
+
+                icon.classList.toggle("bi-eye", !isPassword);
+                icon.classList.toggle("bi-eye-slash", isPassword);
+            });
+        });
+    </script>
 }

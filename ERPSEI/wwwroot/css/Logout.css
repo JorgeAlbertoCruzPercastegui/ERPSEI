@@ -1,6 +1,6 @@
 ﻿:root {
-    --logout-bg: #ddd3bf;
-    --logout-card: rgba(255, 248, 235, 0.72);
+    --logout-bg: #ffffff;
+    --logout-card: rgba(240, 246, 255, 0.92);
     --logout-blue: #1b237e;
     --logout-blue-dark: #0f165f;
     --logout-gold: #caa347;
@@ -27,7 +27,7 @@ body.logout-page {
         content: "";
         position: fixed;
         inset: 0;
-        background: rgba(255, 255, 255, 0.08);
+        background: rgba(255,255,255,.72);
         pointer-events: none;
         z-index: 0;
     }
@@ -125,7 +125,7 @@ body.logout-page {
     max-width: 980px;
     background: var(--logout-card);
     border-radius: 30px;
-    box-shadow: var(--logout-shadow), inset 0 1px 0 rgba(255,255,255,.26);
+    box-shadow: var(--logout-shadow), inset 0 1px 0 rgba(255,255,255,.40);
     padding: 34px 36px;
     backdrop-filter: blur(4px);
 }
@@ -137,7 +137,7 @@ body.logout-page {
     align-items: center;
 }
 
-/* LADO IZQUIERDO */
+/* IZQUIERDA */
 .logout-brand-panel {
     display: flex;
     align-items: center;
@@ -155,7 +155,7 @@ body.logout-page {
     filter: drop-shadow(0 8px 14px rgba(0,0,0,.05));
 }
 
-/* LADO DERECHO */
+/* DERECHA */
 .logout-form-panel {
     display: flex;
     align-items: center;
@@ -206,21 +206,21 @@ body.logout-page {
     width: 100%;
 }
 
-/* BOTON COMO LOGIN */
+/* BOTON */
 .logout-submit-btn,
 .logout-page .btn-primary,
 body.module-main-theme.logout-page .btn-primary {
-    background-color: var(--logout-gold) !important;
-    border-color: var(--logout-gold) !important;
+    background-color: var(--logout-blue) !important;
+    border-color: var(--logout-blue) !important;
     color: #ffffff !important;
     border-radius: 14px !important;
     min-height: 56px;
     font-size: 1.25rem;
     font-weight: 600;
     box-shadow: none !important;
-    transition: all 0.2s ease-in-out;
-    padding-top: 0.8rem;
-    padding-bottom: 0.8rem;
+    transition: all .2s ease-in-out;
+    padding-top: .8rem;
+    padding-bottom: .8rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -230,8 +230,8 @@ body.module-main-theme.logout-page .btn-primary {
     .logout-submit-btn:hover,
     .logout-page .btn-primary:hover,
     body.module-main-theme.logout-page .btn-primary:hover {
-        background-color: var(--logout-gold-hover) !important;
-        border-color: var(--logout-gold-hover) !important;
+        background-color: var(--logout-gold) !important;
+        border-color: var(--logout-gold) !important;
         color: #ffffff !important;
         transform: translateY(-1px);
     }
@@ -245,7 +245,7 @@ body.module-main-theme.logout-page a {
 
     .logout-page a:hover,
     body.module-main-theme.logout-page a:hover {
-        color: var(--logout-blue-dark);
+        color: var(--logout-gold);
         text-decoration: underline;
     }
 
@@ -270,6 +270,7 @@ body.module-main-theme.logout-page .footer {
 
 /* RESPONSIVE */
 @media (max-width: 991.98px) {
+
     body.module-main-theme.logout-page,
     body.logout-page {
         background-attachment: scroll;
@@ -311,6 +312,7 @@ body.module-main-theme.logout-page .footer {
 }
 
 @media (max-width: 575.98px) {
+
     .logout-page-shell {
         padding: 18px 10px 30px;
     }
