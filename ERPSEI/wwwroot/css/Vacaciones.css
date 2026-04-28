@@ -8,25 +8,18 @@ body.module-main-theme.vacaciones-page {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-    background-attachment: fixed;
-    background-color: #07133f;
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #21166f;
 }
 
-    /* =====================================================
-   HEADER SUPERIOR DEL LAYOUT
-   SOLO EN ESTE MODULO
-   ===================================================== */
-
+    /* HEADER */
     body.module-main-theme.vacaciones-page .header-bg {
-        background: transparent !important;
+        background: #ffffff !important;
         background-size: cover;
         background-position: center;
         min-height: 84px;
-        border-bottom: 1px solid rgba(255,255,255,.08);
+        border-bottom: 1px solid rgba(33,22,111,.08);
     }
 
     body.module-main-theme.vacaciones-page .header-bg-inner {
@@ -36,9 +29,26 @@ body.module-main-theme.vacaciones-page {
         background: transparent !important;
     }
 
+    /* LOGO + TEXTO INTRANET */
+    body.module-main-theme.vacaciones-page .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+        body.module-main-theme.vacaciones-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 550;
+            color: #21166f;
+        }
+
     body.module-main-theme.vacaciones-page .brandimage {
-        max-height: 44px;
-        width: auto;
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
     }
 
     body.module-main-theme.vacaciones-page .navbar .nav-link,
@@ -46,24 +56,20 @@ body.module-main-theme.vacaciones-page {
     body.module-main-theme.vacaciones-page .navbar .btn,
     body.module-main-theme.vacaciones-page .navbar a,
     body.module-main-theme.vacaciones-page .navbar form button {
-        color: #fff !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,.30);
+        color: #21166f !important;
+        text-shadow: none !important;
     }
 
-    /* =====================================================
-   MENU RAPIDO DORADO
-   SOLO EN ESTE MODULO
-   ===================================================== */
-
+    /* MENU RAPIDO - MISMA ESTRUCTURA */
     body.module-main-theme.vacaciones-page .topbar-links {
         max-width: 1280px;
         margin: 0 auto 14px auto;
         padding: 9px 14px !important;
         min-height: 54px;
-        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
-        border: 2px solid #d4a941;
+        background: #21166f;
+        border: none;
         border-radius: 18px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        box-shadow: none;
         gap: 10px;
     }
 
@@ -81,7 +87,7 @@ body.module-main-theme.vacaciones-page {
         body.module-main-theme.vacaciones-page .topbar-links .small,
         body.module-main-theme.vacaciones-page .topbar-links .text-muted,
         body.module-main-theme.vacaciones-page .topbar-links b {
-            color: #0c1f60 !important;
+            color: #ffffff !important;
         }
 
     body.module-main-theme.vacaciones-page .quick-nav-wrap {
@@ -103,7 +109,7 @@ body.module-main-theme.vacaciones-page {
     }
 
     body.module-main-theme.vacaciones-page .quick-link {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         text-decoration: none !important;
         font-weight: 700;
         font-size: .88rem;
@@ -115,15 +121,11 @@ body.module-main-theme.vacaciones-page {
     }
 
         body.module-main-theme.vacaciones-page .quick-link:hover {
-            background: rgba(12, 31, 96, .08);
-            color: #09184a !important;
+            color: #d4ad45 !important;
+            background: transparent !important;
         }
 
-    /* =====================================================
-   DROPDOWN DEL MENU
-   SOLO EN ESTE MODULO
-   ===================================================== */
-
+    /* DROPDOWN DEL MENU */
     body.module-main-theme.vacaciones-page .quick-dd {
         position: relative;
     }
@@ -134,12 +136,10 @@ body.module-main-theme.vacaciones-page {
         left: 0;
         margin-top: 2px;
         min-width: 260px;
-        background: rgba(10, 21, 80, .72);
-        border: 1px solid rgba(255,255,255,.12);
+        background: #ffffff;
+        border: 1px solid rgba(33,22,111,.12);
         border-radius: 14px;
-        box-shadow: 0 18px 35px rgba(0,0,0,.24);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 35px rgba(33,22,111,.14);
         padding: 8px;
         display: none;
         z-index: 2000;
@@ -158,7 +158,7 @@ body.module-main-theme.vacaciones-page {
 
     body.module-main-theme.vacaciones-page .quick-dd-item {
         display: block;
-        color: rgba(255,255,255,.90) !important;
+        color: #21166f !important;
         text-decoration: none !important;
         font-size: .88rem;
         font-weight: 600;
@@ -168,52 +168,45 @@ body.module-main-theme.vacaciones-page {
     }
 
         body.module-main-theme.vacaciones-page .quick-dd-item:hover {
-            background: rgba(255,255,255,.10);
-            color: #ffffff !important;
+            background: rgba(33,22,111,.08);
+            color: #21166f !important;
         }
 
     body.module-main-theme.vacaciones-page .quick-dd:hover > .quick-link,
     body.module-main-theme.vacaciones-page .quick-dd.open > .quick-link {
-        color: #fff7d6 !important;
-        background: rgba(12, 31, 96, .18);
+        color: #d4ad45 !important;
+        background: transparent !important;
     }
 
     body.module-main-theme.vacaciones-page .quick-nav-toggle {
-        border: 1px solid #c89a2a;
-        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
-        color: #0c1f60;
+        border: none;
+        background: #21166f;
+        color: #ffffff;
         border-radius: 10px;
         padding: 6px 10px;
         font-weight: 800;
     }
 
-/* =====================================================
-   TITULO PRINCIPAL
-   ===================================================== */
-
+/* TITULO */
 .vacaciones-page .title {
-    color: #ffffff;
+    color: #21166f;
     font-size: 1.9rem;
     font-weight: 800;
     margin-bottom: 1rem !important;
-    text-shadow: 0 2px 10px rgba(0,0,0,.18);
+    text-shadow: none;
 }
 
-/* =====================================================
-   ACORDEON FILTROS
-   AJUSTADO A TONO DORADO
-   ===================================================== */
-
+/* ACORDEON */
 .vacaciones-page .accordion {
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.22);
-    border: 1px solid rgba(212,169,65,.55);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    border: 1px solid rgba(33,22,111,.10);
 }
 
 .vacaciones-page .accordion-item {
-    border: 1px solid rgba(212,169,65,.45) !important;
-    background: linear-gradient(180deg, rgba(251,240,210,.96) 0%, rgba(234,212,160,.94) 100%);
+    border: 1px solid rgba(33,22,111,.08) !important;
+    background: #ffffff;
 }
 
 .vacaciones-page .accordion-header {
@@ -221,59 +214,52 @@ body.module-main-theme.vacaciones-page {
 }
 
 .vacaciones-page .accordion-button {
-    background: linear-gradient(145deg,#f3e3b3,#ddb96c) !important;
-    color: #0c1f60 !important;
+    background: #21166f !important;
+    color: #ffffff !important;
     box-shadow: none !important;
     border: 0 !important;
     font-weight: 800;
 }
 
     .vacaciones-page .accordion-button:not(.collapsed) {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         box-shadow: none !important;
     }
 
     .vacaciones-page .accordion-button::after {
-        filter: saturate(.5) contrast(1.05);
+        filter: brightness(0) invert(1);
     }
 
 .vacaciones-page .accordion-body {
-    background: linear-gradient(180deg, rgba(255,246,224,.96) 0%, rgba(241,224,183,.94) 100%);
+    background: #ffffff;
     padding: 1.25rem 1.1rem;
 }
 
-/* =====================================================
-   INPUTS / FORMULARIOS
-   AJUSTADOS AL NUEVO BLOQUE DORADO
-   ===================================================== */
-
+/* INPUTS */
 .vacaciones-page .form-control,
 .vacaciones-page .form-select,
 .vacaciones-page textarea.form-control {
     border-radius: 12px;
-    border: 1px solid #d2b06a;
-    background: rgba(255,250,239,.92);
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.15);
+    background: #f8f9ff;
+    color: #21166f;
     box-shadow: none;
 }
 
     .vacaciones-page .form-control:focus,
     .vacaciones-page .form-select:focus,
     .vacaciones-page textarea.form-control:focus {
-        border-color: #c89a2a;
-        box-shadow: 0 0 0 .2rem rgba(212,169,65,.18);
-        background: #fffaf0;
+        border-color: #21166f;
+        box-shadow: 0 0 0 .2rem rgba(33,22,111,.12);
+        background: #ffffff;
     }
 
 .vacaciones-page .form-floating > label,
 .vacaciones-page .form-label {
-    color: #6b5a2f;
+    color: #21166f;
 }
 
-/* =====================================================
-   TOOLBAR
-   ===================================================== */
-
+/* TOOLBAR Y BOTONES */
 .vacaciones-page #toolbar {
     display: flex;
     gap: 10px;
@@ -293,49 +279,45 @@ body.module-main-theme.vacaciones-page {
     .vacaciones-page #toolbar .btn,
     .vacaciones-page .btn-primary,
     .vacaciones-page .btn-success {
-        background: #ffffff;
-        color: #0c1f60;
-        border: 1px solid #d4a941;
+        background: #21166f;
+        color: #ffffff;
+        border: 1px solid #21166f;
     }
 
         .vacaciones-page #toolbar .btn:hover,
         .vacaciones-page .btn-primary:hover,
         .vacaciones-page .btn-success:hover {
-            background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-            color: #09184a;
-            border-color: #c89a2a;
+            background: #2f2390;
+            color: #ffffff;
+            border-color: #2f2390;
         }
 
 .vacaciones-page .btn-danger {
-    background: linear-gradient(145deg,#f9d0c8,#ef9b8d);
-    color: #8f1b13;
-    border: 1px solid rgba(184,51,37,.28);
+    background: #ffffff;
+    color: #c62828;
+    border: 1px solid #c62828;
     border-radius: 10px;
     font-weight: 700;
 }
 
     .vacaciones-page .btn-danger:hover {
-        background: linear-gradient(145deg,#f4b9ad,#e87e6a);
-        color: #74140f;
+        background: #c62828;
+        color: #ffffff;
     }
 
 .vacaciones-page .btn-secondary {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
 }
 
     .vacaciones-page .btn-secondary:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
-/* =====================================================
-   TABLAS BOOTSTRAP-TABLE
-   AJUSTADAS A TONO DORADO
-   ===================================================== */
-
+/* TABLAS BOOTSTRAP-TABLE */
 .vacaciones-page .fixed-table-container,
 .vacaciones-page .fixed-table-toolbar,
 .vacaciones-page .fixed-table-pagination,
@@ -346,11 +328,11 @@ body.module-main-theme.vacaciones-page {
 }
 
 .vacaciones-page .fixed-table-container {
-    border: 1px solid rgba(212,169,65,.55) !important;
+    border: 1px solid rgba(33,22,111,.10) !important;
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.22);
-    background: linear-gradient(180deg, rgba(251,240,210,.97) 0%, rgba(232,208,154,.95) 100%);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .vacaciones-page .bootstrap-table .table {
@@ -358,8 +340,8 @@ body.module-main-theme.vacaciones-page {
 }
 
     .vacaciones-page .bootstrap-table .table thead th {
-        background: linear-gradient(135deg,#102f8c,#1f4cd3) !important;
-        color: #fff !important;
+        background: #21166f !important;
+        color: #ffffff !important;
         font-weight: 700;
         border: 0 !important;
         padding: .95rem .85rem;
@@ -367,29 +349,26 @@ body.module-main-theme.vacaciones-page {
     }
 
     .vacaciones-page .bootstrap-table .table tbody tr {
-        background: rgba(255,248,231,.88);
+        background: #ffffff;
         transition: background .15s ease;
     }
 
         .vacaciones-page .bootstrap-table .table tbody tr:nth-child(even) {
-            background: rgba(246,232,197,.88);
+            background: #f8f9ff;
         }
 
         .vacaciones-page .bootstrap-table .table tbody tr:hover {
-            background: rgba(255,241,201,.96);
+            background: #eef2ff;
         }
 
     .vacaciones-page .bootstrap-table .table td {
-        border-color: rgba(214,186,121,.35) !important;
+        border-color: rgba(33,22,111,.08) !important;
         padding: .9rem .85rem;
         vertical-align: middle;
-        color: #2f2a1c;
+        color: #21166f;
     }
 
-/* =====================================================
-   BOTONES DE TABLA / BUSQUEDA / PAGINACION
-   ===================================================== */
-
+/* BUSQUEDA / PAGINACION */
 .vacaciones-page .bootstrap-table .search input,
 .vacaciones-page .fixed-table-pagination .btn,
 .vacaciones-page .columns .btn,
@@ -402,9 +381,9 @@ body.module-main-theme.vacaciones-page {
 .vacaciones-page .columns .btn,
 .vacaciones-page .keep-open .btn,
 .vacaciones-page .fixed-table-pagination .btn {
-    background: linear-gradient(145deg,#fff7e2,#f0dcae);
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    background: #ffffff;
+    color: #21166f;
+    border: 1px solid #21166f;
     font-weight: 700;
 }
 
@@ -412,48 +391,42 @@ body.module-main-theme.vacaciones-page {
     .vacaciones-page .columns .btn:hover,
     .vacaciones-page .keep-open .btn:hover,
     .vacaciones-page .fixed-table-pagination .btn:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 .vacaciones-page .bootstrap-table .search input {
-    border: 1px solid #d2b06a;
-    background: rgba(255,250,239,.92);
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.15);
+    background: #f8f9ff;
+    color: #21166f;
 }
 
-/* =====================================================
-   CARDS INTERNAS
-   ===================================================== */
-
+/* CARDS INTERNAS */
 .vacaciones-page .card {
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid rgba(33,22,111,.10);
     border-radius: 18px;
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
-    box-shadow: 0 12px 28px rgba(0,0,0,.12);
+    background: #ffffff;
+    box-shadow: 0 12px 24px rgba(33,22,111,.08);
     overflow: hidden;
 }
 
 .vacaciones-page .card-header {
     font-weight: 700;
-    border-bottom: 1px solid rgba(212,169,65,.25);
+    border-bottom: 1px solid rgba(33,22,111,.08);
 }
 
     .vacaciones-page .card-header.bg-primary {
-        background: linear-gradient(135deg,#102f8c,#1f4cd3) !important;
-        color: #fff !important;
+        background: #21166f !important;
+        color: #ffffff !important;
     }
 
     .vacaciones-page .card-header.table-light {
-        background: #f8fafc !important;
-        color: #0c1f60 !important;
+        background: #f8f9ff !important;
+        color: #21166f !important;
     }
 
-/* =====================================================
-   TABLAS INTERNAS DEL MODAL
-   ===================================================== */
-
+/* TABLAS INTERNAS DEL MODAL */
 .vacaciones-page .table {
     margin-bottom: 0;
 }
@@ -463,66 +436,60 @@ body.module-main-theme.vacaciones-page {
     }
 
 .vacaciones-page .table-light th {
-    background: #f1f5f9 !important;
-    color: #0c1f60 !important;
+    background: #f8f9ff !important;
+    color: #21166f !important;
 }
 
 .vacaciones-page .table-bordered > :not(caption) > * > * {
-    border-color: #dbe3f4;
+    border-color: rgba(33,22,111,.10);
 }
 
-/* =====================================================
-   MODALES
-   ===================================================== */
-
+/* MODALES */
 .vacaciones-page .modal-content {
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid rgba(33,22,111,.10);
     border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
-    box-shadow: 0 22px 42px rgba(0,0,0,.24);
+    background: #ffffff;
+    box-shadow: 0 22px 42px rgba(33,22,111,.14);
     overflow: hidden;
 }
 
 .vacaciones-page .modal-header {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-    border-bottom: 1px solid rgba(212,169,65,.45);
+    background: #21166f;
+    border-bottom: none;
 }
 
 .vacaciones-page .modal-title {
-    color: #0c1f60;
+    color: #ffffff;
     font-weight: 800;
 }
 
 .vacaciones-page .modal-body {
-    background: transparent;
+    background: #ffffff;
 }
 
 .vacaciones-page .modal-footer {
-    border-top: 1px solid #e7eaf0;
-    background: rgba(255,255,255,.72);
+    border-top: 1px solid rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .vacaciones-page .btn-close {
-    filter: saturate(.1);
+    filter: invert(1);
 }
 
-/* =====================================================
-   ALERTAS / TEXTO
-   ===================================================== */
-
+/* ALERTAS / TEXTO */
 .vacaciones-page .alert {
     border-radius: 14px;
 }
 
 .vacaciones-page .alert-info {
-    background: rgba(37,99,235,.10);
-    color: #0c3b9a;
-    border: 1px solid rgba(37,99,235,.18);
+    background: #eef2ff;
+    color: #21166f;
+    border: 1px solid rgba(33,22,111,.10);
 }
 
 .vacaciones-page .alert-light {
-    background: rgba(255,255,255,.92);
-    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.08);
     color: #334155;
 }
 
@@ -530,10 +497,7 @@ body.module-main-theme.vacaciones-page {
     font-size: .86rem;
 }
 
-/* =====================================================
-   BADGES Y TEXTOS DE RESUMEN
-   ===================================================== */
-
+/* RESUMEN */
 .vacaciones-page #tdAcumuladas,
 .vacaciones-page #tdTomadas,
 .vacaciones-page #tdVencidas,
@@ -543,20 +507,15 @@ body.module-main-theme.vacaciones-page {
 .vacaciones-page #diasSolicitadosTexto,
 .vacaciones-page #lblFechaSaldo {
     font-weight: 700;
-    color: #0c1f60;
+    color: #21166f;
 }
 
-/* =====================================================
-   FOOTER
-   ===================================================== */
-
+/* FOOTER */
 .vacaciones-page .footer {
     margin-top: auto;
     flex-shrink: 0;
-    background: rgba(0,0,0,.35) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(255,255,255,.18) !important;
+    background: #ffffff !important;
+    border-top: 1px solid rgba(33,22,111,.08) !important;
 }
 
     .vacaciones-page .footer,
@@ -564,17 +523,14 @@ body.module-main-theme.vacaciones-page {
     .vacaciones-page .footer .text-muted,
     .vacaciones-page .footer .float-start,
     .vacaciones-page .footer .float-end {
-        color: rgba(255,255,255,.92) !important;
+        color: #21166f !important;
     }
 
         .vacaciones-page .footer a:hover {
-            color: #ffffff !important;
+            color: #d4ad45 !important;
         }
 
-/* =====================================================
-   RESPONSIVE
-   ===================================================== */
-
+/* RESPONSIVE */
 @media (max-width: 991.98px) {
     body.module-main-theme.vacaciones-page {
         background-attachment: scroll;
@@ -643,8 +599,8 @@ body.module-main-theme.vacaciones-page {
 
 #modalVerPoliticas .modal-header,
 #modalAsignacionVacaciones .modal-header {
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
-    color: #fff !important;
+    background: #21166f !important;
+    color: #ffffff !important;
 }
 
 #modalVerPoliticas .table th,
@@ -659,22 +615,22 @@ body.module-main-theme.vacaciones-page {
 #modalAsignacionVacaciones .nav-tabs .nav-link.active {
     font-weight: 600;
 }
-/* HEADER DORADO PARA MODALES */
+
+/* HEADER PARA MODALES */
 .modal-header-gold {
-    background: linear-gradient(135deg, #d4af37 0%, #f5d77a 50%, #c9a227 100%);
-    color: #1a1a1a;
-    border-bottom: 1px solid rgba(0,0,0,.15);
+    background: #21166f !important;
+    color: #ffffff !important;
+    border-bottom: none;
 }
 
-    /* Título */
     .modal-header-gold .modal-title {
         font-weight: 700;
         letter-spacing: .3px;
+        color: #ffffff !important;
     }
 
-    /* Botón cerrar */
     .modal-header-gold .btn-close {
-        filter: invert(0); /* oscuro */
+        filter: invert(1);
         opacity: .8;
     }
 
@@ -682,10 +638,7 @@ body.module-main-theme.vacaciones-page {
             opacity: 1;
         }
 
-/* =====================================================
-   SEPARACIÓN ENTRE TABLAS (VACACIONES)
-   ===================================================== */
-
+/* SEPARACIÓN ENTRE TABLAS */
 .vacaciones-page .fixed-table-container {
     margin-bottom: 20px;
 }

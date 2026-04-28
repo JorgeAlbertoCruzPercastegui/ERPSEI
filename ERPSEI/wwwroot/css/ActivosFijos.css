@@ -1,6 +1,8 @@
 ﻿/* =====================================================
    MODULO ACTIVOS FIJOS
-   SOLO PARA ESTA PAGINA
+   AZUL + BLANCO
+   LOGO CON INTRANET
+   SIN PERJUDICAR MENÚ
    ===================================================== */
 
 body.module-main-theme.activosfijos-page {
@@ -8,25 +10,18 @@ body.module-main-theme.activosfijos-page {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    background-image: url('/img/Intranetformatoprincipaltamaño1copia.jpg');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: cover;
-    background-attachment: fixed;
-    background-color: #07133f;
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #21166f;
 }
 
-    /* =====================================================
-   HEADER SUPERIOR DEL LAYOUT
-   SOLO EN ESTE MODULO
-   ===================================================== */
-
+    /* HEADER */
     body.module-main-theme.activosfijos-page .header-bg {
-        background: transparent !important;
+        background: #ffffff !important;
         background-size: cover;
         background-position: center;
         min-height: 84px;
-        border-bottom: 1px solid rgba(255,255,255,.08);
+        border-bottom: 1px solid rgba(33,22,111,.08);
     }
 
     body.module-main-theme.activosfijos-page .header-bg-inner {
@@ -36,9 +31,28 @@ body.module-main-theme.activosfijos-page {
         background: transparent !important;
     }
 
+    /* LOGO + TEXTO INTRANET */
+    body.module-main-theme.activosfijos-page .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+        body.module-main-theme.activosfijos-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 550;
+            color: #21166f;
+            order: 1;
+        }
+
     body.module-main-theme.activosfijos-page .brandimage {
-        max-height: 44px;
-        width: auto;
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
+        order: 2;
     }
 
     body.module-main-theme.activosfijos-page .navbar .nav-link,
@@ -46,24 +60,20 @@ body.module-main-theme.activosfijos-page {
     body.module-main-theme.activosfijos-page .navbar .btn,
     body.module-main-theme.activosfijos-page .navbar a,
     body.module-main-theme.activosfijos-page .navbar form button {
-        color: #fff !important;
-        text-shadow: 0 1px 3px rgba(0,0,0,.30);
+        color: #21166f !important;
+        text-shadow: none !important;
     }
 
-    /* =====================================================
-   MENU RAPIDO DORADO
-   SOLO EN ESTE MODULO
-   ===================================================== */
-
+    /* MENÚ RÁPIDO - MISMA ESTRUCTURA */
     body.module-main-theme.activosfijos-page .topbar-links {
         max-width: 1280px;
         margin: 0 auto 14px auto;
         padding: 9px 14px !important;
         min-height: 54px;
-        background: linear-gradient(145deg, #f3e3b3, #e3c97b);
-        border: 2px solid #d4a941;
+        background: #21166f;
+        border: none;
         border-radius: 18px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 2px 4px rgba(255,255,255,.35);
+        box-shadow: none;
         gap: 10px;
     }
 
@@ -81,7 +91,7 @@ body.module-main-theme.activosfijos-page {
         body.module-main-theme.activosfijos-page .topbar-links .small,
         body.module-main-theme.activosfijos-page .topbar-links .text-muted,
         body.module-main-theme.activosfijos-page .topbar-links b {
-            color: #0c1f60 !important;
+            color: #ffffff !important;
         }
 
     body.module-main-theme.activosfijos-page .quick-nav-wrap {
@@ -103,7 +113,7 @@ body.module-main-theme.activosfijos-page {
     }
 
     body.module-main-theme.activosfijos-page .quick-link {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         text-decoration: none !important;
         font-weight: 700;
         font-size: .88rem;
@@ -115,15 +125,11 @@ body.module-main-theme.activosfijos-page {
     }
 
         body.module-main-theme.activosfijos-page .quick-link:hover {
-            background: rgba(12, 31, 96, .08);
-            color: #09184a !important;
+            color: #d4ad45 !important;
+            background: transparent !important;
         }
 
-    /* =====================================================
-   DROPDOWN DEL MENU
-   SOLO EN ESTE MODULO
-   ===================================================== */
-
+    /* DROPDOWN DEL MENÚ */
     body.module-main-theme.activosfijos-page .quick-dd {
         position: relative;
     }
@@ -134,12 +140,10 @@ body.module-main-theme.activosfijos-page {
         left: 0;
         margin-top: 2px;
         min-width: 260px;
-        background: rgba(10, 21, 80, .72);
-        border: 1px solid rgba(255,255,255,.12);
+        background: #ffffff;
+        border: 1px solid rgba(33,22,111,.12);
         border-radius: 14px;
-        box-shadow: 0 18px 35px rgba(0,0,0,.24);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 18px 35px rgba(33,22,111,.14);
         padding: 8px;
         display: none;
         z-index: 2000;
@@ -158,7 +162,7 @@ body.module-main-theme.activosfijos-page {
 
     body.module-main-theme.activosfijos-page .quick-dd-item {
         display: block;
-        color: rgba(255,255,255,.90) !important;
+        color: #21166f !important;
         text-decoration: none !important;
         font-size: .88rem;
         font-weight: 600;
@@ -168,50 +172,45 @@ body.module-main-theme.activosfijos-page {
     }
 
         body.module-main-theme.activosfijos-page .quick-dd-item:hover {
-            background: rgba(255,255,255,.10);
-            color: #ffffff !important;
+            background: rgba(33,22,111,.08);
+            color: #21166f !important;
         }
 
     body.module-main-theme.activosfijos-page .quick-dd:hover > .quick-link,
     body.module-main-theme.activosfijos-page .quick-dd.open > .quick-link {
-        color: #fff7d6 !important;
-        background: rgba(12, 31, 96, .18);
+        color: #d4ad45 !important;
+        background: transparent !important;
     }
 
     body.module-main-theme.activosfijos-page .quick-nav-toggle {
-        border: 1px solid #c89a2a;
-        background: linear-gradient(145deg, #f3e3b3, #dcb95e);
-        color: #0c1f60;
+        border: none;
+        background: #21166f;
+        color: #ffffff;
         border-radius: 10px;
         padding: 6px 10px;
         font-weight: 800;
     }
 
-/* =====================================================
-   TITULO PRINCIPAL
-   ===================================================== */
-
+/* TITULO PRINCIPAL */
 .activosfijos-page .title {
-    color: #ffffff;
+    color: #21166f;
     font-size: 1.9rem;
     font-weight: 800;
     margin-bottom: 1rem !important;
-    text-shadow: 0 2px 10px rgba(0,0,0,.18);
+    text-shadow: none;
 }
 
-/* =====================================================
-   ACORDEON FILTROS
-   ===================================================== */
-
+/* ACORDEON FILTROS */
 .activosfijos-page .accordion {
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.18);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    border: 1px solid rgba(33,22,111,.10);
 }
 
 .activosfijos-page .accordion-item {
-    border: 1px solid rgba(255,255,255,.14) !important;
-    background: rgba(255,255,255,.96);
+    border: 1px solid rgba(33,22,111,.08) !important;
+    background: #ffffff;
 }
 
 .activosfijos-page .accordion-header {
@@ -219,55 +218,49 @@ body.module-main-theme.activosfijos-page {
 }
 
 .activosfijos-page .accordion-button {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b) !important;
-    color: #0c1f60 !important;
+    background: #21166f !important;
+    color: #ffffff !important;
     box-shadow: none !important;
     font-weight: 800;
     border: 0;
 }
 
     .activosfijos-page .accordion-button:not(.collapsed) {
-        color: #0c1f60 !important;
+        color: #ffffff !important;
         box-shadow: none !important;
     }
 
     .activosfijos-page .accordion-button::after {
-        filter: saturate(.3) contrast(1.2);
+        filter: brightness(0) invert(1);
     }
 
 .activosfijos-page .accordion-body {
-    background: rgba(255,255,255,.96);
+    background: #ffffff;
     padding: 1.25rem 1.1rem;
 }
 
-/* =====================================================
-   INPUTS / FORMULARIOS
-   ===================================================== */
-
+/* INPUTS / FORMULARIOS */
 .activosfijos-page .form-control,
 .activosfijos-page .form-select {
     border-radius: 12px;
-    border: 1px solid #c7d3f2;
-    background: #f8fbff;
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.15);
+    background: #f8f9ff;
+    color: #21166f;
     box-shadow: none;
 }
 
     .activosfijos-page .form-control:focus,
     .activosfijos-page .form-select:focus {
-        border-color: #7e9cff;
-        box-shadow: 0 0 0 .2rem rgba(67, 97, 238, 0.15);
-        background: #fff;
+        border-color: #21166f;
+        box-shadow: 0 0 0 .2rem rgba(33,22,111,.12);
+        background: #ffffff;
     }
 
 .activosfijos-page .form-floating > label {
-    color: #4b587c;
+    color: #21166f;
 }
 
-/* =====================================================
-   TOOLBAR
-   ===================================================== */
-
+/* TOOLBAR */
 .activosfijos-page #toolbar {
     display: flex;
     gap: 10px;
@@ -277,9 +270,9 @@ body.module-main-theme.activosfijos-page {
 
     .activosfijos-page #toolbar .btn,
     .activosfijos-page .btn-primary {
-        background: #ffffff;
-        color: #0c1f60;
-        border: 1px solid #d4a941;
+        background: #21166f;
+        color: #ffffff;
+        border: 1px solid #21166f;
         border-radius: 10px;
         padding: .5rem .85rem;
         font-size: .92rem;
@@ -289,38 +282,35 @@ body.module-main-theme.activosfijos-page {
 
         .activosfijos-page #toolbar .btn:hover,
         .activosfijos-page .btn-primary:hover {
-            background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-            color: #09184a;
-            border-color: #c89a2a;
+            background: #2f2390;
+            color: #ffffff;
+            border-color: #2f2390;
         }
 
     .activosfijos-page #toolbar .btn-danger {
-        background: linear-gradient(145deg,#f9d0c8,#ef9b8d);
-        color: #8f1b13;
-        border: 1px solid rgba(184,51,37,.28);
+        background: #ffffff;
+        color: #c62828;
+        border: 1px solid #c62828;
     }
 
         .activosfijos-page #toolbar .btn-danger:hover {
-            background: linear-gradient(145deg,#f4b9ad,#e87e6a);
-            color: #74140f;
+            background: #c62828;
+            color: #ffffff;
         }
 
     .activosfijos-page #toolbar .btn-success {
-        background: #ffffff;
-        color: #0c1f60;
-        border: 1px solid #d4a941;
+        background: #21166f;
+        color: #ffffff;
+        border: 1px solid #21166f;
     }
 
         .activosfijos-page #toolbar .btn-success:hover {
-            background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-            color: #09184a;
-            border-color: #c89a2a;
+            background: #2f2390;
+            color: #ffffff;
+            border-color: #2f2390;
         }
 
-/* =====================================================
-   TABLA BOOTSTRAP-TABLE
-   ===================================================== */
-
+/* TABLA BOOTSTRAP-TABLE */
 .activosfijos-page .fixed-table-container,
 .activosfijos-page .fixed-table-toolbar,
 .activosfijos-page .fixed-table-pagination,
@@ -331,11 +321,11 @@ body.module-main-theme.activosfijos-page {
 }
 
 .activosfijos-page .fixed-table-container {
-    border: 0 !important;
+    border: 1px solid rgba(33,22,111,.10) !important;
     border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 16px 34px rgba(0,0,0,.18);
-    background: rgba(255,255,255,.96);
+    box-shadow: 0 14px 28px rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .activosfijos-page .bootstrap-table .table {
@@ -343,8 +333,8 @@ body.module-main-theme.activosfijos-page {
 }
 
     .activosfijos-page .bootstrap-table .table thead th {
-        background: linear-gradient(135deg,#102f8c,#1f4cd3) !important;
-        color: #fff !important;
+        background: #21166f !important;
+        color: #ffffff !important;
         font-weight: 700;
         border: 0 !important;
         padding: .95rem .85rem;
@@ -352,28 +342,26 @@ body.module-main-theme.activosfijos-page {
     }
 
     .activosfijos-page .bootstrap-table .table tbody tr {
-        background: #fff;
+        background: #ffffff;
         transition: background .15s ease;
     }
 
         .activosfijos-page .bootstrap-table .table tbody tr:nth-child(even) {
-            background: #f7faff;
+            background: #f8f9ff;
         }
 
         .activosfijos-page .bootstrap-table .table tbody tr:hover {
-            background: #eef4ff;
+            background: #eef2ff;
         }
 
     .activosfijos-page .bootstrap-table .table td {
-        border-color: #e4ebfb !important;
+        border-color: rgba(33,22,111,.08) !important;
         padding: .9rem .85rem;
         vertical-align: middle;
+        color: #21166f;
     }
 
-/* =====================================================
-   BOTONES DE TABLA / PAGINACION / BUSQUEDA
-   ===================================================== */
-
+/* BOTONES DE TABLA / PAGINACION / BUSQUEDA */
 .activosfijos-page .bootstrap-table .search input,
 .activosfijos-page .fixed-table-pagination .btn,
 .activosfijos-page .columns .btn,
@@ -387,8 +375,8 @@ body.module-main-theme.activosfijos-page {
 .activosfijos-page .keep-open .btn,
 .activosfijos-page .fixed-table-pagination .btn {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
     font-weight: 700;
 }
 
@@ -396,66 +384,64 @@ body.module-main-theme.activosfijos-page {
     .activosfijos-page .columns .btn:hover,
     .activosfijos-page .keep-open .btn:hover,
     .activosfijos-page .fixed-table-pagination .btn:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
 .activosfijos-page .bootstrap-table .search input {
-    border: 1px solid #c7d3f2;
-    background: #f8fbff;
-    color: #1f2b5c;
+    border: 1px solid rgba(33,22,111,.15);
+    background: #f8f9ff;
+    color: #21166f;
 }
 
-/* =====================================================
-   MODAL
-   ===================================================== */
-
+/* MODAL */
 .activosfijos-page .modal-content {
-    border: 1px solid rgba(255,255,255,.14);
+    border: 1px solid rgba(33,22,111,.10);
     border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(248,250,255,.96) 100%);
-    box-shadow: 0 22px 42px rgba(0,0,0,.24);
+    background: #ffffff;
+    box-shadow: 0 22px 42px rgba(33,22,111,.14);
     overflow: hidden;
 }
 
 .activosfijos-page .modal-header {
-    background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-    border-bottom: 1px solid rgba(212,169,65,.45);
+    background: #21166f;
+    border-bottom: none;
 }
 
 .activosfijos-page .modal-title {
-    color: #0c1f60;
+    color: #ffffff;
     font-weight: 800;
 }
 
 .activosfijos-page .modal-body {
-    background: transparent;
+    background: #ffffff;
 }
 
 .activosfijos-page .modal-footer {
-    border-top: 1px solid #e7eaf0;
-    background: rgba(255,255,255,.72);
+    border-top: 1px solid rgba(33,22,111,.08);
+    background: #ffffff;
 }
 
 .activosfijos-page .modal .btn-secondary {
     background: #ffffff;
-    color: #0c1f60;
-    border: 1px solid #d4a941;
+    color: #21166f;
+    border: 1px solid #21166f;
     border-radius: 10px;
     font-weight: 700;
 }
 
     .activosfijos-page .modal .btn-secondary:hover {
-        background: linear-gradient(145deg,#f3e3b3,#e3c97b);
-        color: #09184a;
-        border-color: #c89a2a;
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
     }
 
-/* =====================================================
-   ALERTAS / TEXTO
-   ===================================================== */
+.activosfijos-page .btn-close {
+    filter: invert(1);
+}
 
+/* ALERTAS / TEXTO */
 .activosfijos-page .alert {
     border-radius: 14px;
 }
@@ -464,17 +450,12 @@ body.module-main-theme.activosfijos-page {
     font-size: .86rem;
 }
 
-/* =====================================================
-   FOOTER
-   ===================================================== */
-
+/* FOOTER */
 .activosfijos-page .footer {
     margin-top: auto;
     flex-shrink: 0;
-    background: rgba(0,0,0,.35) !important;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-top: 1px solid rgba(255,255,255,.18) !important;
+    background: #ffffff !important;
+    border-top: 1px solid rgba(33,22,111,.08) !important;
 }
 
     .activosfijos-page .footer,
@@ -482,17 +463,14 @@ body.module-main-theme.activosfijos-page {
     .activosfijos-page .footer .text-muted,
     .activosfijos-page .footer .float-start,
     .activosfijos-page .footer .float-end {
-        color: rgba(255,255,255,.92) !important;
+        color: #21166f !important;
     }
 
         .activosfijos-page .footer a:hover {
-            color: #ffffff !important;
+            color: #d4ad45 !important;
         }
 
-/* =====================================================
-   RESPONSIVE
-   ===================================================== */
-
+/* RESPONSIVE */
 @media (max-width: 991.98px) {
     body.module-main-theme.activosfijos-page {
         background-attachment: scroll;
