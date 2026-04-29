@@ -311,6 +311,47 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(jsonVacaciones);
         }
 
+        private decimal ObtenerDiasVacacionesPorAntiguedad(int anios)
+        {
+            if (anios <= 0)
+                return 0m;
+
+            if (anios == 1)
+                return 12m;
+
+            if (anios == 2)
+                return 14m;
+
+            if (anios == 3)
+                return 16m;
+
+            if (anios == 4)
+                return 18m;
+
+            if (anios == 5)
+                return 20m;
+
+            if (anios >= 6 && anios <= 10)
+                return 22m;
+
+            if (anios >= 11 && anios <= 15)
+                return 24m;
+
+            if (anios >= 16 && anios <= 20)
+                return 26m;
+
+            if (anios >= 21 && anios <= 25)
+                return 28m;
+
+            if (anios >= 26 && anios <= 30)
+                return 30m;
+
+            if (anios >= 31 && anios <= 35)
+                return 32m;
+
+            return 34m; 
+        }
+
         private async Task ConfigurarPermisosVacacionesAsync()
         {
             var userEmail = User.Identity?.Name;
@@ -981,7 +1022,30 @@ namespace ERPSEI.Areas.ERP.Pages
             decimal diasLegales = 0m;
             decimal diasProporcionales = 0m;
 
-            if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
+            int aniosCumplidos = fechaHoy.Year - empleado.FechaIngreso.Date.Year;
+
+            if (fechaHoy < empleado.FechaIngreso.Date.AddYears(aniosCumplidos))
+                aniosCumplidos--;
+
+            decimal diasPorAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos);
+            decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
+            if (aniosCumplidos >= 1)
+            {
+                var ultimoAniversario = empleado.FechaIngreso.Date.AddYears(aniosCumplidos);
+
+                diasLegales = diasPorAnio;
+                diasProporcionales = Math.Round(
+                    (diasProximoAnio / 365m) * (decimal)(fechaHoy - ultimoAniversario).TotalDays, 1);
+            }
+            else
+            {
+                diasLegales = 0m;
+                diasProporcionales = Math.Round(
+                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+            }
+
+            /*if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
             {
                 diasLegales = 12m;
                 diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
@@ -990,7 +1054,7 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 diasLegales = 0m;
                 diasProporcionales = Math.Round((12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
-            }
+            }*/
 
             decimal acumuladas = tipoAsignacion == "Legales"
                 ? diasLegales
@@ -1385,7 +1449,30 @@ namespace ERPSEI.Areas.ERP.Pages
             decimal diasLegales = 0m;
             decimal diasProporcionales = 0m;
 
-            if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
+            int aniosCumplidos = fechaHoy.Year - empleado.FechaIngreso.Date.Year;
+
+            if (fechaHoy < empleado.FechaIngreso.Date.AddYears(aniosCumplidos))
+                aniosCumplidos--;
+
+            decimal diasPorAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos);
+            decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
+            if (aniosCumplidos >= 1)
+            {
+                var ultimoAniversario = empleado.FechaIngreso.Date.AddYears(aniosCumplidos);
+
+                diasLegales = diasPorAnio;
+                diasProporcionales = Math.Round(
+                    (diasProximoAnio / 365m) * (decimal)(fechaHoy - ultimoAniversario).TotalDays, 1);
+            }
+            else
+            {
+                diasLegales = 0m;
+                diasProporcionales = Math.Round(
+                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+            }
+
+            /*if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
             {
                 diasLegales = 12m;
                 diasProporcionales = Math.Round(
@@ -1396,7 +1483,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 diasLegales = 0m;
                 diasProporcionales = Math.Round(
                     (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
-            }
+            }*/
 
             decimal acumuladas = tipoAsignacion == "Legales"
                 ? diasLegales
@@ -1566,7 +1653,15 @@ namespace ERPSEI.Areas.ERP.Pages
 
             string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
 
-            const decimal diasLegales = 12m;
+            int aniosCumplidos = fechaActual.Year - fechaIngreso.Year;
+
+            if (fechaActual < fechaIngreso.AddYears(aniosCumplidos))
+                aniosCumplidos--;
+
+            decimal diasLegales = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos);
+            decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
+            //const decimal diasLegales = 12m;
             ListaVacacionesAcumuladas.Clear();
 
             if (fechaActual >= fechaIngreso.AddYears(1))
@@ -1585,7 +1680,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (tipoAsignacion == "LegalesProporcionales")
                 {
-                    var diasProporcionales = Math.Round((diasLegales / 365) * (decimal)(fechaActual - fechaAniversario).TotalDays, 1);
+                    var diasProporcionales = Math.Round((diasProximoAnio / 365m) * (decimal)(fechaActual - fechaAniversario).TotalDays, 1);
+                    //var diasProporcionales = Math.Round((diasLegales / 365) * (decimal)(fechaActual - fechaAniversario).TotalDays, 1);
 
                     if (diasProporcionales > 0)
                     {
