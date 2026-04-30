@@ -1249,6 +1249,10 @@ function exportarDetalleVacaciones() {
     window.location.href = "/ERP/Vacaciones?handler=ExportarDetalleVacaciones";
 }
 
+function exportarHistorialVacacionesUsuarios() {
+    window.location.href = "/ERP/Vacaciones?handler=ExportarHistorialVacacionesUsuarios";
+}
+
 function cargarAvisoVacacionesPorVencer() {
 
     fetch("/ERP/Vacaciones?handler=AvisoVacacionesPorVencer")

@@ -437,8 +437,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var roles = await userManager.GetRolesAsync(usuario);
 
-            bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
-            bool esAdministradorTH = roles.Contains("Administrador TH");
+            bool esAdministrador = roles.Any(r => r.Equals("Administrador", StringComparison.OrdinalIgnoreCase));
+            bool esAdministradorTH = roles.Any(r => r.Equals("Administrador TH", StringComparison.OrdinalIgnoreCase));
+            bool esMaster = roles.Any(r => r.Equals("Master", StringComparison.OrdinalIgnoreCase));
+
 
             int? empleadoIdActual = usuario.Empleado?.Id;
 
@@ -447,7 +449,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
             PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
             PuedeAprobarTH = esAdministradorTH || esAdministrador;
-            PuedeExportarDetalleVacaciones = esAdministrador || esAdministradorTH;
+            PuedeExportarDetalleVacaciones = esAdministrador || esAdministradorTH || esMaster;
         }
 
         public async Task OnGetAsync()
@@ -490,6 +492,188 @@ namespace ERPSEI.Areas.ERP.Pages
             }).ToList();
 
             return new JsonResult(json);
+        }
+
+        public async Task<IActionResult> OnGetExportarHistorialVacacionesUsuariosAsync()
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            if (!PuedeExportarDetalleVacaciones)
+                return Forbid();
+
+            var solicitudes = await db.SolicitudesVacaciones
+                .Include(s => s.Empleado)
+                .Include(s => s.Autorizador)
+                .OrderBy(s => s.Empleado.NombreCompleto)
+                .ThenByDescending(s => s.FechaSolicitud)
+                .ToListAsync();
+
+            ExcelPackage.License.SetNonCommercialOrganization("ERPSEI");
+
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Historial Vacaciones");
+
+            string[] headers =
+            {
+            "Id Solicitud",
+            "Empleado",
+            "Fecha Solicitud",
+            "Fecha Inicio",
+            "Fecha Fin",
+            "Días Solicitados",
+            "Acumuladas",
+            "Tomadas",
+            "Vencidas",
+            "Tomadas en el Futuro",
+            "Total Saldo",
+            "Vacaciones Legales Proporcionales",
+            "Estado",
+            "Jefe Directo",
+            "TH",
+            "Autorizador",
+            "Comentario"
+        };
+
+            for (int i = 0; i < headers.Length; i++)
+            {
+                ws.Cells[1, i + 1].Value = headers[i];
+            }
+
+            using (var range = ws.Cells[1, 1, 1, headers.Length])
+            {
+                range.Style.Font.Bold = true;
+                range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(31, 20, 102));
+                range.Style.Font.Color.SetColor(System.Drawing.Color.White);
+                range.Style.HorizontalAlignment = OfficeOpenXml.Style.ExcelHorizontalAlignment.Center;
+            }
+
+            int row = 2;
+
+            foreach (var s in solicitudes)
+            {
+                decimal acumuladas = 0m;
+                decimal vacacionesLegalesProporcionales = 0m;
+                decimal tomadas = 0m;
+                decimal vencidas = 0m;
+                decimal tomadasFuturo = 0m;
+                decimal totalSaldo = 0m;
+
+                if (s.Empleado != null)
+                {
+                    var fechaHoy = DateTime.Today;
+                    var fechaIngreso = s.Empleado.FechaIngreso.Date;
+
+                    int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
+
+                    if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
+                        aniosCumplidos--;
+
+                    if (aniosCumplidos >= 1)
+                    {
+                        var ultimoAniversario = fechaIngreso.AddYears(aniosCumplidos);
+
+                        acumuladas = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos);
+
+                        decimal diasDelSiguienteAnio =
+                            ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
+                        decimal diasTranscurridos =
+                            (decimal)(fechaHoy - ultimoAniversario).TotalDays;
+
+                        decimal proporcional = Math.Round(
+                            (diasDelSiguienteAnio / 365m) * diasTranscurridos, 1);
+
+                        vacacionesLegalesProporcionales = acumuladas + proporcional;
+                    }
+                    else
+                    {
+                        acumuladas = 0m;
+
+                        vacacionesLegalesProporcionales = Math.Round(
+                            (12m / 365m) *
+                            (decimal)(fechaHoy - fechaIngreso).TotalDays, 1);
+                    }
+
+                    tomadas = await db.SolicitudesVacaciones
+                        .Where(x =>
+                            x.EmpleadoId == s.Empleado.Id &&
+                            (
+                                (!x.EsVacacionAnticipada &&
+                                 x.EstadoJefeDirecto == "Aprobado" &&
+                                 x.EstadoTH == "Aprobado")
+                                ||
+                                (x.EsVacacionAnticipada &&
+                                 x.DescuentoAnticipadoAplicado)
+                            ))
+                        .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                    tomadasFuturo = await db.SolicitudesVacaciones
+                        .Where(x =>
+                            x.EmpleadoId == s.Empleado.Id &&
+                            x.EsVacacionAnticipada &&
+                            x.Estado != EstadoSolicitud.Rechazado &&
+                            !x.DescuentoAnticipadoAplicado)
+                        .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                    vencidas = await ObtenerDiasVencidosAsync(s.Empleado.Id);
+
+                    totalSaldo = Math.Max(acumuladas - tomadas - vencidas, 0m);
+                }
+
+                ws.Cells[row, 1].Value = s.Id;
+                ws.Cells[row, 2].Value = s.Empleado?.NombreCompleto ?? "-";
+                ws.Cells[row, 3].Value = s.FechaSolicitud.ToString("dd/MM/yyyy");
+                ws.Cells[row, 4].Value = s.FechaInicio.ToString("dd/MM/yyyy");
+                ws.Cells[row, 5].Value = s.FechaFin.ToString("dd/MM/yyyy");
+                ws.Cells[row, 6].Value = s.DiasSolicitados;
+
+                ws.Cells[row, 7].Value = acumuladas;
+                ws.Cells[row, 8].Value = tomadas;
+                ws.Cells[row, 9].Value = vencidas;
+                ws.Cells[row, 10].Value = tomadasFuturo;
+                ws.Cells[row, 11].Value = totalSaldo;
+                ws.Cells[row, 12].Value = vacacionesLegalesProporcionales;
+
+                ws.Cells[row, 13].Value = ObtenerEstadoVisualVacaciones(s);
+                ws.Cells[row, 14].Value = s.EstadoJefeDirecto;
+                ws.Cells[row, 15].Value = s.EstadoTH;
+                ws.Cells[row, 16].Value = s.Autorizador?.NombreCompleto ?? "-";
+                ws.Cells[row, 17].Value = s.ComentarioEmpleado ?? "";
+
+                row++;
+            }
+
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            var bytes = package.GetAsByteArray();
+            var fileName = $"Historial_Vacaciones_Usuarios_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName
+            );
+        }
+
+        private decimal CalcularVacacionesLegalesProporcionales(DateTime fechaIngreso)
+        {
+            var fechaHoy = DateTime.Today;
+
+            int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
+
+            if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
+                aniosCumplidos--;
+
+            decimal diasDelAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
+            var fechaBase = aniosCumplidos >= 1
+                ? fechaIngreso.AddYears(aniosCumplidos)
+                : fechaIngreso;
+
+            decimal diasTranscurridos = (decimal)(fechaHoy - fechaBase).TotalDays;
+
+            return Math.Round((diasDelAnio / 365m) * diasTranscurridos, 1);
         }
 
         public async Task<JsonResult> OnPostEditarSolicitudAsync()
@@ -1596,18 +1780,18 @@ namespace ERPSEI.Areas.ERP.Pages
 
             //decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturasDescontables, 0m);
             decimal diasVencidos = await ObtenerDiasVencidosAsync(empleado.Id);
-            decimal saldo = Math.Max(acumuladas - diasTomados - diasVencidos, 0m);
+            //decimal saldo = Math.Max(acumuladas - diasTomados - diasVencidos, 0m);
+            decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturasDescontables - diasVencidos, 0m);
 
             return new JsonResult(new
             {
-                Acumuladas = acumuladas,
-                Tomadas = diasTomados,
-                Vencidas = 0,
-                Futuras = diasFuturasVisuales,
+                acumuladas = acumuladas,
+                tomadas = diasTomados,
                 vencidas = diasVencidos,
+                futuras = diasFuturasVisuales,
                 saldo = saldo,
-                Fecha = DateTime.Now.ToString("dd-MM-yyyy"),
-                TipoAsignacion = tipoAsignacion
+                fecha = DateTime.Now.ToString("dd-MM-yyyy"),
+                tipoAsignacion = tipoAsignacion
             });
         }
 
