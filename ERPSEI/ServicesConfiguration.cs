@@ -155,6 +155,7 @@ namespace ERPSEI
             ConfigureDINotificacionesEventosComunicados(_builder);
         }
 
+
         private static void ConfigureDINotificacionesEventosComunicados(WebApplicationBuilder _builder)
         {
             //Eventos
@@ -221,6 +222,7 @@ namespace ERPSEI
             //Vacaciones
             _builder.Services.AddScoped<ISolicitudVacacionesManager, SolicitudVacacionesManager>();
             _builder.Services.AddScoped<IPoliticaVacacionManager, PoliticaVacacionManager>();
+
         }
 
         private static void ConfigureDIDocumentos(WebApplicationBuilder _builder)

@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", function (event) {
     cargarResumenVacaciones();
     cargarVacacionesAcumuladas();
     cargarVacacionesTomadas();
+    cargarAvisoVacacionesPorVencer();
 
     // Eventos para calcular días
     const inpFechaInicio = document.getElementById("inpFechaInicio");
@@ -774,8 +775,10 @@ function cargarResumenVacaciones() {
 
             document.getElementById("tdAcumuladas").innerText = `${resp.acumuladas.toFixed(1)} días`;
             document.getElementById("tdTomadas").innerText = `${resp.tomadas.toFixed(1)} días`;
-            document.getElementById("tdVencidas").innerText = `0.0 días`;
-            document.getElementById("tdFuturas").innerText = `0.0 días`;
+            //document.getElementById("tdVencidas").innerText = `0.0 días`;
+            document.getElementById("tdVencidas").innerText = `${(resp.vencidas || 0).toFixed(1)} días`;
+            document.getElementById("tdFuturas").innerText = `${(resp.futuras || 0).toFixed(1)} días`;
+            //document.getElementById("tdFuturas").innerText = `0.0 días`;
             document.getElementById("tdSaldoTotal").innerText = `${resp.saldo.toFixed(1)} días`;
 
             document.getElementById("lblDiasDisponibles").innerText = `${resp.saldo.toFixed(1)}`;
@@ -904,6 +907,7 @@ function onGuardarClick() {
                 obtenerDiasDisponibles();       // Actualiza lblDiasDisponibles
                 cargarResumenVacaciones();      // Actualiza la tabla y saldo total
                 cargarVacacionesTomadas();         // ✅ Actualiza tabla de vacaciones tomadas
+                cargarAvisoVacacionesPorVencer();
             }, 300); // puede ajustarse a 500ms si necesario
         },
         function (error) {
@@ -1243,6 +1247,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function exportarDetalleVacaciones() {
     window.location.href = "/ERP/Vacaciones?handler=ExportarDetalleVacaciones";
+}
+
+function cargarAvisoVacacionesPorVencer() {
+
+    fetch("/ERP/Vacaciones?handler=AvisoVacacionesPorVencer")
+        .then(response => response.json())
+        .then(data => {
+
+            if (!data.mostrar) {
+                $("#rowAvisoVacacionesPorVencer").addClass("d-none");
+                return;
+            }
+
+            $("#lblDiasPorVencer").text(parseFloat(data.dias).toFixed(1));
+            $("#lblFechaVencimientoVacaciones").text(data.fechaVencimiento);
+
+            $("#rowAvisoVacacionesPorVencer").removeClass("d-none");
+        })
+        .catch(error => console.error(error));
 }
 
 function onCerrarClick() {

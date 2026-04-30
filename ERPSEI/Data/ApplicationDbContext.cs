@@ -183,6 +183,7 @@ namespace ERPSEI.Data
         public DbSet<PoliticaVacacion> PoliticasVacaciones { get; set; }
         public DbSet<PoliticaVacacionDetalle> PoliticasVacacionesDetalles { get; set; }
         public DbSet<ConfiguracionVacacion> ConfiguracionesVacaciones { get; set; }
+        public DbSet<HistorialVacacionVencida> HistorialVacacionesVencidas { get; set; }
 
         //Ausencias
         public DbSet<TipoAusencia> TiposAusencias { get; set; }
@@ -1127,6 +1128,23 @@ namespace ERPSEI.Data
                 }
             );
 
+            b.Entity<HistorialVacacionVencida>()
+                .HasOne(x => x.Empleado)
+                .WithMany()
+                .HasForeignKey(x => x.EmpleadoId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.Entity<HistorialVacacionVencida>()
+                .Property(x => x.DiasVencidos)
+                .HasPrecision(10, 2);
+
+            b.Entity<HistorialVacacionVencida>()
+                .Property(x => x.Causa)
+                .HasMaxLength(500);
+
+            b.Entity<HistorialVacacionVencida>()
+                .Property(x => x.Periodo)
+                .HasMaxLength(150);
         }
 
         private static void BuildPolizas(ModelBuilder b) 

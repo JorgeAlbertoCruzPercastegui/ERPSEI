@@ -224,9 +224,12 @@
                                                 <i class="bi bi-eye"></i> Ver Políticas
                                             </button>
 
-                                            <button type="button" class="btn btn-sm btn-light border" data-bs-toggle="modal" data-bs-target="#modalAsignacionVacaciones">
-                                                <i class="bi bi-ui-checks-grid"></i> Asignación
-                                            </button>
+                                            @if (Model.PuedeExportarDetalleVacaciones)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-light border" data-bs-toggle="modal" data-bs-target="#modalAsignacionVacaciones">
+                                                    <i class="bi bi-ui-checks-grid"></i> Asignación
+                                                </button>
+                                            }
                                         </div>
                                     </div>
                                     <div class="card-body">
@@ -267,6 +270,18 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="row mb-3 d-none" id="rowAvisoVacacionesPorVencer">
+                            <div class="col-12">
+                                <div class="alert alert-warning border-0 rounded-4 shadow-sm mb-0">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    Tienes <strong id="lblDiasPorVencer">0</strong> día(s) de vacaciones próximos a caducar.
+                                    Fecha límite:
+                                    <strong id="lblFechaVencimientoVacaciones"></strong>.
+                                </div>
+                            </div>
+                        </div>
+
                         <br />
 
                         <!-- Sección Vacaciones Tomadas -->
