@@ -352,6 +352,45 @@ namespace ERPSEI.Areas.ERP.Pages
             return 34m; 
         }
 
+        private async Task<(int? autorizadorId, string observacion)> ObtenerAutorizadorDisponibleAsync(
+            Empleado empleado,
+            DateTime fechaInicio,
+            DateTime fechaFin)
+                {
+                    int? jefeId = empleado.JefeId;
+
+                    while (jefeId.HasValue && jefeId.Value > 0)
+                    {
+                        var jefe = await db.Empleados
+                            .Include(e => e.Jefe)
+                            .FirstOrDefaultAsync(e => e.Id == jefeId.Value);
+
+                        if (jefe == null)
+                            return (null, "No se encontró un jefe disponible para autorizar.");
+
+                        bool jefeEstaDeVacaciones = await db.SolicitudesVacaciones.AnyAsync(s =>
+                            s.EmpleadoId == jefe.Id &&
+                            s.EstadoJefeDirecto == "Aprobado" &&
+                            s.EstadoTH == "Aprobado" &&
+                            s.FechaInicio <= fechaFin &&
+                            s.FechaFin >= fechaInicio);
+
+                        if (!jefeEstaDeVacaciones)
+                        {
+                            if (jefe.Id == empleado.JefeId)
+                                return (jefe.Id, "Se asignó al jefe directo como autorizador.");
+
+                            return (jefe.Id, $"El jefe directo se encuentra de vacaciones en el periodo solicitado. Se reasignó automáticamente al jefe superior: {jefe.NombreCompleto}.");
+                        }
+
+                        jefeId = jefe.JefeId;
+                    }
+
+                    return (null, "No se encontró un jefe superior disponible para autorizar.");
+        }
+
+
+
         //Vacaciones Vencidas
         private async Task<decimal> ObtenerDiasVencidosAsync(int empleadoId)
         {
@@ -1459,6 +1498,18 @@ namespace ERPSEI.Areas.ERP.Pages
                     }
                 }
 
+                var resultadoAutorizador = await ObtenerAutorizadorDisponibleAsync(
+                empleado,
+                InputSolicitud.FechaInicio.Date,
+                InputSolicitud.FechaFin.Date);
+
+                if (!resultadoAutorizador.autorizadorId.HasValue)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = resultadoAutorizador.observacion;
+                    return new JsonResult(resp);
+                }
+
                 var solicitud = new SolicitudVacaciones
                 {
                     EmpleadoId = empleado.Id,
@@ -1467,10 +1518,16 @@ namespace ERPSEI.Areas.ERP.Pages
                     FechaInicio = InputSolicitud.FechaInicio,
                     FechaFin = InputSolicitud.FechaFin,
                     DiasSolicitados = diasSolicitados,
-                    ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
+                    //ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
+                    ComentarioEmpleado =
+                    string.IsNullOrWhiteSpace(InputSolicitud.ComentarioEmpleado)
+                        ? $"[Asignación automática] {resultadoAutorizador.observacion}"
+                        : $"{InputSolicitud.ComentarioEmpleado}\n\n[Asignación automática] {resultadoAutorizador.observacion}",
 
-                    JefeDirectoEmpleadoId = empleado.JefeId,
-                    AutorizadorId = empleado.JefeId,
+                    /*JefeDirectoEmpleadoId = empleado.JefeId,
+                    AutorizadorId = empleado.JefeId,*/
+                    JefeDirectoEmpleadoId = resultadoAutorizador.autorizadorId,
+                    AutorizadorId = resultadoAutorizador.autorizadorId,
                     Estado = EstadoSolicitud.Pendiente,
 
                     EstadoJefeDirecto = "Pendiente",
