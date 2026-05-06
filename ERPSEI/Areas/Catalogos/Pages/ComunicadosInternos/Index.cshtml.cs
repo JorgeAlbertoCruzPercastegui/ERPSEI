@@ -1,5 +1,4 @@
-﻿using ERPSEI.Data.Entities.Intranet;
-using ERPSEI.Data.Entities.Usuarios;
+﻿using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Intranet;
 using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Mvc;
@@ -51,7 +50,14 @@ namespace ERPSEI.Areas.Intranet.Pages.ComunicadosInternos
                 NombreColaborador = nombre;
             }
 
-            var lista = await _comunicadoManager.GetPublicadosVisiblesAsync(Mes);
+            var lista = await _comunicadoManager.GetPublicadosVisiblesAsync(null);
+
+            if (Mes.HasValue && Mes.Value > 0)
+            {
+                lista = lista
+                    .Where(x => x.FechaPublicacion.Month == Mes.Value)
+                    .ToList();
+            }
 
             Comunicados = lista.Select(x => new ComunicadoCardVm
             {
@@ -67,7 +73,14 @@ namespace ERPSEI.Areas.Intranet.Pages.ComunicadosInternos
 
         public async Task<IActionResult> OnGetListaAsync(int? mes)
         {
-            var lista = await _comunicadoManager.GetPublicadosVisiblesAsync(mes);
+            var lista = await _comunicadoManager.GetPublicadosVisiblesAsync(null);
+
+            if (mes.HasValue && mes.Value > 0)
+            {
+                lista = lista
+                    .Where(x => x.FechaPublicacion.Month == mes.Value)
+                    .ToList();
+            }
 
             var result = lista.Select(x => new
             {

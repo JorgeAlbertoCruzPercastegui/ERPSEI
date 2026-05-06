@@ -26,19 +26,19 @@
                 <div class="month-filter-inline">
                     <label for="selMes" class="month-filter-label">Mes</label>
                     <select id="selMes" class="form-select month-select">
-                        <option value="">Todos</option>
-                        <option value="1">Enero</option>
-                        <option value="2">Febrero</option>
-                        <option value="3">Marzo</option>
-                        <option value="4">Abril</option>
-                        <option value="5">Mayo</option>
-                        <option value="6">Junio</option>
-                        <option value="7">Julio</option>
-                        <option value="8">Agosto</option>
-                        <option value="9">Septiembre</option>
-                        <option value="10">Octubre</option>
-                        <option value="11">Noviembre</option>
-                        <option value="12">Diciembre</option>
+                        <option value="" selected="@(Model.Mes == null)">Todos</option>
+                        <option value="1" selected="@(Model.Mes == 1)">Enero</option>
+                        <option value="2" selected="@(Model.Mes == 2)">Febrero</option>
+                        <option value="3" selected="@(Model.Mes == 3)">Marzo</option>
+                        <option value="4" selected="@(Model.Mes == 4)">Abril</option>
+                        <option value="5" selected="@(Model.Mes == 5)">Mayo</option>
+                        <option value="6" selected="@(Model.Mes == 6)">Junio</option>
+                        <option value="7" selected="@(Model.Mes == 7)">Julio</option>
+                        <option value="8" selected="@(Model.Mes == 8)">Agosto</option>
+                        <option value="9" selected="@(Model.Mes == 9)">Septiembre</option>
+                        <option value="10" selected="@(Model.Mes == 10)">Octubre</option>
+                        <option value="11" selected="@(Model.Mes == 11)">Noviembre</option>
+                        <option value="12" selected="@(Model.Mes == 12)">Diciembre</option>
                     </select>
                 </div>
             </div>
