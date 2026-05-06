@@ -29,5 +29,8 @@ namespace ERPSEI.Data.Entities.Intranet
         public DateTime FechaCreacion { get; set; } = DateTime.Now;
         public string? UsuarioCreadorId { get; set; }
         public AppUser? UsuarioCreador { get; set; }
+        public bool PublicacionGeneral { get; set; } = true;
+
+        public ICollection<ManualPoliticaArea> AreasPermitidas { get; set; } = new List<ManualPoliticaArea>();
     }
 }

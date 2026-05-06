@@ -222,6 +222,7 @@ namespace ERPSEI.Data
 
         //Políticas y Manuales
         public DbSet<ManualPoliticaIntranet> ManualesPoliticasIntranet { get; set; }
+        public DbSet<ManualPoliticaArea> ManualPoliticaAreas { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

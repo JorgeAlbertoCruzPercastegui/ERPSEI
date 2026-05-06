@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data;
+using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Intranet;
 using ERPSEI.Data.Entities.Usuarios;
 using Microsoft.AspNetCore.Authorization;
@@ -12,6 +13,8 @@ using System.ComponentModel.DataAnnotations;
 namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 {
     [Authorize]
+    [RequestSizeLimit(104857600)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 104857600)]
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _db;
@@ -28,6 +31,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
             _userManager = userManager;
         }
 
+        public List<Area> AreasDisponibles { get; set; } = new();
         public List<ManualPoliticaIntranet> Lista { get; set; } = new();
 
         public bool EsEdicion { get; set; } = false;
@@ -37,6 +41,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 
         [BindProperty]
         public InputModel Input { get; set; } = new();
+
 
         public class InputModel
         {
@@ -68,9 +73,60 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
             public bool Publicado { get; set; } = false;
 
             public int Orden { get; set; } = 1;
+
+            public bool PublicacionGeneral { get; set; } = true;
+
+            public List<int> AreasSeleccionadas { get; set; } = new();
         }
 
         public async Task OnGetAsync(int? id)
+        {
+            AreasDisponibles = await _db.Areas
+                .AsNoTracking()
+                .OrderBy(x => x.Nombre)
+                .ToListAsync();
+
+            Lista = await _db.ManualesPoliticasIntranet
+                .AsNoTracking()
+                .Include(x => x.AreasPermitidas)
+                    .ThenInclude(x => x.Area)
+                .OrderBy(x => x.Tipo)
+                .ThenBy(x => x.Orden)
+                .ThenByDescending(x => x.FechaCreacion)
+                .ToListAsync();
+
+            if (id.HasValue)
+            {
+                var item = await _db.ManualesPoliticasIntranet
+                    .AsNoTracking()
+                    .Include(x => x.AreasPermitidas)
+                    .FirstOrDefaultAsync(x => x.Id == id.Value);
+
+                if (item != null)
+                {
+                    EsEdicion = true;
+
+                    Input = new InputModel
+                    {
+                        Id = item.Id,
+                        Titulo = item.Titulo,
+                        Descripcion = item.Descripcion,
+                        Tipo = item.Tipo,
+                        ModoVisualizacion = item.ModoVisualizacion,
+                        CodigoHtml = item.CodigoHtml,
+                        UrlExterna = item.UrlExterna,
+                        Activo = item.Activo,
+                        Publicado = item.Publicado,
+                        Orden = item.Orden,
+                        PublicacionGeneral = item.PublicacionGeneral,
+                        AreasSeleccionadas = item.AreasPermitidas
+                            .Select(x => x.AreaId)
+                            .ToList()
+                    };
+                }
+            }
+        }
+        /*public async Task OnGetAsync(int? id)
         {
             Lista = await _db.ManualesPoliticasIntranet
                 .AsNoTracking()
@@ -104,7 +160,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
                     };
                 }
             }
-        }
+        }*/
 
         public async Task<IActionResult> OnPostGuardarAsync()
         {
@@ -136,11 +192,19 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
                 return Page();
             }
 
+            if (!Input.PublicacionGeneral && (Input.AreasSeleccionadas == null || !Input.AreasSeleccionadas.Any()))
+            {
+                ModelState.AddModelError(string.Empty, "Debes seleccionar al menos un área o publicar de forma general.");
+                await OnGetAsync(Input.Id);
+                return Page();
+            }
+
             ManualPoliticaIntranet entity;
 
             if (Input.Id.HasValue)
             {
-                entity = await _db.ManualesPoliticasIntranet.FirstOrDefaultAsync(x => x.Id == Input.Id.Value);
+                //entity = await _db.ManualesPoliticasIntranet.FirstOrDefaultAsync(x => x.Id == Input.Id.Value);
+                entity = await _db.ManualesPoliticasIntranet.Include(x => x.AreasPermitidas).FirstOrDefaultAsync(x => x.Id == Input.Id.Value);
 
                 if (entity == null)
                     return NotFound();
@@ -245,6 +309,21 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
             entity.Activo = Input.Activo;
             entity.Publicado = Input.Publicado;
             entity.Orden = Input.Orden <= 0 ? 1 : Input.Orden;
+
+            entity.PublicacionGeneral = Input.PublicacionGeneral;
+
+            _db.ManualPoliticaAreas.RemoveRange(entity.AreasPermitidas);
+
+            if (!Input.PublicacionGeneral && Input.AreasSeleccionadas != null)
+            {
+                foreach (var areaId in Input.AreasSeleccionadas.Distinct())
+                {
+                    entity.AreasPermitidas.Add(new ManualPoliticaArea
+                    {
+                        AreaId = areaId
+                    });
+                }
+            }
 
             await _db.SaveChangesAsync();
 

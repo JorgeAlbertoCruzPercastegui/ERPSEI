@@ -36,6 +36,8 @@
         </h5>
 
         <form method="post" enctype="multipart/form-data" asp-page-handler="Guardar">
+            @Html.AntiForgeryToken()
+
             <input type="hidden" asp-for="Input.Id" />
             <div class="row g-3">
 
@@ -84,6 +86,68 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" asp-for="Input.Publicado" />
                         <label class="form-check-label" asp-for="Input.Publicado">Publicado</label>
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Alcance de publicación</label>
+
+                    <div class="d-flex flex-wrap gap-4">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="radio"
+                                   asp-for="Input.PublicacionGeneral"
+                                   value="true"
+                                   id="publicacionGeneral" />
+
+                            <label class="form-check-label" for="publicacionGeneral">
+                                Publicar para todas las áreas
+                            </label>
+                        </div>
+
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="radio"
+                                   asp-for="Input.PublicacionGeneral"
+                                   value="false"
+                                   id="publicacionAreas" />
+
+                            <label class="form-check-label" for="publicacionAreas">
+                                Publicar solo para áreas seleccionadas
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-12" id="bloqueAreas">
+                    <label class="form-label">Áreas habilitadas</label>
+
+                    <div class="border rounded p-3 bg-light">
+                        @if (Model.AreasDisponibles.Count == 0)
+                        {
+                            <div class="text-muted">No hay áreas registradas.</div>
+                        }
+                        else
+                        {
+                            <div class="row">
+                                @foreach (var area in Model.AreasDisponibles)
+                                {
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input area-check"
+                                                   type="checkbox"
+                                                   name="Input.AreasSeleccionadas"
+                                                   value="@area.Id"
+                                            @(Model.Input.AreasSeleccionadas.Contains(area.Id) ? "checked" : "") />
+
+                                            <label class="form-check-label">
+                                                @area.Nombre
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
                     </div>
                 </div>
 
@@ -235,6 +299,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
     <script>
         function toggleModoVisualizacion() {
             const selectModo = document.getElementById("modoVisualizacion");
@@ -261,14 +326,40 @@
             }
         }
 
+        function togglePublicacionAreas() {
+            const publicacionGeneral = document.getElementById("publicacionGeneral");
+            const bloqueAreas = document.getElementById("bloqueAreas");
+
+            if (!publicacionGeneral || !bloqueAreas) return;
+
+            if (publicacionGeneral.checked) {
+                bloqueAreas.classList.add("d-none");
+            } else {
+                bloqueAreas.classList.remove("d-none");
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
             const selectModo = document.getElementById("modoVisualizacion");
+
             if (selectModo) {
                 selectModo.addEventListener("change", toggleModoVisualizacion);
             }
 
-            // ejecuta al cargar la página
             toggleModoVisualizacion();
+
+            const publicacionGeneral = document.getElementById("publicacionGeneral");
+            const publicacionAreas = document.getElementById("publicacionAreas");
+
+            if (publicacionGeneral) {
+                publicacionGeneral.addEventListener("change", togglePublicacionAreas);
+            }
+
+            if (publicacionAreas) {
+                publicacionAreas.addEventListener("change", togglePublicacionAreas);
+            }
+
+            togglePublicacionAreas();
 
             const inputPortada = document.getElementById("inputPortada");
             const previewPortada = document.getElementById("previewPortada");
@@ -283,9 +374,11 @@
                             previewPortada.style.display = "none";
                             previewPortada.src = "";
                         }
+
                         if (previewPortadaTexto) {
                             previewPortadaTexto.style.display = "block";
                         }
+
                         return;
                     }
 
