@@ -312,7 +312,7 @@ namespace ERPSEI
             _builder.Services.AddSingleton<IEncriptacionAES, EncriptacionAES>();
         }
 
-		public static void ConfigureIdentity(WebApplicationBuilder _builder)
+        /*public static void ConfigureIdentity(WebApplicationBuilder _builder)
         {
             _builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
             .AddRoles<AppRole>()
@@ -320,6 +320,25 @@ namespace ERPSEI
             .AddUserManager<AppUserManager>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddTokenProvider<UserAuthorizationTokenProvider<AppUser>>("UserAuthorization");
+        }*/
+
+        public static void ConfigureIdentity(WebApplicationBuilder _builder)
+        {
+            _builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            .AddRoles<AppRole>()
+            .AddRoleManager<AppRoleManager>()
+            .AddUserManager<AppUserManager>()
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddTokenProvider<UserAuthorizationTokenProvider<AppUser>>("UserAuthorization");
+
+            _builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+                options.SlidingExpiration = true;
+                options.LoginPath = "/Identity/Account/Login";
+                options.LogoutPath = "/Identity/Account/Logout";
+                options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+            });
         }
 
         public static void ConfigureAuthorization(WebApplicationBuilder _builder) {
@@ -345,7 +364,13 @@ namespace ERPSEI
                 };
 			});
 
-            _builder.Services.AddSession();
+            //_builder.Services.AddSession();
+            _builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(10);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             _builder.Services.AddMemoryCache();
             _builder.Services.AddMvc(options =>
             {

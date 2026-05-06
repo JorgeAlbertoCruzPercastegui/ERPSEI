@@ -860,7 +860,28 @@
 
             });
         </script>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <script>
+                    let tiempoInactividad;
+                    const tiempoMaximo = 10 * 60 * 1000;
 
+                    function reiniciarTiempoInactividad() {
+                    clearTimeout(tiempoInactividad);
+
+                    tiempoInactividad = setTimeout(function () {
+                    window.location.href = "/Identity/Account/Logout";
+                    }, tiempoMaximo);
+                    }
+
+                    document.addEventListener("mousemove", reiniciarTiempoInactividad);
+                    document.addEventListener("keydown", reiniciarTiempoInactividad);
+                    document.addEventListener("click", reiniciarTiempoInactividad);
+                    document.addEventListener("scroll", reiniciarTiempoInactividad);
+
+                    reiniciarTiempoInactividad();
+                </script>
+            }
     @await RenderSectionAsync("Scripts", required: false)
     </div>
 </body>
