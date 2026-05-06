@@ -118,22 +118,25 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="PrivacyMessage" xml:space="preserve">
-    <value>La empresa SEI Consulting Group (SEI) a la que pertenece el proyecto Web “Enterprise Resource Planning SEI”, es la que hará uso de la información para la operación del sitio.
-Los datos personales y/o sensibles que nos proporcione serán usados para:
+    <value>SEI Consulting Group (SEI), como responsable de la Intranet Corporativa, es quien recaba y hace uso de la información proporcionada por los colaboradores para la operación y funcionamiento de la plataforma.
 
-&lt;ul&gt;
-    &lt;li&gt;Identificación del usuario en el sitio.&lt;/li&gt;
-&lt;/ul&gt;
+Los datos personales y/o sensibles que se recaben serán utilizados para:
 
-Ninguna de estas tendrá fines de lucro. Es importante que sepa que, en algunos casos, su nombre y su imagen pueden estar asociados y permitan que sea identificado por otras personas.
+&lt;ul&gt;&lt;li&gt;Identificar al usuario dentro de la intranet.&lt;/li&gt;
+&lt;li&gt;Gestionar el acceso y uso de los distintos módulos y funcionalidades del sistema.&lt;/li&gt;
+&lt;li&gt;Facilitar la comunicación interna, así como la difusión de comunicados, documentos y recursos corporativos.&lt;/li&gt;&lt;/ul&gt;
 
-Los datos personales que nos proporcione serán protegidos conforme a lo dispuesto por la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados, y otras normatividades que resulten aplicables.</value>
+La información recabada no será utilizada con fines de lucro.
+
+Es importante mencionar que, en ciertos casos, el nombre, imagen u otros datos del colaborador podrán ser visibles dentro de la intranet, lo cual podría permitir su identificación por otros usuarios de la organización.
+
+Los datos personales serán tratados y protegidos conforme a lo establecido en la Ley General de Protección de Datos Personales en Posesión de Sujetos Obligados y demás disposiciones aplicables.</value>
   </data>
   <data name="SecondaryTitle" xml:space="preserve">
     <value>Aviso de privacidad simplificado</value>
   </data>
   <data name="TertiaryTitle" xml:space="preserve">
-    <value>Enterprise Resource Planner - SEI Consulting Group</value>
+    <value>Intranet Corporativa - SEI Consulting Group</value>
   </data>
   <data name="Title" xml:space="preserve">
     <value>Aviso de privacidad</value>
