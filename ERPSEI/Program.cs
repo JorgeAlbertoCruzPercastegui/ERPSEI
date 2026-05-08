@@ -25,7 +25,7 @@ builder.WebHost.ConfigureKestrel(options =>
 // DataProtection (claves)
 // =======================
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtectionKeys\IntranetSEI")) // Asegúrate de crear esta carpeta en el servidor                                                 // Opcional pero recomendado
+    .PersistKeysToFileSystem(new DirectoryInfo(@"C:\DataProtectionKeys\IntranetSEI")) 
     .SetApplicationName("IntranetSEI");
 
 //Email configuration
