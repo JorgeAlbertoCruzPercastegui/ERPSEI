@@ -23,11 +23,26 @@
                 @for (int i = 0; i < banners.Count; i++)
                 {
                     var b = banners[i];
+                    var ext = System.IO.Path.GetExtension(b.RutaArchivo)?.ToLowerInvariant();
+                    var esVideo = ext == ".mp4" || ext == ".webm" || ext == ".mov";
 
                     <div class="carousel-item @(i == 0 ? "active" : "")">
-                        <img src="@b.RutaArchivo"
-                             class="d-block w-100 banner-img"
-                             alt="banner">
+                        @if (esVideo)
+                        {
+                            <video class="d-block w-100 banner-img banner-video"
+                                   muted
+                                   playsinline
+                                   preload="auto">
+                                <source src="@b.RutaArchivo"
+                                        type="video/@(ext == ".mov" ? "quicktime" : ext.Replace(".", ""))" />
+                            </video>
+                        }
+                        else
+                        {
+                            <img src="@b.RutaArchivo"
+                                 class="d-block w-100 banner-img"
+                                 alt="banner">
+                        }
                     </div>
                 }
 
@@ -46,3 +61,69 @@
 
    
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const carouselElement = document.getElementById("bannerERP");
+
+            if (!carouselElement) return;
+
+            const carousel = bootstrap.Carousel.getOrCreateInstance(carouselElement, {
+                interval: 5000,
+                ride: false
+            });
+
+            function detenerVideos() {
+                carouselElement.querySelectorAll("video").forEach(video => {
+                    video.pause();
+                    video.currentTime = 0;
+                });
+            }
+
+            function reproducirSiEsVideoActivo() {
+                const activeItem = carouselElement.querySelector(".carousel-item.active");
+                if (!activeItem) return;
+
+                const video = activeItem.querySelector("video");
+
+                if (video) {
+                    carousel.pause();
+                    video.currentTime = 0;
+
+                    video.play().catch(() => {
+                        carousel.next();
+                    });
+
+                        video.onended = function () {
+                        const totalItems = carouselElement.querySelectorAll(".carousel-item").length;
+
+                        // Si solo existe un banner/video
+                        if (totalItems === 1) {
+
+                            video.currentTime = 0;
+                            video.play();
+
+                        } else {
+
+                            carousel.next();
+
+                        }
+                    };
+                } else {
+                    carousel.cycle();
+                }
+            }
+
+            carouselElement.addEventListener("slide.bs.carousel", function () {
+                detenerVideos();
+            });
+
+            carouselElement.addEventListener("slid.bs.carousel", function () {
+                reproducirSiEsVideoActivo();
+            });
+
+            reproducirSiEsVideoActivo();
+        });
+    </script>
+}

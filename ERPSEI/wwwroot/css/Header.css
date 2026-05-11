@@ -701,3 +701,41 @@ body.module-main-theme .header-side-image {
         display: none;
     }
 }
+
+/* Videos */
+
+.header-bg {
+    position: relative;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.header-bg-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.header-bg-inner {
+    position: relative;
+    z-index: 2;
+}
+
+.header-bg-video-mode::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.25);
+    z-index: 1;
+}
+
+.header-side-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

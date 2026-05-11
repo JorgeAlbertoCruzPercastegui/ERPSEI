@@ -71,6 +71,9 @@
 
     string headerBg = headerImg?.RutaArchivo ?? "";
 
+    string headerExt = System.IO.Path.GetExtension(headerBg)?.ToLowerInvariant() ?? "";
+    bool headerEsVideo = headerExt == ".mp4" || headerExt == ".webm" || headerExt == ".mov";
+
     var hoyCumple = DateTime.Today;
     int mesActualCumple = hoyCumple.Month;
     int diaActualCumple = hoyCumple.Day;
@@ -346,10 +349,17 @@
 
         <div id="layoutWrapper">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light header-bg shadow-none border-0"
-             style="@(string.IsNullOrWhiteSpace(headerBg) ? "" : $"background-image:url('{headerBg}')")">
+            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light header-bg shadow-none border-0 @(headerEsVideo ? "header-bg-video-mode" : "")"
+                 style="@(string.IsNullOrWhiteSpace(headerBg) || headerEsVideo ? "" : $"background-image:url('{headerBg}')")">
 
-            <div class="container header-bg-inner">
+                @if (!string.IsNullOrWhiteSpace(headerBg) && headerEsVideo)
+                {
+                    <video class="header-bg-video" autoplay muted loop playsinline>
+                        <source src="@headerBg" type="video/@(headerExt == ".mov" ? "quicktime" : headerExt.Replace(".", ""))" />
+                    </video>
+                }
+
+                <div class="container header-bg-inner">
                 <a class="navbar-brand d-flex flex-column align-items-start"
                    asp-area="@(SignInManager.IsSignedIn(User) ? "" : "Identity")"
                    asp-page="@(SignInManager.IsSignedIn(User) ? "/Index" : "/Account/Login")">
@@ -374,12 +384,21 @@
                     </ul>
 
                     <div class="header-right-tools">
-                        @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
-                        {
-                            <div class="header-side-visual">
-                                <img src="@headerBg" alt="Header visual" class="header-side-image" />
-                            </div>
-                        }
+                            @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
+                            {
+                                <div class="header-side-visual">
+                                    @if (headerEsVideo)
+                                    {
+                                        <video class="header-side-image" autoplay muted loop playsinline>
+                                            <source src="@headerBg" type="video/@(headerExt == ".mov" ? "quicktime" : headerExt.Replace(".", ""))" />
+                                        </video>
+                                    }
+                                    else
+                                    {
+                                        <img src="@headerBg" alt="Header visual" class="header-side-image" />
+                                    }
+                                </div>
+                            }
 
                         <partial name="_LoginPartial" />
                     </div>

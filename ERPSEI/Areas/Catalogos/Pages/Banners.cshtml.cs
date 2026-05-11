@@ -45,7 +45,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.Banners
 
             public int Orden { get; set; } = 1;
 
-            [Required(ErrorMessage = "Selecciona una imagen.")]
+            [Required(ErrorMessage = "Selecciona una imagen o video.")]
             public IFormFile? Archivo { get; set; }
         }
 
@@ -84,10 +84,11 @@ namespace ERPSEI.Areas.Catalogos.Pages.Banners
                 Directory.CreateDirectory(uploadsRoot);
 
             string ext = Path.GetExtension(Input.Archivo!.FileName).ToLowerInvariant();
-            string[] allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            string[] allowed = new[] { ".jpg", ".jpeg", ".png", ".webp", ".mp4", ".webm", ".mov" };
+
             if (!allowed.Contains(ext))
             {
-                ModelState.AddModelError(string.Empty, "Solo se permiten imágenes JPG, PNG o WEBP.");
+                ModelState.AddModelError(string.Empty, "Solo se permiten imágenes JPG, PNG, WEBP o videos MP4, WEBM, MOV.");
                 await OnGetAsync();
                 return Page();
             }

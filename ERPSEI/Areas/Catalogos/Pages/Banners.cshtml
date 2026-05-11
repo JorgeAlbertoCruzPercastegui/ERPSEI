@@ -39,10 +39,12 @@
                     <div class="row g-3">
 
                         <div class="col-md-6">
-                            <label class="form-label module-label">Imagen</label>
-                            <input class="form-control module-input" type="file" asp-for="Input.Archivo" accept=".jpg,.jpeg,.png,.webp" />
+                            <label class="form-label module-label">Imagen o video</label>
+                            <input class="form-control module-input" type="file" asp-for="Input.Archivo" accept=".jpg,.jpeg,.png,.webp,.mp4,.webm,.mov" />
                             <span class="text-danger" asp-validation-for="Input.Archivo"></span>
-                            <small class="module-help">Recomendado: 1920x400 aprox. (JPG/PNG/WEBP)</small>
+                            <small class="module-help">
+                                Recomendado imagen: 1920x400 aprox. (JPG/PNG/WEBP). Video: MP4/WEBM/MOV.
+                            </small>
                         </div>
 
                         <div class="col-md-3">
@@ -122,7 +124,26 @@
                                 {
                                     <tr>
                                         <td style="width:220px;">
-                                            <img src="@b.RutaArchivo" class="img-fluid rounded border module-preview-table" style="max-height:70px;" />
+                                            @{
+                                                var ext = System.IO.Path.GetExtension(b.RutaArchivo)?.ToLowerInvariant();
+                                                var esVideo = ext == ".mp4" || ext == ".webm" || ext == ".mov";
+                                            }
+
+                                            @if (esVideo)
+                                            {
+                                                <video class="img-fluid rounded border module-preview-table"
+                                                       style="max-height:70px;"
+                                                       muted
+                                                       controls>
+                                                    <source src="@b.RutaArchivo" type="video/@(ext == ".mov" ? "quicktime" : ext.Replace(".", ""))" />
+                                                </video>
+                                            }
+                                            else
+                                            {
+                                                <img src="@b.RutaArchivo"
+                                                     class="img-fluid rounded border module-preview-table"
+                                                     style="max-height:70px;" />
+                                            }
                                         </td>
                                         <td>
                                             <div class="fw-semibold module-main-text">@b.Titulo</div>
