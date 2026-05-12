@@ -1,0 +1,110 @@
+﻿@page
+@model ERPSEI.Areas.Catalogos.Pages.Organigrama.OrganigramaModel
+@using System.Text.Json
+@using Microsoft.AspNetCore.Identity
+
+@{
+    ViewData["Title"] = "Organigrama";
+    ViewData["BodyClass"] = "organigrama-page";
+}
+
+@{
+    var esAdminOrganigrama =
+        User.IsInRole("Administrador") ||
+        User.IsInRole("Administrador TH") ||
+        User.IsInRole("Master");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/OrganigramaIntranet.css" asp-append-version="true" />
+}
+
+<div class="organigrama-module">
+    <div class="module-shell">
+
+        <div class="organigrama-header">
+            <div>
+                <h2>Organigrama Corporativo</h2>
+                <p>Visualización jerárquica de empleados activos registrados en la intranet.</p>
+            </div>
+        </div>
+
+        <div class="organigrama-toolbar">
+
+            <input type="text"
+                   id="txtBuscarOrganigrama"
+                   class="form-control organigrama-search"
+                   placeholder="Buscar empleado, puesto o área..." />
+
+            @if (esAdminOrganigrama)
+            {
+                <button type="button" id="btnExpandirTodo" class="btn org-btn-secondary">
+                    Expandir todo
+                </button>
+
+                <button type="button" id="btnContraerTodo" class="btn org-btn-secondary">
+                    Contraer todo
+                </button>
+
+                <button type="button" id="btnSinJefe" class="btn org-btn-warning">
+                    Sin jefe directo (@Model.EmpleadosSinJefe.Count)
+                </button>
+            }
+
+        </div>
+
+        <div class="organigrama-wrapper">
+            <div id="organigramaContainer" class="organigrama-tree"></div>
+        </div>
+
+        @if (esAdminOrganigrama)
+        {
+            <div id="panelSinJefe" class="sin-jefe-panel d-none">
+
+                <div class="sin-jefe-header">
+                    <h4>Empleados sin jefe directo asignado</h4>
+
+                    <button type="button"
+                            id="btnCerrarSinJefe"
+                            class="btn org-btn-secondary">
+                        Cerrar
+                    </button>
+                </div>
+
+                @if (Model.EmpleadosSinJefe.Any())
+                {
+                    <div class="sin-jefe-grid">
+                        @foreach (var emp in Model.EmpleadosSinJefe)
+                        {
+                            <div class="sin-jefe-card">
+                                <div class="org-avatar">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+
+                                <div class="org-name">@emp.NombreCompleto</div>
+                                <div class="org-position">@emp.Puesto</div>
+                                <div class="org-area">@emp.Area</div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="org-empty">
+                        No hay empleados pendientes de jefe directo.
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+</div>
+
+<script id="organigramaData" type="application/json">
+    @Html.Raw(JsonSerializer.Serialize(Model.Organigrama))
+</script>
+
+@section Scripts {
+    <script src="~/../Areas/Catalogos/Pages/Organigrama/Organigrama.cshtml.js" asp-append-version="true"></script>
+}
