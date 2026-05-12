@@ -726,7 +726,7 @@
                                         ? "birthday-person--past"
                                         : "birthday-person--upcoming";
 
-                                        <div class="birthday-person-card @estadoClase">
+                                        <div class="birthday-person-card @estadoClase @(item.Dia == diaActualCumple ? "birthday-person-card--celebrating" : "")">
                                             <div class="birthday-person-card__day">
                                                 @item.Dia
                                             </div>
@@ -762,6 +762,16 @@
                                                     <span>Próximo</span>
                                                 }
                                             </div>
+
+                                            @if (item.Dia == diaActualCumple)
+                                            {
+                                                <div class="birthday-popup">
+                                                    <strong>¡Feliz cumpleaños, @item.NombreCompleto!</strong>
+                                                    <span>
+                                                        Hoy celebramos tu vida y tu presencia en el equipo. Que este nuevo año esté lleno de éxito, salud y grandes momentos.
+                                                    </span>
+                                                </div>
+                                            }
                                         </div>
                                     }
                                 </div>

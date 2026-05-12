@@ -423,3 +423,82 @@
         font-size: .9rem;
     }
 }
+
+.birthday-person-card {
+    position: relative;
+    overflow: visible;
+}
+
+.birthday-person-card--celebrating {
+    animation: birthdayPulse 1.6s ease-in-out infinite;
+    border-color: #d4ad45 !important;
+    box-shadow: 0 0 0 4px rgba(212, 173, 69, 0.18), 0 12px 26px rgba(33, 22, 111, 0.14);
+}
+
+@keyframes birthdayPulse {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-4px) scale(1.02);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+.birthday-popup {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 14px);
+    transform: translateX(-50%) translateY(8px);
+    width: 280px;
+    background: #ffffff;
+    border: 1px solid rgba(33, 22, 111, 0.16);
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 16px 34px rgba(33, 22, 111, 0.18);
+    color: #21166f;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 50;
+    transition: all 0.2s ease;
+}
+
+    .birthday-popup::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -8px;
+        transform: translateX(-50%) rotate(45deg);
+        width: 16px;
+        height: 16px;
+        background: #ffffff;
+        border-right: 1px solid rgba(33, 22, 111, 0.16);
+        border-bottom: 1px solid rgba(33, 22, 111, 0.16);
+    }
+
+    .birthday-popup strong {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 800;
+        margin-bottom: 6px;
+        color: #21166f;
+    }
+
+    .birthday-popup span {
+        display: block;
+        font-size: 0.78rem;
+        line-height: 1.35;
+        color: #4b5563;
+    }
+
+.birthday-person-card--celebrating:hover .birthday-popup {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
