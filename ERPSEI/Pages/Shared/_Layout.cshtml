@@ -4,6 +4,7 @@
 @using ERPSEI.Data
 @using ERPSEI.Data.Entities.Intranet
 @using Microsoft.EntityFrameworkCore
+@using ERPSEI.Data.Entities.Vacaciones
 
 @inject IViewLocalizer Localizer
 @inject SignInManager<AppUser> SignInManager
@@ -12,6 +13,25 @@
 @inject AppUserManager UsuariosManager;
 @inject IModuloManager ModulosManager;
 @inject ApplicationDbContext Db
+
+@functions {
+
+    private decimal ObtenerDiasVacacionesPorAntiguedad(int anios)
+    {
+        if (anios <= 0) return 0m;
+        if (anios == 1) return 12m;
+        if (anios == 2) return 14m;
+        if (anios == 3) return 16m;
+        if (anios == 4) return 18m;
+        if (anios == 5) return 20m;
+        if (anios >= 6 && anios <= 10) return 22m;
+        if (anios >= 11 && anios <= 15) return 24m;
+        if (anios >= 16 && anios <= 20) return 26m;
+
+        return 28m;
+    }
+
+}
 
 @{
     AppUser? usr = await UsuariosManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
@@ -114,6 +134,7 @@
             .Include(e => e.Area)
             .Include(e => e.Puesto)
             .Include(e => e.Jefe)
+            .Include(e => e.Oficina)
             .FirstOrDefaultAsync(e => e.UserId == usr.Id)
         : null;
 
@@ -132,6 +153,90 @@
     string fechaIngresoEmpleado = empleadoActual != null
         ? empleadoActual.FechaIngreso.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es-MX"))
         : "Sin asignar";
+
+    string oficinaEmpleado = empleadoActual?.Oficina?.Nombre ?? "Sin asignar";
+
+    string correoEmpleado = !string.IsNullOrWhiteSpace(usr?.Email)
+        ? usr.Email
+        : "Sin asignar";
+
+    string horarioEmpleado = empleadoActual?.Horario != null
+        ? empleadoActual.Horario.Descripcion
+        : "Sin asignar";
+
+    decimal saldoVacacionesEmpleado = 0m;
+
+    if (empleadoActual != null)
+    {
+        var fechaHoy = DateTime.Today;
+
+        var configVacaciones = await Db.ConfiguracionesVacaciones
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == 1);
+
+        string tipoAsignacion = string.IsNullOrWhiteSpace(configVacaciones?.TipoVisualizacion)
+            ? "LegalesProporcionales"
+            : configVacaciones.TipoVisualizacion;
+
+        int aniosCumplidos = fechaHoy.Year - empleadoActual.FechaIngreso.Date.Year;
+
+        if (fechaHoy < empleadoActual.FechaIngreso.Date.AddYears(aniosCumplidos))
+            aniosCumplidos--;
+
+        decimal diasPorAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos);
+        decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
+        decimal diasLegales = 0m;
+        decimal diasProporcionales = 0m;
+
+        if (aniosCumplidos >= 1)
+        {
+            var ultimoAniversario = empleadoActual.FechaIngreso.Date.AddYears(aniosCumplidos);
+
+            diasLegales = diasPorAnio;
+
+            diasProporcionales = Math.Round(
+                (diasProximoAnio / 365m) *
+                (decimal)(fechaHoy - ultimoAniversario).TotalDays,
+                1);
+        }
+        else
+        {
+            diasLegales = 0m;
+
+            diasProporcionales = Math.Round(
+                (12m / 365m) *
+                (decimal)(fechaHoy - empleadoActual.FechaIngreso.Date).TotalDays,
+                1);
+        }
+
+        decimal acumuladas = tipoAsignacion == "Legales"
+            ? diasLegales
+            : diasLegales + diasProporcionales;
+
+        decimal diasTomados = await Db.SolicitudesVacaciones
+            .Where(s =>
+                s.EmpleadoId == empleadoActual.Id &&
+                (
+                    (!s.EsVacacionAnticipada && s.Estado == EstadoSolicitud.Aprobado)
+                    ||
+                    (s.EsVacacionAnticipada && s.DescuentoAnticipadoAplicado)
+                ))
+            .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+        decimal diasFuturasDescontables = await Db.SolicitudesVacaciones
+            .Where(s =>
+                s.EmpleadoId == empleadoActual.Id &&
+                s.EsVacacionAnticipada &&
+                s.Estado == EstadoSolicitud.Aprobado &&
+                !s.DescuentoAnticipadoAplicado)
+            .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+        decimal diasVencidos = 0m;
+
+        saldoVacacionesEmpleado =
+            Math.Max(acumuladas - diasTomados - diasFuturasDescontables - diasVencidos, 0m);
+    }
 
     if (accesos.Count >= 0)
     {
@@ -658,10 +763,26 @@
                                 </div>
 
                                 <div class="employee-card__item">
+                                    <i class="bi bi-building-fill"></i>
+                                    <div>
+                                        <span>Oficina</span>
+                                        <strong>@oficinaEmpleado</strong>
+                                    </div>
+                                </div>
+
+                                <div class="employee-card__item">
                                     <i class="bi bi-person-workspace"></i>
                                     <div>
                                         <span>Puesto</span>
                                         <strong>@puestoEmpleado</strong>
+                                    </div>
+                                </div>
+
+                                <div class="employee-card__item">
+                                    <i class="bi bi-envelope-fill"></i>
+                                    <div>
+                                        <span>Correo</span>
+                                        <strong>@correoEmpleado</strong>
                                     </div>
                                 </div>
 
@@ -678,6 +799,22 @@
                                     <div>
                                         <span>Fecha de Ingreso</span>
                                         <strong>@fechaIngresoEmpleado</strong>
+                                    </div>
+                                </div>
+
+                                <div class="employee-card__item">
+                                    <i class="bi bi-clock-fill"></i>
+                                    <div>
+                                        <span>Horario</span>
+                                        <strong>@horarioEmpleado</strong>
+                                    </div>
+                                </div>
+
+                                <div class="employee-card__item">
+                                    <i class="bi bi-calendar-check-fill"></i>
+                                    <div>
+                                        <span>Saldo de vacaciones</span>
+                                        <strong>@saldoVacacionesEmpleado día(s)</strong>
                                     </div>
                                 </div>
 
