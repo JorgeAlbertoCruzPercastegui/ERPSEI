@@ -13,7 +13,7 @@ body.module-main-theme.organigrama-page {
     color: #21166f;
 }
 
-    /* HEADER SUPERIOR */
+    /* HEADER */
 
     body.module-main-theme.organigrama-page .header-bg {
         background: #ffffff !important;
@@ -64,7 +64,7 @@ body.module-main-theme.organigrama-page {
         box-shadow: none !important;
     }
 
-    /* MENU RAPIDO AZUL */
+    /* MENU RAPIDO */
 
     body.module-main-theme.organigrama-page .topbar-links {
         max-width: 1280px;
@@ -78,17 +78,7 @@ body.module-main-theme.organigrama-page {
         gap: 10px;
     }
 
-        body.module-main-theme.organigrama-page .topbar-links > .small {
-            display: flex !important;
-            align-items: center;
-            min-height: 100%;
-            margin: 0;
-            padding-right: 8px;
-            line-height: 1.1;
-            white-space: nowrap;
-            font-size: .92rem;
-        }
-
+        body.module-main-theme.organigrama-page .topbar-links > .small,
         body.module-main-theme.organigrama-page .topbar-links .small,
         body.module-main-theme.organigrama-page .topbar-links .text-muted,
         body.module-main-theme.organigrama-page .topbar-links b {
@@ -129,8 +119,6 @@ body.module-main-theme.organigrama-page {
             color: #d4ad45 !important;
         }
 
-    /* DROPDOWN DEL MENU */
-
     body.module-main-theme.organigrama-page .quick-dd {
         position: relative;
     }
@@ -169,18 +157,11 @@ body.module-main-theme.organigrama-page {
         font-weight: 600;
         padding: 8px 10px;
         border-radius: 10px;
-        transition: background .15s ease, color .15s ease;
     }
 
         body.module-main-theme.organigrama-page .quick-dd-item:hover {
             background: rgba(33,22,111,.08);
-            color: #21166f !important;
         }
-
-    body.module-main-theme.organigrama-page .quick-dd:hover > .quick-link,
-    body.module-main-theme.organigrama-page .quick-dd.open > .quick-link {
-        color: #d4ad45 !important;
-    }
 
     body.module-main-theme.organigrama-page .quick-nav-toggle {
         border: none;
@@ -191,7 +172,7 @@ body.module-main-theme.organigrama-page {
         font-weight: 800;
     }
 
-/* CONTENEDOR DEL MODULO */
+/* CONTENEDOR */
 
 .organigrama-page .organigrama-module {
     flex: 1 0 auto;
@@ -267,7 +248,6 @@ body.module-main-theme.organigrama-page {
     padding: .62rem 1rem;
     font-size: .9rem;
     font-weight: 800;
-    transition: all .18s ease;
 }
 
     .organigrama-page .org-btn-secondary:hover {
@@ -275,15 +255,27 @@ body.module-main-theme.organigrama-page {
         color: #ffffff;
     }
 
-/* ORGANIGRAMA */
+.organigrama-page .org-btn-warning {
+    background: #d4ad45;
+    color: #21166f;
+    border: 1px solid #d4ad45;
+    border-radius: 12px;
+    padding: .62rem 1rem;
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+/* =====================================================
+   ORGANIGRAMA CON CONECTORES
+   ===================================================== */
 
 .organigrama-page .organigrama-wrapper {
     overflow: auto;
-    padding: 18px;
-    background: #f4f7ff;
+    padding: 30px 24px 42px;
+    background: linear-gradient(180deg, #f7f9ff 0%, #f1f5ff 100%);
     border: 1px solid rgba(33,22,111,.12);
     border-radius: 22px;
-    min-height: 420px;
+    min-height: 430px;
     max-height: 72vh;
     box-shadow: 0 14px 32px rgba(33,22,111,.08);
 }
@@ -293,28 +285,37 @@ body.module-main-theme.organigrama-page {
     justify-content: center;
     align-items: flex-start;
     min-width: max-content;
+    gap: 34px;
 }
 
 .organigrama-page .org-node {
-    text-align: center;
     position: relative;
-    padding: 14px 6px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
 .organigrama-page .org-card {
-    width: 160px;
+    width: 158px;
     min-height: 92px;
     background: #ffffff;
     border: 1px solid rgba(33,22,111,.18);
     border-radius: 14px;
-    padding: 10px 8px;
+    padding: 10px 8px 24px;
     display: inline-flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
     box-shadow: 0 8px 18px rgba(33,22,111,.09);
+    z-index: 3;
 }
+
+    .organigrama-page .org-card:hover {
+        border-color: #21166f;
+        box-shadow: 0 12px 24px rgba(33,22,111,.14);
+    }
 
 .organigrama-page .org-avatar {
     font-size: 24px;
@@ -345,60 +346,136 @@ body.module-main-theme.organigrama-page {
     line-height: 1.15;
 }
 
+/* Botón flecha */
 .organigrama-page .org-toggle {
     position: absolute;
-    right: 5px;
-    bottom: 5px;
-    width: 18px;
-    height: 18px;
-    border: none;
+    right: 8px;
+    bottom: 7px;
+    width: 21px;
+    height: 21px;
+    border: 1px solid rgba(33,22,111,.18);
     border-radius: 50%;
     background: #f4f7ff;
     color: #21166f;
-    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 10px;
+    line-height: 1;
+    box-shadow: 0 3px 8px rgba(33,22,111,.08);
 }
 
+    .organigrama-page .org-toggle:hover {
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
+    }
+
+    .organigrama-page .org-toggle i {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform .18s ease;
+    }
+
+    .organigrama-page .org-toggle.collapsed i {
+        transform: rotate(-90deg);
+    }
+
+/* Contenedor de hijos */
 .organigrama-page .org-children {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 6px;
-    padding-top: 24px;
-    position: relative;
+    gap: 22px;
+    padding-top: 46px;
+    margin-top: 20px;
 }
 
-    .organigrama-page .org-children::before {
-        content: "";
-        position: absolute;
-        top: 7px;
-        left: 50%;
-        width: 2px;
-        height: 17px;
-        background: rgba(33,22,111,.35);
-    }
+/* =====================================================
+   CONECTORES VERTICALES Y HORIZONTALES
+   ===================================================== */
 
-    .organigrama-page .org-children > .org-node::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 2px;
-        height: 13px;
-        background: rgba(33,22,111,.35);
-    }
+/* Contenedor hijos */
+.organigrama-page .org-children {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 22px;
+    padding-top: 54px;
+    margin-top: 12px;
+}
 
-.organigrama-page .org-children-collapsed {
+/* Línea vertical del padre */
+.organigrama-page .org-node > .org-children::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    width: 2px;
+    height: 18px;
+    transform: translateX(-50%);
+    background: #9c98c9;
+    z-index: 5;
+}
+
+/* Línea horizontal */
+.organigrama-page .org-node > .org-children::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 79px;
+    right: 79px;
+    height: 2px;
+    background: #9c98c9;
+    z-index: 4;
+}
+
+.organigrama-page .org-children > .org-node::before {
+    content: "";
+    position: absolute;
+    top: -53px;
+    left: 50%;
+    width: 2px;
+    height: 53px;
+    transform: translateX(-50%);
+    background: #9c98c9;
+    z-index: 1;
+}
+
+.organigrama-page .org-children > .org-node::after {
+    content: "";
+    position: absolute;
+    top: 0px;
+    left: 50%;
+    width: 9px;
+    height: 9px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: #9c98c9;
+    z-index: 2;
+}
+
+.organigrama-page .org-node {
+    position: relative;
+    padding-top: 10px;
+}
+
+/* Cuando solo existe un hijo */
+.organigrama-page .org-node > .org-children:has(> .org-node:only-child)::after {
     display: none;
 }
 
-.organigrama-page .org-card-muted {
-    opacity: .18;
-    filter: grayscale(1);
+/* Si solo hay un hijo, elimina horizontal */
+.organigrama-page .org-node > .org-children:has(> .org-node:only-child)::after {
+    display: none;
 }
 
-.organigrama-page .org-card-found {
-    border-color: #21166f;
-    box-shadow: 0 0 0 3px rgba(33,22,111,.14);
+.organigrama-page .org-children-collapsed {
+    display: none;
 }
 
 /* BUSCADOR */
@@ -424,6 +501,46 @@ body.module-main-theme.organigrama-page {
     border-radius: 18px;
     padding: 40px;
     font-weight: 700;
+}
+
+/* PANEL SIN JEFE */
+
+.organigrama-page .sin-jefe-panel {
+    margin-top: 18px;
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: 0 14px 32px rgba(33,22,111,.08);
+}
+
+.organigrama-page .sin-jefe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+    .organigrama-page .sin-jefe-header h4 {
+        color: #21166f;
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+.organigrama-page .sin-jefe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.organigrama-page .sin-jefe-card {
+    background: #f4f7ff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 16px;
+    padding: 14px 10px;
+    text-align: center;
 }
 
 /* RESPONSIVE */
@@ -470,10 +587,6 @@ body.module-main-theme.organigrama-page {
         display: block;
     }
 
-    .organigrama-page .organigrama-header h2 {
-        font-size: 1.45rem;
-    }
-
     .organigrama-page .organigrama-toolbar {
         flex-direction: column;
         align-items: stretch;
@@ -488,61 +601,11 @@ body.module-main-theme.organigrama-page {
     }
 
     .organigrama-page .org-card {
-        width: 220px;
-    }
-}
-
-.organigrama-page .org-btn-warning {
-    background: #d4ad45;
-    color: #21166f;
-    border: 1px solid #d4ad45;
-    border-radius: 12px;
-    padding: .62rem 1rem;
-    font-size: .9rem;
-    font-weight: 800;
-    transition: all .18s ease;
-}
-
-    .organigrama-page .org-btn-warning:hover {
-        background: #c49b31;
-        border-color: #c49b31;
-        color: #21166f;
+        width: 150px;
     }
 
-.organigrama-page .sin-jefe-panel {
-    margin-top: 18px;
-    background: #ffffff;
-    border: 1px solid rgba(33,22,111,.12);
-    border-radius: 22px;
-    padding: 18px;
-    box-shadow: 0 14px 32px rgba(33,22,111,.08);
-}
-
-.organigrama-page .sin-jefe-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-    .organigrama-page .sin-jefe-header h4 {
-        color: #21166f;
-        font-size: 1.15rem;
-        font-weight: 800;
-        margin: 0;
+    .organigrama-page .org-node > .org-children::after {
+        left: 75px;
+        right: 75px;
     }
-
-.organigrama-page .sin-jefe-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-}
-
-.organigrama-page .sin-jefe-card {
-    background: #f4f7ff;
-    border: 1px solid rgba(33,22,111,.12);
-    border-radius: 16px;
-    padding: 14px 10px;
-    text-align: center;
 }

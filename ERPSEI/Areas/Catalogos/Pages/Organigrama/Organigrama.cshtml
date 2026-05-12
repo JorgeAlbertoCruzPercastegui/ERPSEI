@@ -13,6 +13,8 @@
         User.IsInRole("Administrador") ||
         User.IsInRole("Administrador TH") ||
         User.IsInRole("Master");
+
+    var puedeExpandirContraer = User.Identity?.IsAuthenticated == true;
 }
 
 @section Styles {
@@ -36,7 +38,7 @@
                    class="form-control organigrama-search"
                    placeholder="Buscar empleado, puesto o área..." />
 
-            @if (esAdminOrganigrama)
+            @if (puedeExpandirContraer)
             {
                 <button type="button" id="btnExpandirTodo" class="btn org-btn-secondary">
                     Expandir todo
@@ -45,7 +47,10 @@
                 <button type="button" id="btnContraerTodo" class="btn org-btn-secondary">
                     Contraer todo
                 </button>
+            }
 
+            @if (esAdminOrganigrama)
+            {
                 <button type="button" id="btnSinJefe" class="btn org-btn-warning">
                     Sin jefe directo (@Model.EmpleadosSinJefe.Count)
                 </button>
