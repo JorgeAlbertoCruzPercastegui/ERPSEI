@@ -400,13 +400,15 @@
     bool mostrarComunicadosInternosMenu = esUsuario || esAdministrador || esAdministradorTH;
     bool mostrarEventosMenu = esUsuario || esAdministrador || esAdministradorTH;
     bool mostrarOrganigramaMenu = esAdministrador || esAdministradorTH || esAdministradorTI || esUsuario;
+    bool mostrarDirectorioMenu = esAdministrador || esAdministradorTH || esAdministradorTI || esUsuario;
 
     mostrarComunidad =
         mostrarGestorComunicadosInternosMenu ||
         mostrarGestorEventosMenu ||
         mostrarComunicadosInternosMenu ||
         mostrarEventosMenu ||
-        mostrarOrganigramaMenu;
+        mostrarOrganigramaMenu ||
+        mostrarDirectorioMenu;
 
     // Subopciones internas de RH
     bool mostrarBannersMenu = esAdminMenu || permisos["banners"];
@@ -653,6 +655,15 @@
                                                    asp-page="/Organigrama/Organigrama">
                                                 Organigrama
                                             </a>
+                                        }
+
+                                        @if (mostrarDirectorioMenu)
+                                        {
+                                        <a class="quick-dd-item"
+                                               asp-area="Catalogos"
+                                               asp-page="/Directorio/Directorio">
+                                            Directorio
+                                        </a>
                                         }
 
                                     </div>

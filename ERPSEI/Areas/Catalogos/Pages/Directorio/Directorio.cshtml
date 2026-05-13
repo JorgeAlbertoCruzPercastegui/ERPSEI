@@ -1,0 +1,102 @@
+﻿@page
+@model ERPSEI.Areas.Catalogos.Pages.Directorio.IndexModel
+
+@{
+    ViewData["Title"] = "Directorio";
+    ViewData["BodyClass"] = "directorio-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/DirectorioIntranet.css" asp-append-version="true" />
+}
+
+<div class="directorio-module">
+    <div class="directorio-shell">
+
+        <div class="directorio-header">
+            <div>
+                <h2>Directorio Corporativo</h2>
+                <p>Consulta rápida de colaboradores activos registrados en la intranet.</p>
+            </div>
+        </div>
+
+        <div class="directorio-toolbar">
+            <input type="text"
+                   id="txtBuscarDirectorio"
+                   class="form-control directorio-search"
+                   placeholder="Buscar por nombre, cargo, área, subárea o correo..." />
+
+            <button type="button" id="btnLimpiarDirectorio" class="btn directorio-btn">
+                Limpiar
+            </button>
+        </div>
+
+        <div class="directorio-card">
+            <div class="table-responsive">
+                <table class="table directorio-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Nombre empleado</th>
+                            <th>Cargo</th>
+                            <th>Área</th>
+                            <th>SubÁrea</th>
+                            <th>Correo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="directorioBody">
+                        @foreach (var item in Model.EmpleadosDirectorio)
+                        {
+                            <tr class="directorio-row"
+                                data-search="@($"{item.NombreEmpleado} {item.Cargo} {item.Area} {item.SubArea} {item.Correo}".ToLower())">
+                                <td>
+                                    <div class="directorio-user">
+                                        <div class="directorio-avatar">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <strong>@item.NombreEmpleado</strong>
+                                    </div>
+                                </td>
+                                <td>@item.Cargo</td>
+                                <td>@item.Area</td>
+                                <td>@item.SubArea</td>
+                                <td class="directorio-email">
+                                    @if (!string.IsNullOrWhiteSpace(item.Correo) && item.Correo != "Sin asignar")
+                                    {
+                                        @item.Correo
+                                    }
+                                    else
+                                    {
+                                        <span>Sin asignar</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="directorioEmpty" class="directorio-empty d-none">
+                No se encontraron colaboradores con el criterio ingresado.
+            </div>
+        </div>
+
+        <div class="directorio-pagination">
+            <button type="button" id="btnDirectorioPrev" class="directorio-page-btn">
+                <i class="bi bi-chevron-left"></i> Anterior
+            </button>
+
+            <span id="lblDirectorioPagina" class="directorio-page-info">
+                Página 1
+            </span>
+
+            <button type="button" id="btnDirectorioNext" class="directorio-page-btn">
+                Siguiente <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/../Areas/Catalogos/Pages/Directorio/Directorio.cshtml.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,438 @@
+﻿/* =====================================================
+   MODULO DIRECTORIO
+   TEMA AZUL + BLANCO
+   ===================================================== */
+
+body.module-main-theme.directorio-page {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #21166f;
+}
+
+    /* HEADER */
+
+    body.module-main-theme.directorio-page .header-bg {
+        background: #ffffff !important;
+        background-image: none !important;
+        min-height: 84px;
+        border-bottom: none !important;
+        box-shadow: none !important;
+    }
+
+    body.module-main-theme.directorio-page .header-bg-inner {
+        min-height: 84px;
+        display: flex;
+        align-items: center;
+        background: transparent !important;
+    }
+
+    body.module-main-theme.directorio-page .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+        body.module-main-theme.directorio-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #21166f;
+        }
+
+    body.module-main-theme.directorio-page .brandimage {
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
+    }
+
+    body.module-main-theme.directorio-page .navbar .nav-link,
+    body.module-main-theme.directorio-page .navbar .navbar-brand,
+    body.module-main-theme.directorio-page .navbar .btn,
+    body.module-main-theme.directorio-page .navbar a,
+    body.module-main-theme.directorio-page .navbar form button {
+        color: #21166f !important;
+        text-shadow: none !important;
+        font-weight: 700;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* MENU RAPIDO */
+
+    body.module-main-theme.directorio-page .topbar-links {
+        max-width: 1280px;
+        margin: 0 auto 18px auto;
+        padding: 14px 24px !important;
+        min-height: 58px;
+        background: #21166f;
+        border: none;
+        border-radius: 12px;
+        box-shadow: none;
+        gap: 10px;
+    }
+
+        body.module-main-theme.directorio-page .topbar-links > .small,
+        body.module-main-theme.directorio-page .topbar-links .small,
+        body.module-main-theme.directorio-page .topbar-links .text-muted,
+        body.module-main-theme.directorio-page .topbar-links b {
+            color: #ffffff !important;
+        }
+
+    body.module-main-theme.directorio-page .quick-nav-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    body.module-main-theme.directorio-page .quick-nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 4px 14px !important;
+        white-space: nowrap;
+        font-size: .85rem;
+    }
+
+    body.module-main-theme.directorio-page .quick-link {
+        color: #ffffff !important;
+        text-decoration: none !important;
+        font-weight: 700;
+        font-size: .88rem;
+        line-height: 1.05;
+        padding: 2px 4px;
+        border-radius: 8px;
+        transition: all .18s ease;
+        white-space: nowrap;
+    }
+
+        body.module-main-theme.directorio-page .quick-link:hover {
+            color: #d4ad45 !important;
+        }
+
+    body.module-main-theme.directorio-page .quick-dd {
+        position: relative;
+    }
+
+    body.module-main-theme.directorio-page .quick-dd-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 8px;
+        min-width: 260px;
+        background: #ffffff;
+        border: 1px solid rgba(33,22,111,.12);
+        border-radius: 14px;
+        box-shadow: 0 18px 35px rgba(33,22,111,.14);
+        padding: 8px;
+        display: none;
+        z-index: 2000;
+    }
+
+    body.module-main-theme.directorio-page .quick-dd-menu-wide {
+        min-width: 320px;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    body.module-main-theme.directorio-page .quick-dd:hover > .quick-dd-menu,
+    body.module-main-theme.directorio-page .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    body.module-main-theme.directorio-page .quick-dd-item {
+        display: block;
+        color: #21166f !important;
+        text-decoration: none !important;
+        font-size: .88rem;
+        font-weight: 600;
+        padding: 8px 10px;
+        border-radius: 10px;
+    }
+
+        body.module-main-theme.directorio-page .quick-dd-item:hover {
+            background: rgba(33,22,111,.08);
+        }
+
+    body.module-main-theme.directorio-page .quick-nav-toggle {
+        border: none;
+        background: #21166f;
+        color: #ffffff;
+        border-radius: 10px;
+        padding: 6px 10px;
+        font-weight: 800;
+    }
+
+/* CONTENEDOR */
+
+.directorio-page .directorio-module {
+    flex: 1 0 auto;
+    padding: 10px 0 32px;
+}
+
+.directorio-page .directorio-shell {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 12px;
+}
+
+/* CABECERA */
+
+.directorio-page .directorio-header {
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 18px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 28px rgba(33,22,111,.08);
+}
+
+    .directorio-page .directorio-header h2 {
+        color: #21166f;
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .directorio-page .directorio-header p {
+        color: #374151;
+        font-size: .98rem;
+        margin: 3px 0 0;
+    }
+
+/* TOOLBAR */
+
+.directorio-page .directorio-toolbar {
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 28px rgba(33,22,111,.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.directorio-page .directorio-search {
+    max-width: 520px;
+    border-radius: 12px;
+    border: 1px solid rgba(33,22,111,.18);
+    background: #f4f7ff;
+    color: #21166f;
+    padding: .65rem .9rem;
+    box-shadow: none;
+}
+
+    .directorio-page .directorio-search:focus {
+        border-color: #21166f;
+        box-shadow: 0 0 0 0.2rem rgba(33,22,111,.14);
+        background: #ffffff;
+    }
+
+.directorio-page .directorio-btn {
+    background: #ffffff;
+    color: #21166f;
+    border: 1px solid #21166f;
+    border-radius: 12px;
+    padding: .62rem 1rem;
+    font-size: .9rem;
+    font-weight: 800;
+    transition: all .18s ease;
+}
+
+    .directorio-page .directorio-btn:hover {
+        background: #21166f;
+        color: #ffffff;
+    }
+
+/* TABLA */
+
+.directorio-page .directorio-card {
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 22px;
+    box-shadow: 0 14px 32px rgba(33,22,111,.08);
+    overflow: hidden;
+}
+
+.directorio-page .directorio-table {
+    margin: 0;
+    color: #1f2937;
+}
+
+    .directorio-page .directorio-table thead th {
+        background: #21166f;
+        color: #ffffff;
+        font-size: .88rem;
+        font-weight: 800;
+        border: none;
+        padding: 14px 16px;
+        white-space: nowrap;
+    }
+
+    .directorio-page .directorio-table tbody td {
+        padding: 13px 16px;
+        border-color: rgba(33,22,111,.08);
+        font-size: .9rem;
+        vertical-align: middle;
+    }
+
+    .directorio-page .directorio-table tbody tr {
+        transition: background .18s ease, transform .18s ease;
+    }
+
+        .directorio-page .directorio-table tbody tr:hover {
+            background: #f4f7ff;
+        }
+
+.directorio-page .directorio-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #21166f;
+}
+
+.directorio-page .directorio-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #f4f7ff;
+    color: #21166f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.directorio-page .directorio-email {
+    color: #21166f;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+    .directorio-page .directorio-email:hover {
+        color: #d4ad45;
+        text-decoration: underline;
+    }
+
+.directorio-page .directorio-empty {
+    padding: 38px;
+    text-align: center;
+    color: #6b7280;
+    font-weight: 700;
+    background: #ffffff;
+}
+
+/* PAGINACION */
+
+.directorio-page .directorio-pagination {
+    border-top: 1px solid rgba(33,22,111,.10);
+    background: #ffffff;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.directorio-page .directorio-page-btn {
+    background: #ffffff;
+    color: #21166f;
+    border: 1px solid rgba(33,22,111,.25);
+    border-radius: 12px;
+    padding: .55rem .9rem;
+    font-size: .86rem;
+    font-weight: 800;
+    transition: all .18s ease;
+}
+
+    .directorio-page .directorio-page-btn:hover:not(:disabled) {
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
+    }
+
+    .directorio-page .directorio-page-btn:disabled {
+        opacity: .45;
+        cursor: not-allowed;
+    }
+
+.directorio-page .directorio-page-info {
+    color: #21166f;
+    font-size: .88rem;
+    font-weight: 800;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 991.98px) {
+    body.module-main-theme.directorio-page .topbar-links {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+
+    body.module-main-theme.directorio-page .quick-nav-wrap {
+        justify-content: flex-end;
+    }
+
+    body.module-main-theme.directorio-page .quick-nav {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px !important;
+        margin-top: 8px;
+    }
+
+        body.module-main-theme.directorio-page .quick-nav.is-open {
+            display: flex;
+        }
+
+    body.module-main-theme.directorio-page .quick-link {
+        width: 100%;
+        display: block;
+    }
+
+    body.module-main-theme.directorio-page .quick-dd-menu {
+        position: static;
+        display: none;
+        min-width: 100%;
+        margin-top: 6px;
+        box-shadow: none;
+        border-radius: 12px;
+    }
+
+    body.module-main-theme.directorio-page .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    .directorio-page .directorio-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .directorio-page .directorio-search {
+        max-width: 100%;
+    }
+
+    .directorio-page .directorio-header h2 {
+        font-size: 1.45rem;
+    }
+
+    .directorio-page .directorio-pagination {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
