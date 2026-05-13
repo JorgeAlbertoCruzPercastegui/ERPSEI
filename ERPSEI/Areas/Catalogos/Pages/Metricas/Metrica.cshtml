@@ -1,0 +1,177 @@
+﻿@page
+@model ERPSEI.Areas.Catalogos.Pages.Metricas.MetricaModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Métricas";
+    ViewData["BodyClass"] = "metrica-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Metrica.css" asp-append-version="true" />
+}
+
+<div class="metrica-module">
+    <div class="metrica-shell">
+
+        <div class="metrica-header">
+            <div>
+                <h2>Métricas de Uso</h2>
+                <p>Monitoreo de accesos, actividad y módulos más utilizados dentro de la intranet.</p>
+            </div>
+        </div>
+
+        <div class="metrica-kpi-grid">
+            <div class="metrica-kpi-card">
+                <span>Logins hoy</span>
+                <strong>@Model.LoginsHoy</strong>
+            </div>
+
+            <div class="metrica-kpi-card">
+                <span>Usuarios activos hoy</span>
+                <strong>@Model.UsuariosActivosHoy</strong>
+            </div>
+
+            <div class="metrica-kpi-card">
+                <span>Visitas del mes</span>
+                <strong>@Model.VisitasMes</strong>
+            </div>
+
+            <div class="metrica-kpi-card">
+                <span>Módulo más usado</span>
+                <strong>@Model.ModuloMasUsado</strong>
+            </div>
+        </div>
+
+        <div class="metrica-grid">
+
+            <div class="metrica-chart-card">
+                <h4>Usuarios con más inicios de sesión</h4>
+
+                <div class="metrica-list">
+
+                    @foreach (var item in Model.UsuariosMasActivos)
+                    {
+                        <div class="metrica-list-item">
+
+                            <div>
+                                <strong>@item.Usuario</strong>
+                            </div>
+
+                            <span>@item.Total</span>
+
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+            <div class="metrica-chart-card">
+                <h4>Módulos más visitados</h4>
+
+                <div class="metrica-list">
+
+                    @foreach (var item in Model.ModulosMasVisitados)
+                    {
+                        <div class="metrica-list-item">
+
+                            <div>
+                                <strong>@item.Modulo</strong>
+                            </div>
+
+                            <span>@item.Total visitas</span>
+
+                        </div>
+                    }
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="metrica-table-card">
+
+            <div class="metrica-table-header">
+                <div>
+                    <h4>Últimos accesos</h4>
+                </div>
+
+                <input type="text"
+                       id="txtBuscarMetrica"
+                       class="form-control metrica-search"
+                       placeholder="Buscar empleado..." />
+            </div>
+
+            <div class="table-responsive">
+                <table class="table metrica-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Empleado</th>
+                            <th>Evento</th>
+                            <th>Módulo</th>
+                            <th>Fecha</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="metricaBody">
+
+                        @foreach (var item in Model.UltimosAccesos)
+                        {
+                            <tr class="metrica-row"
+                                data-search="@($"{item.UserName} {item.NombreEmpleado}".ToLower())">
+
+                                <td>@item.UserName</td>
+
+                                <td>@item.NombreEmpleado</td>
+
+                                <td>@item.TipoEvento</td>
+
+                                <td>@item.Modulo</td>
+
+                                <td>@item.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                <td>@item.Ip</td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="metrica-pagination">
+
+                <button type="button"
+                        id="btnMetricasPrev"
+                        class="metrica-page-btn">
+                    Anterior
+                </button>
+
+                <span id="lblMetricasPagina"
+                      class="metrica-page-info">
+                    Página 1
+                </span>
+
+                <button type="button"
+                        id="btnMetricasNext"
+                        class="metrica-page-btn">
+                    Siguiente
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script id="metricasData" type="application/json">
+    @Html.Raw(JsonSerializer.Serialize(Model.MetricasJson))
+</script>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/../Areas/Catalogos/Pages/Metricas/Metrica.js" asp-append-version="true"></script>
+}

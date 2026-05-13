@@ -1,27 +1,28 @@
-﻿using ERPSEI.Data.Entities.Conciliaciones;
+﻿using ERPSEI.Data.Entities.ActivosFijos;
 using ERPSEI.Data.Entities.Clientes;
+using ERPSEI.Data.Entities.Conciliaciones;
+using ERPSEI.Data.Entities.Cuentas;
+using ERPSEI.Data.Entities.Documentos;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Empresas;
-using ERPSEI.Data.Entities.Reportes;
 using ERPSEI.Data.Entities.Intranet;
+using ERPSEI.Data.Entities.Metricas;
+using ERPSEI.Data.Entities.Polizas;
+using ERPSEI.Data.Entities.Reportes;
+using ERPSEI.Data.Entities.RH;
 using ERPSEI.Data.Entities.SAT;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.SAT.cfdiv40;
+using ERPSEI.Data.Entities.SAT.Nomina12;
+using ERPSEI.Data.Entities.SAT.Pagos20;
+using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
+using ERPSEI.Data.Entities.TipoContratos;
 using ERPSEI.Data.Entities.Usuarios;
+using ERPSEI.Data.Entities.Vacaciones;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using ERPSEI.Data.Entities.SAT.Nomina12;
-using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
-using ERPSEI.Data.Entities.Cuentas;
-using ERPSEI.Data.Entities.SAT.Pagos20;
-using ERPSEI.Data.Entities.Polizas;
-using ERPSEI.Data.Entities.ActivosFijos;
 using Microsoft.Identity.Client;
-using ERPSEI.Data.Entities.Vacaciones;
 using System.Reflection.Emit;
-using ERPSEI.Data.Entities.TipoContratos;
-using ERPSEI.Data.Entities.Documentos;
-using ERPSEI.Data.Entities.RH;
 
 namespace ERPSEI.Data
 {
@@ -223,6 +224,9 @@ namespace ERPSEI.Data
         //Políticas y Manuales
         public DbSet<ManualPoliticaIntranet> ManualesPoliticasIntranet { get; set; }
         public DbSet<ManualPoliticaArea> ManualPoliticaAreas { get; set; }
+
+        //Métricas
+        public DbSet<IntranetActividad> IntranetActividades { get; set; }
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)

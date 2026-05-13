@@ -432,6 +432,8 @@
         esAdministrador ||
         esAdministradorTI ||
         esAdministradorEmpresas;
+
+    bool mostrarMetricasMenu = esAdministrador;
 }
 
 <!DOCTYPE html>
@@ -601,6 +603,15 @@
                                         @if (mostrarActivosFijosMenu)
                                         {
                                             <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
+                                        }
+
+                                        @if (mostrarMetricasMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   asp-area="Catalogos"
+                                                   asp-page="/Metricas/Metrica">
+                                                Métricas
+                                            </a>
                                         }
                                     </div>
                                 </div>

@@ -2,12 +2,13 @@ using ERPSEI;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Email;
+using ERPSEI.Middleware;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.DataProtection;
 using System.IO;
-using Microsoft.AspNetCore.Http.Features;
+using ERPSEI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -160,6 +161,9 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
+
+app.UseMiddleware<IntranetActividadMiddleware>();
+
 app.UseAuthorization();
 
 app.MapRazorPages();

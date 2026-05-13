@@ -2,7 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using ERPSEI.Data;
 using ERPSEI.Data.Entities;
+using ERPSEI.Data.Entities.Intranet;
+using ERPSEI.Data.Entities.Metricas;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Authentication;
@@ -23,17 +26,20 @@ namespace ERPSEI.Areas.Identity.Pages.Account
         private readonly SignInManager<AppUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly IStringLocalizer<LoginModel> _localizer;
+        private readonly ApplicationDbContext _db;
 
         public LoginModel(
-            AppUserManager userManager, 
-            SignInManager<AppUser> signInManager, 
-            ILogger<LoginModel> logger,
-            IStringLocalizer<LoginModel> localizer)
+        AppUserManager userManager,
+        SignInManager<AppUser> signInManager,
+        ILogger<LoginModel> logger,
+        IStringLocalizer<LoginModel> localizer,
+        ApplicationDbContext db)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _localizer = localizer;
+            _db = db;
         }
 
         /// <summary>
@@ -163,8 +169,41 @@ namespace ERPSEI.Areas.Identity.Pages.Account
                             _logger.LogWarning(_localizer["PendingUserAuthorization"]);
                             return RedirectToPage("./PendingUserAuthorization");
                         }
+                        /*else
+                        {
+                            return LocalRedirect("/");
+                        }*/
                         else
                         {
+                            _db.IntranetActividades.Add(new IntranetActividad
+                            {
+                                UserId = user.Id,
+
+                                UserName = user.UserName,
+
+                                NombreEmpleado = user.Empleado != null
+                                    ? $"{user.Empleado.Nombre} {user.Empleado.ApellidoPaterno}"
+                                    : user.UserName,
+
+                                TipoEvento = "Login",
+
+                                Modulo = "Inicio de sesión",
+
+                                Ruta = "/Identity/Account/Login",
+
+                                FechaHora = DateTime.Now,
+
+                                //Ip = HttpContext.Connection.RemoteIpAddress?.ToString(),
+
+                                Ip = HttpContext.Connection.RemoteIpAddress?.ToString() == "::1"
+                                ? "127.0.0.1"
+                                : HttpContext.Connection.RemoteIpAddress?.ToString(),
+
+                                UserAgent = Request.Headers["User-Agent"].ToString()
+                            });
+
+                            await _db.SaveChangesAsync();
+
                             return LocalRedirect("/");
                         }
                     }
