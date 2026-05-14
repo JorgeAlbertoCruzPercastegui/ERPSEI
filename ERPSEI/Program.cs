@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
-using ERPSEI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +48,11 @@ ServicesConfiguration.ConfigureDependencyInjection(builder);
 
 //Form Options
 ServicesConfiguration.ConfigureFormOptions(builder);
+
+//HttpContextAccessor para auditoría global
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ERPSEI.Data.Entities.Metricas.AuditoriaContext>();
 
 
 //Build and run application

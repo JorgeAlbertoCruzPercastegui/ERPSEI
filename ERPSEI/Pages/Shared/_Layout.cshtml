@@ -434,6 +434,7 @@
         esAdministradorEmpresas;
 
     bool mostrarMetricasMenu = esAdministrador;
+    bool mostrarAuditoriaMenu = esAdministrador;
 }
 
 <!DOCTYPE html>
@@ -611,6 +612,15 @@
                                                    asp-area="Catalogos"
                                                    asp-page="/Metricas/Metrica">
                                                 Métricas
+                                            </a>
+                                        }
+
+                                        @if (mostrarAuditoriaMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   asp-area="Catalogos"
+                                                   asp-page="/Auditorias/Auditoria">
+                                                Auditoría
                                             </a>
                                         }
                                     </div>

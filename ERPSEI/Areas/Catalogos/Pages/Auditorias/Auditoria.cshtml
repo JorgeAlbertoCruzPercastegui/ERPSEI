@@ -1,0 +1,144 @@
+﻿@page
+@model ERPSEI.Areas.Catalogos.Pages.Auditoria.AuditoriaModel
+
+@{
+    ViewData["Title"] = "Auditoría";
+    ViewData["BodyClass"] = "auditoria-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Auditoria.css" asp-append-version="true" />
+}
+
+<div class="auditoria-module">
+    <div class="auditoria-shell">
+
+        <div class="auditoria-header">
+            <div>
+                <h2>Auditoría Administrativa</h2>
+                <p>Consulta de altas, ediciones, bajas y cambios realizados dentro de la intranet.</p>
+            </div>
+        </div>
+
+        <div class="auditoria-kpi-grid">
+            <div class="auditoria-kpi-card">
+                <span>Altas</span>
+                <strong>@Model.TotalAltas</strong>
+            </div>
+
+            <div class="auditoria-kpi-card">
+                <span>Ediciones</span>
+                <strong>@Model.TotalEdiciones</strong>
+            </div>
+
+            <div class="auditoria-kpi-card">
+                <span>Bajas</span>
+                <strong>@Model.TotalBajas</strong>
+            </div>
+
+            <div class="auditoria-kpi-card">
+                <span>Cambios hoy</span>
+                <strong>@Model.CambiosHoy</strong>
+            </div>
+        </div>
+
+        <div class="auditoria-table-card">
+
+            <div class="auditoria-table-header">
+                <h4>Movimientos recientes</h4>
+
+                <div class="auditoria-filters">
+                    <input type="text"
+                           id="txtBuscarAuditoria"
+                           class="form-control auditoria-search"
+                           placeholder="Buscar usuario, acción, módulo o registro..." />
+
+                    <select id="selAccionAuditoria" class="form-select auditoria-select">
+                        <option value="">Todas las acciones</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Edición">Edición</option>
+                        <option value="Baja">Baja</option>
+                        <option value="Eliminación">Eliminación</option>
+                        <option value="Cambio de rol">Cambio de rol</option>
+                        <option value="Reset contraseña">Reset contraseña</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table auditoria-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Ejecutor</th>
+                            <th>Módulo</th>
+                            <th>Acción</th>
+                            <th>Registro</th>
+                            <th>Campo</th>
+                            <th>Valor anterior</th>
+                            <th>Valor nuevo</th>
+                            <th>IP</th>
+                            <th>Ubicación</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="auditoriaBody">
+                        @foreach (var item in Model.RegistrosAuditoria)
+                        {
+                            <tr class="auditoria-row"
+                                data-accion="@item.Accion"
+                                data-search="@($"{item.UsuarioEjecutor} {item.Modulo} {item.Accion} {item.RegistroNombre} {item.CampoModificado} {item.ValorAnterior} {item.ValorNuevo}".ToLower())">
+
+                                <td>@item.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.UsuarioEjecutor</td>
+                                <td>@item.Modulo</td>
+                                <td>
+                                    <span class="auditoria-badge">@item.Accion</span>
+                                </td>
+                                <td>@item.RegistroNombre</td>
+                                <td>@item.CampoModificado</td>
+                                <td>@item.ValorAnterior</td>
+                                <td>@item.ValorNuevo</td>
+                                <td>@item.Ip</td>
+                                <td>
+                                    @if (item.Latitud.HasValue && item.Longitud.HasValue)
+                                    {
+                                        <span>@item.Latitud, @item.Longitud</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="auditoriaEmpty" class="auditoria-empty d-none">
+                No se encontraron registros con el criterio ingresado.
+            </div>
+
+            <div class="auditoria-pagination">
+                <button type="button" id="btnAuditoriaPrev" class="auditoria-page-btn">
+                    Anterior
+                </button>
+
+                <span id="lblAuditoriaPagina" class="auditoria-page-info">
+                    Página 1
+                </span>
+
+                <button type="button" id="btnAuditoriaNext" class="auditoria-page-btn">
+                    Siguiente
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/../Areas/Catalogos/Pages/Auditorias/Auditoria.cshtml.js" asp-append-version="true"></script>
+}

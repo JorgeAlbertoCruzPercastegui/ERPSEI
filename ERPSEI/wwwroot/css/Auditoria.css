@@ -1,0 +1,371 @@
+﻿/* =====================================================
+   MODULO AUDITORIA
+   TEMA AZUL + BLANCO
+   ===================================================== */
+
+body.module-main-theme.auditoria-page {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #21166f;
+}
+
+    /* HEADER / MENU */
+
+    body.module-main-theme.auditoria-page .header-bg {
+        background: #ffffff !important;
+        background-image: none !important;
+        min-height: 84px;
+        border-bottom: none !important;
+        box-shadow: none !important;
+    }
+
+    body.module-main-theme.auditoria-page .header-bg-inner {
+        min-height: 84px;
+        display: flex;
+        align-items: center;
+        background: transparent !important;
+    }
+
+    body.module-main-theme.auditoria-page .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+        body.module-main-theme.auditoria-page .navbar-brand::before {
+            content: "Intranet";
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #21166f;
+        }
+
+    body.module-main-theme.auditoria-page .brandimage {
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+        object-fit: contain;
+    }
+
+    body.module-main-theme.auditoria-page .navbar .nav-link,
+    body.module-main-theme.auditoria-page .navbar .navbar-brand,
+    body.module-main-theme.auditoria-page .navbar .btn,
+    body.module-main-theme.auditoria-page .navbar a,
+    body.module-main-theme.auditoria-page .navbar form button {
+        color: #21166f !important;
+        text-shadow: none !important;
+        font-weight: 700;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    body.module-main-theme.auditoria-page .topbar-links {
+        max-width: 1280px;
+        margin: 0 auto 18px auto;
+        padding: 14px 24px !important;
+        min-height: 58px;
+        background: #21166f;
+        border: none;
+        border-radius: 12px;
+        box-shadow: none;
+        gap: 10px;
+    }
+
+        body.module-main-theme.auditoria-page .topbar-links > .small,
+        body.module-main-theme.auditoria-page .topbar-links .small,
+        body.module-main-theme.auditoria-page .topbar-links .text-muted,
+        body.module-main-theme.auditoria-page .topbar-links b {
+            color: #ffffff !important;
+        }
+
+    body.module-main-theme.auditoria-page .quick-nav-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    body.module-main-theme.auditoria-page .quick-nav {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 4px 14px !important;
+        white-space: nowrap;
+        font-size: .85rem;
+    }
+
+    body.module-main-theme.auditoria-page .quick-link {
+        color: #ffffff !important;
+        text-decoration: none !important;
+        font-weight: 700;
+        font-size: .88rem;
+        line-height: 1.05;
+        padding: 2px 4px;
+        border-radius: 8px;
+        transition: all .18s ease;
+        white-space: nowrap;
+    }
+
+        body.module-main-theme.auditoria-page .quick-link:hover {
+            color: #d4ad45 !important;
+        }
+
+    body.module-main-theme.auditoria-page .quick-dd {
+        position: relative;
+    }
+
+    body.module-main-theme.auditoria-page .quick-dd-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 8px;
+        min-width: 260px;
+        background: #ffffff;
+        border: 1px solid rgba(33,22,111,.12);
+        border-radius: 14px;
+        box-shadow: 0 18px 35px rgba(33,22,111,.14);
+        padding: 8px;
+        display: none;
+        z-index: 2000;
+    }
+
+    body.module-main-theme.auditoria-page .quick-dd-menu-wide {
+        min-width: 320px;
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    body.module-main-theme.auditoria-page .quick-dd:hover > .quick-dd-menu,
+    body.module-main-theme.auditoria-page .quick-dd.open > .quick-dd-menu {
+        display: block;
+    }
+
+    body.module-main-theme.auditoria-page .quick-dd-item {
+        display: block;
+        color: #21166f !important;
+        text-decoration: none !important;
+        font-size: .88rem;
+        font-weight: 600;
+        padding: 8px 10px;
+        border-radius: 10px;
+    }
+
+        body.module-main-theme.auditoria-page .quick-dd-item:hover {
+            background: rgba(33,22,111,.08);
+        }
+
+/* CONTENIDO */
+
+.auditoria-page .auditoria-module {
+    flex: 1 0 auto;
+    padding: 10px 0 32px;
+}
+
+.auditoria-page .auditoria-shell {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 12px;
+}
+
+.auditoria-page .auditoria-header {
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 18px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 28px rgba(33,22,111,.08);
+}
+
+    .auditoria-page .auditoria-header h2 {
+        color: #21166f;
+        font-size: 1.9rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .auditoria-page .auditoria-header p {
+        color: #374151;
+        font-size: .98rem;
+        margin: 3px 0 0;
+    }
+
+.auditoria-page .auditoria-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.auditoria-page .auditoria-kpi-card {
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 12px 28px rgba(33,22,111,.08);
+}
+
+    .auditoria-page .auditoria-kpi-card span {
+        display: block;
+        color: #6b7280;
+        font-size: .85rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .auditoria-page .auditoria-kpi-card strong {
+        display: block;
+        color: #21166f;
+        font-size: 1.7rem;
+        font-weight: 900;
+    }
+
+.auditoria-page .auditoria-table-card {
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 22px;
+    box-shadow: 0 14px 32px rgba(33,22,111,.08);
+    overflow: hidden;
+}
+
+.auditoria-page .auditoria-table-header {
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(33,22,111,.10);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+    .auditoria-page .auditoria-table-header h4 {
+        color: #21166f;
+        font-size: 1.05rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+.auditoria-page .auditoria-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.auditoria-page .auditoria-search,
+.auditoria-page .auditoria-select {
+    max-width: 320px;
+    border-radius: 12px;
+    border: 1px solid rgba(33,22,111,.18);
+    background-color: #f4f7ff;
+    color: #21166f;
+    padding: .65rem .9rem;
+    box-shadow: none;
+}
+
+.auditoria-page .auditoria-table {
+    margin: 0;
+    color: #1f2937;
+}
+
+    .auditoria-page .auditoria-table thead th {
+        background: #21166f;
+        color: #ffffff;
+        font-size: .84rem;
+        font-weight: 800;
+        border: none;
+        padding: 13px 14px;
+        white-space: nowrap;
+    }
+
+    .auditoria-page .auditoria-table tbody td {
+        padding: 12px 14px;
+        font-size: .86rem;
+        border-color: rgba(33,22,111,.08);
+        vertical-align: middle;
+    }
+
+    .auditoria-page .auditoria-table tbody tr:hover {
+        background: #f4f7ff;
+    }
+
+.auditoria-page .auditoria-badge {
+    background: #f4f7ff;
+    color: #21166f;
+    border: 1px solid rgba(33,22,111,.16);
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-weight: 800;
+    font-size: .78rem;
+}
+
+.auditoria-page .auditoria-empty {
+    padding: 38px;
+    text-align: center;
+    color: #6b7280;
+    font-weight: 700;
+    background: #ffffff;
+}
+
+.auditoria-page .auditoria-pagination {
+    border-top: 1px solid rgba(33,22,111,.10);
+    background: #ffffff;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.auditoria-page .auditoria-page-btn {
+    background: #ffffff;
+    color: #21166f;
+    border: 1px solid rgba(33,22,111,.25);
+    border-radius: 12px;
+    padding: .55rem .9rem;
+    font-size: .86rem;
+    font-weight: 800;
+    transition: all .18s ease;
+}
+
+    .auditoria-page .auditoria-page-btn:hover:not(:disabled) {
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
+    }
+
+    .auditoria-page .auditoria-page-btn:disabled {
+        opacity: .45;
+        cursor: not-allowed;
+    }
+
+.auditoria-page .auditoria-page-info {
+    color: #21166f;
+    font-size: .88rem;
+    font-weight: 800;
+}
+
+@media (max-width: 991.98px) {
+    .auditoria-page .auditoria-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .auditoria-page .auditoria-table-header {
+        align-items: stretch;
+    }
+
+    .auditoria-page .auditoria-filters {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .auditoria-page .auditoria-search,
+    .auditoria-page .auditoria-select {
+        max-width: 100%;
+    }
+}

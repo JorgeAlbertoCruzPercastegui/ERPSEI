@@ -23,13 +23,17 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using System.Reflection.Emit;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Security.Claims;
+using ERPSEI.Data.Entities.Metricas;
 
 namespace ERPSEI.Data
 {
 	public class ApplicationDbContext : IdentityDbContext<AppUser, AppRole, string>
 	{
-		//Tablas de trabajo Empleados
-		public DbSet<ArchivoEmpleado> ArchivosEmpleado { get; set; }
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+        //Tablas de trabajo Empleados
+        public DbSet<ArchivoEmpleado> ArchivosEmpleado { get; set; }
 		public DbSet<Empleado> Empleados { get; set; }
 		public DbSet<ContactoEmergencia> ContactosEmergencia { get; set; }
 
@@ -228,10 +232,342 @@ namespace ERPSEI.Data
         //Métricas
         public DbSet<IntranetActividad> IntranetActividades { get; set; }
 
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        public DbSet<IntranetAuditoria> IntranetAuditorias { get; set; }
+
+        private readonly AuditoriaContext? _auditoriaContext;
+
+        /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
 
+        }*/
+        public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        IHttpContextAccessor httpContextAccessor,
+        AuditoriaContext auditoriaContext)
+        : base(options)
+        {
+            _httpContextAccessor = httpContextAccessor;
+            _auditoriaContext = auditoriaContext;
+        }
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var auditorias = ObtenerAuditoriasPendientes();
+
+            var resultado = await base.SaveChangesAsync(cancellationToken);
+
+            if (auditorias.Any())
+            {
+                IntranetAuditorias.AddRange(auditorias);
+                await base.SaveChangesAsync(cancellationToken);
+            }
+
+            return resultado;
+        }
+
+        public override int SaveChanges()
+        {
+            var auditorias = ObtenerAuditoriasPendientes();
+
+            var resultado = base.SaveChanges();
+
+            if (auditorias.Any())
+            {
+                IntranetAuditorias.AddRange(auditorias);
+                base.SaveChanges();
+            }
+
+            return resultado;
+        }
+
+        private bool EsCambioDeRolUsuario(EntityEntry entry)
+        {
+            string nombreEntidad = entry.Entity.GetType().Name.ToLower();
+
+            return nombreEntidad.Contains("identityuserrole") ||
+                   nombreEntidad.Contains("appuserrole") ||
+                   entry.Metadata.ClrType == typeof(Microsoft.AspNetCore.Identity.IdentityUserRole<string>);
+        }
+
+        private List<IntranetAuditoria> ObtenerAuditoriasPendientes()
+        {
+            if (_auditoriaContext == null || !_auditoriaContext.Activada)
+                return new List<IntranetAuditoria>();
+
+            var auditorias = new List<IntranetAuditoria>();
+
+            var entradas = ChangeTracker.Entries()
+                .Where(e =>
+                    e.Entity != null &&
+                    e.Entity is not IntranetAuditoria &&
+                    e.Entity is not IntranetActividad &&
+                    !EsCambioDeRolUsuario(e) &&
+                    (
+                        e.State == EntityState.Added ||
+                        e.State == EntityState.Modified ||
+                        e.State == EntityState.Deleted
+                    ))
+                .ToList();
+
+            var httpContext = _httpContextAccessor?.HttpContext;
+
+            string? usuarioEjecutorId = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            string? usuarioEjecutor = httpContext?.User?.Identity?.Name;
+
+            string? ip = httpContext?.Connection.RemoteIpAddress?.ToString();
+
+            if (ip == "::1")
+                ip = "127.0.0.1";
+
+            string? userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+
+            foreach (var entry in entradas)
+            {
+                string entidad = entry.Entity.GetType().Name;
+
+                string accion = !string.IsNullOrWhiteSpace(_auditoriaContext.Accion)
+                    ? _auditoriaContext.Accion
+                    : entry.State switch
+                    {
+                        EntityState.Added => "Alta",
+                        EntityState.Modified => "Edición",
+                        EntityState.Deleted => "Eliminación",
+                        _ => "Cambio"
+                    };
+
+                string registroId =
+                    ObtenerValorPropiedad(entry, "Id") ??
+                    ObtenerValorPropiedad(entry, "ID") ??
+                    ObtenerValorPropiedad(entry, "UserId") ??
+                    "Sin Id";
+
+                string registroNombre =
+                    ObtenerValorPropiedad(entry, "NombreCompleto") ??
+                    ObtenerValorPropiedad(entry, "Nombre") ??
+                    ObtenerValorPropiedad(entry, "UserName") ??
+                    ObtenerValorPropiedad(entry, "Email") ??
+                    registroId;
+
+                string modulo = !string.IsNullOrWhiteSpace(_auditoriaContext.Modulo)
+                    ? _auditoriaContext.Modulo
+                    : ObtenerModuloAuditoria(entidad);
+
+                if (entry.State == EntityState.Added)
+                {
+                    auditorias.Add(CrearAuditoria(
+                        usuarioEjecutorId,
+                        usuarioEjecutor,
+                        modulo,
+                        accion,
+                        entidad,
+                        registroId,
+                        registroNombre,
+                        "Registro",
+                        null,
+                        "Registro creado",
+                        ip,
+                        userAgent
+                    ));
+                }
+
+                if (entry.State == EntityState.Deleted)
+                {
+                    auditorias.Add(CrearAuditoria(
+                        usuarioEjecutorId,
+                        usuarioEjecutor,
+                        modulo,
+                        accion,
+                        entidad,
+                        registroId,
+                        registroNombre,
+                        "Registro",
+                        "Registro existente",
+                        "Registro eliminado",
+                        ip,
+                        userAgent
+                    ));
+                }
+
+                if (entry.State == EntityState.Modified)
+                {
+                    foreach (var prop in entry.Properties)
+                    {
+                        if (!prop.IsModified)
+                            continue;
+
+                        string campo = prop.Metadata.Name;
+
+                        if (CampoIgnoradoAuditoria(campo))
+                            continue;
+
+                        string? valorAnterior = prop.OriginalValue?.ToString();
+                        string? valorNuevo = prop.CurrentValue?.ToString();
+
+                        if (valorAnterior == valorNuevo)
+                            continue;
+
+                        auditorias.Add(CrearAuditoria(
+                            usuarioEjecutorId,
+                            usuarioEjecutor,
+                            modulo,
+                            accion,
+                            entidad,
+                            registroId,
+                            registroNombre,
+                            campo,
+                            valorAnterior,
+                            valorNuevo,
+                            ip,
+                            userAgent
+                        ));
+                    }
+                }
+            }
+
+            return auditorias;
+        }
+
+        private IntranetAuditoria CrearAuditoria(
+            string? usuarioEjecutorId,
+            string? usuarioEjecutor,
+            string modulo,
+            string accion,
+            string entidad,
+            string registroId,
+            string registroNombre,
+            string? campo,
+            string? valorAnterior,
+            string? valorNuevo,
+            string? ip,
+            string? userAgent)
+        {
+            return new IntranetAuditoria
+            {
+                UsuarioEjecutorId = usuarioEjecutorId,
+                UsuarioEjecutor = usuarioEjecutor,
+
+                Modulo = modulo,
+                Accion = accion,
+                Entidad = entidad,
+                RegistroId = registroId,
+                RegistroNombre = registroNombre,
+
+                CampoModificado = campo,
+                ValorAnterior = valorAnterior,
+                ValorNuevo = valorNuevo,
+
+                FechaHora = DateTime.Now,
+                Ip = ip,
+                UserAgent = userAgent
+            };
+        }
+
+        private string? ObtenerValorPropiedad(EntityEntry entry, string propiedad)
+        {
+            var prop = entry.Properties
+                .FirstOrDefault(p => p.Metadata.Name.Equals(propiedad, StringComparison.OrdinalIgnoreCase));
+
+            if (prop == null)
+                return null;
+
+            return prop.CurrentValue?.ToString() ?? prop.OriginalValue?.ToString();
+        }
+
+        private bool CampoIgnoradoAuditoria(string campo)
+        {
+            string[] camposIgnorados =
+            {
+        "PasswordHash",
+        "SecurityStamp",
+        "ConcurrencyStamp",
+        "NormalizedUserName",
+        "NormalizedEmail",
+        "AccessFailedCount",
+        "LockoutEnd",
+        "TwoFactorEnabled",
+        "EmailConfirmed",
+        "PhoneNumberConfirmed"
+    };
+
+            return camposIgnorados.Any(x =>
+                x.Equals(campo, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string ObtenerModuloAuditoria(string entidad)
+        {
+            entidad = entidad.ToLower();
+
+            if (entidad.Contains("appuser") || entidad.Contains("identityuser"))
+                return "Usuarios";
+
+            if (entidad.Contains("approle") || entidad.Contains("identityrole"))
+                return "Roles";
+
+            if (entidad.Contains("identityuserrole") || entidad.Contains("appuserrole"))
+                return "Usuarios / Roles";
+
+            if (entidad.Contains("empleado") || entidad.Contains("archivoempleado") || entidad.Contains("contactoemergencia"))
+                return "Gestión de Talento";
+
+            if (entidad.Contains("area"))
+                return "Áreas";
+
+            if (entidad.Contains("subarea"))
+                return "Subáreas";
+
+            if (entidad.Contains("puesto"))
+                return "Puestos";
+
+            if (entidad.Contains("oficina"))
+                return "Oficinas";
+
+            if (entidad.Contains("solicitudvacaciones") ||
+                entidad.Contains("periodovacacional") ||
+                entidad.Contains("historialvacacion") ||
+                entidad.Contains("configuracionvacacion") ||
+                entidad.Contains("politicavacacion"))
+                return "Vacaciones";
+
+            if (entidad.Contains("ausencia") || entidad.Contains("incapacidad"))
+                return "Ausencias";
+
+            if (entidad.Contains("banner"))
+                return "Banners";
+
+            if (entidad.Contains("headerimagen"))
+                return "Imágenes Header";
+
+            if (entidad.Contains("manual") ||
+                entidad.Contains("politica") ||
+                entidad.Contains("documento"))
+                return "Biblioteca Corporativa";
+
+            if (entidad.Contains("comunicado"))
+                return "Comunicados Internos";
+
+            if (entidad.Contains("evento"))
+                return "Eventos";
+
+            if (entidad.Contains("empresa"))
+                return "Empresas";
+
+            if (entidad.Contains("activofijo"))
+                return "Activos Fijos";
+
+            if (entidad.Contains("conciliacion") || entidad.Contains("movimientobancario"))
+                return "Conciliaciones";
+
+            if (entidad.Contains("banco"))
+                return "Bancos";
+
+            if (entidad.Contains("cuentacontable"))
+                return "Cuentas Contables";
+
+            if (entidad.Contains("prefactura") || entidad.Contains("comprobante"))
+                return "Facturación";
+
+            return entidad;
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
