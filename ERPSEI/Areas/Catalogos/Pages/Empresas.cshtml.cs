@@ -1,5 +1,7 @@
+using ERPSEI.Areas.Catalogos.Pages.Auditoria;
 using ERPSEI.Data;
 using ERPSEI.Data.Entities.Empresas;
+using ERPSEI.Data.Entities.Metricas;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers;
@@ -35,8 +37,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			ApplicationDbContext _db,
 			IEncriptacionAES _encriptacionAES,
 			AppUserManager _userManager,
-			AppRoleManager _roleManager
-		) : ERPPageModel
+			AppRoleManager _roleManager,
+            AuditoriaContext _auditoriaContext
+        ) : ERPPageModel
 	{
 
 		protected bool PuedeTodoBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeTodoBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
@@ -659,8 +662,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return new JsonResult(resp);
 		}
-		
-		public async Task<JsonResult> OnPostDisableEmpresas(string[] ids)
+
+        /*public async Task<JsonResult> OnPostDisableEmpresas(string[] ids)
 		{
 			ServerResponse resp = new(true, _strLocalizer["EmpresasDeletedUnsuccessfully"]);
 			await _db.Database.BeginTransactionAsync();
@@ -691,48 +694,113 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			}
 
 			return new JsonResult(resp);
-		}
-		
-		public async Task<JsonResult> OnPostSaveBancosEmpresa()
-		{
-			ServerResponse resp = new(true, _strLocalizer["EmpresaSavedUnsuccessfully"]);
+		}*/
 
-            AppUser? usr = await _userManager.GetUserAsync(User);
-            IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
-            List<AccesoModulo> accesos = [];
-            foreach (string rol in rolesUsuario)
+        public async Task<JsonResult> OnPostDisableEmpresas(string[] ids)
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpresasDeletedUnsuccessfully"]);
+
+            await _db.Database.BeginTransactionAsync();
+
+            try
             {
-                AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
-                accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
-            }
-
-            bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
-            bool puedeConsultarBancos = accesos.Where(a => a.PuedeConsultar == 1).Count() >= 1;
-            bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
-
-            if (puedeTodoBancos || puedeEditarBancos)
-			{
-                //Procede a crear o actualizar la empresa.
-                string validacion = await CreateOrUpdateCompanyBanks(InputEmpresa);
-
-                if ((validacion ?? string.Empty).Length <= 0)
+                if (PuedeTodo || PuedeEliminar)
                 {
+                    _auditoriaContext.Activar("Empresas", "Eliminación");
+
+                    foreach (string id in ids)
+                    {
+                        int intId = Convert.ToInt32(id);
+                        await _empresaManager.DisableByIdAsync(intId);
+                    }
+
+                    _auditoriaContext.Desactivar();
+
                     resp.TieneError = false;
-                    resp.Mensaje = _strLocalizer["EmpresaSavedSuccessfully"];
+                    resp.Mensaje = _strLocalizer["EmpresasDeletedSuccessfully"];
                 }
                 else
                 {
-                    resp.Mensaje = validacion;
+                    resp.Mensaje = _strLocalizer["AccesoDenegado"];
                 }
+
+                await _db.Database.CommitTransactionAsync();
             }
-            else
+            catch (Exception ex)
             {
-                resp.Mensaje = _strLocalizer["AccesoDenegado"];
+                _auditoriaContext.Desactivar();
+
+                _logger.LogError(ex.Message);
+                await _db.Database.RollbackTransactionAsync();
             }
 
             return new JsonResult(resp);
         }
-		public async Task<JsonResult> OnPostSaveEmpresa()
+
+        public async Task<JsonResult> OnPostSaveBancosEmpresa()
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpresaSavedUnsuccessfully"]);
+
+            try
+            {
+                AppUser? usr = await _userManager.GetUserAsync(User);
+                IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
+                List<AccesoModulo> accesos = [];
+
+                foreach (string rol in rolesUsuario)
+                {
+                    AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
+
+                    accesos.AddRange(
+                        foundRole?.Accesos.Where(acceso =>
+                            acceso.Modulo?.NombreNormalizado == "bancos" &&
+                            (
+                                acceso.PuedeTodo == 1 ||
+                                acceso.PuedeConsultar == 1 ||
+                                acceso.PuedeEditar == 1 ||
+                                acceso.PuedeEliminar == 1 ||
+                                acceso.PuedeAutorizar == 1
+                            )) ?? []);
+                }
+
+                bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
+                bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
+
+                if (puedeTodoBancos || puedeEditarBancos)
+                {
+                    _auditoriaContext.Activar("Empresas", "Edición Bancos");
+
+                    string validacion = await CreateOrUpdateCompanyBanks(InputEmpresa);
+
+                    _auditoriaContext.Desactivar();
+
+                    if ((validacion ?? string.Empty).Length <= 0)
+                    {
+                        resp.TieneError = false;
+                        resp.Mensaje = _strLocalizer["EmpresaSavedSuccessfully"];
+                    }
+                    else
+                    {
+                        resp.Mensaje = validacion;
+                    }
+                }
+                else
+                {
+                    resp.Mensaje = _strLocalizer["AccesoDenegado"];
+                }
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+
+                _logger.LogError(ex.Message);
+                resp.Mensaje = _strLocalizer["EmpresaSavedUnsuccessfully"];
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<JsonResult> OnPostSaveEmpresa()
 		{
 			ServerResponse resp = new(true, _strLocalizer["EmpresaSavedUnsuccessfully"]);
 
@@ -769,10 +837,18 @@ namespace ERPSEI.Areas.Catalogos.Pages
 					//Si la longitud del mensaje de respuesta es menor o igual a cero, se considera que no hubo errores anteriores.
 					if ((validacion ?? string.Empty).Length <= 0)
 					{
-						//Procede a crear o actualizar la empresa.
-						validacion = await CreateOrUpdateCompany(InputEmpresa, accesoBancos);
+                        //Procede a crear o actualizar la empresa.
+                        string accionAuditoria = InputEmpresa.Id >= 1
+						? "Edición"
+						: "Alta";
 
-						if ((validacion ?? string.Empty).Length <= 0)
+                        _auditoriaContext.Activar("Empresas", accionAuditoria);
+
+                        validacion = await CreateOrUpdateCompany(InputEmpresa, accesoBancos);
+
+                        _auditoriaContext.Desactivar();
+
+                        if ((validacion ?? string.Empty).Length <= 0)
 						{
 							resp.TieneError = false;
 							resp.Mensaje = _strLocalizer["EmpresaSavedSuccessfully"];
@@ -789,7 +865,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				}
 				catch (Exception ex)
 				{
-					_logger.LogError(ex.Message);
+                    _auditoriaContext.Desactivar();
+                    _logger.LogError(ex.Message);
 				}
 			}
 			else
@@ -1044,60 +1121,69 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			return string.Empty;
 		}
 
-		public async Task<JsonResult> OnPostImportarEmpresas()
-		{
-			ServerResponse resp = new(true, _strLocalizer["EmpresasImportadasUnsuccessfully"]);
-			try
-			{
-				if (PuedeTodo || PuedeEditar) { 
-					if (Request.Form.Files.Count >= 1)
-					{
-						//Se procesa el archivo excel.
-						using Stream s = Request.Form.Files[0].OpenReadStream();
-						using var reader = ExcelReaderFactory.CreateReader(s);
-						DataSet result = reader.AsDataSet(new ExcelDataSetConfiguration() { FilterSheet = (tableReader, sheetIndex) => sheetIndex == 0 });
-						foreach (DataRow row in result.Tables[0].Rows)
-						{
-							//Omite el procesamiento del row de encabezado
-							if (result.Tables[0].Rows.IndexOf(row) == 0)
-							{
-								resp.TieneError = false;
-								resp.Mensaje = _strLocalizer["EmpresasImportadasSuccessfully"];
-								continue;
-							}
+        public async Task<JsonResult> OnPostImportarEmpresas()
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpresasImportadasUnsuccessfully"]);
 
-							string vmsg = await CreateCompanyFromExcelRow(row);
+            try
+            {
+                if (PuedeTodo || PuedeEditar)
+                {
+                    if (Request.Form.Files.Count >= 1)
+                    {
+                        _auditoriaContext.Activar("Empresas", "Importación");
 
-							//Si la longitud del mensaje de respuesta es mayor o igual a uno, se considera que hubo errores.
-							if ((vmsg ?? "").Length >= 1)
-							{
-								resp.TieneError = true;
-								resp.Mensaje = vmsg;
-								break;
-							}
-							else
-							{
-								resp.TieneError = false;
-								resp.Mensaje = _strLocalizer["EmpresasImportadasSuccessfully"];
-							}
-						}
-					}
-				}
-				else
-				{
-					resp.Mensaje = _strLocalizer["AccesoDenegado"];
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex.Message);
-				resp.TieneError = true;
-				resp.Mensaje = _strLocalizer["EmpresasImportadasUnsuccessfully"];
-			}
+                        using Stream s = Request.Form.Files[0].OpenReadStream();
+                        using var reader = ExcelReaderFactory.CreateReader(s);
 
-			return new JsonResult(resp);
-		}
-		private static string NormalizePhrase(string s)
+                        DataSet result = reader.AsDataSet(new ExcelDataSetConfiguration()
+                        {
+                            FilterSheet = (tableReader, sheetIndex) => sheetIndex == 0
+                        });
+
+                        foreach (DataRow row in result.Tables[0].Rows)
+                        {
+                            if (result.Tables[0].Rows.IndexOf(row) == 0)
+                            {
+                                resp.TieneError = false;
+                                resp.Mensaje = _strLocalizer["EmpresasImportadasSuccessfully"];
+                                continue;
+                            }
+
+                            string vmsg = await CreateCompanyFromExcelRow(row);
+
+                            if ((vmsg ?? "").Length >= 1)
+                            {
+                                resp.TieneError = true;
+                                resp.Mensaje = vmsg;
+                                break;
+                            }
+
+                            resp.TieneError = false;
+                            resp.Mensaje = _strLocalizer["EmpresasImportadasSuccessfully"];
+                        }
+
+                        _auditoriaContext.Desactivar();
+                    }
+                }
+                else
+                {
+                    resp.Mensaje = _strLocalizer["AccesoDenegado"];
+                }
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+
+                _logger.LogError(ex.Message);
+                resp.TieneError = true;
+                resp.Mensaje = _strLocalizer["EmpresasImportadasUnsuccessfully"];
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private static string NormalizePhrase(string s)
 		{
             string[] parts = s.Split(" ", StringSplitOptions.RemoveEmptyEntries);
 			List<string> normalizedPhrase = [];

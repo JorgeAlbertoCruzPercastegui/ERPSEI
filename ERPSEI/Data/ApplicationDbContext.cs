@@ -382,6 +382,22 @@ namespace ERPSEI.Data
                     .ToList();
             }
 
+            if (_auditoriaContext.Modulo == "Activos Fijos")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "ActivoFijo")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Empresas")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Empresa")
+                    .ToList();
+            }
+
             var httpContext = _httpContextAccessor?.HttpContext;
 
             string? usuarioEjecutorId = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;

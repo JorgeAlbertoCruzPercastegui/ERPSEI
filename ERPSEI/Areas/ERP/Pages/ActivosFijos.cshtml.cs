@@ -1,11 +1,13 @@
-﻿using ERPSEI.Data;
+﻿using ERPSEI.Areas.Catalogos.Pages.Auditoria;
+using ERPSEI.Data;
 using ERPSEI.Data.Entities.ActivosFijos;
-using ERPSEI.Data.Managers.ActivosFijos;
 using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Data.Entities.Empleados;
+using ERPSEI.Data.Entities.Metricas;
 using ERPSEI.Data.Entities.SAT;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers;
+using ERPSEI.Data.Managers.ActivosFijos;
 using ERPSEI.Data.Managers.AdministradorPolizas;
 using ERPSEI.Data.Managers.Conciliaciones;
 using ERPSEI.Data.Managers.Cuentas;
@@ -18,16 +20,24 @@ using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Email;
 using ERPSEI.Pages.Shared;
 using ERPSEI.Requests;
+using ERPSEI.Requests;
 using ERPSEI.Resources;
 using ERPSEI.Utils;
 using ExcelDataReader;
+using iText.Layout;
+using MathNet.Numerics.Distributions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.DotNet.MSIdentity.Shared;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+using OfficeOpenXml;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Net.Mime;
@@ -35,14 +45,6 @@ using System.Text;
 using System.Web;
 using static ERPSEI.Areas.Catalogos.Pages.GestionDeTalentoModel;
 using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
-using Microsoft.DotNet.MSIdentity.Shared;
-using Microsoft.EntityFrameworkCore;
-using ERPSEI.Requests;
-using OfficeOpenXml;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
-using iText.Layout;
-using MathNet.Numerics.Distributions;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -60,6 +62,8 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly AppUserManager userManager;
 
         private readonly Data.ApplicationDbContext db;
+
+        private readonly AuditoriaContext auditoriaContext;
 
         [BindProperty]
         public ActivoFijo? ActivosFijosList { get; set; }
@@ -192,7 +196,8 @@ namespace ERPSEI.Areas.ERP.Pages
             ICategoriaActivosFijosManager categoriaManager,
             ITipoActivosFijosManager tipoManager,
             IEmpleadoManager empleadoManager,
-            IOficinaManager oficinaManager
+            IOficinaManager oficinaManager,
+            AuditoriaContext _auditoriaContext
         )
         {
             stringLocalizer = _stringLocalizer;
@@ -207,6 +212,7 @@ namespace ERPSEI.Areas.ERP.Pages
             tipoActivoFijoManager = tipoManager;
             empleadoActivoFijoManager = empleadoManager;
             oficinaActivoFijoManager = oficinaManager;
+            auditoriaContext = _auditoriaContext;
 
             InputFiltro = new InputFiltroModel();
             InputActivosFijos = new ActivoFijoTableModel();
@@ -305,7 +311,12 @@ namespace ERPSEI.Areas.ERP.Pages
                     db.ActivosFijos.Update(activo);
                 }
 
+                auditoriaContext.Activar("Activos Fijos", "Eliminación");
+
                 await db.SaveChangesAsync();
+
+                auditoriaContext.Desactivar();
+
                 await db.Database.CommitTransactionAsync();
 
                 resp.TieneError = false;
@@ -314,6 +325,7 @@ namespace ERPSEI.Areas.ERP.Pages
             }
             catch (Exception ex)
             {
+                auditoriaContext.Desactivar();
                 await db.Database.RollbackTransactionAsync();
                 logger.LogError(ex, "Error al dar de baja activos fijos");
                 resp.Mensaje = "Ocurrió un error al dar de baja los registros.";
@@ -406,7 +418,14 @@ namespace ERPSEI.Areas.ERP.Pages
                 activo.TipoId = int.TryParse(input.Tipo, out int tipoId) ? tipoId : 0;
                 activo.CategoriaId = int.TryParse(input.Categoria, out int catId) ? catId : 0;
 
+                 auditoriaContext.Activar(
+                "Activos Fijos",
+                esNuevo ? "Alta" : "Edición"
+                );
+
                 await db.SaveChangesAsync();
+
+                auditoriaContext.Desactivar();
 
                 await db.Database.CommitTransactionAsync();
 
@@ -415,6 +434,7 @@ namespace ERPSEI.Areas.ERP.Pages
             }
             catch (Exception ex)
             {
+                auditoriaContext.Desactivar();
                 logger.LogError(ex, "Error al guardar el activo fijo.");
                 await db.Database.RollbackTransactionAsync();
                 resp.Mensaje = localizer["ActualizadoAFSuccessfully"];
@@ -698,10 +718,13 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     using Stream s = Request.Form.Files[0].OpenReadStream();
                     using var reader = ExcelReaderFactory.CreateReader(s);
+
                     DataSet result = reader.AsDataSet(new ExcelDataSetConfiguration
                     {
                         FilterSheet = (tableReader, sheetIndex) => sheetIndex == 0
                     });
+
+                    auditoriaContext.Activar("Activos Fijos", "Importación");
 
                     foreach (DataRow row in result.Tables[0].Rows)
                     {
@@ -724,10 +747,14 @@ namespace ERPSEI.Areas.ERP.Pages
                         resp.TieneError = false;
                         resp.Mensaje = localizer["ActivosFijosImportadosSuccessfully"];
                     }
+
+                    auditoriaContext.Desactivar();
                 }
             }
             catch (Exception ex)
             {
+                auditoriaContext.Desactivar();
+
                 logger.LogError(ex.Message);
                 resp.TieneError = true;
                 resp.Mensaje = localizer["ActivosFijosImportadosUnsuccessfully"];
