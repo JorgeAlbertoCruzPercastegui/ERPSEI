@@ -368,6 +368,7 @@ function aprobarJefeDirectoVacacion(idSolicitud) {
             refrescarTablasVacaciones();
             cargarVacacionesTomadas();
             cargarResumenVacaciones();
+            cargarAvisoVacacionesPorVencer();
         },
         error: function () {
             showError("Vacaciones", "No se pudo aprobar la solicitud.");
@@ -448,6 +449,7 @@ function guardarEdicionVacacion() {
             refrescarTablasVacaciones();
             cargarVacacionesTomadas();
             cargarResumenVacaciones();
+            cargarAvisoVacacionesPorVencer();
         },
         error: function () {
             showError("Editar Vacación", "No se pudo guardar la edición.");
@@ -509,6 +511,7 @@ function rechazarJefeDirectoVacacion(idSolicitud) {
             refrescarTablasVacaciones();
             cargarVacacionesTomadas();
             cargarResumenVacaciones();
+            cargarAvisoVacacionesPorVencer();
         },
         error: function () {
             showError("Vacaciones", "No se pudo rechazar la solicitud.");
@@ -533,6 +536,7 @@ function aprobarTHVacacion(idSolicitud) {
             refrescarTablasVacaciones();
             cargarVacacionesTomadas();
             cargarResumenVacaciones();
+            cargarAvisoVacacionesPorVencer();
         },
         error: function () {
             showError("Vacaciones", "No se pudo aprobar la solicitud en TH.");
@@ -557,6 +561,7 @@ function rechazarTHVacacion(idSolicitud) {
             refrescarTablasVacaciones();
             cargarVacacionesTomadas();
             cargarResumenVacaciones();
+            cargarAvisoVacacionesPorVencer();
         },
         error: function () {
             showError("Vacaciones", "No se pudo rechazar la solicitud en TH.");
@@ -751,12 +756,9 @@ async function obtenerDiasDisponibles() {
         const response = await fetch("/ERP/Vacaciones?handler=ObtenerDiasDisponibles");
         const dias = await response.json();
 
-        diasDisponiblesActuales = dias; // ← Guarda en la variable global
+        diasDisponiblesActuales = dias;
         document.getElementById("lblDiasDisponibles").innerText = dias.toFixed(1);
 
-        // También actualizar resumen si deseas
-        document.getElementById("tdAcumuladas").innerText = `${dias.toFixed(1)} días`;
-        document.getElementById("tdSaldoTotal").innerText = `${dias.toFixed(1)} días`;
     } catch (error) {
         console.error("Error al obtener días disponibles:", error);
     }
@@ -1141,6 +1143,7 @@ function guardarAsignacionVacaciones() {
             cargarResumenVacaciones();
             obtenerDiasDisponibles();
             cargarVacacionesAcumuladas();
+            cargarAvisoVacacionesPorVencer();
 
             showSuccess("Asignación de vacaciones", resp.mensaje);
         },
@@ -1254,22 +1257,26 @@ function exportarHistorialVacacionesUsuarios() {
 }
 
 function cargarAvisoVacacionesPorVencer() {
+    $.get("/ERP/Vacaciones?handler=AvisoVacacionesPorVencer", function (resp) {
 
-    fetch("/ERP/Vacaciones?handler=AvisoVacacionesPorVencer")
-        .then(response => response.json())
-        .then(data => {
+        if (!resp || !resp.mostrar) {
+            $("#rowAvisoVacacionesPorVencer").addClass("d-none");
+            return;
+        }
 
-            if (!data.mostrar) {
-                $("#rowAvisoVacacionesPorVencer").addClass("d-none");
-                return;
-            }
+        $("#lblDiasPorVencer").text(resp.dias);
+        $("#lblFechaVencimientoVacaciones").text(resp.fechaVencimiento);
 
-            $("#lblDiasPorVencer").text(parseFloat(data.dias).toFixed(1));
-            $("#lblFechaVencimientoVacaciones").text(data.fechaVencimiento);
+        const mensaje = resp.mensaje ||
+            `Tienes ${resp.dias} día(s) de vacaciones próximos a vencer. Fecha límite: ${resp.fechaVencimiento}.`;
 
-            $("#rowAvisoVacacionesPorVencer").removeClass("d-none");
-        })
-        .catch(error => console.error(error));
+        $("#rowAvisoVacacionesPorVencer .alert").html(`
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            ${mensaje}
+        `);
+
+        $("#rowAvisoVacacionesPorVencer").removeClass("d-none");
+    });
 }
 
 function onCerrarClick() {

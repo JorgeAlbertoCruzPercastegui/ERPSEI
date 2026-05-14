@@ -198,6 +198,16 @@ namespace ERPSEI.Areas.ERP.Pages
             public string Tipo { get; set; } = "Legales"; // Por default
             public string Estado { get; set; } = string.Empty;
         }
+        private class PeriodoVacacionSaldoModel
+        {
+            public int Anio { get; set; }
+            public DateTime FechaGeneracion { get; set; }
+            public DateTime FechaVencimiento { get; set; }
+            public decimal DiasGenerados { get; set; }
+            public decimal DiasTomados { get; set; }
+            public decimal DiasDisponibles { get; set; }
+            public bool EstaVigente { get; set; }
+        }
 
 
         public VacacionesModel(
@@ -350,6 +360,70 @@ namespace ERPSEI.Areas.ERP.Pages
                 return 32m;
 
             return 34m; 
+        }
+
+        private async Task<List<PeriodoVacacionSaldoModel>> ObtenerPeriodosVacacionesConSaldoAsync(
+    int empleadoId,
+    DateTime fechaIngreso,
+    DateTime fechaHoy)
+        {
+            int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
+
+            if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
+                aniosCumplidos--;
+
+            var periodos = new List<PeriodoVacacionSaldoModel>();
+
+            for (int anio = 1; anio <= aniosCumplidos; anio++)
+            {
+                var fechaGeneracion = fechaIngreso.AddYears(anio);
+                var fechaVencimiento = fechaGeneracion.AddYears(2);
+                var diasGenerados = ObtenerDiasVacacionesPorAntiguedad(anio);
+
+                periodos.Add(new PeriodoVacacionSaldoModel
+                {
+                    Anio = anio,
+                    FechaGeneracion = fechaGeneracion,
+                    FechaVencimiento = fechaVencimiento,
+                    DiasGenerados = diasGenerados,
+                    DiasDisponibles = diasGenerados,
+                    DiasTomados = 0m,
+                    EstaVigente = fechaHoy <= fechaVencimiento
+                });
+            }
+
+            decimal diasTomados = await db.SolicitudesVacaciones
+                .Where(s =>
+                    s.EmpleadoId == empleadoId &&
+                    (
+                        (
+                            !s.EsVacacionAnticipada &&
+                            (
+                                s.Estado == EstadoSolicitud.Aprobado ||
+                                (s.EstadoJefeDirecto == "Aprobado" && s.EstadoTH == "Aprobado")
+                            )
+                        )
+                        ||
+                        (
+                            s.EsVacacionAnticipada &&
+                            s.DescuentoAnticipadoAplicado
+                        )
+                    ))
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+            foreach (var periodo in periodos.OrderBy(p => p.FechaGeneracion))
+            {
+                if (diasTomados <= 0)
+                    break;
+
+                decimal diasAConsumir = Math.Min(periodo.DiasDisponibles, diasTomados);
+
+                periodo.DiasTomados = diasAConsumir;
+                periodo.DiasDisponibles -= diasAConsumir;
+                diasTomados -= diasAConsumir;
+            }
+
+            return periodos;
         }
 
         private async Task<(int? autorizadorId, string observacion)> ObtenerAutorizadorDisponibleAsync(
@@ -1522,7 +1596,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     ComentarioEmpleado =
                     string.IsNullOrWhiteSpace(InputSolicitud.ComentarioEmpleado)
                         ? $"[Asignación automática] {resultadoAutorizador.observacion}"
-                        : $"{InputSolicitud.ComentarioEmpleado}\n\n[Asignación automática] {resultadoAutorizador.observacion}",
+                        : $"{InputSolicitud.ComentarioEmpleado}",
 
                     /*JefeDirectoEmpleadoId = empleado.JefeId,
                     AutorizadorId = empleado.JefeId,*/
@@ -1756,68 +1830,53 @@ namespace ERPSEI.Areas.ERP.Pages
 
             await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
 
-            var fechaHoy = DateTime.Now.Date;
+            var fechaHoy = DateTime.Today;
+            var fechaIngreso = empleado.FechaIngreso.Date;
+
             string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
 
-            decimal diasLegales = 0m;
-            decimal diasProporcionales = 0m;
+            var periodos = await ObtenerPeriodosVacacionesConSaldoAsync(
+                empleado.Id,
+                fechaIngreso,
+                fechaHoy);
 
-            int aniosCumplidos = fechaHoy.Year - empleado.FechaIngreso.Date.Year;
+            var periodosVigentes = periodos
+                .Where(p => p.EstaVigente)
+                .ToList();
 
-            if (fechaHoy < empleado.FechaIngreso.Date.AddYears(aniosCumplidos))
+            decimal diasLegales = periodosVigentes.Sum(p => p.DiasGenerados);
+            decimal diasTomados = periodosVigentes.Sum(p => p.DiasTomados);
+
+            decimal diasVencidos = periodos
+                .Where(p => !p.EstaVigente)
+                .Sum(p => p.DiasDisponibles);
+
+            int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
+
+            if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
                 aniosCumplidos--;
 
-            decimal diasPorAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos);
-            decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+            decimal diasProporcionales = 0m;
 
-            if (aniosCumplidos >= 1)
+            if (tipoAsignacion == "LegalesProporcionales")
             {
-                var ultimoAniversario = empleado.FechaIngreso.Date.AddYears(aniosCumplidos);
+                var fechaBase = aniosCumplidos >= 1
+                    ? fechaIngreso.AddYears(aniosCumplidos)
+                    : fechaIngreso;
 
-                diasLegales = diasPorAnio;
-                diasProporcionales = Math.Round(
-                    (diasProximoAnio / 365m) * (decimal)(fechaHoy - ultimoAniversario).TotalDays, 1);
-            }
-            else
-            {
-                diasLegales = 0m;
-                diasProporcionales = Math.Round(
-                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
-            }
+                decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
 
-            /*if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
-            {
-                diasLegales = 12m;
                 diasProporcionales = Math.Round(
-                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
+                    (diasProximoAnio / 365m) *
+                    (decimal)(fechaHoy - fechaBase).TotalDays,
+                    1);
             }
-            else
-            {
-                diasLegales = 0m;
-                diasProporcionales = Math.Round(
-                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
-            }*/
 
             decimal acumuladas = tipoAsignacion == "Legales"
                 ? diasLegales
                 : diasLegales + diasProporcionales;
 
-            // Tomadas reales:
-            // - normales aprobadas
-            // - anticipadas ya aplicadas al cumplir el año
-            var diasTomados = await db.SolicitudesVacaciones
-                .Where(s =>
-                    s.EmpleadoId == empleado.Id &&
-                    (
-                        (!s.EsVacacionAnticipada && s.Estado == EstadoSolicitud.Aprobado)
-                        ||
-                        (s.EsVacacionAnticipada && s.DescuentoAnticipadoAplicado)
-                    ))
-                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
-
-            // Futuras visuales:
-            // anticipadas solicitadas o aprobadas, mientras no estén rechazadas ni aplicadas
-            var diasFuturasVisuales = await db.SolicitudesVacaciones
+            decimal diasFuturasVisuales = await db.SolicitudesVacaciones
                 .Where(s =>
                     s.EmpleadoId == empleado.Id &&
                     s.EsVacacionAnticipada &&
@@ -1825,9 +1884,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     !s.DescuentoAnticipadoAplicado)
                 .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
-            // Futuras que sí descuentan saldo:
-            // solo las aprobadas y aún no aplicadas
-            var diasFuturasDescontables = await db.SolicitudesVacaciones
+            decimal diasFuturasDescontables = await db.SolicitudesVacaciones
                 .Where(s =>
                     s.EmpleadoId == empleado.Id &&
                     s.EsVacacionAnticipada &&
@@ -1835,10 +1892,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     !s.DescuentoAnticipadoAplicado)
                 .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
-            //decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturasDescontables, 0m);
-            decimal diasVencidos = await ObtenerDiasVencidosAsync(empleado.Id);
-            //decimal saldo = Math.Max(acumuladas - diasTomados - diasVencidos, 0m);
-            decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturasDescontables - diasVencidos, 0m);
+            decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturasDescontables, 0m);
 
             return new JsonResult(new
             {
@@ -1896,47 +1950,31 @@ namespace ERPSEI.Areas.ERP.Pages
             var fechaHoy = DateTime.Today;
             var fechaIngreso = empleado.FechaIngreso.Date;
 
-            int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
+            var periodos = await ObtenerPeriodosVacacionesConSaldoAsync(
+                empleado.Id,
+                fechaIngreso,
+                fechaHoy);
 
-            if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
-                aniosCumplidos--;
+            var periodoPorVencer = periodos
+                .Where(p =>
+                    p.EstaVigente &&
+                    p.DiasDisponibles > 0 &&
+                    (p.FechaVencimiento - fechaHoy).TotalDays >= 0 &&
+                    (p.FechaVencimiento - fechaHoy).TotalDays <= 90)
+                .OrderBy(p => p.FechaVencimiento)
+                .FirstOrDefault();
 
-            for (int anio = 1; anio <= aniosCumplidos; anio++)
+            if (periodoPorVencer == null)
+                return new JsonResult(new { mostrar = false });
+
+            return new JsonResult(new
             {
-                var fechaGeneracion = fechaIngreso.AddYears(anio);
-                var fechaVencimiento = fechaGeneracion.AddYears(2);
-
-                var diasParaVencer = (fechaVencimiento - fechaHoy).TotalDays;
-
-                if (diasParaVencer < 0 || diasParaVencer > 90)
-                    continue;
-
-                decimal diasDelPeriodo = ObtenerDiasVacacionesPorAntiguedad(anio);
-
-                var diasTomados = await db.SolicitudesVacaciones
-                    .Where(s =>
-                        s.EmpleadoId == empleado.Id &&
-                        s.EstadoJefeDirecto == "Aprobado" &&
-                        s.EstadoTH == "Aprobado" &&
-                        !s.EsVacacionAnticipada &&
-                        s.FechaInicio >= fechaGeneracion &&
-                        s.FechaInicio <= fechaVencimiento)
-                    .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
-
-                decimal diasPendientes = Math.Max(diasDelPeriodo - diasTomados, 0m);
-
-                if (diasPendientes > 0)
-                {
-                    return new JsonResult(new
-                    {
-                        mostrar = true,
-                        dias = diasPendientes,
-                        fechaVencimiento = fechaVencimiento.ToString("dd/MM/yyyy")
-                    });
-                }
-            }
-
-            return new JsonResult(new { mostrar = false });
+                mostrar = true,
+                dias = periodoPorVencer.DiasDisponibles,
+                fechaVencimiento = periodoPorVencer.FechaVencimiento.ToString("dd/MM/yyyy"),
+                anio = periodoPorVencer.Anio,
+                mensaje = $"Tienes {periodoPorVencer.DiasDisponibles:0.##} día(s) de vacaciones del año {periodoPorVencer.Anio} próximos a vencer. Debes tomarlos antes del {periodoPorVencer.FechaVencimiento:dd/MM/yyyy}, ya que se resetearán conforme a las políticas de SEI."
+            });
         }
 
         public async Task<JsonResult> OnGetObtenerDiasDisponibles()
@@ -1949,43 +1987,51 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var empleado = usuario.Empleado;
 
-            // 🔥 Aplica descuentos automáticos si ya cumplió el año
             await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
 
             var fechaHoy = DateTime.Today;
+            var fechaIngreso = empleado.FechaIngreso.Date;
+
             string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
 
-            decimal diasLegales = 0m;
+            var periodos = await ObtenerPeriodosVacacionesConSaldoAsync(
+                empleado.Id,
+                fechaIngreso,
+                fechaHoy);
+
+            var periodosVigentes = periodos
+                .Where(p => p.EstaVigente)
+                .ToList();
+
+            decimal diasLegales = periodosVigentes.Sum(p => p.DiasGenerados);
+            decimal diasTomados = periodosVigentes.Sum(p => p.DiasTomados);
+
+            int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
+
+            if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
+                aniosCumplidos--;
+
             decimal diasProporcionales = 0m;
 
-            if (fechaHoy >= empleado.FechaIngreso.Date.AddYears(1))
+            if (tipoAsignacion == "LegalesProporcionales")
             {
-                diasLegales = 12m;
+                var fechaBase = aniosCumplidos >= 1
+                    ? fechaIngreso.AddYears(aniosCumplidos)
+                    : fechaIngreso;
+
+                decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
                 diasProporcionales = Math.Round(
-                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date.AddYears(1)).TotalDays, 1);
-            }
-            else
-            {
-                diasLegales = 0m;
-                diasProporcionales = Math.Round(
-                    (12m / 365m) * (decimal)(fechaHoy - empleado.FechaIngreso.Date).TotalDays, 1);
+                    (diasProximoAnio / 365m) *
+                    (decimal)(fechaHoy - fechaBase).TotalDays,
+                    1);
             }
 
             decimal acumuladas = tipoAsignacion == "Legales"
                 ? diasLegales
                 : diasLegales + diasProporcionales;
 
-            var diasTomados = await db.SolicitudesVacaciones
-                .Where(s =>
-                    s.EmpleadoId == empleado.Id &&
-                    s.Estado == EstadoSolicitud.Aprobado &&
-                    (
-                        !s.EsVacacionAnticipada ||
-                        (s.EsVacacionAnticipada && s.DescuentoAnticipadoAplicado)
-                    ))
-                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
-
-            var diasFuturas = await db.SolicitudesVacaciones
+            decimal diasFuturasDescontables = await db.SolicitudesVacaciones
                 .Where(s =>
                     s.EmpleadoId == empleado.Id &&
                     s.EsVacacionAnticipada &&
@@ -1993,7 +2039,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     !s.DescuentoAnticipadoAplicado)
                 .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
-            decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturas, 0m);
+            decimal saldo = Math.Max(acumuladas - diasTomados - diasFuturasDescontables, 0m);
 
             return new JsonResult(saldo);
         }
