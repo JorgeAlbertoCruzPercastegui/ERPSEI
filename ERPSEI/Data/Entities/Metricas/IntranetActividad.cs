@@ -16,5 +16,8 @@
 
         public string? Ip { get; set; }
         public string? UserAgent { get; set; }
+
+        public decimal? Latitud { get; set; }
+        public decimal? Longitud { get; set; }
     }
 }

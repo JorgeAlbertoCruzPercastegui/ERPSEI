@@ -1069,6 +1069,45 @@
 
             });
         </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+        if (!navigator.geolocation) {
+        console.warn("Geolocalización no soportada.");
+        return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+        function (position) {
+
+        fetch("/Catalogos/Metricas/GuardarUbicacion", {
+        method: "POST",
+        headers: {
+        "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+        latitud: position.coords.latitude,
+        longitud: position.coords.longitude
+        })
+        })
+        .then(r => r.json())
+        .then(data => {
+        console.log("Ubicación guardada:", data);
+        })
+        .catch(err => {
+        console.error("Error GuardarUbicacion:", err);
+        });
+
+        },
+        function (error) {
+        console.warn("El usuario rechazó la ubicación:", error);
+        }
+        );
+
+        });
+    </script>
+
             @if (SignInManager.IsSignedIn(User))
             {
                 <script>

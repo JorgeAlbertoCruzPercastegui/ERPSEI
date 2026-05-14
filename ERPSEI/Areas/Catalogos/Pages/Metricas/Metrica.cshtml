@@ -112,6 +112,8 @@
                             <th>Módulo</th>
                             <th>Fecha</th>
                             <th>IP</th>
+                            <th>Latitud</th>
+                            <th>Longitud</th>
                         </tr>
                     </thead>
 
@@ -133,6 +135,10 @@
                                 <td>@item.FechaHora.ToString("dd/MM/yyyy HH:mm")</td>
 
                                 <td>@item.Ip</td>
+
+                                <td>@(item.Latitud?.ToString() ?? "-")</td>
+
+                                <td>@(item.Longitud?.ToString() ?? "-")</td>
 
                             </tr>
                         }

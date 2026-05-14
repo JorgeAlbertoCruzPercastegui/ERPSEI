@@ -4,6 +4,7 @@ using ERPSEI.Data.Entities.Metricas;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ERPSEI.Areas.Catalogos.Pages.Metricas
 {
