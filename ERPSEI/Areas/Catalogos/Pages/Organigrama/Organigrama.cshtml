@@ -9,10 +9,10 @@
 }
 
 @{
-    var esAdminOrganigrama =
-        User.IsInRole("Administrador") ||
-        User.IsInRole("Administrador TH") ||
-        User.IsInRole("Master");
+    var rolesAdminOrganigrama = new[] { "Administrador", "Administrador TH", "Master" };
+
+    var esAdminOrganigrama = rolesAdminOrganigrama
+        .Any(rol => User.IsInRole(rol));
 
     var puedeExpandirContraer = User.Identity?.IsAuthenticated == true;
 }
