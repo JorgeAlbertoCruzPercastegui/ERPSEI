@@ -1,5 +1,7 @@
+using ERPSEI.Areas.Catalogos.Pages.Auditoria;
 using ERPSEI.Data;
 using ERPSEI.Data.Entities.Empresas;
+using ERPSEI.Data.Entities.Metricas;
 using ERPSEI.Data.Managers;
 using ERPSEI.Data.Managers.Empresas;
 using ERPSEI.Data.Managers.SAT.Catalogos;
@@ -23,8 +25,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 		private readonly ILogger<PerfilesModel> _logger;
 		private readonly ApplicationDbContext _db;
 		private readonly IEmpresaManager _empresaManager;
+        private readonly AuditoriaContext _auditoriaContext;
 
-		[BindProperty]
+        [BindProperty]
 		public InputModel Input { get; set; }
 
 		public class InputModel
@@ -50,8 +53,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			IPerfilManager catalogoManager,
 			IStringLocalizer<PerfilesModel> stringLocalizer,
 			ILogger<PerfilesModel> logger,
-			ApplicationDbContext db
-		)
+			ApplicationDbContext db,
+            AuditoriaContext auditoriaContext
+        )
 		{
 			Input = new InputModel();
 			_empresaManager = empresaManager;
@@ -61,7 +65,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			_strLocalizer = stringLocalizer;
 			_logger = logger;
 			_db = db;
-		}
+            _auditoriaContext = auditoriaContext;
+        }
 
 		public JsonResult OnGetListAll()
         {
@@ -108,7 +113,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			return jsonProdServ;
 		}
 
-		public async Task<JsonResult> OnPostDelete(string[] ids)
+        /*public async Task<JsonResult> OnPostDelete(string[] ids)
 		{
 			ServerResponse resp = new(true, _strLocalizer["DeletedUnsuccessfully"]);
 			try
@@ -165,9 +170,94 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			}
 
 			return new JsonResult(resp);
-		}
+		}*/
 
-		public async Task<JsonResult> OnPostSave()
+        public async Task<JsonResult> OnPostDelete(string[] ids)
+        {
+            ServerResponse resp = new(true, _strLocalizer["DeletedUnsuccessfully"]);
+
+            try
+            {
+                await _db.Database.BeginTransactionAsync();
+
+                _auditoriaContext.Activar("Perfiles", "Eliminación");
+
+                foreach (string id in ids)
+                {
+                    if (!int.TryParse(id, out int sid))
+                    {
+                        sid = 0;
+                    }
+
+                    Perfil? perfil = await _catalogoManager.GetByIdAsync(sid);
+
+                    List<Empresa> empresas = await _empresaManager.GetAllAsync();
+
+                    empresas = empresas
+                        .Where(e => e.PerfilId == sid)
+                        .ToList();
+
+                    List<Empresa> empresasActivasRelacionadas = empresas
+                        .Where(e => e.Deshabilitado == 0)
+                        .ToList();
+
+                    if (empresasActivasRelacionadas.Count > 0)
+                    {
+                        List<string> names = [];
+
+                        foreach (Empresa e in empresasActivasRelacionadas)
+                        {
+                            names.Add($"<i>{e.Id} - {e.RazonSocial}</i>");
+                        }
+
+                        resp.TieneError = true;
+                        resp.Mensaje = $"{_strLocalizer["PerfilIsRelated"]}<br/><br/><i>{perfil?.Nombre}</i><br/><br/>{string.Join("<br/>", names)}";
+                        break;
+                    }
+                    else
+                    {
+                        foreach (Empresa empresa in empresas)
+                        {
+                            empresa.PerfilId = null;
+                            await _empresaManager.UpdateAsync(empresa);
+                        }
+
+                        if (perfil != null)
+                        {
+                            foreach (ProductoServicioPerfil psp in perfil.ProductosServiciosPerfil)
+                            {
+                                _db.Remove(psp);
+                            }
+                        }
+
+                        await _catalogoManager.DeleteByIdAsync(sid);
+
+                        resp.TieneError = false;
+                        resp.Mensaje = _strLocalizer["DeletedSuccessfully"];
+                    }
+                }
+
+                if (resp.TieneError)
+                {
+                    throw new Exception(resp.Mensaje);
+                }
+
+                _auditoriaContext.Desactivar();
+
+                await _db.Database.CommitTransactionAsync();
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+
+                await _db.Database.RollbackTransactionAsync();
+                _logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        /*public async Task<JsonResult> OnPostSave()
 		{
 			ServerResponse resp = new(true, _strLocalizer["SavedUnsuccessfully"]);
 
@@ -205,8 +295,58 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			}
 
 			return new JsonResult(resp);
-		}
-		private async Task CreateOrUpdateProfile(InputModel p)
+		}*/
+
+        public async Task<JsonResult> OnPostSave()
+        {
+            ServerResponse resp = new(true, _strLocalizer["SavedUnsuccessfully"]);
+
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    resp.Errores = ModelState.Keys
+                        .SelectMany(k => ModelState[k]?.Errors ?? [])
+                        .Select(m => m.ErrorMessage)
+                        .ToArray();
+                }
+                else
+                {
+                    Perfil? perfil = await _catalogoManager.GetByNameAsync(Input.Nombre);
+
+                    if (perfil != null && perfil.Id != Input.Id)
+                    {
+                        resp.Mensaje = _strLocalizer["ErrorExistente"];
+                    }
+                    else
+                    {
+                        Perfil? perfilActual = await _catalogoManager.GetByIdAsync(Input.Id);
+
+                        string accionAuditoria = perfilActual != null
+                            ? "Edición"
+                            : "Alta";
+
+                        _auditoriaContext.Activar("Perfiles", accionAuditoria);
+
+                        await CreateOrUpdateProfile(Input);
+
+                        _auditoriaContext.Desactivar();
+
+                        resp.TieneError = false;
+                        resp.Mensaje = _strLocalizer["SavedSuccessfully"];
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+                _logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task CreateOrUpdateProfile(InputModel p)
 		{
 			try
 			{

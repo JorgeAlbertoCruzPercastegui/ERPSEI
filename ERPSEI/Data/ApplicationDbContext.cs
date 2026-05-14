@@ -319,6 +319,69 @@ namespace ERPSEI.Data
                     .ToList();
             }
 
+            if (_auditoriaContext.Modulo == "Roles")
+            {
+                entradas = entradas
+                    .Where(e => e.Entity.GetType().Name == "AppRole")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Puestos")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Puesto")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Áreas")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Area")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Subáreas")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Subarea")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Oficinas")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Oficina")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Orígenes")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Origen")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Niveles")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Nivel")
+                    .ToList();
+            }
+
+            if (_auditoriaContext.Modulo == "Perfiles")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Perfil")
+                    .ToList();
+            }
+
             var httpContext = _httpContextAccessor?.HttpContext;
 
             string? usuarioEjecutorId = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;

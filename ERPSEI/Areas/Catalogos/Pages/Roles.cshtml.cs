@@ -10,6 +10,9 @@ using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using ERPSEI.Areas.Catalogos.Pages.Auditoria;
+using ERPSEI.Data.Entities.Metricas;
+using System.Security.Claims;
 
 namespace ERPSEI.Areas.Catalogos.Pages
 {
@@ -23,8 +26,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 		private readonly IStringLocalizer<RolesModel> _strLocalizer;
 		private readonly ILogger<RolesModel> _logger;
 		private readonly ApplicationDbContext _db;
+        private readonly AuditoriaContext _auditoriaContext;
 
-		[BindProperty]
+        [BindProperty]
 		public RolModel InputRol { get; set; }
 
 		public class RolModel
@@ -55,8 +59,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			AppRoleManager roleManager,
 			IStringLocalizer<RolesModel> stringLocalizer,
 			ILogger<RolesModel> logger,
-			ApplicationDbContext db
-		)
+			ApplicationDbContext db,
+            AuditoriaContext auditoriaContext
+        )
 		{ 
 			_accesoModuloManager = accesoModuloManager;
 			_userManager = userManager;
@@ -65,8 +70,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			_strLocalizer = stringLocalizer;
 			_logger = logger;
 			_db = db;
+            _auditoriaContext = auditoriaContext;
 
-			InputRol = new RolModel();
+            InputRol = new RolModel();
 		}
 
 		private async Task<string> GetLista()
@@ -140,7 +146,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			return new JsonResult(resp);
 		}
 
-		public async Task<JsonResult> OnPostDeleteRoles(string[] ids)
+        /*public async Task<JsonResult> OnPostDeleteRoles(string[] ids)
 		{
 			ServerResponse resp = new(true, _strLocalizer["RolDeletedUnsuccessfully"]);
 			try
@@ -189,8 +195,76 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return new JsonResult(resp);
 		}
+		*/
 
-		public async Task<JsonResult> OnPostSave()
+        public async Task<JsonResult> OnPostDeleteRoles(string[] ids)
+        {
+            ServerResponse resp = new(true, _strLocalizer["RolDeletedUnsuccessfully"]);
+
+            try
+            {
+                await _db.Database.BeginTransactionAsync();
+
+                _auditoriaContext.Activar("Roles", "Eliminación");
+
+                foreach (string id in ids)
+                {
+                    AppRole? rol = await _roleManager.GetByIdAsync(id);
+
+                    IList<AppUser> users = await _userManager.GetUsersInRoleAsync(rol?.Name ?? string.Empty);
+
+                    List<AppUser> usuariosActivosRelacionados = users
+                        .Where(u => !u.IsBanned)
+                        .ToList();
+
+                    if (usuariosActivosRelacionados.Count > 0)
+                    {
+                        List<string> names = [];
+
+                        foreach (AppUser u in usuariosActivosRelacionados)
+                        {
+                            names.Add($"<i>{u.UserName}</i>");
+                        }
+
+                        resp.TieneError = true;
+                        resp.Mensaje = $"{_strLocalizer["RolIsRelated"]}<br/><br/><i>{rol?.Name}</i><br/><br/>{string.Join("<br/>", names)}";
+                        break;
+                    }
+                    else
+                    {
+                        await _accesoModuloManager.DeleteByRolIdAsync(rol?.Id ?? string.Empty);
+
+                        if (rol != null)
+                        {
+                            await _roleManager.DeleteAsync(rol);
+                        }
+
+                        resp.TieneError = false;
+                        resp.Mensaje = _strLocalizer["RolDeletedSuccessfully"];
+                    }
+                }
+
+                if (resp.TieneError)
+                {
+                    throw new Exception(resp.Mensaje);
+                }
+
+                _auditoriaContext.Desactivar();
+
+                await _db.Database.CommitTransactionAsync();
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+
+                _logger.LogError(ex.Message);
+                await _db.Database.RollbackTransactionAsync();
+            }
+
+            return new JsonResult(resp);
+        }
+
+        /*public async Task<JsonResult> OnPostSave()
 		{
 			ServerResponse resp = new(true, _strLocalizer["RolSavedUnsuccessfully"]);
 
@@ -226,8 +300,96 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			}
 
 			return new JsonResult(resp);
-		}
-		private async Task CreateOrUpdateRole(RolModel e)
+		}*/
+
+        public async Task<JsonResult> OnPostSave()
+        {
+            ServerResponse resp = new(true, _strLocalizer["RolSavedUnsuccessfully"]);
+
+            if (!ModelState.IsValid)
+            {
+                resp.Errores = ModelState.Keys
+                    .SelectMany(k => ModelState[k]?.Errors ?? [])
+                    .Select(m => m.ErrorMessage)
+                    .ToArray();
+
+                return new JsonResult(resp);
+            }
+
+            try
+            {
+                AppRole? rol = await _roleManager.GetByNameAsync(InputRol.NombreRol);
+
+                if (rol != null && rol.Id != InputRol.Id)
+                {
+                    resp.Mensaje = _strLocalizer["ErrorRolExistente"];
+                }
+                else
+                {
+                    AppRole? rolActual = await _roleManager.GetByIdAsync(InputRol.Id);
+
+                    string accionAuditoria = rolActual == null
+                        ? "Alta"
+                        : "Edición";
+
+                    _auditoriaContext.Activar("Roles", accionAuditoria);
+
+                    await CreateOrUpdateRole(InputRol);
+
+                    _auditoriaContext.Desactivar();
+
+                    if (accionAuditoria == "Edición")
+                    {
+                        await RegistrarAuditoriaPermisosRolAsync(
+                            InputRol.Id,
+                            InputRol.NombreRol
+                        );
+                    }
+
+                    resp.TieneError = false;
+                    resp.Mensaje = _strLocalizer["RolSavedSuccessfully"];
+                }
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+                await _db.Database.RollbackTransactionAsync();
+                _logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task RegistrarAuditoriaPermisosRolAsync(string rolId, string nombreRol)
+        {
+            _db.IntranetAuditorias.Add(new IntranetAuditoria
+            {
+                UsuarioEjecutorId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                UsuarioEjecutor = User.Identity?.Name,
+
+                Modulo = "Roles",
+                Accion = "Edición",
+                Entidad = "Rol",
+                RegistroId = rolId,
+                RegistroNombre = nombreRol,
+
+                CampoModificado = "Permisos",
+                ValorAnterior = "Configuración anterior",
+                ValorNuevo = "Permisos actualizados",
+
+                FechaHora = DateTime.Now,
+
+                Ip = HttpContext.Connection.RemoteIpAddress?.ToString() == "::1"
+                    ? "127.0.0.1"
+                    : HttpContext.Connection.RemoteIpAddress?.ToString(),
+
+                UserAgent = Request.Headers["User-Agent"].ToString()
+            });
+
+            await _db.SaveChangesAsync();
+        }
+
+        private async Task CreateOrUpdateRole(RolModel e)
 		{
 			try
 			{
