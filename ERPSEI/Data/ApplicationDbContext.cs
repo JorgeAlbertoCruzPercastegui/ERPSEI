@@ -298,17 +298,26 @@ namespace ERPSEI.Data
             var auditorias = new List<IntranetAuditoria>();
 
             var entradas = ChangeTracker.Entries()
-                .Where(e =>
-                    e.Entity != null &&
-                    e.Entity is not IntranetAuditoria &&
-                    e.Entity is not IntranetActividad &&
-                    !EsCambioDeRolUsuario(e) &&
-                    (
-                        e.State == EntityState.Added ||
-                        e.State == EntityState.Modified ||
-                        e.State == EntityState.Deleted
-                    ))
-                .ToList();
+            .Where(e =>
+                e.Entity != null &&
+                e.Entity is not IntranetAuditoria &&
+                e.Entity is not IntranetActividad &&
+                !EsCambioDeRolUsuario(e) &&
+                (
+                    e.State == EntityState.Added ||
+                    e.State == EntityState.Modified ||
+                    e.State == EntityState.Deleted
+                ))
+            .ToList();
+
+            if (_auditoriaContext.Modulo == "Gestión de Talento")
+            {
+                entradas = entradas
+                    .Where(e =>
+                        e.Entity.GetType().Name == "Empleado" &&
+                        e.State == EntityState.Modified)
+                    .ToList();
+            }
 
             var httpContext = _httpContextAccessor?.HttpContext;
 

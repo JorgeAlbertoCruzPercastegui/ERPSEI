@@ -21,6 +21,7 @@ using System.Data;
 using System.Net.Mime;
 using System.Text;
 using System.Web;
+using ERPSEI.Data.Entities.Metricas;
 
 namespace ERPSEI.Areas.Catalogos.Pages
 {
@@ -241,7 +242,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			public IFormFile? Plantilla { get; set; }
 		}
 
-		public GestionDeTalentoModel(
+        private readonly AuditoriaContext _auditoriaContext;
+
+        public GestionDeTalentoModel(
 			IUserStore<AppUser> store,
 			AppUserManager userManager,
 			IEmpleadoManager empleadoManager,
@@ -257,8 +260,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			ILogger<GestionDeTalentoModel> logger,
 			ApplicationDbContext db,
 			IEmailSender emailSender,
-			IEncriptacionAES encriptacionAES
-		)
+			IEncriptacionAES encriptacionAES,
+            AuditoriaContext auditoriaContext
+        )
 		{
 			_userStore = store;
 			_userManager = userManager;
@@ -277,8 +281,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			_db = db;
 			_emailSender = emailSender;
 			_encriptacionAES = encriptacionAES;
+            _auditoriaContext = auditoriaContext;
 
-			InputFiltro = new FiltroModel();
+            InputFiltro = new FiltroModel();
 			InputEmpleado = new EmpleadoModel();
 			InputImportar = new ImportarModel();
 		}
@@ -563,8 +568,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return new JsonResult(resp);
 		}
-		
-		public async Task<JsonResult> OnPostDisableEmpleados(string[] ids)
+
+        /*public async Task<JsonResult> OnPostDisableEmpleados(string[] ids)
 		{
 			ServerResponse resp = new(true, _strLocalizer["EmpleadosDisabledUnsuccessfully"]);
 			try
@@ -618,9 +623,81 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			}
 
 			return new JsonResult(resp);
-		}
-		
-		public async Task<JsonResult> OnPostSaveEmpleado()
+		}*/
+
+        public async Task<JsonResult> OnPostDisableEmpleados(string[] ids)
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpleadosDisabledUnsuccessfully"]);
+
+            try
+            {
+                await _db.Database.BeginTransactionAsync();
+
+                _auditoriaContext.Activar("Gestión de Talento", "Eliminación");
+
+                foreach (string id in ids)
+                {
+                    int intId = Convert.ToInt32(id);
+
+                    List<Empleado> empleados = await _empleadoManager.GetAllAsync(null, null, null, null, null, null, null, null, true);
+
+                    Empleado? empleado = empleados.Where(p => p.Id == intId).FirstOrDefault();
+
+                    empleados = empleados.Where(e => e.JefeId == intId).ToList();
+
+                    List<Empleado> empleadosActivosRelacionados = empleados
+                        .Where(e => e.Deshabilitado == 0)
+                        .ToList();
+
+                    if (empleadosActivosRelacionados.Count > 0)
+                    {
+                        List<string> names = [];
+
+                        foreach (Empleado e in empleadosActivosRelacionados)
+                        {
+                            names.Add($"<i>{e.Id} - {e.NombreCompleto}</i>");
+                        }
+
+                        resp.TieneError = true;
+                        resp.Mensaje = $"{_strLocalizer["EmpleadoIsRelated"]}<br/><br/><i>{empleado?.NombreCompleto}</i><br/><br/>{string.Join("<br/>", names)}";
+                        break;
+                    }
+                    else
+                    {
+                        foreach (Empleado e in empleados)
+                        {
+                            e.JefeId = null;
+                            await _empleadoManager.UpdateAsync(e);
+                        }
+
+                        await _empleadoManager.DisableByIdAsync(intId);
+
+                        resp.TieneError = false;
+                        resp.Mensaje = _strLocalizer["EmpleadosDisabledSuccessfully"];
+                    }
+                }
+
+                if (resp.TieneError)
+                {
+                    throw new Exception(resp.Mensaje);
+                }
+
+                _auditoriaContext.Desactivar();
+
+                await _db.Database.CommitTransactionAsync();
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+
+                _logger.LogError(ex.Message);
+                await _db.Database.RollbackTransactionAsync();
+            }
+
+            return new JsonResult(resp);
+        }
+
+        /*public async Task<JsonResult> OnPostSaveEmpleado()
 		{
 			ServerResponse resp = new(true, _strLocalizer["EmpleadoSavedUnsuccessfully"]);
 
@@ -657,8 +734,58 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			}
 
 			return new JsonResult(resp);
-		}
-		private async Task<string> ValidarSiExisteEmpleado(EmpleadoModel emp, bool curpAsKey)
+		}*/
+
+        public async Task<JsonResult> OnPostSaveEmpleado()
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpleadoSavedUnsuccessfully"]);
+
+            ModelState.Remove("Plantilla");
+
+            if (!ModelState.IsValid)
+            {
+                resp.Errores = ModelState.Keys
+                    .SelectMany(k => ModelState[k]?.Errors ?? [])
+                    .Select(m => m.ErrorMessage)
+                    .ToArray();
+
+                return new JsonResult(resp);
+            }
+
+            try
+            {
+                string validacion = await ValidarSiExisteEmpleado(InputEmpleado, false);
+
+                if ((validacion ?? string.Empty).Length <= 0)
+                {
+                    string accionAuditoria = InputEmpleado.Id >= 1
+                        ? "Edición"
+                        : "Alta";
+
+                    _auditoriaContext.Activar("Gestión de Talento", accionAuditoria);
+
+                    await CreateOrUpdateEmployee(InputEmpleado);
+
+                    _auditoriaContext.Desactivar();
+
+                    resp.TieneError = false;
+                    resp.Mensaje = _strLocalizer["EmpleadoSavedSuccessfully"];
+                }
+                else
+                {
+                    resp.Mensaje = validacion;
+                }
+            }
+            catch (Exception ex)
+            {
+                _auditoriaContext.Desactivar();
+                _logger.LogError(ex.Message);
+            }
+
+            return new JsonResult(resp);
+        }
+
+        private async Task<string> ValidarSiExisteEmpleado(EmpleadoModel emp, bool curpAsKey)
 		{
 			List<Empleado> coincidences = [];
 			List<Empleado> emps = await _empleadoManager.GetAllAsync();
@@ -916,6 +1043,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 if (emp == null)
                 {
                     resp.Mensaje = "No se encontró el empleado.";
+                    _auditoriaContext.Desactivar();
                     return new JsonResult(resp);
                 }
 
@@ -942,6 +1070,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     if (!result.Succeeded)
                     {
                         resp.Mensaje = string.Join(" | ", result.Errors.Select(e => e.Description));
+                        _auditoriaContext.Desactivar();
                         return new JsonResult(resp);
                     }
 
@@ -949,10 +1078,12 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     if (!roleResult.Succeeded)
                     {
                         resp.Mensaje = string.Join(" | ", roleResult.Errors.Select(e => e.Description));
+                        _auditoriaContext.Desactivar();
                         return new JsonResult(resp);
                     }
 
                     emp.UserId = user.Id;
+                    _auditoriaContext.Activar("Gestión de Talento", "Invitación");
                     await _empleadoManager.UpdateAsync(emp);
                 }
                 else
@@ -961,6 +1092,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     if (user == null)
                     {
                         resp.Mensaje = "No se encontró el usuario relacionado al empleado.";
+                        _auditoriaContext.Desactivar();
                         return new JsonResult(resp);
                     }
 
@@ -968,6 +1100,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     if (!removePwd.Succeeded)
                     {
                         resp.Mensaje = string.Join(" | ", removePwd.Errors.Select(e => e.Description));
+                        _auditoriaContext.Desactivar();
                         return new JsonResult(resp);
                     }
 
@@ -975,6 +1108,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     if (!addPwd.Succeeded)
                     {
                         resp.Mensaje = string.Join(" | ", addPwd.Errors.Select(e => e.Description));
+                        _auditoriaContext.Desactivar();
                         return new JsonResult(resp);
                     }
                 }
@@ -1003,12 +1137,14 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
                 resp.TieneError = false;
                 resp.Mensaje = _strLocalizer["EmpleadoInvitadoSuccessfully"];
+                _auditoriaContext.Desactivar();
                 return new JsonResult(resp);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al invitar empleado");
                 resp.Mensaje = ex.ToString();
+                _auditoriaContext.Desactivar();
                 return new JsonResult(resp);
             }
         }
