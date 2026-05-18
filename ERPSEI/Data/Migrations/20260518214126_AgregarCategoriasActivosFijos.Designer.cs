@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260518214126_AgregarCategoriasActivosFijos")]
+    partial class AgregarCategoriasActivosFijos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -26,10 +29,6 @@ namespace ERPSEI.Data.Migrations
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
-
-                    b.Property<string>("ArchivoAdjunto")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
 
                     b.Property<int?>("Cantidades")
                         .HasColumnType("int");
@@ -1204,63 +1203,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1073),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8081),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1089),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8093),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1091),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8094),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1092),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8095),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1093),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8096),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1093),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8097),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1094),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8098),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1095),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8098),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 5, 18, 16, 10, 47, 392, DateTimeKind.Local).AddTicks(1096),
+                            FechaCreacion = new DateTime(2026, 5, 18, 15, 41, 24, 18, DateTimeKind.Local).AddTicks(8099),
                             Nombre = "Otros"
                         });
                 });

@@ -104,6 +104,30 @@
                                 <label for="selFiltroTipo" asp-for="InputFiltro.TipoId" class="form-label"></label>
                             </div>
                         </div>
+
+                        <div class="col-sm-6 col-md-6 col-lg-3">
+                            <div class="form-floating mb-3">
+                                <select id="selFiltroOficina"
+                                        asp-for="InputFiltro.OficinaId"
+                                        class="form-select">
+
+                                    <option value="0">Seleccione...</option>
+
+                                    @foreach (var oficina in oficinas)
+                                    {
+                                        <option value="@oficina.Id">
+                                            @oficina.Nombre
+                                        </option>
+                                    }
+                                </select>
+
+                                <label for="selFiltroOficina"
+                                       asp-for="InputFiltro.OficinaId"
+                                       class="form-label">
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="col-sm-6 col-md-6 col-lg-3">
                             <div class="form-floating mb-3">
                                 <input id="inpFiltroFechaCompraInicio" type="date" asp-for="InputFiltro.FechaCompraInicio" class="form-control" placeholder="@Localizer["FechaCompraInicioField"]" />
@@ -360,6 +384,29 @@
                                     <input id="inpActivoFijoCantidad" asp-for="InputActivosFijos.Cantidades" type="text" class="form-control" placeholder="@Localizer["CantidadPlaceholder"]" />
                                     <label asp-for="InputActivosFijos.Cantidades" class="form-label required"></label>
                                     <span asp-validation-for="InputActivosFijos.Cantidades" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-4">
+                                <div class="archivo-activo-wrapper mb-3">
+                                    <label for="inpActivoFijoArchivo" class="archivo-activo-label">
+                                        Adjuntar PDF o Imagen
+                                    </label>
+
+                                    <input id="inpActivoFijoArchivo"
+                                           name="archivo"
+                                           type="file"
+                                           class="form-control archivo-activo-input"
+                                           accept="application/pdf,image/png,image/jpeg,image/jpg" />
+
+                                    <div id="archivoActualContainer" style="display:none;">
+                                        <a id="archivoActualLink"
+                                               href="#"
+                                               target="_blank"
+                                               class="btn btn-sm btn-outline-primary w-100 mt-2">
+                                            <i class="bi bi-paperclip"></i> Ver archivo actual
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
 

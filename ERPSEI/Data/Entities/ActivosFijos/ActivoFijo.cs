@@ -41,6 +41,9 @@ namespace ERPSEI.Data.Entities.ActivosFijos
 
         public int? Cantidades { get; set; }
 
+        [StringLength(300)]
+        public string? ArchivoAdjunto { get; set; }
+
         public bool Deshabilitado { get; set; } = false;
         public ICollection<ArchivoActivoFijo>? Archivos { get; set; }
     }

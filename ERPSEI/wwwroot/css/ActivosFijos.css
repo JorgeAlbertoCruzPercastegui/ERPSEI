@@ -530,3 +530,52 @@ body.module-main-theme.activosfijos-page {
         margin: 1rem;
     }
 }
+/* INPUT ARCHIVO - ACTIVO FIJO */
+.activosfijos-page .archivo-activo-wrapper {
+    border: 1px dashed rgba(33,22,111,.35);
+    background: #f8f9ff;
+    border-radius: 16px;
+    padding: 14px;
+    min-height: 92px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.activosfijos-page .archivo-activo-label {
+    color: #21166f;
+    font-weight: 700;
+    font-size: .92rem;
+    margin-bottom: 8px;
+}
+
+.activosfijos-page .archivo-activo-input {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: .55rem !important;
+    font-size: .9rem;
+}
+
+    .activosfijos-page .archivo-activo-input::file-selector-button {
+        background: #21166f;
+        color: #ffffff;
+        border: 0;
+        border-radius: 10px;
+        padding: .45rem .75rem;
+        margin-right: 10px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .activosfijos-page .archivo-activo-input::file-selector-button:hover {
+            background: #2f2390;
+        }
+
+.activosfijos-page #archivoActualContainer {
+    margin-top: 10px;
+}
+
+.activosfijos-page #archivoActualLink {
+    border-radius: 10px;
+    font-weight: 700;
+}

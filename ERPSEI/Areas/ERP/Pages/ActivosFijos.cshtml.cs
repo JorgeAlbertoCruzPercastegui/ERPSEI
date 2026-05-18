@@ -88,6 +88,9 @@ namespace ERPSEI.Areas.ERP.Pages
             [Display(Name = "Tipo")]
             public int? TipoId { get; set; }
 
+            [Display(Name = "Oficina")]
+            public int? OficinaId { get; set; }
+
             [Display(Name = "Fecha Compra Inicio")]
             [DataType(DataType.Date)]
             public DateTime? FechaCompraInicio { get; set; }
@@ -97,7 +100,6 @@ namespace ERPSEI.Areas.ERP.Pages
             public DateTime? FechaCompraFin { get; set; }
 
             [DataType(DataType.Text)]
-            //[StringLength(50, ErrorMessage = "FieldLength", MinimumLength = 3)]
             [RegularExpression(RegularExpressions.AlphanumNoSpace, ErrorMessage = "PersonName")]
             public string? Estatus { get; set; }
         }
@@ -173,6 +175,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
             [Display(Name = "Cantidad")]
             public int? Cantidades { get; set; }
+
+            public string? ArchivoAdjunto { get; set; }
+
+            public IFormFile? Archivo { get; set; }
 
             public int? Deshabilitado { get; set; } = 0;
         }
@@ -258,6 +264,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     linkFacturaCompra = a.LinkFacturaCompra ?? "-",
                     cantidades = a.Cantidades,
                     comentarios = a.Comentarios ?? "-",
+                    archivoAdjunto = a.ArchivoAdjunto ?? "",
                     deshabilitado = a.Deshabilitado.ToString()
                 });
             }
@@ -334,7 +341,7 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<JsonResult> OnPostSaveActivoFijo(ActivoFijoTableModel input)
+        public async Task<JsonResult> OnPostSaveActivoFijo(ActivoFijoTableModel input, IFormFile? archivo)
         {
             //ServerResponse resp = new(true, "No se pudo guardar el registro.");
             ServerResponse resp = new(true, localizer["ActualizadoAFUnsuccessfully"]);
@@ -423,6 +430,33 @@ namespace ERPSEI.Areas.ERP.Pages
                 esNuevo ? "Alta" : "Edición"
                 );
 
+                if (archivo != null && archivo.Length > 0)
+                {
+                    var extensionesPermitidas = new[] { ".pdf", ".jpg", ".jpeg", ".png" };
+                    var extension = Path.GetExtension(archivo.FileName).ToLower();
+
+                    if (!extensionesPermitidas.Contains(extension))
+                    {
+                        resp.Mensaje = "Solo se permiten archivos PDF o imágenes JPG/PNG.";
+                        return new JsonResult(resp);
+                    }
+
+                    var carpeta = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "activos-fijos");
+
+                    if (!Directory.Exists(carpeta))
+                        Directory.CreateDirectory(carpeta);
+
+                    var nombreArchivo = $"activo_{activo.Id}_{Guid.NewGuid()}{extension}";
+                    var rutaFisica = Path.Combine(carpeta, nombreArchivo);
+
+                    using (var stream = new FileStream(rutaFisica, FileMode.Create))
+                    {
+                        await archivo.CopyToAsync(stream);
+                    }
+
+                    activo.ArchivoAdjunto = $"/uploads/activos-fijos/{nombreArchivo}";
+                }
+
                 await db.SaveChangesAsync();
 
                 auditoriaContext.Desactivar();
@@ -481,6 +515,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     ubicacion = a.Ubicacion ?? "-",
                     linkFacturaCompra = a.LinkFacturaCompra ?? "-",
                     comentarios = a.Comentarios ?? "-",
+                    archivoAdjunto = a.ArchivoAdjunto ?? "",
                     deshabilitado = a.Deshabilitado
                 }).ToList();
 

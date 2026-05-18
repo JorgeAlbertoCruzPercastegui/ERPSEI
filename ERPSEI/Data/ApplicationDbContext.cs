@@ -1425,7 +1425,17 @@ namespace ERPSEI.Data
             b.Entity<CategoriaActivoFijo>().HasData(
                 new CategoriaActivoFijo { Id = 1, Descripcion = "Software", Deshabilitado = false },
                 new CategoriaActivoFijo { Id = 2, Descripcion = "Hardware", Deshabilitado = false },
-                new CategoriaActivoFijo { Id = 3, Descripcion = "Inmobiliario", Deshabilitado = false }
+                new CategoriaActivoFijo { Id = 3, Descripcion = "Inmobiliario", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 4, Descripcion = "Archiveros", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 5, Descripcion = "Escritorios y mesas", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 6, Descripcion = "Estaciones", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 7, Descripcion = "Extintores", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 8, Descripcion = "Línea blanca", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 9, Descripcion = "Pingüinos y ventiladores", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 10, Descripcion = "Sillas", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 11, Descripcion = "Decoración", Deshabilitado = false },
+                new CategoriaActivoFijo { Id = 12, Descripcion = "Otros ", Deshabilitado = false }
+
             );
 
             // Datos iniciales para Tipos

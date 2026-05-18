@@ -135,13 +135,13 @@ function initTable() {
                 valign: "middle",
                 sortable: true
             },
-            {
+            /*{
                 title: "Responsable",
                 field: "responsable",
                 align: "center",
                 valign: "middle",
                 sortable: true
-            },
+            },*/
             {
                 title: "Categoria",
                 field: "categoria",
@@ -152,6 +152,13 @@ function initTable() {
             {
                 title: "Tipo",
                 field: "tipo",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Oficina",
+                field: "oficina",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -173,6 +180,13 @@ function initTable() {
             {
                 title: "LinkFacturaCompra",
                 field: "linkFacturaCompra",
+                align: "center",
+                valign: "middle",
+                sortable: true
+            },
+            {
+                title: "Comentarios",
+                field: "comentarios",
                 align: "center",
                 valign: "middle",
                 sortable: true
@@ -256,6 +270,7 @@ function initActivoFijoDialog(action, row) {
     let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
     //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
     let comentariosField = document.getElementById("inpActivoFijoComentarios");
+    let archivoField = document.getElementById("inpActivoFijoArchivo");
     let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
     let cantidadesField = document.getElementById("inpActivoFijoCantidad");
     let oficinaField = document.getElementById("inpActivoFijoOficina");
@@ -290,6 +305,7 @@ function initActivoFijoDialog(action, row) {
             numeroSerieField.removeAttribute("disabled");
             //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
+            archivoField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
             cantidadesField.removeAttribute("disabled");
             oficinaField.removeAttribute("disabled");
@@ -314,6 +330,7 @@ function initActivoFijoDialog(action, row) {
             numeroSerieField.removeAttribute("disabled");
             //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
+            archivoField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
             cantidadesField.removeAttribute("disabled");
             oficinaField.removeAttribute("disabled");
@@ -337,6 +354,7 @@ function initActivoFijoDialog(action, row) {
             numeroSerieField.setAttribute("disabled", true);
             //ubicacionField.setAttribute("disabled", true);
             comentariosField.setAttribute("disabled", true);
+            archivoField.setAttribute("disabled", true);
             fechaRenovacionField.setAttribute("disabled", true);
             cantidadesField.setAttribute("disabled", true);
 
@@ -391,6 +409,18 @@ function initActivoFijoDialog(action, row) {
     numeroSerieField.value = row.numeroSerie ?? "";
     //ubicacionField.value = row.ubicacion ?? "";
     comentariosField.value = row.comentarios ?? "";
+
+    let archivoContainer = document.getElementById("archivoActualContainer");
+    let archivoLink = document.getElementById("archivoActualLink");
+
+    if (row.archivoAdjunto && row.archivoAdjunto !== "") {
+        archivoContainer.style.display = "block";
+        archivoLink.href = row.archivoAdjunto;
+    } else {
+        archivoContainer.style.display = "none";
+        archivoLink.href = "#";
+    }
+
     cantidadesField.value = row.cantidades ?? "";
 
     if (row.fechaRenovacion) {
@@ -482,54 +512,62 @@ function onGuardarClick() {
 
     let marcaField = document.getElementById("inpActivoFijoMarca");
     let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
-    //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
     let comentariosField = document.getElementById("inpActivoFijoComentarios");
     let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
     let cantidadesField = document.getElementById("inpActivoFijoCantidad");
+
+    let empleadoIdField = document.getElementById("inpEmpleadoId");
+    let oficinaField = document.getElementById("inpActivoFijoOficina");
+    let archivoField = document.getElementById("inpActivoFijoArchivo");
 
     let dlgTitle = document.getElementById("dlgActivoFijoTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
-    let empleadoIdField = document.getElementById("inpEmpleadoId");
-    let oficinaField = document.getElementById("inpActivoFijoOficina");
-
-
-    // 🔁 ACTUALIZA EL INPUT OCULTO CON EL VALOR DEL SELECT
     $("#inpEmpleadoId").val(responsableField.value);
 
-    let oParams = {
-        id: idField.value === "Nuevo" ? 0 : parseInt(idField.value),
-        folio: folioField.value,
-        descripcion: descripcionField.value,
-        responsable: responsableField.value,
-        empleadoId: parseInt(empleadoIdField?.value || 0),
-        oficina: oficinaField.value,
-        categoria: categoriaField.value,
-        tipo: tipoField.value,
-        fechaCompra: fechacompraField.value,
-        precio: parseFloat(precioField.value) || 0,
-        linkFacturaCompra: linkfacturaField.value,
-        marca: marcaField.value,
-        numeroSerie: numeroSerieField.value,
-        //ubicacion: ubicacionField.value,
-        comentarios: comentariosField.value,
-        fechaRenovacion: fechaRenovacionField.value,
-        cantidades: parseInt(cantidadesField?.value || 0)
-    };
+    let formData = new FormData();
 
-    doAjax(
-        "/ERP/ActivosFijos/SaveActivoFijo",
-        oParams,
-        function (resp) {
+    formData.append("id", idField.value === "Nuevo" ? 0 : parseInt(idField.value));
+    formData.append("folio", folioField.value);
+    formData.append("descripcion", descripcionField.value);
+    formData.append("responsable", responsableField.value);
+    formData.append("empleadoId", parseInt(empleadoIdField?.value || 0));
+    formData.append("oficina", oficinaField.value);
+    formData.append("categoria", categoriaField.value);
+    formData.append("tipo", tipoField.value);
+    formData.append("fechaCompra", fechacompraField.value);
+    formData.append("precio", parseFloat(precioField.value) || 0);
+    formData.append("linkFacturaCompra", linkfacturaField.value);
+    formData.append("marca", marcaField.value);
+    formData.append("numeroSerie", numeroSerieField.value);
+    formData.append("comentarios", comentariosField.value);
+    formData.append("fechaRenovacion", fechaRenovacionField.value);
+    formData.append("cantidades", parseInt(cantidadesField?.value || 0));
+
+    if (archivoField && archivoField.files.length > 0) {
+        formData.append("archivo", archivoField.files[0]);
+    }
+
+    $.ajax({
+        url: "/ERP/ActivosFijos/SaveActivoFijo",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        },
+        success: function (resp) {
             if (resp.tieneError) {
                 if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
                     let summary = ``;
                     resp.errores.forEach(function (error) {
                         summary += `<li>${error}</li>`;
                     });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+                    summaryContainer.innerHTML = `<ul>${summary}</ul>`;
                 }
+
                 showError(dlgTitle.innerHTML, resp.mensaje);
                 return;
             }
@@ -538,11 +576,10 @@ function onGuardarClick() {
             document.querySelector("[name='refresh']").click();
             showSuccess(dlgTitle.innerHTML, resp.mensaje);
         },
-        function (error) {
-            showError("Error", error);
-        },
-        postOptions
-    );
+        error: function (xhr) {
+            showError("Error", xhr.responseText || "Ocurrió un error al guardar el activo fijo.");
+        }
+    });
 }
 
 function onBuscarClick() {
@@ -551,6 +588,7 @@ function onBuscarClick() {
     let inpResponsable = document.getElementById("inpFiltroResponsable");
     let selCategoria = document.getElementById("selFiltroCategoria");
     let selTipo = document.getElementById("selFiltroTipo");
+    let selOficina = document.getElementById("selFiltroOficina");
     let inpFechaInicio = document.getElementById("inpFiltroFechaCompraInicio");
     let inpFechaFin = document.getElementById("inpFiltroFechaCompraFin");
     let inpEstatus = document.getElementById("inpFiltroEstatus");
@@ -560,6 +598,9 @@ function onBuscarClick() {
         responsable: inpResponsable.value.trim() || null,
         categoriaId: selCategoria.value === "0" || selCategoria.value === "" ? null : parseInt(selCategoria.value),
         tipoId: selTipo.value === "0" || selTipo.value === "" ? null : parseInt(selTipo.value),
+        oficinaId: selOficina.value === "0" || selOficina.value === ""
+            ? null
+            : parseInt(selOficina.value),
         fechaCompraInicio: inpFechaInicio.value || null,
         fechaCompraFin: inpFechaFin.value || null,
         estatus: inpEstatus.value.trim() || null

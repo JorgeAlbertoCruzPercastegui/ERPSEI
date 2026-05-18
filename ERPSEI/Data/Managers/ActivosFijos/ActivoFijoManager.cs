@@ -137,6 +137,11 @@ namespace ERPSEI.Data.Managers.ActivosFijos
                 if (filtro.TipoId.HasValue && filtro.TipoId != 0)
                     query = query.Where(a => a.TipoId == filtro.TipoId);
 
+                if (filtro.OficinaId.HasValue && filtro.OficinaId > 0)
+                {
+                    query = query.Where(x => x.OficinaId == filtro.OficinaId);
+                }
+
                 if (filtro.FechaCompraInicio.HasValue)
                     query = query.Where(a => a.FechaCompra >= filtro.FechaCompraInicio.Value);
 
