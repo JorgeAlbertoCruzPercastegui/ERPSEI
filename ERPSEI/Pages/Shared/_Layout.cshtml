@@ -169,6 +169,7 @@
     if (empleadoActual != null)
     {
         var fechaHoy = DateTime.Today;
+        var fechaIngreso = empleadoActual.FechaIngreso.Date;
 
         var configVacaciones = await Db.ConfiguracionesVacaciones
             .AsNoTracking()
@@ -178,51 +179,68 @@
             ? "LegalesProporcionales"
             : configVacaciones.TipoVisualizacion;
 
-        int aniosCumplidos = fechaHoy.Year - empleadoActual.FechaIngreso.Date.Year;
+        int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
 
-        if (fechaHoy < empleadoActual.FechaIngreso.Date.AddYears(aniosCumplidos))
+        if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
             aniosCumplidos--;
 
-        decimal diasPorAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos);
-        decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
-
         decimal diasLegales = 0m;
+        decimal diasTomados = 0m;
+        decimal diasVencidos = 0m;
         decimal diasProporcionales = 0m;
 
-        if (aniosCumplidos >= 1)
+        for (int anio = 1; anio <= aniosCumplidos; anio++)
         {
-            var ultimoAniversario = empleadoActual.FechaIngreso.Date.AddYears(aniosCumplidos);
+            var fechaGeneracion = fechaIngreso.AddYears(anio);
+            var fechaVencimiento = fechaGeneracion.AddYears(2);
+            var diasGenerados = ObtenerDiasVacacionesPorAntiguedad(anio);
 
-            diasLegales = diasPorAnio;
+            if (fechaHoy <= fechaVencimiento)
+            {
+                diasLegales += diasGenerados;
+            }
+            else
+            {
+                diasVencidos += diasGenerados;
+            }
+        }
+
+        diasTomados = await Db.SolicitudesVacaciones
+            .Where(s =>
+                s.EmpleadoId == empleadoActual.Id &&
+                (
+                    (
+                        !s.EsVacacionAnticipada &&
+                        (
+                            s.Estado == EstadoSolicitud.Aprobado ||
+                            (s.EstadoJefeDirecto == "Aprobado" && s.EstadoTH == "Aprobado")
+                        )
+                    )
+                    ||
+                    (
+                        s.EsVacacionAnticipada &&
+                        s.DescuentoAnticipadoAplicado
+                    )
+                ))
+            .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+        if (tipoAsignacion == "LegalesProporcionales")
+        {
+            var fechaBase = aniosCumplidos >= 1
+                ? fechaIngreso.AddYears(aniosCumplidos)
+                : fechaIngreso;
+
+            decimal diasProximoAnio = ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
 
             diasProporcionales = Math.Round(
                 (diasProximoAnio / 365m) *
-                (decimal)(fechaHoy - ultimoAniversario).TotalDays,
-                1);
-        }
-        else
-        {
-            diasLegales = 0m;
-
-            diasProporcionales = Math.Round(
-                (12m / 365m) *
-                (decimal)(fechaHoy - empleadoActual.FechaIngreso.Date).TotalDays,
+                (decimal)(fechaHoy - fechaBase).TotalDays,
                 1);
         }
 
         decimal acumuladas = tipoAsignacion == "Legales"
             ? diasLegales
             : diasLegales + diasProporcionales;
-
-        decimal diasTomados = await Db.SolicitudesVacaciones
-            .Where(s =>
-                s.EmpleadoId == empleadoActual.Id &&
-                (
-                    (!s.EsVacacionAnticipada && s.Estado == EstadoSolicitud.Aprobado)
-                    ||
-                    (s.EsVacacionAnticipada && s.DescuentoAnticipadoAplicado)
-                ))
-            .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
         decimal diasFuturasDescontables = await Db.SolicitudesVacaciones
             .Where(s =>
@@ -232,10 +250,8 @@
                 !s.DescuentoAnticipadoAplicado)
             .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
-        decimal diasVencidos = 0m;
-
         saldoVacacionesEmpleado =
-            Math.Max(acumuladas - diasTomados - diasFuturasDescontables - diasVencidos, 0m);
+            Math.Max(acumuladas - diasTomados - diasFuturasDescontables, 0m);
     }
 
     if (accesos.Count >= 0)
@@ -846,7 +862,7 @@
                                     <i class="bi bi-calendar-check-fill"></i>
                                     <div>
                                         <span>Saldo de vacaciones</span>
-                                        <strong>@saldoVacacionesEmpleado día(s)</strong>
+                                        <strong>@saldoVacacionesEmpleado.ToString("0.00") día(s)</strong>
                                     </div>
                                 </div>
 
