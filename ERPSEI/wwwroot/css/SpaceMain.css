@@ -702,7 +702,7 @@
 
 .home-main-theme .topbar-links {
     position: relative;
-    z-index: 5000;
+    z-index: 1000;
 }
 
 .home-main-theme .quick-nav-wrap {
@@ -1206,4 +1206,235 @@ body.module-main-theme.manuales-politicas-page {
     object-fit: cover;
     display: block;
     border-radius: 8px;
+}
+
+
+
+
+.quick-notification-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 0;
+    background: #1f1466;
+    color: #fff;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: .25s ease;
+    box-shadow: 0 6px 16px rgba(31, 20, 102, .25);
+}
+
+    .quick-notification-btn:hover {
+        background: #d4af37;
+        color: #1f1466;
+        transform: translateY(-2px);
+    }
+
+    .quick-notification-btn i {
+        font-size: 1.15rem;
+    }
+
+.quick-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #d4af37;
+    color: #1f1466;
+    min-width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.quick-notification-header {
+    background: linear-gradient(135deg, #1f1466 0%, #2c1d8f 100%);
+    color: #fff;
+    padding: 18px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .quick-notification-header strong {
+        font-size: 1.05rem;
+    }
+
+    .quick-notification-header span {
+        font-size: .9rem;
+        opacity: .85;
+    }
+
+.quick-notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 14px 18px;
+    text-decoration: none;
+    color: #222;
+    border-bottom: 1px solid #f1f1f1;
+    transition: .2s ease;
+}
+
+    .quick-notification-item:hover {
+        background: #f8f9ff;
+    }
+
+    .quick-notification-item.is-unread {
+        background: #fff8df;
+    }
+
+.quick-notification-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #f1f2ff;
+    color: #1f1466;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.quick-notification-item strong,
+.quick-notification-item span,
+.quick-notification-item small {
+    display: block;
+}
+
+.quick-notification-item strong {
+    font-size: 14px;
+}
+
+.quick-notification-item span {
+    font-size: 13px;
+    color: #666;
+}
+
+.quick-notification-item small {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+}
+
+.quick-notification-empty {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}
+
+.quick-notifications {
+    position: relative;
+    z-index: 99999;
+}
+
+.quick-notification-menu {
+    z-index: 999999 !important;
+    position: absolute !important;
+}
+
+.header-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 999999 !important;
+}
+
+.home-main-theme .header-bg,
+.home-main-theme .header-bg-inner,
+.home-main-theme header,
+.home-main-theme nav.navbar {
+    position: relative;
+    z-index: 999998 !important;
+    overflow: visible !important;
+}
+
+.quick-notifications {
+    position: relative;
+    z-index: 1000000 !important;
+}
+
+.quick-notification-menu {
+    width: 360px;
+    min-height: 120px;
+    border: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    padding: 0;
+    margin-top: 14px !important;
+    box-shadow: 0 20px 55px rgba(0,0,0,.22);
+    background: #ffffff;
+    animation: notificationDropdown .22s ease;
+}
+@keyframes notificationDropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.quick-notification-btn.has-alert {
+    animation: bellShake 2s infinite;
+}
+
+@keyframes bellShake {
+
+    0% {
+        transform: rotate(0);
+    }
+
+    5% {
+        transform: rotate(15deg);
+    }
+
+    10% {
+        transform: rotate(-12deg);
+    }
+
+    15% {
+        transform: rotate(10deg);
+    }
+
+    20% {
+        transform: rotate(-8deg);
+    }
+
+    25% {
+        transform: rotate(0);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+}
+
+.quick-notification-badge {
+    animation: pulseBadge 1.8s infinite;
+}
+
+@keyframes pulseBadge {
+
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.18);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }

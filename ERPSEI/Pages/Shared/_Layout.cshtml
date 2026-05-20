@@ -33,6 +33,7 @@
 
 }
 
+
 @{
     AppUser? usr = await UsuariosManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
     IList<string> rolesUsuario = usr != null ? await UsuariosManager.GetRolesAsync(usr) : new List<string>();
@@ -451,6 +452,36 @@
 
     bool mostrarMetricasMenu = esAdministrador;
     bool mostrarAuditoriaMenu = esAdministrador;
+
+    var notificacionesUsuario = new List<dynamic>();
+    int totalNotificacionesNoLeidas = 0;
+
+    if (usr != null)
+    {
+        var userIdActual = usr.Id;
+
+        notificacionesUsuario = await Db.NotificacionesIntranetUsuarios
+            .AsNoTracking()
+            .Where(x => x.UserId == userIdActual)
+            .Include(x => x.Notificacion)
+            .OrderByDescending(x => x.Notificacion.FechaPublicacion)
+            .Take(8)
+            .Select(x => new
+            {
+                Id = x.NotificacionIntranetId,
+                x.Leida,
+                x.Notificacion.Titulo,
+                x.Notificacion.Descripcion,
+                x.Notificacion.Url,
+                x.Notificacion.Icono,
+                x.Notificacion.FechaPublicacion
+            })
+            .ToListAsync<dynamic>();
+
+        totalNotificacionesNoLeidas = await Db.NotificacionesIntranetUsuarios
+            .AsNoTracking()
+            .CountAsync(x => x.UserId == userIdActual && !x.Leida);
+    }
 }
 
 <!DOCTYPE html>
@@ -511,7 +542,59 @@
                         }
                     </ul>
 
-                    <div class="header-right-tools">
+                        <div class="header-right-tools">
+
+                            @if (SignInManager.IsSignedIn(User))
+                            {
+                                <div class="quick-notifications dropdown">
+                                    <button class="quick-notification-btn @(totalNotificacionesNoLeidas > 0 ? "has-alert" : "")"
+                                            type="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <i class="bi bi-bell-fill"></i>
+
+                                        @if (totalNotificacionesNoLeidas > 0)
+                                        {
+                                            <span class="quick-notification-badge">
+                                                @totalNotificacionesNoLeidas
+                                            </span>
+                                        }
+                                    </button>
+
+                                    <div class="dropdown-menu dropdown-menu-end quick-notification-menu">
+                                        <div class="quick-notification-header">
+                                            <strong>Notificaciones</strong>
+                                            <span>@totalNotificacionesNoLeidas nueva(s)</span>
+                                        </div>
+
+                                        @if (notificacionesUsuario.Any())
+                                        {
+                                            foreach (var n in notificacionesUsuario)
+                                            {
+                                                <a class="quick-notification-item @(n.Leida ? "" : "is-unread")"
+                                                       href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
+                                                    <div class="quick-notification-icon">
+                                                        <i class="@n.Icono"></i>
+                                                    </div>
+
+                                                    <div>
+                                                        <strong>@n.Titulo</strong>
+                                                        <span>@n.Descripcion</span>
+                                                        <small>@n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")</small>
+                                                    </div>
+                                                </a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="quick-notification-empty">
+                                                No tienes notificaciones.
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
                             @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
                             {
                                 <div class="header-side-visual">
@@ -528,8 +611,8 @@
                                 </div>
                             }
 
-                        <partial name="_LoginPartial" />
-                    </div>
+                            <partial name="_LoginPartial" />
+                        </div>
                 </div>
             </div>
         </nav>

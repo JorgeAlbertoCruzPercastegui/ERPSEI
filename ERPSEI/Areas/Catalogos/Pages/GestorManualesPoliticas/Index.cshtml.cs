@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using ERPSEI.Email;
 
 namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 {
@@ -20,15 +21,18 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
         private readonly ApplicationDbContext _db;
         private readonly IWebHostEnvironment _env;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IEmailSender _emailSender;
 
         public IndexModel(
             ApplicationDbContext db,
             IWebHostEnvironment env,
-            UserManager<AppUser> userManager)
+            UserManager<AppUser> userManager,
+            IEmailSender emailSender)
         {
             _db = db;
             _env = env;
             _userManager = userManager;
+            _emailSender = emailSender;
         }
 
         public List<Area> AreasDisponibles { get; set; } = new();
@@ -201,6 +205,8 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 
             ManualPoliticaIntranet entity;
 
+            bool estabaPublicadoAntes = false;
+
             if (Input.Id.HasValue)
             {
                 //entity = await _db.ManualesPoliticasIntranet.FirstOrDefaultAsync(x => x.Id == Input.Id.Value);
@@ -208,6 +214,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 
                 if (entity == null)
                     return NotFound();
+                estabaPublicadoAntes = entity.Publicado;
             }
             else
             {
@@ -327,6 +334,11 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 
             await _db.SaveChangesAsync();
 
+            if (entity.Publicado && !estabaPublicadoAntes)
+            {
+                await CrearNotificacionPublicacionManualAsync(entity);
+            }
+
             TempData["Ok"] = Input.Id.HasValue
                 ? "Registro actualizado correctamente."
                 : "Registro guardado correctamente.";
@@ -347,7 +359,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostTogglePublicadoAsync(int id)
+        /*public async Task<IActionResult> OnPostTogglePublicadoAsync(int id)
         {
             var item = await _db.ManualesPoliticasIntranet.FirstOrDefaultAsync(x => x.Id == id);
             if (item == null) return NotFound();
@@ -356,6 +368,33 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
             await _db.SaveChangesAsync();
 
             TempData["Ok"] = "Publicación actualizada.";
+            return RedirectToPage();
+        }*/
+
+        public async Task<IActionResult> OnPostTogglePublicadoAsync(int id)
+        {
+            var item = await _db.ManualesPoliticasIntranet
+                .Include(x => x.AreasPermitidas)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (item == null)
+                return NotFound();
+
+            bool publicarAhora = !item.Publicado;
+
+            item.Publicado = publicarAhora;
+
+            await _db.SaveChangesAsync();
+
+            if (publicarAhora)
+            {
+                await CrearNotificacionPublicacionManualAsync(item);
+            }
+
+            TempData["Ok"] = publicarAhora
+                ? "Documento publicado correctamente. Se notificó a los usuarios."
+                : "Documento despublicado correctamente.";
+
             return RedirectToPage();
         }
 
@@ -391,6 +430,163 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 
             TempData["Ok"] = "Registro eliminado.";
             return RedirectToPage();
+        }
+
+        private async Task CrearNotificacionPublicacionManualAsync(ManualPoliticaIntranet documento)
+        {
+            var usuariosQuery = _db.Users
+                .Include(u => u.Empleado)
+                .AsQueryable();
+
+            if (!documento.PublicacionGeneral)
+            {
+                var areasPermitidas = await _db.ManualPoliticaAreas
+                    .Where(x => x.ManualPoliticaIntranetId == documento.Id)
+                    .Select(x => x.AreaId)
+                    .ToListAsync();
+
+                usuariosQuery = usuariosQuery.Where(u =>
+                    u.Empleado != null &&
+                    u.Empleado.AreaId.HasValue &&
+                    areasPermitidas.Contains(u.Empleado.AreaId.Value));
+            }
+
+            var usuarios = await usuariosQuery
+                .Where(u => !string.IsNullOrWhiteSpace(u.Email))
+                .ToListAsync();
+
+            if (!usuarios.Any())
+                return;
+
+            string tipo = documento.Tipo ?? "Documento";
+
+            string url = Url.Page(
+                "/ManualesPoliticas",
+                pageHandler: null,
+                values: null,
+                protocol: Request.Scheme
+            ) ?? "/ManualesPoliticas";
+
+            var notificacion = new NotificacionIntranet
+            {
+                Titulo = $"Nuevo {tipo} publicado",
+                Descripcion = documento.Titulo,
+                Tipo = tipo,
+                Modulo = "Manuales / Políticas / Reglamentos",
+                Url = "/ManualesPoliticas",
+                Icono = tipo.Equals("Manual", StringComparison.OrdinalIgnoreCase)
+                    ? "bi bi-journal-bookmark-fill"
+                    : tipo.Equals("Politica", StringComparison.OrdinalIgnoreCase)
+                        ? "bi bi-shield-check"
+                        : "bi bi-file-earmark-text-fill",
+                FechaPublicacion = DateTime.Now,
+                Activa = true,
+                UserIdCreador = _userManager.GetUserId(User)
+            };
+
+            foreach (var usuario in usuarios)
+            {
+                notificacion.UsuariosNotificados.Add(new NotificacionIntranetUsuario
+                {
+                    UserId = usuario.Id,
+                    Leida = false,
+                    FechaCreacion = DateTime.Now
+                });
+            }
+
+            _db.NotificacionesIntranet.Add(notificacion);
+            await _db.SaveChangesAsync();
+
+            // CORREO DE PRUEBAS
+            string correoPruebas = "jcruz@asesorcliente.com";
+
+            string cuerpo = $@"
+                <div style='font-family:Arial,sans-serif;color:#1f1466;'>
+
+                    <div style='background:#1f1466;
+                                padding:18px 22px;
+                                border-radius:14px 14px 0 0;
+                                color:#ffffff;'>
+
+                        <h2 style='margin:0;font-size:22px;'>
+                            Nuevo {tipo} publicado
+                        </h2>
+
+                    </div>
+
+                    <div style='border:1px solid #e5e7eb;
+                                border-top:0;
+                                padding:24px;
+                                border-radius:0 0 14px 14px;
+                                background:#ffffff;'>
+
+                        <p style='font-size:15px;color:#374151;'>
+                            Hola,
+                        </p>
+
+                        <p style='font-size:15px;color:#374151;line-height:1.6;'>
+                            Se ha publicado un nuevo documento en la intranet corporativa de SEI.
+                        </p>
+
+                        <div style='background:#f8f9ff;
+                                    border-left:4px solid #1f1466;
+                                    padding:16px;
+                                    border-radius:10px;
+                                    margin:18px 0;'>
+
+                            <div style='font-size:18px;
+                                        font-weight:700;
+                                        color:#1f1466;
+                                        margin-bottom:8px;'>
+
+                                {documento.Titulo}
+
+                            </div>
+
+                            <div style='font-size:14px;
+                                        color:#4b5563;
+                                        line-height:1.5;'>
+
+                                {documento.Descripcion}
+
+                            </div>
+
+                        </div>
+
+                        <p style='margin-top:24px;'>
+
+                            <a href='{url}'
+                               style='display:inline-block;
+                                      background:#1f1466;
+                                      color:#ffffff;
+                                      padding:12px 18px;
+                                      border-radius:10px;
+                                      text-decoration:none;
+                                      font-weight:600;'>
+
+                                Ver documento
+
+                            </a>
+
+                        </p>
+
+                        <hr style='margin:28px 0;border:none;border-top:1px solid #e5e7eb;' />
+
+                        <p style='font-size:12px;color:#6b7280;'>
+
+                            Este correo fue enviado automáticamente desde la Intranet SEI.
+
+                        </p>
+
+                    </div>
+
+                </div>";
+
+            await _emailSender.SendEmailAsync(
+                correoPruebas,
+                $"Nuevo {tipo} publicado - Intranet SEI",
+                cuerpo
+            );
         }
     }
 }

@@ -229,6 +229,10 @@ namespace ERPSEI.Data
         public DbSet<ManualPoliticaIntranet> ManualesPoliticasIntranet { get; set; }
         public DbSet<ManualPoliticaArea> ManualPoliticaAreas { get; set; }
 
+        //Notificaciones Intranet
+        public DbSet<NotificacionIntranet> NotificacionesIntranet { get; set; }
+        public DbSet<NotificacionIntranetUsuario> NotificacionesIntranetUsuarios { get; set; }
+
         //Métricas
         public DbSet<IntranetActividad> IntranetActividades { get; set; }
 
@@ -716,6 +720,30 @@ namespace ERPSEI.Data
             //Eventos
             BuildEventosIntranet(modelBuilder);
 
+            //Notificaciones
+            BuildNotificaciones(modelBuilder);
+
+        }
+
+        private static void BuildNotificaciones(ModelBuilder b)
+        {
+            b.Entity<NotificacionIntranet>()
+                .HasOne(n => n.UsuarioCreador)
+                .WithMany()
+                .HasForeignKey(n => n.UserIdCreador)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            b.Entity<NotificacionIntranetUsuario>()
+                .HasOne(nu => nu.Notificacion)
+                .WithMany(n => n.UsuariosNotificados)
+                .HasForeignKey(nu => nu.NotificacionIntranetId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.Entity<NotificacionIntranetUsuario>()
+                .HasOne(nu => nu.Usuario)
+                .WithMany()
+                .HasForeignKey(nu => nu.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
 
         private static void BuildEventosIntranet(ModelBuilder b)
