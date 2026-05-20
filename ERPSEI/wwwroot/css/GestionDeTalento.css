@@ -643,3 +643,54 @@ body.module-main-theme.gestiontalento-page {
         height: 220px;
     }
 }
+
+/* =====================================================
+   NOTIFICACIONES ENCIMA DEL MENÚ SIN ROMPER DROPDOWNS
+   GESTION DE TALENTO
+   ===================================================== */
+
+body.module-main-theme.gestiontalento-page .header-bg,
+body.module-main-theme.gestiontalento-page .header-bg-inner,
+body.module-main-theme.gestiontalento-page header,
+body.module-main-theme.gestiontalento-page .navbar,
+body.module-main-theme.gestiontalento-page .navbar-collapse,
+body.module-main-theme.gestiontalento-page .container,
+body.module-main-theme.gestiontalento-page .container-fluid {
+    overflow: visible !important;
+}
+
+/* Dropdowns del menú normales */
+body.module-main-theme.gestiontalento-page .quick-dd {
+    position: relative !important;
+}
+
+body.module-main-theme.gestiontalento-page .quick-dd-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 2px !important;
+    z-index: 2000 !important;
+}
+
+/* Campana encima del menú */
+body.module-main-theme.gestiontalento-page .header-right-tools,
+body.module-main-theme.gestiontalento-page .notification-wrapper,
+body.module-main-theme.gestiontalento-page .notification-bell,
+body.module-main-theme.gestiontalento-page .notifications-wrapper {
+    position: relative !important;
+    z-index: 9999999 !important;
+}
+
+/* Panel de notificaciones encima de todo */
+body.module-main-theme.gestiontalento-page .notification-dropdown,
+body.module-main-theme.gestiontalento-page .dropdown-notifications,
+body.module-main-theme.gestiontalento-page .notifications-dropdown-menu,
+body.module-main-theme.gestiontalento-page .notification-panel {
+    position: absolute !important;
+    z-index: 99999999 !important;
+}
+
+/* Menú debajo de las notificaciones */
+body.module-main-theme.gestiontalento-page .topbar-links {
+    z-index: 1 !important;
+}

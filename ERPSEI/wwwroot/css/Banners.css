@@ -559,3 +559,54 @@ body.module-main-theme {
         white-space: nowrap;
     }
 }
+
+/* =====================================================
+   NOTIFICACIONES ENCIMA DEL MENÚ SIN ROMPER DROPDOWNS
+   BANNERS
+   ===================================================== */
+
+body.module-main-theme .header-bg,
+body.module-main-theme .header-bg-inner,
+body.module-main-theme header,
+body.module-main-theme .navbar,
+body.module-main-theme .navbar-collapse,
+body.module-main-theme .container,
+body.module-main-theme .container-fluid {
+    overflow: visible !important;
+}
+
+/* Dropdowns del menú normales */
+body.module-main-theme .quick-dd {
+    position: relative !important;
+}
+
+body.module-main-theme .quick-dd-menu {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 2px !important;
+    z-index: 2000 !important;
+}
+
+/* Campana encima del menú */
+body.module-main-theme .header-right-tools,
+body.module-main-theme .notification-wrapper,
+body.module-main-theme .notification-bell,
+body.module-main-theme .notifications-wrapper {
+    position: relative !important;
+    z-index: 9999999 !important;
+}
+
+/* Panel de notificaciones encima de todo */
+body.module-main-theme .notification-dropdown,
+body.module-main-theme .dropdown-notifications,
+body.module-main-theme .notifications-dropdown-menu,
+body.module-main-theme .notification-panel {
+    position: absolute !important;
+    z-index: 99999999 !important;
+}
+
+/* Menú debajo de las notificaciones */
+body.module-main-theme .topbar-links {
+    z-index: 1 !important;
+}
