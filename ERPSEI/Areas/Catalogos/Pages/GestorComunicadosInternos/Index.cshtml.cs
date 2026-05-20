@@ -4,6 +4,9 @@ using ERPSEI.Data.Managers.Intranet;
 using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using ERPSEI.Data;
+using ERPSEI.Email;
+using Microsoft.EntityFrameworkCore;
 
 namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
 {
@@ -13,17 +16,23 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
         private readonly IWebHostEnvironment _environment;
         private readonly AppUserManager _userManager;
         private readonly IIntranetNotificationService _notificationService;
+        private readonly ApplicationDbContext _db;
+        private readonly IEmailSender _emailSender;
 
         public IndexModel(
             IComunicadoInternoManager comunicadoManager,
             IWebHostEnvironment environment,
             AppUserManager userManager,
-            IIntranetNotificationService notificationService)
+            IIntranetNotificationService notificationService,
+            ApplicationDbContext db,
+            IEmailSender emailSender)
         {
             _comunicadoManager = comunicadoManager;
             _environment = environment;
             _userManager = userManager;
             _notificationService = notificationService;
+            _db = db;
+            _emailSender = emailSender;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -300,7 +309,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
                 mensaje = ok ? "Comunicado publicado correctamente." : "No se pudo publicar el comunicado."
             });
         }*/
-        public async Task<IActionResult> OnPostPublicarAsync(int id)
+        /*public async Task<IActionResult> OnPostPublicarAsync(int id)
         {
             AppUser? usr = await _userManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
             bool ok = await _comunicadoManager.PublicarAsync(id, usr?.Id);
@@ -330,6 +339,34 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
                 tieneError = !ok,
                 mensaje = ok ? "Comunicado publicado correctamente." : "No se pudo publicar el comunicado."
             });
+        }*/
+
+        public async Task<IActionResult> OnPostPublicarAsync(int id)
+        {
+            AppUser? usr = await _userManager.FindByNameAsync(User.Identity?.Name ?? string.Empty);
+            bool ok = await _comunicadoManager.PublicarAsync(id, usr?.Id);
+
+            if (ok)
+            {
+                var entity = await _comunicadoManager.GetByIdAsync(id);
+
+                if (entity != null && !entity.NotificacionEnviada)
+                {
+                    await CrearNotificacionPublicacionComunicadoAsync(entity);
+
+                    entity.NotificacionEnviada = true;
+                    entity.FechaNotificacion = DateTime.Now;
+                    await _comunicadoManager.UpdateAsync(entity);
+                }
+            }
+
+            return new JsonResult(new
+            {
+                tieneError = !ok,
+                mensaje = ok
+                    ? "Comunicado publicado correctamente. Se generó la notificación."
+                    : "No se pudo publicar el comunicado."
+            });
         }
 
         public async Task<IActionResult> OnPostDeleteComunicadoAsync(int id)
@@ -342,6 +379,101 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
                 tieneError = !ok,
                 mensaje = ok ? "Comunicado eliminado correctamente." : "No se pudo eliminar el comunicado."
             });
+        }
+
+        private async Task CrearNotificacionPublicacionComunicadoAsync(ComunicadoInterno comunicado)
+        {
+            var usuarios = await _db.Users
+                .Include(u => u.Empleado)
+                .Where(u =>
+                    !string.IsNullOrWhiteSpace(u.Email) &&
+                    u.Empleado != null &&
+                    u.Empleado.Deshabilitado == 0)
+                .ToListAsync();
+
+            string urlInterna = $"/Catalogos/ComunicadosInternos?openId={comunicado.Id}";
+            string urlCorreo = $"{Request.Scheme}://{Request.Host}{urlInterna}";
+
+            var notificacion = new NotificacionIntranet
+            {
+                Titulo = "Nuevo comunicado publicado",
+                Descripcion = comunicado.Titulo,
+                Tipo = "Comunicado",
+                Modulo = "Comunicados Internos",
+                Url = urlInterna,
+                Icono = "bi bi-megaphone-fill",
+                FechaPublicacion = DateTime.Now,
+                Activa = true,
+                UserIdCreador = _userManager.GetUserId(User)
+            };
+
+            foreach (var usuario in usuarios)
+            {
+                notificacion.UsuariosNotificados.Add(new NotificacionIntranetUsuario
+                {
+                    UserId = usuario.Id,
+                    Leida = false,
+                    FechaCreacion = DateTime.Now
+                });
+            }
+
+            _db.NotificacionesIntranet.Add(notificacion);
+            await _db.SaveChangesAsync();
+
+            string correoPruebas = "jcruz@asesorcliente.com";
+
+            string cuerpo = $@"
+                <div style='font-family:Arial,sans-serif;color:#1f1466;'>
+
+                    <div style='background:#1f1466;padding:18px 22px;border-radius:14px 14px 0 0;color:#ffffff;'>
+                        <h2 style='margin:0;font-size:22px;'>Nuevo comunicado publicado</h2>
+                    </div>
+
+                    <div style='border:1px solid #e5e7eb;border-top:0;padding:24px;border-radius:0 0 14px 14px;background:#ffffff;'>
+
+                        <p style='font-size:15px;color:#374151;'>Hola,</p>
+
+                        <p style='font-size:15px;color:#374151;line-height:1.6;'>
+                            Se ha publicado un nuevo comunicado interno en la intranet corporativa de SEI.
+                        </p>
+
+                        <div style='background:#f8f9ff;border-left:4px solid #1f1466;padding:16px;border-radius:10px;margin:18px 0;'>
+
+                            <div style='font-size:18px;font-weight:700;color:#1f1466;margin-bottom:8px;'>
+                                {comunicado.Titulo}
+                            </div>
+
+                            <div style='font-size:14px;color:#4b5563;line-height:1.5;'>
+                                {comunicado.Descripcion}
+                            </div>
+
+                            <div style='font-size:13px;color:#4b5563;margin-top:10px;'>
+                                Fecha de publicación: <strong>{comunicado.FechaPublicacion:dd/MM/yyyy}</strong>
+                            </div>
+
+                        </div>
+
+                        <p style='margin-top:24px;'>
+                            <a href='{urlCorreo}'
+                               style='display:inline-block;background:#1f1466;color:#ffffff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600;'>
+                                Ver comunicado
+                            </a>
+                        </p>
+
+                        <hr style='margin:28px 0;border:none;border-top:1px solid #e5e7eb;' />
+
+                        <p style='font-size:12px;color:#6b7280;'>
+                            Este correo fue enviado automáticamente desde la Intranet SEI.
+                        </p>
+
+                    </div>
+                </div>";
+
+            await _emailSender.SendEmailAsync(
+                correoPruebas,
+                "Nuevo comunicado publicado - Intranet SEI",
+                cuerpo
+            );
         }
     }
 }
