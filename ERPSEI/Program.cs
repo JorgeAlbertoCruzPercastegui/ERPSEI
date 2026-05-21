@@ -3,6 +3,7 @@ using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Email;
 using ERPSEI.Middleware;
+using ERPSEI.Services;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
@@ -53,6 +54,8 @@ ServicesConfiguration.ConfigureFormOptions(builder);
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ERPSEI.Data.Entities.Metricas.AuditoriaContext>();
+
+builder.Services.AddHostedService<EventosProgramadosBackgroundService>();
 
 
 //Build and run application

@@ -58,7 +58,42 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorEventos
             public DateTime? FechaNotificacion { get; set; }
         }
 
-        public void OnGet() { }
+        public async Task OnGetAsync()
+        {
+            await ProcesarEventosProgramadosAsync();
+        }
+
+        private async Task ProcesarEventosProgramadosAsync()
+        {
+            var ahora = DateTime.Now;
+
+            var eventos = await _eventoManager.GetAllAsync(true);
+
+            var pendientes = eventos
+                .Where(x =>
+                    x.Activo &&
+                    x.EsProgramado &&
+                    !x.Publicado &&
+                    x.FechaPublicacionProgramada.HasValue &&
+                    x.FechaPublicacionProgramada.Value <= ahora)
+                .ToList();
+
+            foreach (var evento in pendientes)
+            {
+                evento.Publicado = true;
+                evento.FechaModificacion = ahora;
+
+                if (!evento.NotificacionEnviada)
+                {
+                    await CrearNotificacionPublicacionEventoAsync(evento);
+
+                    evento.NotificacionEnviada = true;
+                    evento.FechaNotificacion = ahora;
+                }
+
+                await _eventoManager.UpdateAsync(evento);
+            }
+        }
 
         public async Task<IActionResult> OnGetEventosListAsync()
         {
