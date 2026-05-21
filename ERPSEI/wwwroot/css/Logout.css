@@ -345,3 +345,43 @@ body.module-main-theme.logout-page .footer {
         font-size: 1.1rem;
     }
 }
+
+/* =====================================================
+   IMAGEN DINÁMICA DEL HEADER - LOGOUT
+   ===================================================== */
+
+body.logout-page .header-right-tools,
+body.module-main-theme.logout-page .header-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+    overflow: hidden;
+}
+
+body.logout-page .header-side-visual,
+body.module-main-theme.logout-page .header-side-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 56px;
+    max-width: 180px;
+    overflow: hidden;
+}
+
+body.logout-page .header-side-image,
+body.module-main-theme.logout-page .header-side-image {
+    display: block;
+    height: 52px !important;
+    width: auto !important;
+    max-width: 170px !important;
+    object-fit: contain !important;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(27,35,126,.12);
+}
+
+    body.logout-page .header-side-image:hover,
+    body.module-main-theme.logout-page .header-side-image:hover {
+        transform: scale(1.03);
+        transition: transform .2s ease;
+    }
