@@ -136,6 +136,7 @@
             .Include(e => e.Puesto)
             .Include(e => e.Jefe)
             .Include(e => e.Oficina)
+            .Include(x => x.Horario)
             .FirstOrDefaultAsync(e => e.UserId == usr.Id)
         : null;
 
