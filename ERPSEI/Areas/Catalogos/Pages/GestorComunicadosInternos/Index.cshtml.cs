@@ -420,7 +420,12 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
             _db.NotificacionesIntranet.Add(notificacion);
             await _db.SaveChangesAsync();
 
-            string correoPruebas = "jcruz@asesorcliente.com";
+            //string correoPruebas = "jcruz@asesorcliente.com";
+            var correos = usuarios
+            .Where(x => !string.IsNullOrWhiteSpace(x.Email))
+            .Select(x => x.Email!)
+            .Distinct()
+            .ToList();
 
             string cuerpo = $@"
                 <div style='font-family:Arial,sans-serif;color:#1f1466;'>
@@ -469,11 +474,14 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorComunicadosInternos
                     </div>
                 </div>";
 
-            await _emailSender.SendEmailAsync(
-                correoPruebas,
-                "Nuevo comunicado publicado - Intranet SEI",
-                cuerpo
-            );
+            foreach (var correo in correos)
+            {
+                await _emailSender.SendEmailAsync(
+                    correo,
+                    "Nuevo comunicado publicado - Intranet SEI",
+                    cuerpo
+                );
+            }
         }
     }
 }
