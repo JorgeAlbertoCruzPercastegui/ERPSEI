@@ -142,9 +142,30 @@ body.module-main-theme.auditoria-page {
         overflow-y: auto;
     }
 
-    body.module-main-theme.auditoria-page .quick-dd:hover > .quick-dd-menu,
+    /* ==========================================
+   DROPDOWN SOLO POR CLICK
+   ========================================== */
+
+    body.module-main-theme.auditoria-page .quick-dd-menu {
+        display: none !important;
+    }
+
     body.module-main-theme.auditoria-page .quick-dd.open > .quick-dd-menu {
-        display: block;
+        display: block !important;
+    }
+
+    body.module-main-theme.auditoria-page .quick-dd:hover > .quick-dd-menu {
+        display: none !important;
+    }
+
+    body.module-main-theme.auditoria-page .quick-dd.open:hover > .quick-dd-menu {
+        display: block !important;
+    }
+
+    body.module-main-theme.auditoria-page .quick-dd.open > .quick-link,
+    body.module-main-theme.auditoria-page .quick-dd.open > .quick-dd-toggle {
+        color: #d4ad45 !important;
+        background: transparent !important;
     }
 
     body.module-main-theme.auditoria-page .quick-dd-item {

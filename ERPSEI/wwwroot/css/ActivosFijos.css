@@ -155,9 +155,21 @@ body.module-main-theme.activosfijos-page {
         overflow-y: auto;
     }
 
-    body.module-main-theme.activosfijos-page .quick-dd:hover > .quick-dd-menu,
+    /* ==========================================
+   DROPDOWN CONTROLADO SOLO POR JS
+   ========================================== */
+
+    body.module-main-theme.activosfijos-page .quick-dd-menu {
+        display: none;
+    }
+
     body.module-main-theme.activosfijos-page .quick-dd.open > .quick-dd-menu {
-        display: block;
+        display: block !important;
+    }
+
+    body.module-main-theme.activosfijos-page .quick-dd.open > .quick-link,
+    body.module-main-theme.activosfijos-page .quick-dd.open > .quick-dd-toggle {
+        color: #d4ad45 !important;
     }
 
     body.module-main-theme.activosfijos-page .quick-dd-item {
@@ -176,8 +188,8 @@ body.module-main-theme.activosfijos-page {
             color: #21166f !important;
         }
 
-    body.module-main-theme.activosfijos-page .quick-dd:hover > .quick-link,
-    body.module-main-theme.activosfijos-page .quick-dd.open > .quick-link {
+    body.module-main-theme.activosfijos-page .quick-dd.open > .quick-link,
+    body.module-main-theme.activosfijos-page .quick-dd.open > .quick-dd-toggle {
         color: #d4ad45 !important;
         background: transparent !important;
     }

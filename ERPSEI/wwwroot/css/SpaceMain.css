@@ -271,16 +271,16 @@
         color: #21166f !important;
     }
 
-.home-main-theme .quick-dd:hover > .quick-dd-menu {
-    display: block;
+.home-main-theme .quick-dd.open > .quick-dd-menu {
+    display: block !important;
 }
 
-.home-main-theme .quick-dd:hover > .quick-dd-toggle::after {
+.home-main-theme .quick-dd.open > .quick-dd-toggle::after {
     transform: scaleX(1);
 }
 
-.home-main-theme .quick-dd:hover > .quick-dd-toggle {
-    color: #d4ad45;
+.home-main-theme .quick-dd.open > .quick-dd-toggle {
+    color: #d4ad45 !important;
 }
 
 .home-main-theme .quick-nav-wrap {
@@ -1437,4 +1437,12 @@ body.module-main-theme.manuales-politicas-page {
     100% {
         transform: scale(1);
     }
+}
+
+.home-main-theme .quick-dd-menu {
+    display: none !important;
+}
+
+.home-main-theme .quick-dd.open > .quick-dd-menu {
+    display: block !important;
 }
