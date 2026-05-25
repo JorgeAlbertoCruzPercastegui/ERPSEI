@@ -436,6 +436,127 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
         {
             var usuariosQuery = _db.Users
                 .Include(u => u.Empleado)
+                .Where(u =>
+                    !string.IsNullOrWhiteSpace(u.Email) &&
+                    u.Empleado != null &&
+                    u.Empleado.Deshabilitado == 0)
+                .AsQueryable();
+
+            if (!documento.PublicacionGeneral)
+            {
+                var areasPermitidas = await _db.ManualPoliticaAreas
+                    .Where(x => x.ManualPoliticaIntranetId == documento.Id)
+                    .Select(x => x.AreaId)
+                    .ToListAsync();
+
+                usuariosQuery = usuariosQuery.Where(u =>
+                    u.Empleado != null &&
+                    u.Empleado.AreaId.HasValue &&
+                    areasPermitidas.Contains(u.Empleado.AreaId.Value));
+            }
+
+            var usuarios = await usuariosQuery.ToListAsync();
+
+            if (!usuarios.Any())
+                return;
+
+            string tipo = documento.Tipo ?? "Documento";
+
+            string url = Url.Page(
+                "/ManualesPoliticas",
+                pageHandler: null,
+                values: null,
+                protocol: Request.Scheme
+            ) ?? "/ManualesPoliticas";
+
+            var notificacion = new NotificacionIntranet
+            {
+                Titulo = $"Nuevo {tipo} publicado",
+                Descripcion = documento.Titulo,
+                Tipo = tipo,
+                Modulo = "Manuales / Políticas / Reglamentos",
+                Url = "/ManualesPoliticas",
+                Icono = tipo.Equals("Manual", StringComparison.OrdinalIgnoreCase)
+                    ? "bi bi-journal-bookmark-fill"
+                    : tipo.Equals("Politica", StringComparison.OrdinalIgnoreCase)
+                        ? "bi bi-shield-check"
+                        : "bi bi-file-earmark-text-fill",
+                FechaPublicacion = DateTime.Now,
+                Activa = true,
+                UserIdCreador = _userManager.GetUserId(User)
+            };
+
+            foreach (var usuario in usuarios)
+            {
+                notificacion.UsuariosNotificados.Add(new NotificacionIntranetUsuario
+                {
+                    UserId = usuario.Id,
+                    Leida = false,
+                    FechaCreacion = DateTime.Now
+                });
+            }
+
+            _db.NotificacionesIntranet.Add(notificacion);
+            await _db.SaveChangesAsync();
+
+            string cuerpo = $@"
+        <div style='font-family:Arial,sans-serif;color:#1f1466;'>
+            <div style='background:#1f1466;padding:18px 22px;border-radius:14px 14px 0 0;color:#ffffff;'>
+                <h2 style='margin:0;font-size:22px;'>Nuevo {tipo} publicado</h2>
+            </div>
+
+            <div style='border:1px solid #e5e7eb;border-top:0;padding:24px;border-radius:0 0 14px 14px;background:#ffffff;'>
+                <p style='font-size:15px;color:#374151;'>Hola,</p>
+
+                <p style='font-size:15px;color:#374151;line-height:1.6;'>
+                    Se ha publicado un nuevo documento en la intranet corporativa de SEI.
+                </p>
+
+                <div style='background:#f8f9ff;border-left:4px solid #1f1466;padding:16px;border-radius:10px;margin:18px 0;'>
+                    <div style='font-size:18px;font-weight:700;color:#1f1466;margin-bottom:8px;'>
+                        {documento.Titulo}
+                    </div>
+
+                    <div style='font-size:14px;color:#4b5563;line-height:1.5;'>
+                        {documento.Descripcion}
+                    </div>
+                </div>
+
+                <p style='margin-top:24px;'>
+                    <a href='{url}'
+                       style='display:inline-block;background:#1f1466;color:#ffffff;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:600;'>
+                        Ver documento
+                    </a>
+                </p>
+
+                <hr style='margin:28px 0;border:none;border-top:1px solid #e5e7eb;' />
+
+                <p style='font-size:12px;color:#6b7280;'>
+                    Este correo fue enviado automáticamente desde la Intranet SEI.
+                </p>
+            </div>
+        </div>";
+
+            var correos = usuarios
+                .Where(x => !string.IsNullOrWhiteSpace(x.Email))
+                .Select(x => x.Email!)
+                .Distinct()
+                .ToList();
+
+            foreach (var correo in correos)
+            {
+                await _emailSender.SendEmailAsync(
+                    correo,
+                    $"Nuevo {tipo} publicado - Intranet SEI",
+                    cuerpo
+                );
+            }
+        }
+
+        /*private async Task CrearNotificacionPublicacionManualAsync(ManualPoliticaIntranet documento)
+        {
+            var usuariosQuery = _db.Users
+                .Include(u => u.Empleado)
                 .AsQueryable();
 
             if (!documento.PublicacionGeneral)
@@ -587,6 +708,6 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
                 $"Nuevo {tipo} publicado - Intranet SEI",
                 cuerpo
             );
-        }
+        }*/
     }
 }
