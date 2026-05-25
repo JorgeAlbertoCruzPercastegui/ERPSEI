@@ -409,7 +409,16 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorEventos
             _db.NotificacionesIntranet.Add(notificacion);
             await _db.SaveChangesAsync();
 
-            string correoPruebas = "jcruz@asesorcliente.com";
+            /*var correosPrueba = new List<string>
+            {
+                "jcruz@asesorcliente.com",
+                "jcruz@garantecommercial.com"
+            };*/
+            var correos = usuarios
+            .Where(x => !string.IsNullOrWhiteSpace(x.Email))
+            .Select(x => x.Email!)
+            .Distinct()
+            .ToList();
 
             string cuerpo = $@"
                 <div style='font-family:Arial,sans-serif;color:#1f1466;'>
@@ -458,11 +467,14 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorEventos
                     </div>
                 </div>";
 
-            await _emailSender.SendEmailAsync(
-                correoPruebas,
-                "Nuevo evento publicado - Intranet SEI",
-                cuerpo
-            );
+            foreach (var correo in correos)
+            {
+                await _emailSender.SendEmailAsync(
+                    correo,
+                    "Nuevo evento publicado - Intranet SEI",
+                    cuerpo
+                );
+            }
         }
     }
 }
