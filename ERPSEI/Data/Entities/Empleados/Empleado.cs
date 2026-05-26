@@ -82,6 +82,9 @@ namespace ERPSEI.Data.Entities.Empleados
 
 		public bool? CalcularAsistencia { get; set; } = true;
 
+        public decimal? SaldoVacacionesImportado { get; set; }
+        public DateTime? FechaImportacionSaldoVacaciones { get; set; }
+
         // Propiedades de navegación
         public ICollection<PeriodoVacacional> PeriodosVacacionales { get; set; }
         public ICollection<SolicitudVacaciones> SolicitudesVacaciones { get; set; }
