@@ -143,6 +143,11 @@
             <i class="bi bi-file-earmark-spreadsheet"></i>
             <span class="d-none d-sm-inline">Exportar historial usuarios</span>
         </button>
+
+        <button id="btnImportarVacaciones" type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalImportarVacaciones">
+            <i class="bi bi-upload"></i>
+            <span class="d-none d-sm-inline">Importar vacaciones</span>
+        </button>
     }
 </div>
 
@@ -688,6 +693,89 @@
     </div>
 </div>
 
+<div class="modal fade" id="modalImportarVacaciones" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload"></i> Importar saldo de vacaciones
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    Descarga el layout, modifica únicamente la columna <strong>Saldo Vacaciones</strong> y vuelve a importarlo.
+                </div>
+
+                <div class="row g-3 align-items-end mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Archivo Excel</label>
+                        <input type="file" id="archivoImportarVacaciones" class="form-control" accept=".xlsx" />
+                    </div>
+
+                    <div class="col-md-6 d-flex gap-2">
+                        <button type="button" class="btn btn-success" onclick="descargarLayoutVacaciones()">
+                            <i class="bi bi-file-earmark-excel"></i> Descargar layout
+                        </button>
+
+                        <button type="button" class="btn btn-primary" onclick="importarVacaciones()">
+                            <i class="bi bi-upload"></i> Importar vacaciones
+                        </button>
+                    </div>
+                </div>
+
+                <div id="resumenImportacionVacaciones" class="mb-3"></div>
+
+                <h6 class="fw-bold text-primary">Registros que se actualizarán</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fila</th>
+                                <th>Empleado</th>
+                                <th>Email</th>
+                                <th>Saldo anterior</th>
+                                <th>Nuevo saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyImportacionVacacionesOk">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Sin datos.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h6 class="fw-bold text-danger">Registros con error</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fila</th>
+                                <th>Empleado</th>
+                                <th>Email</th>
+                                <th>Saldo</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyImportacionVacacionesErrores">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Sin errores.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>

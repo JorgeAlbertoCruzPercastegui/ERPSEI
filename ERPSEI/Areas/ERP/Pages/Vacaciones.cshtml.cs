@@ -1382,6 +1382,34 @@ namespace ERPSEI.Areas.ERP.Pages
             if (empleado == null)
                 return 0m;
 
+            if (empleado.SaldoVacacionesImportado.HasValue)
+            {
+                decimal saldoImportado = empleado.SaldoVacacionesImportado.Value;
+
+                decimal tomadas = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        (
+                            (!x.EsVacacionAnticipada &&
+                             x.EstadoJefeDirecto == "Aprobado" &&
+                             x.EstadoTH == "Aprobado")
+                            ||
+                            (x.EsVacacionAnticipada &&
+                             x.DescuentoAnticipadoAplicado)
+                        ))
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                decimal futuras = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        x.EsVacacionAnticipada &&
+                        x.Estado != EstadoSolicitud.Rechazado &&
+                        !x.DescuentoAnticipadoAplicado)
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                return saldoImportado - tomadas - futuras;
+            }
+
             var fechaHoy = DateTime.Today;
             string tipoAsignacion = await ObtenerTipoVisualizacionVacacionesAsync();
 
@@ -1828,6 +1856,46 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var empleado = usuario.Empleado;
 
+            if (empleado.SaldoVacacionesImportado.HasValue)
+            {
+                decimal saldoImportado = empleado.SaldoVacacionesImportado.Value;
+
+                decimal tomadas = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        (
+                            (!x.EsVacacionAnticipada &&
+                             x.EstadoJefeDirecto == "Aprobado" &&
+                             x.EstadoTH == "Aprobado")
+                            ||
+                            (x.EsVacacionAnticipada &&
+                             x.DescuentoAnticipadoAplicado)
+                        ))
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                decimal futuras = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        x.EsVacacionAnticipada &&
+                        x.Estado != EstadoSolicitud.Rechazado &&
+                        !x.DescuentoAnticipadoAplicado)
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                //decimal saldo = saldoImportado - tomadas - futuras;
+                decimal saldoImportadoFinal = saldoImportado - tomadas - futuras;
+
+                return new JsonResult(new
+                {
+                    acumuladas = saldoImportado,
+                    tomadas = tomadas,
+                    vencidas = 0m,
+                    futuras = futuras,
+                    saldo = saldoImportadoFinal,
+                    fecha = DateTime.Now.ToString("dd-MM-yyyy"),
+                    tipoAsignacion = "Importado"
+                });
+            }
+
             await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
 
             var fechaHoy = DateTime.Today;
@@ -1987,6 +2055,34 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var empleado = usuario.Empleado;
 
+            if (empleado.SaldoVacacionesImportado.HasValue)
+            {
+                decimal saldoImportado = empleado.SaldoVacacionesImportado.Value;
+
+                decimal tomadas = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        (
+                            (!x.EsVacacionAnticipada &&
+                             x.EstadoJefeDirecto == "Aprobado" &&
+                             x.EstadoTH == "Aprobado")
+                            ||
+                            (x.EsVacacionAnticipada &&
+                             x.DescuentoAnticipadoAplicado)
+                        ))
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                decimal futuras = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        x.EsVacacionAnticipada &&
+                        x.Estado != EstadoSolicitud.Rechazado &&
+                        !x.DescuentoAnticipadoAplicado)
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                return new JsonResult(saldoImportado - tomadas - futuras);
+            }
+
             await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
 
             var fechaHoy = DateTime.Today;
@@ -2065,6 +2161,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(new { error = "Empleado no encontrado." });
 
             var empleado = usuario.Empleado;
+
+            if (empleado.SaldoVacacionesImportado.HasValue)
+            {
+                return new JsonResult(empleado.SaldoVacacionesImportado.Value);
+            }
+
             var fechaIngreso = empleado.FechaIngreso.Date;
             var fechaActual = DateTime.Today;
 
@@ -2813,6 +2915,225 @@ namespace ERPSEI.Areas.ERP.Pages
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 fileName
             );
+        }
+
+        //Para importar vacaciones
+        public async Task<IActionResult> OnGetDescargarLayoutImportacionVacacionesAsync()
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            if (!PuedeExportarDetalleVacaciones)
+                return Forbid();
+
+            var empleados = await db.Empleados
+                .Include(e => e.Usuario)
+                .Where(e => e.Deshabilitado == 0)
+                .OrderBy(e => e.NombreCompleto)
+                .ToListAsync();
+
+            ExcelPackage.License.SetNonCommercialOrganization("ERPSEI");
+
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Importar Vacaciones");
+
+            ws.Cells[1, 1].Value = "Nombre Empleado";
+            ws.Cells[1, 2].Value = "Email";
+            ws.Cells[1, 3].Value = "Saldo Vacaciones";
+
+            using (var header = ws.Cells[1, 1, 1, 3])
+            {
+                header.Style.Font.Bold = true;
+                header.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                header.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(31, 20, 102));
+                header.Style.Font.Color.SetColor(Color.White);
+                header.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            }
+
+            int row = 2;
+
+            foreach (var empleado in empleados)
+            {
+                string correoEmpleado =
+                    !string.IsNullOrWhiteSpace(empleado.Email)
+                        ? empleado.Email.Trim()
+                        : empleado.Usuario?.Email?.Trim() ?? "";
+
+                ws.Cells[row, 1].Value = empleado.NombreCompleto;
+                ws.Cells[row, 2].Value = correoEmpleado;
+                decimal saldoImportado = empleado.SaldoVacacionesImportado ?? 0m;
+
+                decimal tomadas = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        (
+                            (!x.EsVacacionAnticipada &&
+                             x.EstadoJefeDirecto == "Aprobado" &&
+                             x.EstadoTH == "Aprobado")
+                            ||
+                            (x.EsVacacionAnticipada &&
+                             x.DescuentoAnticipadoAplicado)
+                        ))
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                decimal futuras = await db.SolicitudesVacaciones
+                    .Where(x =>
+                        x.EmpleadoId == empleado.Id &&
+                        x.EsVacacionAnticipada &&
+                        x.Estado != EstadoSolicitud.Rechazado &&
+                        !x.DescuentoAnticipadoAplicado)
+                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                ws.Cells[row, 3].Value = saldoImportado - tomadas - futuras;
+                ws.Cells[row, 3].Style.Numberformat.Format = "0.00";
+
+                row++;
+            }
+
+            ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+            var bytes = package.GetAsByteArray();
+
+            return File(
+                bytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Layout_Importacion_Vacaciones_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+            );
+        }
+
+        public async Task<JsonResult> OnPostImportarSaldoVacacionesAsync(IFormFile archivo)
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            if (!PuedeExportarDetalleVacaciones)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No tienes permisos para importar saldos de vacaciones."
+                });
+            }
+
+            if (archivo == null || archivo.Length == 0)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Debes seleccionar un archivo Excel."
+                });
+            }
+
+            var actualizados = new List<object>();
+            var errores = new List<object>();
+
+            ExcelPackage.License.SetNonCommercialOrganization("ERPSEI");
+
+            using var package = new ExcelPackage(archivo.OpenReadStream());
+            var ws = package.Workbook.Worksheets.FirstOrDefault();
+
+            if (ws == null)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "El archivo no contiene hojas válidas."
+                });
+            }
+
+            string h1 = ws.Cells[1, 1].Text.Trim();
+            string h2 = ws.Cells[1, 2].Text.Trim();
+            string h3 = ws.Cells[1, 3].Text.Trim();
+
+            if (h1 != "Nombre Empleado" || h2 != "Email" || h3 != "Saldo Vacaciones")
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "El layout no tiene el formato correcto. Descarga nuevamente el layout desde el sistema."
+                });
+            }
+
+            var empleados = await db.Empleados
+                .Include(e => e.Usuario)
+                .Where(e => e.Deshabilitado == 0)
+                .ToListAsync();
+
+            int totalRows = ws.Dimension.End.Row;
+
+            for (int row = 2; row <= totalRows; row++)
+            {
+                string nombre = ws.Cells[row, 1].Text.Trim();
+                string email = ws.Cells[row, 2].Text.Trim();
+                string saldoTexto = ws.Cells[row, 3].Text.Trim();
+
+                if (string.IsNullOrWhiteSpace(nombre) &&
+                    string.IsNullOrWhiteSpace(email) &&
+                    string.IsNullOrWhiteSpace(saldoTexto))
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(nombre))
+                {
+                    errores.Add(new { fila = row, empleado = nombre, email, saldo = saldoTexto, motivo = "El nombre del empleado está vacío." });
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    errores.Add(new { fila = row, empleado = nombre, email, saldo = saldoTexto, motivo = "El email está vacío." });
+                    continue;
+                }
+
+                if (!decimal.TryParse(saldoTexto, out decimal nuevoSaldo))
+                {
+                    errores.Add(new { fila = row, empleado = nombre, email, saldo = saldoTexto, motivo = "El saldo de vacaciones no es un número válido." });
+                    continue;
+                }
+
+                var empleado = empleados.FirstOrDefault(e =>
+                {
+                    string correoEmpleado =
+                        !string.IsNullOrWhiteSpace(e.Email)
+                            ? e.Email.Trim()
+                            : e.Usuario?.Email?.Trim() ?? "";
+
+                    return
+                        e.NombreCompleto.Trim().Equals(nombre, StringComparison.OrdinalIgnoreCase) &&
+                        correoEmpleado.Equals(email, StringComparison.OrdinalIgnoreCase);
+                });
+
+                if (empleado == null)
+                {
+                    errores.Add(new { fila = row, empleado = nombre, email, saldo = saldoTexto, motivo = "No se encontró un empleado activo con ese nombre y email." });
+                    continue;
+                }
+
+                decimal saldoAnterior = empleado.SaldoVacacionesImportado ?? 0m;
+
+                empleado.SaldoVacacionesImportado = nuevoSaldo;
+                empleado.FechaImportacionSaldoVacaciones = DateTime.Now;
+
+                actualizados.Add(new
+                {
+                    fila = row,
+                    empleado = empleado.NombreCompleto,
+                    email,
+                    saldoAnterior,
+                    nuevoSaldo
+                });
+            }
+
+            await db.SaveChangesAsync();
+
+            return new JsonResult(new
+            {
+                tieneError = false,
+                mensaje = "Importación procesada correctamente.",
+                totalActualizados = actualizados.Count,
+                totalErrores = errores.Count,
+                actualizados,
+                errores
+            });
         }
     }
 }
