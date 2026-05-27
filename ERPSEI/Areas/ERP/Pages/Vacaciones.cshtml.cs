@@ -63,6 +63,9 @@ namespace ERPSEI.Areas.ERP.Pages
         //private readonly Data.ApplicationDbContext db;
         ApplicationDbContext db;
 
+        //private static List<(Empleado empleado, decimal nuevoSaldo)> _previewImportacionVacaciones = new();
+        private static List<(int empleadoId, decimal nuevoSaldo)> _previewImportacionVacaciones = new();
+
         public bool EsJefeInmediato { get; set; }
         public bool PuedeAprobarJefeDirecto { get; set; }
         public bool PuedeAprobarTH { get; set; }
@@ -198,6 +201,46 @@ namespace ERPSEI.Areas.ERP.Pages
             public string Tipo { get; set; } = "Legales"; // Por default
             public string Estado { get; set; } = string.Empty;
         }
+
+        public class ImportacionVacacionesPreviewModel
+        {
+            public int Fila { get; set; }
+
+            public string Empleado { get; set; } = string.Empty;
+
+            public string Email { get; set; } = string.Empty;
+
+            public decimal SaldoAnterior { get; set; }
+
+            public decimal NuevoSaldo { get; set; }
+        }
+
+        public class ImportacionVacacionesErrorModel
+        {
+            public int Fila { get; set; }
+
+            public string Empleado { get; set; } = string.Empty;
+
+            public string Email { get; set; } = string.Empty;
+
+            public string Saldo { get; set; } = string.Empty;
+
+            public string Motivo { get; set; } = string.Empty;
+        }
+
+        public class VacacionesEmpleadoInfoModel
+        {
+            public string Empleado { get; set; } = string.Empty;
+
+            public string Email { get; set; } = string.Empty;
+
+            public decimal SaldoActual { get; set; }
+
+            public decimal SaldoImportado { get; set; }
+
+            public string FechaImportacion { get; set; } = "-";
+        }
+
         private class PeriodoVacacionSaldoModel
         {
             public int Anio { get; set; }
@@ -563,6 +606,268 @@ namespace ERPSEI.Areas.ERP.Pages
             PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
             PuedeAprobarTH = esAdministradorTH || esAdministrador;
             PuedeExportarDetalleVacaciones = esAdministrador || esAdministradorTH || esMaster;
+        }
+
+        public async Task<JsonResult> OnGetVacacionesEmpleadosInfoAsync()
+        {
+            var empleados = await db.Empleados
+                .Where(e => e.Deshabilitado == 0)
+                .OrderBy(e => e.NombreCompleto)
+                .ToListAsync();
+
+            var result = new List<VacacionesEmpleadoInfoModel>();
+
+            foreach (var empleado in empleados)
+            {
+                decimal saldoActual = await OnGetObtenerDiasDisponiblesInternoAsync(empleado.Id);
+
+                result.Add(new VacacionesEmpleadoInfoModel
+                {
+                    Empleado = empleado.NombreCompleto,
+                    Email = empleado.Email ?? "",
+                    SaldoActual = saldoActual,
+                    SaldoImportado = empleado.SaldoVacacionesImportado ?? 0,
+                    FechaImportacion = empleado.FechaImportacionSaldoVacaciones.HasValue
+                        ? empleado.FechaImportacionSaldoVacaciones.Value.ToString("dd/MM/yyyy HH:mm")
+                        : "-"
+                });
+            }
+
+            return new JsonResult(result);
+        }
+
+        public async Task<JsonResult> OnPostGuardarImportacionVacacionesAsync()
+        {
+            ServerResponse resp = new(true, "No hay datos para guardar.");
+
+            try
+            {
+                if (_previewImportacionVacaciones == null || !_previewImportacionVacaciones.Any())
+                {
+                    resp.TieneError = true;
+                    return new JsonResult(resp);
+                }
+
+                foreach (var item in _previewImportacionVacaciones)
+                {
+                    var empleado = await db.Empleados.FirstOrDefaultAsync(e => e.Id == item.empleadoId);
+
+                    if (empleado == null)
+                        continue;
+
+                    empleado.SaldoVacacionesImportado = item.nuevoSaldo;
+                    empleado.FechaImportacionSaldoVacaciones = DateTime.Now;
+                }
+
+                await db.SaveChangesAsync();
+
+                _previewImportacionVacaciones.Clear();
+
+                resp.TieneError = false;
+                resp.Mensaje = "Importación guardada correctamente.";
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al guardar importación de vacaciones");
+
+                resp.TieneError = true;
+                resp.Mensaje = "Ocurrió un error al guardar la importación.";
+            }
+
+            return new JsonResult(resp);
+        }
+
+        public async Task<IActionResult> OnGetExportarVacacionesEmpleadosInfoAsync()
+        {
+            try
+            {
+                ExcelPackage.License.SetNonCommercialOrganization("ERPSEI");
+
+                var empleados = await db.Empleados
+                    .Where(e => e.Deshabilitado == 0)
+                    .OrderBy(e => e.NombreCompleto)
+                    .ToListAsync();
+
+                using var package = new ExcelPackage();
+
+                var ws = package.Workbook.Worksheets.Add("Saldos Vacaciones");
+
+                // Headers
+                ws.Cells[1, 1].Value = "Empleado";
+                ws.Cells[1, 2].Value = "Email";
+                ws.Cells[1, 3].Value = "Saldo Actual";
+                ws.Cells[1, 4].Value = "Saldo Base Importado";
+                ws.Cells[1, 5].Value = "Fecha Importación";
+
+                using (var header = ws.Cells[1, 1, 1, 5])
+                {
+                    header.Style.Font.Bold = true;
+                    header.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    header.Style.Fill.BackgroundColor.SetColor(Color.FromArgb(31, 20, 102));
+                    header.Style.Font.Color.SetColor(Color.White);
+                    header.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                }
+
+                int row = 2;
+
+                foreach (var empleado in empleados)
+                {
+                    decimal saldoActual = await OnGetObtenerDiasDisponiblesInternoAsync(empleado.Id);
+
+                    ws.Cells[row, 1].Value = empleado.NombreCompleto;
+                    ws.Cells[row, 2].Value = empleado.Email ?? "";
+                    ws.Cells[row, 3].Value = saldoActual;
+                    ws.Cells[row, 4].Value = empleado.SaldoVacacionesImportado ?? 0;
+                    ws.Cells[row, 5].Value = empleado.FechaImportacionSaldoVacaciones.HasValue
+                        ? empleado.FechaImportacionSaldoVacaciones.Value.ToString("dd/MM/yyyy HH:mm")
+                        : "-";
+
+                    ws.Cells[row, 3].Style.Numberformat.Format = "0.00";
+                    ws.Cells[row, 4].Style.Numberformat.Format = "0.00";
+
+                    row++;
+                }
+
+                ws.Cells[ws.Dimension.Address].AutoFitColumns();
+
+                var bytes = package.GetAsByteArray();
+
+                return File(
+                    bytes,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"Saldos_Vacaciones_Empleados_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                );
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al exportar saldos de vacaciones");
+
+                return Content("Ocurrió un error al exportar el archivo.");
+            }
+        }
+
+
+        public async Task<JsonResult> OnPostImportarVacacionesAsync(IFormFile archivoExcel)
+        {
+            ServerResponse resp = new(true, "No se pudo importar el archivo.");
+
+            try
+            {
+                if (archivoExcel == null || archivoExcel.Length == 0)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "Debes seleccionar un archivo Excel.";
+                    return new JsonResult(resp);
+                }
+
+                ExcelPackage.License.SetNonCommercialOrganization("ERPSEI");
+
+                var preview = new List<ImportacionVacacionesPreviewModel>();
+                var errores = new List<ImportacionVacacionesErrorModel>();
+
+                _previewImportacionVacaciones.Clear();
+
+                using var stream = new MemoryStream();
+
+                await archivoExcel.CopyToAsync(stream);
+
+                using var package = new ExcelPackage(stream);
+
+                var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+
+                if (worksheet == null)
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje = "El archivo no contiene hojas.";
+                    return new JsonResult(resp);
+                }
+
+                int totalRows = worksheet.Dimension.Rows;
+
+                for (int row = 2; row <= totalRows; row++)
+                {
+                    try
+                    {
+                        string empleadoNombre = worksheet.Cells[row, 1].Text?.Trim() ?? "";
+                        string email = worksheet.Cells[row, 2].Text?.Trim() ?? "";
+                        string saldoTexto = worksheet.Cells[row, 3].Text?.Trim() ?? "";
+
+                        if (string.IsNullOrWhiteSpace(empleadoNombre))
+                            continue;
+
+                        if (!decimal.TryParse(saldoTexto, out decimal nuevoSaldo))
+                        {
+                            errores.Add(new ImportacionVacacionesErrorModel
+                            {
+                                Fila = row,
+                                Empleado = empleadoNombre,
+                                Email = email,
+                                Saldo = saldoTexto,
+                                Motivo = "El saldo no es válido."
+                            });
+
+                            continue;
+                        }
+
+                        var empleado = await db.Empleados
+                            .FirstOrDefaultAsync(e =>
+                                e.NombreCompleto == empleadoNombre);
+
+                        if (empleado == null)
+                        {
+                            errores.Add(new ImportacionVacacionesErrorModel
+                            {
+                                Fila = row,
+                                Empleado = empleadoNombre,
+                                Email = email,
+                                Saldo = saldoTexto,
+                                Motivo = "Empleado no encontrado."
+                            });
+
+                            continue;
+                        }
+
+                        preview.Add(new ImportacionVacacionesPreviewModel
+                        {
+                            Fila = row,
+                            Empleado = empleado.NombreCompleto,
+                            Email = empleado.Email ?? "",
+                            SaldoAnterior = empleado.SaldoVacacionesImportado ?? 0,
+                            NuevoSaldo = nuevoSaldo
+                        });
+
+                        //_previewImportacionVacaciones.Add((empleado, nuevoSaldo));
+                        _previewImportacionVacaciones.Add((empleado.Id, nuevoSaldo));
+                    }
+                    catch (Exception exFila)
+                    {
+                        errores.Add(new ImportacionVacacionesErrorModel
+                        {
+                            Fila = row,
+                            Motivo = exFila.Message
+                        });
+                    }
+                }
+
+                resp.TieneError = false;
+
+                resp.Datos = new
+                {
+                    preview,
+                    errores
+                };
+
+                resp.Mensaje = "Preview generado correctamente.";
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error al importar vacaciones");
+
+                resp.TieneError = true;
+                resp.Mensaje = "Ocurrió un error al importar el archivo.";
+            }
+
+            return new JsonResult(resp);
         }
 
         public async Task OnGetAsync()

@@ -1000,17 +1000,21 @@ function cargarVacacionesAcumuladas() {
                 return;
             }
 
-            if (data.length === 0) {
+            const lista = Array.isArray(data)
+                ? data
+                : (data.datos || data.data || data.lista || []);
+
+            if (!lista || lista.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No hay vacaciones acumuladas</td></tr>`;
                 return;
             }
 
-            data.forEach(item => {
+            lista.forEach(item => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${item.fecha ? new Date(item.fecha).toLocaleDateString() : ""}</td>
-                    <td>${item.numeroDias.toFixed(1)} días</td>
-                    <td>${item.tipo}</td>
+                    <td>${Number(item.numeroDias || 0).toFixed(1)} días</td>
+                    <td>${item.tipo || ""}</td>
                     <td>${item.vencimiento ? new Date(item.vencimiento).toLocaleDateString() : ""}</td>
                     <td>${item.periodo || ""}</td>
                     <td>-</td>
@@ -1020,7 +1024,8 @@ function cargarVacacionesAcumuladas() {
         })
         .catch(err => {
             console.error("Error al cargar vacaciones acumuladas:", err);
-            document.getElementById("tbodyVacAcumuladas").innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos</td></tr>`;
+            document.getElementById("tbodyVacAcumuladas").innerHTML =
+                `<tr><td colspan="6" class="text-center text-danger">Error al cargar los datos</td></tr>`;
         });
 }
 
@@ -1310,9 +1315,9 @@ function importarVacaciones() {
     }
 
     const formData = new FormData();
-    formData.append("archivo", input.files[0]);
+    formData.append("archivoExcel", input.files[0]);
 
-    fetch("/ERP/Vacaciones?handler=ImportarSaldoVacaciones", {
+    fetch("/ERP/Vacaciones?handler=ImportarVacaciones", {
         method: "POST",
         headers: {
             "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
@@ -1328,45 +1333,136 @@ function importarVacaciones() {
 
             pintarResultadoImportacionVacaciones(resp);
 
-            obtenerDiasDisponibles();
-            cargarResumenVacaciones();
-            cargarVacacionesAcumuladas();
-            cargarVacacionesTomadas();
+            const btnGuardar = document.getElementById("btnGuardarImportacionVacaciones");
+            if (btnGuardar) {
+                btnGuardar.disabled = false;
+            }
 
             showSuccess("Importar vacaciones", resp.mensaje);
         })
         .catch(() => {
-            showError("Importar vacaciones", "Ocurrió un error al importar el archivo.");
+            showError("Importar vacaciones", "Ocurrió un error al leer el archivo.");
         });
 }
 
-//Función para vacaciones
+function guardarImportacionVacaciones() {
+    fetch("/ERP/Vacaciones?handler=GuardarImportacionVacaciones", {
+        method: "POST",
+        headers: {
+            "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val()
+        }
+    })
+        .then(resp => resp.json())
+        .then(resp => {
+            if (resp.tieneError) {
+                showError("Guardar importación", resp.mensaje);
+                return;
+            }
+
+            showSuccess("Guardar importación", resp.mensaje);
+
+            const modalImportar = document.getElementById("modalImportarVacaciones");
+            const modalInstance = bootstrap.Modal.getInstance(modalImportar);
+
+            if (modalInstance) {
+                modalInstance.hide();
+            }
+
+            const btnGuardar = document.getElementById("btnGuardarImportacionVacaciones");
+            if (btnGuardar) {
+                btnGuardar.disabled = true;
+            }
+
+            obtenerDiasDisponibles();
+            cargarResumenVacaciones();
+            cargarVacacionesAcumuladas();
+            cargarVacacionesTomadas();
+            cargarAvisoVacacionesPorVencer();
+
+            //abrirModalVacacionesEmpleados();
+        })
+        .catch(() => {
+            showError("Guardar importación", "Ocurrió un error al guardar la importación.");
+        });
+}
+
+function abrirModalVacacionesEmpleados() {
+    fetch("/ERP/Vacaciones?handler=VacacionesEmpleadosInfo")
+        .then(resp => resp.json())
+        .then(data => {
+            const tbody = document.getElementById("tbodyVacacionesEmpleadosInfo");
+
+            if (!tbody) return;
+
+            tbody.innerHTML = "";
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Sin registros.</td>
+                    </tr>
+                `;
+            } else {
+                data.forEach(x => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${x.empleado || ""}</td>
+                            <td>${x.email || ""}</td>
+                            <td class="fw-bold text-primary">${Number(x.saldoActual || 0).toFixed(2)}</td>
+                            <td>${Number(x.saldoImportado || 0).toFixed(2)}</td>
+                            <td>${x.fechaImportacion || "-"}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            new bootstrap.Modal(document.getElementById("modalVacacionesEmpleadosInfo")).show();
+        })
+        .catch(() => {
+            showError("Saldos vacaciones", "No se pudo consultar la información.");
+        });
+}
+
+function descargarVacacionesEmpleadosInfo() {
+    window.location.href = "/ERP/Vacaciones?handler=ExportarVacacionesEmpleadosInfo";
+}
+
 function pintarResultadoImportacionVacaciones(resp) {
     const resumen = document.getElementById("resumenImportacionVacaciones");
     const tbodyOk = document.getElementById("tbodyImportacionVacacionesOk");
     const tbodyErrores = document.getElementById("tbodyImportacionVacacionesErrores");
 
+    const datos = resp.datos || {};
+    const preview = datos.preview || [];
+    const errores = datos.errores || [];
+
     resumen.innerHTML = `
-        <div class="alert alert-success">
-            <strong>Importación finalizada.</strong>
-            Actualizados: <strong>${resp.totalActualizados}</strong> |
-            Errores: <strong>${resp.totalErrores}</strong>
+        <div class="alert alert-warning">
+            <strong>Previsualización generada.</strong><br>
+            Registros listos para guardar: <strong>${preview.length}</strong> |
+            Errores: <strong>${errores.length}</strong>
+            <br>
+            Revisa la información y presiona <strong>Guardar importación</strong> para actualizar la base de datos.
         </div>
     `;
 
     tbodyOk.innerHTML = "";
 
-    if (!resp.actualizados || resp.actualizados.length === 0) {
-        tbodyOk.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No hubo registros actualizados.</td></tr>`;
+    if (preview.length === 0) {
+        tbodyOk.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">No hay registros válidos para actualizar.</td>
+            </tr>
+        `;
     } else {
-        resp.actualizados.forEach(x => {
+        preview.forEach(x => {
             tbodyOk.innerHTML += `
                 <tr>
                     <td>${x.fila}</td>
-                    <td>${x.empleado}</td>
-                    <td>${x.email}</td>
-                    <td>${Number(x.saldoAnterior).toFixed(2)}</td>
-                    <td class="fw-bold text-success">${Number(x.nuevoSaldo).toFixed(2)}</td>
+                    <td>${x.empleado || ""}</td>
+                    <td>${x.email || ""}</td>
+                    <td>${Number(x.saldoAnterior || 0).toFixed(2)}</td>
+                    <td class="fw-bold text-success">${Number(x.nuevoSaldo || 0).toFixed(2)}</td>
                 </tr>
             `;
         });
@@ -1374,17 +1470,21 @@ function pintarResultadoImportacionVacaciones(resp) {
 
     tbodyErrores.innerHTML = "";
 
-    if (!resp.errores || resp.errores.length === 0) {
-        tbodyErrores.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Sin errores.</td></tr>`;
+    if (errores.length === 0) {
+        tbodyErrores.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center text-muted">Sin errores.</td>
+            </tr>
+        `;
     } else {
-        resp.errores.forEach(x => {
+        errores.forEach(x => {
             tbodyErrores.innerHTML += `
                 <tr>
                     <td>${x.fila}</td>
                     <td>${x.empleado || ""}</td>
                     <td>${x.email || ""}</td>
                     <td>${x.saldo || ""}</td>
-                    <td class="text-danger">${x.motivo}</td>
+                    <td class="text-danger">${x.motivo || ""}</td>
                 </tr>
             `;
         });

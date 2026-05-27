@@ -769,6 +769,22 @@
             </div>
 
             <div class="modal-footer">
+                <button type="button" class="btn btn-info" onclick="abrirModalVacacionesEmpleados()">
+                    <i class="bi bi-eye"></i> Ver saldos actuales
+                </button>
+
+                <button type="button" class="btn btn-success" onclick="descargarVacacionesEmpleadosInfo()">
+                    <i class="bi bi-file-earmark-excel"></i> Descargar saldos
+                </button>
+
+                <button type="button"
+                        id="btnGuardarImportacionVacaciones"
+                        class="btn btn-primary"
+                        onclick="guardarImportacionVacaciones()"
+                        disabled>
+                    <i class="bi bi-save"></i> Guardar importación
+                </button>
+
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     Cerrar
                 </button>
@@ -776,6 +792,51 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="modalVacacionesEmpleadosInfo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header modal-header-gold">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-check"></i> Saldos actuales de vacaciones
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Empleado</th>
+                                <th>Email</th>
+                                <th>Saldo actual</th>
+                                <th>Saldo base importado</th>
+                                <th>Fecha importación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyVacacionesEmpleadosInfo">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Sin datos.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="descargarVacacionesEmpleadosInfo()">
+                    <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                </button>
+
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 @section Scripts {
     <script src="~/lib/jquery-ui/jquery-ui.min.js"></script>
