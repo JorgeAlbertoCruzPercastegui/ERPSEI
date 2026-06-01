@@ -50,15 +50,43 @@ function getIdSelections() {
 }
 //Función para procesar la respuesta del servidor al consultar datos
 function responseHandler(res) {
+
     if (typeof res == "string" && res.length >= 1) {
-        res = JSON.parse(res);
+
+        try {
+            res = JSON.parse(res);
+        }
+        catch (e) {
+
+            console.error("JSON inválido");
+            console.error(e);
+
+            console.log("Posición:", e.message);
+
+            let posMatch = e.message.match(/position (\d+)/);
+
+            if (posMatch) {
+
+                let pos = parseInt(posMatch[1]);
+
+                console.log("ANTES:");
+                console.log(res.substring(pos - 200, pos));
+
+                console.log("DESPUÉS:");
+                console.log(res.substring(pos, pos + 200));
+            }
+
+            throw e;
+        }
     }
+
     $.each(res, function (i, row) {
-        row.state = $.inArray(row.id, selections) !== -1
+        row.state = $.inArray(row.id, selections) !== -1;
     });
 
-    return res
+    return res;
 }
+
 //Función para dar formato al detalle de empleado
 function detailFormatter(index, row) {
     return `<div class="container-fluid alert alert-primary mb-0">

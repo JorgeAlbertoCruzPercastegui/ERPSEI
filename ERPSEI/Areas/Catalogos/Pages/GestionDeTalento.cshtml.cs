@@ -332,99 +332,86 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return jsonResponse;
 		}
-		private async Task<string> GetTalentList(FiltroModel? filtro = null)
-		{
-			string nombreHorario;
-			string nombreArea;
-			string nombreSubarea;
-			string nombrePuesto;
-			string nombreOficina;
-			string nombreGenero;
-			string nombreEstadoCivil;
-			string jsonResponse;
-			List<string> jsonEmpleados = [];
-			List<Empleado> empleados;
+        private async Task<object> GetTalentList(FiltroModel? filtro = null)
+        {
+            List<Empleado> empleados;
 
-			if (filtro != null)
-			{
-				empleados = await _empleadoManager.GetAllAsync(
-					filtro.FechaIngresoInicio, 
-					filtro.FechaIngresoFin, 
-					filtro.FechaNacimientoInicio, 
-					filtro.FechaNacimientoFin,
-					filtro.PuestoId,
-					filtro.AreaId,
-					filtro.SubareaId,
-					filtro.OficinaId
-				);
-			}
-			else
-			{
-				empleados = await _empleadoManager.GetAllAsync();
-			}
+            if (filtro != null)
+            {
+                empleados = await _empleadoManager.GetAllAsync(
+                    filtro.FechaIngresoInicio,
+                    filtro.FechaIngresoFin,
+                    filtro.FechaNacimientoInicio,
+                    filtro.FechaNacimientoFin,
+                    filtro.PuestoId,
+                    filtro.AreaId,
+                    filtro.SubareaId,
+                    filtro.OficinaId
+                );
+            }
+            else
+            {
+                empleados = await _empleadoManager.GetAllAsync();
+            }
 
-			foreach (Empleado e in empleados)
-			{
-				nombreHorario = e.Horario != null ? e.Horario.Descripcion : "";
-				nombreArea = e.Area != null ? e.Area.Nombre : "";
-				nombreSubarea = e.Subarea != null ? e.Subarea.Nombre : "";
-				nombrePuesto = e.Puesto != null ? e.Puesto.Nombre : "";
-				nombreOficina = e.Oficina != null ? e.Oficina.Nombre : "";
-				nombreGenero = e.Genero != null ? e.Genero.Nombre : "";
-				nombreEstadoCivil = e.EstadoCivil != null ? e.EstadoCivil.Nombre : "";
-				AppUser? usuario = e.UserId != null && e.UserId.Length >= 1 ? await _userManager.FindByIdAsync(e.UserId) : null;
-				bool usuarioConfirmado = usuario != null && usuario.EmailConfirmed;
+            var lista = new List<object>();
 
-				DateTime? fechaIngreso = e.FechaIngreso == DateTime.MinValue ? null : e.FechaIngreso;
-				DateTime? fechaNacimiento = e.FechaNacimiento == DateTime.MinValue ? null : e.FechaNacimiento;
+            foreach (Empleado e in empleados)
+            {
+                AppUser? usuario = e.UserId != null && e.UserId.Length >= 1
+                    ? await _userManager.FindByIdAsync(e.UserId)
+                    : null;
 
-				jsonEmpleados.Add(
-					"{" +
-						$"\"id\": {e.Id}," +
-						$"\"nombre\": \"{e.Nombre}\", " +
-						$"\"nombrePreferido\": \"{e.NombrePreferido}\", " +
-						$"\"apellidoPaterno\": \"{e.ApellidoPaterno}\", " +
-						$"\"apellidoMaterno\": \"{e.ApellidoMaterno}\", " +
-						$"\"nombreCompleto\": \"{e.NombreCompleto}\", " +
-						$"\"fechaIngreso\": \"{fechaIngreso:dd/MM/yyyy}\", " +
-						$"\"fechaIngresoJS\": \"{fechaIngreso:yyyy-MM-dd}\", " +
-						$"\"fechaNacimiento\": \"{fechaNacimiento:dd/MM/yyyy}\", " +
-						$"\"fechaNacimientoJS\": \"{fechaNacimiento:yyyy-MM-dd}\", " +
-						$"\"direccion\": \"{e.Direccion.Trim()}\", " +
-						$"\"telefono\": \"{e.Telefono}\", " +
-						$"\"email\": \"{e.Email}\", " +
-						$"\"generoId\": {e.GeneroId ?? 0}, " +
-						$"\"genero\": \"{nombreGenero}\", " +
-						$"\"subareaId\": {e.SubareaId ?? 0}, " +
-						$"\"subarea\": \"{nombreSubarea}\", " +
-						$"\"oficinaId\": {e.OficinaId ?? 0}, " +
-						$"\"oficina\": \"{nombreOficina}\", " +
-						$"\"puestoId\": {e.PuestoId ?? 0}, " +
-						$"\"puesto\": \"{nombrePuesto}\", " +
-						$"\"areaId\": {e.AreaId ?? 0}, " +
-						$"\"area\": \"{nombreArea}\", " +
-						$"\"estadoCivilId\": {e.EstadoCivilId ?? 0}, " +
-						$"\"estadoCivil\": \"{nombreEstadoCivil}\", " +
-						$"\"jefeId\": {e.JefeId ?? 0}, " +
-						$"\"jefe\": \"\", " +
-						$"\"curp\": \"{e.CURP}\", " +
-						$"\"rfc\": \"{e.RFC}\", " +
-						$"\"nss\": \"{e.NSS}\", " +
-						$"\"horarioId\": {e.HorarioId ?? 0}, " +
-						$"\"horario\": \"{nombreHorario}\", " +
-						$"\"usuarioId\": \"{e.UserId}\", " +
-						$"\"usuarioValido\": \"{(usuarioConfirmado ? "1" : "0")}\", " +
-						$"\"contactosEmergencia\": [], " +
-						$"\"archivos\": [] " +
-					"}"
-				);
-			}
+                bool usuarioConfirmado = usuario != null && usuario.EmailConfirmed;
 
-			jsonResponse = $"[{string.Join(",", jsonEmpleados)}]";
+                DateTime? fechaIngreso = e.FechaIngreso == DateTime.MinValue ? null : e.FechaIngreso;
+                DateTime? fechaNacimiento = e.FechaNacimiento == DateTime.MinValue ? null : e.FechaNacimiento;
 
-			return jsonResponse;
-		}
-		private static List<string> GetListJsonContactosEmergencia(ICollection<ContactoEmergencia>? contactos)
+                lista.Add(new
+                {
+                    id = e.Id,
+                    nombre = e.Nombre ?? "",
+                    nombrePreferido = e.NombrePreferido ?? "",
+                    apellidoPaterno = e.ApellidoPaterno ?? "",
+                    apellidoMaterno = e.ApellidoMaterno ?? "",
+                    nombreCompleto = e.NombreCompleto ?? "",
+                    fechaIngreso = fechaIngreso?.ToString("dd/MM/yyyy") ?? "",
+                    fechaIngresoJS = fechaIngreso?.ToString("yyyy-MM-dd") ?? "",
+                    fechaNacimiento = fechaNacimiento?.ToString("dd/MM/yyyy") ?? "",
+                    fechaNacimientoJS = fechaNacimiento?.ToString("yyyy-MM-dd") ?? "",
+                    direccion = e.Direccion?.Trim() ?? "",
+                    telefono = e.Telefono ?? "",
+                    email = e.Email ?? "",
+                    generoId = e.GeneroId ?? 0,
+                    genero = e.Genero?.Nombre ?? "",
+                    subareaId = e.SubareaId ?? 0,
+                    subarea = e.Subarea?.Nombre ?? "",
+                    oficinaId = e.OficinaId ?? 0,
+                    oficina = e.Oficina?.Nombre ?? "",
+                    puestoId = e.PuestoId ?? 0,
+                    puesto = e.Puesto?.Nombre ?? "",
+                    areaId = e.AreaId ?? 0,
+                    area = e.Area?.Nombre ?? "",
+                    estadoCivilId = e.EstadoCivilId ?? 0,
+                    estadoCivil = e.EstadoCivil?.Nombre ?? "",
+                    jefeId = e.JefeId ?? 0,
+                    jefe = "",
+                    curp = e.CURP ?? "",
+                    rfc = e.RFC ?? "",
+                    nss = e.NSS ?? "",
+                    horarioId = e.HorarioId ?? 0,
+                    horario = e.Horario?.Descripcion ?? "",
+                    usuarioId = e.UserId ?? "",
+                    usuarioValido = usuarioConfirmado ? "1" : "0",
+                    contactosEmergencia = new List<object>(),
+                    archivos = new List<object>()
+                });
+            }
+
+            return lista;
+        }
+
+        private static List<string> GetListJsonContactosEmergencia(ICollection<ContactoEmergencia>? contactos)
 		{
 			List<string> jsonContactosEmergencia = [];
 			if (contactos != null)
@@ -552,22 +539,23 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return new JsonResult(resp);
 		}
-		public async Task<JsonResult> OnPostFiltrarEmpleados()
-		{
-			ServerResponse resp = new(true, _strLocalizer["EmpleadosFiltradosUnsuccessfully"]);
-			try
-			{
-				resp.Datos = await GetTalentList(InputFiltro);
-				resp.TieneError = false;
-				resp.Mensaje = _strLocalizer["EmpleadosFiltradosSuccessfully"];
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex.Message);
-			}
+        public async Task<JsonResult> OnPostFiltrarEmpleados()
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpleadosFiltradosUnsuccessfully"]);
 
-			return new JsonResult(resp);
-		}
+            try
+            {
+                resp.Datos = await GetTalentList(InputFiltro);
+                resp.TieneError = false;
+                resp.Mensaje = _strLocalizer["EmpleadosFiltradosSuccessfully"];
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al filtrar empleados");
+            }
+
+            return new JsonResult(resp);
+        }
 
         /*public async Task<JsonResult> OnPostDisableEmpleados(string[] ids)
 		{
