@@ -461,6 +461,10 @@
     bool mostrarMetricasMenu = esAdministrador;
     bool mostrarAuditoriaMenu = esAdministrador;
 
+    bool mostrarCorreosDominiosMenu =
+    esAdministrador ||
+    esAdministradorTI;
+
     var notificacionesUsuario = new List<dynamic>();
     int totalNotificacionesNoLeidas = 0;
 
@@ -728,6 +732,15 @@
                                                    asp-area="Catalogos"
                                                    asp-page="/Auditorias/Auditoria">
                                                 Auditoría
+                                            </a>
+                                        }
+
+                                        @if (mostrarCorreosDominiosMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   asp-area="Catalogos"
+                                                   asp-page="/CorreosDominios/CorreoDominio">
+                                                Correos y Dominios
                                             </a>
                                         }
                                     </div>

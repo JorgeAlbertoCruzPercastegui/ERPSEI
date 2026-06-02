@@ -1,0 +1,161 @@
+﻿@page
+@model ERPSEI.Areas.Catalogos.Pages.CorreosDominios.CorreoDominioModel
+
+@{
+    ViewData["Title"] = "Correos y Dominios";
+    ViewData["BodyClass"] = "correos-dominios-page";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css" />
+    <link rel="stylesheet" href="~/css/CorreosDominios.css" asp-append-version="true" />
+}
+
+<form method="post">
+    @Html.AntiForgeryToken()
+</form>
+
+<div class="container-fluid">
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-envelope-at-fill"></i> Correos y Dominios
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label class="form-label">Correo</label>
+                    <input id="txtFiltroCorreo" class="form-control" placeholder="Buscar correo" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Dominio</label>
+                    <input id="txtFiltroDominio" class="form-control" placeholder="Buscar dominio" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Responsable</label>
+                    <input id="txtFiltroResponsable" class="form-control" placeholder="Buscar responsable" />
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="button" id="btnBuscarCorreoDominio" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+
+                    <button type="button" id="btnLimpiarCorreoDominio" class="btn btn-secondary w-100">
+                        Limpiar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header registros-header">
+            <div class="registros-actions">
+                <input id="inpExcelCorreosDominios"
+                       type="file"
+                       class="form-control form-control-sm"
+                       accept=".xlsx,.xls" />
+
+                <button type="button" id="btnImportarCorreosDominios" class="btn btn-success btn-sm btn-registro">
+                    <i class="bi bi-file-earmark-excel"></i> Importar Excel
+                </button>
+
+                <button type="button" id="btnNuevoCorreoDominio" class="btn btn-primary btn-sm btn-registro">
+                    <i class="bi bi-plus-circle"></i> Nuevo
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <table id="tableCorreosDominios"
+                   class="table table-striped table-hover"
+                   data-pagination="true"
+                   data-search="true"
+                   data-page-size="10">
+                <thead>
+                    <tr>
+                        <th data-field="id" data-visible="false">Id</th>
+                        <th data-field="correo">Correo</th>
+                        <th data-field="dominio">Dominio</th>
+                        <th data-field="descripcion">Descripción</th>
+                        <th data-field="responsable">Responsable</th>
+                        <th data-field="observaciones">Observaciones</th>
+                        <th data-field="acciones" data-formatter="accionesCorreoDominioFormatter">Acciones</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="dlgCorreoDominio" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-envelope-at-fill"></i> Correo y Dominio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="inpCorreoDominioId" value="0" />
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Correo</label>
+                        <input id="inpCorreo" class="form-control" placeholder="ejemplo@dominio.com" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Dominio</label>
+                        <input id="inpDominio" class="form-control" placeholder="dominio.com" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Responsable</label>
+                        <input id="inpResponsable" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Descripción</label>
+                        <input id="inpDescripcion" class="form-control" />
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label">Observaciones</label>
+                        <textarea id="inpObservaciones" class="form-control" rows="3"></textarea>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" id="btnGuardarCorreoDominio" class="btn btn-primary">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+    <script src="~/../Areas/Catalogos/Pages/CorreosDominios/CorreoDominio.cshtml.js" asp-append-version="true"></script>
+}

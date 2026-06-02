@@ -238,6 +238,9 @@ namespace ERPSEI.Data
 
         public DbSet<IntranetAuditoria> IntranetAuditorias { get; set; }
 
+        //Correos y Dominios
+        public DbSet<CorreoDominio> CorreosDominios { get; set; }
+
         private readonly AuditoriaContext? _auditoriaContext;
 
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)

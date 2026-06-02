@@ -1,0 +1,456 @@
+﻿/* =====================================================
+   MÓDULO CORREOS Y DOMINIOS
+   ===================================================== */
+
+body.correos-dominios-page {
+    background: #f6f7fb !important;
+}
+
+/* CONTENEDOR */
+.correos-dominios-page .container-fluid {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* TARJETAS */
+.correos-dominios-page .card {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(33, 22, 111, 0.08) !important;
+    overflow: hidden;
+}
+
+.correos-dominios-page .card-header {
+    border-bottom: 0;
+    padding: 16px 18px;
+}
+
+    .correos-dominios-page .card-header.bg-primary {
+        background: #21166f !important;
+    }
+
+    .correos-dominios-page .card-header h5 {
+        font-weight: 800;
+        letter-spacing: .2px;
+    }
+
+/* FILTROS */
+.correos-dominios-page .form-label {
+    color: #21166f;
+    font-weight: 700;
+    font-size: .9rem;
+}
+
+.correos-dominios-page .form-control {
+    border-radius: 8px;
+    border: 1px solid #d9ddec;
+    min-height: 40px;
+    font-size: .92rem;
+}
+
+    .correos-dominios-page .form-control:focus {
+        border-color: #21166f;
+        box-shadow: 0 0 0 .18rem rgba(33, 22, 111, .12);
+    }
+
+/* BOTONES */
+.correos-dominios-page .btn {
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.correos-dominios-page .btn-primary {
+    background: #21166f;
+    border-color: #21166f;
+}
+
+    .correos-dominios-page .btn-primary:hover {
+        background: #2f2390;
+        border-color: #2f2390;
+    }
+
+.correos-dominios-page .btn-success {
+    background: #198754;
+    border-color: #198754;
+}
+
+.correos-dominios-page .btn-secondary {
+    background: #6c757d;
+    border-color: #6c757d;
+}
+
+/* INPUT FILE */
+.correos-dominios-page #inpExcelCorreosDominios {
+    max-width: 360px;
+    min-height: 38px;
+}
+
+/* TABLA */
+.correos-dominios-page .bootstrap-table {
+    margin-top: 10px;
+}
+
+.correos-dominios-page .fixed-table-toolbar {
+    margin-bottom: 10px;
+}
+
+    .correos-dominios-page .fixed-table-toolbar .search input {
+        border-radius: 8px;
+        border: 1px solid #d9ddec;
+        min-height: 38px;
+    }
+
+.correos-dominios-page table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+    .correos-dominios-page table thead th {
+        background: #f2f4fb !important;
+        color: #21166f;
+        font-weight: 800;
+        border-bottom: 1px solid #d9ddec !important;
+        vertical-align: middle;
+    }
+
+    .correos-dominios-page table tbody td {
+        vertical-align: middle;
+        color: #263238;
+        font-size: .92rem;
+    }
+
+    .correos-dominios-page table tbody tr:hover {
+        background: #f8f6ff !important;
+    }
+
+/* ACCIONES */
+.correos-dominios-page .btn-warning {
+    background: #d4ad45;
+    border-color: #d4ad45;
+    color: #21166f;
+}
+
+    .correos-dominios-page .btn-warning:hover {
+        background: #c49b31;
+        border-color: #c49b31;
+        color: #21166f;
+    }
+
+.correos-dominios-page .btn-danger {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+
+/* MODAL */
+.correos-dominios-page .modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .22);
+}
+
+.correos-dominios-page .modal-header {
+    background: #21166f !important;
+    border-bottom: 0;
+    padding: 16px 20px;
+}
+
+.correos-dominios-page .modal-title {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.correos-dominios-page .modal-body {
+    padding: 22px;
+}
+
+.correos-dominios-page .modal-footer {
+    border-top: 1px solid #eef0f6;
+    padding: 16px 22px;
+}
+
+/* MENÚ SUPERIOR EN MÓDULOS */
+.module-main-theme .topbar-links {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    white-space: nowrap;
+    margin-top: 2px;
+    margin-bottom: 20px;
+    padding: 14px 24px !important;
+    border-radius: 10px;
+    background: #21166f;
+    border: none;
+    box-shadow: none;
+    position: relative;
+    z-index: 1000;
+}
+
+    .module-main-theme .topbar-links .small,
+    .module-main-theme .topbar-links .text-muted,
+    .module-main-theme .topbar-links b {
+        color: #ffffff !important;
+        font-weight: 700;
+    }
+
+.module-main-theme .quick-nav-wrap {
+    margin-left: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+    position: relative;
+    z-index: 5001;
+}
+
+.module-main-theme .quick-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+    row-gap: .5rem;
+    white-space: normal;
+}
+
+.module-main-theme .quick-link {
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-weight: 700;
+    font-size: .88rem;
+    line-height: 1.05;
+    padding: 2px 4px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+    .module-main-theme .quick-link:hover {
+        color: #d4ad45 !important;
+    }
+
+.module-main-theme .quick-dd {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    z-index: 5003;
+}
+
+.module-main-theme .quick-dd-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    min-width: 260px;
+    background: #ffffff;
+    border: 1px solid rgba(33,22,111,.12);
+    border-radius: 14px;
+    padding: .55rem;
+    box-shadow: 0 18px 35px rgba(33,22,111,.14);
+    display: none !important;
+    z-index: 99999 !important;
+}
+
+.module-main-theme .quick-dd.open > .quick-dd-menu {
+    display: block !important;
+}
+
+.module-main-theme .quick-dd-item {
+    display: block;
+    padding: .6rem .8rem;
+    border-radius: 10px;
+    text-decoration: none !important;
+    color: #21166f !important;
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+    .module-main-theme .quick-dd-item:hover {
+        background: rgba(33,22,111,.08);
+        color: #21166f !important;
+    }
+
+/* RESPONSIVE */
+@media (max-width: 991.98px) {
+    .correos-dominios-page .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+
+        .correos-dominios-page .card-header .d-flex {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+    .correos-dominios-page #inpExcelCorreosDominios {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .module-main-theme .topbar-links {
+        align-items: flex-start;
+        white-space: normal;
+    }
+
+    .module-main-theme .quick-nav {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .correos-dominios-page .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .correos-dominios-page .card-body {
+        padding: 14px;
+    }
+
+    .correos-dominios-page .btn {
+        width: 100%;
+    }
+
+    .correos-dominios-page .modal-dialog {
+        margin: 10px;
+    }
+}
+
+/* =====================================================
+   LOGO COMO MENÚ PRINCIPAL EN MÓDULOS
+   ===================================================== */
+
+.module-main-theme .navbar-brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px;
+    padding: 0 !important;
+}
+
+    .module-main-theme .navbar-brand img.brandimage {
+        height: 58px !important;
+        width: auto !important;
+        max-height: 58px !important;
+        object-fit: contain;
+    }
+
+    .module-main-theme .navbar-brand::before {
+        content: "Intranet";
+        font-size: 1.15rem;
+        font-weight: 500;
+        color: #21166f;
+        margin-right: 4px;
+    }
+
+/* =====================================================
+   NOTIFICACIONES ENCIMA DEL MENÚ
+   ===================================================== */
+
+.module-main-theme header,
+.module-main-theme .header-bg,
+.module-main-theme .header-bg-inner,
+.module-main-theme nav.navbar,
+.module-main-theme .navbar-collapse,
+.module-main-theme .header-right-tools {
+    position: relative !important;
+    z-index: 999998 !important;
+    overflow: visible !important;
+}
+
+.module-main-theme .header-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 999999 !important;
+}
+
+.module-main-theme .quick-notifications {
+    position: relative !important;
+    z-index: 1000000 !important;
+}
+
+.module-main-theme .quick-notification-menu {
+    position: absolute !important;
+    z-index: 1000001 !important;
+    width: 360px;
+    min-height: 120px;
+    border: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    padding: 0;
+    margin-top: 14px !important;
+    box-shadow: 0 20px 55px rgba(0,0,0,.22);
+    background: #ffffff;
+}
+
+/* El menú corporativo queda debajo de notificaciones */
+.module-main-theme .topbar-links {
+    position: relative;
+    z-index: 1000 !important;
+}
+
+.module-main-theme .quick-nav-wrap {
+    position: relative;
+    z-index: 5001 !important;
+}
+
+.module-main-theme #quickNavMenu {
+    position: relative;
+    z-index: 5002 !important;
+}
+
+.module-main-theme .quick-dd {
+    position: relative;
+    z-index: 5003 !important;
+}
+
+.module-main-theme .quick-dd-menu {
+    z-index: 99999 !important;
+}
+
+/* =====================================================
+   BOTONES REGISTROS ALINEADOS A LA IZQUIERDA
+   ===================================================== */
+
+.correos-dominios-page .registros-header {
+    display: flex;
+    justify-content: flex-start !important;
+    align-items: center;
+    gap: 12px;
+    background: #ffffff;
+}
+
+.correos-dominios-page .registros-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.correos-dominios-page #inpExcelCorreosDominios {
+    width: 360px;
+    max-width: 360px;
+    height: 42px;
+}
+
+.correos-dominios-page .btn-registro {
+    width: 145px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 12px;
+    white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+    .correos-dominios-page #inpExcelCorreosDominios,
+    .correos-dominios-page .btn-registro {
+        width: 100%;
+        max-width: 100%;
+    }
+}
