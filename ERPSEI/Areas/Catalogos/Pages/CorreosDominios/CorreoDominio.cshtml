@@ -28,8 +28,8 @@
             <div class="row g-3">
 
                 <div class="col-md-3">
-                    <label class="form-label">Correo</label>
-                    <input id="txtFiltroCorreo" class="form-control" placeholder="Buscar correo" />
+                    <label class="form-label">Empresa</label>
+                    <input id="txtFiltroEmpresa" class="form-control" placeholder="Buscar empresa" />
                 </div>
 
                 <div class="col-md-3">
@@ -38,16 +38,21 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Responsable</label>
-                    <input id="txtFiltroResponsable" class="form-control" placeholder="Buscar responsable" />
+                    <label class="form-label">Proveedor</label>
+                    <input id="txtFiltroProveedor" class="form-control" placeholder="Buscar proveedor" />
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button type="button" id="btnBuscarCorreoDominio" class="btn btn-primary w-100">
+                <div class="col-md-3">
+                    <label class="form-label">Estado</label>
+                    <input id="txtFiltroEstado" class="form-control" placeholder="Buscar estado" />
+                </div>
+
+                <div class="col-md-12 d-flex justify-content-end gap-2">
+                    <button type="button" id="btnBuscarCorreoDominio" class="btn btn-primary">
                         <i class="bi bi-search"></i> Buscar
                     </button>
 
-                    <button type="button" id="btnLimpiarCorreoDominio" class="btn btn-secondary w-100">
+                    <button type="button" id="btnLimpiarCorreoDominio" class="btn btn-secondary">
                         Limpiar
                     </button>
                 </div>
@@ -56,21 +61,76 @@
         </div>
     </div>
 
+    <div class="modal fade" id="dlgImportacionMasiva" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-file-earmark-excel"></i> Importación Masiva
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Close">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="alert alert-info mb-3">
+                        Selecciona el archivo Excel con el layout correspondiente para importar los registros masivamente.
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-12">
+                            <label class="form-label">Archivo Excel</label>
+                            <input id="inpExcelCorreosDominios"
+                                   type="file"
+                                   class="form-control"
+                                   accept=".xlsx,.xls" />
+                        </div>
+
+                        <div class="col-md-12 d-flex gap-2 justify-content-end">
+                            <a class="btn btn-outline-primary"
+                                   href="?handler=DescargarLayoutCorreosDominios">
+                                <i class="bi bi-download"></i> Descargar Layout
+                            </a>
+
+                            <button type="button" id="btnImportarCorreosDominios" class="btn btn-success">
+                                <i class="bi bi-upload"></i> Importar Excel
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <div class="card shadow-sm">
         <div class="card-header registros-header">
-            <div class="registros-actions">
-                <input id="inpExcelCorreosDominios"
-                       type="file"
-                       class="form-control form-control-sm"
-                       accept=".xlsx,.xls" />
+            <div class="registros-toolbar">
 
-                <button type="button" id="btnImportarCorreosDominios" class="btn btn-success btn-sm btn-registro">
-                    <i class="bi bi-file-earmark-excel"></i> Importar Excel
-                </button>
+                <div class="registros-actions-left">
+                    <button type="button" id="btnNuevoCorreoDominio" class="btn btn-primary btn-sm btn-registro">
+                        <i class="bi bi-plus-circle"></i> Nuevo
+                    </button>
 
-                <button type="button" id="btnNuevoCorreoDominio" class="btn btn-primary btn-sm btn-registro">
-                    <i class="bi bi-plus-circle"></i> Nuevo
-                </button>
+                    <button type="button" id="btnAbrirImportacionMasiva" class="btn btn-success btn-sm btn-registro">
+                        <i class="bi bi-file-earmark-excel"></i> Importar Masivamente
+                    </button>
+                </div>
+
+                <div class="registros-search-right">
+                    <input id="txtBuscarTablaCorreosDominios"
+                           class="form-control form-control-sm"
+                           placeholder="Buscar..." />
+                </div>
+
             </div>
         </div>
 
@@ -78,17 +138,51 @@
             <table id="tableCorreosDominios"
                    class="table table-striped table-hover"
                    data-pagination="true"
-                   data-search="true"
+                   data-search="false"
                    data-page-size="10">
                 <thead>
                     <tr>
                         <th data-field="id" data-visible="false">Id</th>
-                        <th data-field="correo">Correo</th>
-                        <th data-field="dominio">Dominio</th>
-                        <th data-field="descripcion">Descripción</th>
-                        <th data-field="responsable">Responsable</th>
-                        <th data-field="observaciones">Observaciones</th>
-                        <th data-field="acciones" data-formatter="accionesCorreoDominioFormatter">Acciones</th>
+
+                        <th data-field="empresa"
+                            data-sortable="true">
+                            Empresa
+                        </th>
+
+                        <th data-field="dominio"
+                            data-sortable="true">
+                            Dominio
+                        </th>
+
+                        <th data-field="proveedor"
+                            data-sortable="true">
+                            Proveedor
+                        </th>
+
+                        <th data-field="fechaCaducacion"
+                            data-sortable="true">
+                            Fecha Caducación
+                        </th>
+
+                        <th data-field="pagWeb"
+                            data-formatter="pagWebFormatter">
+                            Página Web
+                        </th>
+
+                        <th data-field="estado"
+                            data-formatter="estadoFormatter">
+                            Estado
+                        </th>
+
+                        <th data-field="observaciones">
+                            Observaciones
+                        </th>
+
+                        <th data-field="acciones"
+                            data-align="center"
+                            data-formatter="accionesCorreoDominioFormatter">
+                            Acciones
+                        </th>
                     </tr>
                 </thead>
             </table>
@@ -98,14 +192,18 @@
 </div>
 
 <div class="modal fade" id="dlgCorreoDominio" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
 
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
                     <i class="bi bi-envelope-at-fill"></i> Correo y Dominio
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                </button>
             </div>
 
             <div class="modal-body">
@@ -113,24 +211,59 @@
 
                 <div class="row g-3">
 
-                    <div class="col-md-6">
-                        <label class="form-label">Correo</label>
-                        <input id="inpCorreo" class="form-control" placeholder="ejemplo@dominio.com" />
+                    <div class="col-md-4">
+                        <label class="form-label">Empresa</label>
+                        <input id="inpEmpresa" class="form-control" />
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">Dominio</label>
-                        <input id="inpDominio" class="form-control" placeholder="dominio.com" />
+                        <input id="inpDominio" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Proveedor</label>
+                        <input id="inpProveedor" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha Caducación</label>
+                        <input id="inpFechaCaducacion" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Costos</label>
+                        <input id="inpCostos" type="number" step="0.01" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Estado</label>
+                        <input id="inpEstado" class="form-control" />
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">Responsable</label>
-                        <input id="inpResponsable" class="form-control" />
+                        <label class="form-label">Correo Operaciones</label>
+                        <input id="inpCorreoOperaciones" class="form-control" />
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">Descripción</label>
-                        <input id="inpDescripcion" class="form-control" />
+                        <label class="form-label">Contraseña Operaciones</label>
+                        <input id="inpContrasenaOperaciones" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Correo Fiscal</label>
+                        <input id="inpCorreoFiscal" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Contraseña Fiscal</label>
+                        <input id="inpContrasenaFiscal" class="form-control" />
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label">Pág. Web</label>
+                        <input id="inpPagWeb" class="form-control" />
                     </div>
 
                     <div class="col-md-12">
