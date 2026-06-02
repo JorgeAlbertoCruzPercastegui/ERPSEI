@@ -119,6 +119,21 @@ function pagWebFormatter(value, row) {
     return value || "";
 }
 
+function costosFormatter(value, row) {
+
+    if (!value)
+        return "";
+
+    const numero = parseFloat(value);
+
+    return `<span class="badge-costo">
+                ${numero.toLocaleString("es-MX", {
+        style: "currency",
+        currency: "MXN"
+    })}
+            </span>`;
+}
+
 /*function editarCorreoDominioDesdeJson(rowJson) {
     const row = JSON.parse(decodeURIComponent(rowJson));
     editarCorreoDominio(row);

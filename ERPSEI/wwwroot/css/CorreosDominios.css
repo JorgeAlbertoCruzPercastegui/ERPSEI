@@ -731,3 +731,8 @@ body.correos-dominios-page {
     color: #842029;
     border: 1px solid #f1aeb5;
 }
+
+.badge-costo {
+    font-weight: 700;
+    color: #21166f;
+}
