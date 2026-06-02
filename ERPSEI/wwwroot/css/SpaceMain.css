@@ -1446,3 +1446,26 @@ body.module-main-theme.manuales-politicas-page {
 .home-main-theme .quick-dd.open > .quick-dd-menu {
     display: block !important;
 }
+
+/* Evitar que el mensaje de cumpleaños se corte */
+.home-main-theme .birthday-showcase,
+.home-main-theme .birthday-showcase--compact,
+.home-main-theme .birthday-showcase-wrapper,
+.home-main-theme .birthday-showcase__content,
+.home-main-theme .birthday-showcase__grid {
+    overflow: visible !important;
+}
+
+.home-main-theme .birthday-person-card {
+    position: relative;
+    overflow: visible !important;
+    z-index: 1;
+}
+
+    .home-main-theme .birthday-person-card:hover {
+        z-index: 9999;
+    }
+
+.home-main-theme .birthday-popup {
+    z-index: 99999 !important;
+}
