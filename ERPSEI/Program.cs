@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
+using ERPSEI.Services.CorreosDominios;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ERPSEI.Data.Entities.Metricas.AuditoriaContext>();
 
 builder.Services.AddHostedService<EventosProgramadosBackgroundService>();
+
+//Para correo de notificacion de dominios y correos
+builder.Services.AddHostedService<CorreoDominioCaducidadService>();
 
 
 //Build and run application

@@ -736,3 +736,21 @@ body.correos-dominios-page {
     font-weight: 700;
     color: #21166f;
 }
+
+.badge-fecha-proxima {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #ffc107;
+    color: #3d2b00;
+    font-weight: 800;
+}
+
+.badge-fecha-caducada {
+    display: inline-flex;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #dc3545;
+    color: #ffffff;
+    font-weight: 800;
+}

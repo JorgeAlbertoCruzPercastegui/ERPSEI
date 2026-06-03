@@ -25,4 +25,5 @@
 
     public DateTime? FechaModificacion { get; set; }
     public string? UsuarioModificador { get; set; }
+    public bool Notificacion7DiasEnviada { get; set; }
 }

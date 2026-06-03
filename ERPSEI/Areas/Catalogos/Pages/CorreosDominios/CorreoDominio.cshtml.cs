@@ -101,6 +101,13 @@ namespace ERPSEI.Areas.Catalogos.Pages.CorreosDominios
                 entity.Empresa = input.Empresa;
                 entity.Dominio = input.Dominio;
                 entity.Proveedor = input.Proveedor;
+
+                // Si cambia la fecha de caducación, reiniciamos la notificación
+                if (entity.FechaCaducacion?.Date != input.FechaCaducacion?.Date)
+                {
+                    entity.Notificacion7DiasEnviada = false;
+                }
+
                 entity.FechaCaducacion = input.FechaCaducacion;
                 entity.Costos = input.Costos;
                 entity.CorreoOperaciones = input.CorreoOperaciones;

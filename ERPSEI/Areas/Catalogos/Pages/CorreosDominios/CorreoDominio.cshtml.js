@@ -484,3 +484,28 @@ function mostrarConfirmacionCorreoDominio(titulo, texto, onConfirmar) {
 
     abrirModal("dlgMensajeCorreoDominio");
 }
+
+function fechaCaducacionFormatter(value, row) {
+    if (!value) return "";
+
+    const partes = value.split("/");
+    if (partes.length !== 3) return value;
+
+    const fecha = new Date(partes[2], partes[1] - 1, partes[0]);
+    const hoy = new Date();
+
+    hoy.setHours(0, 0, 0, 0);
+    fecha.setHours(0, 0, 0, 0);
+
+    const dias = Math.ceil((fecha - hoy) / (1000 * 60 * 60 * 24));
+
+    if (dias <= 0) {
+        return `<span class="badge-fecha-caducada">${value}</span>`;
+    }
+
+    if (dias <= 7) {
+        return `<span class="badge-fecha-proxima">${value}</span>`;
+    }
+
+    return value;
+}
