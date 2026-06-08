@@ -348,21 +348,16 @@ body.correos-dominios-page {
    ===================================================== */
 
 .module-main-theme header,
-.module-main-theme .header-bg,
-.module-main-theme .header-bg-inner,
 .module-main-theme nav.navbar,
 .module-main-theme .navbar-collapse,
 .module-main-theme .header-right-tools {
     position: relative !important;
     z-index: 999998 !important;
-    overflow: visible !important;
 }
 
-.module-main-theme .header-right-tools {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 999999 !important;
+.module-main-theme .header-bg,
+.module-main-theme .header-bg-inner {
+    overflow: hidden !important;
 }
 
 .module-main-theme .quick-notifications {
@@ -753,4 +748,58 @@ body.correos-dominios-page {
     background: #dc3545;
     color: #ffffff;
     font-weight: 800;
+}
+
+body.correos-dominios-page .header-bg,
+body.correos-dominios-page .header-bg-inner {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 120px !important;
+}
+
+/* =====================================================
+   FIX HEADER CORREOS Y DOMINIOS
+   ===================================================== */
+
+body.module-main-theme.correos-dominios-page .header-bg {
+    background: #ffffff !important;
+    background-image: none !important;
+    min-height: 84px !important;
+    height: 84px !important;
+    max-height: 84px !important;
+    overflow: visible !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+}
+
+body.module-main-theme.correos-dominios-page .header-bg-inner {
+    min-height: 84px !important;
+    height: 84px !important;
+    max-height: 84px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+
+body.module-main-theme.correos-dominios-page .navbar-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+    body.module-main-theme.correos-dominios-page .navbar-brand img.brandimage {
+        height: 58px !important;
+        max-height: 58px !important;
+        width: auto !important;
+    }
+
+body.module-main-theme.correos-dominios-page .topbar-links {
+    margin-top: 0 !important;
+}
+
+body.module-main-theme.correos-dominios-page header,
+body.module-main-theme.correos-dominios-page nav,
+body.module-main-theme.correos-dominios-page .navbar,
+body.module-main-theme.correos-dominios-page .navbar-collapse {
+    min-height: unset !important;
 }
