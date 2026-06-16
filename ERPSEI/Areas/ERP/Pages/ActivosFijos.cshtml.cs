@@ -493,6 +493,14 @@ namespace ERPSEI.Areas.ERP.Pages
             {
                 var activos = await activoFijoManager.GetAllAsync(InputFiltro);
 
+                // IMPORTANTE: si no se eligió estatus, mostrar solo habilitados
+                if (string.IsNullOrWhiteSpace(InputFiltro.Estatus))
+                {
+                    activos = activos
+                        .Where(a => a.Deshabilitado != true)
+                        .ToList();
+                }
+
                 var result = activos.Select(a => new {
                     id = a.Id,
                     folio = a.Folio ?? "-",
