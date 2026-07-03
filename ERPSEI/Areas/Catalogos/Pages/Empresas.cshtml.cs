@@ -901,53 +901,59 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return string.Empty;
 		}
-		private async Task<string> CreateOrUpdateCompanyBanks(EmpresaModel e)
-		{
+        private async Task<string> CreateOrUpdateCompanyBanks(EmpresaModel e)
+        {
             try
             {
                 await _db.Database.BeginTransactionAsync();
 
-                int idEmpresa = 0;
-
-                //Se busca empresa por id
+                // Se busca empresa por Id
                 Empresa? empresa = await _empresaManager.GetByIdAsync(e.Id);
 
-                //Si se encontró empresa, obtiene su Id del registro existente. 
-                if (empresa != null)
+                if (empresa == null)
                 {
-                    idEmpresa = empresa.Id;
+                    await _db.Database.RollbackTransactionAsync();
+                    return _strLocalizer["EmpresaSavedUnsuccessfully"];
+                }
 
-					//Se toma solo el número de bancos permitidos.
-					e.Bancos = [..e.Bancos.Take(MAX_BANCOS)];
+                int idEmpresa = empresa.Id;
 
-                    //Valida la información de bancos
-                    foreach (BancoModel? b in e.Bancos)
+                // Se toma solo el número de bancos permitidos.
+                e.Bancos = [.. (e.Bancos ?? []).Take(MAX_BANCOS)];
+
+                // Valida la información de bancos
+                foreach (BancoModel? b in e.Bancos)
+                {
+                    if (b != null && e.NivelId != null)
                     {
-                        if (b != null && e.NivelId != null)
-                        {
-                            //Obtiene la información del Nivel
-                            Nivel? n = await _nivelManager.GetByIdAsync(e.NivelId ?? 0);
+                        Nivel? n = await _nivelManager.GetByIdAsync(e.NivelId ?? 0);
 
-                            //Si el nivel puede facturar, entonces valida que el límite de todos los bancos sea mayor a cero.
-                            if (n != null && n.PuedeFacturar && b.Limite <= 0)
-                            {
-                                return _strLocalizer["LimiteNoPuedeSerCero", n.Nombre];
-                            }
+                        if (n != null && n.PuedeFacturar && b.Limite <= 0)
+                        {
+                            await _db.Database.RollbackTransactionAsync();
+                            return _strLocalizer["LimiteNoPuedeSerCero", n.Nombre];
                         }
                     }
+                }
 
-                    //Elimina los bancos de la empresa.
-                    await _bancoEmpresaManager.DeleteByEmpresaIdAsync(idEmpresa);
+                // Elimina los bancos anteriores de la empresa.
+                await _bancoEmpresaManager.DeleteByEmpresaIdAsync(idEmpresa);
 
-                    //Crea los bancos de la empresa
-                    foreach (BancoModel? b in e.Bancos)
+                // Crea los bancos nuevos de la empresa.
+                foreach (BancoModel? b in e.Bancos)
+                {
+                    if (b != null)
                     {
-                        if (b != null)
-                        {
-                            await _bancoEmpresaManager.CreateAsync(
-                                new BancoEmpresa() { Banco = b.Banco ?? string.Empty, Responsable = b.Responsable ?? string.Empty, Firmante = b.Firmante ?? string.Empty, Limite = b.Limite ?? 0m, EmpresaId = idEmpresa }
-                            );
-                        }
+                        await _bancoEmpresaManager.CreateAsync(
+                            new BancoEmpresa()
+                            {
+                                Banco = b.Banco ?? string.Empty,
+                                Responsable = b.Responsable ?? string.Empty,
+                                Firmante = b.Firmante ?? string.Empty,
+                                Limite = b.Limite ?? 0m,
+                                EmpresaId = idEmpresa
+                            }
+                        );
                     }
                 }
 
@@ -958,9 +964,11 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 await _db.Database.RollbackTransactionAsync();
                 throw;
             }
+
             return string.Empty;
         }
-		private async Task<string> CreateOrUpdateCompany(EmpresaModel e, bool accesoBancos)
+
+        private async Task<string> CreateOrUpdateCompany(EmpresaModel e, bool accesoBancos)
 		{
 			try
 			{
@@ -999,12 +1007,18 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 }
 				else
 				{
-					//De lo contrario, busca la empresa por RFC.
-					empresa = await _empresaManager.GetByRFCAsync(e.RFC ?? string.Empty);
+                    // Se busca empresa por id
+                    empresa = await _empresaManager.GetByIdAsync(e.Id);
 
-					//Si se encontró empresa, obtiene su Id del registro existente. De lo contrario, crea una nueva empresa.
-					if (empresa != null) { idEmpresa = empresa.Id; } else { empresa = new Empresa(); }
-				}
+                    if (empresa != null)
+                    {
+                        idEmpresa = empresa.Id;
+                    }
+                    else
+                    {
+                        empresa = new Empresa();
+                    }
+                }
 
 				//Se valida el password SAT en caso de venir
 				if (e.ArchivosSATConfirmNewPassword?.Length >= 1 || e.ArchivosSATConfirmNewPassword?.Length >= 1)
