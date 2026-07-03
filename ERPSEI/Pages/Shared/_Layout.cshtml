@@ -403,18 +403,29 @@
         permisos["banners"] = false;
     }
 
-    bool mostrarBibliotecaCorporativa = true;
-    bool mostrarBibliotecaFront = true;
+    bool soloAdministradorEmpresas =
+        esAdministradorEmpresas &&
+        !esAdministrador &&
+        !esAdministradorTH &&
+        !esAdministradorTI;
+
+    bool mostrarBibliotecaCorporativa = !soloAdministradorEmpresas;
+    bool mostrarBibliotecaFront = !soloAdministradorEmpresas;
+    bool mostrarIncidencias = !soloAdministradorEmpresas;
+    bool mostrarWorkspace = !soloAdministradorEmpresas;
+
     bool mostrarGestorBiblioteca = esAdminMenu;
 
-    bool mostrarIncidencias = true;
-    bool mostrarWorkspace = true;
     bool mostrarComunidad = true;
 
     // Solo administradores y administradores TH
     //bool mostrarGestionCorporativa = esAdminMenu;
     //bool mostrarGestionCorporativa = esAdministrador;
-    bool mostrarGestionCorporativa = esAdministrador || esAdministradorTI || esAdministradorEmpresas;
+    bool mostrarGestionCorporativa =
+    esAdministrador ||
+    esAdministradorTI ||
+    (permisos.ContainsKey("empresas") && permisos["empresas"]);
+
     bool mostrarRecursosHumanos = esAdminMenu;
 
 
@@ -450,13 +461,12 @@
 
     // Por si después quieres controlar empresas/activos con permisos
     bool mostrarEmpresasMenu =
-    esAdministrador ||
-    esAdministradorEmpresas;
+        esAdministrador ||
+        (permisos.ContainsKey("empresas") && permisos["empresas"]);
 
     bool mostrarActivosFijosMenu =
         esAdministrador ||
-        esAdministradorTI ||
-        esAdministradorEmpresas;
+        esAdministradorTI;
 
     bool mostrarMetricasMenu = esAdministrador;
     bool mostrarAuditoriaMenu = esAdministrador;
