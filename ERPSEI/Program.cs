@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
 using ERPSEI.Services.CorreosDominios;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,7 +65,14 @@ builder.Services.AddHostedService<CorreoDominioCaducidadService>();
 
 //Build and run application
 WebApplication app = builder.Build();
-using(IServiceScope scope = app.Services.CreateScope())
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+
+using (IServiceScope scope = app.Services.CreateScope())
 {
 	//Authorization initialization
 	//Se crea instancia del administrador de roles
