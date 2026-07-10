@@ -346,70 +346,152 @@
 
                         <!-- Grupo 4 -->
                         <div class="row">
-                            <div class="col-4">
+                            <div class="col-6">
                                 <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoPrecio" asp-for="InputActivosFijos.Precio" type="text" class="form-control" placeholder="@Localizer["PrecioPlaceholder"]"/>
-                                    <label asp-for="InputActivosFijos.Precio" class="form-label required"></label>
-                                    <span asp-validation-for="InputActivosFijos.Precio" class="text-danger"></span>
+                                    <input id="inpActivoFijoPrecio"
+                                           asp-for="InputActivosFijos.Precio"
+                                           type="text"
+                                           class="form-control"
+                                           placeholder="@Localizer["PrecioPlaceholder"]" />
+
+                                    <label asp-for="InputActivosFijos.Precio"
+                                           class="form-label required"></label>
+
+                                    <span asp-validation-for="InputActivosFijos.Precio"
+                                          class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="col-4">
+
+                            <div class="col-6">
                                 <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoLinkFacturaCompra" asp-for="InputActivosFijos.LinkFacturaCompra" type="text" class="form-control" placeholder="@Localizer["LinkFacturaCompraPlaceholder"]" />
-                                    <label asp-for="InputActivosFijos.LinkFacturaCompra" class="form-label required"></label>
-                                    <span asp-validation-for="InputActivosFijos.LinkFacturaCompra" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoComentarios" asp-for="InputActivosFijos.Comentarios" type="text" class="form-control" placeholder="@Localizer["ComentariosPlaceholder"]" />
-                                    <label asp-for="InputActivosFijos.Comentarios" class="form-label required"></label>
-                                    <span asp-validation-for="InputActivosFijos.Comentarios" class="text-danger"></span>
+                                    <input id="inpActivoFijoComentarios"
+                                           asp-for="InputActivosFijos.Comentarios"
+                                           type="text"
+                                           class="form-control"
+                                           placeholder="@Localizer["ComentariosPlaceholder"]" />
+
+                                    <label asp-for="InputActivosFijos.Comentarios"
+                                           class="form-label required"></label>
+
+                                    <span asp-validation-for="InputActivosFijos.Comentarios"
+                                          class="text-danger"></span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Grupo 5 -->
-                        <div class="row">
+                        <div class="row align-items-start">
                             <div class="col-4">
                                 <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoFechaRenovacion" asp-for="InputActivosFijos.FechaRenovacion" type="date" class="form-control" placeholder="@Localizer["FechaRenovacionPlaceholder"]" />
-                                    <label asp-for="InputActivosFijos.FechaRenovacion" class="form-label required"></label>
-                                    <span asp-validation-for="InputActivosFijos.FechaRenovacion" class="text-danger"></span>
+                                    <input id="inpActivoFijoFechaRenovacion"
+                                           asp-for="InputActivosFijos.FechaRenovacion"
+                                           type="date"
+                                           class="form-control"
+                                           placeholder="@Localizer["FechaRenovacionPlaceholder"]" />
+
+                                    <label asp-for="InputActivosFijos.FechaRenovacion"
+                                           class="form-label required"></label>
+
+                                    <span asp-validation-for="InputActivosFijos.FechaRenovacion"
+                                          class="text-danger"></span>
                                 </div>
                             </div>
 
                             <div class="col-4">
                                 <div class="form-floating mb-3">
-                                    <input id="inpActivoFijoCantidad" asp-for="InputActivosFijos.Cantidades" type="text" class="form-control" placeholder="@Localizer["CantidadPlaceholder"]" />
-                                    <label asp-for="InputActivosFijos.Cantidades" class="form-label required"></label>
-                                    <span asp-validation-for="InputActivosFijos.Cantidades" class="text-danger"></span>
+                                    <input id="inpActivoFijoCantidad"
+                                           asp-for="InputActivosFijos.Cantidades"
+                                           type="number"
+                                           min="0"
+                                           class="form-control"
+                                           placeholder="@Localizer["CantidadPlaceholder"]" />
+
+                                    <label asp-for="InputActivosFijos.Cantidades"
+                                           class="form-label required"></label>
+
+                                    <span asp-validation-for="InputActivosFijos.Cantidades"
+                                          class="text-danger"></span>
                                 </div>
                             </div>
 
                             <div class="col-4">
-                                <div class="archivo-activo-wrapper mb-3">
-                                    <label for="inpActivoFijoArchivo" class="archivo-activo-label">
-                                        Adjuntar PDF o Imagen
-                                    </label>
+                                <div class="factura-activo-card mb-3">
+                                    <div class="factura-activo-header">
+                                        <div>
+                                            <i class="bi bi-receipt-cutoff me-2"></i>
+                                            <span>Factura del Activo</span>
+                                        </div>
 
-                                    <input id="inpActivoFijoArchivo"
-                                           name="archivo"
-                                           type="file"
-                                           class="form-control archivo-activo-input"
-                                           accept="application/pdf,image/png,image/jpeg,image/jpg" />
+                                        <span class="factura-formatos">
+                                            PDF / JPG / PNG
+                                        </span>
+                                    </div>
 
-                                    <div id="archivoActualContainer" style="display:none;">
+                                    <div id="facturaPreviewContainer"
+                                         class="factura-preview-container">
+
+                                        <div id="facturaPreviewVacio"
+                                             class="factura-preview-vacio">
+                                            <i class="bi bi-file-earmark-arrow-up"></i>
+
+                                            <span>
+                                                Selecciona una factura para visualizarla
+                                            </span>
+                                        </div>
+
+                                        <img id="facturaPreviewImagen"
+                                             class="factura-preview-imagen"
+                                             alt="Vista previa de la factura"
+                                             style="display:none;" />
+
+                                        <iframe id="facturaPreviewPdf"
+                                                class="factura-preview-pdf"
+                                                title="Vista previa de la factura PDF"
+                                                style="display:none;">
+                                        </iframe>
+                                    </div>
+
+                                    <div class="factura-selector">
+                                        <label for="inpActivoFijoArchivo"
+                                               class="btn btn-primary factura-btn-seleccionar">
+                                            <i class="bi bi-folder2-open me-1"></i>
+                                            Seleccionar archivo
+                                        </label>
+
+                                        <input id="inpActivoFijoArchivo"
+                                               name="archivo"
+                                               type="file"
+                                               class="d-none"
+                                               accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                                               onchange="mostrarVistaPreviaFactura(this)" />
+
+                                        <div id="facturaNombreArchivo"
+                                             class="factura-nombre-archivo">
+                                            Ningún archivo seleccionado
+                                        </div>
+                                    </div>
+
+                                    <div id="archivoActualContainer"
+                                         class="factura-archivo-actual"
+                                         style="display:none;">
+
+                                        <span>
+                                            <i class="bi bi-check-circle-fill me-1"></i>
+                                            Factura almacenada
+                                        </span>
+
                                         <a id="archivoActualLink"
                                                href="#"
                                                target="_blank"
-                                               class="btn btn-sm btn-outline-primary w-100 mt-2">
-                                            <i class="bi bi-paperclip"></i> Ver archivo actual
+                                               rel="noopener noreferrer"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                            <i class="bi bi-box-arrow-up-right me-1"></i>
+                                            Abrir
                                         </a>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
 
                     </div>

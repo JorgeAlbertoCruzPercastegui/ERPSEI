@@ -642,3 +642,105 @@ body.module-main-theme.activosfijos-page .notification-panel {
 body.module-main-theme.activosfijos-page .topbar-links {
     z-index: 1 !important;
 }
+
+.factura-activo-card {
+    overflow: hidden;
+    border: 1px dashed rgba(42, 28, 124, 0.35);
+    border-radius: 18px;
+    background: #f9f9ff;
+}
+
+.factura-activo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(42, 28, 124, 0.12);
+    color: #20156d;
+    font-weight: 700;
+}
+
+.factura-formatos {
+    padding: 4px 8px;
+    border-radius: 20px;
+    background: rgba(42, 28, 124, 0.08);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.factura-preview-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+    margin: 14px;
+    overflow: hidden;
+    border: 1px solid #e1e1ef;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.factura-preview-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px;
+    color: #77748f;
+    text-align: center;
+}
+
+    .factura-preview-vacio i {
+        color: #2a1c7c;
+        font-size: 38px;
+    }
+
+.factura-preview-imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.factura-preview-pdf {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #fff;
+}
+
+.factura-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px 14px;
+}
+
+.factura-btn-seleccionar {
+    flex-shrink: 0;
+    margin: 0;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.factura-nombre-archivo {
+    min-width: 0;
+    overflow: hidden;
+    color: #55516e;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.factura-archivo-actual {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 14px 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(25, 135, 84, 0.08);
+    color: #157347;
+    font-size: 13px;
+    font-weight: 600;
+}

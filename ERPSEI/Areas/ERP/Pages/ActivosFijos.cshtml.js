@@ -98,6 +98,242 @@ function additionalButtons() {
 function onAgregarClick() {
     initActivoFijoDialog(NUEVO, { id: "Nuevo", nombre: "" });
 }
+
+function obtenerExtensionArchivo(rutaArchivo) {
+    if (!rutaArchivo) {
+        return "";
+    }
+
+    const rutaLimpia = rutaArchivo
+        .split("?")[0]
+        .split("#")[0];
+
+    const partes = rutaLimpia.split(".");
+
+    return partes.length > 1
+        ? partes.pop().toLowerCase()
+        : "";
+}
+
+function limpiarVistaPreviaFactura() {
+    const previewVacio =
+        document.getElementById("facturaPreviewVacio");
+
+    const previewImagen =
+        document.getElementById("facturaPreviewImagen");
+
+    const previewPdf =
+        document.getElementById("facturaPreviewPdf");
+
+    if (previewVacio) {
+        previewVacio.style.display = "flex";
+    }
+
+    if (previewImagen) {
+        previewImagen.style.display = "none";
+        previewImagen.removeAttribute("src");
+    }
+
+    if (previewPdf) {
+        previewPdf.style.display = "none";
+        previewPdf.removeAttribute("src");
+    }
+}
+
+function cargarVistaPreviaFactura(rutaArchivo) {
+    const previewVacio =
+        document.getElementById("facturaPreviewVacio");
+
+    const previewImagen =
+        document.getElementById("facturaPreviewImagen");
+
+    const previewPdf =
+        document.getElementById("facturaPreviewPdf");
+
+    limpiarVistaPreviaFactura();
+
+    if (!rutaArchivo) {
+        return;
+    }
+
+    const extension =
+        obtenerExtensionArchivo(rutaArchivo);
+
+    if (previewVacio) {
+        previewVacio.style.display = "none";
+    }
+
+    if (["jpg", "jpeg", "png"].includes(extension)) {
+        previewImagen.src = rutaArchivo;
+        previewImagen.style.display = "block";
+        return;
+    }
+
+    if (extension === "pdf") {
+        previewPdf.src =
+            `${rutaArchivo}#page=1&toolbar=0&navpanes=0&scrollbar=0`;
+
+        previewPdf.style.display = "block";
+        return;
+    }
+
+    limpiarVistaPreviaFactura();
+}
+
+function mostrarVistaPreviaFactura(input) {
+    const nombreArchivo =
+        document.getElementById("facturaNombreArchivo");
+
+    if (!input.files || input.files.length === 0) {
+        nombreArchivo.textContent =
+            "Ningún archivo seleccionado";
+
+        limpiarVistaPreviaFactura();
+        return;
+    }
+
+    const archivo = input.files[0];
+
+    const extensionesPermitidas = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png"
+    ];
+
+    if (!extensionesPermitidas.includes(archivo.type)) {
+        input.value = "";
+
+        nombreArchivo.textContent =
+            "Ningún archivo seleccionado";
+
+        limpiarVistaPreviaFactura();
+
+        showError(
+            "Formato no permitido",
+            "Solo se permiten archivos PDF, JPG, JPEG o PNG."
+        );
+
+        return;
+    }
+
+    const tamanioMaximo = 10 * 1024 * 1024;
+
+    if (archivo.size > tamanioMaximo) {
+        input.value = "";
+
+        nombreArchivo.textContent =
+            "Ningún archivo seleccionado";
+
+        limpiarVistaPreviaFactura();
+
+        showError(
+            "Archivo demasiado grande",
+            "La factura no puede superar los 10 MB."
+        );
+
+        return;
+    }
+
+    nombreArchivo.textContent = archivo.name;
+
+    const rutaTemporal =
+        URL.createObjectURL(archivo);
+
+    cargarVistaPreviaFactura(rutaTemporal);
+}
+
+function facturaActivoFormatter(value, row, index) {
+    const rutaArchivo = row.archivoAdjunto;
+
+    if (!rutaArchivo) {
+        return `
+            <span class="text-muted small">
+                <i class="bi bi-file-earmark-x"></i>
+                Sin factura
+            </span>
+        `;
+    }
+
+    const extension = obtenerExtensionArchivo(rutaArchivo);
+
+    if (["jpg", "jpeg", "png"].includes(extension)) {
+        return `
+            <a href="${rutaArchivo}"
+               target="_blank"
+               rel="noopener noreferrer"
+               title="Ver factura completa">
+
+                <img src="${rutaArchivo}"
+                     alt="Factura del activo"
+                     style="
+                        width: 100px;
+                        height: 70px;
+                        object-fit: cover;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                     ">
+            </a>
+        `;
+    }
+
+    if (extension === "pdf") {
+        return `
+            <a href="${rutaArchivo}"
+               target="_blank"
+               rel="noopener noreferrer"
+               title="Abrir factura PDF"
+               style="text-decoration:none;">
+
+                <div style="
+                    position:relative;
+                    width:100px;
+                    height:70px;
+                    overflow:hidden;
+                    border:1px solid #ddd;
+                    border-radius:5px;
+                    background:#fff;
+                    margin:auto;
+                ">
+                    <iframe
+                        src="${rutaArchivo}#page=1&toolbar=0&navpanes=0&scrollbar=0"
+                        style="
+                            width:200px;
+                            height:140px;
+                            border:0;
+                            pointer-events:none;
+                            transform:scale(.5);
+                            transform-origin:top left;
+                        ">
+                    </iframe>
+
+                    <span style="
+                        position:absolute;
+                        right:3px;
+                        bottom:3px;
+                        padding:1px 4px;
+                        border-radius:3px;
+                        background:#dc3545;
+                        color:#fff;
+                        font-size:10px;
+                    ">
+                        PDF
+                    </span>
+                </div>
+            </a>
+        `;
+    }
+
+    return `
+        <a href="${rutaArchivo}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="btn btn-sm btn-outline-primary">
+
+            <i class="bi bi-paperclip"></i>
+            Ver
+        </a>
+    `;
+}
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
         //url: '/ERP/ActivosFijos?handler=ActivosFijosList',
@@ -178,11 +414,14 @@ function initTable() {
                 sortable: true
             },
             {
-                title: "LinkFacturaCompra",
-                field: "linkFacturaCompra",
+                title: "Factura del Activo",
+                field: "archivoAdjunto",
                 align: "center",
                 valign: "middle",
-                sortable: true
+                sortable: false,
+                width: "140px",
+                clickToSelect: false,
+                formatter: facturaActivoFormatter
             },
             {
                 title: "Comentarios",
@@ -264,7 +503,6 @@ function initActivoFijoDialog(action, row) {
     let tipoField = document.getElementById("inpActivoFijoTipo");
     let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
     let precioField = document.getElementById("inpActivoFijoPrecio");
-    let linkfacturaField = document.getElementById("inpActivoFijoLinkFacturaCompra");
 
     let marcaField = document.getElementById("inpActivoFijoMarca");
     let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
@@ -299,7 +537,6 @@ function initActivoFijoDialog(action, row) {
             tipoField.removeAttribute("disabled");
             fechacompraField.removeAttribute("disabled");
             precioField.removeAttribute("disabled");
-            linkfacturaField.removeAttribute("disabled");
 
             marcaField.removeAttribute("disabled");
             numeroSerieField.removeAttribute("disabled");
@@ -324,7 +561,6 @@ function initActivoFijoDialog(action, row) {
             tipoField.removeAttribute("disabled");
             fechacompraField.removeAttribute("disabled");
             precioField.removeAttribute("disabled");
-            linkfacturaField.removeAttribute("disabled");
 
             marcaField.removeAttribute("disabled");
             numeroSerieField.removeAttribute("disabled");
@@ -348,7 +584,6 @@ function initActivoFijoDialog(action, row) {
             tipoField.setAttribute("disabled", true);
             fechacompraField.setAttribute("disabled", true);
             precioField.setAttribute("disabled", true);
-            linkfacturaField.setAttribute("disabled", true);
 
             marcaField.setAttribute("disabled", true);
             numeroSerieField.setAttribute("disabled", true);
@@ -404,21 +639,44 @@ function initActivoFijoDialog(action, row) {
     }
 
     precioField.value = row.precio ?? "";
-    linkfacturaField.value = row.linkFacturaCompra || '';
     marcaField.value = row.marca ?? "";
     numeroSerieField.value = row.numeroSerie ?? "";
     //ubicacionField.value = row.ubicacion ?? "";
     comentariosField.value = row.comentarios ?? "";
 
-    let archivoContainer = document.getElementById("archivoActualContainer");
-    let archivoLink = document.getElementById("archivoActualLink");
+    let archivoContainer =
+        document.getElementById("archivoActualContainer");
 
-    if (row.archivoAdjunto && row.archivoAdjunto !== "") {
-        archivoContainer.style.display = "block";
+    let archivoLink =
+        document.getElementById("archivoActualLink");
+
+    let nombreArchivo =
+        document.getElementById("facturaNombreArchivo");
+
+    if (archivoField) {
+        archivoField.value = "";
+    }
+
+    if (row.archivoAdjunto &&
+        row.archivoAdjunto.trim() !== "") {
+
+        archivoContainer.style.display = "flex";
         archivoLink.href = row.archivoAdjunto;
+
+        nombreArchivo.textContent =
+            row.archivoAdjunto.split("/").pop();
+
+        cargarVistaPreviaFactura(
+            row.archivoAdjunto
+        );
     } else {
         archivoContainer.style.display = "none";
         archivoLink.href = "#";
+
+        nombreArchivo.textContent =
+            "Ningún archivo seleccionado";
+
+        limpiarVistaPreviaFactura();
     }
 
     cantidadesField.value = row.cantidades ?? "";
@@ -508,7 +766,6 @@ function onGuardarClick() {
     let tipoField = document.getElementById("inpActivoFijoTipo");
     let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
     let precioField = document.getElementById("inpActivoFijoPrecio");
-    let linkfacturaField = document.getElementById("inpActivoFijoLinkFacturaCompra");
 
     let marcaField = document.getElementById("inpActivoFijoMarca");
     let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
@@ -538,7 +795,6 @@ function onGuardarClick() {
     formData.append("tipo", tipoField.value);
     formData.append("fechaCompra", fechacompraField.value);
     formData.append("precio", parseFloat(precioField.value) || 0);
-    formData.append("linkFacturaCompra", linkfacturaField.value);
     formData.append("marca", marcaField.value);
     formData.append("numeroSerie", numeroSerieField.value);
     formData.append("comentarios", comentariosField.value);
@@ -577,7 +833,20 @@ function onGuardarClick() {
             showSuccess(dlgTitle.innerHTML, resp.mensaje);
         },
         error: function (xhr) {
-            showError("Error", xhr.responseText || "Ocurrió un error al guardar el activo fijo.");
+            console.error("Error al guardar:", {
+                status: xhr.status,
+                statusText: xhr.statusText,
+                responseText: xhr.responseText,
+                responseJSON: xhr.responseJSON
+            });
+
+            let mensaje =
+                xhr.responseJSON?.mensaje ||
+                xhr.responseJSON?.title ||
+                xhr.responseText ||
+                "Ocurrió un error al guardar el activo fijo.";
+
+            showError("Error", mensaje);
         }
     });
 }
