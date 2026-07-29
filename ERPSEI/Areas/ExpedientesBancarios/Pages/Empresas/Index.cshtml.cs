@@ -58,7 +58,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             }
 
             var empresas = await query
-                .OrderBy(x => x.RazonSocial)
+                .OrderBy(x => x.Id)
                 .Select(x => new
                 {
                     id = x.Id,
@@ -475,6 +475,464 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             return errores;
         }
 
+        // =====================================================
+        // LISTAR ACCIONISTAS DE UNA EMPRESA
+        // GET ?handler=Accionistas&empresaId=1
+        // =====================================================
+        public async Task<IActionResult> OnGetAccionistasAsync(int empresaId)
+        {
+            if (empresaId <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El identificador de la empresa no es válido."
+                });
+            }
+
+            bool empresaExiste = await _context.EbEmpresas
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == empresaId);
+
+            if (!empresaExiste)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró la empresa solicitada."
+                });
+            }
+
+            var accionistas = await _context.EbAccionistas
+                .AsNoTracking()
+                .Where(x => x.EmpresaId == empresaId)
+                .OrderByDescending(x => x.PorcentajeParticipacion)
+                .ThenBy(x => x.NombreCompleto)
+                .Select(x => new
+                {
+                    id = x.Id,
+                    empresaId = x.EmpresaId,
+                    nombreCompleto = x.NombreCompleto,
+                    rfc = x.Rfc,
+                    porcentajeParticipacion = x.PorcentajeParticipacion,
+                    nacionalidad = x.Nacionalidad,
+                    esRepresentanteLegal = x.EsRepresentanteLegal,
+                    deshabilitado = x.Deshabilitado,
+                    fechaCreacion = x.FechaCreacion
+                })
+                .ToListAsync();
+
+            decimal porcentajeTotal = accionistas.Sum(
+                x => x.porcentajeParticipacion);
+
+            return new JsonResult(new
+            {
+                success = true,
+                data = accionistas,
+                resumen = new
+                {
+                    totalAccionistas = accionistas.Count,
+                    porcentajeTotal,
+                    porcentajeDisponible = 100m - porcentajeTotal
+                }
+            });
+        }
+
+        // =====================================================
+        // CONSULTAR ACCIONISTA
+        // GET ?handler=Accionista&id=1
+        // =====================================================
+        public async Task<IActionResult> OnGetAccionistaAsync(int id)
+        {
+            if (id <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El identificador del accionista no es válido."
+                });
+            }
+
+            var accionista = await _context.EbAccionistas
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (accionista == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró el accionista solicitado."
+                });
+            }
+
+            return new JsonResult(new
+            {
+                success = true,
+                data = new
+                {
+                    id = accionista.Id,
+                    empresaId = accionista.EmpresaId,
+                    nombreCompleto = accionista.NombreCompleto,
+                    rfc = accionista.Rfc,
+                    porcentajeParticipacion =
+                        accionista.PorcentajeParticipacion,
+                    nacionalidad = accionista.Nacionalidad,
+                    esRepresentanteLegal =
+                        accionista.EsRepresentanteLegal,
+                    deshabilitado = accionista.Deshabilitado
+                }
+            });
+        }
+
+        // =====================================================
+        // CREAR ACCIONISTA
+        // POST ?handler=CrearAccionista
+        // =====================================================
+        public async Task<IActionResult> OnPostCrearAccionistaAsync(
+            [FromBody] AccionistaRequest request)
+        {
+            NormalizarAccionistaRequest(request);
+
+            Dictionary<string, string[]> errores =
+                await ValidarAccionistaRequestAsync(
+                    request,
+                    requiereId: false);
+
+            if (errores.Any())
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Revisa la información del accionista.",
+                    errors = errores
+                });
+            }
+
+            bool empresaExiste = await _context.EbEmpresas
+                .AnyAsync(x => x.Id == request.EmpresaId);
+
+            if (!empresaExiste)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró la empresa seleccionada."
+                });
+            }
+
+            string usuarioId = ObtenerUsuarioId();
+
+            var accionista = new EbAccionista
+            {
+                EmpresaId = request.EmpresaId,
+                NombreCompleto = request.NombreCompleto,
+                Rfc = request.Rfc,
+                PorcentajeParticipacion =
+                    request.PorcentajeParticipacion,
+                Nacionalidad = request.Nacionalidad,
+                EsRepresentanteLegal =
+                    request.EsRepresentanteLegal,
+                Deshabilitado = false,
+                Eliminado = false,
+                FechaCreacion = DateTime.Now,
+                UsuarioCreacionId = usuarioId
+            };
+
+            _context.EbAccionistas.Add(accionista);
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = "El accionista se registró correctamente.",
+                id = accionista.Id
+            });
+        }
+
+        // =====================================================
+        // EDITAR ACCIONISTA
+        // POST ?handler=EditarAccionista
+        // =====================================================
+        public async Task<IActionResult> OnPostEditarAccionistaAsync(
+            [FromBody] AccionistaRequest request)
+        {
+            NormalizarAccionistaRequest(request);
+
+            Dictionary<string, string[]> errores =
+                await ValidarAccionistaRequestAsync(
+                    request,
+                    requiereId: true);
+
+            if (errores.Any())
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Revisa la información del accionista.",
+                    errors = errores
+                });
+            }
+
+            var accionista = await _context.EbAccionistas
+                .FirstOrDefaultAsync(x => x.Id == request.Id);
+
+            if (accionista == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró el accionista que deseas editar."
+                });
+            }
+
+            if (accionista.EmpresaId != request.EmpresaId)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El accionista no pertenece a la empresa seleccionada."
+                });
+            }
+
+            accionista.NombreCompleto = request.NombreCompleto;
+            accionista.Rfc = request.Rfc;
+            accionista.PorcentajeParticipacion =
+                request.PorcentajeParticipacion;
+            accionista.Nacionalidad = request.Nacionalidad;
+            accionista.EsRepresentanteLegal =
+                request.EsRepresentanteLegal;
+            accionista.FechaActualizacion = DateTime.Now;
+            accionista.UsuarioActualizacionId =
+                ObtenerUsuarioId();
+
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = "El accionista se actualizó correctamente."
+            });
+        }
+
+        // =====================================================
+        // HABILITAR / DESHABILITAR ACCIONISTA
+        // POST ?handler=CambiarEstatusAccionista
+        // =====================================================
+        public async Task<IActionResult>
+            OnPostCambiarEstatusAccionistaAsync(
+                [FromBody] AccionistaIdRequest request)
+        {
+            if (request.Id <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El identificador del accionista no es válido."
+                });
+            }
+
+            var accionista = await _context.EbAccionistas
+                .FirstOrDefaultAsync(x => x.Id == request.Id);
+
+            if (accionista == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró el accionista solicitado."
+                });
+            }
+
+            accionista.Deshabilitado =
+                !accionista.Deshabilitado;
+
+            accionista.FechaActualizacion = DateTime.Now;
+            accionista.UsuarioActualizacionId =
+                ObtenerUsuarioId();
+
+            await _context.SaveChangesAsync();
+
+            string mensaje = accionista.Deshabilitado
+                ? "El accionista se deshabilitó correctamente."
+                : "El accionista se habilitó correctamente.";
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = mensaje,
+                deshabilitado = accionista.Deshabilitado
+            });
+        }
+
+        // =====================================================
+        // ELIMINAR ACCIONISTA LÓGICAMENTE
+        // POST ?handler=EliminarAccionista
+        // =====================================================
+        public async Task<IActionResult> OnPostEliminarAccionistaAsync(
+            [FromBody] AccionistaIdRequest request)
+        {
+            if (request.Id <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El identificador del accionista no es válido."
+                });
+            }
+
+            var accionista = await _context.EbAccionistas
+                .FirstOrDefaultAsync(x => x.Id == request.Id);
+
+            if (accionista == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró el accionista solicitado."
+                });
+            }
+
+            accionista.Eliminado = true;
+            accionista.Deshabilitado = true;
+            accionista.FechaActualizacion = DateTime.Now;
+            accionista.UsuarioActualizacionId =
+                ObtenerUsuarioId();
+
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = "El accionista se eliminó correctamente."
+            });
+        }
+
+        private async Task<Dictionary<string, string[]>>
+    ValidarAccionistaRequestAsync(
+        AccionistaRequest request,
+        bool requiereId)
+        {
+            var errores = new Dictionary<string, string[]>();
+
+            if (requiereId && request.Id <= 0)
+            {
+                errores["Id"] = new[]
+                {
+            "El identificador del accionista no es válido."
+        };
+            }
+
+            if (request.EmpresaId <= 0)
+            {
+                errores["EmpresaId"] = new[]
+                {
+            "La empresa es obligatoria."
+        };
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NombreCompleto))
+            {
+                errores["NombreCompleto"] = new[]
+                {
+            "El nombre completo es obligatorio."
+        };
+            }
+            else if (request.NombreCompleto.Length > 250)
+            {
+                errores["NombreCompleto"] = new[]
+                {
+            "El nombre no puede exceder 250 caracteres."
+        };
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Rfc))
+            {
+                var validadorRfc = new RegularExpressionAttribute(
+                    @"^[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}$");
+
+                if (request.Rfc.Length is < 12 or > 13 ||
+                    !validadorRfc.IsValid(request.Rfc))
+                {
+                    errores["Rfc"] = new[]
+                    {
+                "El formato del RFC no es válido."
+            };
+                }
+            }
+
+            if (request.PorcentajeParticipacion <= 0)
+            {
+                errores["PorcentajeParticipacion"] = new[]
+                {
+            "El porcentaje debe ser mayor que cero."
+        };
+            }
+            else if (request.PorcentajeParticipacion > 100)
+            {
+                errores["PorcentajeParticipacion"] = new[]
+                {
+            "El porcentaje no puede ser mayor que 100."
+        };
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.Nacionalidad) &&
+                request.Nacionalidad.Length > 100)
+            {
+                errores["Nacionalidad"] = new[]
+                {
+            "La nacionalidad no puede exceder 100 caracteres."
+        };
+            }
+
+            if (request.EmpresaId > 0 &&
+                request.PorcentajeParticipacion > 0 &&
+                request.PorcentajeParticipacion <= 100)
+            {
+                decimal porcentajeRegistrado =
+                    await _context.EbAccionistas
+                        .AsNoTracking()
+                        .Where(x =>
+                            x.EmpresaId == request.EmpresaId &&
+                            x.Id != request.Id &&
+                            !x.Deshabilitado)
+                        .SumAsync(x =>
+                            (decimal?)x.PorcentajeParticipacion)
+                        ?? 0m;
+
+                decimal porcentajeFinal =
+                    porcentajeRegistrado +
+                    request.PorcentajeParticipacion;
+
+                if (porcentajeFinal > 100m)
+                {
+                    decimal porcentajeDisponible =
+                        100m - porcentajeRegistrado;
+
+                    errores["PorcentajeParticipacion"] = new[]
+                    {
+                $"La participación total no puede superar el 100 %. " +
+                $"Actualmente hay {porcentajeRegistrado:N4} % registrado " +
+                $"y quedan {porcentajeDisponible:N4} % disponibles."
+            };
+                }
+            }
+
+            return errores;
+        }
+
+        private static void NormalizarAccionistaRequest(AccionistaRequest request)
+        {
+            request.NombreCompleto =
+                request.NombreCompleto?.Trim() ?? string.Empty;
+
+            request.Rfc = NormalizarOpcional(request.Rfc)?
+                .ToUpperInvariant();
+
+            request.Nacionalidad =
+                NormalizarOpcional(request.Nacionalidad);
+        }
+
         private static void NormalizarRequest(EmpresaRequest request)
         {
             request.RazonSocial =
@@ -553,6 +1011,29 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         }
 
         public class EmpresaIdRequest
+        {
+            public int Id { get; set; }
+        }
+
+        public class AccionistaRequest
+        {
+            public int Id { get; set; }
+
+            public int EmpresaId { get; set; }
+
+            public string NombreCompleto { get; set; }
+                = string.Empty;
+
+            public string? Rfc { get; set; }
+
+            public decimal PorcentajeParticipacion { get; set; }
+
+            public string? Nacionalidad { get; set; }
+
+            public bool EsRepresentanteLegal { get; set; }
+        }
+
+        public class AccionistaIdRequest
         {
             public int Id { get; set; }
         }

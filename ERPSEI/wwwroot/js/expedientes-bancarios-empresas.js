@@ -11,11 +11,15 @@
 let modalEmpresa;
 let modalEliminarEmpresa;
 let modalResultado;
+let modalAccionistas;
 
 let empresaIdEliminar = 0;
 let empresasIdsEliminar = [];
 let modoEliminacion = "individual";
 let modoEmpresa = "crear";
+
+let empresaIdAccionistas = 0;
+let empresaNombreAccionistas = "";
 
 function inicializarTablaEmpresas() {
     const tabla = $("#tablaEmpresas");
@@ -23,19 +27,32 @@ function inicializarTablaEmpresas() {
     tabla.bootstrapTable({
         url: construirUrlEmpresas(),
         method: "get",
-
         toolbar: "#toolbarEmpresas",
 
         detailView: true,
         detailFormatter: detalleEmpresaFormatter,
+
         search: true,
         pagination: true,
+        sidePagination: "client",
+
         pageSize: 10,
-        pageList: [10, 25, 50, 100],
+        pageList: [10, 20, 30, 50],
+
+        sortName: "id",
+        sortOrder: "asc",
+
+        paginationLoop: false,
         showRefresh: true,
         showColumns: true,
+
         uniqueId: "id",
-        locale: "es-MX"
+        locale: "es-MX",
+        height: undefined,
+
+        onPostBody: function () {
+            actualizarBotonSeleccionados();
+        }
     });
 }
 
@@ -51,6 +68,19 @@ function inicializarEventosEmpresas() {
     modalResultado = bootstrap.Modal.getOrCreateInstance(
         document.getElementById("modalResultado")
     );
+
+    modalAccionistas = bootstrap.Modal.getOrCreateInstance(
+        document.getElementById("modalAccionistas")
+    );
+
+    document
+        .getElementById("btnNuevoAccionista")
+        ?.addEventListener("click", function () {
+            mostrarResultado(
+                "En el siguiente bloque habilitaremos el formulario para registrar accionistas.",
+                "success"
+            );
+        });
 
     document
         .getElementById("btnBuscarEmpresas")
@@ -233,22 +263,27 @@ function accionesEmpresaFormatter(value, row) {
         : "fa-ban";
 
     return `
-        <div class="dropdown">
-            <button type="button"
-                    class="btn btn-sm btn-link eb-action-button"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-            </button>
+    <div class="dropdown eb-actions-dropdown">
 
-            <ul class="dropdown-menu dropdown-menu-end">
+        <button type="button"
+                class="btn btn-sm eb-action-button"
+                data-bs-toggle="dropdown"
+                data-bs-boundary="viewport"
+                data-bs-offset="8,0"
+                aria-expanded="false"
+                title="Acciones">
+
+            <span class="eb-action-dots">⋮</span>
+        </button>
+
+        <ul class="dropdown-menu eb-actions-menu">
 
                 <li>
                     <button type="button"
                             class="dropdown-item"
                             onclick="consultarEmpresa(${row.id})">
                         <i class="fa-regular fa-eye me-2"></i>
-                        Consultar
+                        Consultar empresa
                     </button>
                 </li>
 
@@ -257,8 +292,24 @@ function accionesEmpresaFormatter(value, row) {
                             class="dropdown-item"
                             onclick="editarEmpresa(${row.id})">
                         <i class="fa-regular fa-pen-to-square me-2"></i>
-                        Editar
+                        Editar empresa
                     </button>
+                </li>
+
+                <li>
+                    <button type="button"
+                            class="dropdown-item"
+                            onclick="abrirAccionistasEmpresa(
+                                ${row.id},
+                                '${escaparAtributoJs(row.razonSocial)}'
+                            )">
+                        <i class="fa-solid fa-users me-2"></i>
+                        Accionistas
+                    </button>
+                </li>
+
+                <li>
+                    <hr class="dropdown-divider" />
                 </li>
 
                 <li>
@@ -271,15 +322,11 @@ function accionesEmpresaFormatter(value, row) {
                 </li>
 
                 <li>
-                    <hr class="dropdown-divider" />
-                </li>
-
-                <li>
                     <button type="button"
                             class="dropdown-item text-danger"
                             onclick="confirmarEliminarEmpresa(
                                 ${row.id},
-                                '${escaparHtml(row.razonSocial)}'
+                                '${escaparAtributoJs(row.razonSocial)}'
                             )">
                         <i class="fa-regular fa-trash-can me-2"></i>
                         Eliminar
@@ -796,6 +843,304 @@ function limpiarErroresEmpresa() {
         });
 }
 
+
+async function abrirAccionistasEmpresa(empresaId, razonSocial) {
+    empresaIdAccionistas = empresaId;
+    empresaNombreAccionistas = razonSocial;
+
+    document.getElementById(
+        "nombreEmpresaAccionistas"
+    ).textContent = razonSocial;
+
+    limpiarListadoAccionistas();
+    mostrarCargaAccionistas();
+
+    modalAccionistas.show();
+
+    await cargarAccionistasEmpresa();
+}
+
+async function cargarAccionistasEmpresa() {
+    if (empresaIdAccionistas <= 0) {
+        mostrarErrorAccionistas(
+            "El identificador de la empresa no es válido."
+        );
+
+        return;
+    }
+
+    try {
+        const parametros = new URLSearchParams({
+            handler: "Accionistas",
+            empresaId: empresaIdAccionistas.toString()
+        });
+
+        const response = await fetch(
+            `${window.location.pathname}?${parametros.toString()}`
+        );
+
+        const resultado = await response.json();
+
+        if (!resultado.success) {
+            mostrarErrorAccionistas(
+                resultado.message ??
+                "No fue posible consultar los accionistas."
+            );
+
+            return;
+        }
+
+        actualizarResumenAccionistas(resultado.resumen);
+        renderizarAccionistas(resultado.data);
+    } catch (error) {
+        console.error(error);
+
+        mostrarErrorAccionistas(
+            "Ocurrió un error al consultar los accionistas."
+        );
+    }
+}
+
+function actualizarResumenAccionistas(resumen) {
+    document.getElementById(
+        "totalAccionistas"
+    ).textContent = resumen?.totalAccionistas ?? 0;
+
+    document.getElementById(
+        "porcentajeRegistrado"
+    ).textContent = formatearPorcentaje(
+        resumen?.porcentajeTotal
+    );
+
+    document.getElementById(
+        "porcentajeDisponible"
+    ).textContent = formatearPorcentaje(
+        resumen?.porcentajeDisponible
+    );
+}
+
+function renderizarAccionistas(accionistas) {
+    const cuerpo = document.getElementById(
+        "tablaAccionistasBody"
+    );
+
+    const estadoVacio = document.getElementById(
+        "accionistasEstadoVacio"
+    );
+
+    const contenedorTabla = document.getElementById(
+        "contenedorTablaAccionistas"
+    );
+
+    const carga = document.getElementById(
+        "accionistasCargando"
+    );
+
+    carga?.classList.add("d-none");
+
+    if (!Array.isArray(accionistas) ||
+        accionistas.length === 0) {
+
+        cuerpo.innerHTML = "";
+        contenedorTabla?.classList.add("d-none");
+        estadoVacio?.classList.remove("d-none");
+
+        return;
+    }
+
+    estadoVacio?.classList.add("d-none");
+    contenedorTabla?.classList.remove("d-none");
+
+    cuerpo.innerHTML = accionistas.map(function (accionista) {
+        const representante = accionista.esRepresentanteLegal
+            ? `
+                <span class="eb-status eb-status-representative">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    Sí
+                </span>
+            `
+            : `
+                <span class="text-muted">
+                    No
+                </span>
+            `;
+
+        const estatus = accionista.deshabilitado
+            ? `
+                <span class="eb-status eb-status-inactive">
+                    Inactivo
+                </span>
+            `
+            : `
+                <span class="eb-status eb-status-active">
+                    Activo
+                </span>
+            `;
+
+        return `
+            <tr>
+                <td>
+                    <strong>
+                        ${escaparHtml(accionista.nombreCompleto)}
+                    </strong>
+                </td>
+
+                <td>
+                    ${valorTexto(accionista.rfc)}
+                </td>
+
+                <td class="text-end">
+                    ${formatearPorcentaje(
+            accionista.porcentajeParticipacion
+        )}
+                </td>
+
+                <td>
+                    ${valorTexto(accionista.nacionalidad)}
+                </td>
+
+                <td class="text-center">
+                    ${representante}
+                </td>
+
+                <td class="text-center">
+                    ${estatus}
+                </td>
+
+                <td class="text-center">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            onclick="consultarAccionista(
+                                ${accionista.id}
+                            )"
+                            title="Consultar accionista">
+
+                        <i class="fa-regular fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function limpiarListadoAccionistas() {
+    document.getElementById(
+        "tablaAccionistasBody"
+    ).innerHTML = "";
+
+    document.getElementById(
+        "totalAccionistas"
+    ).textContent = "0";
+
+    document.getElementById(
+        "porcentajeRegistrado"
+    ).textContent = "0.0000 %";
+
+    document.getElementById(
+        "porcentajeDisponible"
+    ).textContent = "100.0000 %";
+
+    document.getElementById(
+        "accionistasEstadoVacio"
+    )?.classList.add("d-none");
+
+    document.getElementById(
+        "contenedorTablaAccionistas"
+    )?.classList.add("d-none");
+}
+
+function mostrarCargaAccionistas() {
+    document.getElementById(
+        "accionistasCargando"
+    )?.classList.remove("d-none");
+
+    document.getElementById(
+        "accionistasError"
+    )?.classList.add("d-none");
+}
+
+function mostrarErrorAccionistas(mensaje) {
+    document.getElementById(
+        "accionistasCargando"
+    )?.classList.add("d-none");
+
+    document.getElementById(
+        "contenedorTablaAccionistas"
+    )?.classList.add("d-none");
+
+    document.getElementById(
+        "accionistasEstadoVacio"
+    )?.classList.add("d-none");
+
+    const alerta = document.getElementById(
+        "accionistasError"
+    );
+
+    const texto = document.getElementById(
+        "accionistasErrorMensaje"
+    );
+
+    if (texto) {
+        texto.textContent = mensaje;
+    }
+
+    alerta?.classList.remove("d-none");
+}
+
+function formatearPorcentaje(valor) {
+    const numero = Number(valor ?? 0);
+
+    if (Number.isNaN(numero)) {
+        return "0.0000 %";
+    }
+
+    return `${numero.toFixed(4)} %`;
+}
+
+async function consultarAccionista(id) {
+    try {
+        const parametros = new URLSearchParams({
+            handler: "Accionista",
+            id: id.toString()
+        });
+
+        const response = await fetch(
+            `${window.location.pathname}?${parametros.toString()}`
+        );
+
+        const resultado = await response.json();
+
+        if (!resultado.success) {
+            mostrarResultado(
+                resultado.message ??
+                "No fue posible consultar el accionista.",
+                "error"
+            );
+
+            return;
+        }
+
+        const accionista = resultado.data;
+
+        const mensaje = [
+            `Nombre: ${accionista.nombreCompleto}`,
+            `RFC: ${accionista.rfc ?? "-"}`,
+            `Participación: ${formatearPorcentaje(
+                accionista.porcentajeParticipacion
+            )}`,
+            `Nacionalidad: ${accionista.nacionalidad ?? "-"}`,
+            `Representante legal: ${accionista.esRepresentanteLegal ? "Sí" : "No"
+            }`
+        ].join(" | ");
+
+        mostrarResultado(mensaje, "success");
+    } catch {
+        mostrarResultado(
+            "No fue posible consultar el accionista.",
+            "error"
+        );
+    }
+}
 function mostrarResultado(mensaje, tipo) {
     const icono = document.getElementById("resultadoIcono");
     const titulo = document.getElementById("resultadoTitulo");
@@ -886,4 +1231,13 @@ function confirmarEliminarSeleccionadas() {
     }
 
     modalEliminarEmpresa.show();
+}
+
+function escaparAtributoJs(texto) {
+    return String(texto ?? "")
+        .replaceAll("\\", "\\\\")
+        .replaceAll("'", "\\'")
+        .replaceAll('"', "&quot;")
+        .replaceAll("\r", " ")
+        .replaceAll("\n", " ");
 }

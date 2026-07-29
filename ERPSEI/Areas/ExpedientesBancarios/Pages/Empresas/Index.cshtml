@@ -109,21 +109,23 @@
 
         <button type="button"
                 id="btnNuevaEmpresa"
-                class="btn btn-outline-primary eb-toolbar-action"
-                title="Registrar nueva empresa">
+                class="btn eb-toolbar-action"
+                title="Nueva empresa"
+                aria-label="Nueva empresa">
 
-            <i class="fa-solid fa-plus me-2"></i>
-            Nueva empresa
+            <span class="eb-toolbar-plus"
+                  aria-hidden="true"></span>
         </button>
 
         <button type="button"
                 id="btnEliminarSeleccionadas"
-                class="btn btn-outline-secondary eb-toolbar-action"
+                class="btn eb-toolbar-action"
                 title="Eliminar empresas seleccionadas"
+                aria-label="Eliminar empresas seleccionadas"
                 disabled>
 
-            <i class="fa-regular fa-trash-can me-2"></i>
-            Eliminar
+            <span class="eb-toolbar-trash"
+                  aria-hidden="true"></span>
         </button>
 
     </div>
@@ -469,6 +471,182 @@
 
                     <i class="fa-solid fa-floppy-disk me-1"></i>
                     Guardar empresa
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL DE ACCIONISTAS
+     ========================================================= -->
+<div class="modal fade"
+     id="modalAccionistas"
+     tabindex="-1"
+     aria-labelledby="modalAccionistasTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+                    <h5 class="modal-title"
+                        id="modalAccionistasTitulo">
+                        Accionistas
+                    </h5>
+
+                    <p class="eb-modal-subtitle mb-0">
+                        Empresa:
+                        <strong id="nombreEmpresaAccionistas"></strong>
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Resumen -->
+                <div class="eb-shareholder-summary">
+
+                    <div class="eb-shareholder-kpi">
+                        <span>Total de accionistas</span>
+                        <strong id="totalAccionistas">
+                            0
+                        </strong>
+                    </div>
+
+                    <div class="eb-shareholder-kpi">
+                        <span>Participación registrada</span>
+                        <strong id="porcentajeRegistrado">
+                            0.0000 %
+                        </strong>
+                    </div>
+
+                    <div class="eb-shareholder-kpi">
+                        <span>Participación disponible</span>
+                        <strong id="porcentajeDisponible">
+                            100.0000 %
+                        </strong>
+                    </div>
+
+                </div>
+
+                <!-- Barra de acciones -->
+                <div class="d-flex justify-content-between
+                    align-items-center flex-wrap gap-2 mb-3">
+
+                    <div>
+                        <h6 class="mb-1 eb-section-title">
+                            Accionistas registrados
+                        </h6>
+
+                        <p class="text-muted small mb-0">
+                            La participación activa no puede superar el 100 %.
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            id="btnNuevoAccionista"
+                            class="btn btn-primary">
+
+                        <i class="fa-solid fa-plus me-1"></i>
+                        Nuevo accionista
+                    </button>
+
+                </div>
+
+                <!-- Cargando -->
+                <div id="accionistasCargando"
+                     class="eb-loading-state">
+
+                    <div class="spinner-border"
+                         role="status"
+                         aria-hidden="true">
+                    </div>
+
+                    <span>
+                        Consultando accionistas...
+                    </span>
+                </div>
+
+                <!-- Error -->
+                <div id="accionistasError"
+                     class="alert alert-danger d-none"
+                     role="alert">
+
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+                    <span id="accionistasErrorMensaje">
+                        No fue posible consultar los accionistas.
+                    </span>
+                </div>
+
+                <!-- Estado vacío -->
+                <div id="accionistasEstadoVacio"
+                     class="eb-empty-state d-none">
+
+                    <div class="eb-empty-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <h3>
+                        No hay accionistas registrados
+                    </h3>
+
+                    <p>
+                        Registra el primer accionista de esta empresa.
+                    </p>
+
+                </div>
+
+                <!-- Tabla -->
+                <div id="contenedorTablaAccionistas"
+                     class="table-responsive eb-shareholder-table-wrap d-none">
+
+                    <table class="table eb-shareholder-table">
+
+                        <thead>
+                            <tr>
+                                <th>Nombre completo</th>
+                                <th>RFC</th>
+                                <th class="text-end">Participación</th>
+                                <th>Nacionalidad</th>
+                                <th class="text-center">
+                                    Representante legal
+                                </th>
+                                <th class="text-center">Estatus</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="tablaAccionistasBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
                 </button>
 
             </div>

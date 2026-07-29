@@ -1253,3 +1253,849 @@ body.module-main-theme.expedientes-bancarios-page .footer {
         gap: 4px;
     }
 }
+
+/* =====================================================
+   ACCIONISTAS
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-shareholder-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.expedientes-bancarios-page .eb-shareholder-kpi {
+    padding: 16px 18px;
+    background: #f8f9ff;
+    border: 1px solid rgba(33, 22, 111, .10);
+    border-radius: 16px;
+}
+
+    .expedientes-bancarios-page .eb-shareholder-kpi span {
+        display: block;
+        margin-bottom: 6px;
+        color: #6f6b8f;
+        font-size: .84rem;
+        font-weight: 700;
+    }
+
+    .expedientes-bancarios-page .eb-shareholder-kpi strong {
+        display: block;
+        color: #21166f;
+        font-size: 1.2rem;
+        font-weight: 900;
+    }
+
+.expedientes-bancarios-page .eb-section-title {
+    color: #21166f;
+    font-weight: 800;
+}
+
+.expedientes-bancarios-page .eb-loading-state {
+    min-height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    color: #21166f;
+    font-weight: 700;
+}
+
+    .expedientes-bancarios-page .eb-loading-state .spinner-border {
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+
+.expedientes-bancarios-page .eb-shareholder-table-wrap {
+    border: 1px solid rgba(33, 22, 111, .10);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.expedientes-bancarios-page .eb-shareholder-table {
+    margin: 0;
+}
+
+    .expedientes-bancarios-page .eb-shareholder-table thead th {
+        padding: 13px 12px;
+        background: #21166f;
+        color: #ffffff;
+        border: none;
+        font-size: .84rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .expedientes-bancarios-page .eb-shareholder-table tbody td {
+        padding: 13px 12px;
+        color: #21166f;
+        vertical-align: middle;
+        border-color: rgba(33, 22, 111, .08);
+    }
+
+    .expedientes-bancarios-page
+    .eb-shareholder-table tbody tr:nth-child(even) {
+        background: #f8f9ff;
+    }
+
+.expedientes-bancarios-page .eb-status-representative {
+    background: #fff8e1;
+    color: #8a6400;
+}
+
+@media (max-width: 767.98px) {
+    .expedientes-bancarios-page .eb-shareholder-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =====================================================
+   DATATABLE SIN SCROLL INTERNO
+   ===================================================== */
+
+.expedientes-bancarios-page .fixed-table-container {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+
+.expedientes-bancarios-page .fixed-table-body {
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+.expedientes-bancarios-page .fixed-table-container-inner {
+    overflow: visible !important;
+}
+
+.expedientes-bancarios-page .bootstrap-table,
+.expedientes-bancarios-page .fixed-table-toolbar,
+.expedientes-bancarios-page .fixed-table-pagination {
+    overflow: visible !important;
+}
+
+/* Evita que la tarjeta recorte el dropdown */
+
+.expedientes-bancarios-page .eb-card:has(#tablaEmpresas) {
+    overflow: visible !important;
+}
+
+    .expedientes-bancarios-page
+    .eb-card:has(#tablaEmpresas)
+    .eb-card-body {
+        overflow: visible !important;
+    }
+
+/* =====================================================
+   BOTÓN DE ACCIONES
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-action-button {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #21166f !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(33, 22, 111, .16) !important;
+    border-radius: 10px;
+    font-size: 1rem;
+    box-shadow: none !important;
+}
+
+    .expedientes-bancarios-page .eb-action-button:hover,
+    .expedientes-bancarios-page .eb-action-button:focus {
+        color: #ffffff !important;
+        background: #21166f !important;
+        border-color: #21166f !important;
+    }
+
+    .expedientes-bancarios-page .eb-action-button i {
+        display: inline-block !important;
+        color: inherit !important;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+/* =====================================================
+   DROPDOWN POR ENCIMA DE LA TABLA
+   ===================================================== */
+
+.expedientes-bancarios-page .bootstrap-table .dropdown {
+    position: static !important;
+}
+
+.expedientes-bancarios-page .bootstrap-table .dropdown-menu {
+    z-index: 99999 !important;
+    min-width: 220px;
+    margin-top: 6px !important;
+}
+
+/* La columna de acciones no debe recortar el contenido */
+
+.expedientes-bancarios-page
+.bootstrap-table td:last-child,
+.expedientes-bancarios-page
+.bootstrap-table th:last-child {
+    overflow: visible !important;
+}
+
+/* =====================================================
+   PAGINACIÓN
+   ===================================================== */
+
+.expedientes-bancarios-page .fixed-table-pagination {
+    padding: 14px 16px 18px;
+    border-top: 1px solid rgba(33, 22, 111, .08);
+}
+
+    .expedientes-bancarios-page
+    .fixed-table-pagination
+    .pagination-detail,
+    .expedientes-bancarios-page
+    .fixed-table-pagination
+    .pagination {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    .expedientes-bancarios-page
+    .fixed-table-pagination
+    .page-link {
+        color: #21166f;
+        border-color: rgba(33, 22, 111, .20);
+    }
+
+    .expedientes-bancarios-page
+    .fixed-table-pagination
+    .page-item.active
+    .page-link {
+        color: #ffffff;
+        background: #21166f;
+        border-color: #21166f;
+    }
+
+/* =====================================================
+   ÍCONO DE ACCIONES VISIBLE
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-action-button {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #ffffff !important;
+    color: #21166f !important;
+    border: 1px solid rgba(33, 22, 111, .18) !important;
+    border-radius: 10px;
+    opacity: 1 !important;
+}
+
+    .expedientes-bancarios-page .eb-action-button i,
+    .expedientes-bancarios-page .eb-action-button .fas,
+    .expedientes-bancarios-page .eb-action-button .fa {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #21166f !important;
+        font-size: 18px !important;
+        line-height: 1 !important;
+    }
+
+    .expedientes-bancarios-page .eb-action-button:hover,
+    .expedientes-bancarios-page .eb-action-button:focus {
+        background: #21166f !important;
+        color: #ffffff !important;
+    }
+
+        .expedientes-bancarios-page .eb-action-button:hover i,
+        .expedientes-bancarios-page .eb-action-button:focus i {
+            color: #ffffff !important;
+        }
+
+.expedientes-bancarios-page .eb-action-dots {
+    display: inline-block;
+    color: #21166f;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+/* =====================================================
+   BOTÓN DE ACCIONES: PUNTOS BLANCOS AL ACTIVAR
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-action-button:hover,
+.expedientes-bancarios-page .eb-action-button:focus,
+.expedientes-bancarios-page .eb-action-button:active,
+.expedientes-bancarios-page .eb-action-button.show,
+.expedientes-bancarios-page .dropdown.show .eb-action-button {
+    background: #21166f !important;
+    color: #ffffff !important;
+    border-color: #21166f !important;
+    box-shadow: none !important;
+}
+
+    .expedientes-bancarios-page .eb-action-button:hover i,
+    .expedientes-bancarios-page .eb-action-button:focus i,
+    .expedientes-bancarios-page .eb-action-button:active i,
+    .expedientes-bancarios-page .eb-action-button.show i,
+    .expedientes-bancarios-page .dropdown.show .eb-action-button i,
+    .expedientes-bancarios-page .eb-action-button:hover .eb-action-dots,
+    .expedientes-bancarios-page .eb-action-button:focus .eb-action-dots,
+    .expedientes-bancarios-page .eb-action-button:active .eb-action-dots,
+    .expedientes-bancarios-page .eb-action-button.show .eb-action-dots,
+    .expedientes-bancarios-page .dropdown.show .eb-action-button .eb-action-dots {
+        color: #ffffff !important;
+    }
+
+/* =====================================================
+   TOOLBAR COMPACTA Y EJECUTIVA
+   ===================================================== */
+
+.expedientes-bancarios-page .fixed-table-toolbar {
+    padding: 12px 20px !important;
+    align-items: center !important;
+}
+
+/* Botones Nueva empresa / Eliminar */
+.expedientes-bancarios-page .eb-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+    .expedientes-bancarios-page .eb-toolbar .eb-toolbar-action {
+        min-width: 148px !important;
+        height: 42px !important;
+        padding: 0 16px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 7px;
+        font-size: .88rem;
+        font-weight: 800;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        border-radius: 11px;
+    }
+
+        .expedientes-bancarios-page .eb-toolbar .eb-toolbar-action i {
+            margin: 0 !important;
+            font-size: .88rem;
+        }
+
+/* Buscador más compacto */
+.expedientes-bancarios-page .fixed-table-toolbar .search {
+    margin-right: 10px !important;
+}
+
+    .expedientes-bancarios-page .fixed-table-toolbar .search input {
+        width: 290px !important;
+        min-width: 290px !important;
+        height: 42px !important;
+        padding: 0 14px;
+        border-radius: 11px;
+    }
+
+/* Separación entre Actualizar y Columnas */
+.expedientes-bancarios-page .fixed-table-toolbar .columns {
+    display: flex !important;
+    align-items: center;
+    gap: 8px !important;
+    margin: 0 !important;
+}
+
+    .expedientes-bancarios-page .fixed-table-toolbar .columns .btn,
+    .expedientes-bancarios-page .fixed-table-toolbar > .btn-group .btn {
+        width: 44px;
+        min-width: 44px;
+        height: 42px !important;
+        padding: 0 !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 11px !important;
+    }
+
+    /* Bootstrap Table puede agruparlos en un btn-group.
+   Separamos visualmente cada opción. */
+    .expedientes-bancarios-page
+    .fixed-table-toolbar
+    .columns.btn-group {
+        gap: 8px;
+    }
+
+        .expedientes-bancarios-page
+        .fixed-table-toolbar
+        .columns.btn-group > .btn,
+        .expedientes-bancarios-page
+        .fixed-table-toolbar
+        .columns.btn-group > .dropdown-toggle {
+            margin-left: 0 !important;
+            border-radius: 11px !important;
+        }
+
+/* Evita que se unan los bordes entre botones */
+.expedientes-bancarios-page
+.fixed-table-toolbar
+.btn-group > .btn:not(:first-child),
+.expedientes-bancarios-page
+.fixed-table-toolbar
+.btn-group > .btn-group:not(:first-child) > .btn {
+    margin-left: 8px !important;
+    border-radius: 11px !important;
+}
+
+/* Estado de Nueva empresa */
+.expedientes-bancarios-page #btnNuevaEmpresa {
+    background: #21166f;
+    color: #ffffff;
+    border-color: #21166f;
+}
+
+    .expedientes-bancarios-page #btnNuevaEmpresa:hover {
+        background: #302493;
+        border-color: #302493;
+    }
+
+/* Eliminar deshabilitado */
+.expedientes-bancarios-page #btnEliminarSeleccionadas:disabled {
+    background: #ffffff;
+    color: #aaa7b8;
+    border-color: #c9c7d2;
+    opacity: 1;
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    .expedientes-bancarios-page .fixed-table-toolbar {
+        padding: 12px !important;
+    }
+
+    .expedientes-bancarios-page .eb-toolbar {
+        width: 100%;
+    }
+
+        .expedientes-bancarios-page .eb-toolbar .eb-toolbar-action {
+            flex: 1;
+            min-width: 0 !important;
+        }
+
+    .expedientes-bancarios-page .fixed-table-toolbar .search,
+    .expedientes-bancarios-page .fixed-table-toolbar .search input {
+        width: 100% !important;
+        min-width: 100% !important;
+        margin-right: 0 !important;
+    }
+}
+
+/* =====================================================
+   MENÚ DE ACCIONES AL COSTADO DEL REGISTRO
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-actions-dropdown {
+    position: relative !important;
+    display: inline-block;
+}
+
+.expedientes-bancarios-page .eb-actions-menu {
+    position: absolute !important;
+    z-index: 99999 !important;
+    min-width: 220px;
+    padding: 8px;
+    margin-top: 0 !important;
+    border: 1px solid rgba(33, 22, 111, .14);
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 18px 38px rgba(33, 22, 111, .18);
+}
+
+/* El menú se despliega hacia la izquierda del botón */
+.expedientes-bancarios-page
+.eb-actions-dropdown
+.dropdown-menu-end {
+    top: 50% !important;
+    left: calc(100% + 10px) !important;
+    right: auto !important;
+    transform: translateY(-50%) !important;
+}
+
+/* Evita que la tabla recorte el menú */
+.expedientes-bancarios-page .fixed-table-container,
+.expedientes-bancarios-page .fixed-table-body,
+.expedientes-bancarios-page .bootstrap-table,
+.expedientes-bancarios-page .eb-card:has(#tablaEmpresas),
+.expedientes-bancarios-page
+.eb-card:has(#tablaEmpresas)
+.eb-card-body {
+    overflow: visible !important;
+}
+
+/* Acciones internas */
+.expedientes-bancarios-page .eb-actions-menu .dropdown-item {
+    width: 100%;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    color: #21166f;
+    font-size: .9rem;
+    font-weight: 650;
+    text-align: left;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+}
+
+    .expedientes-bancarios-page
+    .eb-actions-menu
+    .dropdown-item:hover,
+    .expedientes-bancarios-page
+    .eb-actions-menu
+    .dropdown-item:focus {
+        color: #21166f;
+        background: #eef2ff;
+    }
+
+    .expedientes-bancarios-page
+    .eb-actions-menu
+    .dropdown-item.text-danger {
+        color: #c62828 !important;
+    }
+
+        .expedientes-bancarios-page
+        .eb-actions-menu
+        .dropdown-item.text-danger:hover {
+            color: #ffffff !important;
+            background: #c62828;
+        }
+
+.expedientes-bancarios-page
+.eb-actions-menu
+.dropdown-divider {
+    margin: 6px 4px;
+    border-color: rgba(33, 22, 111, .12);
+}
+
+/* =====================================================
+   BOTONES COMPACTOS DE LA TOOLBAR
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+    .expedientes-bancarios-page
+    .eb-toolbar
+    .eb-toolbar-action {
+        width: 46px !important;
+        min-width: 46px !important;
+        height: 42px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 11px;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+        .expedientes-bancarios-page
+        .eb-toolbar
+        .eb-toolbar-action i {
+            margin: 0 !important;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+/* Nueva empresa */
+.expedientes-bancarios-page #btnNuevaEmpresa {
+    background: #21166f;
+    color: #ffffff;
+    border-color: #21166f;
+}
+
+    .expedientes-bancarios-page #btnNuevaEmpresa:hover,
+    .expedientes-bancarios-page #btnNuevaEmpresa:focus {
+        background: #302493;
+        color: #ffffff;
+        border-color: #302493;
+    }
+
+/* Eliminar deshabilitado */
+.expedientes-bancarios-page
+#btnEliminarSeleccionadas:disabled {
+    background: #ffffff;
+    color: #aaa7b8;
+    border-color: #c9c7d2;
+    opacity: 1;
+    cursor: not-allowed;
+}
+
+/* Eliminar habilitado */
+.expedientes-bancarios-page
+#btnEliminarSeleccionadas.btn-danger {
+    background: #c62828;
+    color: #ffffff;
+    border-color: #c62828;
+}
+
+    .expedientes-bancarios-page
+    #btnEliminarSeleccionadas.btn-danger:hover {
+        background: #a91f1f;
+        border-color: #a91f1f;
+    }
+
+/* =====================================================
+   ICONOS DE TOOLBAR CENTRADOS
+   ===================================================== */
+
+.expedientes-bancarios-page
+.eb-toolbar
+.eb-toolbar-action {
+    position: relative;
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 11px;
+    line-height: 1;
+}
+
+/* =====================================================
+   SIGNO MÁS
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-toolbar-plus {
+    position: relative;
+    display: block;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+}
+
+    .expedientes-bancarios-page .eb-toolbar-plus::before,
+    .expedientes-bancarios-page .eb-toolbar-plus::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: block;
+        background: currentColor;
+        border-radius: 2px;
+        transform: translate(-50%, -50%);
+    }
+
+    .expedientes-bancarios-page .eb-toolbar-plus::before {
+        width: 16px;
+        height: 2px;
+    }
+
+    .expedientes-bancarios-page .eb-toolbar-plus::after {
+        width: 2px;
+        height: 16px;
+    }
+
+/* =====================================================
+   BOTE DE BASURA
+   ===================================================== */
+
+.expedientes-bancarios-page .eb-toolbar-trash {
+    position: relative;
+    display: block;
+    width: 14px;
+    height: 15px;
+    flex: 0 0 14px;
+    border: 2px solid currentColor;
+    border-top: none;
+    border-radius: 0 0 2px 2px;
+}
+
+    .expedientes-bancarios-page .eb-toolbar-trash::before {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -3px;
+        width: 16px;
+        height: 2px;
+        background: currentColor;
+        border-radius: 2px;
+    }
+
+    .expedientes-bancarios-page .eb-toolbar-trash::after {
+        content: "";
+        position: absolute;
+        top: -8px;
+        left: 3px;
+        width: 6px;
+        height: 4px;
+        border: 2px solid currentColor;
+        border-bottom: none;
+        border-radius: 3px 3px 0 0;
+    }
+
+/* Líneas interiores del bote */
+.expedientes-bancarios-page
+#btnEliminarSeleccionadas::before,
+.expedientes-bancarios-page
+#btnEliminarSeleccionadas::after {
+    content: "";
+    position: absolute;
+    top: 17px;
+    width: 1px;
+    height: 8px;
+    background: currentColor;
+}
+
+.expedientes-bancarios-page
+#btnEliminarSeleccionadas::before {
+    left: 20px;
+}
+
+.expedientes-bancarios-page
+#btnEliminarSeleccionadas::after {
+    right: 20px;
+}
+
+/* =====================================================
+   ESTADOS
+   ===================================================== */
+
+.expedientes-bancarios-page #btnNuevaEmpresa {
+    background: #21166f !important;
+    color: #ffffff !important;
+    border: 1px solid #21166f !important;
+}
+
+    .expedientes-bancarios-page #btnNuevaEmpresa:hover,
+    .expedientes-bancarios-page #btnNuevaEmpresa:focus {
+        background: #302493 !important;
+        color: #ffffff !important;
+        border-color: #302493 !important;
+    }
+
+.expedientes-bancarios-page
+#btnEliminarSeleccionadas {
+    background: #ffffff !important;
+    color: #c62828 !important;
+    border: 1px solid #c62828 !important;
+}
+
+    .expedientes-bancarios-page
+    #btnEliminarSeleccionadas:disabled {
+        background: #ffffff !important;
+        color: #aaa7b8 !important;
+        border-color: #c9c7d2 !important;
+        opacity: 1 !important;
+        cursor: not-allowed;
+    }
+
+    .expedientes-bancarios-page
+    #btnEliminarSeleccionadas.btn-danger {
+        background: #ffffff !important;
+        color: #c62828 !important;
+        border-color: #c62828 !important;
+    }
+
+        .expedientes-bancarios-page
+        #btnEliminarSeleccionadas.btn-danger:hover,
+        .expedientes-bancarios-page
+        #btnEliminarSeleccionadas.btn-danger:focus {
+            background: #c62828 !important;
+            color: #ffffff !important;
+            border-color: #c62828 !important;
+        }
+
+/* =====================================================
+   DATATABLE CON ESQUINAS MÁS REDONDEADAS
+   ===================================================== */
+
+.expedientes-bancarios-page
+.eb-card:has(#tablaEmpresas) {
+    border-radius: 22px;
+}
+
+.expedientes-bancarios-page
+.bootstrap-table {
+    border-radius: 20px;
+}
+
+.expedientes-bancarios-page
+.fixed-table-container {
+    border: 1px solid rgba(33, 22, 111, .10) !important;
+    border-radius: 18px !important;
+    overflow: visible !important;
+}
+
+/* Esquinas superiores del encabezado */
+.expedientes-bancarios-page
+.bootstrap-table
+.table
+thead
+tr:first-child
+th:first-child {
+    border-top-left-radius: 18px;
+}
+
+.expedientes-bancarios-page
+.bootstrap-table
+.table
+thead
+tr:first-child
+th:last-child {
+    border-top-right-radius: 18px;
+}
+
+/* Esquinas inferiores de la última fila */
+.expedientes-bancarios-page
+.bootstrap-table
+.table
+tbody
+tr:last-child
+td:first-child {
+    border-bottom-left-radius: 18px;
+}
+
+.expedientes-bancarios-page
+.bootstrap-table
+.table
+tbody
+tr:last-child
+td:last-child {
+    border-bottom-right-radius: 18px;
+}
+
+/* Paginación inferior */
+.expedientes-bancarios-page
+.fixed-table-pagination {
+    margin-top: 0;
+    padding: 18px 20px;
+    border-top: 1px solid rgba(33, 22, 111, .08);
+    border-radius: 0 0 18px 18px;
+    background: #ffffff;
+}
+
+/* La tabla conserva el recorte visual,
+   pero los dropdowns siguen visibles */
+.expedientes-bancarios-page
+.fixed-table-body {
+    border-radius: 18px 18px 0 0;
+}
