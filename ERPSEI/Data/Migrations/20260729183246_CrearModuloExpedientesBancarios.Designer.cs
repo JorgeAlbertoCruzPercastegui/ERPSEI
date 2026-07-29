@@ -4,6 +4,7 @@ using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPSEI.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260729183246_CrearModuloExpedientesBancarios")]
+    partial class CrearModuloExpedientesBancarios
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1271,63 +1274,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4656),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5781),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4667),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5804),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4668),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5805),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4669),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5806),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4670),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5807),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4671),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5808),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4672),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5809),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4673),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5809),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 12, 45, 13, 507, DateTimeKind.Local).AddTicks(4674),
+                            FechaCreacion = new DateTime(2026, 7, 29, 12, 32, 44, 527, DateTimeKind.Local).AddTicks(5810),
                             Nombre = "Otros"
                         });
                 });
@@ -2670,233 +2673,6 @@ namespace ERPSEI.Data.Migrations
                         .HasDatabaseName("UX_EB_TiposDocumento_Nombre_Categoria");
 
                     b.ToTable("EB_TiposDocumento", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Categoria = "Fiscal",
-                            Descripcion = "Constancia de Situación Fiscal vigente de la empresa.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Constancia de Situación Fiscal",
-                            Orden = 1,
-                            PermiteMultiplesArchivos = false,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Categoria = "Fiscal",
-                            Descripcion = "Certificado de firma electrónica vigente.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Certificado FIEL",
-                            Orden = 2,
-                            PermiteMultiplesArchivos = false,
-                            RequiereFechaVencimiento = true,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Categoria = "Domicilio",
-                            Descripcion = "Comprobante de domicilio fiscal o comercial.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Comprobante de domicilio",
-                            Orden = 3,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = true,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Categoria = "Corporativo",
-                            Descripcion = "Acta constitutiva de la sociedad.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Acta constitutiva",
-                            Orden = 4,
-                            PermiteMultiplesArchivos = false,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Categoria = "Corporativo",
-                            Descripcion = "Reformas, protocolizaciones o instrumentos adicionales.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = false,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Actas o instrumentos adicionales",
-                            Orden = 5,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Categoria = "Legal",
-                            Descripcion = "Poderes notariales vigentes de representantes o apoderados.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = false,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Poder notarial",
-                            Orden = 6,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Categoria = "Accionistas",
-                            Descripcion = "Identificación oficial de los accionistas.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "INE de accionistas",
-                            Orden = 7,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = true,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Categoria = "Accionistas",
-                            Descripcion = "Constancia de Situación Fiscal de cada accionista.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "CSF de accionistas",
-                            Orden = 8,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Categoria = "Accionistas",
-                            Descripcion = "Comprobante de domicilio de cada accionista.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Comprobante de domicilio de accionistas",
-                            Orden = 9,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = true,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Categoria = "Corporativo",
-                            Descripcion = "Hoja membretada vigente de la empresa.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = false,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Hoja membretada",
-                            Orden = 10,
-                            PermiteMultiplesArchivos = false,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            Categoria = "Corporativo",
-                            Descripcion = "Organigrama actualizado de la empresa.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Organigrama",
-                            Orden = 11,
-                            PermiteMultiplesArchivos = false,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 12,
-                            Categoria = "Financiero",
-                            Descripcion = "Última declaración anual o mensual disponible.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Declaración anual o mensual",
-                            Orden = 12,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 13,
-                            Categoria = "Fiscal",
-                            Descripcion = "Constancia de opinión de cumplimiento emitida por el SAT.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = true,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Opinión de cumplimiento SAT",
-                            Orden = 13,
-                            PermiteMultiplesArchivos = false,
-                            RequiereFechaVencimiento = true,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 14,
-                            Categoria = "Evidencias",
-                            Descripcion = "Imágenes o evidencias solicitadas por instituciones bancarias.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = false,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Prueba de vida",
-                            Orden = 14,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        },
-                        new
-                        {
-                            Id = 15,
-                            Categoria = "Otros",
-                            Descripcion = "Documentación adicional requerida por la institución.",
-                            Deshabilitado = false,
-                            Eliminado = false,
-                            EsObligatorio = false,
-                            FechaCreacion = new DateTime(2026, 7, 29, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Nombre = "Otro documento",
-                            Orden = 15,
-                            PermiteMultiplesArchivos = true,
-                            RequiereFechaVencimiento = false,
-                            UsuarioCreacionId = "SYSTEM"
-                        });
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.Banner", b =>

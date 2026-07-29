@@ -1,0 +1,632 @@
+﻿@page
+@model ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas.IndexModel
+
+@{
+    ViewData["Title"] = "Empresas - Expedientes Bancarios";
+}
+
+@section Styles
+{
+    <link rel="stylesheet"
+          href="~/css/expedientes-bancarios.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap-table/bootstrap-table.min.css"
+          asp-append-version="true" />
+}
+
+<div class="eb-container">
+
+    <!-- =====================================================
+         ENCABEZADO
+         ===================================================== -->
+    <div class="eb-page-header">
+        <div>
+            <h1 class="eb-page-title">
+                Empresas
+            </h1>
+
+            <p class="eb-page-subtitle">
+                Administración de empresas y expedientes bancarios.
+            </p>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         FILTROS
+         ===================================================== -->
+    <div class="eb-card mb-4">
+
+        <div class="eb-card-header">
+            <h2>
+                <i class="fa-solid fa-filter me-2"></i>
+                Filtros de búsqueda
+            </h2>
+        </div>
+
+        <div class="eb-card-body">
+
+            <div class="row g-3 align-items-end">
+
+                <div class="col-12 col-lg-7">
+                    <label for="filtroBusqueda"
+                           class="form-label">
+                        Buscar empresa
+                    </label>
+
+                    <input type="text"
+                           id="filtroBusqueda"
+                           class="form-control"
+                           placeholder="Razón social, nombre corto, RFC o nivel"
+                           autocomplete="off" />
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label for="filtroEstatus"
+                           class="form-label">
+                        Estatus
+                    </label>
+
+                    <select id="filtroEstatus"
+                            class="form-select">
+
+                        <option value="Activas" selected>
+                            Activas
+                        </option>
+
+                        <option value="Inactivas">
+                            Inactivas
+                        </option>
+
+                        <option value="Todas">
+                            Todas
+                        </option>
+
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2 d-grid">
+                    <button type="button"
+                            id="btnBuscarEmpresas"
+                            class="btn btn-primary">
+
+                        <i class="fa-solid fa-magnifying-glass me-1"></i>
+                        Buscar
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =====================================================
+         TOOLBAR DEL DATATABLE
+         ===================================================== -->
+    <div id="toolbarEmpresas"
+         class="eb-toolbar">
+
+        <button type="button"
+                id="btnNuevaEmpresa"
+                class="btn btn-outline-primary eb-toolbar-action"
+                title="Registrar nueva empresa">
+
+            <i class="fa-solid fa-plus me-2"></i>
+            Nueva empresa
+        </button>
+
+        <button type="button"
+                id="btnEliminarSeleccionadas"
+                class="btn btn-outline-secondary eb-toolbar-action"
+                title="Eliminar empresas seleccionadas"
+                disabled>
+
+            <i class="fa-regular fa-trash-can me-2"></i>
+            Eliminar
+        </button>
+
+    </div>
+
+    <!-- =====================================================
+         TABLA
+         ===================================================== -->
+    <div class="eb-card">
+
+        <div class="eb-card-body p-0">
+
+            <table id="tablaEmpresas"
+                   class="table">
+
+                <thead>
+                    <tr>
+                        <th data-field="state"
+                            data-checkbox="true">
+                        </th>
+
+                        <th data-field="id"
+                            data-sortable="true">
+                            Id
+                        </th>
+
+                        <th data-field="razonSocial"
+                            data-sortable="true">
+                            Razón social
+                        </th>
+
+                        <th data-field="nombreCorto"
+                            data-sortable="true">
+                            Nombre corto
+                        </th>
+
+                        <th data-field="rfc"
+                            data-sortable="true">
+                            RFC
+                        </th>
+
+                        <th data-field="nivel"
+                            data-sortable="true">
+                            Nivel
+                        </th>
+
+                        <th data-field="deshabilitado"
+                            data-align="center"
+                            data-formatter="estatusEmpresaFormatter">
+                            Estatus
+                        </th>
+
+                        <th data-field="acciones"
+                            data-align="center"
+                            data-formatter="accionesEmpresaFormatter">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL CREAR / EDITAR / CONSULTAR EMPRESA
+     ========================================================= -->
+<div class="modal fade"
+     id="modalEmpresa"
+     tabindex="-1"
+     aria-labelledby="modalEmpresaTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+                    <h5 class="modal-title"
+                        id="modalEmpresaTitulo">
+                        Empresa
+                    </h5>
+
+                    <p class="eb-modal-subtitle mb-0">
+                        Información corporativa para el expediente bancario.
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <form id="formEmpresa"
+                      autocomplete="off">
+
+                    <input type="hidden"
+                           id="ebId"
+                           value="0" />
+
+                    <div class="row g-4">
+
+                        <!-- Razón social -->
+                        <div class="col-12 col-lg-8">
+
+                            <label for="ebRazonSocial"
+                                   class="form-label eb-required">
+                                Razón social
+                            </label>
+
+                            <input type="text"
+                                   id="ebRazonSocial"
+                                   class="form-control"
+                                   maxlength="250"
+                                   placeholder="Ej. Empresa Comercializadora, S.A. de C.V."
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-error-for="RazonSocial"></span>
+
+                        </div>
+
+                        <!-- Nombre corto -->
+                        <div class="col-12 col-lg-4">
+
+                            <label for="ebNombreCorto"
+                                   class="form-label eb-required">
+                                Nombre corto
+                            </label>
+
+                            <input type="text"
+                                   id="ebNombreCorto"
+                                   class="form-control"
+                                   maxlength="150"
+                                   placeholder="Ej. Comercializadora"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-error-for="NombreCorto"></span>
+
+                        </div>
+
+                        <!-- RFC -->
+                        <div class="col-12 col-md-6 col-lg-4">
+
+                            <label for="ebRfc"
+                                   class="form-label eb-required">
+                                RFC
+                            </label>
+
+                            <input type="text"
+                                   id="ebRfc"
+                                   class="form-control text-uppercase"
+                                   maxlength="13"
+                                   placeholder="Ej. ABC010203XYZ"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-error-for="Rfc"></span>
+
+                        </div>
+
+                        <!-- Nivel -->
+                        <div class="col-12 col-md-6 col-lg-4">
+
+                            <label for="ebNivel"
+                                   class="form-label">
+                                Nivel
+                            </label>
+
+                            <input type="text"
+                                   id="ebNivel"
+                                   class="form-control"
+                                   maxlength="100"
+                                   placeholder="Ej. Nivel 1"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-error-for="Nivel"></span>
+
+                        </div>
+
+                        <!-- Fecha constitución -->
+                        <div class="col-12 col-md-6 col-lg-4">
+
+                            <label for="ebFechaConstitucion"
+                                   class="form-label">
+                                Fecha de constitución
+                            </label>
+
+                            <input type="date"
+                                   id="ebFechaConstitucion"
+                                   class="form-control" />
+
+                            <span class="text-danger"
+                                  data-error-for="FechaConstitucion"></span>
+
+                        </div>
+
+                        <!-- Actividad comercial -->
+                        <div class="col-12">
+
+                            <label for="ebActividadComercial"
+                                   class="form-label">
+                                Actividad comercial
+                            </label>
+
+                            <textarea id="ebActividadComercial"
+                                      class="form-control"
+                                      maxlength="500"
+                                      rows="3"
+                                      placeholder="Describe la actividad comercial principal de la empresa"></textarea>
+
+                            <span class="text-danger"
+                                  data-error-for="ActividadComercial"></span>
+
+                        </div>
+
+                        <!-- Teléfono -->
+                        <div class="col-12 col-md-6">
+
+                            <label for="ebTelefonoBancos"
+                                   class="form-label">
+                                Teléfono de bancos
+                            </label>
+
+                            <input type="text"
+                                   id="ebTelefonoBancos"
+                                   class="form-control"
+                                   maxlength="30"
+                                   placeholder="Ej. 55 1234 5678"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-error-for="TelefonoBancos"></span>
+
+                        </div>
+
+                        <!-- Correo -->
+                        <div class="col-12 col-md-6">
+
+                            <label for="ebCorreoBancos"
+                                   class="form-label">
+                                Correo de bancos
+                            </label>
+
+                            <input type="email"
+                                   id="ebCorreoBancos"
+                                   class="form-control"
+                                   maxlength="200"
+                                   placeholder="Ej. bancos@empresa.com"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-error-for="CorreoBancos"></span>
+
+                        </div>
+
+                        <!-- Escritura -->
+                        <div class="col-12">
+
+                            <label for="ebNumeroEscritura"
+                                   class="form-label">
+                                Número de escritura
+                            </label>
+
+                            <input type="text"
+                                   id="ebNumeroEscritura"
+                                   class="form-control"
+                                   maxlength="200"
+                                   placeholder="Número de escritura o instrumentos relacionados"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-error-for="NumeroEscritura"></span>
+
+                        </div>
+
+                        <!-- Domicilio fiscal -->
+                        <div class="col-12">
+
+                            <label for="ebDomicilioFiscal"
+                                   class="form-label">
+                                Domicilio fiscal
+                            </label>
+
+                            <textarea id="ebDomicilioFiscal"
+                                      class="form-control"
+                                      maxlength="500"
+                                      rows="3"
+                                      placeholder="Calle, número, colonia, municipio, estado y código postal"></textarea>
+
+                            <span class="text-danger"
+                                  data-error-for="DomicilioFiscal"></span>
+
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="col-12">
+
+                            <label for="ebObservaciones"
+                                   class="form-label">
+                                Observaciones
+                            </label>
+
+                            <textarea id="ebObservaciones"
+                                      class="form-control"
+                                      maxlength="1000"
+                                      rows="3"
+                                      placeholder="Información complementaria de la empresa"></textarea>
+
+                            <span class="text-danger"
+                                  data-error-for="Observaciones"></span>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <button type="button"
+                        id="btnGuardarEmpresa"
+                        class="btn btn-primary">
+
+                    <i class="fa-solid fa-floppy-disk me-1"></i>
+                    Guardar empresa
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL CONFIRMAR ELIMINACIÓN
+     ========================================================= -->
+<div class="modal fade"
+     id="modalEliminarEmpresa"
+     tabindex="-1"
+     aria-labelledby="modalEliminarEmpresaTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title"
+                    id="modalEliminarEmpresaTitulo">
+                    Confirmar eliminación
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="eb-confirmation-content">
+
+                    <div class="eb-confirmation-icon">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+
+                    <h5>
+                        ¿Estás seguro de que deseas eliminar?
+                    </h5>
+
+                    <p id="mensajeConfirmacionEliminar">
+                        La empresa
+                        <strong id="nombreEmpresaEliminar"></strong>
+                        dejará de mostrarse en el módulo.
+                    </p>
+
+                    <div class="alert alert-warning mb-0">
+                        No se realizará ningún cambio hasta que confirmes
+                        la operación. Las empresas con documentos o accionistas
+                        relacionados no podrán eliminarse.
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        id="btnCancelarEliminarEmpresa"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    No, cancelar
+                </button>
+
+                <button type="button"
+                        id="btnConfirmarEliminarEmpresa"
+                        class="btn btn-danger">
+
+                    <i class="fa-regular fa-trash-can me-1"></i>
+                    Sí, eliminar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL DE RESULTADO
+     ========================================================= -->
+<div class="modal fade"
+     id="modalResultado"
+     tabindex="-1"
+     aria-labelledby="resultadoTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-body text-center py-5">
+
+                <div id="resultadoIcono"
+                     class="eb-result-icon eb-result-success">
+
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+
+                <h5 id="resultadoTitulo"
+                    class="eb-result-title">
+                    Operación exitosa
+                </h5>
+
+                <p id="resultadoMensaje"
+                       class="eb-result-message">
+                    La operación se completó correctamente.
+                </p>
+
+                <button type="button"
+                        class="btn btn-primary mt-2"
+                        data-bs-dismiss="modal">
+                    Aceptar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     TOKEN ANTIFALSIFICACIÓN
+     ========================================================= -->
+<form method="post"
+      id="formToken"
+      class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts
+{
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+
+    <script src="~/lib/bootstrap-table/locale/bootstrap-table-es-MX.min.js"></script>
+
+    <script src="~/js/expedientes-bancarios.js"
+            asp-append-version="true">
+    </script>
+
+    <script src="~/js/expedientes-bancarios-empresas.js"
+            asp-append-version="true">
+    </script>
+}

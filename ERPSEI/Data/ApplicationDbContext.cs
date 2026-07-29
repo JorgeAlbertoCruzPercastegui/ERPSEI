@@ -26,6 +26,7 @@ using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Security.Claims;
 using ERPSEI.Data.Entities.Metricas;
+using ERPSEI.Data.Entities.ExpedientesBancarios;
 
 namespace ERPSEI.Data
 {
@@ -55,8 +56,14 @@ namespace ERPSEI.Data
 		public DbSet<ActividadEconomicaEmpresa> ActividadesEconomicasEmpresa { get; set; }
 		public DbSet<ProductoServicioPerfil> ProductosServiciosPerfil { get; set; }
 
-		//Catálogos Administrables Empresas
-		public DbSet<Origen> Origenes { get; set; }
+        // Expedientes Bancarios
+        public DbSet<EbEmpresa> EbEmpresas { get; set; } = null!;
+        public DbSet<EbAccionista> EbAccionistas { get; set; } = null!;
+        public DbSet<EbTipoDocumento> EbTiposDocumento { get; set; } = null!;
+        public DbSet<EbDocumento> EbDocumentos { get; set; } = null!;
+
+        //Catálogos Administrables Empresas
+        public DbSet<Origen> Origenes { get; set; }
 		public DbSet<Nivel> Niveles { get; set; }
 		public DbSet<Perfil> Perfiles { get; set; }
 		public DbSet<ProductoServicio> ProductosServicios { get; set; }
@@ -726,6 +733,494 @@ namespace ERPSEI.Data
             //Notificaciones
             BuildNotificaciones(modelBuilder);
 
+            // Expedientes Bancarios
+            BuildExpedientesBancarios(modelBuilder);
+
+        }
+
+        private static void BuildExpedientesBancarios(ModelBuilder b)
+        {
+            // ==========================
+            // Empresas del nuevo módulo
+            // ==========================
+            b.Entity<EbEmpresa>(entity =>
+            {
+                entity.ToTable("EB_Empresas");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.RazonSocial)
+                    .IsRequired()
+                    .HasMaxLength(250);
+
+                entity.Property(x => x.NombreCorto)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Rfc)
+                    .IsRequired()
+                    .HasMaxLength(13);
+
+                entity.Property(x => x.Nivel)
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.ActividadComercial)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.TelefonoBancos)
+                    .HasMaxLength(30);
+
+                entity.Property(x => x.CorreoBancos)
+                    .HasMaxLength(200);
+
+                entity.Property(x => x.NumeroEscritura)
+                    .HasMaxLength(200);
+
+                entity.Property(x => x.DomicilioFiscal)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.Observaciones)
+                    .HasMaxLength(1000);
+
+                entity.Property(x => x.UsuarioCreacionId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.UsuarioActualizacionId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.Deshabilitado)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.Eliminado)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.HasIndex(x => x.Rfc)
+                    .IsUnique()
+                    .HasDatabaseName("UX_EB_Empresas_Rfc");
+
+                entity.HasIndex(x => x.RazonSocial)
+                    .HasDatabaseName("IX_EB_Empresas_RazonSocial");
+
+                entity.HasIndex(x => x.NombreCorto)
+                    .HasDatabaseName("IX_EB_Empresas_NombreCorto");
+
+                entity.HasQueryFilter(x => !x.Eliminado);
+            });
+
+            // ==========================
+            // Accionistas
+            // ==========================
+            b.Entity<EbAccionista>(entity =>
+            {
+                entity.ToTable("EB_Accionistas");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.NombreCompleto)
+                    .IsRequired()
+                    .HasMaxLength(250);
+
+                entity.Property(x => x.Rfc)
+                    .HasMaxLength(13);
+
+                entity.Property(x => x.PorcentajeParticipacion)
+                    .HasPrecision(7, 4);
+
+                entity.Property(x => x.Nacionalidad)
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.UsuarioCreacionId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.UsuarioActualizacionId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.Deshabilitado)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.Eliminado)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.HasOne(x => x.Empresa)
+                    .WithMany(x => x.Accionistas)
+                    .HasForeignKey(x => x.EmpresaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => x.EmpresaId)
+                    .HasDatabaseName("IX_EB_Accionistas_EmpresaId");
+
+                entity.HasQueryFilter(x => !x.Eliminado);
+            });
+
+            // ==========================
+            // Tipos de documento
+            // ==========================
+            b.Entity<EbTipoDocumento>(entity =>
+            {
+                entity.ToTable("EB_TiposDocumento");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(x => x.Categoria)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.UsuarioCreacionId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.EsObligatorio)
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.RequiereFechaVencimiento)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.PermiteMultiplesArchivos)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.Deshabilitado)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.Eliminado)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.HasIndex(x => new { x.Nombre, x.Categoria })
+                    .IsUnique()
+                    .HasDatabaseName("UX_EB_TiposDocumento_Nombre_Categoria");
+
+                entity.HasQueryFilter(x => !x.Eliminado);
+            });
+
+            DateTime fechaCatalogoEb = new DateTime(2026, 7, 29, 0, 0, 0);
+
+            b.Entity<EbTipoDocumento>().HasData(
+                new EbTipoDocumento
+                {
+                    Id = 1,
+                    Nombre = "Constancia de Situación Fiscal",
+                    Categoria = "Fiscal",
+                    Descripcion = "Constancia de Situación Fiscal vigente de la empresa.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = false,
+                    Orden = 1,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 2,
+                    Nombre = "Certificado FIEL",
+                    Categoria = "Fiscal",
+                    Descripcion = "Certificado de firma electrónica vigente.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = true,
+                    PermiteMultiplesArchivos = false,
+                    Orden = 2,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 3,
+                    Nombre = "Comprobante de domicilio",
+                    Categoria = "Domicilio",
+                    Descripcion = "Comprobante de domicilio fiscal o comercial.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = true,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 3,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 4,
+                    Nombre = "Acta constitutiva",
+                    Categoria = "Corporativo",
+                    Descripcion = "Acta constitutiva de la sociedad.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = false,
+                    Orden = 4,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 5,
+                    Nombre = "Actas o instrumentos adicionales",
+                    Categoria = "Corporativo",
+                    Descripcion = "Reformas, protocolizaciones o instrumentos adicionales.",
+                    EsObligatorio = false,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 5,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 6,
+                    Nombre = "Poder notarial",
+                    Categoria = "Legal",
+                    Descripcion = "Poderes notariales vigentes de representantes o apoderados.",
+                    EsObligatorio = false,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 6,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 7,
+                    Nombre = "INE de accionistas",
+                    Categoria = "Accionistas",
+                    Descripcion = "Identificación oficial de los accionistas.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = true,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 7,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 8,
+                    Nombre = "CSF de accionistas",
+                    Categoria = "Accionistas",
+                    Descripcion = "Constancia de Situación Fiscal de cada accionista.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 8,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 9,
+                    Nombre = "Comprobante de domicilio de accionistas",
+                    Categoria = "Accionistas",
+                    Descripcion = "Comprobante de domicilio de cada accionista.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = true,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 9,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 10,
+                    Nombre = "Hoja membretada",
+                    Categoria = "Corporativo",
+                    Descripcion = "Hoja membretada vigente de la empresa.",
+                    EsObligatorio = false,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = false,
+                    Orden = 10,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 11,
+                    Nombre = "Organigrama",
+                    Categoria = "Corporativo",
+                    Descripcion = "Organigrama actualizado de la empresa.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = false,
+                    Orden = 11,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 12,
+                    Nombre = "Declaración anual o mensual",
+                    Categoria = "Financiero",
+                    Descripcion = "Última declaración anual o mensual disponible.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 12,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 13,
+                    Nombre = "Opinión de cumplimiento SAT",
+                    Categoria = "Fiscal",
+                    Descripcion = "Constancia de opinión de cumplimiento emitida por el SAT.",
+                    EsObligatorio = true,
+                    RequiereFechaVencimiento = true,
+                    PermiteMultiplesArchivos = false,
+                    Orden = 13,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 14,
+                    Nombre = "Prueba de vida",
+                    Categoria = "Evidencias",
+                    Descripcion = "Imágenes o evidencias solicitadas por instituciones bancarias.",
+                    EsObligatorio = false,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 14,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                },
+                new EbTipoDocumento
+                {
+                    Id = 15,
+                    Nombre = "Otro documento",
+                    Categoria = "Otros",
+                    Descripcion = "Documentación adicional requerida por la institución.",
+                    EsObligatorio = false,
+                    RequiereFechaVencimiento = false,
+                    PermiteMultiplesArchivos = true,
+                    Orden = 15,
+                    Deshabilitado = false,
+                    Eliminado = false,
+                    FechaCreacion = fechaCatalogoEb,
+                    UsuarioCreacionId = "SYSTEM"
+                }
+            );
+
+            // ==========================
+            // Documentos
+            // ==========================
+            b.Entity<EbDocumento>(entity =>
+            {
+                entity.ToTable("EB_Documentos");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.NombreOriginal)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.NombreAlmacenado)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.RutaArchivo)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.Extension)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(x => x.MimeType)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Estado)
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasDefaultValue("Vigente");
+
+                entity.Property(x => x.Observaciones)
+                    .HasMaxLength(1000);
+
+                entity.Property(x => x.UsuarioCargaId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.UsuarioEliminacionId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.Version)
+                    .HasDefaultValue(1);
+
+                entity.Property(x => x.EsVersionActual)
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.Eliminado)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.FechaCarga)
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.HasOne(x => x.Empresa)
+                    .WithMany(x => x.Documentos)
+                    .HasForeignKey(x => x.EmpresaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.TipoDocumento)
+                    .WithMany(x => x.Documentos)
+                    .HasForeignKey(x => x.TipoDocumentoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => x.EmpresaId)
+                    .HasDatabaseName("IX_EB_Documentos_EmpresaId");
+
+                entity.HasIndex(x => x.TipoDocumentoId)
+                    .HasDatabaseName("IX_EB_Documentos_TipoDocumentoId");
+
+                entity.HasIndex(x => new
+                {
+                    x.EmpresaId,
+                    x.TipoDocumentoId,
+                    x.EsVersionActual
+                })
+                .HasDatabaseName("IX_EB_Documentos_Expediente");
+
+                entity.HasQueryFilter(x => !x.Eliminado);
+            });
         }
 
         private static void BuildNotificaciones(ModelBuilder b)

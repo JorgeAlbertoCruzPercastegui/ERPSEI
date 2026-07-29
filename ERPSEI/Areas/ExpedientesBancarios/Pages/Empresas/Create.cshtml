@@ -1,0 +1,259 @@
+﻿@page
+@model ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas.CreateModel
+
+@{
+    ViewData["Title"] = "Nueva empresa";
+}
+
+@section Styles
+{
+    <link rel="stylesheet"
+          href="~/css/expedientes-bancarios.css"
+          asp-append-version="true" />
+}
+
+<div class="eb-container">
+
+    <div class="mb-4">
+        <a asp-area="ExpedientesBancarios"
+               asp-page="/Empresas/Index"
+               class="btn btn-outline-secondary">
+
+            <i class="fa-solid fa-arrow-left me-1"></i>
+            Regresar a empresas
+        </a>
+    </div>
+
+    <div class="eb-page-header">
+        <div>
+            <h1 class="eb-page-title">
+                Nueva empresa
+            </h1>
+
+            <p class="eb-page-subtitle">
+                Registra la información corporativa de la empresa para integrar su expediente bancario.
+            </p>
+        </div>
+    </div>
+
+    <form method="post"
+          data-eb-form>
+
+        <div class="eb-card">
+
+            <div class="eb-card-header">
+                <h2>
+                    <i class="fa-regular fa-building me-2"></i>
+                    Información general
+                </h2>
+            </div>
+
+            <div class="eb-card-body">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger">
+                </div>
+
+                <div class="row g-4">
+
+                    <div class="col-12 col-lg-8">
+                        <label asp-for="Input.RazonSocial"
+                               class="form-label eb-required">
+                        </label>
+
+                        <input asp-for="Input.RazonSocial"
+                               class="form-control"
+                               placeholder="Ej. Empresa Comercializadora, S.A. de C.V."
+                               autocomplete="off" />
+
+                        <span asp-validation-for="Input.RazonSocial"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <label asp-for="Input.NombreCorto"
+                               class="form-label eb-required">
+                        </label>
+
+                        <input asp-for="Input.NombreCorto"
+                               class="form-control"
+                               placeholder="Ej. Comercializadora"
+                               autocomplete="off" />
+
+                        <span asp-validation-for="Input.NombreCorto"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label asp-for="Input.Rfc"
+                               class="form-label eb-required">
+                        </label>
+
+                        <input asp-for="Input.Rfc"
+                               class="form-control text-uppercase"
+                               maxlength="13"
+                               data-eb-rfc
+                               placeholder="Ej. ABC010203XYZ"
+                               autocomplete="off" />
+
+                        <span asp-validation-for="Input.Rfc"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label asp-for="Input.Nivel"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="Input.Nivel"
+                               class="form-control"
+                               placeholder="Ej. Nivel 1"
+                               autocomplete="off" />
+
+                        <span asp-validation-for="Input.Nivel"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label asp-for="Input.FechaConstitucion"
+                               class="form-label">
+                        </label>
+
+                        <input asp-for="Input.FechaConstitucion"
+                               class="form-control" />
+
+                        <span asp-validation-for="Input.FechaConstitucion"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Input.ActividadComercial"
+                               class="form-label">
+                        </label>
+
+                        <textarea asp-for="Input.ActividadComercial"
+                                  class="form-control"
+                                  rows="3"
+                                      placeholder="Describe la actividad comercial principal de la empresa">
+                        </textarea>
+
+                            <span asp-validation-for="Input.ActividadComercial"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label asp-for="Input.TelefonoBancos"
+                                   class="form-label">
+                            </label>
+
+                            <input asp-for="Input.TelefonoBancos"
+                                   class="form-control"
+                                   placeholder="Ej. 55 1234 5678"
+                                   autocomplete="off" />
+
+                            <span asp-validation-for="Input.TelefonoBancos"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label asp-for="Input.CorreoBancos"
+                                   class="form-label">
+                            </label>
+
+                            <input asp-for="Input.CorreoBancos"
+                                   class="form-control"
+                                   placeholder="Ej. bancos@empresa.com"
+                                   autocomplete="off" />
+
+                            <span asp-validation-for="Input.CorreoBancos"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Input.NumeroEscritura"
+                                   class="form-label">
+                            </label>
+
+                            <input asp-for="Input.NumeroEscritura"
+                                   class="form-control"
+                                   placeholder="Número de escritura o escrituras relacionadas"
+                                   autocomplete="off" />
+
+                            <span asp-validation-for="Input.NumeroEscritura"
+                                  class="text-danger">
+                            </span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Input.DomicilioFiscal"
+                                   class="form-label">
+                            </label>
+
+                            <textarea asp-for="Input.DomicilioFiscal"
+                                      class="form-control"
+                                      rows="3"
+                                          placeholder="Calle, número, colonia, municipio, estado y código postal">
+                        </textarea>
+
+                                <span asp-validation-for="Input.DomicilioFiscal"
+                                      class="text-danger">
+                                </span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Input.Observaciones"
+                                       class="form-label">
+                                </label>
+
+                                <textarea asp-for="Input.Observaciones"
+                                          class="form-control"
+                                          rows="3"
+                                              placeholder="Información complementaria de la empresa">
+                        </textarea>
+
+                                    <span asp-validation-for="Input.Observaciones"
+                                          class="text-danger">
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+
+                        <a asp-area="ExpedientesBancarios"
+                               asp-page="/Empresas/Index"
+                               class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk me-1"></i>
+                            Guardar empresa
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            @section Scripts
+            {
+                <partial name="_ValidationScriptsPartial" />
+
+                <script src="~/js/expedientes-bancarios.js"
+                        asp-append-version="true">
+                </script>
+            }
