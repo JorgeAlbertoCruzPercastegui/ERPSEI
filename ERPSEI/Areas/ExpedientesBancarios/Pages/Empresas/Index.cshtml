@@ -658,6 +658,685 @@
 </div>
 
 <!-- =========================================================
+     MODAL EXPEDIENTE DOCUMENTAL
+     ========================================================= -->
+<div class="modal fade"
+     id="modalDocumentos"
+     tabindex="-1"
+     aria-labelledby="modalDocumentosTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content eb-documents-modal eb-documents-modal-redesign">
+
+            <div class="modal-header eb-documents-header">
+
+                <div>
+                    <h5 class="modal-title"
+                        id="modalDocumentosTitulo">
+                        Expediente documental
+                    </h5>
+
+                    <p class="eb-modal-subtitle mb-0">
+                        Empresa:
+                        <strong id="nombreEmpresaDocumentos"></strong>
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body eb-documents-body">
+
+                <!-- =============================================
+                     INFORMACIÓN CORPORATIVA
+                     ============================================= -->
+                <section class="eb-document-section eb-corporate-section">
+
+                    <div class="eb-document-section-heading">
+                        <div>
+                            <h6>
+                                Información corporativa
+                            </h6>
+
+                            <p>
+                                Datos generales registrados para la empresa.
+                            </p>
+                        </div>
+
+                        <span class="eb-section-icon">
+                            <i class="fa-regular fa-building"></i>
+                        </span>
+                    </div>
+
+                    <div class="eb-corporate-information-grid">
+
+                        <div class="eb-corporate-information-item">
+                            <span>Nombre completo</span>
+                            <strong id="documentoEmpresaNombre">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>RFC</span>
+                            <strong id="documentoEmpresaRfc">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>Nivel</span>
+                            <strong id="documentoEmpresaNivel">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>Actividad comercial</span>
+                            <strong id="documentoEmpresaActividad">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>Teléfono de bancos</span>
+                            <strong id="documentoEmpresaTelefono">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>Correo de bancos</span>
+                            <strong id="documentoEmpresaCorreo">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>Fecha de constitución</span>
+                            <strong id="documentoEmpresaFechaConstitucion">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>Número de escritura</span>
+                            <strong id="documentoEmpresaEscritura">-</strong>
+                        </div>
+
+                        <div class="eb-corporate-information-item">
+                            <span>Accionistas y participación</span>
+                            <strong id="documentoEmpresaAccionistas">-</strong>
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- =============================================
+                     INDICADORES
+                     ============================================= -->
+                <section class="eb-document-section">
+
+                    <div class="eb-document-summary-grid">
+
+                        <div class="eb-document-summary-card eb-summary-required">
+
+                            <div class="eb-summary-icon">
+                                <i class="fa-regular fa-folder-open"></i>
+                            </div>
+
+                            <div>
+                                <span>Requeridos</span>
+
+                                <strong id="totalDocumentosRequeridos">
+                                    0
+                                </strong>
+                            </div>
+
+                        </div>
+
+                        <div class="eb-document-summary-card eb-summary-loaded">
+
+                            <div class="eb-summary-icon">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+
+                            <div>
+                                <span>Cargados</span>
+
+                                <strong id="totalDocumentosCargados">
+                                    0
+                                </strong>
+                            </div>
+
+                        </div>
+
+                        <div class="eb-document-summary-card eb-summary-pending">
+
+                            <div class="eb-summary-icon">
+                                <i class="fa-regular fa-clock"></i>
+                            </div>
+
+                            <div>
+                                <span>Pendientes</span>
+
+                                <strong id="totalDocumentosPendientes">
+                                    0
+                                </strong>
+                            </div>
+
+                        </div>
+
+                        <div class="eb-document-summary-card eb-summary-expired">
+
+                            <div class="eb-summary-icon">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+
+                            <div>
+                                <span>Vencidos</span>
+
+                                <strong id="totalDocumentosVencidos">
+                                    0
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                <!-- =============================================
+                     DOCUMENTACIÓN
+                     ============================================= -->
+                <section class="eb-document-section">
+
+                    <div class="eb-document-section-heading">
+
+                        <div>
+                            <h6>
+                                Documentos
+                            </h6>
+
+                            <p>
+                                Carga, consulta y administra los archivos del expediente.
+                            </p>
+                        </div>
+
+                        <span class="eb-section-icon">
+                            <i class="fa-regular fa-file-lines"></i>
+                        </span>
+
+                    </div>
+
+                    <div class="eb-document-information-alert">
+
+                        
+
+                        <div>
+                            <strong>
+                                Consideraciones para la carga
+                            </strong>
+
+                            <p>
+                                Se permiten archivos PDF, Word, Excel,
+                                JPG, JPEG, PNG, WEBP y ZIP con un tamaño
+                                máximo de 25 MB. Algunos documentos requieren
+                                fecha de vencimiento.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div id="documentosCargando"
+                         class="eb-documents-state d-none">
+
+                        <div class="spinner-border"
+                             role="status">
+
+                            <span class="visually-hidden">
+                                Cargando...
+                            </span>
+
+                        </div>
+
+                        <span>
+                            Consultando documentación...
+                        </span>
+
+                    </div>
+
+                    <div id="documentosError"
+                         class="alert alert-danger d-none"
+                         role="alert">
+
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+                        <span id="documentosErrorMensaje">
+                            No fue posible consultar la documentación.
+                        </span>
+
+                    </div>
+
+                    <div id="matrizDocumentos"
+                         class="eb-document-matrix">
+                    </div>
+
+                </section>
+
+                <!-- =============================================
+                     ARCHIVOS DEL DOCUMENTO SELECCIONADO
+                     ============================================= -->
+                
+
+            </div>
+
+            <div class="modal-footer eb-documents-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+
+                    <i class="fa-solid fa-xmark me-1"></i>
+                    Cerrar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL CARGAR DOCUMENTO
+     ========================================================= -->
+<div class="modal fade"
+     id="modalCargarDocumento"
+     tabindex="-1"
+     aria-labelledby="modalCargarDocumentoTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+                    <h5 class="modal-title"
+                        id="modalCargarDocumentoTitulo">
+                        Cargar documento
+                    </h5>
+
+                    <p class="eb-modal-subtitle mb-0">
+                        Documento:
+                        <strong id="nombreTipoDocumentoCarga"></strong>
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <form id="formCargarDocumento"
+                      enctype="multipart/form-data"
+                      autocomplete="off">
+
+                    <input type="hidden"
+                           id="documentoCargaEmpresaId"
+                           value="0" />
+
+                    <input type="hidden"
+                           id="documentoCargaTipoId"
+                           value="0" />
+
+                    <div class="row g-4">
+
+                        <div class="col-12">
+
+                            <label for="documentoCargaArchivo"
+                                   class="form-label eb-required">
+                                Archivo
+                            </label>
+
+                            <input type="file"
+                                   id="documentoCargaArchivo"
+                                   class="form-control"
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.zip" />
+
+                            <span class="text-danger"
+                                  data-documento-error-for="Archivo">
+                            </span>
+
+                            <small class="form-text text-muted">
+                                Tamaño máximo: 25 MB. Se permiten PDF,
+                                Word, Excel, imágenes y ZIP.
+                            </small>
+
+                        </div>
+
+                        <div class="col-12 col-md-6"
+                             id="contenedorFechaVencimientoDocumento">
+
+                            <label for="documentoCargaFechaVencimiento"
+                                   class="form-label">
+                                Fecha de vencimiento
+                            </label>
+
+                            <input type="date"
+                                   id="documentoCargaFechaVencimiento"
+                                   class="form-control" />
+
+                            <span class="text-danger"
+                                  data-documento-error-for="FechaVencimiento">
+                            </span>
+
+                        </div>
+
+                        <div class="col-12">
+
+                            <label for="documentoCargaObservaciones"
+                                   class="form-label">
+                                Observaciones
+                            </label>
+
+                            <textarea id="documentoCargaObservaciones"
+                                      class="form-control"
+                                      rows="3"
+                                      maxlength="1000"
+                                      placeholder="Información adicional del documento"></textarea>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button"
+                        id="btnGuardarDocumento"
+                        class="btn btn-primary">
+
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i>
+                    Cargar documento
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL CREAR / EDITAR / CONSULTAR ACCIONISTA
+     ========================================================= -->
+<div class="modal fade"
+     id="modalAccionista"
+     tabindex="-1"
+     aria-labelledby="modalAccionistaTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+                    <h5 class="modal-title"
+                        id="modalAccionistaTitulo">
+                        Accionista
+                    </h5>
+
+                    <p class="eb-modal-subtitle mb-0">
+                        Empresa:
+                        <strong id="nombreEmpresaFormularioAccionista"></strong>
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <form id="formAccionista"
+                      autocomplete="off">
+
+                    <input type="hidden"
+                           id="eaId"
+                           value="0" />
+
+                    <input type="hidden"
+                           id="eaEmpresaId"
+                           value="0" />
+
+                    <div class="row g-4">
+
+                        <div class="col-12">
+
+                            <label for="eaNombreCompleto"
+                                   class="form-label eb-required">
+                                Nombre completo
+                            </label>
+
+                            <input type="text"
+                                   id="eaNombreCompleto"
+                                   class="form-control"
+                                   maxlength="250"
+                                   placeholder="Nombre completo del accionista"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-accionista-error-for="NombreCompleto"></span>
+
+                        </div>
+
+                        <div class="col-12 col-md-6">
+
+                            <label for="eaRfc"
+                                   class="form-label">
+                                RFC
+                            </label>
+
+                            <input type="text"
+                                   id="eaRfc"
+                                   class="form-control text-uppercase"
+                                   maxlength="13"
+                                   placeholder="Ej. ABC010203XYZ"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-accionista-error-for="Rfc"></span>
+
+                        </div>
+
+                        <div class="col-12 col-md-6">
+
+                            <label for="eaNacionalidad"
+                                   class="form-label">
+                                Nacionalidad
+                            </label>
+
+                            <input type="text"
+                                   id="eaNacionalidad"
+                                   class="form-control"
+                                   maxlength="100"
+                                   placeholder="Ej. Mexicana"
+                                   autocomplete="off" />
+
+                            <span class="text-danger"
+                                  data-accionista-error-for="Nacionalidad"></span>
+
+                        </div>
+
+                        <div class="col-12 col-md-6">
+
+                            <label for="eaPorcentajeParticipacion"
+                                   class="form-label eb-required">
+                                Porcentaje de participación
+                            </label>
+
+                            <div class="input-group">
+                                <input type="number"
+                                       id="eaPorcentajeParticipacion"
+                                       class="form-control"
+                                       min="0.0001"
+                                       max="100"
+                                       step="0.0001"
+                                       placeholder="0.0000" />
+
+                                <span class="input-group-text">
+                                    %
+                                </span>
+                            </div>
+
+                            <span class="text-danger"
+                                  data-accionista-error-for="PorcentajeParticipacion"></span>
+
+                        </div>
+
+                        <div class="col-12 col-md-6 d-flex align-items-end">
+
+                            <div class="form-check form-switch mb-2">
+
+                                <input type="checkbox"
+                                       id="eaEsRepresentanteLegal"
+                                       class="form-check-input"
+                                       role="switch" />
+
+                                <label for="eaEsRepresentanteLegal"
+                                       class="form-check-label">
+                                    Es representante legal
+                                </label>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <button type="button"
+                        id="btnGuardarAccionista"
+                        class="btn btn-primary">
+
+                    <i class="fa-solid fa-floppy-disk me-1"></i>
+                    Guardar accionista
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL CONFIRMAR ELIMINACIÓN DE ACCIONISTA
+     ========================================================= -->
+<div class="modal fade"
+     id="modalEliminarAccionista"
+     tabindex="-1"
+     aria-labelledby="modalEliminarAccionistaTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title"
+                    id="modalEliminarAccionistaTitulo">
+                    Confirmar eliminación
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="eb-confirmation-content">
+
+                    <div class="eb-confirmation-icon">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+
+                    <h5>
+                        ¿Deseas eliminar al accionista?
+                    </h5>
+
+                    <p>
+                        El accionista
+                        <strong id="nombreAccionistaEliminar"></strong>
+                        dejará de mostrarse en la empresa.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    No, cancelar
+                </button>
+
+                <button type="button"
+                        id="btnConfirmarEliminarAccionista"
+                        class="btn btn-danger">
+
+                    <i class="fa-regular fa-trash-can me-1"></i>
+                    Sí, eliminar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
      MODAL CONFIRMAR ELIMINACIÓN
      ========================================================= -->
 <div class="modal fade"

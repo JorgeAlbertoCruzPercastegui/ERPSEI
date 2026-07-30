@@ -13,10 +13,17 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
-        public IndexModel(ApplicationDbContext context)
+        public IndexModel(
+            ApplicationDbContext context,
+            IWebHostEnvironment environment,
+            IConfiguration configuration)
         {
             _context = context;
+            _environment = environment;
+            _configuration = configuration;
         }
 
         public void OnGet()
@@ -379,6 +386,708 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 success = true,
                 message = "La empresa se eliminó correctamente."
             });
+        }
+
+        // =====================================================
+        // DOCUMENTOS DE UNA EMPRESA
+        // GET ?handler=Documentos&empresaId=1
+        // =====================================================
+        public async Task<IActionResult> OnGetDocumentosAsync(
+            int empresaId)
+        {
+            if (empresaId <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "El identificador de la empresa no es válido."
+                });
+            }
+
+            bool empresaExiste = await _context.EbEmpresas
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == empresaId);
+
+            if (!empresaExiste)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "No se encontró la empresa solicitada."
+                });
+            }
+
+            DateTime fechaActual = DateTime.Today;
+            DateTime fechaProximaVencimiento =
+                fechaActual.AddDays(30);
+
+            var tiposDocumento = await _context
+                .EbTiposDocumento
+                .AsNoTracking()
+                .Where(x =>
+                    !x.Eliminado &&
+                    !x.Deshabilitado)
+                .OrderBy(x => x.Orden)
+                .ThenBy(x => x.Nombre)
+                .Select(x => new
+                {
+                    id = x.Id,
+                    nombre = x.Nombre,
+                    categoria = x.Categoria,
+                    descripcion = x.Descripcion,
+                    esObligatorio = x.EsObligatorio,
+                    requiereFechaVencimiento =
+                        x.RequiereFechaVencimiento,
+                    permiteMultiplesArchivos =
+                        x.PermiteMultiplesArchivos,
+                    orden = x.Orden
+                })
+                .ToListAsync();
+
+            var documentosEmpresa = await _context
+                .EbDocumentos
+                .AsNoTracking()
+                .Where(x =>
+                    x.EmpresaId == empresaId &&
+                    !x.Eliminado &&
+                    x.EsVersionActual)
+                .OrderByDescending(x => x.FechaCarga)
+                .Select(x => new
+                {
+                    id = x.Id,
+                    empresaId = x.EmpresaId,
+                    tipoDocumentoId = x.TipoDocumentoId,
+                    nombreOriginal = x.NombreOriginal,
+                    nombreAlmacenado = x.NombreAlmacenado,
+                    rutaArchivo = x.RutaArchivo,
+                    extension = x.Extension,
+                    mimeType = x.MimeType,
+                    tamanoBytes = x.TamanoBytes,
+                    version = x.Version,
+                    fechaCarga = x.FechaCarga,
+                    fechaVencimiento = x.FechaVencimiento,
+                    estado = x.Estado,
+                    observaciones = x.Observaciones
+                })
+                .ToListAsync();
+
+            var documentos = tiposDocumento
+                .Select(tipo =>
+                {
+                    var archivos = documentosEmpresa
+                        .Where(x =>
+                            x.tipoDocumentoId == tipo.id)
+                        .OrderByDescending(x => x.fechaCarga)
+                        .ToList();
+
+                    string estatus;
+
+                    if (archivos.Count == 0)
+                    {
+                        estatus = "Pendiente";
+                    }
+                    else if (!tipo.requiereFechaVencimiento)
+                    {
+                        estatus = "Cargado";
+                    }
+                    else
+                    {
+                        bool tieneVencidos = archivos.Any(x =>
+                            x.fechaVencimiento.HasValue &&
+                            x.fechaVencimiento.Value.Date <
+                            fechaActual);
+
+                        bool tieneProximosAVencer = archivos.Any(x =>
+                            x.fechaVencimiento.HasValue &&
+                            x.fechaVencimiento.Value.Date >=
+                            fechaActual &&
+                            x.fechaVencimiento.Value.Date <=
+                            fechaProximaVencimiento);
+
+                        bool tieneVigentes = archivos.Any(x =>
+                            x.fechaVencimiento.HasValue &&
+                            x.fechaVencimiento.Value.Date >
+                            fechaProximaVencimiento);
+
+                        if (tieneVencidos)
+                        {
+                            estatus = "Vencido";
+                        }
+                        else if (tieneProximosAVencer)
+                        {
+                            estatus = "Próximo a vencer";
+                        }
+                        else if (tieneVigentes)
+                        {
+                            estatus = "Vigente";
+                        }
+                        else
+                        {
+                            /*
+                             * Existe un archivo, pero no tiene fecha
+                             * de vencimiento capturada.
+                             */
+                            estatus = "Cargado";
+                        }
+                    }
+
+                    return new
+                    {
+                        id = tipo.id,
+                        nombre = tipo.nombre,
+                        categoria = tipo.categoria,
+                        descripcion = tipo.descripcion,
+                        obligatorio = tipo.esObligatorio,
+                        requiereFechaVencimiento =
+                            tipo.requiereFechaVencimiento,
+                        permiteMultiples =
+                            tipo.permiteMultiplesArchivos,
+                        orden = tipo.orden,
+                        estatus,
+                        totalArchivos = archivos.Count,
+
+                        archivos = archivos.Select(archivo => new
+                        {
+                            id = archivo.id,
+                            tipoDocumentoId =
+                                archivo.tipoDocumentoId,
+                            nombreOriginal =
+                                archivo.nombreOriginal,
+                            extension = archivo.extension,
+                            mimeType = archivo.mimeType,
+                            tamanoBytes = archivo.tamanoBytes,
+                            version = archivo.version,
+                            fechaCarga = archivo.fechaCarga,
+                            fechaVencimiento =
+                                archivo.fechaVencimiento,
+                            estado = archivo.estado,
+                            observaciones =
+                                archivo.observaciones
+                        })
+                        .ToList()
+                    };
+                })
+                .ToList();
+
+            int totalRequeridos = documentos.Count(x =>
+                x.obligatorio);
+
+            int totalCargados = documentos.Count(x =>
+                x.totalArchivos > 0);
+
+            int totalPendientes = documentos.Count(x =>
+                x.obligatorio &&
+                x.totalArchivos == 0);
+
+            int totalVencidos = documentos.Count(x =>
+                x.estatus == "Vencido");
+
+            int totalProximosAVencer = documentos.Count(x =>
+                x.estatus == "Próximo a vencer");
+
+            return new JsonResult(new
+            {
+                success = true,
+
+                data = documentos,
+
+                resumen = new
+                {
+                    totalDocumentos = documentos.Count,
+                    totalRequeridos,
+                    totalCargados,
+                    totalPendientes,
+                    totalVencidos,
+                    totalProximosAVencer
+                }
+            });
+        }
+
+        // =====================================================
+        // VISUALIZAR DOCUMENTO
+        // GET ?handler=VisualizarDocumento&id=1
+        // =====================================================
+        public async Task<IActionResult> OnGetVisualizarDocumentoAsync(int id)
+        {
+            if (id <= 0)
+            {
+                return NotFound();
+            }
+
+            var documento = await _context.EbDocumentos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    !x.Eliminado &&
+                    x.EsVersionActual);
+
+            if (documento == null)
+            {
+                return NotFound();
+            }
+
+            string? rutaBaseDocumentos =
+                _configuration[
+                    "ExpedientesBancarios:RutaDocumentos"
+                ];
+
+            if (string.IsNullOrWhiteSpace(rutaBaseDocumentos))
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+
+            string rutaBaseCompleta = Path.GetFullPath(
+                rutaBaseDocumentos
+            );
+
+            string rutaFisica = Path.GetFullPath(
+                Path.Combine(
+                    rutaBaseCompleta,
+                    documento.RutaArchivo
+                        .Replace("/", Path.DirectorySeparatorChar.ToString())
+                )
+            );
+
+            /*
+             * Evita acceder a rutas fuera del directorio configurado.
+             */
+            string rutaBaseConSeparador =
+                rutaBaseCompleta.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar
+                ) + Path.DirectorySeparatorChar;
+
+            if (!rutaFisica.StartsWith(
+                    rutaBaseConSeparador,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest();
+            }
+
+            if (!System.IO.File.Exists(rutaFisica))
+            {
+                return NotFound();
+            }
+
+            string mimeType = string.IsNullOrWhiteSpace(
+                documento.MimeType)
+                    ? "application/octet-stream"
+                    : documento.MimeType;
+
+            /*
+             * Al no enviar downloadFileName, el navegador intenta
+             * mostrar el archivo en línea.
+             */
+            return PhysicalFile(
+            rutaFisica,
+            mimeType
+);
+        }
+
+        // =====================================================
+        // CARGAR DOCUMENTO
+        // POST ?handler=CargarDocumento
+        // =====================================================
+        [RequestSizeLimit(104857600)]
+        public async Task<IActionResult> OnPostCargarDocumentoAsync(
+            [FromForm] CargarDocumentoRequest request)
+        {
+            const long tamanoMaximo = 25L * 1024L * 1024L;
+
+            string? rutaFisica = null;
+
+            try
+            {
+                string[] extensionesPermitidas =
+                {
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".zip"
+        };
+
+                if (request.EmpresaId <= 0)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "La empresa seleccionada no es válida."
+                    });
+                }
+
+                if (request.TipoDocumentoId <= 0)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "El tipo de documento no es válido."
+                    });
+                }
+
+                if (request.Archivo == null ||
+                    request.Archivo.Length <= 0)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "Selecciona un archivo para cargar.",
+                        errors = new Dictionary<string, string[]>
+                        {
+                            ["Archivo"] = new[]
+                            {
+                        "El archivo es obligatorio."
+                    }
+                        }
+                    });
+                }
+
+                if (request.Archivo.Length > tamanoMaximo)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "El archivo excede el tamaño máximo permitido.",
+                        errors = new Dictionary<string, string[]>
+                        {
+                            ["Archivo"] = new[]
+                            {
+                        "El archivo no puede superar los 25 MB."
+                    }
+                        }
+                    });
+                }
+
+                string extension = Path
+                    .GetExtension(request.Archivo.FileName)
+                    .ToLowerInvariant();
+
+                if (string.IsNullOrWhiteSpace(extension) ||
+                    !extensionesPermitidas.Contains(extension))
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message = "El tipo de archivo no está permitido.",
+                        errors = new Dictionary<string, string[]>
+                        {
+                            ["Archivo"] = new[]
+                            {
+                        "Formatos permitidos: PDF, Word, Excel, " +
+                        "JPG, PNG, WEBP y ZIP."
+                    }
+                        }
+                    });
+                }
+
+                bool empresaExiste = await _context.EbEmpresas
+                    .AsNoTracking()
+                    .AnyAsync(x =>
+                        x.Id == request.EmpresaId &&
+                        !x.Deshabilitado);
+
+                if (!empresaExiste)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la empresa seleccionada."
+                    });
+                }
+
+                var tipoDocumento = await _context.EbTiposDocumento
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == request.TipoDocumentoId &&
+                        !x.Eliminado &&
+                        !x.Deshabilitado);
+
+                if (tipoDocumento == null)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el tipo de documento seleccionado."
+                    });
+                }
+
+                if (tipoDocumento.RequiereFechaVencimiento &&
+                    !request.FechaVencimiento.HasValue)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "El documento requiere una fecha de vencimiento.",
+                        errors = new Dictionary<string, string[]>
+                        {
+                            ["FechaVencimiento"] = new[]
+                            {
+                        "La fecha de vencimiento es obligatoria."
+                    }
+                        }
+                    });
+                }
+
+                if (request.FechaVencimiento.HasValue &&
+                    request.FechaVencimiento.Value.Date < DateTime.Today)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "La fecha de vencimiento no puede ser anterior a hoy.",
+                        errors = new Dictionary<string, string[]>
+                        {
+                            ["FechaVencimiento"] = new[]
+                            {
+                        "Selecciona una fecha válida."
+                    }
+                        }
+                    });
+                }
+
+                string nombreOriginal = Path.GetFileName(
+                    request.Archivo.FileName
+                );
+
+                string nombreAlmacenado =
+                    $"{Guid.NewGuid():N}{extension}";
+
+                string? rutaBaseDocumentos =
+    _configuration[
+        "ExpedientesBancarios:RutaDocumentos"
+    ];
+
+                if (string.IsNullOrWhiteSpace(rutaBaseDocumentos))
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "No se encuentra configurada la ruta de almacenamiento documental."
+                    })
+                    {
+                        StatusCode =
+                            StatusCodes.Status500InternalServerError
+                    };
+                }
+
+                rutaBaseDocumentos = Path.GetFullPath(
+                    rutaBaseDocumentos
+                );
+
+                string directorioFisico = Path.Combine(
+                    rutaBaseDocumentos,
+                    request.EmpresaId.ToString(),
+                    request.TipoDocumentoId.ToString()
+                );
+
+                Console.WriteLine(
+                    $"Directorio documental: {directorioFisico}"
+                );
+
+                Directory.CreateDirectory(
+                    directorioFisico
+                );
+
+                rutaFisica = Path.Combine(
+                    directorioFisico,
+                    nombreAlmacenado
+                );
+
+                /*
+                 * Esta ruta es la referencia interna que se almacena
+                 * en la base de datos. No incluye la ruta física raíz.
+                 */
+                string rutaRelativa = Path.Combine(
+                    request.EmpresaId.ToString(),
+                    request.TipoDocumentoId.ToString(),
+                    nombreAlmacenado
+                ).Replace("\\", "/");
+
+                var documentosActuales =
+                    await _context.EbDocumentos
+                        .Where(x =>
+                            x.EmpresaId == request.EmpresaId &&
+                            x.TipoDocumentoId ==
+                                request.TipoDocumentoId &&
+                            !x.Eliminado &&
+                            x.EsVersionActual)
+                        .ToListAsync();
+
+                int version = 1;
+
+                if (!tipoDocumento.PermiteMultiplesArchivos)
+                {
+                    version = documentosActuales.Any()
+                        ? documentosActuales.Max(x => x.Version) + 1
+                        : 1;
+
+                    foreach (EbDocumento documentoAnterior
+                             in documentosActuales)
+                    {
+                        documentoAnterior.EsVersionActual = false;
+                    }
+                }
+
+                await using (
+                    var stream = new FileStream(
+                        rutaFisica,
+                        FileMode.Create,
+                        FileAccess.Write,
+                        FileShare.None
+                    )
+                )
+                {
+                    await request.Archivo.CopyToAsync(
+                        stream
+                    );
+                }
+
+                string estado = CalcularEstadoDocumento(
+                    request.FechaVencimiento,
+                    tipoDocumento.RequiereFechaVencimiento
+                );
+
+                var documento = new EbDocumento
+                {
+                    EmpresaId = request.EmpresaId,
+                    TipoDocumentoId = request.TipoDocumentoId,
+
+                    NombreOriginal = nombreOriginal,
+                    NombreAlmacenado = nombreAlmacenado,
+                    RutaArchivo = rutaRelativa,
+
+                    Extension = extension,
+                    MimeType = string.IsNullOrWhiteSpace(
+                        request.Archivo.ContentType)
+                            ? "application/octet-stream"
+                            : request.Archivo.ContentType,
+
+                    TamanoBytes = request.Archivo.Length,
+                    Version = version,
+
+                    FechaCarga = DateTime.Now,
+                    FechaVencimiento =
+                        request.FechaVencimiento,
+
+                    Estado = estado,
+
+                    Observaciones = NormalizarOpcional(
+                        request.Observaciones
+                    ),
+
+                    EsVersionActual = true,
+                    Eliminado = false,
+
+                    UsuarioCargaId = ObtenerUsuarioId()
+                };
+
+                _context.EbDocumentos.Add(documento);
+
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(new
+                {
+                    success = true,
+                    message =
+                        "El documento se cargó correctamente.",
+                    id = documento.Id
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    "======================================"
+                );
+
+                Console.WriteLine(
+                    "ERROR AL CARGAR DOCUMENTO"
+                );
+
+                Console.WriteLine(
+                    ex.ToString()
+                );
+
+                Console.WriteLine(
+                    "======================================"
+                );
+
+                if (!string.IsNullOrWhiteSpace(rutaFisica) &&
+                    System.IO.File.Exists(rutaFisica))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(rutaFisica);
+                    }
+                    catch (Exception errorEliminar)
+                    {
+                        Console.WriteLine(
+                            "No se pudo eliminar el archivo incompleto:"
+                        );
+
+                        Console.WriteLine(
+                            errorEliminar.ToString()
+                        );
+                    }
+                }
+
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "Ocurrió un error al guardar el documento.",
+                    detail = _environment.IsDevelopment()
+                        ? ex.Message
+                        : null
+                })
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        private static string CalcularEstadoDocumento(
+            DateTime? fechaVencimiento,
+            bool requiereFechaVencimiento)
+        {
+            if (!requiereFechaVencimiento)
+            {
+                return "Cargado";
+            }
+
+            if (!fechaVencimiento.HasValue)
+            {
+                return "Cargado";
+            }
+
+            DateTime fechaActual = DateTime.Today;
+            DateTime fechaLimite = fechaActual.AddDays(30);
+
+            if (fechaVencimiento.Value.Date < fechaActual)
+            {
+                return "Vencido";
+            }
+
+            if (fechaVencimiento.Value.Date <= fechaLimite)
+            {
+                return "Próximo a vencer";
+            }
+
+            return "Vigente";
         }
 
         // =====================================================
@@ -1036,6 +1745,19 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public class AccionistaIdRequest
         {
             public int Id { get; set; }
+        }
+
+        public class CargarDocumentoRequest
+        {
+            public int EmpresaId { get; set; }
+
+            public int TipoDocumentoId { get; set; }
+
+            public IFormFile? Archivo { get; set; }
+
+            public DateTime? FechaVencimiento { get; set; }
+
+            public string? Observaciones { get; set; }
         }
     }
 }
