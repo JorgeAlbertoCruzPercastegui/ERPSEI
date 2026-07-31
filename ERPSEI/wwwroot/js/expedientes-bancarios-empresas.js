@@ -47,7 +47,15 @@ let modalEliminarDocumento;
 let documentoIdEliminar = 0;
 let nombreDocumentoEliminar = "";
 
+let modalHistorialDocumento;
+let tipoDocumentoHistorialId = 0;
+let nombreTipoDocumentoHistorial = "";
+
 function inicializarEventosEmpresas() {
+
+    modalHistorialDocumento = obtenerInstanciaModal(
+        "modalHistorialDocumento"
+    );
 
     modalEliminarDocumento = obtenerInstanciaModal(
         "modalEliminarDocumento"
@@ -84,6 +92,27 @@ function inicializarEventosEmpresas() {
     modalDocumentos = obtenerInstanciaModal(
         "modalDocumentos"
     );
+
+    document
+        .getElementById("modalHistorialDocumento")
+        ?.addEventListener(
+            "hidden.bs.modal",
+            function () {
+                tipoDocumentoHistorialId = 0;
+                nombreTipoDocumentoHistorial = "";
+
+                limpiarHistorialDocumento();
+
+                if (
+                    modalDocumentos &&
+                    empresaIdDocumentos > 0
+                ) {
+                    setTimeout(function () {
+                        modalDocumentos.show();
+                    }, 180);
+                }
+            }
+        );
 
     document
         .getElementById("modalEliminarDocumento")
@@ -123,15 +152,32 @@ function inicializarEventosEmpresas() {
             refrescarTablaEmpresas
         );
 
-    document
-        .getElementById("filtroBusqueda")
-        ?.addEventListener(
-            "keydown",
-            function (event) {
-                if (event.key === "Enter") {
-                    event.preventDefault();
-                    refrescarTablaEmpresas();
+    [
+        "filtroBusqueda",
+        "filtroRfc",
+        "filtroNivel"
+    ].forEach(function (idFiltro) {
+        document
+            .getElementById(idFiltro)
+            ?.addEventListener(
+                "keydown",
+                function (event) {
+                    if (event.key === "Enter") {
+                        event.preventDefault();
+                        refrescarTablaEmpresas();
+                    }
                 }
+            );
+    });
+
+    document
+        .getElementById("filtroRfc")
+        ?.addEventListener(
+            "input",
+            function () {
+                this.value = this.value
+                    .toUpperCase()
+                    .replace(/\s+/g, "");
             }
         );
 
@@ -360,11 +406,17 @@ function inicializarTablaEmpresas() {
     });
 }
 
-
-
 function construirUrlEmpresas() {
     const busqueda = document
         .getElementById("filtroBusqueda")
+        ?.value?.trim() ?? "";
+
+    const rfc = document
+        .getElementById("filtroRfc")
+        ?.value?.trim() ?? "";
+
+    const nivel = document
+        .getElementById("filtroNivel")
         ?.value?.trim() ?? "";
 
     const estatus = document
@@ -374,6 +426,8 @@ function construirUrlEmpresas() {
     const params = new URLSearchParams({
         handler: "Empresas",
         busqueda: busqueda,
+        rfc: rfc,
+        nivel: nivel,
         estatus: estatus
     });
 
@@ -2493,6 +2547,19 @@ function renderizarMatrizDocumental(documentos) {
                                     </li>
 
                                     <li>
+                                        <button type="button"
+                                                class="dropdown-item"
+                                                onclick="event.stopPropagation();
+                                                         abrirHistorialDocumento(
+                                                             ${documento.id}
+                                                         )">
+
+                                            <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                                            Historial de versiones
+                                        </button>
+                                    </li>
+
+                                    <li>
                                         <hr class="dropdown-divider" />
                                     </li>
 
@@ -2522,6 +2589,476 @@ function renderizarMatrizDocumental(documentos) {
             `;
         }
     ).join("");
+}
+
+async function abrirHistorialDocumento(
+    tipoDocumentoId
+) {
+    const documento =
+        obtenerDocumentoPorTipo(
+            tipoDocumentoId
+        );
+
+    if (!documento) {
+        mostrarResultado(
+            "No se encontró el documento seleccionado.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!modalHistorialDocumento) {
+        mostrarResultado(
+            "No se encontró el historial documental.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (empresaIdDocumentos <= 0) {
+        mostrarResultado(
+            "No se identificó la empresa del expediente.",
+            "error"
+        );
+
+        return;
+    }
+
+    tipoDocumentoHistorialId =
+        Number(documento.id);
+
+    nombreTipoDocumentoHistorial =
+        documento.nombre ?? "Documento";
+
+    establecerTexto(
+        "nombreDocumentoHistorial",
+        nombreTipoDocumentoHistorial
+    );
+
+    limpiarHistorialDocumento();
+    mostrarCargaHistorialDocumento();
+
+    modalDocumentos?.hide();
+
+    setTimeout(function () {
+        modalHistorialDocumento?.show();
+    }, 180);
+
+    await cargarHistorialDocumento();
+}
+
+function limpiarHistorialDocumento() {
+    establecerTexto(
+        "historialTotalVersiones",
+        "0"
+    );
+
+    establecerTexto(
+        "historialVersionesActivas",
+        "0"
+    );
+
+    establecerTexto(
+        "historialVersionesEliminadas",
+        "0"
+    );
+
+    establecerTexto(
+        "historialVersionActual",
+        "-"
+    );
+
+    document
+        .getElementById("historialDocumentoCargando")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("historialDocumentoError")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("historialDocumentoVacio")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("listaHistorialDocumento")
+        ?.classList.add("d-none");
+
+    const lista = document.getElementById(
+        "listaHistorialDocumento"
+    );
+
+    if (lista) {
+        lista.innerHTML = "";
+    }
+}
+
+function mostrarCargaHistorialDocumento() {
+    document
+        .getElementById("historialDocumentoCargando")
+        ?.classList.remove("d-none");
+
+    document
+        .getElementById("historialDocumentoError")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("historialDocumentoVacio")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("listaHistorialDocumento")
+        ?.classList.add("d-none");
+}
+
+function mostrarErrorHistorialDocumento(
+    mensaje
+) {
+    document
+        .getElementById("historialDocumentoCargando")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("historialDocumentoVacio")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("listaHistorialDocumento")
+        ?.classList.add("d-none");
+
+    establecerTexto(
+        "historialDocumentoErrorMensaje",
+        mensaje
+    );
+
+    document
+        .getElementById("historialDocumentoError")
+        ?.classList.remove("d-none");
+}
+
+function actualizarResumenHistorialDocumento(
+    resumen
+) {
+    establecerTexto(
+        "historialTotalVersiones",
+        resumen?.totalVersiones ?? 0
+    );
+
+    establecerTexto(
+        "historialVersionesActivas",
+        resumen?.versionesActivas ?? 0
+    );
+
+    establecerTexto(
+        "historialVersionesEliminadas",
+        resumen?.versionesEliminadas ?? 0
+    );
+
+    establecerTexto(
+        "historialVersionActual",
+        resumen?.versionActual
+            ? `V${resumen.versionActual}`
+            : "-"
+    );
+}
+
+async function cargarHistorialDocumento() {
+    if (
+        empresaIdDocumentos <= 0 ||
+        tipoDocumentoHistorialId <= 0
+    ) {
+        mostrarErrorHistorialDocumento(
+            "No fue posible identificar el documento."
+        );
+
+        return;
+    }
+
+    try {
+        const parametros = new URLSearchParams({
+            handler: "HistorialDocumento",
+            empresaId:
+                empresaIdDocumentos.toString(),
+            tipoDocumentoId:
+                tipoDocumentoHistorialId.toString()
+        });
+
+        const response = await fetch(
+            `${window.location.pathname}?${parametros.toString()}`,
+            {
+                credentials: "same-origin"
+            }
+        );
+
+        const contenido =
+            await response.text();
+
+        let resultado = null;
+
+        if (contenido) {
+            try {
+                resultado = JSON.parse(
+                    contenido
+                );
+            } catch {
+                throw new Error(
+                    "El servidor devolvió una respuesta no válida."
+                );
+            }
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                resultado?.message ??
+                `Error HTTP ${response.status}.`
+            );
+        }
+
+        if (!resultado?.success) {
+            mostrarErrorHistorialDocumento(
+                resultado?.message ??
+                "No fue posible consultar el historial."
+            );
+
+            return;
+        }
+
+        actualizarResumenHistorialDocumento(
+            resultado.resumen
+        );
+
+        renderizarHistorialDocumento(
+            resultado.data
+        );
+    } catch (error) {
+        console.error(
+            "Error al consultar historial:",
+            error
+        );
+
+        mostrarErrorHistorialDocumento(
+            error?.message ??
+            "Ocurrió un error al consultar el historial."
+        );
+    }
+}
+
+function renderizarHistorialDocumento(
+    versiones
+) {
+    document
+        .getElementById("historialDocumentoCargando")
+        ?.classList.add("d-none");
+
+    document
+        .getElementById("historialDocumentoError")
+        ?.classList.add("d-none");
+
+    const lista = document.getElementById(
+        "listaHistorialDocumento"
+    );
+
+    const estadoVacio = document.getElementById(
+        "historialDocumentoVacio"
+    );
+
+    if (!lista) {
+        return;
+    }
+
+    if (
+        !Array.isArray(versiones) ||
+        versiones.length === 0
+    ) {
+        lista.innerHTML = "";
+        lista.classList.add("d-none");
+
+        estadoVacio?.classList.remove("d-none");
+
+        return;
+    }
+
+    estadoVacio?.classList.add("d-none");
+    lista.classList.remove("d-none");
+
+    lista.innerHTML = versiones.map(
+        function (version) {
+            const claseSituacion =
+                obtenerClaseSituacionHistorial(
+                    version.situacion
+                );
+
+            const fechaCarga = version.fechaCarga
+                ? formatearFecha(
+                    version.fechaCarga
+                )
+                : "-";
+
+            const fechaVencimiento =
+                version.fechaVencimiento
+                    ? formatearFecha(
+                        version.fechaVencimiento
+                    )
+                    : "No aplica";
+
+            const fechaEliminacion =
+                version.fechaEliminacion
+                    ? formatearFecha(
+                        version.fechaEliminacion
+                    )
+                    : null;
+
+            return `
+                <article class="
+                    eb-history-item
+                    ${version.eliminado
+                    ? "eb-history-item-deleted"
+                    : ""}
+                ">
+
+                    <div class="eb-history-version">
+
+                        <span>
+                            Versión
+                        </span>
+
+                        <strong>
+                            ${version.version}
+                        </strong>
+
+                    </div>
+
+                    <div class="eb-history-information">
+
+                        <div class="eb-history-title-row">
+
+                            <strong>
+                                ${escaparHtml(
+                        version.nombreOriginal
+                    )}
+                            </strong>
+
+                            <span class="
+                                eb-history-status
+                                ${claseSituacion}
+                            ">
+                                ${escaparHtml(
+                        version.situacion
+                    )}
+                            </span>
+
+                        </div>
+
+                        <div class="eb-history-metadata">
+
+                            <span>
+                                <i class="fa-regular fa-calendar me-1"></i>
+                                Cargado:
+                                ${fechaCarga}
+                            </span>
+
+                            <span>
+                                <i class="fa-regular fa-clock me-1"></i>
+                                Vencimiento:
+                                ${fechaVencimiento}
+                            </span>
+
+                            <span>
+                                <i class="fa-solid fa-hard-drive me-1"></i>
+                                ${formatearTamanoArchivo(
+                        version.tamanoBytes
+                    )}
+                            </span>
+
+                        </div>
+
+                        ${version.observaciones
+                    ? `
+                                <p class="eb-history-observations">
+                                    ${escaparHtml(
+                        version.observaciones
+                    )}
+                                </p>
+                            `
+                    : ""
+                }
+
+                        ${fechaEliminacion
+                    ? `
+                                <small class="eb-history-deletion">
+                                    Eliminado:
+                                    ${fechaEliminacion}
+                                </small>
+                            `
+                    : ""
+                }
+
+                    </div>
+
+                    <div class="eb-history-actions">
+
+                        ${!version.eliminado
+                    ? `
+                                <button type="button"
+                                        class="btn btn-outline-primary"
+                                        onclick="visualizarArchivoDocumento(
+                                            ${version.id}
+                                        )">
+
+                                    <i class="fa-regular fa-eye"></i>
+
+                                    <span>
+                                        Visualizar
+                                    </span>
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-outline-primary"
+                                        onclick="descargarArchivoDocumento(
+                                            ${version.id}
+                                        )">
+
+                                    <i class="fa-solid fa-download"></i>
+
+                                    <span>
+                                        Descargar
+                                    </span>
+                                </button>
+                            `
+                    : `
+                                <span class="eb-history-unavailable">
+                                    Archivo no disponible
+                                </span>
+                            `
+                }
+
+                    </div>
+
+                </article>
+            `;
+        }
+    ).join("");
+}
+
+function obtenerClaseSituacionHistorial(
+    situacion
+) {
+    const valor = String(
+        situacion ?? ""
+    ).toLowerCase();
+
+    switch (valor) {
+        case "actual":
+            return "eb-history-status-current";
+
+        case "eliminada":
+            return "eb-history-status-deleted";
+
+        default:
+            return "eb-history-status-replaced";
+    }
 }
 
 function obtenerDocumentoPorTipo(

@@ -36,9 +36,18 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // =====================================================
         public async Task<IActionResult> OnGetEmpresasAsync(
             string? busqueda,
+            string? rfc,
+            string? nivel,
             string? estatus)
         {
             string filtro = busqueda?.Trim() ?? string.Empty;
+            string filtroRfc =
+            rfc?.Trim().ToUpperInvariant() ??
+            string.Empty;
+
+            string filtroNivel =
+                nivel?.Trim() ??
+                string.Empty;
             string filtroEstatus = string.IsNullOrWhiteSpace(estatus)
                 ? "Activas"
                 : estatus.Trim();
@@ -53,15 +62,29 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 _ => query.Where(x => !x.Deshabilitado)
             };
 
+            // Búsqueda general
             if (!string.IsNullOrWhiteSpace(filtro))
             {
                 query = query.Where(x =>
                     x.RazonSocial.Contains(filtro) ||
                     x.NombreCorto.Contains(filtro) ||
-                    x.Rfc.Contains(filtro) ||
-                    (x.Nivel != null && x.Nivel.Contains(filtro)) ||
                     (x.ActividadComercial != null &&
                      x.ActividadComercial.Contains(filtro)));
+            }
+
+            // Filtro independiente por RFC
+            if (!string.IsNullOrWhiteSpace(filtroRfc))
+            {
+                query = query.Where(x =>
+                    x.Rfc.Contains(filtroRfc));
+            }
+
+            // Filtro independiente por nivel
+            if (!string.IsNullOrWhiteSpace(filtroNivel))
+            {
+                query = query.Where(x =>
+                    x.Nivel != null &&
+                    x.Nivel.Contains(filtroNivel));
             }
 
             var empresas = await query
@@ -601,6 +624,177 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     totalPendientes,
                     totalVencidos,
                     totalProximosAVencer
+                }
+            });
+        }
+
+        // =====================================================
+        // HISTORIAL DE VERSIONES DE UN DOCUMENTO
+        // GET ?handler=HistorialDocumento
+        //     &empresaId=1
+        //     &tipoDocumentoId=1
+        // =====================================================
+        public async Task<IActionResult> OnGetHistorialDocumentoAsync(
+            int empresaId,
+            int tipoDocumentoId)
+        {
+            if (empresaId <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "El identificador de la empresa no es válido."
+                });
+            }
+
+            if (tipoDocumentoId <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "El tipo de documento no es válido."
+                });
+            }
+
+            bool empresaExiste = await _context.EbEmpresas
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == empresaId);
+
+            if (!empresaExiste)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "No se encontró la empresa seleccionada."
+                });
+            }
+
+            var tipoDocumento = await _context.EbTiposDocumento
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.Id == tipoDocumentoId);
+
+            if (tipoDocumento == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "No se encontró el tipo documental."
+                });
+            }
+
+            var versiones = await _context.EbDocumentos
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(x =>
+                    x.EmpresaId == empresaId &&
+                    x.TipoDocumentoId == tipoDocumentoId)
+                .OrderByDescending(x => x.Version)
+                .ThenByDescending(x => x.FechaCarga)
+                .Select(x => new
+                {
+                    id = x.Id,
+                    empresaId = x.EmpresaId,
+                    tipoDocumentoId = x.TipoDocumentoId,
+
+                    nombreOriginal = x.NombreOriginal,
+                    extension = x.Extension,
+                    mimeType = x.MimeType,
+                    tamanoBytes = x.TamanoBytes,
+
+                    version = x.Version,
+                    fechaCarga = x.FechaCarga,
+                    fechaVencimiento = x.FechaVencimiento,
+                    estado = x.Estado,
+                    observaciones = x.Observaciones,
+
+                    esVersionActual = x.EsVersionActual,
+                    eliminado = x.Eliminado,
+                    fechaEliminacion = x.FechaEliminacion,
+
+                    usuarioCargaId = x.UsuarioCargaId,
+                    usuarioEliminacionId =
+                        x.UsuarioEliminacionId
+                })
+                .ToListAsync();
+
+            var historial = versiones
+                .Select(x =>
+                {
+                    string situacion;
+
+                    if (x.eliminado)
+                    {
+                        situacion = "Eliminada";
+                    }
+                    else if (x.esVersionActual)
+                    {
+                        situacion = "Actual";
+                    }
+                    else
+                    {
+                        situacion = "Reemplazada";
+                    }
+
+                    return new
+                    {
+                        x.id,
+                        x.empresaId,
+                        x.tipoDocumentoId,
+                        x.nombreOriginal,
+                        x.extension,
+                        x.mimeType,
+                        x.tamanoBytes,
+                        x.version,
+                        x.fechaCarga,
+                        x.fechaVencimiento,
+                        x.estado,
+                        x.observaciones,
+                        x.esVersionActual,
+                        x.eliminado,
+                        x.fechaEliminacion,
+                        x.usuarioCargaId,
+                        x.usuarioEliminacionId,
+                        situacion
+                    };
+                })
+                .ToList();
+
+            return new JsonResult(new
+            {
+                success = true,
+
+                tipoDocumento = new
+                {
+                    id = tipoDocumento.Id,
+                    nombre = tipoDocumento.Nombre,
+                    permiteMultiplesArchivos =
+                        tipoDocumento.PermiteMultiplesArchivos
+                },
+
+                data = historial,
+
+                resumen = new
+                {
+                    totalVersiones = historial.Count,
+
+                    versionesActivas = historial.Count(x =>
+                        !x.eliminado),
+
+                    versionesEliminadas = historial.Count(x =>
+                        x.eliminado),
+
+                    versionActual = historial
+                        .Where(x =>
+                            x.esVersionActual &&
+                            !x.eliminado)
+                        .Select(x => (int?)x.version)
+                        .FirstOrDefault()
                 }
             });
         }
@@ -1178,6 +1372,17 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 errores["FechaConstitucion"] = new[]
                 {
                     "La fecha de constitución no puede ser futura."
+                };
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    request.NumeroEscritura) &&
+                request.NumeroEscritura.Length > 200)
+                        {
+                            errores["NumeroEscritura"] = new[]
+                            {
+                    "El número de escritura y/o escrituras " +
+                    "no puede exceder 200 caracteres."
                 };
             }
 

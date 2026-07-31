@@ -3092,3 +3092,254 @@ td:last-child {
     color: #b42318;
     background: #fde8e6;
 }
+
+/* =====================================================
+   HISTORIAL DOCUMENTAL
+   ===================================================== */
+
+.expedientes-bancarios-page
+.eb-history-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.expedientes-bancarios-page
+.eb-history-summary-card {
+    min-height: 92px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+    background: #f8f8ff;
+    border: 1px solid rgba(33, 22, 111, .13);
+    border-radius: 14px;
+}
+
+    .expedientes-bancarios-page
+    .eb-history-summary-card span {
+        color: #77728f;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .expedientes-bancarios-page
+    .eb-history-summary-card strong {
+        color: #21166f;
+        font-size: 1.45rem;
+        font-weight: 900;
+    }
+
+.expedientes-bancarios-page
+.eb-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.expedientes-bancarios-page
+.eb-history-item {
+    min-width: 0;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid rgba(33, 22, 111, .13);
+    border-radius: 14px;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+    .expedientes-bancarios-page
+    .eb-history-item:hover {
+        border-color: rgba(33, 22, 111, .28);
+        box-shadow: 0 8px 20px rgba(33, 22, 111, .08);
+        transform: translateY(-1px);
+    }
+
+.expedientes-bancarios-page
+.eb-history-item-deleted {
+    opacity: .72;
+    background: #fafafa;
+}
+
+.expedientes-bancarios-page
+.eb-history-version {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #21166f;
+    background: #eeedfb;
+    border-radius: 14px;
+}
+
+    .expedientes-bancarios-page
+    .eb-history-version span {
+        font-size: .67rem;
+        font-weight: 700;
+    }
+
+    .expedientes-bancarios-page
+    .eb-history-version strong {
+        font-size: 1.35rem;
+        font-weight: 900;
+        line-height: 1.1;
+    }
+
+.expedientes-bancarios-page
+.eb-history-information {
+    min-width: 0;
+}
+
+.expedientes-bancarios-page
+.eb-history-title-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 7px;
+}
+
+    .expedientes-bancarios-page
+    .eb-history-title-row > strong {
+        min-width: 0;
+        color: #21166f;
+        font-size: .9rem;
+        font-weight: 850;
+        overflow-wrap: anywhere;
+    }
+
+.expedientes-bancarios-page
+.eb-history-status {
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: .67rem;
+    font-weight: 800;
+}
+
+.expedientes-bancarios-page
+.eb-history-status-current {
+    color: #237a35;
+    background: #e3f4e7;
+}
+
+.expedientes-bancarios-page
+.eb-history-status-replaced {
+    color: #6d6780;
+    background: #efeff4;
+}
+
+.expedientes-bancarios-page
+.eb-history-status-deleted {
+    color: #b42318;
+    background: #fde8e6;
+}
+
+.expedientes-bancarios-page
+.eb-history-metadata {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 7px 16px;
+    color: #77728f;
+    font-size: .74rem;
+}
+
+.expedientes-bancarios-page
+.eb-history-observations {
+    margin: 8px 0 0;
+    color: #55516e;
+    font-size: .76rem;
+}
+
+.expedientes-bancarios-page
+.eb-history-deletion {
+    display: block;
+    margin-top: 7px;
+    color: #b42318;
+    font-size: .7rem;
+}
+
+.expedientes-bancarios-page
+.eb-history-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+    .expedientes-bancarios-page
+    .eb-history-actions .btn {
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 11px;
+        font-size: .76rem;
+    }
+
+.expedientes-bancarios-page
+.eb-history-unavailable {
+    color: #9995a8;
+    font-size: .74rem;
+    font-weight: 700;
+}
+
+@media (max-width: 991.98px) {
+
+    .expedientes-bancarios-page
+    .eb-history-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .expedientes-bancarios-page
+    .eb-history-item {
+        grid-template-columns: 64px minmax(0, 1fr);
+    }
+
+    .expedientes-bancarios-page
+    .eb-history-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    .expedientes-bancarios-page
+    .eb-history-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .expedientes-bancarios-page
+    .eb-history-item {
+        grid-template-columns: 1fr;
+    }
+
+    .expedientes-bancarios-page
+    .eb-history-version {
+        width: 100%;
+        height: 52px;
+        flex-direction: row;
+        gap: 5px;
+    }
+
+    .expedientes-bancarios-page
+    .eb-history-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+        .expedientes-bancarios-page
+        .eb-history-actions .btn {
+            justify-content: center;
+        }
+}

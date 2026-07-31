@@ -49,7 +49,9 @@
 
             <div class="row g-3 align-items-end">
 
-                <div class="col-12 col-lg-7">
+                <!-- Búsqueda general -->
+                <div class="col-12 col-lg-4">
+
                     <label for="filtroBusqueda"
                            class="form-label">
                         Buscar empresa
@@ -58,11 +60,48 @@
                     <input type="text"
                            id="filtroBusqueda"
                            class="form-control"
-                           placeholder="Razón social, nombre corto, RFC o nivel"
+                           placeholder="Razón social, nombre corto o actividad"
                            autocomplete="off" />
+
                 </div>
 
-                <div class="col-12 col-md-6 col-lg-3">
+                <!-- RFC -->
+                <div class="col-12 col-md-6 col-lg-2">
+
+                    <label for="filtroRfc"
+                           class="form-label">
+                        RFC
+                    </label>
+
+                    <input type="text"
+                           id="filtroRfc"
+                           class="form-control text-uppercase"
+                           maxlength="13"
+                           placeholder="ABC010203XYZ"
+                           autocomplete="off" />
+
+                </div>
+
+                <!-- Nivel -->
+                <div class="col-12 col-md-6 col-lg-2">
+
+                    <label for="filtroNivel"
+                           class="form-label">
+                        Nivel
+                    </label>
+
+                    <input type="text"
+                           id="filtroNivel"
+                           class="form-control"
+                           maxlength="100"
+                           placeholder="Ej. Nivel 1"
+                           autocomplete="off" />
+
+                </div>
+
+                <!-- Estatus -->
+                <div class="col-12 col-md-6 col-lg-2">
+
                     <label for="filtroEstatus"
                            class="form-label">
                         Estatus
@@ -84,9 +123,12 @@
                         </option>
 
                     </select>
+
                 </div>
 
+                <!-- Buscar -->
                 <div class="col-12 col-md-6 col-lg-2 d-grid">
+
                     <button type="button"
                             id="btnBuscarEmpresas"
                             class="btn btn-primary">
@@ -94,6 +136,7 @@
                         <i class="fa-solid fa-magnifying-glass me-1"></i>
                         Buscar
                     </button>
+
                 </div>
 
             </div>
@@ -334,6 +377,31 @@
 
                         </div>
 
+                        <!-- Número de escritura y/o escrituras -->
+                        <div class="col-12">
+
+                            <label for="ebNumeroEscritura"
+                                   class="form-label">
+                                Número de escritura y/o escrituras
+                            </label>
+
+                            <input type="text"
+                                   id="ebNumeroEscritura"
+                                   class="form-control"
+                                   maxlength="200"
+                                   placeholder="Ej. Escritura 1254, Escritura 2876"
+                                   autocomplete="off" />
+
+                            <small class="form-text text-muted">
+                                Puedes registrar uno o varios números de escritura
+                                separados por comas.
+                            </small>
+
+                            <span class="text-danger"
+                                  data-error-for="NumeroEscritura"></span>
+
+                        </div>
+
                         <!-- Actividad comercial -->
                         <div class="col-12">
 
@@ -390,26 +458,6 @@
 
                             <span class="text-danger"
                                   data-error-for="CorreoBancos"></span>
-
-                        </div>
-
-                        <!-- Escritura -->
-                        <div class="col-12">
-
-                            <label for="ebNumeroEscritura"
-                                   class="form-label">
-                                Número de escritura
-                            </label>
-
-                            <input type="text"
-                                   id="ebNumeroEscritura"
-                                   class="form-control"
-                                   maxlength="200"
-                                   placeholder="Número de escritura o instrumentos relacionados"
-                                   autocomplete="off" />
-
-                            <span class="text-danger"
-                                  data-error-for="NumeroEscritura"></span>
 
                         </div>
 
@@ -753,7 +801,7 @@
                         </div>
 
                         <div class="eb-corporate-information-item">
-                            <span>Número de escritura</span>
+                            <span>Número de escritura y/o escrituras</span>
                             <strong id="documentoEmpresaEscritura">-</strong>
                         </div>
 
@@ -1485,6 +1533,167 @@
 
                     <i class="fa-regular fa-trash-can me-1"></i>
                     Eliminar archivo
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL HISTORIAL DOCUMENTAL
+     ========================================================= -->
+<div class="modal fade"
+     id="modalHistorialDocumento"
+     tabindex="-1"
+     aria-labelledby="modalHistorialDocumentoTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content eb-history-modal">
+
+            <div class="modal-header">
+
+                <div>
+                    <h5 class="modal-title"
+                        id="modalHistorialDocumentoTitulo">
+                        Historial de versiones
+                    </h5>
+
+                    <p class="eb-modal-subtitle mb-0">
+                        Documento:
+                        <strong id="nombreDocumentoHistorial"></strong>
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <!-- Resumen -->
+                <div class="eb-history-summary">
+
+                    <div class="eb-history-summary-card">
+
+                        <span>
+                            Total de versiones
+                        </span>
+
+                        <strong id="historialTotalVersiones">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="eb-history-summary-card">
+
+                        <span>
+                            Versiones activas
+                        </span>
+
+                        <strong id="historialVersionesActivas">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="eb-history-summary-card">
+
+                        <span>
+                            Versiones eliminadas
+                        </span>
+
+                        <strong id="historialVersionesEliminadas">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="eb-history-summary-card">
+
+                        <span>
+                            Versión actual
+                        </span>
+
+                        <strong id="historialVersionActual">
+                            -
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                <!-- Cargando -->
+                <div id="historialDocumentoCargando"
+                     class="eb-loading-state d-none">
+
+                    <div class="spinner-border"
+                         role="status"
+                         aria-hidden="true">
+                    </div>
+
+                    <span>
+                        Consultando historial...
+                    </span>
+
+                </div>
+
+                <!-- Error -->
+                <div id="historialDocumentoError"
+                     class="alert alert-danger d-none"
+                     role="alert">
+
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+                    <span id="historialDocumentoErrorMensaje">
+                        No fue posible consultar el historial.
+                    </span>
+
+                </div>
+
+                <!-- Vacío -->
+                <div id="historialDocumentoVacio"
+                     class="eb-empty-state d-none">
+
+                    <div class="eb-empty-icon">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+
+                    <h3>
+                        No hay versiones registradas
+                    </h3>
+
+                    <p>
+                        Este documento todavía no contiene historial.
+                    </p>
+
+                </div>
+
+                <!-- Listado -->
+                <div id="listaHistorialDocumento"
+                     class="eb-history-list d-none">
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+
+                    <i class="fa-solid fa-xmark me-1"></i>
+                    Cerrar
                 </button>
 
             </div>
