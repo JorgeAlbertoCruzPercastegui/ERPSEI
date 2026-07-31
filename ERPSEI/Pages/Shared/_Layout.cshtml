@@ -475,6 +475,15 @@
     esAdministrador ||
     esAdministradorTI;
 
+    bool mostrarComplianceMenu =
+    esAdministrador ||
+    esAdministradorTI ||
+    esAdministradorEmpresas ||
+    (
+        permisos.ContainsKey("empresas") &&
+        permisos["empresas"]
+    );
+
     var notificacionesUsuario = new List<dynamic>();
     int totalNotificacionesNoLeidas = 0;
 
@@ -715,16 +724,34 @@
                             @if (mostrarGestionCorporativa)
                             {
                                 <div class="quick-dd">
-                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Gestión Corporativa</a>
+
+                                    <a class="quick-link quick-dd-toggle"
+                                           href="#"
+                                           onclick="return false;">
+
+                                        Gestión Corporativa
+                                    </a>
+
                                     <div class="quick-dd-menu">
+
                                         @if (mostrarEmpresasMenu)
                                         {
-                                            <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Empresas">Empresas</a>
+                                            <a class="quick-dd-item"
+                                                   asp-area="Catalogos"
+                                                   asp-page="/Empresas">
+
+                                                Empresas
+                                            </a>
                                         }
 
                                         @if (mostrarActivosFijosMenu)
                                         {
-                                            <a class="quick-dd-item" asp-area="ERP" asp-page="/ActivosFijos">Activos fijos</a>
+                                            <a class="quick-dd-item"
+                                                   asp-area="ERP"
+                                                   asp-page="/ActivosFijos">
+
+                                                Activos fijos
+                                            </a>
                                         }
 
                                         @if (mostrarMetricasMenu)
@@ -732,6 +759,7 @@
                                             <a class="quick-dd-item"
                                                    asp-area="Catalogos"
                                                    asp-page="/Metricas/Metrica">
+
                                                 Métricas
                                             </a>
                                         }
@@ -741,6 +769,7 @@
                                             <a class="quick-dd-item"
                                                    asp-area="Catalogos"
                                                    asp-page="/Auditorias/Auditoria">
+
                                                 Auditoría
                                             </a>
                                         }
@@ -750,10 +779,36 @@
                                             <a class="quick-dd-item"
                                                    asp-area="Catalogos"
                                                    asp-page="/CorreosDominios/CorreoDominio">
+
                                                 Correos y Dominios
                                             </a>
                                         }
+
+                                        @if (mostrarComplianceMenu)
+                                        {
+                                            <div class="quick-dd-divider"></div>
+
+                                            <div class="quick-dd-section-title">
+                                                Compliance
+                                            </div>
+
+                                            <a class="quick-dd-item"
+                                                   asp-area="ExpedientesBancarios"
+                                                   asp-page="/Dashboard/Index">
+
+                                                Dashboard de Compliance
+                                            </a>
+
+                                            <a class="quick-dd-item"
+                                                   asp-area="ExpedientesBancarios"
+                                                   asp-page="/Empresas/Index">
+
+                                                Expedientes de empresas
+                                            </a>
+                                        }
+
                                     </div>
+
                                 </div>
                             }
 

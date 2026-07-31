@@ -150,6 +150,7 @@
     <div id="toolbarEmpresas"
          class="eb-toolbar">
 
+        <!-- Nueva empresa -->
         <button type="button"
                 id="btnNuevaEmpresa"
                 class="btn eb-toolbar-action"
@@ -160,6 +161,7 @@
                   aria-hidden="true"></span>
         </button>
 
+        <!-- Eliminar empresas -->
         <button type="button"
                 id="btnEliminarSeleccionadas"
                 class="btn eb-toolbar-action"
@@ -170,6 +172,20 @@
             <span class="eb-toolbar-trash"
                   aria-hidden="true"></span>
         </button>
+
+        <!-- Dashboard -->
+        <a asp-area="ExpedientesBancarios"
+               asp-page="/Dashboard/Index"
+               class="btn eb-dashboard-access"
+               title="Dashboard de expedientes"
+               aria-label="Dashboard de expedientes">
+
+            <i class="fa-solid fa-chart-column"></i>
+
+            <span>
+                Dashboard
+            </span>
+        </a>
 
     </div>
 
@@ -922,10 +938,9 @@
                             </strong>
 
                             <p>
-                                Se permiten archivos PDF, Word, Excel,
-                                JPG, JPEG, PNG, WEBP y ZIP con un tamaño
-                                máximo de 25 MB. Algunos documentos requieren
-                                fecha de vencimiento.
+                                Se permiten archivos PDF, Word, Excel, JPG, JPEG, PNG,
+                                WEBP y ZIP con un tamaño máximo de 100 MB.
+                                Algunos documentos requieren fecha de vencimiento.
                             </p>
                         </div>
 

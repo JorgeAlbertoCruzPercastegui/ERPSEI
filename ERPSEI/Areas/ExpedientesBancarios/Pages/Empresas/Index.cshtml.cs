@@ -872,25 +872,37 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     ? "application/octet-stream"
                     : documento.MimeType;
 
-            /*
-             * Al no enviar downloadFileName, el navegador intenta
-             * mostrar el archivo en línea.
-             */
-            return PhysicalFile(
-            rutaFisica,
-            mimeType
-);
+            RegistrarBitacoraDocumento(
+            documento,
+            EbAccionesBitacoraDocumento
+            .Visualizacion,
+            exitoso: true,
+            detalle:
+            "El documento fue visualizado.");
+
+                await _context.SaveChangesAsync();
+
+                return PhysicalFile(
+                    rutaFisica,
+                    mimeType
+                );
         }
 
         // =====================================================
         // CARGAR DOCUMENTO
         // POST ?handler=CargarDocumento
         // =====================================================
-        [RequestSizeLimit(104857600)]
+        [RequestSizeLimit(110L * 1024L * 1024L)]
         public async Task<IActionResult> OnPostCargarDocumentoAsync(
-            [FromForm] CargarDocumentoRequest request)
+        [FromForm] CargarDocumentoRequest request)
         {
-            const long tamanoMaximo = 25L * 1024L * 1024L;
+            /*
+             * El archivo puede pesar hasta 100 MB.
+             * La solicitud permite 110 MB para dejar margen
+             * al formulario multipart y sus encabezados.
+             */
+            const long tamanoMaximo =
+                100L * 1024L * 1024L;
 
             string? rutaFisica = null;
 
@@ -956,7 +968,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         {
                             ["Archivo"] = new[]
                             {
-                        "El archivo no puede superar los 25 MB."
+                        "El archivo no puede superar los 100 MB."
                     }
                         }
                     });
@@ -1190,7 +1202,37 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     UsuarioCargaId = ObtenerUsuarioId()
                 };
 
-                _context.EbDocumentos.Add(documento);
+                _context.EbDocumentos.Add(
+                        documento
+                    );
+
+                /*
+                 * Guardamos primero para obtener
+                 * el Id del nuevo documento.
+                 */
+                await _context.SaveChangesAsync();
+
+                string accionBitacora =
+                    !tipoDocumento.PermiteMultiplesArchivos &&
+                    documentosActuales.Any()
+                        ? EbAccionesBitacoraDocumento
+                            .NuevaVersion
+                        : EbAccionesBitacoraDocumento
+                            .Carga;
+
+                string detalleBitacora =
+                    accionBitacora ==
+                    EbAccionesBitacoraDocumento
+                        .NuevaVersion
+                        ? $"Se cargó la versión {documento.Version} del documento."
+                        : "Se cargó el documento.";
+
+                RegistrarBitacoraDocumento(
+                    documento,
+                    accionBitacora,
+                    exitoso: true,
+                    detalle: detalleBitacora
+                );
 
                 await _context.SaveChangesAsync();
 
@@ -1907,6 +1949,17 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     ? "application/octet-stream"
                     : documento.MimeType;
 
+            RegistrarBitacoraDocumento(
+                documento,
+                EbAccionesBitacoraDocumento
+                    .Descarga,
+                exitoso: true,
+                detalle:
+                    "El documento fue descargado."
+            );
+
+            await _context.SaveChangesAsync();
+
             return PhysicalFile(
                 rutaFisica,
                 mimeType,
@@ -1965,6 +2018,116 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             return string.IsNullOrWhiteSpace(resultado)
                 ? null
                 : resultado;
+        }
+
+        // =====================================================
+        // REGISTRAR EVENTO EN BITÁCORA DOCUMENTAL
+        // =====================================================
+        private void RegistrarBitacoraDocumento(
+            EbDocumento documento,
+            string accion,
+            bool exitoso = true,
+            string? detalle = null,
+            string? banco = null)
+        {
+            if (documento == null)
+            {
+                return;
+            }
+
+            string usuarioId = ObtenerUsuarioId();
+
+            string nombreUsuario =
+                User.Identity?.Name ??
+                User.FindFirstValue(ClaimTypes.Email) ??
+                usuarioId;
+
+            string? direccionIp =
+                HttpContext.Connection
+                    .RemoteIpAddress?
+                    .ToString();
+
+            if (direccionIp == "::1")
+            {
+                direccionIp = "127.0.0.1";
+            }
+
+            string? navegador =
+                HttpContext.Request
+                    .Headers["User-Agent"]
+                    .FirstOrDefault();
+
+            var bitacora = new EbBitacoraDocumento
+            {
+                EmpresaId = documento.EmpresaId,
+                DocumentoId = documento.Id,
+                TipoDocumentoId =
+                    documento.TipoDocumentoId,
+
+                Accion = accion,
+
+                UsuarioId = LimitarTexto(
+                    usuarioId,
+                    450
+                ),
+
+                NombreUsuario = LimitarTexto(
+                    nombreUsuario,
+                    250
+                ),
+
+                NombreDocumento = LimitarTexto(
+                    documento.NombreOriginal,
+                    250
+                ),
+
+                Banco = LimitarTexto(
+                    banco,
+                    50
+                ),
+
+                FechaEvento = DateTime.Now,
+
+                DireccionIp = LimitarTexto(
+                    direccionIp,
+                    64
+                ),
+
+                Navegador = LimitarTexto(
+                    navegador,
+                    1000
+                ),
+
+                Exitoso = exitoso,
+
+                Detalle = LimitarTexto(
+                    detalle,
+                    1000
+                ),
+
+                VersionDocumento =
+                    documento.Version
+            };
+
+            _context.EbBitacoraDocumentos.Add(
+                bitacora
+            );
+        }
+
+        private static string? LimitarTexto(
+            string? valor,
+            int longitudMaxima)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                return null;
+            }
+
+            string resultado = valor.Trim();
+
+            return resultado.Length <= longitudMaxima
+                ? resultado
+                : resultado[..longitudMaxima];
         }
 
         private string ObtenerUsuarioId()
@@ -2057,12 +2220,31 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 
                     if (versionAnterior != null)
                     {
-                        versionAnterior.EsVersionActual = true;
+                        versionAnterior.EsVersionActual =
+                            true;
 
                         versionRestauradaId =
                             versionAnterior.Id;
+
+                        RegistrarBitacoraDocumento(
+                            versionAnterior,
+                            EbAccionesBitacoraDocumento
+                                .Restauracion,
+                            exitoso: true,
+                            detalle:
+                                $"Se restauró automáticamente la versión {versionAnterior.Version}."
+                        );
                     }
                 }
+
+                RegistrarBitacoraDocumento(
+                    documento,
+                    EbAccionesBitacoraDocumento
+                        .Eliminacion,
+                    exitoso: true,
+                    detalle:
+                        $"Se eliminó lógicamente la versión {documento.Version}."
+                );
 
                 await _context.SaveChangesAsync();
                 await transaccion.CommitAsync();

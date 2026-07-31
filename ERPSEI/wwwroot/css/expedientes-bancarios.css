@@ -3343,3 +3343,242 @@ td:last-child {
             justify-content: center;
         }
 }
+
+/* =====================================================
+   DASHBOARD DE EXPEDIENTES BANCARIOS
+   ===================================================== */
+
+.expedientes-bancarios-page
+.eb-dashboard-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-kpi {
+    min-width: 0;
+    min-height: 132px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid rgba(33, 22, 111, .14);
+    border-radius: 16px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-kpi-icon {
+    width: 54px;
+    height: 54px;
+    flex: 0 0 54px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #21166f;
+    background: #eeedfb;
+    border-radius: 15px;
+    font-size: 1.15rem;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-kpi > div:last-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-kpi span {
+    color: #77728f;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-kpi strong {
+    color: #21166f;
+    font-size: 1.8rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-card {
+    min-width: 0;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid rgba(33, 22, 111, .14);
+    border-radius: 16px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-heading {
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(33, 22, 111, .12);
+}
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-heading h2 {
+        margin: 0 0 5px;
+        color: #21166f;
+        font-size: 1rem;
+        font-weight: 850;
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-heading p {
+        margin: 0;
+        color: #77728f;
+        font-size: .78rem;
+    }
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-container {
+    position: relative;
+    width: 100%;
+    height: 320px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-container-large {
+    height: 360px;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-empty {
+    min-height: 100%;
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #77728f;
+    text-align: center;
+    background: #f8f8ff;
+    border: 1px dashed rgba(33, 22, 111, .22);
+    border-radius: 13px;
+    font-size: .82rem;
+}
+
+@media (max-width: 1199.98px) {
+
+    .expedientes-bancarios-page
+    .eb-dashboard-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 991.98px) {
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    .expedientes-bancarios-page
+    .eb-dashboard-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-card {
+        padding: 16px;
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-container,
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-container-large {
+        height: 300px;
+    }
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-access {
+    min-width: 132px;
+    height: 58px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    color: #ffffff;
+    background: #21166f;
+    border: 1px solid #21166f;
+    border-radius: 14px;
+    font-size: .88rem;
+    font-weight: 800;
+    line-height: 1;
+    text-decoration: none;
+    box-shadow: none;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+    .expedientes-bancarios-page
+    .eb-dashboard-access i {
+        font-size: 1rem;
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-access:hover {
+        color: #ffffff;
+        background: #30228d;
+        border-color: #30228d;
+        transform: translateY(-1px);
+        box-shadow: 0 7px 16px rgba(33, 22, 111, .18);
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-access:focus {
+        color: #ffffff;
+        background: #30228d;
+        border-color: #30228d;
+        box-shadow: 0 0 0 3px rgba(33, 22, 111, .16);
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-access:active {
+        color: #ffffff;
+        background: #18104f;
+        border-color: #18104f;
+        transform: translateY(0);
+    }
+
+.expedientes-bancarios-page
+#toolbarEmpresas {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .expedientes-bancarios-page
+    #toolbarEmpresas .eb-dashboard-access {
+        margin: 0;
+    }

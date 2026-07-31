@@ -50,384 +50,975 @@ namespace ERPSEI
 
         private static readonly List<AppRole> Roles = [];
 
-        public static string MasterPassword { get; set; } = string.Empty;
-        public static AppUser MasterUser { get; } = new AppUser() { EmailConfirmed = true, IsPreregisterAuthorized = true, PasswordResetNeeded = false, IsMaster = true };
-
-
-        /*public static void ConfigureEmail(WebApplicationBuilder builder)
-            {
-                // Validación mínima de configuración Graph
-                var graphSection = builder.Configuration.GetSection("Graph");
-
-                var tenantId = graphSection.GetValue<string>("TenantId")
-                    ?? throw new InvalidOperationException("Graph:TenantId not found.");
-
-                var clientId = graphSection.GetValue<string>("ClientId")
-                    ?? throw new InvalidOperationException("Graph:ClientId not found.");
-
-                var clientSecret = graphSection.GetValue<string>("ClientSecret")
-                    ?? throw new InvalidOperationException("Graph:ClientSecret not found.");
-
-                var fromEmail = graphSection.GetValue<string>("FromEmail")
-                    ?? throw new InvalidOperationException("Graph:FromEmail not found.");
-
-                // Registro DI: EmailSender (Graph)
-                builder.Services.AddTransient<IEmailSender, EmailSender>();
-
-                // Si usas MasterUser en tu sistema, deja esto (opcional)
-                MasterUser.Email = fromEmail;
-                MasterUser.UserName = fromEmail;
-        }*/
-
-        public static void ConfigureEmail(WebApplicationBuilder builder)
+        public static string MasterPassword
         {
-            var graphSection = builder.Configuration.GetSection("Graph");
+            get;
+            set;
+        } = string.Empty;
 
-            var tenantId = graphSection.GetValue<string>("TenantId")
-                ?? throw new InvalidOperationException("Graph:TenantId not found.");
+        public static AppUser MasterUser
+        {
+            get;
+        } = new AppUser
+        {
+            EmailConfirmed = true,
+            IsPreregisterAuthorized = true,
+            PasswordResetNeeded = false,
+            IsMaster = true
+        };
 
-            var clientId = graphSection.GetValue<string>("ClientId")
-                ?? throw new InvalidOperationException("Graph:ClientId not found.");
+        public static void ConfigureEmail(
+            WebApplicationBuilder builder)
+        {
+            var graphSection =
+                builder.Configuration
+                    .GetSection("Graph");
 
-            var clientSecret = graphSection.GetValue<string>("ClientSecret")
-                ?? throw new InvalidOperationException("Graph:ClientSecret not found.");
+            var tenantId =
+                graphSection.GetValue<string>(
+                    "TenantId"
+                )
+                ?? throw new InvalidOperationException(
+                    "Graph:TenantId not found."
+                );
 
-            var fromEmail = graphSection.GetValue<string>("FromEmail")
-                ?? throw new InvalidOperationException("Graph:FromEmail not found.");
+            var clientId =
+                graphSection.GetValue<string>(
+                    "ClientId"
+                )
+                ?? throw new InvalidOperationException(
+                    "Graph:ClientId not found."
+                );
 
-            var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+            var clientSecret =
+                graphSection.GetValue<string>(
+                    "ClientSecret"
+                )
+                ?? throw new InvalidOperationException(
+                    "Graph:ClientSecret not found."
+                );
 
-            builder.Services.AddSingleton(credential);
+            var fromEmail =
+                graphSection.GetValue<string>(
+                    "FromEmail"
+                )
+                ?? throw new InvalidOperationException(
+                    "Graph:FromEmail not found."
+                );
 
-            builder.Services.AddSingleton<GraphServiceClient>(sp =>
-            {
-                var cred = sp.GetRequiredService<ClientSecretCredential>();
-                return new GraphServiceClient(cred);
-            });
+            var credential =
+                new ClientSecretCredential(
+                    tenantId,
+                    clientId,
+                    clientSecret
+                );
 
-            builder.Services.AddTransient<IEmailSender, EmailSender>();
+            builder.Services.AddSingleton(
+                credential
+            );
 
-            MasterUser.Email = fromEmail;
-            MasterUser.UserName = fromEmail;
+            builder.Services
+                .AddSingleton<GraphServiceClient>(
+                    serviceProvider =>
+                    {
+                        var cred =
+                            serviceProvider
+                                .GetRequiredService<
+                                    ClientSecretCredential>();
+
+                        return new GraphServiceClient(
+                            cred
+                        );
+                    }
+                );
+
+            builder.Services
+                .AddTransient<
+                    IEmailSender,
+                    EmailSender>();
+
+            MasterUser.Email =
+                fromEmail;
+
+            MasterUser.UserName =
+                fromEmail;
         }
 
-
-        public static void ConfigureDatabase(WebApplicationBuilder _builder)
+        public static void ConfigureDatabase(
+            WebApplicationBuilder builder)
         {
-            var connectionString = _builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-            _builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
-            if (_builder.Environment.IsDevelopment())
+            var connectionString =
+                builder.Configuration
+                    .GetConnectionString(
+                        "DefaultConnection"
+                    )
+                ?? throw new InvalidOperationException(
+                    "Connection string 'DefaultConnection' not found."
+                );
+
+            builder.Services
+                .AddDbContext<ApplicationDbContext>(
+                    options =>
+                        options.UseSqlServer(
+                            connectionString
+                        )
+                );
+
+            if (builder.Environment.IsDevelopment())
             {
-                _builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+                builder.Services
+                    .AddDatabaseDeveloperPageExceptionFilter();
             }
-		}
-
-        public static void ConfigureDependencyInjection(WebApplicationBuilder _builder)
-        {
-            ConfigureDIUtils(_builder);
-
-			ConfigureDIFacturacion(_builder);
-
-			ConfigureDIEmpresas(_builder);
-
-			ConfigureDIEmpleados(_builder);
-
-			ConfigureDIAsistencias(_builder);
-
-            ConfigureDIConciliaciones(_builder);
-
-            ConfigureDICuentasContables(_builder);
-
-            ConfigureDIPolizas(_builder);
-
-            ConfigureDIActivosFijos(_builder);
-
-            ConfigureDIVacaciones(_builder);
-
-            ConfigureDITipoContratos(_builder);
-
-            ConfigureDIDocumentos(_builder);
-
-            ConfigureDIComunicadosInteros(_builder);
-
-            ConfigureDIEventos(_builder);
-
-            ConfigureDINotificacionesEventosComunicados(_builder);
         }
 
-
-        private static void ConfigureDINotificacionesEventosComunicados(WebApplicationBuilder _builder)
+        public static void ConfigureDependencyInjection(
+            WebApplicationBuilder builder)
         {
-            //Eventos
-            _builder.Services.AddScoped<IIntranetNotificationService, IntranetNotificationService>();
+            ConfigureDIUtils(
+                builder
+            );
+
+            ConfigureDIFacturacion(
+                builder
+            );
+
+            ConfigureDIEmpresas(
+                builder
+            );
+
+            ConfigureDIEmpleados(
+                builder
+            );
+
+            ConfigureDIAsistencias(
+                builder
+            );
+
+            ConfigureDIConciliaciones(
+                builder
+            );
+
+            ConfigureDICuentasContables(
+                builder
+            );
+
+            ConfigureDIPolizas(
+                builder
+            );
+
+            ConfigureDIActivosFijos(
+                builder
+            );
+
+            ConfigureDIVacaciones(
+                builder
+            );
+
+            ConfigureDITipoContratos(
+                builder
+            );
+
+            ConfigureDIDocumentos(
+                builder
+            );
+
+            ConfigureDIComunicadosInteros(
+                builder
+            );
+
+            ConfigureDIEventos(
+                builder
+            );
+
+            ConfigureDINotificacionesEventosComunicados(
+                builder
+            );
         }
 
-
-        private static void ConfigureDIEventos(WebApplicationBuilder _builder)
+        private static void
+            ConfigureDINotificacionesEventosComunicados(
+                WebApplicationBuilder builder)
         {
-            //Eventos
-            _builder.Services.AddScoped<IEventoIntranetManager, EventoIntranetManager>();
+            builder.Services
+                .AddScoped<
+                    IIntranetNotificationService,
+                    IntranetNotificationService>();
         }
 
-        private static void ConfigureDIComunicadosInteros(WebApplicationBuilder _builder)
+        private static void ConfigureDIEventos(
+            WebApplicationBuilder builder)
         {
-            //ComunicadosIInternos
-            _builder.Services.AddScoped<IComunicadoInternoManager, ComunicadoInternoManager>();
+            builder.Services
+                .AddScoped<
+                    IEventoIntranetManager,
+                    EventoIntranetManager>();
         }
 
-        private static void ConfigureDITipoContratos(WebApplicationBuilder _builder)
+        private static void
+            ConfigureDIComunicadosInteros(
+                WebApplicationBuilder builder)
         {
-            //TipoContratos
-            _builder.Services.AddScoped<ITipoContratosManager, TipoContratosManager>();
-            _builder.Services.AddScoped<IEmpresaContratosManager, EmpresaContratosManager>();
-            _builder.Services.AddScoped<IClienteContratosManager, ClienteContratosManager>();
-        }
-        private static void ConfigureDIAsistencias(WebApplicationBuilder _builder) 
-        {
-			//Asistencias
-			_builder.Services.AddScoped<IAsistenciaManager, AsistenciaManager>();
-			_builder.Services.AddScoped<IHorariosManager, HorariosManager>();
-		}
-        private static void ConfigureDIConciliaciones(WebApplicationBuilder _builder)
-        {
-            // Conciliaciones
-            _builder.Services.AddScoped<IBancoManager, BancoManager>();
-            //_builder.Services.AddScoped<IRCatalogoManager<Banco>, BancoManager>(); 
-            _builder.Services.AddScoped<IConciliacionManager, ConciliacionManager>();
-            _builder.Services.AddScoped<IConciliacionDetalleManager, ConciliacionDetalleManager>();
-            _builder.Services.AddScoped<IConciliacionDetalleComprobanteManager, ConciliacionDetalleComprobanteManager>();
-            _builder.Services.AddScoped<IConciliacionDetalleMovimientoManager, ConciliacionDetalleMovimientoManager>();
-            _builder.Services.AddScoped<IClienteManager, ClienteManager>();
-            _builder.Services.AddScoped<IMovimientoBancarioManager, MovimientoBancarioManager>();
-        }
-		private static void ConfigureDIPolizas(WebApplicationBuilder _builder)
-		{
-			//Polizas
-			_builder.Services.AddScoped<IGruposPolizasManager, GruposPolizasManager>();
-			_builder.Services.AddScoped<IPolizasManager, PolizasManager>();
-			_builder.Services.AddScoped<IPolizasDetalles, PolizasDetallesManager>();
-			_builder.Services.AddScoped<IPolizasTipos, PolizasTiposManager>();
-		}
-        private static void ConfigureDIActivosFijos(WebApplicationBuilder _builder)
-        {
-            //Activos Fijos
-            _builder.Services.AddScoped<IActivoFijoManager, ActivoFijoManager>();
-            _builder.Services.AddScoped<ITipoActivosFijosManager, TipoActivosFijosManager>();
-            _builder.Services.AddScoped<ICategoriaActivosFijosManager, CategoriaActivosFijosManager>();
-            _builder.Services.AddScoped<IOficinaManager, OficinaManager>();
-
-        }
-        private static void ConfigureDIVacaciones(WebApplicationBuilder _builder)
-        {
-            //Vacaciones
-            _builder.Services.AddScoped<ISolicitudVacacionesManager, SolicitudVacacionesManager>();
-            _builder.Services.AddScoped<IPoliticaVacacionManager, PoliticaVacacionManager>();
-
+            builder.Services
+                .AddScoped<
+                    IComunicadoInternoManager,
+                    ComunicadoInternoManager>();
         }
 
-        private static void ConfigureDIDocumentos(WebApplicationBuilder _builder)
+        private static void ConfigureDITipoContratos(
+            WebApplicationBuilder builder)
         {
-            //Documentos
-            _builder.Services.AddScoped<IDocumentoManager, DocumentoManager>();
-            _builder.Services.AddScoped<IEstatusDocumentoManager, EstatusDocumentoManager>();
-            _builder.Services.AddScoped<ITipoDocumentoManager, TipoDocumentoManager>();
+            builder.Services
+                .AddScoped<
+                    ITipoContratosManager,
+                    TipoContratosManager>();
+
+            builder.Services
+                .AddScoped<
+                    IEmpresaContratosManager,
+                    EmpresaContratosManager>();
+
+            builder.Services
+                .AddScoped<
+                    IClienteContratosManager,
+                    ClienteContratosManager>();
         }
 
-        private static void ConfigureDICuentasContables(WebApplicationBuilder _builder)
-		{
-			//Cuentas Contables
-			_builder.Services.AddScoped<ICuentaContableManager, CuentaContableManager>();
-			_builder.Services.AddScoped<ICuentaContableTipoManager, CuentaContableTipoManager>();
-			_builder.Services.AddScoped<ICuentaContableSubtipoManager, CuentaContableSubtipoManager>();
-		}
-
-		private static void ConfigureDIFacturacion(WebApplicationBuilder _builder)
+        private static void ConfigureDIAsistencias(
+            WebApplicationBuilder builder)
         {
-            //Comprobantes
-            _builder.Services.AddScoped<IComprobanteManager, ComprobanteManager>();
-            _builder.Services.AddScoped<IComprobanteEmisorManager, ComprobanteEmisorManager>();
-			_builder.Services.AddScoped<IComprobanteReceptorManager, ComprobanteReceptorManager>();
+            builder.Services
+                .AddScoped<
+                    IAsistenciaManager,
+                    AsistenciaManager>();
 
-			//Catálogos SAT
-			_builder.Services.AddScoped<IAutorizacionesPrefactura, AutorizacionesPrefacturaManager>();
-			_builder.Services.AddScoped<IExportacionManager, ExportacionManager>();
-			_builder.Services.AddScoped<IFormaPagoManager, FormaPagoManager>();
-			_builder.Services.AddScoped<IImpuestoManager, ImpuestoManager>();
-			_builder.Services.AddScoped<IMesManager, MesManager>();
-			_builder.Services.AddScoped<IMetodoPagoManager, MetodoPagoManager>();
-			_builder.Services.AddScoped<IMonedaManager, MonedaManager>();
-			_builder.Services.AddScoped<IObjetoImpuestoManager, ObjetoImpuestoManager>();
-			_builder.Services.AddScoped<IPeriodicidadManager, PeriodicidadManager>();
-			_builder.Services.AddScoped<IRegimenFiscalManager, RegimenFiscalManager>();
-			_builder.Services.AddScoped<ITasaOCuotaManager, TasaOCuotaManager>();
-			_builder.Services.AddScoped<ITipoComprobanteManager, TipoComprobanteManager>();
-			_builder.Services.AddScoped<ITipoFactorManager, TipoFactorManager>();
-			_builder.Services.AddScoped<ITipoRelacionManager, TipoRelacionManager>();
-			_builder.Services.AddScoped<IUnidadMedidaManager, UnidadMedidaManager>();
-			_builder.Services.AddScoped<IUsoCFDIManager, UsoCFDIManager>();
-			_builder.Services.AddScoped<IProductoServicioManager, ProductoServicioManager>();
-			_builder.Services.AddScoped<IRWCatalogoManager<ActividadEconomica>, ActividadEconomicaManager>();
-
-            //Prefacturas
-			_builder.Services.AddScoped<IConceptoManager, ConceptoManager>();
-			_builder.Services.AddScoped<IPrefacturaManager, PrefacturaManager>();
-
-            //Web Service EDICOM
-            _builder.Services.AddSingleton<ServicioEDICOM.CFDi, ServicioEDICOM.CFDiClient>();
-		}
-        private static void ConfigureDIEmpresas(WebApplicationBuilder _builder)
-        {
-            //Gestión de Empresas
-			_builder.Services.AddScoped<IBancoEmpresaManager, BancoEmpresaManager>();
-			_builder.Services.AddScoped<IArchivoEmpresaManager, ArchivoEmpresaManager>();
-			_builder.Services.AddScoped<IEmpresaManager, EmpresaManager>();
-			_builder.Services.AddScoped<IProductoServicioPerfilManager, ProductoServicioPerfilManager>();
-			_builder.Services.AddScoped<IPerfilManager, PerfilManager>();
-			_builder.Services.AddScoped<IRWCatalogoManager<Origen>, OrigenManager>();
-			_builder.Services.AddScoped<IRWCatalogoManager<Nivel>, NivelManager>();
-			_builder.Services.AddScoped<IActividadEconomicaEmpresaManager, ActividadEconomicaEmpresaManager>();
-		}
-        private static void ConfigureDIEmpleados(WebApplicationBuilder _builder) 
-        {
-            //Accesos módulos
-			_builder.Services.AddScoped<IAccesoModuloManager, AccesoModuloManager>();
-			_builder.Services.AddScoped<AppRoleManager, AppRoleManager>();
-			_builder.Services.AddScoped<IModuloManager, ModuloManager>();
-
-            //Gestión de Talento
-			_builder.Services.AddScoped<IArchivoEmpleadoManager, ArchivoEmpleadoManager>();
-			_builder.Services.AddScoped<IContactoEmergenciaManager, ContactoEmergenciaManager>();
-			_builder.Services.AddScoped<IEmpleadoManager, EmpleadoManager>();
-			_builder.Services.AddScoped<IRWCatalogoManager<Puesto>, PuestoManager>();
-			_builder.Services.AddScoped<IRWCatalogoManager<Area>, AreaManager>();
-			_builder.Services.AddScoped<IRWCatalogoManager<Oficina>, OficinaManager>();
-			_builder.Services.AddScoped<IRWCatalogoManager<Subarea>, SubareaManager>();
-			_builder.Services.AddScoped<IRCatalogoManager<Genero>, GeneroManager>();
-			_builder.Services.AddScoped<IRCatalogoManager<EstadoCivil>, EstadoCivilManager>();
-
-            
-		}    
-        private static void ConfigureDIUtils(WebApplicationBuilder _builder)
-        {
-            _builder.Services.AddSingleton<IEncriptacionAES, EncriptacionAES>();
+            builder.Services
+                .AddScoped<
+                    IHorariosManager,
+                    HorariosManager>();
         }
 
-        /*public static void ConfigureIdentity(WebApplicationBuilder _builder)
+        private static void ConfigureDIConciliaciones(
+            WebApplicationBuilder builder)
         {
-            _builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
-            .AddRoles<AppRole>()
-            .AddRoleManager<AppRoleManager>()
-            .AddUserManager<AppUserManager>()
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddTokenProvider<UserAuthorizationTokenProvider<AppUser>>("UserAuthorization");
-        }*/
+            builder.Services
+                .AddScoped<
+                    IBancoManager,
+                    BancoManager>();
 
-        public static void ConfigureIdentity(WebApplicationBuilder _builder)
-        {
-            _builder.Services.AddDefaultIdentity<AppUser>(options => options.SignIn.RequireConfirmedAccount = true)
-            .AddRoles<AppRole>()
-            .AddRoleManager<AppRoleManager>()
-            .AddUserManager<AppUserManager>()
-            .AddEntityFrameworkStores<ApplicationDbContext>()
-            .AddTokenProvider<UserAuthorizationTokenProvider<AppUser>>("UserAuthorization");
+            builder.Services
+                .AddScoped<
+                    IConciliacionManager,
+                    ConciliacionManager>();
 
-            _builder.Services.ConfigureApplicationCookie(options =>
-            {
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-                options.SlidingExpiration = true;
-                options.LoginPath = "/Identity/Account/Login";
-                options.LogoutPath = "/Identity/Account/Logout";
-                options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-            });
+            builder.Services
+                .AddScoped<
+                    IConciliacionDetalleManager,
+                    ConciliacionDetalleManager>();
+
+            builder.Services
+                .AddScoped<
+                    IConciliacionDetalleComprobanteManager,
+                    ConciliacionDetalleComprobanteManager>();
+
+            builder.Services
+                .AddScoped<
+                    IConciliacionDetalleMovimientoManager,
+                    ConciliacionDetalleMovimientoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IClienteManager,
+                    ClienteManager>();
+
+            builder.Services
+                .AddScoped<
+                    IMovimientoBancarioManager,
+                    MovimientoBancarioManager>();
         }
 
-        public static void ConfigureAuthorization(WebApplicationBuilder _builder) {
-			_builder.Services.AddAuthorizationBuilder()
-				.AddPolicy("AccessPolicy", policy => policy.Requirements.Add(new AccessRequirement()))
-                .AddPolicy("EmpresasPolicy", policy => policy.Requirements.Add(new AccessRequirementEmpresas()));
-
-            _builder.Services.AddScoped<IAuthorizationHandler, AccessHandler>();
-			_builder.Services.AddScoped<IAuthorizationHandler, AccessHandlerEmpresas>();
-		}
-
-		public static void ConfigurePagesAndLocalization(WebApplicationBuilder _builder)
+        private static void ConfigureDIPolizas(
+            WebApplicationBuilder builder)
         {
-            _builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
-            _builder.Services.AddRazorPages()
-            .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
-			.AddDataAnnotationsLocalization(options =>
-			{
-				options.DataAnnotationLocalizerProvider = (type, factory) =>
-				{
-					var assemblyName = new AssemblyName(typeof(ValidationsLocalization).GetTypeInfo().Assembly.FullName ?? "");
-                    return factory.Create(nameof(ValidationsLocalization), assemblyName.Name ?? "");
-                };
-			});
+            builder.Services
+                .AddScoped<
+                    IGruposPolizasManager,
+                    GruposPolizasManager>();
 
-            //_builder.Services.AddSession();
-            _builder.Services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(10);
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
-            _builder.Services.AddMemoryCache();
-            _builder.Services.AddMvc(options =>
-            {
-                var assemblyName = new AssemblyName(typeof(ModelBindingMessages).GetTypeInfo().Assembly.FullName ?? "");
-                var F = _builder.Services.BuildServiceProvider().GetService<IStringLocalizerFactory>();
+            builder.Services
+                .AddScoped<
+                    IPolizasManager,
+                    PolizasManager>();
 
-                if(F == null) { return; }
+            builder.Services
+                .AddScoped<
+                    IPolizasDetalles,
+                    PolizasDetallesManager>();
 
-                var L = F.Create(nameof(ModelBindingMessages), assemblyName.Name ?? "");
+            builder.Services
+                .AddScoped<
+                    IPolizasTipos,
+                    PolizasTiposManager>();
+        }
 
-                options.ModelBindingMessageProvider.SetMissingBindRequiredValueAccessor((x) => L["MissingBindRequiredValueAccessor", x]);
-                options.ModelBindingMessageProvider.SetMissingKeyOrValueAccessor(() => L["MissingKeyOrValueAccessor"]);
-                options.ModelBindingMessageProvider.SetMissingRequestBodyRequiredValueAccessor(() => L["MissingRequestBodyRequiredValueAccessor"]);
-                options.ModelBindingMessageProvider.SetValueMustNotBeNullAccessor((x) => L["ValueMustNotBeNullAccessor", x]);
+        private static void ConfigureDIActivosFijos(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    IActivoFijoManager,
+                    ActivoFijoManager>();
 
-                options.ModelBindingMessageProvider.SetUnknownValueIsInvalidAccessor((x) => L["UnknownValueIsInvalidAccessor", x]);
-                options.ModelBindingMessageProvider.SetNonPropertyUnknownValueIsInvalidAccessor(() => L["NonPropertyUnknownValueIsInvalidAccessor"]);
-                options.ModelBindingMessageProvider.SetValueIsInvalidAccessor((x) => L["ValueIsInvalidAccessor", x]);
+            builder.Services
+                .AddScoped<
+                    ITipoActivosFijosManager,
+                    TipoActivosFijosManager>();
 
-                options.ModelBindingMessageProvider.SetValueMustBeANumberAccessor((x) => L["ValueMustBeANumberAccessor", x]);
-                options.ModelBindingMessageProvider.SetNonPropertyValueMustBeANumberAccessor(() => L["NonPropertyValueMustBeANumberAccessor"]);
+            builder.Services
+                .AddScoped<
+                    ICategoriaActivosFijosManager,
+                    CategoriaActivosFijosManager>();
 
-                options.ModelBindingMessageProvider.SetAttemptedValueIsInvalidAccessor((x, y) => L["AttemptedValueIsInvalidAccessor", x, y]);
-                options.ModelBindingMessageProvider.SetNonPropertyAttemptedValueIsInvalidAccessor((x) => L["NonPropertyAttemptedValueIsInvalidAccessor", x]);
-            });
+            builder.Services
+                .AddScoped<
+                    IOficinaManager,
+                    OficinaManager>();
+        }
 
-			_builder.Services.Configure<RequestLocalizationOptions>(options =>
-            {
-                var supportedCultures = new[]
+        private static void ConfigureDIVacaciones(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    ISolicitudVacacionesManager,
+                    SolicitudVacacionesManager>();
+
+            builder.Services
+                .AddScoped<
+                    IPoliticaVacacionManager,
+                    PoliticaVacacionManager>();
+        }
+
+        private static void ConfigureDIDocumentos(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    IDocumentoManager,
+                    DocumentoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IEstatusDocumentoManager,
+                    EstatusDocumentoManager>();
+
+            builder.Services
+                .AddScoped<
+                    ITipoDocumentoManager,
+                    TipoDocumentoManager>();
+        }
+
+        private static void ConfigureDICuentasContables(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    ICuentaContableManager,
+                    CuentaContableManager>();
+
+            builder.Services
+                .AddScoped<
+                    ICuentaContableTipoManager,
+                    CuentaContableTipoManager>();
+
+            builder.Services
+                .AddScoped<
+                    ICuentaContableSubtipoManager,
+                    CuentaContableSubtipoManager>();
+        }
+
+        private static void ConfigureDIFacturacion(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    IComprobanteManager,
+                    ComprobanteManager>();
+
+            builder.Services
+                .AddScoped<
+                    IComprobanteEmisorManager,
+                    ComprobanteEmisorManager>();
+
+            builder.Services
+                .AddScoped<
+                    IComprobanteReceptorManager,
+                    ComprobanteReceptorManager>();
+
+            builder.Services
+                .AddScoped<
+                    IAutorizacionesPrefactura,
+                    AutorizacionesPrefacturaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IExportacionManager,
+                    ExportacionManager>();
+
+            builder.Services
+                .AddScoped<
+                    IFormaPagoManager,
+                    FormaPagoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IImpuestoManager,
+                    ImpuestoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IMesManager,
+                    MesManager>();
+
+            builder.Services
+                .AddScoped<
+                    IMetodoPagoManager,
+                    MetodoPagoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IMonedaManager,
+                    MonedaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IObjetoImpuestoManager,
+                    ObjetoImpuestoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IPeriodicidadManager,
+                    PeriodicidadManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRegimenFiscalManager,
+                    RegimenFiscalManager>();
+
+            builder.Services
+                .AddScoped<
+                    ITasaOCuotaManager,
+                    TasaOCuotaManager>();
+
+            builder.Services
+                .AddScoped<
+                    ITipoComprobanteManager,
+                    TipoComprobanteManager>();
+
+            builder.Services
+                .AddScoped<
+                    ITipoFactorManager,
+                    TipoFactorManager>();
+
+            builder.Services
+                .AddScoped<
+                    ITipoRelacionManager,
+                    TipoRelacionManager>();
+
+            builder.Services
+                .AddScoped<
+                    IUnidadMedidaManager,
+                    UnidadMedidaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IUsoCFDIManager,
+                    UsoCFDIManager>();
+
+            builder.Services
+                .AddScoped<
+                    IProductoServicioManager,
+                    ProductoServicioManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRWCatalogoManager<
+                        ActividadEconomica>,
+                    ActividadEconomicaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IConceptoManager,
+                    ConceptoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IPrefacturaManager,
+                    PrefacturaManager>();
+
+            builder.Services
+                .AddSingleton<
+                    ServicioEDICOM.CFDi,
+                    ServicioEDICOM.CFDiClient>();
+        }
+
+        private static void ConfigureDIEmpresas(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    IBancoEmpresaManager,
+                    BancoEmpresaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IArchivoEmpresaManager,
+                    ArchivoEmpresaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IEmpresaManager,
+                    EmpresaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IProductoServicioPerfilManager,
+                    ProductoServicioPerfilManager>();
+
+            builder.Services
+                .AddScoped<
+                    IPerfilManager,
+                    PerfilManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRWCatalogoManager<Origen>,
+                    OrigenManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRWCatalogoManager<Nivel>,
+                    NivelManager>();
+
+            builder.Services
+                .AddScoped<
+                    IActividadEconomicaEmpresaManager,
+                    ActividadEconomicaEmpresaManager>();
+        }
+
+        private static void ConfigureDIEmpleados(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    IAccesoModuloManager,
+                    AccesoModuloManager>();
+
+            builder.Services
+                .AddScoped<
+                    AppRoleManager,
+                    AppRoleManager>();
+
+            builder.Services
+                .AddScoped<
+                    IModuloManager,
+                    ModuloManager>();
+
+            builder.Services
+                .AddScoped<
+                    IArchivoEmpleadoManager,
+                    ArchivoEmpleadoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IContactoEmergenciaManager,
+                    ContactoEmergenciaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IEmpleadoManager,
+                    EmpleadoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRWCatalogoManager<Puesto>,
+                    PuestoManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRWCatalogoManager<Area>,
+                    AreaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRWCatalogoManager<Oficina>,
+                    OficinaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRWCatalogoManager<Subarea>,
+                    SubareaManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRCatalogoManager<Genero>,
+                    GeneroManager>();
+
+            builder.Services
+                .AddScoped<
+                    IRCatalogoManager<EstadoCivil>,
+                    EstadoCivilManager>();
+        }
+
+        private static void ConfigureDIUtils(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddSingleton<
+                    IEncriptacionAES,
+                    EncriptacionAES>();
+        }
+
+        public static void ConfigureIdentity(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddDefaultIdentity<AppUser>(
+                    options =>
+                        options.SignIn
+                            .RequireConfirmedAccount =
+                            true
+                )
+                .AddRoles<AppRole>()
+                .AddRoleManager<AppRoleManager>()
+                .AddUserManager<AppUserManager>()
+                .AddEntityFrameworkStores<
+                    ApplicationDbContext>()
+                .AddTokenProvider<
+                    UserAuthorizationTokenProvider<
+                        AppUser>>(
+                    "UserAuthorization"
+                );
+
+            builder.Services
+                .ConfigureApplicationCookie(
+                    options =>
+                    {
+                        options.ExpireTimeSpan =
+                            TimeSpan.FromMinutes(
+                                10
+                            );
+
+                        options.SlidingExpiration =
+                            true;
+
+                        options.LoginPath =
+                            "/Identity/Account/Login";
+
+                        options.LogoutPath =
+                            "/Identity/Account/Logout";
+
+                        options.AccessDeniedPath =
+                            "/Identity/Account/AccessDenied";
+                    }
+                );
+        }
+
+        public static void ConfigureAuthorization(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddAuthorizationBuilder()
+                .AddPolicy(
+                    "AccessPolicy",
+                    policy =>
+                        policy.Requirements.Add(
+                            new AccessRequirement()
+                        )
+                )
+                .AddPolicy(
+                    "EmpresasPolicy",
+                    policy =>
+                        policy.Requirements.Add(
+                            new AccessRequirementEmpresas()
+                        )
+                );
+
+            builder.Services
+                .AddScoped<
+                    IAuthorizationHandler,
+                    AccessHandler>();
+
+            builder.Services
+                .AddScoped<
+                    IAuthorizationHandler,
+                    AccessHandlerEmpresas>();
+        }
+
+        public static void
+            ConfigurePagesAndLocalization(
+                WebApplicationBuilder builder)
+        {
+            builder.Services.AddLocalization(
+                options =>
+                    options.ResourcesPath =
+                        "Resources"
+            );
+
+            builder.Services
+                .AddRazorPages()
+                .AddViewLocalization(
+                    Microsoft.AspNetCore.Mvc.Razor
+                        .LanguageViewLocationExpanderFormat
+                        .Suffix
+                )
+                .AddDataAnnotationsLocalization(
+                    options =>
+                    {
+                        options
+                            .DataAnnotationLocalizerProvider =
+                            (type, factory) =>
+                            {
+                                var assemblyName =
+                                    new AssemblyName(
+                                        typeof(
+                                            ValidationsLocalization
+                                        )
+                                        .GetTypeInfo()
+                                        .Assembly
+                                        .FullName ??
+                                        string.Empty
+                                    );
+
+                                return factory.Create(
+                                    nameof(
+                                        ValidationsLocalization
+                                    ),
+                                    assemblyName.Name ??
+                                    string.Empty
+                                );
+                            };
+                    }
+                );
+
+            builder.Services.AddSession(
+                options =>
                 {
-                    new CultureInfo("en-US"),
-                    new CultureInfo("es-MX")
-                };
+                    options.IdleTimeout =
+                        TimeSpan.FromMinutes(
+                            10
+                        );
 
-                options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("es-MX");
-                options.SupportedUICultures = supportedCultures;
-                options.SupportedCultures = supportedCultures;
-            });
+                    options.Cookie.HttpOnly =
+                        true;
+
+                    options.Cookie.IsEssential =
+                        true;
+                }
+            );
+
+            builder.Services.AddMemoryCache();
+
+            builder.Services.AddMvc(
+                options =>
+                {
+                    var assemblyName =
+                        new AssemblyName(
+                            typeof(
+                                ModelBindingMessages
+                            )
+                            .GetTypeInfo()
+                            .Assembly
+                            .FullName ??
+                            string.Empty
+                        );
+
+                    var factory =
+                        builder.Services
+                            .BuildServiceProvider()
+                            .GetService<
+                                IStringLocalizerFactory>();
+
+                    if (factory == null)
+                    {
+                        return;
+                    }
+
+                    var localizer =
+                        factory.Create(
+                            nameof(
+                                ModelBindingMessages
+                            ),
+                            assemblyName.Name ??
+                            string.Empty
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetMissingBindRequiredValueAccessor(
+                            campo =>
+                                localizer[
+                                    "MissingBindRequiredValueAccessor",
+                                    campo
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetMissingKeyOrValueAccessor(
+                            () =>
+                                localizer[
+                                    "MissingKeyOrValueAccessor"
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetMissingRequestBodyRequiredValueAccessor(
+                            () =>
+                                localizer[
+                                    "MissingRequestBodyRequiredValueAccessor"
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetValueMustNotBeNullAccessor(
+                            campo =>
+                                localizer[
+                                    "ValueMustNotBeNullAccessor",
+                                    campo
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetUnknownValueIsInvalidAccessor(
+                            campo =>
+                                localizer[
+                                    "UnknownValueIsInvalidAccessor",
+                                    campo
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetNonPropertyUnknownValueIsInvalidAccessor(
+                            () =>
+                                localizer[
+                                    "NonPropertyUnknownValueIsInvalidAccessor"
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetValueIsInvalidAccessor(
+                            valor =>
+                                localizer[
+                                    "ValueIsInvalidAccessor",
+                                    valor
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetValueMustBeANumberAccessor(
+                            campo =>
+                                localizer[
+                                    "ValueMustBeANumberAccessor",
+                                    campo
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetNonPropertyValueMustBeANumberAccessor(
+                            () =>
+                                localizer[
+                                    "NonPropertyValueMustBeANumberAccessor"
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetAttemptedValueIsInvalidAccessor(
+                            (valor, campo) =>
+                                localizer[
+                                    "AttemptedValueIsInvalidAccessor",
+                                    valor,
+                                    campo
+                                ]
+                        );
+
+                    options.ModelBindingMessageProvider
+                        .SetNonPropertyAttemptedValueIsInvalidAccessor(
+                            valor =>
+                                localizer[
+                                    "NonPropertyAttemptedValueIsInvalidAccessor",
+                                    valor
+                                ]
+                        );
+                }
+            );
+
+            builder.Services.Configure<
+                RequestLocalizationOptions>(
+                options =>
+                {
+                    var supportedCultures =
+                        new[]
+                        {
+                            new CultureInfo(
+                                "en-US"
+                            ),
+
+                            new CultureInfo(
+                                "es-MX"
+                            )
+                        };
+
+                    options.DefaultRequestCulture =
+                        new Microsoft.AspNetCore
+                            .Localization
+                            .RequestCulture(
+                                "es-MX"
+                            );
+
+                    options.SupportedUICultures =
+                        supportedCultures;
+
+                    options.SupportedCultures =
+                        supportedCultures;
+                }
+            );
         }
 
-        /*public static void ConfigureFormOptions(WebApplicationBuilder _builder)
+        // =====================================================
+        // CONFIGURACIÓN DE FORMULARIOS Y ARCHIVOS
+        // =====================================================
+        public static void ConfigureFormOptions(
+            WebApplicationBuilder builder)
         {
-            _builder.Services.Configure<FormOptions>(options =>
-            {
-                options.ValueCountLimit = 10000;
-            });
-        }*/
-        public static void ConfigureFormOptions(WebApplicationBuilder _builder)
-        {
-            _builder.Services.Configure<FormOptions>(options =>
-            {
-                options.ValueCountLimit = 10000; 
-                options.ValueLengthLimit = int.MaxValue;
-                options.MultipartBodyLengthLimit = long.MaxValue;
-                options.MultipartHeadersLengthLimit = int.MaxValue;
-            });
-        }
+            /*
+             * El archivo individual del módulo Compliance
+             * estará limitado a 100 MB desde el handler.
+             *
+             * FormOptions permite 110 MB para considerar
+             * encabezados, campos y estructura multipart.
+             */
+            const long limiteSolicitudMultipart =
+                110L * 1024L * 1024L;
 
+            builder.Services.Configure<FormOptions>(
+                options =>
+                {
+                    options.ValueCountLimit =
+                        10000;
+
+                    options.ValueLengthLimit =
+                        int.MaxValue;
+
+                    options.MultipartBodyLengthLimit =
+                        limiteSolicitudMultipart;
+
+                    /*
+                     * No debe establecerse en int.MaxValue.
+                     * Este valor controla los encabezados de
+                     * cada sección multipart, no el archivo.
+                     */
+                    options.MultipartHeadersLengthLimit =
+                        64 * 1024;
+                }
+            );
+        }
     }
 }

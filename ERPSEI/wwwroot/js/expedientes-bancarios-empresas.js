@@ -3738,12 +3738,12 @@ async function guardarDocumento() {
     }
 
     const tamanoMaximo =
-        25 * 1024 * 1024;
+        100 * 1024 * 1024;
 
     if (archivo.size > tamanoMaximo) {
         mostrarErrorCampoDocumento(
             "Archivo",
-            "El archivo no puede superar los 25 MB."
+            "El archivo no puede superar los 100 MB."
         );
 
         return;

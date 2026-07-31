@@ -44,5 +44,11 @@ namespace ERPSEI.Data.Entities.ExpedientesBancarios
 
         public ICollection<EbDocumento> Documentos { get; set; }
             = new List<EbDocumento>();
+
+        public ICollection<EbBitacoraDocumento> Bitacora
+        {
+            get;
+            set;
+        } = new List<EbBitacoraDocumento>();
     }
 }

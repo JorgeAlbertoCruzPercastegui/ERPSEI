@@ -62,6 +62,12 @@ namespace ERPSEI.Data
         public DbSet<EbTipoDocumento> EbTiposDocumento { get; set; } = null!;
         public DbSet<EbDocumento> EbDocumentos { get; set; } = null!;
 
+        public DbSet<EbBitacoraDocumento> EbBitacoraDocumentos
+        {
+            get;
+            set;
+        }
+
         //Catálogos Administrables Empresas
         public DbSet<Origen> Origenes { get; set; }
 		public DbSet<Nivel> Niveles { get; set; }
@@ -736,6 +742,124 @@ namespace ERPSEI.Data
             // Expedientes Bancarios
             BuildExpedientesBancarios(modelBuilder);
 
+            // Expedientes Bancarios
+            BuildBitacoraDocumental(modelBuilder);
+
+        }
+
+        private static void BuildBitacoraDocumental(ModelBuilder b)
+        {
+            b.Entity<EbBitacoraDocumento>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "EB_BitacoraDocumentos"
+                    );
+
+                    entity.HasKey(x => x.Id);
+
+                    entity.Property(x => x.Accion)
+                        .HasMaxLength(50)
+                        .IsRequired();
+
+                    entity.Property(x => x.UsuarioId)
+                        .HasMaxLength(450);
+
+                    entity.Property(x => x.NombreUsuario)
+                        .HasMaxLength(250);
+
+                    entity.Property(x => x.NombreDocumento)
+                        .HasMaxLength(250);
+
+                    entity.Property(x => x.Banco)
+                        .HasMaxLength(50);
+
+                    entity.Property(x => x.DireccionIp)
+                        .HasMaxLength(64);
+
+                    entity.Property(x => x.Navegador)
+                        .HasMaxLength(1000);
+
+                    entity.Property(x => x.Detalle)
+                        .HasMaxLength(1000);
+
+                    entity.Property(x => x.FechaEvento)
+                        .IsRequired();
+
+                    entity.Property(x => x.Exitoso)
+                        .IsRequired();
+
+                    entity.HasOne(x => x.Empresa)
+                        .WithMany(x =>
+                            x.BitacoraDocumental)
+                        .HasForeignKey(x =>
+                            x.EmpresaId)
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(x => x.Documento)
+                        .WithMany(x =>
+                            x.Bitacora)
+                        .HasForeignKey(x =>
+                            x.DocumentoId)
+                        .OnDelete(
+                            DeleteBehavior.SetNull
+                        );
+
+                    entity.HasOne(x =>
+                            x.TipoDocumento)
+                        .WithMany(x =>
+                            x.Bitacora)
+                        .HasForeignKey(x =>
+                            x.TipoDocumentoId)
+                        .OnDelete(
+                            DeleteBehavior.SetNull
+                        );
+
+                    entity.HasIndex(x =>
+                            x.FechaEvento)
+                        .HasDatabaseName(
+                            "IX_EB_BitacoraDocumentos_FechaEvento"
+                        );
+
+                    entity.HasIndex(x => new
+                    {
+                        x.Accion,
+                        x.FechaEvento
+                    })
+                        .HasDatabaseName(
+                            "IX_EB_BitacoraDocumentos_Accion_Fecha"
+                        );
+
+                    entity.HasIndex(x => new
+                    {
+                        x.UsuarioId,
+                        x.FechaEvento
+                    })
+                        .HasDatabaseName(
+                            "IX_EB_BitacoraDocumentos_Usuario_Fecha"
+                        );
+
+                    entity.HasIndex(x => new
+                    {
+                        x.EmpresaId,
+                        x.FechaEvento
+                    })
+                        .HasDatabaseName(
+                            "IX_EB_BitacoraDocumentos_Empresa_Fecha"
+                        );
+
+                    entity.HasIndex(x => new
+                    {
+                        x.Banco,
+                        x.FechaEvento
+                    })
+                        .HasDatabaseName(
+                            "IX_EB_BitacoraDocumentos_Banco_Fecha"
+                        );
+                }
+            );
         }
 
         private static void BuildExpedientesBancarios(ModelBuilder b)

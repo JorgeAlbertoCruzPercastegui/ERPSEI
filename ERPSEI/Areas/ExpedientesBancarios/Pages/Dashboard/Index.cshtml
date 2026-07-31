@@ -1,6 +1,392 @@
-﻿namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
+﻿@page
+@model ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard.IndexModel
+
+@{
+    ViewData["Title"] = "Dashboard - Compliance";
+}
+
+@section Styles
 {
-    public class Index
-    {
-    }
+    <link rel="stylesheet"
+          href="~/css/expedientes-bancarios.css"
+          asp-append-version="true" />
+}
+
+<div class="eb-container">
+
+    <!-- =====================================================
+         ENCABEZADO
+         ===================================================== -->
+    <div class="eb-page-header eb-dashboard-page-header">
+
+        <div>
+            <h1 class="eb-page-title">
+                Dashboard de Compliance
+            </h1>
+
+            <p class="eb-page-subtitle">
+                Indicadores de empresas, documentación y actividad
+                durante el periodo seleccionado.
+            </p>
+        </div>
+
+        <a asp-area="ExpedientesBancarios"
+               asp-page="/Empresas/Index"
+               class="btn btn-outline-secondary">
+
+            <i class="fa-solid fa-arrow-left me-1"></i>
+            Regresar a expedientes
+        </a>
+
+    </div>
+
+    <!-- =====================================================
+         FILTROS
+         ===================================================== -->
+    <section class="eb-card mb-4">
+
+        <div class="eb-card-header">
+
+            <h2>
+                <i class="fa-solid fa-calendar-days me-2"></i>
+                Periodo de consulta
+            </h2>
+
+        </div>
+
+        <div class="eb-card-body">
+
+            <div class="row g-3 align-items-end">
+
+                <!-- FECHA INICIAL -->
+                <div class="col-12 col-md-4">
+
+                    <label for="dashboardFechaInicio"
+                           class="form-label">
+                        Fecha inicial
+                    </label>
+
+                    <input type="date"
+                           id="dashboardFechaInicio"
+                           class="form-control"
+                           autocomplete="off" />
+
+                </div>
+
+                <!-- FECHA FINAL -->
+                <div class="col-12 col-md-4">
+
+                    <label for="dashboardFechaFin"
+                           class="form-label">
+                        Fecha final
+                    </label>
+
+                    <input type="date"
+                           id="dashboardFechaFin"
+                           class="form-control"
+                           autocomplete="off" />
+
+                </div>
+
+                <!-- CONSULTAR -->
+                <div class="col-12 col-md-4 d-grid">
+
+                    <button type="button"
+                            id="btnConsultarDashboard"
+                            class="btn btn-primary">
+
+                        <i class="fa-solid fa-chart-column me-1"></i>
+                        Consultar periodo
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         CARGANDO
+         ===================================================== -->
+    <div id="dashboardCargando"
+         class="eb-loading-state d-none">
+
+        <div class="spinner-border"
+             role="status"
+             aria-hidden="true">
+        </div>
+
+        <span>
+            Consultando indicadores...
+        </span>
+
+    </div>
+
+    <!-- =====================================================
+         ERROR
+         ===================================================== -->
+    <div id="dashboardError"
+         class="alert alert-danger d-none"
+         role="alert">
+
+        <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+        <span id="dashboardErrorMensaje">
+            No fue posible consultar el dashboard.
+        </span>
+
+    </div>
+
+    <!-- =====================================================
+         CONTENIDO DEL DASHBOARD
+         ===================================================== -->
+    <div id="dashboardContenido">
+
+        <!-- =================================================
+             INDICADORES
+             ================================================= -->
+        <section class="eb-dashboard-kpi-grid mb-4">
+
+            <!-- DOCUMENTOS DESCARGADOS -->
+            <article class="eb-dashboard-kpi">
+
+                <div class="eb-dashboard-kpi-icon">
+                    <i class="fa-solid fa-download"></i>
+                </div>
+
+                <div>
+                    <span>
+                        Documentos descargados
+                    </span>
+
+                    <strong id="kpiDocumentosDescargados">
+                        0
+                    </strong>
+                </div>
+
+            </article>
+
+            <!-- VISUALIZACIONES -->
+            <article class="eb-dashboard-kpi">
+
+                <div class="eb-dashboard-kpi-icon">
+                    <i class="fa-regular fa-eye"></i>
+                </div>
+
+                <div>
+                    <span>
+                        Visualizaciones
+                    </span>
+
+                    <strong id="kpiVisualizaciones">
+                        0
+                    </strong>
+                </div>
+
+            </article>
+
+            <!-- EMPRESAS NUEVAS -->
+            <article class="eb-dashboard-kpi">
+
+                <div class="eb-dashboard-kpi-icon">
+                    <i class="fa-regular fa-building"></i>
+                </div>
+
+                <div>
+                    <span>
+                        Empresas nuevas
+                    </span>
+
+                    <strong id="kpiEmpresasNuevas">
+                        0
+                    </strong>
+                </div>
+
+            </article>
+
+            <!-- DOCUMENTOS CARGADOS -->
+            <article class="eb-dashboard-kpi">
+
+                <div class="eb-dashboard-kpi-icon">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+
+                <div>
+                    <span>
+                        Documentos cargados
+                    </span>
+
+                    <strong id="kpiDocumentosCargados">
+                        0
+                    </strong>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- =================================================
+             GRÁFICAS
+             ================================================= -->
+        <section class="eb-dashboard-chart-grid">
+
+            <!-- AVANCE DOCUMENTAL -->
+            <article class="eb-dashboard-chart-card">
+
+                <div class="eb-dashboard-chart-heading">
+
+                    <div>
+                        <h2>
+                            Avance documental por empresa
+                        </h2>
+
+                        <p>
+                            Porcentaje de documentos obligatorios
+                            cargados por las empresas creadas en
+                            el periodo seleccionado.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="
+                    eb-dashboard-chart-container
+                    eb-dashboard-chart-container-large">
+
+                    <canvas id="graficaAvanceEmpresas">
+                    </canvas>
+
+                    <div id="vacioAvanceEmpresas"
+                         class="eb-dashboard-chart-empty d-none">
+
+                        No hay empresas nuevas en el periodo seleccionado.
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            <!-- DESCARGAS POR USUARIO -->
+            <article class="eb-dashboard-chart-card">
+
+                <div class="eb-dashboard-chart-heading">
+
+                    <div>
+                        <h2>
+                            Descargas por usuario
+                        </h2>
+
+                        <p>
+                            Número de documentos descargados por cada
+                            usuario durante el periodo seleccionado.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="eb-dashboard-chart-container">
+
+                    <canvas id="graficaDescargasUsuarios">
+                    </canvas>
+
+                    <div id="vacioDescargasUsuarios"
+                         class="eb-dashboard-chart-empty d-none">
+
+                        No se registraron descargas durante
+                        el periodo seleccionado.
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            <!-- DOCUMENTOS POR BANCO -->
+            <article class="eb-dashboard-chart-card">
+
+                <div class="eb-dashboard-chart-heading">
+
+                    <div>
+                        <h2>
+                            Documentos utilizados por banco
+                        </h2>
+
+                        <p>
+                            Distribución de documentos descargados
+                            y asociados a cada institución bancaria.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="eb-dashboard-chart-container">
+
+                    <canvas id="graficaBancos">
+                    </canvas>
+
+                    <div id="vacioBancos"
+                         class="eb-dashboard-chart-empty d-none">
+
+                        No se registraron bancos durante
+                        el periodo seleccionado.
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            <!-- ACTIVIDAD DEL PERIODO -->
+            <article class="eb-dashboard-chart-card">
+
+                <div class="eb-dashboard-chart-heading">
+
+                    <div>
+                        <h2>
+                            Actividad documental del periodo
+                        </h2>
+
+                        <p>
+                            Documentos cargados durante las fechas
+                            seleccionadas. La gráfica se agrupa por día
+                            o por mes, según la duración del periodo.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="eb-dashboard-chart-container">
+
+                    <canvas id="graficaActividadDiaria">
+                    </canvas>
+
+                    <div id="vacioActividadDiaria"
+                         class="eb-dashboard-chart-empty d-none">
+
+                        No se registraron documentos cargados
+                        durante el periodo seleccionado.
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </section>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js">
+    </script>
+
+    <script src="~/js/expedientes-bancarios-dashboard.js"
+            asp-append-version="true">
+    </script>
 }
