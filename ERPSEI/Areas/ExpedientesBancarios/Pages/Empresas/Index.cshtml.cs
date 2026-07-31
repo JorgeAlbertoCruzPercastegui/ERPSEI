@@ -1630,6 +1630,85 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             return errores;
         }
 
+        // =====================================================
+        // DESCARGAR DOCUMENTO
+        // GET ?handler=DescargarDocumento&id=1
+        // =====================================================
+        public async Task<IActionResult> OnGetDescargarDocumentoAsync(int id)
+        {
+            if (id <= 0)
+            {
+                return NotFound();
+            }
+
+            var documento = await _context.EbDocumentos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    !x.Eliminado &&
+                    x.EsVersionActual);
+
+            if (documento == null)
+            {
+                return NotFound();
+            }
+
+            string? rutaBaseDocumentos =
+                _configuration[
+                    "ExpedientesBancarios:RutaDocumentos"
+                ];
+
+            if (string.IsNullOrWhiteSpace(rutaBaseDocumentos))
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError
+                );
+            }
+
+            string rutaBaseCompleta = Path.GetFullPath(
+                rutaBaseDocumentos
+            );
+
+            string rutaFisica = Path.GetFullPath(
+                Path.Combine(
+                    rutaBaseCompleta,
+                    documento.RutaArchivo.Replace(
+                        "/",
+                        Path.DirectorySeparatorChar.ToString()
+                    )
+                )
+            );
+
+            string rutaBaseConSeparador =
+                rutaBaseCompleta.TrimEnd(
+                    Path.DirectorySeparatorChar,
+                    Path.AltDirectorySeparatorChar
+                ) + Path.DirectorySeparatorChar;
+
+            if (!rutaFisica.StartsWith(
+                    rutaBaseConSeparador,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest();
+            }
+
+            if (!System.IO.File.Exists(rutaFisica))
+            {
+                return NotFound();
+            }
+
+            string mimeType = string.IsNullOrWhiteSpace(
+                documento.MimeType)
+                    ? "application/octet-stream"
+                    : documento.MimeType;
+
+            return PhysicalFile(
+                rutaFisica,
+                mimeType,
+                documento.NombreOriginal
+            );
+        }
+
         private static void NormalizarAccionistaRequest(AccionistaRequest request)
         {
             request.NombreCompleto =

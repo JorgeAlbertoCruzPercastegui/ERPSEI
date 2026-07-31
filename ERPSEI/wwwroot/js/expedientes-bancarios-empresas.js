@@ -2425,43 +2425,46 @@ function renderizarMatrizDocumental(documentos) {
 
                                 <li>
                                     <button type="button"
-                                            class="dropdown-item"
-                                            onclick="seleccionarTipoDocumento(
-                                                ${documento.id}
-                                            )">
+                                        class="dropdown-item"
+                                        onclick="event.stopPropagation();
+                                                 seleccionarTipoDocumento(
+                                                     ${documento.id}
+                                                 )">
 
-                                        <i class="fa-regular fa-eye me-2"></i>
-                                        Visualizar Archivo
-                                    </button>
+                                    <i class="fa-regular fa-eye me-2"></i>
+                                    Visualizar archivo
+                                </button>
                                 </li>
 
                                 <li>
                                     <button type="button"
-                                            class="dropdown-item"
-                                            onclick="prepararCargaDocumento(
-                                                ${documento.id}
-                                            )">
+                                        class="dropdown-item"
+                                        onclick="event.stopPropagation();
+                                                 prepararCargaDocumento(
+                                                     ${documento.id}
+                                                 )">
 
-                                        <i class="fa-solid fa-cloud-arrow-up me-2"></i>
+                                    <i class="fa-solid fa-cloud-arrow-up me-2"></i>
 
-                                        ${tieneArchivos
-                    ? "Cargar nueva versión"
-                    : "Cargar archivo"}
-                                    </button>
+                                    ${tieneArchivos
+                                                    ? "Cargar nueva versión"
+                                                    : "Cargar archivo"}
+                                </button>
                                 </li>
 
                                 ${tieneArchivos
                     ? `
                                         <li>
                                             <button type="button"
-                                                    class="dropdown-item"
-                                                    onclick="descargarDocumento(
-                                                        ${documento.id}
-                                                    )">
+                                            class="dropdown-item"
+                                            onclick="event.stopPropagation();
+                                                     descargarDocumento(
+                                                         ${documento.id}
+                                                     )">
 
-                                                <i class="fa-solid fa-download me-2"></i>
-                                                Descargar
-                                            </button>
+                                        <i class="fa-solid fa-download me-2"></i>
+                                        Descargar
+                                    </button>
                                         </li>
                                     `
                     : ""
@@ -2479,14 +2482,51 @@ function renderizarMatrizDocumental(documentos) {
     ).join("");
 }
 
+function obtenerDocumentoPorTipo(
+    tipoDocumentoId
+) {
+    const id = Number(tipoDocumentoId);
+
+    if (
+        !Number.isInteger(id) ||
+        id <= 0
+    ) {
+        return null;
+    }
+
+    return documentosEmpresaActuales.find(
+        function (documento) {
+            return Number(documento.id) === id;
+        }
+    ) ?? null;
+}
+
+function obtenerArchivoActualDocumento(
+    documento
+) {
+    const archivos = Array.isArray(
+        documento?.archivos
+    )
+        ? documento.archivos
+        : [];
+
+    if (archivos.length === 0) {
+        return null;
+    }
+
+    /*
+     * El backend devuelve primero
+     * el archivo más reciente.
+     */
+    return archivos[0];
+}
+
 function seleccionarTipoDocumento(
     tipoDocumentoId
 ) {
     const documento =
-        documentosEmpresaActuales.find(
-            function (item) {
-                return item.id === tipoDocumentoId;
-            }
+        obtenerDocumentoPorTipo(
+            tipoDocumentoId
         );
 
     if (!documento) {
@@ -2498,25 +2538,18 @@ function seleccionarTipoDocumento(
         return;
     }
 
-    const archivos = Array.isArray(
-        documento.archivos
-    )
-        ? documento.archivos
-        : [];
+    const archivoActual =
+        obtenerArchivoActualDocumento(
+            documento
+        );
 
-    if (archivos.length === 0) {
+    if (!archivoActual) {
         prepararCargaDocumento(
             tipoDocumentoId
         );
 
         return;
     }
-
-    /*
-     * El backend entrega los archivos ordenados
-     * del más reciente al más antiguo.
-     */
-    const archivoActual = archivos[0];
 
     visualizarArchivoDocumento(
         archivoActual.id
@@ -2600,11 +2633,12 @@ function renderizarArchivosDocumento(archivos) {
                     <div class="dropdown">
 
                         <button type="button"
-                                class="btn eb-document-menu-button"
+                                class="btn eb-document-upload-menu"
                                 data-bs-toggle="dropdown"
                                 data-bs-display="static"
-                                aria-expanded="false"
-                                title="Acciones">
+                                data-bs-boundary="viewport"
+                                onclick="event.stopPropagation()"
+                                aria-expanded="false">
 
                             <span>⋮</span>
                         </button>
@@ -2726,11 +2760,11 @@ function formatearTamanoArchivo(bytes) {
 }
 
 function visualizarArchivoDocumento(id) {
-    const documentoId = Number(id);
+    const archivoId = Number(id);
 
     if (
-        !Number.isInteger(documentoId) ||
-        documentoId <= 0
+        !Number.isInteger(archivoId) ||
+        archivoId <= 0
     ) {
         mostrarResultado(
             "El archivo seleccionado no es válido.",
@@ -2740,35 +2774,74 @@ function visualizarArchivoDocumento(id) {
         return;
     }
 
+    cerrarResultadoAnterior();
+
     const parametros = new URLSearchParams({
         handler: "VisualizarDocumento",
-        id: documentoId.toString()
+        id: archivoId.toString()
     });
 
     const url =
         `${window.location.pathname}` +
         `?${parametros.toString()}`;
 
-    const nuevaPestana = window.open(
+    window.open(
         url,
-        "_blank",
-        "noopener,noreferrer"
+        "_blank"
     );
-
-    if (!nuevaPestana) {
-        mostrarResultado(
-            "El navegador bloqueó la nueva pestaña. " +
-            "Permite las ventanas emergentes para este sitio.",
-            "error"
-        );
-    }
 }
 
 function descargarArchivoDocumento(id) {
-    mostrarResultado(
-        `La descarga del archivo ${id} se conectará en el siguiente paso.`,
-        "success"
-    );
+    const archivoId = Number(id);
+
+    if (
+        !Number.isInteger(archivoId) ||
+        archivoId <= 0
+    ) {
+        mostrarResultado(
+            "El archivo seleccionado no es válido.",
+            "error"
+        );
+
+        return;
+    }
+
+    cerrarResultadoAnterior();
+
+    const parametros = new URLSearchParams({
+        handler: "DescargarDocumento",
+        id: archivoId.toString()
+    });
+
+    const url =
+        `${window.location.pathname}` +
+        `?${parametros.toString()}`;
+
+    const enlace = document.createElement("a");
+
+    enlace.href = url;
+    enlace.style.display = "none";
+
+    document.body.appendChild(enlace);
+
+    enlace.click();
+    enlace.remove();
+}
+
+function cerrarResultadoAnterior() {
+    const modalResultadoElemento =
+        document.getElementById(
+            "modalResultado"
+        );
+
+    if (
+        modalResultadoElemento &&
+        modalResultadoElemento.classList.contains(
+            "show"
+        )
+    ) {
+        modalResultado?.hide();
+    }
 }
 
 function confirmarEliminarArchivoDocumento(
@@ -3197,10 +3270,39 @@ function limpiarErroresDocumento() {
         });
 }
 
-function descargarDocumento(tipoDocumentoId) {
-    mostrarResultado(
-        "Este documento todavía no contiene archivos disponibles.",
-        "error"
+function descargarDocumento(
+    tipoDocumentoId
+) {
+    const documento =
+        obtenerDocumentoPorTipo(
+            tipoDocumentoId
+        );
+
+    if (!documento) {
+        mostrarResultado(
+            "No se encontró el documento seleccionado.",
+            "error"
+        );
+
+        return;
+    }
+
+    const archivoActual =
+        obtenerArchivoActualDocumento(
+            documento
+        );
+
+    if (!archivoActual) {
+        mostrarResultado(
+            "El documento todavía no contiene archivos.",
+            "error"
+        );
+
+        return;
+    }
+
+    descargarArchivoDocumento(
+        archivoActual.id
     );
 }
 
