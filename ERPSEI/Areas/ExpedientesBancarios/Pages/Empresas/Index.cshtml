@@ -1418,6 +1418,84 @@
 </div>
 
 <!-- =========================================================
+     MODAL ELIMINAR DOCUMENTO
+     ========================================================= -->
+<div class="modal fade"
+     id="modalEliminarDocumento"
+     tabindex="-1"
+     aria-labelledby="modalEliminarDocumentoTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-md modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title"
+                    id="modalEliminarDocumentoTitulo">
+                    Eliminar archivo
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <div class="eb-confirmation-content">
+
+                    <div class="eb-confirmation-icon eb-confirmation-icon-danger">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </div>
+
+                    <h5>
+                        ¿Eliminar este archivo?
+                    </h5>
+
+                    <p>
+                        Se eliminará lógicamente el archivo
+                        <strong id="nombreDocumentoEliminar"></strong>.
+                    </p>
+
+                    <p class="small text-muted mb-0">
+                        El archivo físico se conservará para fines de
+                        auditoría y recuperación.
+                    </p>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button"
+                        id="btnConfirmarEliminarDocumento"
+                        class="btn btn-danger">
+
+                    <i class="fa-regular fa-trash-can me-1"></i>
+                    Eliminar archivo
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
      MODAL DE RESULTADO
      ========================================================= -->
 <div class="modal fade"

@@ -3086,3 +3086,9 @@ td:last-child {
         padding-right: 6px;
     }
 }
+
+.expedientes-bancarios-page
+.eb-confirmation-icon-danger {
+    color: #b42318;
+    background: #fde8e6;
+}

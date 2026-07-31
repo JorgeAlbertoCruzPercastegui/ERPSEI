@@ -1769,6 +1769,144 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         }
 
         // =====================================================
+        // ELIMINAR DOCUMENTO LÓGICAMENTE
+        // POST ?handler=EliminarDocumento
+        // =====================================================
+        public async Task<IActionResult> OnPostEliminarDocumentoAsync(
+            [FromBody] DocumentoIdRequest request)
+        {
+            if (request.Id <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "El identificador del documento no es válido."
+                });
+            }
+
+            await using var transaccion =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var documento = await _context.EbDocumentos
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == request.Id &&
+                        !x.Eliminado);
+
+                if (documento == null)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el documento seleccionado."
+                    });
+                }
+
+                var tipoDocumento = await _context.EbTiposDocumento
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == documento.TipoDocumentoId);
+
+                if (tipoDocumento == null)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el tipo documental relacionado."
+                    });
+                }
+
+                bool eraVersionActual =
+                    documento.EsVersionActual;
+
+                documento.Eliminado = true;
+                documento.EsVersionActual = false;
+                documento.FechaEliminacion = DateTime.Now;
+                documento.UsuarioEliminacionId =
+                    ObtenerUsuarioId();
+
+                /*
+                 * En tipos que no permiten múltiples archivos,
+                 * recuperamos la versión anterior más reciente.
+                 */
+                int? versionRestauradaId = null;
+
+                if (eraVersionActual &&
+                    !tipoDocumento.PermiteMultiplesArchivos)
+                {
+                    var versionAnterior =
+                        await _context.EbDocumentos
+                            .Where(x =>
+                                x.EmpresaId == documento.EmpresaId &&
+                                x.TipoDocumentoId ==
+                                    documento.TipoDocumentoId &&
+                                x.Id != documento.Id &&
+                                !x.Eliminado)
+                            .OrderByDescending(x => x.Version)
+                            .ThenByDescending(x => x.FechaCarga)
+                            .FirstOrDefaultAsync();
+
+                    if (versionAnterior != null)
+                    {
+                        versionAnterior.EsVersionActual = true;
+
+                        versionRestauradaId =
+                            versionAnterior.Id;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await transaccion.CommitAsync();
+
+                return new JsonResult(new
+                {
+                    success = true,
+
+                    message = versionRestauradaId.HasValue
+                        ? "El archivo se eliminó y se restauró la versión anterior."
+                        : "El archivo se eliminó correctamente.",
+
+                    versionRestauradaId
+                });
+            }
+            catch (Exception ex)
+            {
+                await transaccion.RollbackAsync();
+
+                Console.WriteLine(
+                    "ERROR AL ELIMINAR DOCUMENTO"
+                );
+
+                Console.WriteLine(
+                    ex.ToString()
+                );
+
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "Ocurrió un error al eliminar el documento.",
+                    detail = _environment.IsDevelopment()
+                        ? ex.Message
+                        : null
+                })
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        public class DocumentoIdRequest
+        {
+            public int Id { get; set; }
+        }
+
+        // =====================================================
         // REQUESTS AJAX
         // =====================================================
         public class EmpresaRequest

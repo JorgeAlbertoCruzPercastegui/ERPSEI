@@ -43,7 +43,15 @@ let modalCargarDocumento;
 let empresaIdDocumentos = 0;
 let empresaNombreDocumentos = "";
 
+let modalEliminarDocumento;
+let documentoIdEliminar = 0;
+let nombreDocumentoEliminar = "";
+
 function inicializarEventosEmpresas() {
+
+    modalEliminarDocumento = obtenerInstanciaModal(
+        "modalEliminarDocumento"
+    );
 
     modalCargarDocumento = obtenerInstanciaModal(
         "modalCargarDocumento"
@@ -76,6 +84,23 @@ function inicializarEventosEmpresas() {
     modalDocumentos = obtenerInstanciaModal(
         "modalDocumentos"
     );
+
+    document
+        .getElementById("modalEliminarDocumento")
+        ?.addEventListener(
+            "hidden.bs.modal",
+            function () {
+                documentoIdEliminar = 0;
+                nombreDocumentoEliminar = "";
+            }
+    );
+
+    document
+        .getElementById("btnConfirmarEliminarDocumento")
+        ?.addEventListener(
+            "click",
+            eliminarArchivoDocumento
+        );
 
     document
         .getElementById("btnGuardarDocumento")
@@ -2453,22 +2478,39 @@ function renderizarMatrizDocumental(documentos) {
                                 </li>
 
                                 ${tieneArchivos
-                    ? `
-                                        <li>
-                                            <button type="button"
-                                            class="dropdown-item"
-                                            onclick="event.stopPropagation();
-                                                     descargarDocumento(
-                                                         ${documento.id}
-                                                     )">
+                                                ? `
+                                    <li>
+                                        <button type="button"
+                                                class="dropdown-item"
+                                                onclick="event.stopPropagation();
+                                                         descargarDocumento(
+                                                             ${documento.id}
+                                                         )">
 
-                                        <i class="fa-solid fa-download me-2"></i>
-                                        Descargar
-                                    </button>
-                                        </li>
-                                    `
-                    : ""
-                }
+                                            <i class="fa-solid fa-download me-2"></i>
+                                            Descargar
+                                        </button>
+                                    </li>
+
+                                    <li>
+                                        <hr class="dropdown-divider" />
+                                    </li>
+
+                                    <li>
+                                        <button type="button"
+                                                class="dropdown-item text-danger"
+                                                onclick="event.stopPropagation();
+                                                         confirmarEliminarArchivoDocumento(
+                                                             ${documento.id}
+                                                         )">
+
+                                            <i class="fa-regular fa-trash-can me-2"></i>
+                                            Eliminar archivo
+                                        </button>
+                                    </li>
+                                `
+                                                : ""
+                            }
 
                             </ul>
 
@@ -2845,13 +2887,136 @@ function cerrarResultadoAnterior() {
 }
 
 function confirmarEliminarArchivoDocumento(
-    id,
-    nombre
+    tipoDocumentoId
 ) {
-    mostrarResultado(
-        `La eliminación de "${nombre}" se conectará en el siguiente paso.`,
-        "success"
+    const documento =
+        obtenerDocumentoPorTipo(
+            tipoDocumentoId
+        );
+
+    if (!documento) {
+        mostrarResultado(
+            "No se encontró el documento seleccionado.",
+            "error"
+        );
+
+        return;
+    }
+
+    const archivoActual =
+        obtenerArchivoActualDocumento(
+            documento
+        );
+
+    if (!archivoActual) {
+        mostrarResultado(
+            "El documento no contiene un archivo disponible.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!modalEliminarDocumento) {
+        mostrarResultado(
+            "No se encontró el formulario de confirmación.",
+            "error"
+        );
+
+        return;
+    }
+
+    documentoIdEliminar =
+        Number(archivoActual.id);
+
+    nombreDocumentoEliminar =
+        archivoActual.nombreOriginal ??
+        documento.nombre ??
+        "archivo seleccionado";
+
+    establecerTexto(
+        "nombreDocumentoEliminar",
+        nombreDocumentoEliminar
     );
+
+    modalEliminarDocumento.show();
+}
+
+async function eliminarArchivoDocumento() {
+    if (
+        !Number.isInteger(documentoIdEliminar) ||
+        documentoIdEliminar <= 0
+    ) {
+        return;
+    }
+
+    const boton = document.getElementById(
+        "btnConfirmarEliminarDocumento"
+    );
+
+    if (!boton) {
+        return;
+    }
+
+    const htmlOriginal = boton.innerHTML;
+
+    boton.disabled = true;
+
+    boton.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin me-1"></i>' +
+        " Eliminando...";
+
+    try {
+        const resultado = await enviarJson(
+            "EliminarDocumento",
+            {
+                id: documentoIdEliminar
+            }
+        );
+
+        if (!resultado?.success) {
+            modalEliminarDocumento?.hide();
+
+            mostrarResultado(
+                resultado?.message ??
+                "No fue posible eliminar el archivo.",
+                "error"
+            );
+
+            return;
+        }
+
+        modalEliminarDocumento?.hide();
+
+        documentoIdEliminar = 0;
+        nombreDocumentoEliminar = "";
+
+        /*
+         * Recargamos matriz, contadores y estados.
+         */
+        await cargarDocumentosEmpresa();
+
+        mostrarResultado(
+            resultado.message ??
+            "El archivo se eliminó correctamente.",
+            "success"
+        );
+    } catch (error) {
+        console.error(
+            "Error al eliminar el documento:",
+            error
+        );
+
+        modalEliminarDocumento?.hide();
+
+        mostrarResultado(
+            "Ocurrió un error al eliminar el archivo.",
+            "error"
+        );
+    } finally {
+        boton.disabled = false;
+        boton.innerHTML = htmlOriginal;
+    }
 }
 
 function prepararCargaDocumento(
