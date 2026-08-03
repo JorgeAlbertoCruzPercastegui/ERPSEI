@@ -26,6 +26,15 @@ function inicializarDashboard() {
         ?.addEventListener(
             "click",
             cargarDashboard
+    );
+
+    document
+        .getElementById(
+            "btnExportarBitacora"
+        )
+        ?.addEventListener(
+            "click",
+            exportarBitacora
         );
 
     document
@@ -314,6 +323,127 @@ async function cargarDashboard() {
         mostrarErrorDashboard(
             error?.message ??
             "Ocurrió un error al consultar el dashboard."
+        );
+    }
+}
+
+// =====================================================
+// EXPORTAR BITÁCORA
+// =====================================================
+function exportarBitacora() {
+    const fechaInicio =
+        document.getElementById(
+            "dashboardFechaInicio"
+        )?.value;
+
+    const fechaFin =
+        document.getElementById(
+            "dashboardFechaFin"
+        )?.value;
+
+    ocultarErrorDashboard();
+
+    if (!fechaInicio) {
+        mostrarErrorDashboard(
+            "Selecciona la fecha inicial."
+        );
+
+        document
+            .getElementById(
+                "dashboardFechaInicio"
+            )
+            ?.focus();
+
+        return;
+    }
+
+    if (!fechaFin) {
+        mostrarErrorDashboard(
+            "Selecciona la fecha final."
+        );
+
+        document
+            .getElementById(
+                "dashboardFechaFin"
+            )
+            ?.focus();
+
+        return;
+    }
+
+    if (!validarPeriodoSeleccionado()) {
+        return;
+    }
+
+    const boton =
+        document.getElementById(
+            "btnExportarBitacora"
+        );
+
+    if (!boton) {
+        return;
+    }
+
+    const htmlOriginal =
+        boton.innerHTML;
+
+    boton.disabled = true;
+
+    boton.innerHTML =
+        '<i class="fa-solid fa-spinner ' +
+        'fa-spin me-1"></i>' +
+        " Generando...";
+
+    try {
+        const parametros =
+            new URLSearchParams({
+                handler:
+                    "ExportarBitacora",
+
+                fechaInicio:
+                    fechaInicio,
+
+                fechaFin:
+                    fechaFin
+            });
+
+        const url =
+            `${window.location.pathname}` +
+            `?${parametros.toString()}`;
+
+        /*
+         * Utilizamos un enlace temporal porque el handler
+         * devuelve directamente un archivo Excel.
+         */
+        const enlace =
+            document.createElement("a");
+
+        enlace.href = url;
+        enlace.style.display = "none";
+
+        document.body.appendChild(
+            enlace
+        );
+
+        enlace.click();
+        enlace.remove();
+    } catch (error) {
+        console.error(
+            "Error al exportar la bitácora:",
+            error
+        );
+
+        mostrarErrorDashboard(
+            "No fue posible generar la bitácora."
+        );
+    } finally {
+        setTimeout(
+            function () {
+                boton.disabled = false;
+                boton.innerHTML =
+                    htmlOriginal;
+            },
+            800
         );
     }
 }
@@ -848,6 +978,15 @@ function mostrarCargaDashboard() {
         ?.setAttribute(
             "disabled",
             "disabled"
+    );
+
+    document
+        .getElementById(
+            "btnExportarBitacora"
+        )
+        ?.setAttribute(
+            "disabled",
+            "disabled"
         );
 }
 
@@ -863,6 +1002,14 @@ function ocultarCargaDashboard() {
     document
         .getElementById(
             "btnConsultarDashboard"
+        )
+        ?.removeAttribute(
+            "disabled"
+    );
+
+    document
+        .getElementById(
+            "btnExportarBitacora"
         )
         ?.removeAttribute(
             "disabled"
