@@ -1085,7 +1085,7 @@
                              id="contenedorFechaVencimientoDocumento">
 
                             <label for="documentoCargaFechaVencimiento"
-                                   class="form-label">
+                                   class="form-label eb-required">
                                 Fecha de vencimiento
                             </label>
 
@@ -1709,6 +1709,178 @@
 
                     <i class="fa-solid fa-xmark me-1"></i>
                     Cerrar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
+     MODAL PARA SELECCIONAR BANCO DE DESCARGA
+     ========================================================= -->
+<div class="modal fade"
+     id="modalSeleccionarBanco"
+     tabindex="-1"
+     aria-labelledby="modalSeleccionarBancoTitulo"
+     aria-hidden="true"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+                    <h5 class="modal-title"
+                        id="modalSeleccionarBancoTitulo">
+                        Seleccionar banco
+                    </h5>
+
+                    <p class="eb-modal-subtitle mb-0">
+                        Indica para qué banco será utilizado el documento.
+                    </p>
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <input type="hidden"
+                       id="documentoIdDescarga"
+                       value="0" />
+
+                <div class="alert alert-light border mb-4">
+
+                    <div class="d-flex align-items-start gap-3">
+
+                        <i class="fa-solid fa-file-arrow-down mt-1"></i>
+
+                        <div>
+                            <strong class="d-block">
+                                Documento seleccionado
+                            </strong>
+
+                            <span id="nombreDocumentoDescarga"
+                                  class="text-muted">
+                                Documento
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label for="bancoDocumentoDescarga"
+                           class="form-label eb-required">
+                        Banco
+                    </label>
+
+                    <select id="bancoDocumentoDescarga"
+                            class="form-select">
+
+                        <option value="">
+                            Selecciona un banco
+                        </option>
+
+                        <option value="BBVA">
+                            BBVA
+                        </option>
+
+                        <option value="Banorte">
+                            Banorte
+                        </option>
+
+                        <option value="Santander">
+                            Santander
+                        </option>
+
+                        <option value="HSBC">
+                            HSBC
+                        </option>
+
+                        <option value="Scotiabank">
+                            Scotiabank
+                        </option>
+
+                        <option value="Citibanamex">
+                            Citibanamex
+                        </option>
+
+                        <option value="Banco Azteca">
+                            Banco Azteca
+                        </option>
+
+                        <option value="Inbursa">
+                            Inbursa
+                        </option>
+
+                        <option value="Banca Mifel">
+                            Banca Mifel
+                        </option>
+
+                        <option value="Monex">
+                            Monex
+                        </option>
+
+                        <option value="Intercam">
+                            Intercam
+                        </option>
+
+                        <option value="BanBajío">
+                            BanBajío
+                        </option>
+
+                        <option value="Multiva">
+                            Multiva
+                        </option>
+
+                        <option value="Otro banco">
+                            Otro banco
+                        </option>
+
+                    </select>
+
+                    <span id="bancoDocumentoDescargaError"
+                          class="text-danger small">
+                    </span>
+
+                    <small class="form-text text-muted">
+                        Esta selección quedará registrada en la
+                        bitácora documental.
+                    </small>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button"
+                        id="btnConfirmarDescargaDocumento"
+                        class="btn btn-primary">
+
+                    <i class="fa-solid fa-download me-1"></i>
+                    Descargar documento
                 </button>
 
             </div>

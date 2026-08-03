@@ -511,28 +511,31 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     {
                         estatus = "Pendiente";
                     }
-                    else if (!tipo.requiereFechaVencimiento)
+                    if (archivos.Count == 0)
                     {
-                        estatus = "Cargado";
+                        estatus = "Pendiente";
                     }
                     else
                     {
                         bool tieneVencidos = archivos.Any(x =>
                             x.fechaVencimiento.HasValue &&
                             x.fechaVencimiento.Value.Date <
-                            fechaActual);
+                            fechaActual
+                        );
 
                         bool tieneProximosAVencer = archivos.Any(x =>
                             x.fechaVencimiento.HasValue &&
                             x.fechaVencimiento.Value.Date >=
                             fechaActual &&
                             x.fechaVencimiento.Value.Date <=
-                            fechaProximaVencimiento);
+                            fechaProximaVencimiento
+                        );
 
                         bool tieneVigentes = archivos.Any(x =>
                             x.fechaVencimiento.HasValue &&
                             x.fechaVencimiento.Value.Date >
-                            fechaProximaVencimiento);
+                            fechaProximaVencimiento
+                        );
 
                         if (tieneVencidos)
                         {
@@ -548,10 +551,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         }
                         else
                         {
-                            /*
-                             * Existe un archivo, pero no tiene fecha
-                             * de vencimiento capturada.
-                             */
                             estatus = "Cargado";
                         }
                     }
@@ -813,9 +812,8 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             var documento = await _context.EbDocumentos
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x =>
-                    x.Id == id &&
-                    !x.Eliminado &&
-                    x.EsVersionActual);
+                x.Id == id &&
+                !x.Eliminado);
 
             if (documento == null)
             {
@@ -1029,21 +1027,28 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     });
                 }
 
-                if (tipoDocumento.RequiereFechaVencimiento &&
-                    !request.FechaVencimiento.HasValue)
+                /*
+                 * Todos los documentos deben registrar
+                 * obligatoriamente una fecha de vencimiento.
+                 */
+                if (!request.FechaVencimiento.HasValue)
                 {
                     return new JsonResult(new
                     {
                         success = false,
+
                         message =
-                            "El documento requiere una fecha de vencimiento.",
-                        errors = new Dictionary<string, string[]>
-                        {
-                            ["FechaVencimiento"] = new[]
+                            "La fecha de vencimiento es obligatoria.",
+
+                        errors =
+                            new Dictionary<string, string[]>
                             {
-                        "La fecha de vencimiento es obligatoria."
-                    }
-                        }
+                                ["FechaVencimiento"] =
+                                    new[]
+                                    {
+                        "Selecciona la fecha de vencimiento del documento."
+                                    }
+                            }
                     });
                 }
 
@@ -1124,29 +1129,27 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     nombreAlmacenado
                 ).Replace("\\", "/");
 
-                var documentosActuales =
+                var versionesDocumento =
                     await _context.EbDocumentos
+                        .IgnoreQueryFilters()
                         .Where(x =>
                             x.EmpresaId == request.EmpresaId &&
                             x.TipoDocumentoId ==
-                                request.TipoDocumentoId &&
-                            !x.Eliminado &&
-                            x.EsVersionActual)
+                                request.TipoDocumentoId)
                         .ToListAsync();
 
-                int version = 1;
+                int version = versionesDocumento.Any()
+                    ? versionesDocumento.Max(x => x.Version) + 1
+                    : 1;
 
-                if (!tipoDocumento.PermiteMultiplesArchivos)
+                foreach (
+                    EbDocumento documentoAnterior
+                    in versionesDocumento.Where(x =>
+                        !x.Eliminado &&
+                        x.EsVersionActual)
+                )
                 {
-                    version = documentosActuales.Any()
-                        ? documentosActuales.Max(x => x.Version) + 1
-                        : 1;
-
-                    foreach (EbDocumento documentoAnterior
-                             in documentosActuales)
-                    {
-                        documentoAnterior.EsVersionActual = false;
-                    }
+                    documentoAnterior.EsVersionActual = false;
                 }
 
                 await using (
@@ -1213,12 +1216,9 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 await _context.SaveChangesAsync();
 
                 string accionBitacora =
-                    !tipoDocumento.PermiteMultiplesArchivos &&
-                    documentosActuales.Any()
-                        ? EbAccionesBitacoraDocumento
-                            .NuevaVersion
-                        : EbAccionesBitacoraDocumento
-                            .Carga;
+                    version > 1
+                        ? EbAccionesBitacoraDocumento.NuevaVersion
+                        : EbAccionesBitacoraDocumento.Carga;
 
                 string detalleBitacora =
                     accionBitacora ==
@@ -1881,23 +1881,95 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // DESCARGAR DOCUMENTO
         // GET ?handler=DescargarDocumento&id=1
         // =====================================================
-        public async Task<IActionResult> OnGetDescargarDocumentoAsync(int id)
+        // =====================================================
+        // DESCARGAR DOCUMENTO
+        // GET ?handler=DescargarDocumento&id=1&banco=BBVA
+        // =====================================================
+        public async Task<IActionResult>
+            OnGetDescargarDocumentoAsync(
+                int id,
+                string? banco)
         {
             if (id <= 0)
             {
-                return NotFound();
+                return BadRequest(
+                    "El identificador del documento no es válido."
+                );
             }
 
-            var documento = await _context.EbDocumentos
-                .AsNoTracking()
-                .FirstOrDefaultAsync(x =>
+            string bancoNormalizado =
+                banco?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(bancoNormalizado))
+            {
+                return BadRequest(
+                    "Debes seleccionar el banco asociado a la descarga."
+                );
+            }
+
+            if (bancoNormalizado.Length > 50)
+            {
+                return BadRequest(
+                    "El nombre del banco no puede superar los 50 caracteres."
+                );
+            }
+
+            /*
+             * Lista controlada para evitar valores arbitrarios
+             * enviados directamente por URL.
+             */
+            HashSet<string> bancosPermitidos =
+                new HashSet<string>(
+                    StringComparer.OrdinalIgnoreCase
+                )
+                {
+            "BBVA",
+            "Banorte",
+            "Santander",
+            "HSBC",
+            "Scotiabank",
+            "Citibanamex",
+            "Banco Azteca",
+            "Inbursa",
+            "Banca Mifel",
+            "Monex",
+            "Intercam",
+            "BanBajío",
+            "Multiva",
+            "Otro banco"
+                };
+
+            if (!bancosPermitidos.Contains(bancoNormalizado))
+            {
+                return BadRequest(
+                    "El banco seleccionado no es válido."
+                );
+            }
+
+            /*
+             * Conserva el nombre exactamente como está definido
+             * en el catálogo para evitar diferencias de mayúsculas.
+             */
+            bancoNormalizado =
+                bancosPermitidos.First(
+                    item => item.Equals(
+                        bancoNormalizado,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                );
+
+            var documento =
+                await _context.EbDocumentos
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
                     x.Id == id &&
-                    !x.Eliminado &&
-                    x.EsVersionActual);
+                    !x.Eliminado);
 
             if (documento == null)
             {
-                return NotFound();
+                return NotFound(
+                    "No se encontró el documento solicitado."
+                );
             }
 
             string? rutaBaseDocumentos =
@@ -1908,54 +1980,64 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             if (string.IsNullOrWhiteSpace(rutaBaseDocumentos))
             {
                 return StatusCode(
-                    StatusCodes.Status500InternalServerError
+                    StatusCodes.Status500InternalServerError,
+                    "No está configurada la ruta documental."
                 );
             }
 
-            string rutaBaseCompleta = Path.GetFullPath(
-                rutaBaseDocumentos
-            );
+            string rutaBaseCompleta =
+                Path.GetFullPath(
+                    rutaBaseDocumentos
+                );
 
-            string rutaFisica = Path.GetFullPath(
-                Path.Combine(
-                    rutaBaseCompleta,
-                    documento.RutaArchivo.Replace(
-                        "/",
-                        Path.DirectorySeparatorChar.ToString()
+            string rutaFisica =
+                Path.GetFullPath(
+                    Path.Combine(
+                        rutaBaseCompleta,
+                        documento.RutaArchivo.Replace(
+                            "/",
+                            Path.DirectorySeparatorChar.ToString()
+                        )
                     )
-                )
-            );
+                );
 
             string rutaBaseConSeparador =
                 rutaBaseCompleta.TrimEnd(
                     Path.DirectorySeparatorChar,
                     Path.AltDirectorySeparatorChar
-                ) + Path.DirectorySeparatorChar;
+                ) +
+                Path.DirectorySeparatorChar;
 
             if (!rutaFisica.StartsWith(
                     rutaBaseConSeparador,
                     StringComparison.OrdinalIgnoreCase))
             {
-                return BadRequest();
+                return BadRequest(
+                    "La ruta del documento no es válida."
+                );
             }
 
             if (!System.IO.File.Exists(rutaFisica))
             {
-                return NotFound();
+                return NotFound(
+                    "El archivo físico no fue encontrado."
+                );
             }
 
-            string mimeType = string.IsNullOrWhiteSpace(
-                documento.MimeType)
+            string mimeType =
+                string.IsNullOrWhiteSpace(
+                    documento.MimeType
+                )
                     ? "application/octet-stream"
                     : documento.MimeType;
 
             RegistrarBitacoraDocumento(
                 documento,
-                EbAccionesBitacoraDocumento
-                    .Descarga,
+                EbAccionesBitacoraDocumento.Descarga,
                 exitoso: true,
                 detalle:
-                    "El documento fue descargado."
+                    $"El documento fue descargado para uso en {bancoNormalizado}.",
+                banco: bancoNormalizado
             );
 
             await _context.SaveChangesAsync();

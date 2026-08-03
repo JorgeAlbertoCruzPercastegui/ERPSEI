@@ -51,7 +51,19 @@ let modalHistorialDocumento;
 let tipoDocumentoHistorialId = 0;
 let nombreTipoDocumentoHistorial = "";
 
+let modalSeleccionarBanco;
+
+let documentoIdDescarga = 0;
+let nombreDocumentoDescarga = "";
+let regresarDocumentosDespuesDescarga = false;
+let regresarHistorialDespuesDescarga = false;
+
 function inicializarEventosEmpresas() {
+
+    modalSeleccionarBanco =
+        obtenerInstanciaModal(
+            "modalSeleccionarBanco"
+        );
 
     modalHistorialDocumento = obtenerInstanciaModal(
         "modalHistorialDocumento"
@@ -92,6 +104,77 @@ function inicializarEventosEmpresas() {
     modalDocumentos = obtenerInstanciaModal(
         "modalDocumentos"
     );
+
+    document
+        .getElementById(
+            "btnConfirmarDescargaDocumento"
+        )
+        ?.addEventListener(
+            "click",
+            confirmarDescargaDocumento
+        );
+
+    document
+        .getElementById(
+            "bancoDocumentoDescarga"
+        )
+        ?.addEventListener(
+            "change",
+            function () {
+                limpiarErrorBancoDescarga();
+            }
+        );
+
+    document
+        .getElementById(
+            "modalSeleccionarBanco"
+        )
+        ?.addEventListener(
+            "hidden.bs.modal",
+            function () {
+                limpiarModalSeleccionarBanco();
+
+                if (
+                    regresarHistorialDespuesDescarga &&
+                    modalHistorialDocumento &&
+                    empresaIdDocumentos > 0 &&
+                    tipoDocumentoHistorialId > 0
+                ) {
+                    regresarHistorialDespuesDescarga =
+                        false;
+
+                    setTimeout(
+                        function () {
+                            modalHistorialDocumento.show();
+                        },
+                        180
+                    );
+
+                    return;
+                }
+
+                if (
+                    regresarDocumentosDespuesDescarga &&
+                    modalDocumentos &&
+                    empresaIdDocumentos > 0
+                ) {
+                    regresarDocumentosDespuesDescarga =
+                        false;
+
+                    setTimeout(
+                        function () {
+                            modalDocumentos.show();
+                        },
+                        180
+                    );
+
+                    return;
+                }
+
+                regresarHistorialDespuesDescarga = false;
+                regresarDocumentosDespuesDescarga = false;
+            }
+        );
 
     document
         .getElementById("modalHistorialDocumento")
@@ -1538,6 +1621,30 @@ function formatearFecha(valor) {
     return fecha.toLocaleDateString("es-MX");
 }
 
+function formatearFechaHora(valor) {
+    if (!valor) {
+        return "-";
+    }
+
+    const fecha = new Date(valor);
+
+    if (Number.isNaN(fecha.getTime())) {
+        return "-";
+    }
+
+    return fecha.toLocaleString(
+        "es-MX",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+        }
+    );
+}
+
 function escaparHtml(texto) {
     return String(texto ?? "")
         .replaceAll("&", "&amp;")
@@ -2891,7 +2998,7 @@ function renderizarHistorialDocumento(
                 );
 
             const fechaCarga = version.fechaCarga
-                ? formatearFecha(
+                ? formatearFechaHora(
                     version.fechaCarga
                 )
                 : "-";
@@ -3015,17 +3122,21 @@ function renderizarHistorialDocumento(
                                 </button>
 
                                 <button type="button"
-                                        class="btn btn-outline-primary"
-                                        onclick="descargarArchivoDocumento(
-                                            ${version.id}
-                                        )">
+                                    class="btn btn-outline-primary"
+                                    onclick="descargarArchivoDocumento(
+                                        ${version.id},
+                                        '${escaparAtributoJs(
+                                            version.nombreOriginal ??
+                                            "Documento"
+                                        )}'
+                                    )">
 
-                                    <i class="fa-solid fa-download"></i>
+                                <i class="fa-solid fa-download"></i>
 
-                                    <span>
-                                        Descargar
-                                    </span>
-                                </button>
+                                <span>
+                                    Descargar
+                                </span>
+                            </button>
                             `
                     : `
                                 <span class="eb-history-unavailable">
@@ -3370,7 +3481,10 @@ function visualizarArchivoDocumento(id) {
     );
 }
 
-function descargarArchivoDocumento(id) {
+function descargarArchivoDocumento(
+    id,
+    nombreArchivo = ""
+) {
     const archivoId = Number(id);
 
     if (
@@ -3385,27 +3499,309 @@ function descargarArchivoDocumento(id) {
         return;
     }
 
+    if (!modalSeleccionarBanco) {
+        mostrarResultado(
+            "No se encontró el formulario de selección de banco.",
+            "error"
+        );
+
+        return;
+    }
+
     cerrarResultadoAnterior();
 
-    const parametros = new URLSearchParams({
-        handler: "DescargarDocumento",
-        id: archivoId.toString()
-    });
+    documentoIdDescarga =
+        archivoId;
 
-    const url =
-        `${window.location.pathname}` +
-        `?${parametros.toString()}`;
+    nombreDocumentoDescarga =
+        nombreArchivo?.trim() ||
+        "Documento seleccionado";
 
-    const enlace = document.createElement("a");
+    regresarDocumentosDespuesDescarga =
+        Boolean(
+            modalDocumentos &&
+            document
+                .getElementById(
+                    "modalDocumentos"
+                )
+                ?.classList.contains("show")
+        );
 
-    enlace.href = url;
-    enlace.style.display = "none";
+    regresarHistorialDespuesDescarga =
+        Boolean(
+            modalHistorialDocumento &&
+            document
+                .getElementById(
+                    "modalHistorialDocumento"
+                )
+                ?.classList.contains("show")
+        );
 
-    document.body.appendChild(enlace);
+    document
+        .getElementById(
+            "documentoIdDescarga"
+        )
+        ?.setAttribute(
+            "value",
+            archivoId.toString()
+        );
 
-    enlace.click();
-    enlace.remove();
+    establecerTexto(
+        "nombreDocumentoDescarga",
+        nombreDocumentoDescarga
+    );
+
+    const selectorBanco =
+        document.getElementById(
+            "bancoDocumentoDescarga"
+        );
+
+    if (selectorBanco) {
+        selectorBanco.value = "";
+    }
+
+    limpiarErrorBancoDescarga();
+
+    if (
+        regresarHistorialDespuesDescarga &&
+        modalHistorialDocumento
+    ) {
+        modalHistorialDocumento.hide();
+
+        setTimeout(
+            function () {
+                modalSeleccionarBanco.show();
+
+                document
+                    .getElementById(
+                        "bancoDocumentoDescarga"
+                    )
+                    ?.focus();
+            },
+            180
+        );
+
+        return;
+    }
+
+    if (
+        regresarDocumentosDespuesDescarga &&
+        modalDocumentos
+    ) {
+        modalDocumentos.hide();
+
+        setTimeout(
+            function () {
+                modalSeleccionarBanco.show();
+
+                document
+                    .getElementById(
+                        "bancoDocumentoDescarga"
+                    )
+                    ?.focus();
+            },
+            180
+        );
+
+        return;
+    }
+
+    modalSeleccionarBanco.show();
+
+    setTimeout(
+        function () {
+            document
+                .getElementById(
+                    "bancoDocumentoDescarga"
+                )
+                ?.focus();
+        },
+        250
+    );
 }
+
+
+function confirmarDescargaDocumento() {
+    const archivoId =
+        Number(documentoIdDescarga);
+
+    const banco =
+        document
+            .getElementById(
+                "bancoDocumentoDescarga"
+            )
+            ?.value
+            ?.trim() ?? "";
+
+    limpiarErrorBancoDescarga();
+
+    if (
+        !Number.isInteger(archivoId) ||
+        archivoId <= 0
+    ) {
+        mostrarErrorBancoDescarga(
+            "El documento seleccionado no es válido."
+        );
+
+        return;
+    }
+
+    if (!banco) {
+        mostrarErrorBancoDescarga(
+            "Selecciona el banco asociado a la descarga."
+        );
+
+        document
+            .getElementById(
+                "bancoDocumentoDescarga"
+            )
+            ?.focus();
+
+        return;
+    }
+
+    const boton =
+        document.getElementById(
+            "btnConfirmarDescargaDocumento"
+        );
+
+    const htmlOriginal =
+        boton?.innerHTML ?? "";
+
+    if (boton) {
+        boton.disabled = true;
+
+        boton.innerHTML =
+            '<i class="fa-solid fa-spinner ' +
+            'fa-spin me-1"></i>' +
+            " Preparando...";
+    }
+
+    try {
+        const parametros =
+            new URLSearchParams({
+                handler:
+                    "DescargarDocumento",
+
+                id:
+                    archivoId.toString(),
+
+                banco:
+                    banco
+            });
+
+        const url =
+            `${window.location.pathname}` +
+            `?${parametros.toString()}`;
+
+        const enlace =
+            document.createElement("a");
+
+        enlace.href = url;
+        enlace.style.display = "none";
+
+        document.body.appendChild(
+            enlace
+        );
+
+        enlace.click();
+        enlace.remove();
+
+        modalSeleccionarBanco?.hide();
+    } catch (error) {
+        console.error(
+            "Error al preparar la descarga:",
+            error
+        );
+
+        mostrarErrorBancoDescarga(
+            "No fue posible preparar la descarga."
+        );
+    } finally {
+        if (boton) {
+            setTimeout(
+                function () {
+                    boton.disabled = false;
+                    boton.innerHTML =
+                        htmlOriginal;
+                },
+                500
+            );
+        }
+    }
+}
+
+function mostrarErrorBancoDescarga(
+    mensaje
+) {
+    const elemento =
+        document.getElementById(
+            "bancoDocumentoDescargaError"
+        );
+
+    if (elemento) {
+        elemento.textContent =
+            mensaje ?? "";
+    }
+
+    document
+        .getElementById(
+            "bancoDocumentoDescarga"
+        )
+        ?.classList.add(
+            "is-invalid"
+        );
+}
+
+function limpiarErrorBancoDescarga() {
+    const elemento =
+        document.getElementById(
+            "bancoDocumentoDescargaError"
+        );
+
+    if (elemento) {
+        elemento.textContent = "";
+    }
+
+    document
+        .getElementById(
+            "bancoDocumentoDescarga"
+        )
+        ?.classList.remove(
+            "is-invalid"
+        );
+}
+
+function limpiarModalSeleccionarBanco() {
+    documentoIdDescarga = 0;
+    nombreDocumentoDescarga = "";
+
+    const inputDocumento =
+        document.getElementById(
+            "documentoIdDescarga"
+        );
+
+    if (inputDocumento) {
+        inputDocumento.value = "0";
+    }
+
+    const selectorBanco =
+        document.getElementById(
+            "bancoDocumentoDescarga"
+        );
+
+    if (selectorBanco) {
+        selectorBanco.value = "";
+    }
+
+    establecerTexto(
+        "nombreDocumentoDescarga",
+        "Documento"
+    );
+
+    limpiarErrorBancoDescarga();
+}
+
 
 function cerrarResultadoAnterior() {
     const modalResultadoElemento =
@@ -3634,35 +4030,35 @@ function prepararCargaDocumento(
             "documentoCargaFechaVencimiento"
         );
 
-    if (documento.requiereFechaVencimiento) {
-        contenedorVencimiento?.classList.remove(
-            "d-none"
-        );
+    /*
+     * La fecha de vencimiento debe mostrarse
+     * y ser obligatoria para todos los documentos.
+     */
+    contenedorVencimiento?.classList.remove(
+        "d-none"
+    );
 
-        fechaVencimiento?.setAttribute(
-            "required",
-            "required"
-        );
+    fechaVencimiento?.setAttribute(
+        "required",
+        "required"
+    );
 
-        if (fechaVencimiento) {
-            fechaVencimiento.min =
-                new Date()
-                    .toISOString()
-                    .split("T")[0];
-        }
-    } else {
-        contenedorVencimiento?.classList.add(
-            "d-none"
-        );
+    if (fechaVencimiento) {
+        fechaVencimiento.value = "";
 
-        fechaVencimiento?.removeAttribute(
-            "required"
-        );
+        const hoy = new Date();
 
-        if (fechaVencimiento) {
-            fechaVencimiento.value = "";
-            fechaVencimiento.removeAttribute("min");
-        }
+        const anio = hoy.getFullYear();
+        const mes = String(
+            hoy.getMonth() + 1
+        ).padStart(2, "0");
+
+        const dia = String(
+            hoy.getDate()
+        ).padStart(2, "0");
+
+        fechaVencimiento.min =
+            `${anio}-${mes}-${dia}`;
     }
 
     limpiarErroresDocumento();
@@ -3749,15 +4145,13 @@ async function guardarDocumento() {
         return;
     }
 
-    if (
-        tipoDocumentoSeleccionado
-            ?.requiereFechaVencimiento &&
-        !fechaInput?.value
-    ) {
+    if (!fechaInput?.value) {
         mostrarErrorCampoDocumento(
             "FechaVencimiento",
             "La fecha de vencimiento es obligatoria."
         );
+
+        fechaInput?.focus();
 
         return;
     }
@@ -4004,7 +4398,10 @@ function descargarDocumento(
     }
 
     descargarArchivoDocumento(
-        archivoActual.id
+        archivoActual.id,
+        archivoActual.nombreOriginal ??
+        documento.nombre ??
+        "Documento"
     );
 }
 
