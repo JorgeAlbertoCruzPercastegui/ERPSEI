@@ -38,6 +38,7 @@ using ERPSEI.Data.Entities.Documentos;
 using ERPSEI.Data.Managers.Intranet;
 using Azure.Identity;
 using Microsoft.Graph;
+using ERPSEI.Services.Compliance;
 
 namespace ERPSEI
 {
@@ -47,6 +48,31 @@ namespace ERPSEI
         public const string RolAdministrador = "Administrador";
         public const string RolUsuario = "Usuario";
         public const string RolCandidato = "Candidato";
+
+        public const string RolAdministradorBancos =
+            "Administrador Bancos";
+
+        public const string RolUsuarioBancos =
+            "Usuario Bancos";
+
+        public const string RolUsuarioOperacionesInternas =
+            "Usuario Operaciones Internas";
+
+        public static readonly string[] RolesAdministradoresCompliance =
+        {
+            RolMaster,
+            RolAdministrador,
+            RolAdministradorBancos
+        };
+
+        public static readonly string[] RolesAccesoCompliance =
+        {
+            RolMaster,
+            RolAdministrador,
+            RolAdministradorBancos,
+            RolUsuarioBancos,
+            RolUsuarioOperacionesInternas
+        };
 
         private static readonly List<AppRole> Roles = [];
 
@@ -233,6 +259,19 @@ namespace ERPSEI
             ConfigureDINotificacionesEventosComunicados(
                 builder
             );
+
+            ConfigureDICompliance(
+                builder
+            );
+        }
+
+        private static void ConfigureDICompliance(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    IPermisosComplianceService,
+                    PermisosComplianceService>();
         }
 
         private static void

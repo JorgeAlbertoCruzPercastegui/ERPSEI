@@ -86,14 +86,22 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				//Se obtiene un listado de accesos del rol.
 				List<AccesoModulo> accesosRol = await _accesoModuloManager.GetByRolIdAsync(r.Id);
 				List<string> jsonModulos = [];
-				switch (r.Name)
-				{
-					case ServicesConfiguration.RolMaster:
-					case ServicesConfiguration.RolUsuario:
-					case ServicesConfiguration.RolCandidato:
-						//Los roles default no serán mostrados.
-						break;
-					default:
+                switch (r.Name)
+                {
+                    case ServicesConfiguration.RolMaster:
+                    case ServicesConfiguration.RolUsuario:
+                    case ServicesConfiguration.RolCandidato:
+                    case ServicesConfiguration.RolAdministradorBancos:
+                    case ServicesConfiguration.RolUsuarioBancos:
+                    case ServicesConfiguration
+        .RolUsuarioOperacionesInternas:
+
+                        /*
+                         * Roles internos del sistema.
+                         * No se administran desde el catálogo general.
+                         */
+                        break;
+                    default:
 						foreach (Modulo m in modulos)
 						{
 							AccesoModulo? acceso = accesosRol.Where(a => a.Modulo?.NombreNormalizado == m.NombreNormalizado).FirstOrDefault();

@@ -3582,3 +3582,258 @@ td:last-child {
     #toolbarEmpresas .eb-dashboard-access {
         margin: 0;
     }
+
+/* ==========================================================
+   PERMISOS COMPLIANCE
+   ========================================================== */
+
+.eb-permissions-table {
+    min-width: 1050px;
+    margin-bottom: 0;
+}
+
+    .eb-permissions-table thead th {
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        color: #495057;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 0.9rem 0.75rem;
+        text-transform: uppercase;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .eb-permissions-table tbody td {
+        border-color: #edf0f2;
+        padding: 0.85rem 0.75rem;
+        vertical-align: middle;
+    }
+
+.eb-permission-user {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 220px;
+}
+
+    .eb-permission-user strong {
+        color: #212529;
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+
+    .eb-permission-user span {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+
+.eb-permission-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    min-width: 170px;
+}
+
+.eb-permission-role {
+    background: #eef2f6;
+    border: 1px solid #dde3e9;
+    border-radius: 999px;
+    color: #495057;
+    display: inline-flex;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.25rem 0.55rem;
+}
+
+.eb-permission-role-admin {
+    background: #fff3cd;
+    border-color: #ffe69c;
+    color: #664d03;
+}
+
+.eb-permission-checkbox {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+    .eb-permission-checkbox .form-check-input {
+        cursor: pointer;
+        height: 1.15rem;
+        margin: 0;
+        width: 1.15rem;
+    }
+
+        .eb-permission-checkbox .form-check-input:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+.eb-permission-admin-row {
+    background: rgba(255, 193, 7, 0.05);
+}
+
+/* Documento sin permiso de visualización o carga */
+.eb-document-card-disabled {
+    cursor: default !important;
+    opacity: 0.78;
+}
+
+    .eb-document-card-disabled:hover {
+        transform: none !important;
+    }
+
+    .eb-document-card-disabled .eb-document-upload-area {
+        cursor: not-allowed !important;
+    }
+
+        .eb-document-card-disabled .eb-document-upload-area:disabled {
+            opacity: 1;
+        }
+
+.eb-permission-row-modified {
+    background: rgba(33, 22, 111, 0.055);
+}
+
+    .eb-permission-row-modified td:first-child {
+        box-shadow: inset 4px 0 0 #21166f;
+    }
+
+/* ==========================================================
+   BUSCADOR DE PERMISOS COMPLIANCE
+   ========================================================== */
+
+.eb-permissions-search {
+    background: linear-gradient( 135deg, rgba(33, 22, 111, 0.045), rgba(88, 70, 190, 0.025) );
+    border: 1px solid rgba(33, 22, 111, 0.12);
+    border-radius: 18px;
+    margin-bottom: 1.25rem;
+    padding: 1.15rem;
+}
+
+.eb-permissions-search-heading {
+    align-items: center;
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.eb-permissions-search-icon {
+    align-items: center;
+    background: #21166f;
+    border-radius: 12px;
+    color: #fff;
+    display: flex;
+    flex: 0 0 42px;
+    height: 42px;
+    justify-content: center;
+    width: 42px;
+}
+
+.eb-permissions-search-heading h6 {
+    color: #21166f;
+    font-size: 0.96rem;
+    font-weight: 800;
+    margin: 0 0 0.15rem;
+}
+
+.eb-permissions-search-heading p {
+    color: #74718b;
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+.eb-permissions-search-controls {
+    align-items: stretch;
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.eb-permissions-search-input {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #d8d5e9;
+    border-radius: 13px;
+    display: flex;
+    min-height: 48px;
+    padding: 0 0.85rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .eb-permissions-search-input:focus-within {
+        border-color: #5846be;
+        box-shadow: 0 0 0 4px rgba(88, 70, 190, 0.11);
+    }
+
+    .eb-permissions-search-input > i {
+        color: #77738e;
+        font-size: 0.9rem;
+        margin-right: 0.7rem;
+    }
+
+    .eb-permissions-search-input .form-control {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        color: #21166f;
+        font-size: 0.9rem;
+        min-height: 46px;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+        .eb-permissions-search-input .form-control::placeholder {
+            color: #aaa6bb;
+        }
+
+.eb-permissions-search-clear {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: #8b879e;
+    display: flex;
+    height: 32px;
+    justify-content: center;
+    margin-left: 0.5rem;
+    transition: background 0.2s ease, color 0.2s ease;
+    width: 32px;
+}
+
+    .eb-permissions-search-clear:hover {
+        background: #f0eef8;
+        color: #21166f;
+    }
+
+.eb-permissions-clear-button {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #c8c3dd;
+    border-radius: 13px;
+    color: #21166f;
+    display: inline-flex;
+    font-weight: 700;
+    gap: 0.45rem;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0.7rem 1.1rem;
+}
+
+    .eb-permissions-clear-button:hover {
+        background: #21166f;
+        border-color: #21166f;
+        color: #fff;
+    }
+
+@media (max-width: 767.98px) {
+    .eb-permissions-search-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .eb-permissions-clear-button {
+        width: 100%;
+    }
+}

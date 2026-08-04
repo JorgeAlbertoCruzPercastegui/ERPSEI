@@ -1,6 +1,10 @@
 ﻿using ERPSEI.Data;
 using ERPSEI.Data.Entities.ExpedientesBancarios;
+using ERPSEI.Data.Entities.Usuarios;
+using ERPSEI.Data.Managers.Usuarios;
+using ERPSEI.Services.Compliance;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -15,19 +19,66 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
+        private readonly AppUserManager _userManager;
+        private readonly IPermisosComplianceService _permisosComplianceService;
 
         public IndexModel(
             ApplicationDbContext context,
             IWebHostEnvironment environment,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            AppUserManager userManager,
+            IPermisosComplianceService permisosComplianceService)
         {
             _context = context;
             _environment = environment;
             _configuration = configuration;
+            _userManager = userManager;
+            _permisosComplianceService = permisosComplianceService;
         }
 
-        public void OnGet()
+        public PermisosComplianceResultado
+    PermisosCompliance
         {
+            get;
+            private set;
+        } =
+    PermisosComplianceResultado.SinAcceso();
+
+        public async Task<IActionResult> OnGetAsync()
+        {
+            PermisosCompliance =
+                await _permisosComplianceService
+                    .ObtenerPermisosAsync(User);
+
+            if (!PermisosCompliance.TieneAccesoModulo)
+            {
+                return Forbid();
+            }
+
+            return Page();
+        }
+
+        private static string
+    ObtenerNombreUsuarioCompliance(
+        AppUser usuario)
+        {
+            /*
+             * En esta primera versión usamos el nombre
+             * de usuario y después el correo como respaldo.
+             */
+            if (!string.IsNullOrWhiteSpace(
+                    usuario.UserName))
+            {
+                return usuario.UserName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                    usuario.Email))
+            {
+                return usuario.Email;
+            }
+
+            return "Usuario sin nombre";
         }
 
         // =====================================================
@@ -40,6 +91,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             string? nivel,
             string? estatus)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
             string filtro = busqueda?.Trim() ?? string.Empty;
             string filtroRfc =
             rfc?.Trim().ToUpperInvariant() ??
@@ -112,11 +170,400 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         }
 
         // =====================================================
+        // CONSULTAR USUARIOS Y PERMISOS DE COMPLIANCE
+        // GET ?handler=PermisosCompliance
+        // =====================================================
+        public async Task<IActionResult>
+            OnGetPermisosComplianceAsync()
+        {
+            bool puedeAdministrar =
+                await _permisosComplianceService
+                    .PuedeAdministrarPermisosAsync(
+                        User
+                    );
+
+            if (!puedeAdministrar)
+            {
+                return StatusCode(
+                    StatusCodes.Status403Forbidden,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes autorización para administrar los permisos de Compliance."
+                    }
+                );
+            }
+
+            /*
+             * Usuarios activos de Identity.
+             */
+            List<AppUser> usuarios =
+                await _userManager.Users
+                    .AsNoTracking()
+                    .Where(x =>
+                        !x.IsBanned)
+                    .OrderBy(x =>
+                        x.UserName)
+                    .ThenBy(x =>
+                        x.Email)
+                    .ToListAsync();
+
+            /*
+             * Permisos existentes, consultados una sola vez.
+             */
+            Dictionary<string, EbPermisoComplianceUsuario>
+                permisosPorUsuario =
+                    await _context
+                        .EbPermisosComplianceUsuarios
+                        .AsNoTracking()
+                        .ToDictionaryAsync(
+                            x => x.UsuarioId
+                        );
+
+            var resultado =
+    new List<UsuarioPermisoComplianceResponse>();
+
+            foreach (AppUser usuario in usuarios)
+            {
+                IList<string> rolesUsuario =
+                    await _userManager
+                        .GetRolesAsync(
+                            usuario
+                        );
+
+                bool esAdministradorCompliance =
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolMaster
+                    ) ||
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolAdministrador
+                    ) ||
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolAdministradorBancos
+                    );
+
+                bool esUsuarioCompliance =
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolUsuarioBancos
+                    ) ||
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolUsuarioOperacionesInternas
+                    );
+
+                permisosPorUsuario.TryGetValue(
+                    usuario.Id,
+                    out EbPermisoComplianceUsuario? permiso
+                );
+
+                bool puedeVisualizar =
+                    esAdministradorCompliance ||
+                    esUsuarioCompliance ||
+                    permiso?.PuedeVisualizar == true;
+
+                resultado.Add(
+                    new UsuarioPermisoComplianceResponse
+                    {
+                        Id = usuario.Id,
+
+                        Nombre =
+                            ObtenerNombreUsuarioCompliance(
+                                usuario
+                            ),
+
+                        Correo =
+                            usuario.Email ??
+                            usuario.UserName ??
+                            string.Empty,
+
+                        Roles =
+                            rolesUsuario
+                                .OrderBy(x => x)
+                                .ToArray(),
+
+                        EsAdministrador =
+                            esAdministradorCompliance,
+
+                        PuedeEditarPermisos =
+                            !esAdministradorCompliance,
+
+                        PuedeVisualizar =
+                            puedeVisualizar,
+
+                        PuedeCrearCargar =
+                            esAdministradorCompliance ||
+                            permiso?.PuedeCrearCargar == true,
+
+                        PuedeModificar =
+                            esAdministradorCompliance ||
+                            permiso?.PuedeModificar == true,
+
+                        PuedeEliminar =
+                            esAdministradorCompliance ||
+                            permiso?.PuedeEliminar == true,
+
+                        PuedeDescargar =
+                            esAdministradorCompliance ||
+                            permiso?.PuedeDescargar == true
+                    }
+                );
+            }
+
+            List<UsuarioPermisoComplianceResponse>
+                usuariosOrdenados =
+                    resultado
+                        .OrderBy(x => x.Nombre)
+                        .ThenBy(x => x.Correo)
+                        .ToList();
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+                    data = usuariosOrdenados
+                }
+            );
+        }
+
+        // =====================================================
+        // GUARDAR PERMISOS DE COMPLIANCE
+        // POST ?handler=GuardarPermisosCompliance
+        // =====================================================
+        public async Task<IActionResult>
+            OnPostGuardarPermisosComplianceAsync(
+                [FromBody]
+        GuardarPermisosComplianceRequest request)
+        {
+            bool puedeAdministrar =
+                await _permisosComplianceService
+                    .PuedeAdministrarPermisosAsync(
+                        User
+                    );
+
+            if (!puedeAdministrar)
+            {
+                return StatusCode(
+                    StatusCodes.Status403Forbidden,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes autorización para modificar los permisos de Compliance."
+                    }
+                );
+            }
+
+            if (
+                request == null ||
+                request.Permisos == null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se recibieron permisos para guardar."
+                    }
+                );
+            }
+
+            string usuarioModificacionId =
+                ObtenerUsuarioId();
+
+            List<string> idsRecibidos =
+                request.Permisos
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.UsuarioId
+                        ))
+                    .Select(x =>
+                        x.UsuarioId.Trim()
+                    )
+                    .Distinct()
+                    .ToList();
+
+            if (idsRecibidos.Count == 0)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Selecciona al menos un usuario."
+                    }
+                );
+            }
+
+            List<AppUser> usuariosExistentes =
+                await _userManager.Users
+                    .Where(x =>
+                        idsRecibidos.Contains(
+                            x.Id
+                        ) &&
+                        !x.IsBanned)
+                    .ToListAsync();
+
+            Dictionary<string, AppUser>
+                usuariosPorId =
+                    usuariosExistentes
+                        .ToDictionary(
+                            x => x.Id
+                        );
+
+            List<EbPermisoComplianceUsuario>
+                permisosExistentes =
+                    await _context
+                        .EbPermisosComplianceUsuarios
+                        .Where(x =>
+                            idsRecibidos.Contains(
+                                x.UsuarioId
+                            ))
+                        .ToListAsync();
+
+            Dictionary<string, EbPermisoComplianceUsuario>
+                permisosPorUsuario =
+                    permisosExistentes
+                        .ToDictionary(
+                            x => x.UsuarioId
+                        );
+
+            int totalGuardados = 0;
+
+            foreach (
+                PermisoComplianceUsuarioRequest item
+                in request.Permisos
+            )
+            {
+                string usuarioId =
+                    item.UsuarioId?.Trim() ??
+                    string.Empty;
+
+                if (
+                    string.IsNullOrWhiteSpace(
+                        usuarioId
+                    ) ||
+                    !usuariosPorId.TryGetValue(
+                        usuarioId,
+                        out AppUser? usuario
+                    )
+                )
+                {
+                    continue;
+                }
+
+                IList<string> rolesUsuario =
+                    await _userManager
+                        .GetRolesAsync(
+                            usuario
+                        );
+
+                bool esAdministradorCompliance =
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolMaster
+                    ) ||
+                    rolesUsuario.Contains(
+                        ServicesConfiguration
+                            .RolAdministrador
+                    ) ||
+                    rolesUsuario.Contains(
+                        ServicesConfiguration
+                            .RolAdministradorBancos
+                    );
+
+                /*
+                 * Master, Administrador y Administrador Bancos
+                 * siempre conservan acceso total.
+                 */
+                if (esAdministradorCompliance)
+                {
+                    continue;
+                }
+
+
+                if (
+                    !permisosPorUsuario.TryGetValue(
+                        usuarioId,
+                        out EbPermisoComplianceUsuario?
+                            permiso
+                    )
+                )
+                {
+                    permiso =
+                        new EbPermisoComplianceUsuario
+                        {
+                            UsuarioId =
+                                usuarioId,
+
+                            FechaCreacion =
+                                DateTime.Now
+                        };
+
+                    _context
+                        .EbPermisosComplianceUsuarios
+                        .Add(
+                            permiso
+                        );
+
+                    permisosPorUsuario[
+                        usuarioId
+                    ] = permiso;
+                }
+
+                permiso.PuedeVisualizar =
+                    item.PuedeVisualizar;
+
+                permiso.PuedeCrearCargar =
+                    item.PuedeCrearCargar;
+
+                permiso.PuedeModificar =
+                    item.PuedeModificar;
+
+                permiso.PuedeEliminar =
+                    item.PuedeEliminar;
+
+                permiso.PuedeDescargar =
+                    item.PuedeDescargar;
+
+                permiso.FechaModificacion =
+                    DateTime.Now;
+
+                permiso.UsuarioModificacionId =
+                    usuarioModificacionId;
+
+                totalGuardados++;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    message =
+                        totalGuardados == 1
+                            ? "El permiso se guardó correctamente."
+                            : $"Se guardaron correctamente los permisos de {totalGuardados} usuarios.",
+
+                    totalGuardados
+                }
+            );
+        }
+
+        // =====================================================
         // CONSULTAR REGISTRO
         // GET ?handler=Empresa&id=1
         // =====================================================
         public async Task<IActionResult> OnGetEmpresaAsync(int id)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
             var empresa = await _context.EbEmpresas
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == id);
@@ -160,6 +607,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostCrearAsync(
             [FromBody] EmpresaRequest request)
         {
+
+            if (!await _permisosComplianceService
+        .PuedeCrearCargarAsync(User))
+            {
+                return Forbid();
+            }
+
             NormalizarRequest(request);
 
             Dictionary<string, string[]> errores =
@@ -234,6 +688,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostEditarAsync(
             [FromBody] EmpresaRequest request)
         {
+
+            if (!await _permisosComplianceService
+        .PuedeModificarAsync(User))
+            {
+                return Forbid();
+            }
+
             NormalizarRequest(request);
 
             Dictionary<string, string[]> errores =
@@ -313,6 +774,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostCambiarEstatusAsync(
             [FromBody] EmpresaIdRequest request)
         {
+
+            if (!await _permisosComplianceService
+        .PuedeModificarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (request.Id <= 0)
             {
                 return new JsonResult(new
@@ -359,6 +827,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostEliminarAsync(
             [FromBody] EmpresaIdRequest request)
         {
+
+            if (!await _permisosComplianceService
+        .PuedeEliminarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (request.Id <= 0)
             {
                 return new JsonResult(new
@@ -418,6 +893,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnGetDocumentosAsync(
             int empresaId)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (empresaId <= 0)
             {
                 return new JsonResult(new
@@ -507,10 +989,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 
                     string estatus;
 
-                    if (archivos.Count == 0)
-                    {
-                        estatus = "Pendiente";
-                    }
                     if (archivos.Count == 0)
                     {
                         estatus = "Pendiente";
@@ -637,6 +1115,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             int empresaId,
             int tipoDocumentoId)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (empresaId <= 0)
             {
                 return new JsonResult(new
@@ -804,6 +1289,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // =====================================================
         public async Task<IActionResult> OnGetVisualizarDocumentoAsync(int id)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (id <= 0)
             {
                 return NotFound();
@@ -894,6 +1386,12 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostCargarDocumentoAsync(
         [FromForm] CargarDocumentoRequest request)
         {
+            if (!await _permisosComplianceService
+            .PuedeCrearCargarAsync(User))
+            {
+                return Forbid();
+            }
+
             /*
              * El archivo puede pesar hasta 100 MB.
              * La solicitud permite 110 MB para dejar margen
@@ -1437,6 +1935,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // =====================================================
         public async Task<IActionResult> OnGetAccionistasAsync(int empresaId)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (empresaId <= 0)
             {
                 return new JsonResult(new
@@ -1500,6 +2005,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // =====================================================
         public async Task<IActionResult> OnGetAccionistaAsync(int id)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (id <= 0)
             {
                 return new JsonResult(new
@@ -1548,6 +2060,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostCrearAccionistaAsync(
             [FromBody] AccionistaRequest request)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeCrearCargarAsync(User))
+            {
+                return Forbid();
+            }
+
             NormalizarAccionistaRequest(request);
 
             Dictionary<string, string[]> errores =
@@ -1613,6 +2132,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostEditarAccionistaAsync(
             [FromBody] AccionistaRequest request)
         {
+
+            if (!await _permisosComplianceService
+        .PuedeModificarAsync(User))
+            {
+                return Forbid();
+            }
+
             NormalizarAccionistaRequest(request);
 
             Dictionary<string, string[]> errores =
@@ -1679,6 +2205,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             OnPostCambiarEstatusAccionistaAsync(
                 [FromBody] AccionistaIdRequest request)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeModificarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (request.Id <= 0)
             {
                 return new JsonResult(new
@@ -1728,6 +2261,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         public async Task<IActionResult> OnPostEliminarAccionistaAsync(
             [FromBody] AccionistaIdRequest request)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeEliminarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (request.Id <= 0)
             {
                 return new JsonResult(new
@@ -1879,10 +2419,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 
         // =====================================================
         // DESCARGAR DOCUMENTO
-        // GET ?handler=DescargarDocumento&id=1
-        // =====================================================
-        // =====================================================
-        // DESCARGAR DOCUMENTO
         // GET ?handler=DescargarDocumento&id=1&banco=BBVA
         // =====================================================
         public async Task<IActionResult>
@@ -1890,6 +2426,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 int id,
                 string? banco)
         {
+
+            if (!await _permisosComplianceService
+            .PuedeDescargarAsync(User))
+            {
+                return Forbid();
+            }
+
             if (id <= 0)
             {
                 return BadRequest(
@@ -2444,6 +2987,124 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             public DateTime? FechaVencimiento { get; set; }
 
             public string? Observaciones { get; set; }
+        }
+
+        public class GuardarPermisosComplianceRequest
+        {
+            public List<PermisoComplianceUsuarioRequest>
+                Permisos
+            {
+                get;
+                set;
+            } = new();
+        }
+
+        public class PermisoComplianceUsuarioRequest
+        {
+            public string UsuarioId
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public bool PuedeVisualizar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeCrearCargar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeModificar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeEliminar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeDescargar
+            {
+                get;
+                set;
+            }
+        }
+
+        public class UsuarioPermisoComplianceResponse
+        {
+            public string Id
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Nombre
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Correo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string[] Roles
+            {
+                get;
+                set;
+            } = Array.Empty<string>();
+
+            public bool EsAdministrador
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeEditarPermisos
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeVisualizar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeCrearCargar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeModificar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeEliminar
+            {
+                get;
+                set;
+            }
+
+            public bool PuedeDescargar
+            {
+                get;
+                set;
+            }
         }
     }
 }

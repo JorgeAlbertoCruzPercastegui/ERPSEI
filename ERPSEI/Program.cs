@@ -154,47 +154,51 @@ using (
                 RoleManager<AppRole>>();
 
     // =================================================
-    // CREAR ROLES PRINCIPALES
+    // CREAR ROLES PRINCIPALES Y DE COMPLIANCE
     // =================================================
 
-    if (!await roleManager.RoleExistsAsync(
-            ServicesConfiguration.RolMaster))
+    string[] rolesRequeridos =
     {
-        await roleManager.CreateAsync(
-            new AppRole(
-                ServicesConfiguration.RolMaster
-            )
-        );
-    }
+    ServicesConfiguration.RolMaster,
+    ServicesConfiguration.RolAdministrador,
+    ServicesConfiguration.RolUsuario,
+    ServicesConfiguration.RolCandidato,
+    ServicesConfiguration.RolAdministradorBancos,
+    ServicesConfiguration.RolUsuarioBancos,
+    ServicesConfiguration.RolUsuarioOperacionesInternas
+};
 
-    if (!await roleManager.RoleExistsAsync(
-            ServicesConfiguration.RolAdministrador))
+    foreach (string nombreRol in rolesRequeridos)
     {
-        await roleManager.CreateAsync(
-            new AppRole(
-                ServicesConfiguration.RolAdministrador
-            )
-        );
-    }
+        if (await roleManager.RoleExistsAsync(
+                nombreRol))
+        {
+            continue;
+        }
 
-    if (!await roleManager.RoleExistsAsync(
-            ServicesConfiguration.RolUsuario))
-    {
-        await roleManager.CreateAsync(
-            new AppRole(
-                ServicesConfiguration.RolUsuario
-            )
-        );
-    }
+        IdentityResult resultadoRol =
+            await roleManager.CreateAsync(
+                new AppRole(
+                    nombreRol
+                )
+            );
 
-    if (!await roleManager.RoleExistsAsync(
-            ServicesConfiguration.RolCandidato))
-    {
-        await roleManager.CreateAsync(
-            new AppRole(
-                ServicesConfiguration.RolCandidato
-            )
-        );
+        if (!resultadoRol.Succeeded)
+        {
+            string errores =
+                string.Join(
+                    " | ",
+                    resultadoRol.Errors.Select(
+                        error =>
+                            error.Description
+                    )
+                );
+
+            throw new InvalidOperationException(
+                $"No fue posible crear el rol " +
+                $"'{nombreRol}'. {errores}"
+            );
+        }
     }
 
     // =================================================
@@ -268,6 +272,17 @@ using (
 
                     break;
 
+                case ServicesConfiguration.RolAdministradorBancos:
+
+                    /*
+                     * El Administrador Bancos tendrá acceso total
+                     * dentro de Compliance. El detalle se controlará
+                     * con el servicio de permisos del módulo.
+                     *
+                     * No recibe acceso automático al resto de módulos.
+                     */
+                    break;
+
                 case ServicesConfiguration.RolAdministrador:
 
                     /*
@@ -289,6 +304,18 @@ using (
                             }
                         );
 
+                    break;
+
+                case ServicesConfiguration.RolUsuarioBancos:
+                case ServicesConfiguration.RolUsuarioOperacionesInternas:
+
+                    /*
+                     * Estos roles tendrán acceso únicamente a Compliance
+                     * y sus acciones dependerán de los permisos individuales.
+                     *
+                     * El acceso específico al módulo se configurará
+                     * posteriormente mediante el servicio de Compliance.
+                     */
                     break;
 
                 case ServicesConfiguration.RolUsuario:

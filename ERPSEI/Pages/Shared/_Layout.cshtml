@@ -53,9 +53,43 @@
         r.Equals("Administrador Empresas", StringComparison.OrdinalIgnoreCase));
 
     bool esUsuario = rolesUsuario.Any(r =>
-        r.Equals("Usuario", StringComparison.OrdinalIgnoreCase));
+    r.Equals(
+        ServicesConfiguration.RolUsuario,
+        StringComparison.OrdinalIgnoreCase
+    ));
 
-    bool esAdminMenu = esAdministrador || esAdministradorTH;
+    bool esAdministradorBancos = rolesUsuario.Any(r =>
+        r.Equals(
+            ServicesConfiguration.RolAdministradorBancos,
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool esUsuarioBancos = rolesUsuario.Any(r =>
+        r.Equals(
+            ServicesConfiguration.RolUsuarioBancos,
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool esUsuarioOperacionesInternas = rolesUsuario.Any(r =>
+        r.Equals(
+            ServicesConfiguration.RolUsuarioOperacionesInternas,
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool esUsuarioCompliance =
+        esUsuario &&
+        (
+            esUsuarioBancos ||
+            esUsuarioOperacionesInternas
+        );
+
+    bool esAdministradorCompliance =
+        esAdministrador ||
+        esAdministradorBancos;
+
+    bool esAdminMenu =
+        esAdministrador ||
+        esAdministradorTH;
 
     foreach (string rol in rolesUsuario)
     {
@@ -409,10 +443,32 @@
         !esAdministradorTH &&
         !esAdministradorTI;
 
-    bool mostrarBibliotecaCorporativa = !soloAdministradorEmpresas;
-    bool mostrarBibliotecaFront = !soloAdministradorEmpresas;
-    bool mostrarIncidencias = !soloAdministradorEmpresas;
-    bool mostrarWorkspace = !soloAdministradorEmpresas;
+    bool mostrarBibliotecaCorporativa =
+        !soloAdministradorEmpresas;
+
+    bool mostrarBibliotecaFront =
+        !soloAdministradorEmpresas;
+
+    bool mostrarIncidencias =
+        !soloAdministradorEmpresas;
+
+    /*
+     * Workspace se muestra normalmente para los usuarios
+     * actuales y también para los roles especiales de
+     * Compliance.
+     */
+    bool mostrarWorkspace =
+        !soloAdministradorEmpresas ||
+        esUsuarioCompliance ||
+        esAdministradorCompliance;
+
+    /*
+     * Los usuarios especiales solamente verán Compliance
+     * dentro de Workspace Corporativo.
+     */
+    bool mostrarSoloComplianceEnWorkspace =
+        esUsuarioCompliance &&
+        !esAdministradorCompliance;
 
     bool mostrarGestorBiblioteca = esAdminMenu;
 
@@ -476,13 +532,8 @@
     esAdministradorTI;
 
     bool mostrarComplianceMenu =
-    esAdministrador ||
-    esAdministradorTI ||
-    esAdministradorEmpresas ||
-    (
-        permisos.ContainsKey("empresas") &&
-        permisos["empresas"]
-    );
+        esAdministradorCompliance ||
+        esUsuarioCompliance;
 
     var notificacionesUsuario = new List<dynamic>();
     int totalNotificacionesNoLeidas = 0;
@@ -711,13 +762,86 @@
                             @if (mostrarWorkspace)
                             {
                                 <div class="quick-dd">
-                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Workspace Corporativo</a>
+
+                                    <a class="quick-link quick-dd-toggle"
+                                           href="#"
+                                           onclick="return false;">
+
+                                        Workspace Corporativo
+
+                                    </a>
+
                                     <div class="quick-dd-menu">
-                                        <a class="quick-dd-item" href="https://time.cybertradeinternational.mx/" target="_blank" rel="noopener">Time</a>
-                                        <a class="quick-dd-item" href="https://seiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Space</a>
-                                        <a class="quick-dd-item" href="https://projectseiconsulting.iqualabi.com/" target="_blank" rel="noopener">Kyndom Project</a>
-                                        <a class="quick-dd-item" href="https://fridayapp.top/login" target="_blank" rel="noopener">Friday</a>
+
+                                        @if (!mostrarSoloComplianceEnWorkspace)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   href="https://time.cybertradeinternational.mx/"
+                                                   target="_blank"
+                                                   rel="noopener">
+
+                                                Time
+
+                                            </a>
+
+                                            <a class="quick-dd-item"
+                                                   href="https://seiconsulting.iqualabi.com/"
+                                                   target="_blank"
+                                                   rel="noopener">
+
+                                                Kyndom Space
+
+                                            </a>
+
+                                            <a class="quick-dd-item"
+                                                   href="https://projectseiconsulting.iqualabi.com/"
+                                                   target="_blank"
+                                                   rel="noopener">
+
+                                                Kyndom Project
+
+                                            </a>
+
+                                            <a class="quick-dd-item"
+                                                   href="https://fridayapp.top/login"
+                                                   target="_blank"
+                                                   rel="noopener">
+
+                                                Friday
+
+                                            </a>
+                                        }
+
+                                        @if (mostrarComplianceMenu)
+                                        {
+                                            @if (!mostrarSoloComplianceEnWorkspace)
+                                            {
+                                                <div class="quick-dd-divider">
+                                                </div>
+                                            }
+
+                                            @if (esAdministradorCompliance)
+                                            {
+                                                <a class="quick-dd-item"
+                                                       asp-area="ExpedientesBancarios"
+                                                       asp-page="/Dashboard/Index">
+
+                                                    Dashboard de Compliance
+
+                                                </a>
+                                            }
+
+                                            <a class="quick-dd-item"
+                                                   asp-area="ExpedientesBancarios"
+                                                   asp-page="/Empresas/Index">
+
+                                                Compliance
+
+                                            </a>
+                                        }
+
                                     </div>
+
                                 </div>
                             }
 
@@ -781,29 +905,6 @@
                                                    asp-page="/CorreosDominios/CorreoDominio">
 
                                                 Correos y Dominios
-                                            </a>
-                                        }
-
-                                        @if (mostrarComplianceMenu)
-                                        {
-                                            <div class="quick-dd-divider"></div>
-
-                                            <div class="quick-dd-section-title">
-                                                Compliance
-                                            </div>
-
-                                            <a class="quick-dd-item"
-                                                   asp-area="ExpedientesBancarios"
-                                                   asp-page="/Dashboard/Index">
-
-                                                Dashboard de Compliance
-                                            </a>
-
-                                            <a class="quick-dd-item"
-                                                   asp-area="ExpedientesBancarios"
-                                                   asp-page="/Empresas/Index">
-
-                                                Expedientes de empresas
                                             </a>
                                         }
 

@@ -3,6 +3,17 @@
 
 @{
     ViewData["Title"] = "Empresas - Expedientes Bancarios";
+
+    bool puedeAdministrarPermisosCompliance =
+        User.IsInRole(
+            ServicesConfiguration.RolMaster
+        ) ||
+        User.IsInRole(
+            ServicesConfiguration.RolAdministrador
+        ) ||
+        User.IsInRole(
+            ServicesConfiguration.RolAdministradorBancos
+        );
 }
 
 @section Styles
@@ -151,41 +162,72 @@
          class="eb-toolbar">
 
         <!-- Nueva empresa -->
-        <button type="button"
-                id="btnNuevaEmpresa"
-                class="btn eb-toolbar-action"
-                title="Nueva empresa"
-                aria-label="Nueva empresa">
+        @if (Model.PermisosCompliance.PuedeCrearCargar)
+        {
+            <button type="button"
+                    id="btnNuevaEmpresa"
+                    class="btn eb-toolbar-action"
+                    title="Nueva empresa"
+                    aria-label="Nueva empresa">
 
-            <span class="eb-toolbar-plus"
-                  aria-hidden="true"></span>
-        </button>
+                <span class="eb-toolbar-plus"
+                      aria-hidden="true">
+                </span>
+
+            </button>
+        }
 
         <!-- Eliminar empresas -->
-        <button type="button"
-                id="btnEliminarSeleccionadas"
-                class="btn eb-toolbar-action"
-                title="Eliminar empresas seleccionadas"
-                aria-label="Eliminar empresas seleccionadas"
-                disabled>
+        @if (Model.PermisosCompliance.PuedeEliminar)
+        {
+            <button type="button"
+                    id="btnEliminarSeleccionadas"
+                    class="btn eb-toolbar-action"
+                    title="Eliminar empresas seleccionadas"
+                    aria-label="Eliminar empresas seleccionadas"
+                    disabled>
 
-            <span class="eb-toolbar-trash"
-                  aria-hidden="true"></span>
-        </button>
+                <span class="eb-toolbar-trash"
+                      aria-hidden="true">
+                </span>
+
+            </button>
+        }
 
         <!-- Dashboard -->
-        <a asp-area="ExpedientesBancarios"
-               asp-page="/Dashboard/Index"
-               class="btn eb-dashboard-access"
-               title="Dashboard de expedientes"
-               aria-label="Dashboard de expedientes">
+        @if (Model.PermisosCompliance.EsAdministrador)
+        {
+            <a asp-area="ExpedientesBancarios"
+                   asp-page="/Dashboard/Index"
+                   class="btn eb-dashboard-access"
+                   title="Dashboard de Compliance"
+                   aria-label="Dashboard de Compliance">
 
-            <i class="fa-solid fa-chart-column"></i>
+                <i class="fa-solid fa-chart-column"></i>
 
-            <span>
-                Dashboard
-            </span>
-        </a>
+                <span>
+                    Dashboard
+                </span>
+
+            </a>
+        }
+
+        @if (Model.PermisosCompliance.PuedeAdministrarPermisos)
+        {
+            <button type="button"
+                    id="btnPermisosCompliance"
+                    class="btn eb-dashboard-access"
+                    title="Administrar permisos de Compliance"
+                    aria-label="Administrar permisos de Compliance">
+
+                <i class="fa-solid fa-user-shield"></i>
+
+                <span>
+                    Permisos
+                </span>
+
+            </button>
+        }
 
     </div>
 
@@ -250,6 +292,271 @@
     </div>
 
 </div>
+
+@if (puedeAdministrarPermisosCompliance)
+{
+    <!-- =========================================================
+         MODAL PERMISOS COMPLIANCE
+         ========================================================= -->
+    <div class="modal fade"
+         id="modalPermisosCompliance"
+         tabindex="-1"
+         aria-labelledby="modalPermisosComplianceTitulo"
+         aria-hidden="true">
+
+        <div class="modal-dialog
+            modal-xl
+            modal-dialog-centered
+            modal-dialog-scrollable">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <div>
+                        <h5 class="modal-title"
+                            id="modalPermisosComplianceTitulo">
+
+                            <i class="fa-solid fa-user-shield me-2"></i>
+                            Permisos Compliance
+
+                        </h5>
+
+                        <p class="eb-modal-subtitle mb-0">
+                            Asigna permisos individuales a los usuarios
+                            autorizados para utilizar el módulo.
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <!-- Buscador de usuarios -->
+                    <section class="eb-permissions-search">
+
+                        <div class="eb-permissions-search-heading">
+
+                            <div class="eb-permissions-search-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+
+                            <div>
+                                <h6>
+                                    Buscar usuario
+                                </h6>
+
+                                <p>
+                                    Filtra por nombre, correo electrónico o rol.
+                                </p>
+                            </div>
+
+                        </div>
+
+                        <div class="eb-permissions-search-controls">
+
+                            <div class="eb-permissions-search-input">
+
+                                <i class="fa-solid fa-magnifying-glass"></i>
+
+                                <input type="text"
+                                       id="buscarUsuarioCompliance"
+                                       class="form-control"
+                                       placeholder="Escribe un nombre, correo o rol..."
+                                       autocomplete="off" />
+
+                                <button type="button"
+                                        id="btnBorrarTextoPermisos"
+                                        class="eb-permissions-search-clear"
+                                        title="Borrar búsqueda"
+                                        aria-label="Borrar búsqueda">
+
+                                    <i class="fa-solid fa-xmark"></i>
+
+                                </button>
+
+                            </div>
+
+                            <button type="button"
+                                    id="btnLimpiarBusquedaPermisos"
+                                    class="btn eb-permissions-clear-button">
+
+                                <i class="fa-solid fa-rotate-left"></i>
+
+                                <span>
+                                    Restablecer
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </section>
+
+                    <!-- Información -->
+                    <div class="alert alert-info"
+                         role="alert">
+
+                        <div class="d-flex gap-2">
+
+                            <i class="fa-solid fa-circle-info mt-1"></i>
+
+                            <div>
+                                <strong>
+                                    Accesos administrativos
+                                </strong>
+
+                                <div class="small mt-1">
+                                    Master, Administrador y Administrador
+                                    Bancos cuentan siempre con acceso total.
+                                    Sus permisos no pueden desactivarse.
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Cargando -->
+                    <div id="permisosComplianceCargando"
+                         class="eb-loading-state">
+
+                        <div class="spinner-border"
+                             role="status"
+                             aria-hidden="true">
+                        </div>
+
+                        <span>
+                            Consultando usuarios y permisos...
+                        </span>
+
+                    </div>
+
+                    <!-- Error -->
+                    <div id="permisosComplianceError"
+                         class="alert alert-danger d-none"
+                         role="alert">
+
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+                        <span id="permisosComplianceErrorMensaje">
+                            No fue posible consultar los permisos.
+                        </span>
+
+                    </div>
+
+                    <!-- Estado vacío -->
+                    <div id="permisosComplianceVacio"
+                         class="eb-empty-state d-none">
+
+                        <div class="eb-empty-icon">
+                            <i class="fa-solid fa-users-slash"></i>
+                        </div>
+
+                        <h3>
+                            No hay usuarios disponibles
+                        </h3>
+
+                        <p>
+                            No se encontraron usuarios disponibles.
+                        </p>
+
+                    </div>
+
+                    <!-- Tabla -->
+                    <div id="contenedorTablaPermisosCompliance"
+                         class="table-responsive d-none">
+
+                        <table class="table
+                            table-hover
+                            align-middle
+                            eb-permissions-table">
+
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Usuario
+                                    </th>
+
+                                    <th>
+                                        Rol
+                                    </th>
+
+                                    <th class="text-center">
+                                        Visualizar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Crear / Cargar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Modificar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Eliminar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Descargar
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="tablaPermisosComplianceBody">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <div class="me-auto">
+
+                        <span id="totalUsuariosPermisosCompliance"
+                              class="text-muted small">
+                            0 usuarios
+                        </span>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        <i class="fa-solid fa-xmark me-1"></i>
+                        Cerrar
+
+                    </button>
+
+                    <button type="button"
+                            id="btnGuardarPermisosCompliance"
+                            class="btn btn-primary"
+                            disabled>
+
+                        <i class="fa-solid fa-floppy-disk me-1"></i>
+                        Guardar permisos
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+}
 
 <!-- =========================================================
      MODAL CREAR / EDITAR / CONSULTAR EMPRESA
@@ -622,13 +929,17 @@
                         </p>
                     </div>
 
-                    <button type="button"
-                            id="btnNuevoAccionista"
-                            class="btn btn-primary">
+                    @if (Model.PermisosCompliance.PuedeCrearCargar)
+                    {
+                        <button type="button"
+                                id="btnNuevoAccionista"
+                                class="btn btn-primary">
 
-                        <i class="fa-solid fa-plus me-1"></i>
-                        Nuevo accionista
-                    </button>
+                            <i class="fa-solid fa-plus me-1"></i>
+                            Nuevo accionista
+
+                        </button>
+                    }
 
                 </div>
 
@@ -1944,6 +2255,28 @@
       class="d-none">
     @Html.AntiForgeryToken()
 </form>
+
+<script>
+    window.permisosCompliance = {
+        puedeVisualizar:
+            @Model.PermisosCompliance.PuedeVisualizar.ToString().ToLowerInvariant(),
+
+        puedeCrearCargar:
+            @Model.PermisosCompliance.PuedeCrearCargar.ToString().ToLowerInvariant(),
+
+        puedeModificar:
+            @Model.PermisosCompliance.PuedeModificar.ToString().ToLowerInvariant(),
+
+        puedeEliminar:
+            @Model.PermisosCompliance.PuedeEliminar.ToString().ToLowerInvariant(),
+
+        puedeDescargar:
+            @Model.PermisosCompliance.PuedeDescargar.ToString().ToLowerInvariant(),
+
+        esAdministrador:
+            @Model.PermisosCompliance.EsAdministrador.ToString().ToLowerInvariant()
+    };
+</script>
 
 @section Scripts
 {

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.Drawing;
+using ERPSEI.Services.Compliance;
 
 namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
 {
@@ -14,15 +15,28 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPermisosComplianceService _permisosComplianceService;
 
         public IndexModel(
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IPermisosComplianceService permisosComplianceService)
         {
             _context = context;
+            _permisosComplianceService = permisosComplianceService;
         }
 
-        public void OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
+            bool puedeAdministrar =
+                await _permisosComplianceService
+                    .EsAdministradorAsync(User);
+
+            if (!puedeAdministrar)
+            {
+                return Forbid();
+            }
+
+            return Page();
         }
 
         // =====================================================
@@ -35,6 +49,17 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
             DateTime? fechaInicio,
             DateTime? fechaFin)
         {
+
+            bool puedeAdministrar =
+            await _permisosComplianceService
+                .EsAdministradorAsync(
+                    User
+                );
+
+            if (!puedeAdministrar)
+            {
+                return Forbid();
+            }
             // =================================================
             // VALIDAR FECHAS
             // =================================================
@@ -597,6 +622,18 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
             DateTime? fechaInicio,
             DateTime? fechaFin)
         {
+
+            bool puedeAdministrar =
+        await _permisosComplianceService
+            .EsAdministradorAsync(
+                User
+            );
+
+            if (!puedeAdministrar)
+            {
+                return Forbid();
+            }
+
             if (!fechaInicio.HasValue)
             {
                 return new JsonResult(new

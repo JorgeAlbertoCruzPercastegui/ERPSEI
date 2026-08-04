@@ -53,12 +53,40 @@ let nombreTipoDocumentoHistorial = "";
 
 let modalSeleccionarBanco;
 
+/*
+ * Permisos Compliance.
+ */
+let modalPermisosCompliance;
+let usuariosPermisosCompliance = [];
+
+/*
+ * Contiene únicamente los identificadores de usuarios
+ * cuyos permisos fueron modificados.
+ */
+const usuariosPermisosModificados =
+    new Set();
+
 let documentoIdDescarga = 0;
 let nombreDocumentoDescarga = "";
 let regresarDocumentosDespuesDescarga = false;
 let regresarHistorialDespuesDescarga = false;
 
+const permisosCompliance =
+    window.permisosCompliance ?? {
+        puedeVisualizar: false,
+        puedeCrearCargar: false,
+        puedeModificar: false,
+        puedeEliminar: false,
+        puedeDescargar: false,
+        esAdministrador: false
+    };
+
 function inicializarEventosEmpresas() {
+
+    modalPermisosCompliance =
+        obtenerInstanciaModal(
+            "modalPermisosCompliance"
+        );
 
     modalSeleccionarBanco =
         obtenerInstanciaModal(
@@ -104,6 +132,101 @@ function inicializarEventosEmpresas() {
     modalDocumentos = obtenerInstanciaModal(
         "modalDocumentos"
     );
+
+    document
+        .getElementById(
+            "btnBorrarTextoPermisos"
+        )
+        ?.addEventListener(
+            "click",
+            function () {
+                const buscador =
+                    document.getElementById(
+                        "buscarUsuarioCompliance"
+                    );
+
+                if (buscador) {
+                    buscador.value = "";
+                    buscador.focus();
+                }
+
+                filtrarPermisosCompliance();
+            }
+    );
+
+    /*
+ * Abrir administración de permisos.
+ */
+    document
+        .getElementById(
+            "btnPermisosCompliance"
+        )
+        ?.addEventListener(
+            "click",
+            abrirPermisosCompliance
+        );
+
+    /*
+     * Guardar permisos.
+     */
+    document
+        .getElementById(
+            "btnGuardarPermisosCompliance"
+        )
+        ?.addEventListener(
+            "click",
+            guardarPermisosCompliance
+        );
+
+    /*
+     * Búsqueda inmediata.
+     */
+    document
+        .getElementById(
+            "buscarUsuarioCompliance"
+        )
+        ?.addEventListener(
+            "input",
+            filtrarPermisosCompliance
+        );
+
+    /*
+     * Limpiar búsqueda.
+     */
+    document
+        .getElementById(
+            "btnLimpiarBusquedaPermisos"
+        )
+        ?.addEventListener(
+            "click",
+            function () {
+                const buscador =
+                    document.getElementById(
+                        "buscarUsuarioCompliance"
+                    );
+
+                if (buscador) {
+                    buscador.value = "";
+                    buscador.focus();
+                }
+
+                filtrarPermisosCompliance();
+            }
+        );
+
+    /*
+     * Limpiar el estado al cerrar el modal.
+     */
+    document
+        .getElementById(
+            "modalPermisosCompliance"
+        )
+        ?.addEventListener(
+            "hidden.bs.modal",
+            function () {
+                limpiarPermisosCompliance();
+            }
+        );
 
     document
         .getElementById(
@@ -454,6 +577,901 @@ function obtenerInstanciaModal(id) {
     );
 }
 
+// =====================================================
+// PERMISOS COMPLIANCE
+// =====================================================
+
+async function abrirPermisosCompliance() {
+
+    if (!modalPermisosCompliance) {
+        console.error(
+            "No se encontró el modal de permisos Compliance."
+        );
+
+        mostrarResultado(
+            "No fue posible abrir la administración de permisos.",
+            "error"
+        );
+
+        return;
+    }
+
+    limpiarPermisosCompliance();
+    mostrarCargaPermisosCompliance();
+
+    modalPermisosCompliance.show();
+
+    await cargarPermisosCompliance();
+}
+
+async function cargarPermisosCompliance() {
+
+    try {
+        const parametros =
+            new URLSearchParams({
+                handler:
+                    "PermisosCompliance"
+            });
+
+        const response =
+            await fetch(
+                `${window.location.pathname}?${parametros.toString()}`,
+                {
+                    method: "GET",
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
+
+        if (!response.ok) {
+
+            let mensaje =
+                "No fue posible consultar los permisos.";
+
+            if (response.status === 403) {
+                mensaje =
+                    "No tienes autorización para administrar los permisos de Compliance.";
+            }
+
+            throw new Error(mensaje);
+        }
+
+        const resultado =
+            await response.json();
+
+        if (!resultado.success) {
+            mostrarErrorPermisosCompliance(
+                resultado.message ??
+                "No fue posible consultar los permisos."
+            );
+
+            return;
+        }
+
+        usuariosPermisosCompliance =
+            Array.isArray(resultado.data)
+                ? resultado.data
+                : [];
+
+        renderizarPermisosCompliance(
+            usuariosPermisosCompliance
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        mostrarErrorPermisosCompliance(
+            error?.message ??
+            "Ocurrió un error al consultar los permisos."
+        );
+    }
+}
+
+function renderizarPermisosCompliance(
+    usuarios
+) {
+    const cuerpo =
+        document.getElementById(
+            "tablaPermisosComplianceBody"
+        );
+
+    const carga =
+        document.getElementById(
+            "permisosComplianceCargando"
+        );
+
+    const error =
+        document.getElementById(
+            "permisosComplianceError"
+        );
+
+    const vacio =
+        document.getElementById(
+            "permisosComplianceVacio"
+        );
+
+    const contenedor =
+        document.getElementById(
+            "contenedorTablaPermisosCompliance"
+        );
+
+    const botonGuardar =
+        document.getElementById(
+            "btnGuardarPermisosCompliance"
+        );
+
+    carga?.classList.add(
+        "d-none"
+    );
+
+    error?.classList.add(
+        "d-none"
+    );
+
+    /*
+     * Al volver a renderizar, todavía no hay
+     * modificaciones pendientes.
+     */
+    usuariosPermisosModificados.clear();
+
+    if (!cuerpo) {
+        return;
+    }
+
+    if (
+        !Array.isArray(usuarios) ||
+        usuarios.length === 0
+    ) {
+        cuerpo.innerHTML = "";
+
+        contenedor?.classList.add(
+            "d-none"
+        );
+
+        vacio?.classList.remove(
+            "d-none"
+        );
+
+        if (botonGuardar) {
+            botonGuardar.disabled = true;
+        }
+
+        actualizarTotalUsuariosPermisos(
+            0
+        );
+
+        return;
+    }
+
+    vacio?.classList.add(
+        "d-none"
+    );
+
+    contenedor?.classList.remove(
+        "d-none"
+    );
+
+    /*
+     * El botón solo se habilitará cuando cambie
+     * al menos un checkbox.
+     */
+    if (botonGuardar) {
+        botonGuardar.disabled = true;
+    }
+
+    cuerpo.innerHTML =
+        usuarios
+            .map(
+                function (usuario) {
+                    const esAdministrador =
+                        Boolean(
+                            usuario.esAdministrador
+                        );
+
+                    const puedeEditar =
+                        Boolean(
+                            usuario.puedeEditarPermisos
+                        );
+
+                    const claseFila =
+                        esAdministrador
+                            ? "eb-permission-admin-row"
+                            : "";
+
+                    const roles =
+                        Array.isArray(usuario.roles)
+                            ? usuario.roles
+                            : [];
+
+                    const htmlRoles =
+                        roles.length > 0
+                            ? roles
+                                .map(
+                                    function (rol) {
+                                        const claseRol =
+                                            esAdministrador
+                                                ? "eb-permission-role-admin"
+                                                : "";
+
+                                        return `
+                                            <span class="
+                                                eb-permission-role
+                                                ${claseRol}
+                                            ">
+                                                ${escaparHtml(
+                                            rol
+                                        )}
+                                            </span>
+                                        `;
+                                    }
+                                )
+                                .join("")
+                            : `
+                                <span class="text-muted small">
+                                    Sin rol
+                                </span>
+                            `;
+
+                    return `
+                        <tr class="${claseFila}"
+                            data-permiso-usuario-id="${escaparHtml(
+                        usuario.id
+                    )}"
+                            data-permiso-busqueda="${escaparHtml(
+                        obtenerTextoBusquedaPermiso(
+                            usuario
+                        )
+                    )}">
+
+                            <td>
+                                <div class="eb-permission-user">
+
+                                    <strong>
+                                        ${escaparHtml(
+                        usuario.nombre
+                    )}
+                                    </strong>
+
+                                    <span>
+                                        ${escaparHtml(
+                        usuario.correo
+                    )}
+                                    </span>
+
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="eb-permission-roles">
+                                    ${htmlRoles}
+                                </div>
+                            </td>
+
+                            ${crearCeldaPermisoCompliance(
+                        usuario.id,
+                        "puedeVisualizar",
+                        usuario.puedeVisualizar,
+                        puedeEditar,
+                        esAdministrador
+                    )}
+
+                            ${crearCeldaPermisoCompliance(
+                        usuario.id,
+                        "puedeCrearCargar",
+                        usuario.puedeCrearCargar,
+                        puedeEditar,
+                        esAdministrador
+                    )}
+
+                            ${crearCeldaPermisoCompliance(
+                        usuario.id,
+                        "puedeModificar",
+                        usuario.puedeModificar,
+                        puedeEditar,
+                        esAdministrador
+                    )}
+
+                            ${crearCeldaPermisoCompliance(
+                        usuario.id,
+                        "puedeEliminar",
+                        usuario.puedeEliminar,
+                        puedeEditar,
+                        esAdministrador
+                    )}
+
+                            ${crearCeldaPermisoCompliance(
+                        usuario.id,
+                        "puedeDescargar",
+                        usuario.puedeDescargar,
+                        puedeEditar,
+                        esAdministrador
+                    )}
+
+                        </tr>
+                    `;
+                }
+            )
+            .join("");
+
+    actualizarTotalUsuariosPermisos(
+        usuarios.length
+    );
+
+    actualizarEstadoBotonGuardarPermisos();
+}
+
+function crearCeldaPermisoCompliance(
+    usuarioId,
+    permiso,
+    marcado,
+    puedeEditar,
+    esAdministrador
+) {
+    const checked =
+        marcado
+            ? "checked"
+            : "";
+
+    const disabled =
+        puedeEditar
+            ? ""
+            : "disabled";
+
+    return `
+        <td class="text-center">
+
+            <div class="eb-permission-checkbox">
+
+                <input type="checkbox"
+                       class="form-check-input"
+                       data-permiso-usuario="${escaparHtml(
+        usuarioId
+    )}"
+                       data-permiso-campo="${permiso}"
+                       onchange="marcarUsuarioPermisoModificado(
+                           '${escaparAtributoJs(usuarioId)}'
+                       )"
+                       ${checked}
+                       ${disabled} />
+
+            </div>
+
+        </td>
+    `;
+}
+
+function marcarUsuarioPermisoModificado(
+    usuarioId
+) {
+    const id =
+        String(usuarioId ?? "")
+            .trim();
+
+    if (id === "") {
+        return;
+    }
+
+    usuariosPermisosModificados.add(
+        id
+    );
+
+    const fila =
+        document.querySelector(
+            `[data-permiso-usuario-id="${escaparSelectorCss(
+                id
+            )}"]`
+        );
+
+    fila?.classList.add(
+        "eb-permission-row-modified"
+    );
+
+    actualizarEstadoBotonGuardarPermisos();
+}
+
+function actualizarEstadoBotonGuardarPermisos() {
+    const boton =
+        document.getElementById(
+            "btnGuardarPermisosCompliance"
+        );
+
+    if (!boton) {
+        return;
+    }
+
+    boton.disabled =
+        usuariosPermisosModificados.size === 0;
+}
+
+function obtenerTextoBusquedaPermiso(
+    usuario
+) {
+    const roles =
+        Array.isArray(usuario.roles)
+            ? usuario.roles.join(" ")
+            : "";
+
+    return normalizarTextoBusqueda(
+        `${usuario.nombre ?? ""} ` +
+        `${usuario.correo ?? ""} ` +
+        `${roles}`
+    );
+}
+
+function filtrarPermisosCompliance() {
+
+    const busqueda =
+        normalizarTextoBusqueda(
+            document
+                .getElementById(
+                    "buscarUsuarioCompliance"
+                )
+                ?.value ??
+            ""
+        );
+
+    const filas =
+        document.querySelectorAll(
+            "#tablaPermisosComplianceBody tr"
+        );
+
+    let totalVisibles = 0;
+
+    filas.forEach(
+        function (fila) {
+
+            const texto =
+                fila.dataset
+                    .permisoBusqueda ??
+                "";
+
+            const visible =
+                busqueda === "" ||
+                texto.includes(
+                    busqueda
+                );
+
+            fila.classList.toggle(
+                "d-none",
+                !visible
+            );
+
+            if (visible) {
+                totalVisibles++;
+            }
+        }
+    );
+
+    actualizarTotalUsuariosPermisos(
+        totalVisibles
+    );
+
+    const vacio =
+        document.getElementById(
+            "permisosComplianceVacio"
+        );
+
+    const contenedor =
+        document.getElementById(
+            "contenedorTablaPermisosCompliance"
+        );
+
+    if (
+        filas.length > 0 &&
+        totalVisibles === 0
+    ) {
+        contenedor?.classList.add(
+            "d-none"
+        );
+
+        vacio?.classList.remove(
+            "d-none"
+        );
+
+        const tituloVacio =
+            vacio?.querySelector(
+                "h3"
+            );
+
+        const textoVacio =
+            vacio?.querySelector(
+                "p"
+            );
+
+        if (tituloVacio) {
+            tituloVacio.textContent =
+                "No se encontraron coincidencias";
+        }
+
+        if (textoVacio) {
+            textoVacio.textContent =
+                "No hay usuarios que coincidan con la búsqueda capturada.";
+        }
+    } else {
+        vacio?.classList.add(
+            "d-none"
+        );
+
+        if (filas.length > 0) {
+            contenedor?.classList.remove(
+                "d-none"
+            );
+        }
+    }
+}
+
+function normalizarTextoBusqueda(
+    texto
+) {
+    return String(
+        texto ??
+        ""
+    )
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        )
+        .toLowerCase()
+        .trim();
+}
+
+async function guardarPermisosCompliance() {
+
+    const boton =
+        document.getElementById(
+            "btnGuardarPermisosCompliance"
+        );
+
+    if (!boton) {
+        return;
+    }
+
+    const permisos =
+        obtenerPermisosComplianceFormulario();
+
+    if (permisos.length === 0) {
+        mostrarResultado(
+            "No se detectaron cambios en los permisos.",
+            "error"
+        );
+
+        return;
+    }
+
+    const htmlOriginal =
+        boton.innerHTML;
+
+    boton.disabled = true;
+
+    boton.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin me-1"></i>' +
+        " Guardando...";
+
+    try {
+        const resultado =
+            await enviarJson(
+                "GuardarPermisosCompliance",
+                {
+                    permisos:
+                        permisos
+                }
+            );
+
+        if (!resultado.success) {
+            mostrarResultado(
+                resultado.message ??
+                "No fue posible guardar los permisos.",
+                "error"
+            );
+
+            return;
+        }
+
+        usuariosPermisosModificados.clear();
+
+        modalPermisosCompliance?.hide();
+
+        mostrarResultado(
+            resultado.message ??
+            "Los permisos se guardaron correctamente.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        mostrarResultado(
+            "Ocurrió un error al guardar los permisos de Compliance.",
+            "error"
+        );
+
+    } finally {
+        boton.disabled = false;
+        boton.innerHTML = htmlOriginal;
+    }
+}
+
+function obtenerPermisosComplianceFormulario() {
+    const usuariosEditables =
+        usuariosPermisosCompliance.filter(
+            function (usuario) {
+                return (
+                    usuario.puedeEditarPermisos &&
+                    usuariosPermisosModificados.has(
+                        String(usuario.id)
+                    )
+                );
+            }
+        );
+
+    return usuariosEditables.map(
+        function (usuario) {
+            return {
+                usuarioId:
+                    usuario.id,
+
+                puedeVisualizar:
+                    obtenerValorCheckboxPermiso(
+                        usuario.id,
+                        "puedeVisualizar"
+                    ),
+
+                puedeCrearCargar:
+                    obtenerValorCheckboxPermiso(
+                        usuario.id,
+                        "puedeCrearCargar"
+                    ),
+
+                puedeModificar:
+                    obtenerValorCheckboxPermiso(
+                        usuario.id,
+                        "puedeModificar"
+                    ),
+
+                puedeEliminar:
+                    obtenerValorCheckboxPermiso(
+                        usuario.id,
+                        "puedeEliminar"
+                    ),
+
+                puedeDescargar:
+                    obtenerValorCheckboxPermiso(
+                        usuario.id,
+                        "puedeDescargar"
+                    )
+            };
+        }
+    );
+}
+
+function obtenerValorCheckboxPermiso(
+    usuarioId,
+    campo
+) {
+    const selector =
+        `[data-permiso-usuario="${escaparSelectorCss(
+            usuarioId
+        )}"]` +
+        `[data-permiso-campo="${campo}"]`;
+
+    const checkbox =
+        document.querySelector(
+            selector
+        );
+
+    return Boolean(
+        checkbox?.checked
+    );
+}
+
+function escaparSelectorCss(
+    valor
+) {
+    const texto =
+        String(
+            valor ??
+            ""
+        );
+
+    if (
+        window.CSS &&
+        typeof window.CSS.escape ===
+        "function"
+    ) {
+        return window.CSS.escape(
+            texto
+        );
+    }
+
+    return texto.replace(
+        /["\\]/g,
+        "\\$&"
+    );
+}
+
+function mostrarCargaPermisosCompliance() {
+
+    document
+        .getElementById(
+            "permisosComplianceCargando"
+        )
+        ?.classList.remove(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "permisosComplianceError"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "permisosComplianceVacio"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "contenedorTablaPermisosCompliance"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    const boton =
+        document.getElementById(
+            "btnGuardarPermisosCompliance"
+        );
+
+    if (boton) {
+        boton.disabled = true;
+    }
+}
+
+function mostrarErrorPermisosCompliance(
+    mensaje
+) {
+    document
+        .getElementById(
+            "permisosComplianceCargando"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "contenedorTablaPermisosCompliance"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "permisosComplianceVacio"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    const alerta =
+        document.getElementById(
+            "permisosComplianceError"
+        );
+
+    const texto =
+        document.getElementById(
+            "permisosComplianceErrorMensaje"
+        );
+
+    if (texto) {
+        texto.textContent =
+            mensaje;
+    }
+
+    alerta?.classList.remove(
+        "d-none"
+    );
+
+    const boton =
+        document.getElementById(
+            "btnGuardarPermisosCompliance"
+        );
+
+    if (boton) {
+        boton.disabled = true;
+    }
+}
+
+function limpiarPermisosCompliance() {
+
+    usuariosPermisosModificados.clear();
+    usuariosPermisosCompliance = [];
+
+    const cuerpo =
+        document.getElementById(
+            "tablaPermisosComplianceBody"
+        );
+
+    if (cuerpo) {
+        cuerpo.innerHTML = "";
+    }
+
+    const buscador =
+        document.getElementById(
+            "buscarUsuarioCompliance"
+        );
+
+    if (buscador) {
+        buscador.value = "";
+    }
+
+    document
+        .getElementById(
+            "permisosComplianceCargando"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "permisosComplianceError"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "permisosComplianceVacio"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "contenedorTablaPermisosCompliance"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    actualizarTotalUsuariosPermisos(
+        0
+    );
+}
+
+function actualizarTotalUsuariosPermisos(
+    total
+) {
+    const elemento =
+        document.getElementById(
+            "totalUsuariosPermisosCompliance"
+        );
+
+    if (!elemento) {
+        return;
+    }
+
+    elemento.textContent =
+        total === 1
+            ? "1 usuario"
+            : `${total} usuarios`;
+}
+
 function inicializarTablaEmpresas() {
     const tabla = $("#tablaEmpresas");
 
@@ -614,48 +1632,52 @@ function estatusEmpresaFormatter(value, row) {
 }
 
 function accionesEmpresaFormatter(value, row) {
-    const accionEstatus = row.deshabilitado
-        ? "Habilitar"
-        : "Deshabilitar";
 
-    const iconoEstatus = row.deshabilitado
-        ? "fa-circle-check"
-        : "fa-ban";
+    const accionEstatus =
+        row.deshabilitado
+            ? "Habilitar"
+            : "Deshabilitar";
 
-    return `
-    <div class="dropdown eb-actions-dropdown">
+    const iconoEstatus =
+        row.deshabilitado
+            ? "fa-circle-check"
+            : "fa-ban";
 
-        <button type="button"
-                class="btn btn-sm eb-action-button"
-                data-bs-toggle="dropdown"
-                data-bs-boundary="viewport"
-                data-bs-offset="8,0"
-                aria-expanded="false"
-                title="Acciones">
-
-            <span class="eb-action-dots">⋮</span>
-        </button>
-
-        <ul class="dropdown-menu eb-actions-menu">
-
+    const opcionConsultar =
+        permisosCompliance.puedeVisualizar
+            ? `
                 <li>
                     <button type="button"
                             class="dropdown-item"
                             onclick="consultarEmpresa(${row.id})">
+
                         <i class="fa-regular fa-eye me-2"></i>
                         Consultar empresa
+
                     </button>
                 </li>
+            `
+            : "";
 
+    const opcionEditar =
+        permisosCompliance.puedeModificar
+            ? `
                 <li>
                     <button type="button"
                             class="dropdown-item"
                             onclick="editarEmpresa(${row.id})">
+
                         <i class="fa-regular fa-pen-to-square me-2"></i>
                         Editar empresa
+
                     </button>
                 </li>
+            `
+            : "";
 
+    const opcionAccionistas =
+        permisosCompliance.puedeVisualizar
+            ? `
                 <li>
                     <button type="button"
                             class="dropdown-item"
@@ -663,11 +1685,18 @@ function accionesEmpresaFormatter(value, row) {
                                 ${row.id},
                                 '${escaparAtributoJs(row.razonSocial)}'
                             )">
+
                         <i class="fa-solid fa-users me-2"></i>
                         Accionistas
+
                     </button>
                 </li>
+            `
+            : "";
 
+    const opcionDocumentos =
+        permisosCompliance.puedeVisualizar
+            ? `
                 <li>
                     <button type="button"
                             class="dropdown-item"
@@ -678,22 +1707,31 @@ function accionesEmpresaFormatter(value, row) {
 
                         <i class="fa-regular fa-folder-open me-2"></i>
                         Documentos
+
                     </button>
                 </li>
+            `
+            : "";
 
-                <li>
-                    <hr class="dropdown-divider" />
-                </li>
-
+    const opcionCambiarEstatus =
+        permisosCompliance.puedeModificar
+            ? `
                 <li>
                     <button type="button"
                             class="dropdown-item"
                             onclick="cambiarEstatusEmpresa(${row.id})">
+
                         <i class="fa-solid ${iconoEstatus} me-2"></i>
                         ${accionEstatus}
+
                     </button>
                 </li>
+            `
+            : "";
 
+    const opcionEliminar =
+        permisosCompliance.puedeEliminar
+            ? `
                 <li>
                     <button type="button"
                             class="dropdown-item text-danger"
@@ -701,12 +1739,51 @@ function accionesEmpresaFormatter(value, row) {
                                 ${row.id},
                                 '${escaparAtributoJs(row.razonSocial)}'
                             )">
+
                         <i class="fa-regular fa-trash-can me-2"></i>
                         Eliminar
+
                     </button>
                 </li>
+            `
+            : "";
+
+    const mostrarSeparador =
+        permisosCompliance.puedeModificar ||
+        permisosCompliance.puedeEliminar;
+
+    return `
+        <div class="dropdown eb-actions-dropdown">
+
+            <button type="button"
+                    class="btn btn-sm eb-action-button"
+                    data-bs-toggle="dropdown"
+                    data-bs-boundary="viewport"
+                    data-bs-offset="8,0"
+                    aria-expanded="false"
+                    title="Acciones">
+
+                <span class="eb-action-dots">⋮</span>
+
+            </button>
+
+            <ul class="dropdown-menu eb-actions-menu">
+
+                ${opcionConsultar}
+                ${opcionEditar}
+                ${opcionAccionistas}
+                ${opcionDocumentos}
+
+                ${mostrarSeparador
+            ? `<li><hr class="dropdown-divider" /></li>`
+            : ""
+        }
+
+                ${opcionCambiarEstatus}
+                ${opcionEliminar}
 
             </ul>
+
         </div>
     `;
 }
@@ -1359,144 +2436,240 @@ function renderizarAccionistas(accionistas) {
         return;
     }
 
-    if (!Array.isArray(accionistas) ||
-        accionistas.length === 0) {
-
+    if (
+        !Array.isArray(accionistas) ||
+        accionistas.length === 0
+    ) {
         cuerpo.innerHTML = "";
 
-        contenedorTabla?.classList.add("d-none");
-        estadoVacio?.classList.remove("d-none");
+        contenedorTabla?.classList.add(
+            "d-none"
+        );
+
+        estadoVacio?.classList.remove(
+            "d-none"
+        );
 
         return;
     }
 
-    estadoVacio?.classList.add("d-none");
-    contenedorTabla?.classList.remove("d-none");
+    estadoVacio?.classList.add(
+        "d-none"
+    );
 
-    cuerpo.innerHTML = accionistas.map(function (accionista) {
-        const representante = accionista.esRepresentanteLegal
-            ? `
-                <span class="eb-status eb-status-representative">
-                    Sí
-                </span>
-            `
-            : `
-                <span class="text-muted">
-                    No
-                </span>
+    contenedorTabla?.classList.remove(
+        "d-none"
+    );
+
+    cuerpo.innerHTML = accionistas.map(
+        function (accionista) {
+            const representante =
+                accionista.esRepresentanteLegal
+                    ? `
+                        <span class="
+                            eb-status
+                            eb-status-representative
+                        ">
+                            Sí
+                        </span>
+                    `
+                    : `
+                        <span class="text-muted">
+                            No
+                        </span>
+                    `;
+
+            const estatus =
+                accionista.deshabilitado
+                    ? `
+                        <span class="
+                            eb-status
+                            eb-status-inactive
+                        ">
+                            Inactivo
+                        </span>
+                    `
+                    : `
+                        <span class="
+                            eb-status
+                            eb-status-active
+                        ">
+                            Activo
+                        </span>
+                    `;
+
+            const accionEstatus =
+                accionista.deshabilitado
+                    ? "Habilitar"
+                    : "Deshabilitar";
+
+            const opcionConsultar =
+                permisosCompliance.puedeVisualizar
+                    ? `
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item"
+                                    onclick="consultarAccionista(
+                                        ${accionista.id}
+                                    )">
+
+                                Consultar
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            const opcionEditar =
+                permisosCompliance.puedeModificar
+                    ? `
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item"
+                                    onclick="editarAccionista(
+                                        ${accionista.id}
+                                    )">
+
+                                Editar
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            const opcionEstatus =
+                permisosCompliance.puedeModificar
+                    ? `
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item"
+                                    onclick="cambiarEstatusAccionista(
+                                        ${accionista.id}
+                                    )">
+
+                                ${accionEstatus}
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            const opcionEliminar =
+                permisosCompliance.puedeEliminar
+                    ? `
+                        <li>
+                            <hr class="dropdown-divider" />
+                        </li>
+
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item text-danger"
+                                    onclick="confirmarEliminarAccionista(
+                                        ${accionista.id},
+                                        '${escaparAtributoJs(
+                        accionista.nombreCompleto
+                    )}'
+                                    )">
+
+                                Eliminar
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            const tieneAcciones =
+                opcionConsultar !== "" ||
+                opcionEditar !== "" ||
+                opcionEstatus !== "" ||
+                opcionEliminar !== "";
+
+            const menuAcciones =
+                tieneAcciones
+                    ? `
+                        <div class="
+                            dropdown
+                            eb-accionista-actions-dropdown
+                        ">
+
+                            <button type="button"
+                                    class="btn btn-sm eb-action-button"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-display="static"
+                                    aria-expanded="false"
+                                    title="Acciones">
+
+                                <span class="eb-action-dots">
+                                    ⋮
+                                </span>
+
+                            </button>
+
+                            <ul class="
+                                dropdown-menu
+                                dropdown-menu-end
+                                eb-accionista-actions-menu
+                            ">
+                                ${opcionConsultar}
+                                ${opcionEditar}
+                                ${opcionEstatus}
+                                ${opcionEliminar}
+                            </ul>
+
+                        </div>
+                    `
+                    : `
+                        <span class="text-muted">
+                            Sin acciones
+                        </span>
+                    `;
+
+            return `
+                <tr>
+
+                    <td>
+                        <strong>
+                            ${escaparHtml(
+                accionista.nombreCompleto
+            )}
+                        </strong>
+                    </td>
+
+                    <td>
+                        ${valorTexto(accionista.rfc)}
+                    </td>
+
+                    <td class="text-end">
+                        ${formatearPorcentaje(
+                accionista.porcentajeParticipacion
+            )}
+                    </td>
+
+                    <td>
+                        ${valorTexto(
+                accionista.nacionalidad
+            )}
+                    </td>
+
+                    <td class="text-center">
+                        ${representante}
+                    </td>
+
+                    <td class="text-center">
+                        ${estatus}
+                    </td>
+
+                    <td class="
+                        text-center
+                        eb-accionista-actions-cell
+                    ">
+                        ${menuAcciones}
+                    </td>
+
+                </tr>
             `;
-
-        const estatus = accionista.deshabilitado
-            ? `
-                <span class="eb-status eb-status-inactive">
-                    Inactivo
-                </span>
-            `
-            : `
-                <span class="eb-status eb-status-active">
-                    Activo
-                </span>
-            `;
-
-        const accionEstatus = accionista.deshabilitado
-            ? "Habilitar"
-            : "Deshabilitar";
-
-        return `
-            <tr>
-                <td>
-                    <strong>
-                        ${escaparHtml(
-            accionista.nombreCompleto
-        )}
-                    </strong>
-                </td>
-
-                <td>
-                    ${valorTexto(accionista.rfc)}
-                </td>
-
-                <td class="text-end">
-                    ${formatearPorcentaje(
-            accionista.porcentajeParticipacion
-        )}
-                </td>
-
-                <td>
-                    ${valorTexto(accionista.nacionalidad)}
-                </td>
-
-                <td class="text-center">
-                    ${representante}
-                </td>
-
-                <td class="text-center">
-                    ${estatus}
-                </td>
-
-                <td class="text-center eb-accionista-actions-cell">
-                    <div class="dropdown eb-accionista-actions-dropdown">
-
-                        <button type="button"
-                                class="btn btn-sm eb-action-button"
-                                data-bs-toggle="dropdown"
-                                data-bs-display="static"
-                                aria-expanded="false"
-                                title="Acciones">
-
-                            <span class="eb-action-dots">⋮</span>
-                        </button>
-
-                        <ul class="dropdown-menu dropdown-menu-end eb-accionista-actions-menu">
-
-                            <li>
-                                <button type="button"
-                                        class="dropdown-item"
-                                        onclick="consultarAccionista(${accionista.id})">
-                                    Consultar
-                                </button>
-                            </li>
-
-                            <li>
-                                <button type="button"
-                                        class="dropdown-item"
-                                        onclick="editarAccionista(${accionista.id})">
-                                    Editar
-                                </button>
-                            </li>
-
-                            <li>
-                                <button type="button"
-                                        class="dropdown-item"
-                                        onclick="cambiarEstatusAccionista(${accionista.id})">
-                                    ${accionEstatus}
-                                </button>
-                            </li>
-
-                            <li>
-                                <hr class="dropdown-divider" />
-                            </li>
-
-                            <li>
-                                <button type="button"
-                                        class="dropdown-item text-danger"
-                                        onclick="confirmarEliminarAccionista(
-                                            ${accionista.id},
-                                            '${escaparAtributoJs(
-                                                accionista.nombreCompleto
-                                            )}'
-                                        )">
-                                    Eliminar
-                                </button>
-                            </li>
-
-                        </ul>
-
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join("");
+        }
+    ).join("");
 }
 
 function limpiarListadoAccionistas() {
@@ -2504,7 +3677,9 @@ function renderizarMatrizDocumental(documentos) {
     matriz.innerHTML = documentos.map(
         function (documento) {
             const totalArchivos =
-                Number(documento.totalArchivos ?? 0);
+                Number(
+                    documento.totalArchivos ?? 0
+                );
 
             const tieneArchivos =
                 totalArchivos > 0;
@@ -2514,26 +3689,228 @@ function renderizarMatrizDocumental(documentos) {
                     documento.estatus
                 );
 
-            const textoPrincipal = tieneArchivos
-                ? totalArchivos === 1
-                    ? "1 archivo cargado"
-                    : `${totalArchivos} archivos cargados`
-                : "Selecciona un archivo";
+            const textoPrincipal =
+                tieneArchivos
+                    ? totalArchivos === 1
+                        ? "1 archivo cargado"
+                        : `${totalArchivos} archivos cargados`
+                    : "Selecciona un archivo";
 
-            const textoSecundario = tieneArchivos
-                ? "Haz clic para consultar los archivos"
-                : "Haz clic para cargar el documento";
+            const textoSecundario =
+                tieneArchivos
+                    ? "Haz clic para consultar los archivos"
+                    : permisosCompliance.puedeCrearCargar
+                        ? "Haz clic para cargar el documento"
+                        : "No tienes permiso para cargar documentos";
 
-            const accionTarjeta = tieneArchivos
-                ? `seleccionarTipoDocumento(${documento.id})`
-                : `prepararCargaDocumento(${documento.id})`;
+            /*
+             * La tarjeta puede abrirse:
+             *
+             * - Cuando hay archivos y puede visualizar.
+             * - Cuando está pendiente y puede cargar.
+             */
+            const puedeAbrirDocumento =
+                tieneArchivos
+                    ? permisosCompliance.puedeVisualizar
+                    : permisosCompliance.puedeCrearCargar;
+
+            const accionTarjeta =
+                puedeAbrirDocumento
+                    ? tieneArchivos
+                        ? `seleccionarTipoDocumento(${documento.id})`
+                        : `prepararCargaDocumento(${documento.id})`
+                    : "";
+
+            const atributoClick =
+                accionTarjeta
+                    ? `onclick="${accionTarjeta}"`
+                    : "";
+
+            const atributoDisabled =
+                puedeAbrirDocumento
+                    ? ""
+                    : "disabled";
+
+            const claseSinPermiso =
+                puedeAbrirDocumento
+                    ? ""
+                    : "eb-document-card-disabled";
+
+            /*
+             * Visualizar documento.
+             */
+            const opcionVisualizarArchivo =
+                tieneArchivos &&
+                    permisosCompliance.puedeVisualizar
+                    ? `
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item"
+                                    onclick="event.stopPropagation();
+                                             seleccionarTipoDocumento(
+                                                 ${documento.id}
+                                             )">
+
+                                <i class="fa-regular fa-eye me-2"></i>
+                                Visualizar archivo
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            /*
+             * Cargar documento o nueva versión.
+             */
+            const opcionCargarArchivo =
+                permisosCompliance.puedeCrearCargar
+                    ? `
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item"
+                                    onclick="event.stopPropagation();
+                                             prepararCargaDocumento(
+                                                 ${documento.id}
+                                             )">
+
+                                <i class="fa-solid fa-cloud-arrow-up me-2"></i>
+
+                                ${tieneArchivos
+                        ? "Cargar nueva versión"
+                        : "Cargar archivo"
+                    }
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            /*
+             * Descargar documento.
+             */
+            const opcionDescargarArchivo =
+                tieneArchivos &&
+                    permisosCompliance.puedeDescargar
+                    ? `
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item"
+                                    onclick="event.stopPropagation();
+                                             descargarDocumento(
+                                                 ${documento.id}
+                                             )">
+
+                                <i class="fa-solid fa-download me-2"></i>
+                                Descargar
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            /*
+             * Historial de versiones.
+             */
+            const opcionHistorialArchivo =
+                tieneArchivos &&
+                    permisosCompliance.puedeVisualizar
+                    ? `
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item"
+                                    onclick="event.stopPropagation();
+                                             abrirHistorialDocumento(
+                                                 ${documento.id}
+                                             )">
+
+                                <i class="fa-solid fa-clock-rotate-left me-2"></i>
+                                Historial de versiones
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            /*
+             * Eliminar documento.
+             */
+            const opcionEliminarArchivo =
+                tieneArchivos &&
+                    permisosCompliance.puedeEliminar
+                    ? `
+                        <li>
+                            <hr class="dropdown-divider" />
+                        </li>
+
+                        <li>
+                            <button type="button"
+                                    class="dropdown-item text-danger"
+                                    onclick="event.stopPropagation();
+                                             confirmarEliminarArchivoDocumento(
+                                                 ${documento.id}
+                                             )">
+
+                                <i class="fa-regular fa-trash-can me-2"></i>
+                                Eliminar archivo
+
+                            </button>
+                        </li>
+                    `
+                    : "";
+
+            const tieneAccionesDocumento =
+                opcionVisualizarArchivo !== "" ||
+                opcionCargarArchivo !== "" ||
+                opcionDescargarArchivo !== "" ||
+                opcionHistorialArchivo !== "" ||
+                opcionEliminarArchivo !== "";
+
+            const menuAccionesDocumento =
+                tieneAccionesDocumento
+                    ? `
+                        <div class="
+                            dropdown
+                            eb-document-upload-actions
+                        ">
+
+                            <button type="button"
+                                    class="btn eb-document-upload-menu"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-display="static"
+                                    data-bs-boundary="viewport"
+                                    aria-expanded="false"
+                                    aria-label="Acciones de ${escaparHtml(
+                        documento.nombre
+                    )}">
+
+                                <span>⋮</span>
+
+                            </button>
+
+                            <ul class="
+                                dropdown-menu
+                                dropdown-menu-end
+                                eb-document-upload-dropdown
+                            ">
+                                ${opcionVisualizarArchivo}
+                                ${opcionCargarArchivo}
+                                ${opcionDescargarArchivo}
+                                ${opcionHistorialArchivo}
+                                ${opcionEliminarArchivo}
+                            </ul>
+
+                        </div>
+                    `
+                    : "";
 
             return `
                 <article class="
                     eb-document-upload-card
                     ${tieneArchivos
                     ? "eb-document-upload-card-loaded"
-                    : "eb-document-upload-card-empty"}
+                    : "eb-document-upload-card-empty"
+                }
+                    ${claseSinPermiso}
                 ">
 
                     <div class="eb-document-upload-title-row">
@@ -2546,11 +3923,13 @@ function renderizarMatrizDocumental(documentos) {
 
                             ${documento.obligatorio
                     ? `
-                                    <span class="eb-document-required-mark"
-                                          title="Documento obligatorio">
-                                        *
-                                    </span>
-                                `
+                                        <span class="
+                                            eb-document-required-mark
+                                        "
+                                              title="Documento obligatorio">
+                                            *
+                                        </span>
+                                    `
                     : ""
                 }
 
@@ -2562,7 +3941,8 @@ function renderizarMatrizDocumental(documentos) {
 
                         <button type="button"
                                 class="eb-document-upload-area"
-                                onclick="${accionTarjeta}">
+                                ${atributoClick}
+                                ${atributoDisabled}>
 
                             <span class="eb-document-upload-file-text">
 
@@ -2585,110 +3965,7 @@ function renderizarMatrizDocumental(documentos) {
 
                         </button>
 
-                        <div class="
-                            dropdown
-                            eb-document-upload-actions
-                        ">
-
-                            <button type="button"
-                                    class="btn eb-document-upload-menu"
-                                    data-bs-toggle="dropdown"
-                                    data-bs-display="static"
-                                    data-bs-boundary="viewport"
-                                    aria-expanded="false"
-                                    aria-label="Acciones de ${escaparHtml(
-                    documento.nombre
-                )}">
-
-                                <span>⋮</span>
-                            </button>
-
-                            <ul class="
-                                dropdown-menu
-                                dropdown-menu-end
-                                eb-document-upload-dropdown
-                            ">
-
-                                <li>
-                                    <button type="button"
-                                        class="dropdown-item"
-                                        onclick="event.stopPropagation();
-                                                 seleccionarTipoDocumento(
-                                                     ${documento.id}
-                                                 )">
-
-                                    <i class="fa-regular fa-eye me-2"></i>
-                                    Visualizar archivo
-                                </button>
-                                </li>
-
-                                <li>
-                                    <button type="button"
-                                        class="dropdown-item"
-                                        onclick="event.stopPropagation();
-                                                 prepararCargaDocumento(
-                                                     ${documento.id}
-                                                 )">
-
-                                    <i class="fa-solid fa-cloud-arrow-up me-2"></i>
-
-                                    ${tieneArchivos
-                                                    ? "Cargar nueva versión"
-                                                    : "Cargar archivo"}
-                                </button>
-                                </li>
-
-                                ${tieneArchivos
-                                                ? `
-                                    <li>
-                                        <button type="button"
-                                                class="dropdown-item"
-                                                onclick="event.stopPropagation();
-                                                         descargarDocumento(
-                                                             ${documento.id}
-                                                         )">
-
-                                            <i class="fa-solid fa-download me-2"></i>
-                                            Descargar
-                                        </button>
-                                    </li>
-
-                                    <li>
-                                        <button type="button"
-                                                class="dropdown-item"
-                                                onclick="event.stopPropagation();
-                                                         abrirHistorialDocumento(
-                                                             ${documento.id}
-                                                         )">
-
-                                            <i class="fa-solid fa-clock-rotate-left me-2"></i>
-                                            Historial de versiones
-                                        </button>
-                                    </li>
-
-                                    <li>
-                                        <hr class="dropdown-divider" />
-                                    </li>
-
-                                    <li>
-                                        <button type="button"
-                                                class="dropdown-item text-danger"
-                                                onclick="event.stopPropagation();
-                                                         confirmarEliminarArchivoDocumento(
-                                                             ${documento.id}
-                                                         )">
-
-                                            <i class="fa-regular fa-trash-can me-2"></i>
-                                            Eliminar archivo
-                                        </button>
-                                    </li>
-                                `
-                                                : ""
-                            }
-
-                            </ul>
-
-                        </div>
+                        ${menuAccionesDocumento}
 
                     </div>
 
@@ -3017,6 +4294,68 @@ function renderizarHistorialDocumento(
                     )
                     : null;
 
+            const botonVisualizarHistorial =
+                !version.eliminado &&
+                    permisosCompliance.puedeVisualizar
+                    ? `
+            <button type="button"
+                    class="btn btn-outline-primary"
+                    onclick="visualizarArchivoDocumento(
+                        ${version.id}
+                    )">
+
+                <i class="fa-regular fa-eye"></i>
+
+                <span>
+                    Visualizar
+                </span>
+
+            </button>
+        `
+                    : "";
+
+            const botonDescargarHistorial =
+                !version.eliminado &&
+                    permisosCompliance.puedeDescargar
+                    ? `
+            <button type="button"
+                    class="btn btn-outline-primary"
+                    onclick="descargarArchivoDocumento(
+                        ${version.id},
+                        '${escaparAtributoJs(
+                        version.nombreOriginal ??
+                        "Documento"
+                    )}'
+                    )">
+
+                <i class="fa-solid fa-download"></i>
+
+                <span>
+                    Descargar
+                </span>
+
+            </button>
+        `
+                    : "";
+
+            const tieneAccionesHistorial =
+                botonVisualizarHistorial !== "" ||
+                botonDescargarHistorial !== "";
+
+            const accionesHistorial =
+                version.eliminado
+                    ? `
+            <span class="eb-history-unavailable">
+                Archivo no disponible
+            </span>
+        `
+                    : tieneAccionesHistorial
+                        ? `
+                ${botonVisualizarHistorial}
+                ${botonDescargarHistorial}
+            `
+                        : "";
+
             return `
                 <article class="
                     eb-history-item
@@ -3105,46 +4444,7 @@ function renderizarHistorialDocumento(
                     </div>
 
                     <div class="eb-history-actions">
-
-                        ${!version.eliminado
-                    ? `
-                                <button type="button"
-                                        class="btn btn-outline-primary"
-                                        onclick="visualizarArchivoDocumento(
-                                            ${version.id}
-                                        )">
-
-                                    <i class="fa-regular fa-eye"></i>
-
-                                    <span>
-                                        Visualizar
-                                    </span>
-                                </button>
-
-                                <button type="button"
-                                    class="btn btn-outline-primary"
-                                    onclick="descargarArchivoDocumento(
-                                        ${version.id},
-                                        '${escaparAtributoJs(
-                                            version.nombreOriginal ??
-                                            "Documento"
-                                        )}'
-                                    )">
-
-                                <i class="fa-solid fa-download"></i>
-
-                                <span>
-                                    Descargar
-                                </span>
-                            </button>
-                            `
-                    : `
-                                <span class="eb-history-unavailable">
-                                    Archivo no disponible
-                                </span>
-                            `
-                }
-
+                        ${accionesHistorial}
                     </div>
 
                 </article>

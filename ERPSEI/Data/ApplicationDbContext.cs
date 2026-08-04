@@ -57,16 +57,42 @@ namespace ERPSEI.Data
 		public DbSet<ProductoServicioPerfil> ProductosServiciosPerfil { get; set; }
 
         // Expedientes Bancarios
-        public DbSet<EbEmpresa> EbEmpresas { get; set; } = null!;
-        public DbSet<EbAccionista> EbAccionistas { get; set; } = null!;
-        public DbSet<EbTipoDocumento> EbTiposDocumento { get; set; } = null!;
-        public DbSet<EbDocumento> EbDocumentos { get; set; } = null!;
+        public DbSet<EbEmpresa> EbEmpresas
+        {
+            get;
+            set;
+        } = null!;
+
+        public DbSet<EbAccionista> EbAccionistas
+        {
+            get;
+            set;
+        } = null!;
+
+        public DbSet<EbTipoDocumento> EbTiposDocumento
+        {
+            get;
+            set;
+        } = null!;
+
+        public DbSet<EbDocumento> EbDocumentos
+        {
+            get;
+            set;
+        } = null!;
 
         public DbSet<EbBitacoraDocumento> EbBitacoraDocumentos
         {
             get;
             set;
-        }
+        } = null!;
+
+        public DbSet<EbPermisoComplianceUsuario>
+            EbPermisosComplianceUsuarios
+        {
+            get;
+            set;
+        } = null!;
 
         //Catálogos Administrables Empresas
         public DbSet<Origen> Origenes { get; set; }
@@ -606,6 +632,26 @@ namespace ERPSEI.Data
         {
             entidad = entidad.ToLower();
 
+            if (
+                entidad.Contains(
+                    "ebpermisocomplianceusuario"
+                )
+            )
+            {
+                return "Compliance / Permisos";
+            }
+
+            if (
+                entidad.Contains("ebempresa") ||
+                entidad.Contains("ebaccionista") ||
+                entidad.Contains("ebdocumento") ||
+                entidad.Contains("ebtipodocumento") ||
+                entidad.Contains("ebbitacoradocumento")
+            )
+            {
+                return "Compliance";
+            }
+
             if (entidad.Contains("appuser") || entidad.Contains("identityuser"))
                 return "Usuarios";
 
@@ -740,10 +786,19 @@ namespace ERPSEI.Data
             BuildNotificaciones(modelBuilder);
 
             // Expedientes Bancarios
-            BuildExpedientesBancarios(modelBuilder);
+            BuildExpedientesBancarios(
+                modelBuilder
+            );
 
-            // Expedientes Bancarios
-            BuildBitacoraDocumental(modelBuilder);
+            // Bitácora documental de Compliance
+            BuildBitacoraDocumental(
+                modelBuilder
+            );
+
+            // Permisos individuales de Compliance
+            BuildPermisosCompliance(
+                modelBuilder
+            );
 
         }
 
@@ -860,6 +915,96 @@ namespace ERPSEI.Data
                         );
                 }
             );
+        }
+
+        private static void BuildPermisosCompliance(
+    ModelBuilder modelBuilder)
+        {
+            modelBuilder
+                .Entity<EbPermisoComplianceUsuario>(
+                    entity =>
+                    {
+                        entity.ToTable(
+                            "EB_PermisosComplianceUsuarios"
+                        );
+
+                        entity.HasKey(
+                            x => x.Id
+                        );
+
+                        entity.Property(
+                                x => x.UsuarioId
+                            )
+                            .IsRequired()
+                            .HasMaxLength(450);
+
+                        entity.Property(
+                                x => x.PuedeVisualizar
+                            )
+                            .IsRequired()
+                            .HasDefaultValue(false);
+
+                        entity.Property(
+                                x => x.PuedeCrearCargar
+                            )
+                            .IsRequired()
+                            .HasDefaultValue(false);
+
+                        entity.Property(
+                                x => x.PuedeModificar
+                            )
+                            .IsRequired()
+                            .HasDefaultValue(false);
+
+                        entity.Property(
+                                x => x.PuedeEliminar
+                            )
+                            .IsRequired()
+                            .HasDefaultValue(false);
+
+                        entity.Property(
+                                x => x.PuedeDescargar
+                            )
+                            .IsRequired()
+                            .HasDefaultValue(false);
+
+                        entity.Property(
+                                x => x.FechaCreacion
+                            )
+                            .IsRequired()
+                            .HasDefaultValueSql(
+                                "GETDATE()"
+                            );
+
+                        entity.Property(
+                                x => x.FechaModificacion
+                            );
+
+                        entity.Property(
+                                x => x.UsuarioModificacionId
+                            )
+                            .HasMaxLength(450);
+
+                        /*
+                         * Cada usuario solamente puede tener
+                         * un registro de permisos Compliance.
+                         */
+                        entity.HasIndex(
+                                x => x.UsuarioId
+                            )
+                            .IsUnique()
+                            .HasDatabaseName(
+                                "UX_EB_PermisosComplianceUsuarios_UsuarioId"
+                            );
+
+                        entity.HasIndex(
+                                x => x.FechaModificacion
+                            )
+                            .HasDatabaseName(
+                                "IX_EB_PermisosComplianceUsuarios_FechaModificacion"
+                            );
+                    }
+                );
         }
 
         private static void BuildExpedientesBancarios(ModelBuilder b)
