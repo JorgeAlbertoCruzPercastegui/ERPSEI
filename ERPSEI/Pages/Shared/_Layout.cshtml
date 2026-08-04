@@ -463,11 +463,17 @@
         esAdministradorCompliance;
 
     /*
-     * Los usuarios especiales solamente verán Compliance
-     * dentro de Workspace Corporativo.
-     */
+ * Un usuario que tenga el rol general Usuario,
+ * además de Usuario Bancos o Usuario Operaciones
+ * Internas, conserva su Workspace habitual y se
+ * agrega Compliance.
+ *
+ * Solo se limita a Compliance cuando tiene el rol
+ * especial, pero no tiene el rol general Usuario.
+ */
     bool mostrarSoloComplianceEnWorkspace =
         esUsuarioCompliance &&
+        !esUsuario &&
         !esAdministradorCompliance;
 
     bool mostrarGestorBiblioteca = esAdminMenu;

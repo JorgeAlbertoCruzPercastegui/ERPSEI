@@ -81,10 +81,10 @@ namespace ERPSEI.Services.Compliance
                     );
 
             /*
-             * El usuario con rol Usuario Bancos o
-             * Usuario Operaciones Internas puede visualizar
-             * por default aunque todavía no tenga registro.
-             */
+ * Cuando el usuario recibe por primera vez el rol
+ * Usuario Bancos o Usuario Operaciones Internas,
+ * su permiso inicial es únicamente Visualizar.
+ */
             if (permiso == null)
             {
                 return new PermisosComplianceResultado
@@ -100,17 +100,18 @@ namespace ERPSEI.Services.Compliance
                 };
             }
 
+            /*
+             * Cuando ya existe un registro, se respetan
+             * exactamente los permisos guardados.
+             */
             return new PermisosComplianceResultado
             {
                 TieneAccesoModulo = true,
                 EsAdministrador = false,
                 PuedeAdministrarPermisos = false,
 
-                /*
-                 * El acceso mínimo del rol especial
-                 * siempre permite visualizar.
-                 */
-                PuedeVisualizar = true,
+                PuedeVisualizar =
+                    permiso.PuedeVisualizar,
 
                 PuedeCrearCargar =
                     permiso.PuedeCrearCargar,

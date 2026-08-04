@@ -257,9 +257,12 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 );
 
                 bool puedeVisualizar =
-                    esAdministradorCompliance ||
-                    esUsuarioCompliance ||
-                    permiso?.PuedeVisualizar == true;
+                esAdministradorCompliance ||
+                (
+                    permiso == null &&
+                    esUsuarioCompliance
+                ) ||
+                permiso?.PuedeVisualizar == true;
 
                 resultado.Add(
                     new UsuarioPermisoComplianceResponse
