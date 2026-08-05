@@ -87,6 +87,13 @@ namespace ERPSEI.Data
             set;
         } = null!;
 
+        public DbSet<EbBitacoraEmpresa>
+        EbBitacoraEmpresas
+        {
+            get;
+            set;
+        }
+
         public DbSet<EbPermisoComplianceUsuario>
             EbPermisosComplianceUsuarios
         {
@@ -800,6 +807,110 @@ namespace ERPSEI.Data
                 modelBuilder
             );
 
+            BuildBitacoraEmpresas(
+                modelBuilder
+            );
+
+        }
+
+        private static void BuildBitacoraEmpresas(
+        ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<EbBitacoraEmpresa>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "EB_BitacoraEmpresas"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.EmpresaId
+                        )
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.Accion
+                        )
+                        .HasMaxLength(80)
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.UsuarioId
+                        )
+                        .HasMaxLength(450)
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.NombreUsuario
+                        )
+                        .HasMaxLength(250)
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.FechaEvento
+                        )
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        )
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.DireccionIp
+                        )
+                        .HasMaxLength(64);
+
+                    entity.Property(
+                            x => x.Navegador
+                        )
+                        .HasMaxLength(1000);
+
+                    entity.Property(
+                            x => x.Exitoso
+                        )
+                        .HasDefaultValue(true)
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.Detalle
+                        )
+                        .HasMaxLength(2000);
+
+                    entity.HasIndex(
+                        x => x.EmpresaId
+                    );
+
+                    entity.HasIndex(
+                        x => x.UsuarioId
+                    );
+
+                    entity.HasIndex(
+                        x => x.FechaEvento
+                    );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.Accion,
+                            x.FechaEvento
+                        }
+                    );
+
+                    entity.HasOne(
+                            x => x.Empresa
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.EmpresaId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+                }
+            );
         }
 
         private static void BuildBitacoraDocumental(ModelBuilder b)

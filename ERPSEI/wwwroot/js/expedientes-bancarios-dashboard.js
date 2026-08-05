@@ -14,6 +14,8 @@ let graficaAvanceEmpresas = null;
 let graficaDescargasUsuarios = null;
 let graficaBancos = null;
 let graficaActividadDiaria = null;
+let graficaActividadDocumentalUsuarios = null;
+let graficaActividadEmpresasUsuarios = null;
 
 // =====================================================
 // INICIALIZACIÓN
@@ -312,8 +314,19 @@ async function cargarDashboard() {
                 ?.agrupacion ?? "Diaria"
         );
 
+        renderizarActividadDocumentalUsuarios(
+            resultado.graficas
+                ?.actividadDocumentalUsuarios ?? []
+        );
+
+        renderizarActividadEmpresasUsuarios(
+            resultado.graficas
+                ?.actividadEmpresasUsuarios ?? []
+        );
+
         ocultarCargaDashboard();
         ocultarErrorDashboard();
+
     } catch (error) {
         console.error(
             "Error al consultar dashboard:",
@@ -928,6 +941,541 @@ function renderizarActividadDiaria(
 
                                         return (
                                             `Documentos cargados: ${total}`
+                                        );
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
+        );
+}
+
+// =====================================================
+// GRÁFICA: ACTIVIDAD DOCUMENTAL POR USUARIO
+// =====================================================
+function renderizarActividadDocumentalUsuarios(datos) {
+    destruirGrafica(
+        graficaActividadDocumentalUsuarios
+    );
+
+    graficaActividadDocumentalUsuarios = null;
+
+    const canvas =
+        document.getElementById(
+            "graficaActividadDocumentalUsuarios"
+        );
+
+    const vacio =
+        document.getElementById(
+            "vacioActividadDocumentalUsuarios"
+        );
+
+    const contieneActividad =
+        Array.isArray(datos) &&
+        datos.some(item =>
+            Number(item.creados ?? 0) > 0 ||
+            Number(item.reemplazados ?? 0) > 0 ||
+            Number(item.visualizados ?? 0) > 0 ||
+            Number(item.descargados ?? 0) > 0 ||
+            Number(item.eliminados ?? 0) > 0
+        );
+
+    if (
+        !canvas ||
+        !Array.isArray(datos) ||
+        datos.length === 0 ||
+        !contieneActividad
+    ) {
+        canvas?.classList.add(
+            "d-none"
+        );
+
+        vacio?.classList.remove(
+            "d-none"
+        );
+
+        return;
+    }
+
+    canvas.classList.remove(
+        "d-none"
+    );
+
+    vacio?.classList.add(
+        "d-none"
+    );
+
+    const datasetsDocumentales = [
+        {
+            label: "Cargados",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.creados ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#22C55E",
+
+            borderColor:
+                "#22C55E",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label: "Reemplazados",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.reemplazados ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#F59E0B",
+
+            borderColor:
+                "#F59E0B",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label: "Visualizados",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.visualizados ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#3B82F6",
+
+            borderColor:
+                "#3B82F6",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label: "Descargados",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.descargados ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#8B5CF6",
+
+            borderColor:
+                "#8B5CF6",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label: "Eliminados",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.eliminados ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#EF4444",
+
+            borderColor:
+                "#EF4444",
+
+            borderWidth: 1,
+            borderRadius: 4
+        }
+    ];
+
+    graficaActividadDocumentalUsuarios =
+        new Chart(
+            canvas,
+            {
+                type: "bar",
+
+                data: {
+                    labels: datos.map(
+                        item =>
+                            item.usuario
+                    ),
+
+                    datasets:
+                        datasetsDocumentales
+                },
+
+                options: {
+                    indexAxis: "y",
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    interaction: {
+                        mode: "nearest",
+                        intersect: true
+                    },
+
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            stacked: true,
+
+                            ticks: {
+                                precision: 0
+                            },
+
+                            title: {
+                                display: true,
+                                text:
+                                    "Total de movimientos"
+                            }
+                        },
+
+                        y: {
+                            stacked: true
+                        }
+                    },
+
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "bottom",
+
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 10,
+                                padding: 16
+                            }
+                        },
+
+                        tooltip: {
+                            filter: function (contexto) {
+                                return Number(
+                                    contexto.raw ?? 0
+                                ) > 0;
+                            },
+
+                            callbacks: {
+                                afterBody:
+                                    function (
+                                        elementos
+                                    ) {
+                                        if (
+                                            !elementos ||
+                                            elementos.length === 0
+                                        ) {
+                                            return "";
+                                        }
+
+                                        const indice =
+                                            elementos[0]
+                                                .dataIndex;
+
+                                        const registro =
+                                            datos[indice];
+
+                                        const total =
+                                            Number(
+                                                registro.creados ?? 0
+                                            ) +
+                                            Number(
+                                                registro.reemplazados ?? 0
+                                            ) +
+                                            Number(
+                                                registro.visualizados ?? 0
+                                            ) +
+                                            Number(
+                                                registro.descargados ?? 0
+                                            ) +
+                                            Number(
+                                                registro.eliminados ?? 0
+                                            );
+
+                                        return (
+                                            `Total: ${total}`
+                                        );
+                                    }
+                            }
+                        }
+                    }
+                }
+            }
+        );
+}
+
+// =====================================================
+// GRÁFICA: ACTIVIDAD DE EMPRESAS POR USUARIO
+// =====================================================
+function renderizarActividadEmpresasUsuarios(datos) {
+    destruirGrafica(
+        graficaActividadEmpresasUsuarios
+    );
+
+    graficaActividadEmpresasUsuarios = null;
+
+    const canvas =
+        document.getElementById(
+            "graficaActividadEmpresasUsuarios"
+        );
+
+    const vacio =
+        document.getElementById(
+            "vacioActividadEmpresasUsuarios"
+        );
+
+    const contieneActividad =
+        Array.isArray(datos) &&
+        datos.some(item =>
+            Number(item.consultas ?? 0) > 0 ||
+            Number(item.creaciones ?? 0) > 0 ||
+            Number(item.ediciones ?? 0) > 0 ||
+            Number(item.cambiosEstatus ?? 0) > 0 ||
+            Number(item.eliminaciones ?? 0) > 0
+        );
+
+    if (
+        !canvas ||
+        !Array.isArray(datos) ||
+        datos.length === 0 ||
+        !contieneActividad
+    ) {
+        canvas?.classList.add(
+            "d-none"
+        );
+
+        vacio?.classList.remove(
+            "d-none"
+        );
+
+        return;
+    }
+
+    canvas.classList.remove(
+        "d-none"
+    );
+
+    vacio?.classList.add(
+        "d-none"
+    );
+
+    const datasetsEmpresas = [
+        {
+            label: "Consultas",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.consultas ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#3B82F6",
+
+            borderColor:
+                "#3B82F6",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label: "Creaciones",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.creaciones ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#10B981",
+
+            borderColor:
+                "#10B981",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label: "Ediciones",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.ediciones ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#F59E0B",
+
+            borderColor:
+                "#F59E0B",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label:
+                "Cambios de estatus",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.cambiosEstatus ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#A855F7",
+
+            borderColor:
+                "#A855F7",
+
+            borderWidth: 1,
+            borderRadius: 4
+        },
+        {
+            label: "Eliminaciones",
+
+            data: datos.map(
+                item =>
+                    Number(
+                        item.eliminaciones ?? 0
+                    )
+            ),
+
+            backgroundColor:
+                "#EF4444",
+
+            borderColor:
+                "#EF4444",
+
+            borderWidth: 1,
+            borderRadius: 4
+        }
+    ];
+
+    graficaActividadEmpresasUsuarios =
+        new Chart(
+            canvas,
+            {
+                type: "bar",
+
+                data: {
+                    labels: datos.map(
+                        item =>
+                            item.usuario
+                    ),
+
+                    datasets:
+                        datasetsEmpresas
+                },
+
+                options: {
+                    indexAxis: "y",
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    interaction: {
+                        mode: "nearest",
+                        intersect: true
+                    },
+
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            stacked: true,
+
+                            ticks: {
+                                precision: 0
+                            },
+
+                            title: {
+                                display: true,
+                                text:
+                                    "Total de movimientos"
+                            }
+                        },
+
+                        y: {
+                            stacked: true
+                        }
+                    },
+
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "bottom",
+
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 10,
+                                padding: 16
+                            }
+                        },
+
+                        tooltip: {
+                            filter: function (contexto) {
+                                return Number(
+                                    contexto.raw ?? 0
+                                ) > 0;
+                            },
+
+                            callbacks: {
+                                afterBody:
+                                    function (
+                                        elementos
+                                    ) {
+                                        if (
+                                            !elementos ||
+                                            elementos.length === 0
+                                        ) {
+                                            return "";
+                                        }
+
+                                        const indice =
+                                            elementos[0]
+                                                .dataIndex;
+
+                                        const registro =
+                                            datos[indice];
+
+                                        const total =
+                                            Number(
+                                                registro.consultas ?? 0
+                                            ) +
+                                            Number(
+                                                registro.creaciones ?? 0
+                                            ) +
+                                            Number(
+                                                registro.ediciones ?? 0
+                                            ) +
+                                            Number(
+                                                registro.cambiosEstatus ?? 0
+                                            ) +
+                                            Number(
+                                                registro.eliminaciones ?? 0
+                                            );
+
+                                        return (
+                                            `Total: ${total}`
                                         );
                                     }
                             }

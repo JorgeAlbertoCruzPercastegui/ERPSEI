@@ -1010,6 +1010,184 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
                     .ToListAsync();
 
             // =================================================
+            // TOP 10 DE ACTIVIDAD DOCUMENTAL POR USUARIO
+            // =================================================
+
+            var movimientosDocumentales =
+                await bitacoraPeriodo
+                    .Select(x => new
+                    {
+                        Usuario =
+                            !string.IsNullOrWhiteSpace(
+                                x.NombreUsuario
+                            )
+                                ? x.NombreUsuario
+                                : !string.IsNullOrWhiteSpace(
+                                    x.UsuarioId
+                                )
+                                    ? x.UsuarioId
+                                    : "Usuario desconocido",
+
+                        x.Accion
+                    })
+                    .ToListAsync();
+
+            var actividadDocumentalUsuarios =
+                movimientosDocumentales
+                    .GroupBy(x =>
+                        x.Usuario
+                    )
+                    .Select(grupo => new
+                    {
+                        usuario =
+                            grupo.Key,
+
+                        creados =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraDocumento
+                                    .Carga
+                            ),
+
+                        reemplazados =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraDocumento
+                                    .NuevaVersion
+                            ),
+
+                        visualizados =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraDocumento
+                                    .Visualizacion
+                            ),
+
+                        descargados =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraDocumento
+                                    .Descarga
+                            ),
+
+                        eliminados =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraDocumento
+                                    .Eliminacion
+                            ),
+
+                        restaurados =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraDocumento
+                                    .Restauracion
+                            ),
+
+                        total =
+                            grupo.Count()
+                    })
+                    .OrderByDescending(x =>
+                        x.total
+                    )
+                    .ThenBy(x =>
+                        x.usuario
+                    )
+                    .Take(10)
+                    .ToList();
+
+            // =================================================
+            // BITÁCORA DE EMPRESAS DEL PERIODO
+            // =================================================
+
+            var movimientosEmpresas =
+                await _context
+                    .EbBitacoraEmpresas
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.FechaEvento >= inicio &&
+                        x.FechaEvento < finExclusivo &&
+                        x.Exitoso
+                    )
+                    .Select(x => new
+                    {
+                        Usuario =
+                            !string.IsNullOrWhiteSpace(
+                                x.NombreUsuario
+                            )
+                                ? x.NombreUsuario
+                                : !string.IsNullOrWhiteSpace(
+                                    x.UsuarioId
+                                )
+                                    ? x.UsuarioId
+                                    : "Usuario desconocido",
+
+                        x.Accion
+                    })
+                    .ToListAsync();
+
+            // =================================================
+            // TOP 10 DE ACTIVIDAD DE EMPRESAS POR USUARIO
+            // =================================================
+
+            var actividadEmpresasUsuarios =
+                movimientosEmpresas
+                    .GroupBy(x =>
+                        x.Usuario
+                    )
+                    .Select(grupo => new
+                    {
+                        usuario =
+                            grupo.Key,
+
+                        consultas =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraEmpresa
+                                    .Consulta
+                            ),
+
+                        creaciones =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraEmpresa
+                                    .Creacion
+                            ),
+
+                        ediciones =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraEmpresa
+                                    .Edicion
+                            ),
+
+                        cambiosEstatus =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraEmpresa
+                                    .CambioEstatus
+                            ),
+
+                        eliminaciones =
+                            grupo.Count(x =>
+                                x.Accion ==
+                                EbAccionesBitacoraEmpresa
+                                    .Eliminacion
+                            ),
+
+                        total =
+                            grupo.Count()
+                    })
+                    .OrderByDescending(x =>
+                        x.total
+                    )
+                    .ThenBy(x =>
+                        x.usuario
+                    )
+                    .Take(10)
+                    .ToList();
+
+            // =================================================
             // RESPUESTA DEL DASHBOARD
             // =================================================
             return new JsonResult(new
@@ -1055,7 +1233,11 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
                     documentosPorBanco,
 
                     actividadDiaria =
-                        actividadPeriodo
+                    actividadPeriodo,
+
+                    actividadDocumentalUsuarios,
+
+                    actividadEmpresasUsuarios
                 }
             });
         }

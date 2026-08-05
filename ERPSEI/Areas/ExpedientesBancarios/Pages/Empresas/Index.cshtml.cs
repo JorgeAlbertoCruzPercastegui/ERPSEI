@@ -560,9 +560,8 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // =====================================================
         public async Task<IActionResult> OnGetEmpresaAsync(int id)
         {
-
             if (!await _permisosComplianceService
-            .PuedeVisualizarAsync(User))
+                    .PuedeVisualizarAsync(User))
             {
                 return Forbid();
             }
@@ -579,6 +578,16 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     message = "No se encontró la empresa solicitada."
                 });
             }
+
+            RegistrarBitacoraEmpresa(
+                empresa,
+                EbAccionesBitacoraEmpresa.Consulta,
+                exitoso: true,
+                detalle:
+                    $"Se consultó la información de la empresa '{empresa.RazonSocial}'."
+            );
+
+            await _context.SaveChangesAsync();
 
             return new JsonResult(new
             {
@@ -601,6 +610,35 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     deshabilitado = empresa.Deshabilitado
                 }
             });
+        }
+
+        private static void AgregarCambioEmpresa(
+        ICollection<string> cambios,
+        string campo,
+        string? valorAnterior,
+        string? valorNuevo)
+        {
+            string anterior =
+                string.IsNullOrWhiteSpace(valorAnterior)
+                    ? "Sin valor"
+                    : valorAnterior.Trim();
+
+            string nuevo =
+                string.IsNullOrWhiteSpace(valorNuevo)
+                    ? "Sin valor"
+                    : valorNuevo.Trim();
+
+            if (string.Equals(
+                    anterior,
+                    nuevo,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            cambios.Add(
+                $"{campo}: '{anterior}' → '{nuevo}'"
+            );
         }
 
         // =====================================================
@@ -674,6 +712,17 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             };
 
             _context.EbEmpresas.Add(empresa);
+
+            await _context.SaveChangesAsync();
+
+            RegistrarBitacoraEmpresa(
+                empresa,
+                EbAccionesBitacoraEmpresa.Creacion,
+                exitoso: true,
+                detalle:
+                    $"Se creó la empresa '{empresa.RazonSocial}'."
+            );
+
             await _context.SaveChangesAsync();
 
             return new JsonResult(new
@@ -684,16 +733,11 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             });
         }
 
-        // =====================================================
-        // EDITAR EMPRESA
-        // POST ?handler=Editar
-        // =====================================================
         public async Task<IActionResult> OnPostEditarAsync(
-            [FromBody] EmpresaRequest request)
+    [FromBody] EmpresaRequest request)
         {
-
             if (!await _permisosComplianceService
-        .PuedeModificarAsync(User))
+                    .PuedeModificarAsync(User))
             {
                 return Forbid();
             }
@@ -701,72 +745,262 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             NormalizarRequest(request);
 
             Dictionary<string, string[]> errores =
-                ValidarRequest(request, requiereId: true);
+                ValidarRequest(
+                    request,
+                    requiereId: true
+                );
 
             if (errores.Any())
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "Revisa la información capturada.",
+                    message =
+                        "Revisa la información capturada.",
                     errors = errores
                 });
             }
 
-            var empresa = await _context.EbEmpresas
-                .FirstOrDefaultAsync(x => x.Id == request.Id);
+            var empresa =
+                await _context.EbEmpresas
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == request.Id &&
+                            !x.Eliminado
+                    );
 
             if (empresa == null)
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "No se encontró la empresa que deseas editar."
+                    message =
+                        "No se encontró la empresa solicitada."
                 });
             }
 
-            bool rfcExistente = await _context.EbEmpresas
-                .IgnoreQueryFilters()
-                .AnyAsync(x =>
-                    x.Rfc == request.Rfc &&
-                    x.Id != request.Id);
+            bool rfcExistente =
+                await _context.EbEmpresas
+                    .IgnoreQueryFilters()
+                    .AnyAsync(
+                        x =>
+                            x.Id != request.Id &&
+                            x.Rfc == request.Rfc
+                    );
 
             if (rfcExistente)
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "El RFC ya está asignado a otra empresa.",
-                    errors = new Dictionary<string, string[]>
-                    {
-                        ["Rfc"] = new[]
+                    message =
+                        "Ya existe otra empresa registrada con este RFC.",
+
+                    errors =
+                        new Dictionary<string, string[]>
                         {
-                            "El RFC ya está asignado a otra empresa."
+                            ["Rfc"] =
+                                new[]
+                                {
+                            "Ya existe otra empresa registrada con este RFC."
+                                }
                         }
-                    }
                 });
             }
 
-            empresa.RazonSocial = request.RazonSocial;
-            empresa.NombreCorto = request.NombreCorto;
-            empresa.Rfc = request.Rfc;
-            empresa.Nivel = request.Nivel;
-            empresa.ActividadComercial = request.ActividadComercial;
-            empresa.TelefonoBancos = request.TelefonoBancos;
-            empresa.CorreoBancos = request.CorreoBancos;
-            empresa.FechaConstitucion = request.FechaConstitucion;
-            empresa.NumeroEscritura = request.NumeroEscritura;
-            empresa.DomicilioFiscal = request.DomicilioFiscal;
-            empresa.Observaciones = request.Observaciones;
-            empresa.FechaActualizacion = DateTime.Now;
-            empresa.UsuarioActualizacionId = ObtenerUsuarioId();
+            /*
+             * Guardar valores anteriores antes de modificar
+             * la entidad.
+             */
+            string razonSocialAnterior =
+                empresa.RazonSocial;
 
+            string nombreCortoAnterior =
+                empresa.NombreCorto;
+
+            string rfcAnterior =
+                empresa.Rfc;
+
+            string? nivelAnterior =
+                empresa.Nivel;
+
+            string? actividadComercialAnterior =
+                empresa.ActividadComercial;
+
+            string? telefonoBancosAnterior =
+                empresa.TelefonoBancos;
+
+            string? correoBancosAnterior =
+                empresa.CorreoBancos;
+
+            DateTime? fechaConstitucionAnterior =
+                empresa.FechaConstitucion;
+
+            string? numeroEscrituraAnterior =
+                empresa.NumeroEscritura;
+
+            string? domicilioFiscalAnterior =
+                empresa.DomicilioFiscal;
+
+            string? observacionesAnterior =
+                empresa.Observaciones;
+
+            /*
+             * Asignar los valores nuevos.
+             */
+            empresa.RazonSocial =
+                request.RazonSocial;
+
+            empresa.NombreCorto =
+                request.NombreCorto;
+
+            empresa.Rfc =
+                request.Rfc;
+
+            empresa.Nivel =
+                request.Nivel;
+
+            empresa.ActividadComercial =
+                request.ActividadComercial;
+
+            empresa.TelefonoBancos =
+                request.TelefonoBancos;
+
+            empresa.CorreoBancos =
+                request.CorreoBancos;
+
+            empresa.FechaConstitucion =
+                request.FechaConstitucion;
+
+            empresa.NumeroEscritura =
+                request.NumeroEscritura;
+
+            empresa.DomicilioFiscal =
+                request.DomicilioFiscal;
+
+            empresa.Observaciones =
+                request.Observaciones;
+
+            /*
+             * Campos reales de auditoría de EbEmpresa.
+             */
+            empresa.FechaActualizacion =
+                DateTime.Now;
+
+            empresa.UsuarioActualizacionId =
+                ObtenerUsuarioId();
+
+            /*
+             * Identificar exactamente qué campos cambiaron.
+             */
+            List<string> cambios =
+                new();
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Razón social",
+                razonSocialAnterior,
+                empresa.RazonSocial
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Nombre corto",
+                nombreCortoAnterior,
+                empresa.NombreCorto
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "RFC",
+                rfcAnterior,
+                empresa.Rfc
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Nivel",
+                nivelAnterior,
+                empresa.Nivel
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Actividad comercial",
+                actividadComercialAnterior,
+                empresa.ActividadComercial
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Teléfono de bancos",
+                telefonoBancosAnterior,
+                empresa.TelefonoBancos
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Correo de bancos",
+                correoBancosAnterior,
+                empresa.CorreoBancos
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Fecha de constitución",
+                fechaConstitucionAnterior?
+                    .ToString("dd/MM/yyyy"),
+                empresa.FechaConstitucion?
+                    .ToString("dd/MM/yyyy")
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Número de escritura",
+                numeroEscrituraAnterior,
+                empresa.NumeroEscritura
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Domicilio fiscal",
+                domicilioFiscalAnterior,
+                empresa.DomicilioFiscal
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Observaciones",
+                observacionesAnterior,
+                empresa.Observaciones
+            );
+
+            RegistrarBitacoraEmpresa(
+                empresa,
+                EbAccionesBitacoraEmpresa.Edicion,
+                exitoso: true,
+                detalle:
+                    cambios.Count > 0
+                        ? string.Join(
+                            " | ",
+                            cambios
+                        )
+                        : "Se guardó la empresa sin cambios detectables."
+            );
+
+            /*
+             * Guarda en una sola operación:
+             *
+             * - Los cambios de la empresa.
+             * - El registro de la bitácora.
+             */
             await _context.SaveChangesAsync();
 
             return new JsonResult(new
             {
                 success = true,
-                message = "La empresa se actualizó correctamente."
+                message =
+                    "La empresa se actualizó correctamente."
             });
         }
 
@@ -805,9 +1039,24 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 });
             }
 
-            empresa.Deshabilitado = !empresa.Deshabilitado;
-            empresa.FechaActualizacion = DateTime.Now;
-            empresa.UsuarioActualizacionId = ObtenerUsuarioId();
+            empresa.Deshabilitado =
+            !empresa.Deshabilitado;
+
+            empresa.FechaActualizacion =
+                DateTime.Now;
+
+            empresa.UsuarioActualizacionId =
+                ObtenerUsuarioId();
+
+            RegistrarBitacoraEmpresa(
+                empresa,
+                EbAccionesBitacoraEmpresa.CambioEstatus,
+                exitoso: true,
+                detalle:
+                    empresa.Deshabilitado
+                        ? $"Se deshabilitó la empresa '{empresa.RazonSocial}'."
+                        : $"Se habilitó la empresa '{empresa.RazonSocial}'."
+            );
 
             await _context.SaveChangesAsync();
 
@@ -876,9 +1125,23 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             }
 
             empresa.Eliminado = true;
-            empresa.Deshabilitado = true;
-            empresa.FechaActualizacion = DateTime.Now;
-            empresa.UsuarioActualizacionId = ObtenerUsuarioId();
+
+            empresa.Deshabilitado =
+                true;
+
+            empresa.FechaActualizacion =
+                DateTime.Now;
+
+            empresa.UsuarioActualizacionId =
+                ObtenerUsuarioId();
+
+            RegistrarBitacoraEmpresa(
+                empresa,
+                EbAccionesBitacoraEmpresa.Eliminacion,
+                exitoso: true,
+                detalle:
+                    $"Se eliminó lógicamente la empresa '{empresa.RazonSocial}'."
+            );
 
             await _context.SaveChangesAsync();
 
@@ -2646,6 +2909,98 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             return string.IsNullOrWhiteSpace(resultado)
                 ? null
                 : resultado;
+        }
+
+        // =====================================================
+        // REGISTRAR EVENTO EN BITÁCORA DE EMPRESAS
+        // =====================================================
+        private void RegistrarBitacoraEmpresa(
+            EbEmpresa empresa,
+            string accion,
+            bool exitoso = true,
+            string? detalle = null)
+        {
+            if (empresa == null)
+            {
+                return;
+            }
+
+            string usuarioId =
+                ObtenerUsuarioId();
+
+            string nombreUsuario =
+                User.Identity?.Name ??
+                User.FindFirstValue(
+                    ClaimTypes.Email
+                ) ??
+                usuarioId;
+
+            string? direccionIp =
+                HttpContext.Connection
+                    .RemoteIpAddress?
+                    .ToString();
+
+            if (direccionIp == "::1")
+            {
+                direccionIp = "127.0.0.1";
+            }
+
+            string? navegador =
+                HttpContext.Request
+                    .Headers["User-Agent"]
+                    .FirstOrDefault();
+
+            var bitacora =
+                new EbBitacoraEmpresa
+                {
+                    EmpresaId =
+                        empresa.Id,
+
+                    Accion =
+                        accion,
+
+                    UsuarioId =
+                        LimitarTexto(
+                            usuarioId,
+                            450
+                        ) ??
+                        "SYSTEM",
+
+                    NombreUsuario =
+                        LimitarTexto(
+                            nombreUsuario,
+                            250
+                        ) ??
+                        "Usuario no identificado",
+
+                    FechaEvento =
+                        DateTime.Now,
+
+                    DireccionIp =
+                        LimitarTexto(
+                            direccionIp,
+                            64
+                        ),
+
+                    Navegador =
+                        LimitarTexto(
+                            navegador,
+                            1000
+                        ),
+
+                    Exitoso =
+                        exitoso,
+
+                    Detalle =
+                        LimitarTexto(
+                            detalle,
+                            2000
+                        )
+                };
+
+            _context.EbBitacoraEmpresas.Add(
+                bitacora
+            );
         }
 
         // =====================================================

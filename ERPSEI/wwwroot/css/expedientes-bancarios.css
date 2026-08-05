@@ -3463,6 +3463,21 @@ td:last-child {
     height: 360px;
 }
 
+/* =====================================================
+   GRÁFICAS AMPLIAS DE ACTIVIDAD POR USUARIO
+   ===================================================== */
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-card-wide {
+    grid-column: 1 / -1;
+}
+
+.expedientes-bancarios-page
+.eb-dashboard-chart-container-horizontal {
+    height: 430px;
+    min-height: 430px;
+}
+
 .expedientes-bancarios-page
 .eb-dashboard-chart-empty {
     min-height: 100%;
@@ -3494,6 +3509,20 @@ td:last-child {
     }
 }
 
+@media (max-width: 991.98px) {
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-card-wide {
+        grid-column: auto;
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-container-horizontal {
+        height: 400px;
+        min-height: 400px;
+    }
+}
+
 @media (max-width: 575.98px) {
 
     .expedientes-bancarios-page
@@ -3517,6 +3546,52 @@ td:last-child {
     .expedientes-bancarios-page
     .eb-dashboard-chart-container-large {
         height: 300px;
+    }
+
+    /* =====================================================
+   GRÁFICAS AMPLIAS DE ACTIVIDAD POR USUARIO
+   ===================================================== */
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-card-wide {
+        grid-column: 1 / -1;
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-container-horizontal {
+        position: relative;
+        width: 100%;
+        height: 430px;
+        min-height: 430px;
+    }
+
+    @media (max-width: 991.98px) {
+
+        .expedientes-bancarios-page
+        .eb-dashboard-chart-card-wide {
+            grid-column: auto;
+        }
+
+        .expedientes-bancarios-page
+        .eb-dashboard-chart-container-horizontal {
+            height: 400px;
+            min-height: 400px;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+
+        .expedientes-bancarios-page
+        .eb-dashboard-chart-container-horizontal {
+            height: 380px;
+            min-height: 380px;
+        }
+    }
+
+    .expedientes-bancarios-page
+    .eb-dashboard-chart-container-horizontal {
+        height: 380px;
+        min-height: 380px;
     }
 }
 
