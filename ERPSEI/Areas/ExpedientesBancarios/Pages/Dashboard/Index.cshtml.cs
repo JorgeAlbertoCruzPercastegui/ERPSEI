@@ -8,6 +8,8 @@ using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.Drawing;
 using ERPSEI.Services.Compliance;
+using ERPSEI.Data.Entities.Metricas;
+using System.Security.Claims;
 
 namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
 {
@@ -23,6 +25,63 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
         {
             _context = context;
             _permisosComplianceService = permisosComplianceService;
+        }
+
+        private void RegistrarActividadCompliance(
+        string tipoEvento,
+        string ruta)
+        {
+            string usuarioId =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier) ??
+                string.Empty;
+
+            string nombreUsuario =
+                User.Identity?.Name ??
+                "Usuario desconocido";
+
+            string? ip =
+                HttpContext.Connection
+                    .RemoteIpAddress?
+                    .ToString();
+
+            if (ip == "::1")
+            {
+                ip = "127.0.0.1";
+            }
+
+            _context.IntranetActividades.Add(
+                new IntranetActividad
+                {
+                    UserId =
+                        usuarioId,
+
+                    UserName =
+                        nombreUsuario,
+
+                    NombreEmpleado =
+                        nombreUsuario,
+
+                    TipoEvento =
+                        tipoEvento,
+
+                    Modulo =
+                        "Compliance",
+
+                    Ruta =
+                        ruta,
+
+                    FechaHora =
+                        DateTime.Now,
+
+                    Ip =
+                        ip,
+
+                    UserAgent =
+                        Request.Headers[
+                            "User-Agent"
+                        ].ToString()
+                });
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -598,12 +657,19 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
             // DEVOLVER ARCHIVO
             // =================================================
             byte[] contenidoExcel =
-                paquete.GetAsByteArray();
+            paquete.GetAsByteArray();
 
             string nombreArchivo =
                 $"Bitacora_Compliance_" +
                 $"{inicio:yyyy-MM-dd}_" +
                 $"{fin:yyyy-MM-dd}.xlsx";
+
+            RegistrarActividadCompliance(
+                "ExportarBitacora",
+                "/ExpedientesBancarios/Dashboard"
+            );
+
+            await _context.SaveChangesAsync();
 
             return File(
                 contenidoExcel,
@@ -1190,6 +1256,14 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
             // =================================================
             // RESPUESTA DEL DASHBOARD
             // =================================================
+
+            RegistrarActividadCompliance(
+            "ConsultarDashboard",
+            "/ExpedientesBancarios/Dashboard"
+            );
+
+            await _context.SaveChangesAsync();
+
             return new JsonResult(new
             {
                 success = true,
@@ -1232,8 +1306,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Dashboard
 
                     documentosPorBanco,
 
-                    actividadDiaria =
-                    actividadPeriodo,
+                    actividadDiaria = actividadPeriodo,
 
                     actividadDocumentalUsuarios,
 

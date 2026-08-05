@@ -93,13 +93,13 @@
 
             <div class="metrica-table-header">
                 <div>
-                    <h4>Últimos accesos</h4>
+                    <h4>Última actividad</h4>
                 </div>
 
                 <input type="text"
                        id="txtBuscarMetrica"
                        class="form-control metrica-search"
-                       placeholder="Buscar empleado..." />
+                       placeholder="Buscar usuario, evento o módulo..." />
             </div>
 
             <div class="table-responsive">
@@ -122,7 +122,7 @@
                         @foreach (var item in Model.UltimosAccesos)
                         {
                             <tr class="metrica-row"
-                                data-search="@($"{item.UserName} {item.NombreEmpleado}".ToLower())">
+                                data-search="@($"{item.UserName} {item.NombreEmpleado} {item.TipoEvento} {item.Modulo} {item.Ip}".ToLower())">
 
                                 <td>@item.UserName</td>
 

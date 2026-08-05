@@ -136,6 +136,11 @@ namespace ERPSEI.Middleware
             if (path.Contains("friday"))
                 return "Friday";
 
+            if (path.Contains("expedientesbancarios") || path.Contains("compliance"))
+            {
+                return "Compliance";
+            }
+
             if (path.Contains("empresas"))
                 return "Empresas";
 
