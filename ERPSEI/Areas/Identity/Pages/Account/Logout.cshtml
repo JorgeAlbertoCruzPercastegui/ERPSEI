@@ -14,15 +14,15 @@
 
 <div class="logout-page-shell">
     <div class="logout-card">
-        <div class="logout-card-inner">
+        <div class="logout-card-inner logout-card-inner-centered">
 
-            <div class="logout-brand-panel">
+            <!--<div class="logout-brand-panel">
                 <img class="logout-brand-logo"
                      src="@this.HttpContext.Request.Scheme://@this.HttpContext.Request.Host/img/Logo.png"
                      alt="Intranet SEI" />
-            </div>
+            </div>-->
 
-            <div class="logout-form-panel">
+            <div class="logout-form-panel logout-form-panel-centered">
                 @if (User.Identity?.IsAuthenticated ?? false)
                 {
                     <form asp-area="Identity"
@@ -31,7 +31,10 @@
                           method="post"
                           class="logout-form">
 
-                        <h2 class="logout-title">@ViewData["Title"]</h2>
+                        <h2 class="logout-title">
+                            @ViewData["Title"]
+                        </h2>
+
                         <div class="logout-title-line"></div>
 
                         <div class="logout-message-box">
@@ -45,7 +48,8 @@
                         </div>
 
                         <div class="logout-actions">
-                            <button type="submit" class="w-100 btn btn-lg btn-primary logout-submit-btn">
+                            <button type="submit"
+                                    class="w-100 btn btn-lg btn-primary logout-submit-btn">
                                 @Localizer["LogoutButton"]
                             </button>
                         </div>
@@ -54,7 +58,11 @@
                 else
                 {
                     <div class="logout-form">
-                        <h2 class="logout-title">@ViewData["Title"]</h2>
+
+                        <h2 class="logout-title">
+                            @ViewData["Title"]
+                        </h2>
+
                         <div class="logout-title-line"></div>
 
                         <div class="logout-message-box">
@@ -64,10 +72,12 @@
                         </div>
 
                         <div class="logout-actions">
-                            <a asp-page="/Account/Login" class="w-100 btn btn-lg btn-primary logout-submit-btn">
+                            <a asp-page="/Account/Login"
+                                   class="w-100 btn btn-lg btn-primary logout-submit-btn">
                                 Iniciar sesión
                             </a>
                         </div>
+
                     </div>
                 }
             </div>

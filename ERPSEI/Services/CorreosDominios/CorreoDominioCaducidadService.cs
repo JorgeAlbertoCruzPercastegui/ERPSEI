@@ -181,7 +181,7 @@ namespace ERPSEI.Services.CorreosDominios
                 </p>
 
                 <p style='color:#777; font-size:12px;'>
-                    Este es un aviso automático generado por la Intranet SEI.
+                    Este es un aviso automático generado por la Intranet.
                 </p>
             </div>";
 

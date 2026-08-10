@@ -159,9 +159,10 @@
 
     bool esAuthPage = esLogin || esLogout || esPrivacy;
 
-    string logoHeader = esAuthPage
+    string logoHeader = ""; 
+    /*= esAuthPage
     ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/Logo.png"
-    : $"{Context.Request.Scheme}://{Context.Request.Host}/img/Logo.png";
+    : $"{Context.Request.Scheme}://{Context.Request.Host}/img/Logo.png";*/
 
     var empleadoActual = usr != null
         ? await Db.Empleados
@@ -577,7 +578,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Intranet SEI</title>
+    <!--<title>@ViewData["Title"] - Intranet SEI</title>-->
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />

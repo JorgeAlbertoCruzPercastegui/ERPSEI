@@ -385,3 +385,34 @@ body.module-main-theme.logout-page .header-side-image {
         transform: scale(1.03);
         transition: transform .2s ease;
     }
+
+    /*Aqui se agrego esto temporalmente para centrar el boton y texto sin logo SEI*/
+.logout-card-inner-centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.logout-form-panel-centered {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+    .logout-form-panel-centered .logout-form {
+        width: 100%;
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+.logout-card {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.logout-card-inner {
+    width: 100%;
+}
