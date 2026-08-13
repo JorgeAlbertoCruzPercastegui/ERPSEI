@@ -25,7 +25,7 @@ using Microsoft.Identity.Client;
 using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Security.Claims;
-using ERPSEI.Data.Entities.Metricas;
+using ERPSEI.Data.Entities.ServiceDesk;
 using ERPSEI.Data.Entities.ExpedientesBancarios;
 
 namespace ERPSEI.Data
@@ -279,6 +279,19 @@ namespace ERPSEI.Data
         public DbSet<NotificacionIntranet> NotificacionesIntranet { get; set; }
         public DbSet<NotificacionIntranetUsuario> NotificacionesIntranetUsuarios { get; set; }
 
+        //Mesa de Servicio
+        public DbSet<ServiceTicket> ServiceTickets { get; set; }
+        public DbSet<ServiceTicketType> ServiceTicketTypes { get; set; }
+        public DbSet<ServiceTicketStatus> ServiceTicketStatuses { get; set; }
+        public DbSet<ServiceTicketPriority> ServiceTicketPriorities { get; set; }
+        public DbSet<ServiceCategory> ServiceCategories { get; set; }
+        public DbSet<ServiceSubcategory> ServiceSubcategories { get; set; }
+        public DbSet<ServiceSupportTeam> ServiceSupportTeams { get; set; }
+        public DbSet<ServiceSupportTeamUser> ServiceSupportTeamUsers { get; set; }
+        public DbSet<ServiceTicketComment> ServiceTicketComments { get; set; }
+        public DbSet<ServiceTicketAttachment> ServiceTicketAttachments { get; set; }
+        public DbSet<ServiceTicketHistory> ServiceTicketHistories { get; set; }
+
         //Métricas
         public DbSet<IntranetActividad> IntranetActividades { get; set; }
 
@@ -355,6 +368,7 @@ namespace ERPSEI.Data
                 e.Entity != null &&
                 e.Entity is not IntranetAuditoria &&
                 e.Entity is not IntranetActividad &&
+                e.Entity is not ServiceTicketHistory &&
                 !EsCambioDeRolUsuario(e) &&
                 (
                     e.State == EntityState.Added ||
@@ -728,6 +742,15 @@ namespace ERPSEI.Data
             if (entidad.Contains("prefactura") || entidad.Contains("comprobante"))
                 return "Facturación";
 
+            if (entidad.Contains("serviceticket") ||
+                entidad.Contains("servicecategory") ||
+                entidad.Contains("servicesubcategory") ||
+                entidad.Contains("servicesupportteam")
+            )
+            {
+                return "Incidencias";
+            }
+
             return entidad;
         }
 
@@ -811,6 +834,957 @@ namespace ERPSEI.Data
                 modelBuilder
             );
 
+            //Mesa de Servicio / Incidencias
+            BuildServiceDesk(
+                modelBuilder
+            );
+        }
+
+        private static void BuildServiceDesk(ModelBuilder b)
+        {
+            // =========================================================
+            // TIPOS DE TICKET
+            // =========================================================
+
+            b.Entity<ServiceTicketType>(entity =>
+            {
+                entity.ToTable("SD_TiposTicket");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.Codigo)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.Activo)
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.Orden)
+                    .IsRequired();
+
+                entity.HasIndex(x => x.Codigo)
+                    .IsUnique()
+                    .HasDatabaseName("UX_SD_TiposTicket_Codigo");
+
+                entity.HasIndex(x => x.Nombre)
+                    .HasDatabaseName("IX_SD_TiposTicket_Nombre");
+
+                entity.HasData(
+                    new ServiceTicketType
+                    {
+                        Id = 1,
+                        Nombre = "Incidente",
+                        Codigo = "INC",
+                        Descripcion = "Falla, interrupción o afectación de un servicio.",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceTicketType
+                    {
+                        Id = 2,
+                        Nombre = "Solicitud de Servicio",
+                        Codigo = "SR",
+                        Descripcion = "Solicitud de acceso, equipo, software o servicio.",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceTicketType
+                    {
+                        Id = 3,
+                        Nombre = "Problema",
+                        Codigo = "PRB",
+                        Descripcion = "Análisis de causa raíz de incidentes recurrentes.",
+                        Activo = true,
+                        Orden = 3
+                    },
+                    new ServiceTicketType
+                    {
+                        Id = 4,
+                        Nombre = "Cambio",
+                        Codigo = "CHG",
+                        Descripcion = "Solicitud de cambio controlado en infraestructura o sistemas.",
+                        Activo = true,
+                        Orden = 4
+                    }
+                );
+            });
+
+
+            // =========================================================
+            // ESTADOS
+            // =========================================================
+
+            b.Entity<ServiceTicketStatus>(entity =>
+            {
+                entity.ToTable("SD_EstadosTicket");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.Codigo)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.EsFinal)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.PausaSla)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.Activo)
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.Orden)
+                    .IsRequired();
+
+                entity.HasIndex(x => x.Codigo)
+                    .IsUnique()
+                    .HasDatabaseName("UX_SD_EstadosTicket_Codigo");
+
+                entity.HasData(
+                    new ServiceTicketStatus
+                    {
+                        Id = 1,
+                        Nombre = "Nuevo",
+                        Codigo = "NUEVO",
+                        Descripcion = "Ticket registrado y pendiente de atención.",
+                        EsFinal = false,
+                        PausaSla = false,
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceTicketStatus
+                    {
+                        Id = 2,
+                        Nombre = "Asignado",
+                        Codigo = "ASIGNADO",
+                        Descripcion = "Ticket asignado a un administrador o equipo.",
+                        EsFinal = false,
+                        PausaSla = false,
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceTicketStatus
+                    {
+                        Id = 3,
+                        Nombre = "En proceso",
+                        Codigo = "EN_PROCESO",
+                        Descripcion = "Ticket actualmente en atención.",
+                        EsFinal = false,
+                        PausaSla = false,
+                        Activo = true,
+                        Orden = 3
+                    },
+                    new ServiceTicketStatus
+                    {
+                        Id = 4,
+                        Nombre = "Pendiente del usuario",
+                        Codigo = "PENDIENTE_USUARIO",
+                        Descripcion = "Se requiere información o respuesta del solicitante.",
+                        EsFinal = false,
+                        PausaSla = true,
+                        Activo = true,
+                        Orden = 4
+                    },
+                    new ServiceTicketStatus
+                    {
+                        Id = 5,
+                        Nombre = "Resuelto",
+                        Codigo = "RESUELTO",
+                        Descripcion = "El administrador ha registrado una solución.",
+                        EsFinal = false,
+                        PausaSla = false,
+                        Activo = true,
+                        Orden = 5
+                    },
+                    new ServiceTicketStatus
+                    {
+                        Id = 6,
+                        Nombre = "Cerrado",
+                        Codigo = "CERRADO",
+                        Descripcion = "Ticket finalizado.",
+                        EsFinal = true,
+                        PausaSla = false,
+                        Activo = true,
+                        Orden = 6
+                    },
+                    new ServiceTicketStatus
+                    {
+                        Id = 7,
+                        Nombre = "Reabierto",
+                        Codigo = "REABIERTO",
+                        Descripcion = "Ticket reabierto después de su resolución.",
+                        EsFinal = false,
+                        PausaSla = false,
+                        Activo = true,
+                        Orden = 7
+                    },
+                    new ServiceTicketStatus
+                    {
+                        Id = 8,
+                        Nombre = "Cancelado",
+                        Codigo = "CANCELADO",
+                        Descripcion = "Ticket cancelado.",
+                        EsFinal = true,
+                        PausaSla = false,
+                        Activo = true,
+                        Orden = 8
+                    }
+                );
+            });
+
+
+            // =========================================================
+            // PRIORIDADES
+            // =========================================================
+
+            b.Entity<ServiceTicketPriority>(entity =>
+            {
+                entity.ToTable("SD_PrioridadesTicket");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.Codigo)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.Property(x => x.Nivel)
+                    .IsRequired();
+
+                entity.Property(x => x.MinutosRespuesta)
+                    .IsRequired();
+
+                entity.Property(x => x.MinutosResolucion)
+                    .IsRequired();
+
+                entity.Property(x => x.Activo)
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.HasIndex(x => x.Codigo)
+                    .IsUnique()
+                    .HasDatabaseName("UX_SD_PrioridadesTicket_Codigo");
+
+                entity.HasData(
+                    new ServiceTicketPriority
+                    {
+                        Id = 1,
+                        Nombre = "Crítica",
+                        Codigo = "CRITICA",
+                        Nivel = 1,
+                        MinutosRespuesta = 15,
+                        MinutosResolucion = 120,
+                        Activo = true
+                    },
+                    new ServiceTicketPriority
+                    {
+                        Id = 2,
+                        Nombre = "Alta",
+                        Codigo = "ALTA",
+                        Nivel = 2,
+                        MinutosRespuesta = 30,
+                        MinutosResolucion = 240,
+                        Activo = true
+                    },
+                    new ServiceTicketPriority
+                    {
+                        Id = 3,
+                        Nombre = "Media",
+                        Codigo = "MEDIA",
+                        Nivel = 3,
+                        MinutosRespuesta = 120,
+                        MinutosResolucion = 480,
+                        Activo = true
+                    },
+                    new ServiceTicketPriority
+                    {
+                        Id = 4,
+                        Nombre = "Baja",
+                        Codigo = "BAJA",
+                        Nivel = 4,
+                        MinutosRespuesta = 240,
+                        MinutosResolucion = 1440,
+                        Activo = true
+                    }
+                );
+            });
+
+
+            // =========================================================
+            // CATEGORÍAS
+            // =========================================================
+
+            b.Entity<ServiceCategory>(entity =>
+            {
+                entity.ToTable("SD_Categorias");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.Activo)
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.Orden)
+                    .IsRequired();
+
+                entity.HasIndex(x => x.Nombre)
+                    .IsUnique()
+                    .HasDatabaseName("UX_SD_Categorias_Nombre");
+
+                entity.HasData(
+                    new ServiceCategory
+                    {
+                        Id = 1,
+                        Nombre = "Infraestructura",
+                        Descripcion = "Redes, servidores, VPN, conectividad e infraestructura tecnológica.",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceCategory
+                    {
+                        Id = 2,
+                        Nombre = "Software",
+                        Descripcion = "Aplicaciones y programas utilizados por los usuarios.",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceCategory
+                    {
+                        Id = 3,
+                        Nombre = "Accesos",
+                        Descripcion = "Solicitudes o problemas relacionados con cuentas y permisos.",
+                        Activo = true,
+                        Orden = 3
+                    },
+                    new ServiceCategory
+                    {
+                        Id = 4,
+                        Nombre = "Hardware",
+                        Descripcion = "Equipos de cómputo y periféricos.",
+                        Activo = true,
+                        Orden = 4
+                    },
+                    new ServiceCategory
+                    {
+                        Id = 5,
+                        Nombre = "Microsoft 365",
+                        Descripcion = "Outlook, Teams, OneDrive y servicios Microsoft.",
+                        Activo = true,
+                        Orden = 5
+                    },
+                    new ServiceCategory
+                    {
+                        Id = 6,
+                        Nombre = "Intranet",
+                        Descripcion = "Incidencias y solicitudes relacionadas con la Intranet.",
+                        Activo = true,
+                        Orden = 6
+                    },
+                    new ServiceCategory
+                    {
+                        Id = 7,
+                        Nombre = "Seguridad",
+                        Descripcion = "Incidentes relacionados con ciberseguridad.",
+                        Activo = true,
+                        Orden = 7
+                    },
+                    new ServiceCategory
+                    {
+                        Id = 8,
+                        Nombre = "Otros",
+                        Descripcion = "Solicitudes que no pertenecen a otra categoría.",
+                        Activo = true,
+                        Orden = 8
+                    }
+                );
+            });
+
+
+            // =========================================================
+            // SUBCATEGORÍAS
+            // =========================================================
+
+            b.Entity<ServiceSubcategory>(entity =>
+            {
+                entity.ToTable("SD_Subcategorias");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.Activo)
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.Orden)
+                    .IsRequired();
+
+                entity.HasOne(x => x.Category)
+                    .WithMany(x => x.Subcategorias)
+                    .HasForeignKey(x => x.CategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new
+                {
+                    x.CategoryId,
+                    x.Nombre
+                })
+                .IsUnique()
+                .HasDatabaseName("UX_SD_Subcategorias_Categoria_Nombre");
+
+                entity.HasData(
+                    new ServiceSubcategory
+                    {
+                        Id = 1,
+                        CategoryId = 1,
+                        Nombre = "VPN",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 2,
+                        CategoryId = 1,
+                        Nombre = "Internet",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 3,
+                        CategoryId = 1,
+                        Nombre = "Servidor",
+                        Activo = true,
+                        Orden = 3
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 4,
+                        CategoryId = 2,
+                        Nombre = "Instalación de software",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 5,
+                        CategoryId = 2,
+                        Nombre = "Error de aplicación",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 6,
+                        CategoryId = 3,
+                        Nombre = "Alta de usuario",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 7,
+                        CategoryId = 3,
+                        Nombre = "Permisos",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 8,
+                        CategoryId = 3,
+                        Nombre = "Contraseña",
+                        Activo = true,
+                        Orden = 3
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 9,
+                        CategoryId = 4,
+                        Nombre = "Laptop / PC",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 10,
+                        CategoryId = 4,
+                        Nombre = "Monitor",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 11,
+                        CategoryId = 4,
+                        Nombre = "Impresora",
+                        Activo = true,
+                        Orden = 3
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 12,
+                        CategoryId = 5,
+                        Nombre = "Outlook",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 13,
+                        CategoryId = 5,
+                        Nombre = "Teams",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 14,
+                        CategoryId = 5,
+                        Nombre = "OneDrive",
+                        Activo = true,
+                        Orden = 3
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 15,
+                        CategoryId = 6,
+                        Nombre = "Acceso",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 16,
+                        CategoryId = 6,
+                        Nombre = "Error funcional",
+                        Activo = true,
+                        Orden = 2
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 17,
+                        CategoryId = 7,
+                        Nombre = "Correo sospechoso",
+                        Activo = true,
+                        Orden = 1
+                    },
+                    new ServiceSubcategory
+                    {
+                        Id = 18,
+                        CategoryId = 7,
+                        Nombre = "Malware",
+                        Activo = true,
+                        Orden = 2
+                    }
+                );
+            });
+
+
+            // =========================================================
+            // EQUIPOS DE SOPORTE
+            // =========================================================
+
+            b.Entity<ServiceSupportTeam>(entity =>
+            {
+                entity.ToTable("SD_EquiposSoporte");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.Descripcion)
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.Activo)
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.HasIndex(x => x.Nombre)
+                    .IsUnique()
+                    .HasDatabaseName("UX_SD_EquiposSoporte_Nombre");
+
+                entity.HasData(
+                    new ServiceSupportTeam
+                    {
+                        Id = 1,
+                        Nombre = "Mesa de Servicio TI",
+                        Descripcion = "Equipo principal responsable de la atención de tickets.",
+                        Activo = true
+                    }
+                );
+            });
+
+
+            // =========================================================
+            // USUARIOS DE EQUIPOS
+            // =========================================================
+
+            b.Entity<ServiceSupportTeamUser>(entity =>
+            {
+                entity.ToTable("SD_EquiposSoporteUsuarios");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.UserId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.EsResponsable)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.Activo)
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.FechaAsignacion)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.HasOne(x => x.SupportTeam)
+                    .WithMany(x => x.Usuarios)
+                    .HasForeignKey(x => x.SupportTeamId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new
+                {
+                    x.SupportTeamId,
+                    x.UserId
+                })
+                .IsUnique()
+                .HasDatabaseName("UX_SD_EquiposSoporteUsuarios_Equipo_Usuario");
+            });
+
+
+            // =========================================================
+            // TICKETS
+            // =========================================================
+
+            b.Entity<ServiceTicket>(entity =>
+            {
+                entity.ToTable("SD_Tickets");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Folio)
+                    .IsRequired()
+                    .HasMaxLength(30);
+
+                entity.Property(x => x.Titulo)
+                    .IsRequired()
+                    .HasMaxLength(250);
+
+                entity.Property(x => x.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(5000);
+
+                entity.Property(x => x.UsuarioSolicitanteId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.UsuarioAsignadoId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.Origen)
+                    .IsRequired()
+                    .HasMaxLength(30)
+                    .HasDefaultValue("Intranet");
+
+                entity.Property(x => x.Resolucion)
+                    .HasMaxLength(5000);
+
+                entity.Property(x => x.UsuarioCierreId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.FechaCreacion)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.Property(x => x.Eliminado)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.SlaRespuestaVencido)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.SlaResolucionVencido)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.HasIndex(x => x.Folio)
+                    .IsUnique()
+                    .HasDatabaseName("UX_SD_Tickets_Folio");
+
+                entity.HasIndex(x => x.UsuarioSolicitanteId)
+                    .HasDatabaseName("IX_SD_Tickets_UsuarioSolicitante");
+
+                entity.HasIndex(x => x.UsuarioAsignadoId)
+                    .HasDatabaseName("IX_SD_Tickets_UsuarioAsignado");
+
+                entity.HasIndex(x => x.StatusId)
+                    .HasDatabaseName("IX_SD_Tickets_Status");
+
+                entity.HasIndex(x => x.PriorityId)
+                    .HasDatabaseName("IX_SD_Tickets_Priority");
+
+                entity.HasIndex(x => x.FechaCreacion)
+                    .HasDatabaseName("IX_SD_Tickets_FechaCreacion");
+
+                entity.HasOne(x => x.TicketType)
+                    .WithMany(x => x.Tickets)
+                    .HasForeignKey(x => x.TicketTypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Status)
+                    .WithMany(x => x.Tickets)
+                    .HasForeignKey(x => x.StatusId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Priority)
+                    .WithMany(x => x.Tickets)
+                    .HasForeignKey(x => x.PriorityId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Category)
+                    .WithMany(x => x.Tickets)
+                    .HasForeignKey(x => x.CategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Subcategory)
+                    .WithMany(x => x.Tickets)
+                    .HasForeignKey(x => x.SubcategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.SupportTeam)
+                    .WithMany(x => x.Tickets)
+                    .HasForeignKey(x => x.SupportTeamId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Solicitante
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioSolicitanteId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Administrador/agente asignado
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioAsignadoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Usuario que cierra
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioCierreId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasQueryFilter(x => !x.Eliminado);
+            });
+
+
+            // =========================================================
+            // COMENTARIOS
+            // =========================================================
+
+            b.Entity<ServiceTicketComment>(entity =>
+            {
+                entity.ToTable("SD_TicketComentarios");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.UsuarioId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.Comentario)
+                    .IsRequired()
+                    .HasMaxLength(5000);
+
+                entity.Property(x => x.EsNotaInterna)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.FechaCreacion)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.Property(x => x.Eliminado)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.HasOne(x => x.Ticket)
+                    .WithMany(x => x.Comentarios)
+                    .HasForeignKey(x => x.TicketId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new
+                {
+                    x.TicketId,
+                    x.FechaCreacion
+                })
+                .HasDatabaseName("IX_SD_TicketComentarios_Ticket_Fecha");
+
+                entity.HasQueryFilter(x => !x.Eliminado);
+            });
+
+
+            // =========================================================
+            // ADJUNTOS
+            // =========================================================
+
+            b.Entity<ServiceTicketAttachment>(entity =>
+            {
+                entity.ToTable("SD_TicketAdjuntos");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.NombreOriginal)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.NombreAlmacenado)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.RutaArchivo)
+                    .IsRequired()
+                    .HasMaxLength(500);
+
+                entity.Property(x => x.Extension)
+                    .HasMaxLength(20);
+
+                entity.Property(x => x.MimeType)
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.UsuarioCargaId)
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.FechaCarga)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.Property(x => x.Eliminado)
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.HasOne(x => x.Ticket)
+                    .WithMany(x => x.Adjuntos)
+                    .HasForeignKey(x => x.TicketId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioCargaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => x.TicketId)
+                    .HasDatabaseName("IX_SD_TicketAdjuntos_Ticket");
+
+                entity.HasQueryFilter(x => !x.Eliminado);
+            });
+
+
+            // =========================================================
+            // HISTORIAL DEL TICKET
+            // =========================================================
+
+            b.Entity<ServiceTicketHistory>(entity =>
+            {
+                entity.ToTable("SD_TicketHistorial");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.UsuarioId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.Accion)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.Campo)
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.ValorAnterior)
+                    .HasMaxLength(2000);
+
+                entity.Property(x => x.ValorNuevo)
+                    .HasMaxLength(2000);
+
+                entity.Property(x => x.Detalle)
+                    .HasMaxLength(3000);
+
+                entity.Property(x => x.FechaHora)
+                    .IsRequired()
+                    .HasDefaultValueSql("GETDATE()");
+
+                entity.Property(x => x.DireccionIp)
+                    .HasMaxLength(64);
+
+                entity.HasOne(x => x.Ticket)
+                    .WithMany(x => x.Historial)
+                    .HasForeignKey(x => x.TicketId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UsuarioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(x => new
+                {
+                    x.TicketId,
+                    x.FechaHora
+                })
+                .HasDatabaseName("IX_SD_TicketHistorial_Ticket_Fecha");
+            });
         }
 
         private static void BuildBitacoraEmpresas(
@@ -2927,7 +3901,8 @@ namespace ERPSEI.Data
 					new Modulo() { Id = 18, Nombre = "Activos Fijos", NombreNormalizado = "activosfijos", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 19, Nombre = "Conciliaciones", NombreNormalizado = "conciliaciones", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 20, Nombre = "Administrador de Comprobantes", NombreNormalizado = "administradordecomprobantes", Deshabilitado = 0, Categoria = "erp" },
-                    new Modulo() { Id = 25, Nombre = "Banners", NombreNormalizado = "banners", Deshabilitado = 0, Categoria = "erp" }
+                    new Modulo() { Id = 25, Nombre = "Banners", NombreNormalizado = "banners", Deshabilitado = 0, Categoria = "erp" },
+                    new Modulo() { Id = 26, Nombre = "Incidencias", NombreNormalizado = "incidencias", Deshabilitado = 0, Categoria = "erp" }
                 );
 		}
 
