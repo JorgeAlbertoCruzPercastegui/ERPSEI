@@ -42,6 +42,7 @@ let modalCargarDocumento;
 
 let empresaIdDocumentos = 0;
 let empresaNombreDocumentos = "";
+let empresaMaestraIdDocumentos = 0;
 
 let modalEliminarDocumento;
 let documentoIdEliminar = 0;
@@ -1679,12 +1680,12 @@ function accionesEmpresaFormatter(value, row) {
         permisosCompliance.puedeVisualizar
             ? `
                 <li>
-                    <button type="button"
+                    <button type="button"v
                             class="dropdown-item"
                             onclick="abrirAccionistasEmpresa(
-                                ${row.id},
-                                '${escaparAtributoJs(row.razonSocial)}'
-                            )">
+                            ${row.complianceId ?? 0},
+                            '${escaparAtributoJs(row.razonSocial)}'
+                        )">
 
                         <i class="fa-solid fa-users me-2"></i>
                         Accionistas
@@ -1701,9 +1702,10 @@ function accionesEmpresaFormatter(value, row) {
                     <button type="button"
                             class="dropdown-item"
                             onclick="abrirDocumentosEmpresa(
-                                ${row.id},
-                                '${escaparAtributoJs(row.razonSocial)}'
-                            )">
+                            ${row.complianceId ?? 0},
+                            ${row.id},
+                            '${escaparAtributoJs(row.razonSocial)}'
+                        )">
 
                         <i class="fa-regular fa-folder-open me-2"></i>
                         Documentos
@@ -3256,7 +3258,7 @@ function mostrarModalAccionista() {
     }, 180);
 }
 
-async function abrirDocumentosEmpresa(
+/*async function abrirDocumentosEmpresa(
     empresaId,
     razonSocial
 ) {
@@ -3295,6 +3297,91 @@ async function abrirDocumentosEmpresa(
         cargarInformacionCorporativaDocumentos(
             empresaId
         ),
+        cargarDocumentosEmpresa()
+    ]);
+}*/
+
+async function abrirDocumentosEmpresa(
+    complianceId,
+    empresaId,
+    razonSocial
+) {
+    if (!modalDocumentos) {
+        console.error(
+            "No se encontró el modal de documentos."
+        );
+
+        mostrarResultado(
+            "No fue posible abrir el expediente documental.",
+            "error"
+        );
+
+        return;
+    }
+
+    /*
+     * ==========================================================
+     * IDs
+     * ==========================================================
+     *
+     * empresaIdDocumentos:
+     * EbEmpresa.Id utilizado por documentos y accionistas.
+     *
+     * empresaMaestraIdDocumentos:
+     * Empresa.Id utilizado para información corporativa.
+     */
+    empresaIdDocumentos =
+        Number(complianceId ?? 0);
+
+    empresaMaestraIdDocumentos =
+        Number(empresaId ?? 0);
+
+    empresaNombreDocumentos =
+        razonSocial;
+
+    tipoDocumentoSeleccionado = null;
+
+    /*
+     * La empresa puede existir en el catálogo maestro
+     * aunque todavía no tenga registro interno Compliance.
+     */
+    if (empresaIdDocumentos <= 0) {
+        mostrarResultado(
+            "La empresa todavía no cuenta con un expediente interno de Compliance.",
+            "error"
+        );
+
+        return;
+    }
+
+    const nombreEmpresa =
+        document.getElementById(
+            "nombreEmpresaDocumentos"
+        );
+
+    if (nombreEmpresa) {
+        nombreEmpresa.textContent =
+            razonSocial;
+    }
+
+    limpiarListadoDocumentos();
+    mostrarCargaDocumentos();
+
+    modalDocumentos.show();
+
+    await Promise.all([
+        /*
+         * Información corporativa:
+         * Empresa.Id
+         */
+        cargarInformacionCorporativaDocumentos(
+            empresaMaestraIdDocumentos
+        ),
+
+        /*
+         * Documentos:
+         * EbEmpresa.Id
+         */
         cargarDocumentosEmpresa()
     ]);
 }
@@ -3516,7 +3603,7 @@ function actualizarResumenDocumentosBackend(
 let tipoDocumentoSeleccionado = null;
 let documentosEmpresaActuales = [];
 
-async function cargarInformacionCorporativaDocumentos(empresaId) {
+/*async function cargarInformacionCorporativaDocumentos(empresaId) {
     const respuestaEmpresa = await obtenerEmpresa(empresaId);
 
     if (respuestaEmpresa?.success) {
@@ -3574,6 +3661,112 @@ async function cargarInformacionCorporativaDocumentos(empresaId) {
             "documentoEmpresaAccionistas",
             textoAccionistas
         );
+    } catch {
+        establecerTexto(
+            "documentoEmpresaAccionistas",
+            "-"
+        );
+    }
+}*/
+
+async function cargarInformacionCorporativaDocumentos(
+    empresaId
+) {
+    /*
+     * ==========================================================
+     * INFORMACIÓN CORPORATIVA
+     * ==========================================================
+     *
+     * empresaId = Empresa.Id
+     */
+    const respuestaEmpresa =
+        await obtenerEmpresa(
+            empresaId
+        );
+
+    if (respuestaEmpresa?.success) {
+        llenarInformacionCorporativaDocumento(
+            respuestaEmpresa.data
+        );
+    }
+
+    /*
+     * ==========================================================
+     * ACCIONISTAS
+     * ==========================================================
+     *
+     * Los accionistas todavía dependen de EbEmpresa.Id.
+     */
+    if (empresaIdDocumentos <= 0) {
+        establecerTexto(
+            "documentoEmpresaAccionistas",
+            "-"
+        );
+
+        return;
+    }
+
+    try {
+        const parametros =
+            new URLSearchParams({
+                handler: "Accionistas",
+                empresaId:
+                    empresaIdDocumentos.toString()
+            });
+
+        const response =
+            await fetch(
+                `${window.location.pathname}?${parametros.toString()}`
+            );
+
+        const resultado =
+            await response.json();
+
+        if (!resultado.success) {
+            establecerTexto(
+                "documentoEmpresaAccionistas",
+                "-"
+            );
+
+            return;
+        }
+
+        const accionistasActivos =
+            (resultado.data ?? [])
+                .filter(
+                    function (accionista) {
+                        return !accionista.deshabilitado;
+                    }
+                );
+
+        if (accionistasActivos.length === 0) {
+            establecerTexto(
+                "documentoEmpresaAccionistas",
+                "-"
+            );
+
+            return;
+        }
+
+        const textoAccionistas =
+            accionistasActivos
+                .map(
+                    function (accionista) {
+                        return (
+                            `${accionista.nombreCompleto} ` +
+                            `(${formatearPorcentaje(
+                                accionista.porcentajeParticipacion
+                            )})`
+                        );
+                    }
+                )
+                .join(", ");
+
+        establecerTexto(
+            "documentoEmpresaAccionistas",
+            textoAccionistas
+        );
+
     } catch {
         establecerTexto(
             "documentoEmpresaAccionistas",

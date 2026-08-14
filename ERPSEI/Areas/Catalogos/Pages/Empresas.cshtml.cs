@@ -1,6 +1,7 @@
 using ERPSEI.Areas.Catalogos.Pages.Auditoria;
 using ERPSEI.Data;
 using ERPSEI.Data.Entities.Empresas;
+using ERPSEI.Data.Entities.ExpedientesBancarios;
 using ERPSEI.Data.Entities.Metricas;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.Usuarios;
@@ -14,6 +15,7 @@ using ERPSEI.Utils;
 using ExcelDataReader;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
@@ -968,7 +970,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
             return string.Empty;
         }
 
-        private async Task<string> CreateOrUpdateCompany(EmpresaModel e, bool accesoBancos)
+        /*private async Task<string> CreateOrUpdateCompany(EmpresaModel e, bool accesoBancos)
 		{
 			try
 			{
@@ -1133,7 +1135,661 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				throw;
 			}
 			return string.Empty;
-		}
+		}*/
+
+        private async Task SincronizarEmpresaComplianceAsync(
+    Empresa empresa,
+    string? rfcAnterior)
+        {
+            /*
+             * ==========================================================
+             * NORMALIZAR RFC
+             * ==========================================================
+             */
+            string rfcActual =
+                empresa.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            string rfcAnteriorNormalizado =
+                rfcAnterior?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            /*
+             * ==========================================================
+             * LOCALIZAR REGISTRO COMPLIANCE
+             * ==========================================================
+             *
+             * Primero buscamos mediante el RFC anterior.
+             * Esto permite seguir encontrando EbEmpresa aunque
+             * el usuario esté modificando precisamente el RFC.
+             */
+            EbEmpresa? empresaCompliance =
+                null;
+
+            if (!string.IsNullOrWhiteSpace(
+                rfcAnteriorNormalizado))
+            {
+                empresaCompliance =
+                    await _db.EbEmpresas
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(x =>
+                            x.Rfc == rfcAnteriorNormalizado
+                        );
+            }
+
+            /*
+             * Si no fue encontrada por RFC anterior,
+             * intentamos con el RFC actual.
+             */
+            if (empresaCompliance == null &&
+                !string.IsNullOrWhiteSpace(rfcActual))
+            {
+                empresaCompliance =
+                    await _db.EbEmpresas
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(x =>
+                            x.Rfc == rfcActual
+                        );
+            }
+
+            /*
+             * ==========================================================
+             * NIVEL
+             * ==========================================================
+             */
+            string nivelNombre =
+                string.Empty;
+
+            if (empresa.NivelId.HasValue)
+            {
+                Nivel? nivel =
+                    await _nivelManager
+                        .GetByIdAsync(
+                            empresa.NivelId.Value
+                        );
+
+                nivelNombre =
+                    nivel?.Nombre ??
+                    string.Empty;
+            }
+
+            /*
+             * ==========================================================
+             * USUARIO ACTUAL
+             * ==========================================================
+             */
+            AppUser? usuarioActual =
+                await _userManager
+                    .GetUserAsync(User);
+
+            string usuarioId =
+                usuarioActual?.Id ??
+                string.Empty;
+
+            /*
+             * ==========================================================
+             * SI NO EXISTE EN COMPLIANCE, CREARLO
+             * ==========================================================
+             *
+             * Se crea únicamente la estructura necesaria.
+             * Los datos exclusivamente Compliance permanecen vacíos
+             * hasta que sean capturados desde ese módulo.
+             */
+            if (empresaCompliance == null)
+            {
+                empresaCompliance =
+                    new EbEmpresa
+                    {
+                        RazonSocial =
+                            empresa.RazonSocial ??
+                            string.Empty,
+
+                        NombreCorto =
+                            string.Empty,
+
+                        Rfc =
+                            rfcActual,
+
+                        Nivel =
+                            nivelNombre,
+
+                        ActividadComercial =
+                            null,
+
+                        TelefonoBancos =
+                            empresa.Telefono,
+
+                        CorreoBancos =
+                            empresa.CorreoBancos,
+
+                        FechaConstitucion =
+                            empresa.FechaConstitucion,
+
+                        NumeroEscritura =
+                            null,
+
+                        DomicilioFiscal =
+                            empresa.DomicilioFiscal,
+
+                        Observaciones =
+                            null,
+
+                        Deshabilitado =
+                            empresa.Deshabilitado != 0,
+
+                        Eliminado =
+                            false,
+
+                        FechaCreacion =
+                            DateTime.Now,
+
+                        UsuarioCreacionId =
+                            usuarioId
+                    };
+
+                _db.EbEmpresas.Add(
+                    empresaCompliance
+                );
+
+                return;
+            }
+
+            /*
+             * ==========================================================
+             * ACTUALIZAR CAMPOS COMPARTIDOS
+             * ==========================================================
+             *
+             * IMPORTANTE:
+             * No tocamos:
+             *
+             * NombreCorto
+             * ActividadComercial
+             * NumeroEscritura
+             * Observaciones
+             *
+             * porque pertenecen exclusivamente a Compliance.
+             */
+            empresaCompliance.RazonSocial =
+                empresa.RazonSocial ??
+                string.Empty;
+
+            empresaCompliance.Rfc =
+                rfcActual;
+
+            empresaCompliance.Nivel =
+                nivelNombre;
+
+            empresaCompliance.TelefonoBancos =
+                empresa.Telefono;
+
+            empresaCompliance.CorreoBancos =
+                empresa.CorreoBancos;
+
+            empresaCompliance.FechaConstitucion =
+                empresa.FechaConstitucion;
+
+            empresaCompliance.DomicilioFiscal =
+                empresa.DomicilioFiscal;
+
+            empresaCompliance.Deshabilitado =
+                empresa.Deshabilitado != 0;
+
+            /*
+             * Si nuevamente se está trabajando con la empresa
+             * desde el catálogo maestro, mantenemos disponible
+             * su registro interno de Compliance.
+             */
+            empresaCompliance.Eliminado =
+                false;
+
+            empresaCompliance.FechaActualizacion =
+                DateTime.Now;
+
+            empresaCompliance.UsuarioActualizacionId =
+                usuarioId;
+        }
+
+        private async Task<string> CreateOrUpdateCompany(
+    EmpresaModel e,
+    bool accesoBancos)
+        {
+            try
+            {
+                await _db.Database.BeginTransactionAsync();
+
+                int idEmpresa = 0;
+
+                /*
+                 * ==========================================================
+                 * BUSCAR EMPRESA EXISTENTE
+                 * ==========================================================
+                 */
+                Empresa? empresa =
+                    await _empresaManager.GetByIdAsync(e.Id);
+
+                string rfcAnterior =
+                empresa?.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+                /*
+                 * Se toma solamente el número máximo de bancos permitido.
+                 */
+                if (e.Bancos != null &&
+                    e.Bancos.Length >= 1)
+                {
+                    e.Bancos =
+                        [.. e.Bancos.Take(MAX_BANCOS)];
+                }
+
+                /*
+                 * ==========================================================
+                 * EMPRESA EXISTENTE
+                 * ==========================================================
+                 */
+                if (empresa != null)
+                {
+                    idEmpresa =
+                        empresa.Id;
+
+                    /*
+                     * Validaciones propias de bancos.
+                     */
+                    if (accesoBancos)
+                    {
+                        foreach (BancoModel? b in e.Bancos ?? [])
+                        {
+                            if (b != null &&
+                                e.NivelId != null)
+                            {
+                                Nivel? nivel =
+                                    await _nivelManager
+                                        .GetByIdAsync(
+                                            e.NivelId ?? 0
+                                        );
+
+                                /*
+                                 * Si el nivel permite facturar,
+                                 * el límite del banco debe ser mayor a cero.
+                                 */
+                                if (nivel != null &&
+                                    nivel.PuedeFacturar &&
+                                    b.Limite <= 0)
+                                {
+                                    await _db.Database
+                                        .RollbackTransactionAsync();
+
+                                    return _strLocalizer[
+                                        "LimiteNoPuedeSerCero",
+                                        nivel.Nombre
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    /*
+                     * ======================================================
+                     * NUEVA EMPRESA
+                     * ======================================================
+                     */
+                    empresa =
+                        new Empresa();
+                }
+
+                /*
+                 * ==========================================================
+                 * VALIDACIÓN DE CONTRASEÑA SAT
+                 * ==========================================================
+                 */
+                if (
+                    e.ArchivosSATNewPassword?.Length >= 1 ||
+                    e.ArchivosSATConfirmNewPassword?.Length >= 1
+                )
+                {
+                    if (
+                        e.ArchivosSATNewPassword !=
+                        e.ArchivosSATConfirmNewPassword
+                    )
+                    {
+                        await _db.Database
+                            .RollbackTransactionAsync();
+
+                        return _strLocalizer[
+                            "NuevoPasswordSATNoCoincide"
+                        ];
+                    }
+
+                    /*
+                     * Solamente validamos contraseña anterior
+                     * cuando realmente existe una empresa.
+                     */
+                    if (idEmpresa >= 1)
+                    {
+                        string passwordActual =
+                            _encriptacionAES
+                                .Base64AESToPlainText(
+                                    empresa.PFESAT ??
+                                    string.Empty
+                                );
+
+                        if (
+                            (e.ArchivosSATOldPassword ??
+                                string.Empty)
+                            != passwordActual
+                        )
+                        {
+                            await _db.Database
+                                .RollbackTransactionAsync();
+
+                            return _strLocalizer[
+                                "AnteriorPasswordSATNoCoincide"
+                            ];
+                        }
+                    }
+
+                    if (
+                        e.ArchivosSATNewPassword?.Length >= 1 &&
+                        e.ArchivosSATConfirmNewPassword?.Length >= 1
+                    )
+                    {
+                        empresa.PFESAT =
+                            _encriptacionAES
+                                .PlainTextToBase64AES(
+                                    e.ArchivosSATNewPassword ??
+                                    string.Empty
+                                );
+                    }
+                }
+
+                /*
+                 * ==========================================================
+                 * DATOS GENERALES DE LA EMPRESA
+                 * ==========================================================
+                 */
+                empresa.RazonSocial =
+                    e.RazonSocial;
+
+                empresa.PerfilId =
+                    e.PerfilId;
+
+                empresa.OrigenId =
+                    e.OrigenId;
+
+                empresa.NivelId =
+                    e.NivelId;
+
+                empresa.FechaConstitucion =
+                    e.FechaConstitucion;
+
+                empresa.FechaInicioOperacion =
+                    e.FechaInicioOperacion;
+
+                empresa.FechaInicioFacturacion =
+                    e.FechaInicioFacturacion;
+
+                empresa.FechaInicioAsimilados =
+                    e.FechaInicioAsimilados;
+
+                empresa.RFC =
+                    e.RFC ??
+                    string.Empty;
+
+                empresa.DomicilioFiscal =
+                    e.DomicilioFiscal ??
+                    string.Empty;
+
+                empresa.Administrador =
+                    e.Administrador ??
+                    string.Empty;
+
+                empresa.Accionista =
+                    e.Accionista ??
+                    string.Empty;
+
+                empresa.CorreoGeneral =
+                    e.CorreoGeneral;
+
+                empresa.CorreoBancos =
+                    e.CorreoBancos;
+
+                empresa.CorreoFiscal =
+                    e.CorreoFiscal;
+
+                empresa.CorreoFacturacion =
+                    e.CorreoFacturacion;
+
+                empresa.Telefono =
+                    e.Telefono;
+
+                empresa.ObjetoSocial =
+                    e.ObjetoSocial;
+
+                /*
+                 * ==========================================================
+                 * ACTUALIZAR O CREAR EMPRESA
+                 * ==========================================================
+                 */
+                if (idEmpresa >= 1)
+                {
+                    /*
+                     * Empresa existente.
+                     */
+                    await _empresaManager
+                        .UpdateAsync(
+                            empresa
+                        );
+
+                    /*
+                     * Eliminar actividades anteriores.
+                     */
+                    await _actividadesEconomicasEmpresaManager
+                        .DeleteByEmpresaIdAsync(
+                            idEmpresa
+                        );
+
+                    /*
+                     * Eliminar bancos anteriores cuando
+                     * el usuario tenga acceso.
+                     */
+                    if (accesoBancos)
+                    {
+                        await _bancoEmpresaManager
+                            .DeleteByEmpresaIdAsync(
+                                idEmpresa
+                            );
+                    }
+
+                    /*
+                     * Eliminar archivos que requieran actualizarse.
+                     */
+                    foreach (
+                        ArchivoModel? archivo
+                        in e.Archivos ?? []
+                    )
+                    {
+                        if (archivo == null)
+                        {
+                            continue;
+                        }
+
+                        await _archivoEmpresaManager
+                            .DeleteByIdAsync(
+                                archivo.Id ??
+                                string.Empty
+                            );
+                    }
+                }
+                else
+                {
+                    /*
+                     * Nueva empresa.
+                     *
+                     * El manager se encarga de crearla
+                     * y devolver el ID generado.
+                     */
+                    idEmpresa =
+                        await _empresaManager
+                            .CreateAsync(
+                                empresa
+                            );
+                }
+
+                /*
+                 * ==========================================================
+                 * SINCRONIZAR EMPRESA ? COMPLIANCE
+                 * ==========================================================
+                 */
+                await SincronizarEmpresaComplianceAsync(
+                    empresa,
+                    rfcAnterior
+                );
+
+                /*
+                 * ==========================================================
+                 * ACTIVIDADES ECONÓMICAS
+                 * ==========================================================
+                 */
+                foreach (
+                    int? actividadEconomicaId
+                    in e.ActividadesEconomicas ?? []
+                )
+                {
+                    if (!actividadEconomicaId.HasValue)
+                    {
+                        continue;
+                    }
+
+                    await _actividadesEconomicasEmpresaManager
+                        .CreateAsync(
+                            new ActividadEconomicaEmpresa
+                            {
+                                ActividadEconomicaId =
+                                    actividadEconomicaId.Value,
+
+                                EmpresaId =
+                                    idEmpresa
+                            }
+                        );
+                }
+
+                /*
+                 * ==========================================================
+                 * BANCOS
+                 * ==========================================================
+                 */
+                if (accesoBancos)
+                {
+                    foreach (
+                        BancoModel? banco
+                        in e.Bancos ?? []
+                    )
+                    {
+                        if (banco == null)
+                        {
+                            continue;
+                        }
+
+                        await _bancoEmpresaManager
+                            .CreateAsync(
+                                new BancoEmpresa
+                                {
+                                    Banco =
+                                        banco.Banco ??
+                                        string.Empty,
+
+                                    Responsable =
+                                        banco.Responsable ??
+                                        string.Empty,
+
+                                    Firmante =
+                                        banco.Firmante ??
+                                        string.Empty,
+
+                                    Limite =
+                                        banco.Limite ??
+                                        0m,
+
+                                    EmpresaId =
+                                        idEmpresa
+                                }
+                            );
+                    }
+                }
+
+                /*
+                 * ==========================================================
+                 * ARCHIVOS
+                 * ==========================================================
+                 */
+                foreach (
+                    ArchivoModel? archivo
+                    in e.Archivos ?? []
+                )
+                {
+                    if (archivo == null)
+                    {
+                        continue;
+                    }
+
+                    byte[] contenidoArchivo =
+                        !string.IsNullOrWhiteSpace(
+                            archivo.ImgSrc
+                        )
+                            ? Convert.FromBase64String(
+                                archivo.ImgSrc
+                            )
+                            : Array.Empty<byte>();
+
+                    await _archivoEmpresaManager
+                        .CreateAsync(
+                            new ArchivoEmpresa
+                            {
+                                Archivo =
+                                    contenidoArchivo,
+
+                                EmpresaId =
+                                    idEmpresa,
+
+                                Extension =
+                                    archivo.Extension ??
+                                    string.Empty,
+
+                                Nombre =
+                                    archivo.Nombre ??
+                                    string.Empty,
+
+                                TipoArchivoId =
+                                    archivo.TipoArchivoId
+                            }
+                        );
+                }
+
+                /*
+                 * ==========================================================
+                 * CONFIRMAR TRANSACCIÓN
+                 * ==========================================================
+                 */
+                await _db.Database
+                    .CommitTransactionAsync();
+
+                return string.Empty;
+            }
+            catch
+            {
+                await _db.Database
+                    .RollbackTransactionAsync();
+
+                throw;
+            }
+        }
 
         public async Task<JsonResult> OnPostImportarEmpresas()
         {
@@ -1327,6 +1983,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			return new JsonResult(resp);
 		}
+
 		private async Task<string> GetActividadesEconomicasSuggestion(string texto)
 		{
 			string jsonResponse;

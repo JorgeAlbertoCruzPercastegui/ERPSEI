@@ -1376,12 +1376,14 @@ function onImportarClick() {
         extendedOptions
     );
 }
+
 //Función para el cierre del cuadro de diálogo
 function onCerrarImportarClick() {
     let fileField = document.getElementById("excelFile");
     fileField.value = null;
     onCerrarClick();
 }
+
 //Función para procesar el cambio de archivo a exportar
 function onExcelSelectorChanged(input) {
     //Validación para seleccionar archivos excel solamente.

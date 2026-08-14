@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data;
+using ERPSEI.Data.Entities.Empresas;
 using ERPSEI.Data.Entities.ExpedientesBancarios;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
@@ -10,6 +11,8 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using ERPSEI.Data.Entities.SAT.Catalogos;
+using ERPSEI.Data.Managers.Empresas;
 
 namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 {
@@ -20,6 +23,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
         private readonly AppUserManager _userManager;
+        private readonly IEmpresaManager _empresaManager;
         private readonly IPermisosComplianceService _permisosComplianceService;
 
         public IndexModel(
@@ -27,12 +31,14 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             IWebHostEnvironment environment,
             IConfiguration configuration,
             AppUserManager userManager,
+            IEmpresaManager empresaManager,
             IPermisosComplianceService permisosComplianceService)
         {
             _context = context;
             _environment = environment;
             _configuration = configuration;
             _userManager = userManager;
+            _empresaManager = empresaManager;
             _permisosComplianceService = permisosComplianceService;
         }
 
@@ -85,7 +91,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // LISTADO PARA BOOTSTRAP TABLE
         // GET ?handler=Empresas
         // =====================================================
-        public async Task<IActionResult> OnGetEmpresasAsync(
+        /*public async Task<IActionResult> OnGetEmpresasAsync(
             string? busqueda,
             string? rfc,
             string? nivel,
@@ -164,6 +170,246 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     deshabilitado = x.Deshabilitado,
                     fechaCreacion = x.FechaCreacion
                 })
+                .ToListAsync();
+
+            return new JsonResult(empresas);
+        }*/
+        public async Task<IActionResult> OnGetEmpresasAsync(
+    string? busqueda,
+    string? rfc,
+    string? nivel,
+    string? estatus)
+        {
+            if (!await _permisosComplianceService
+                .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
+            string filtro =
+                busqueda?.Trim() ??
+                string.Empty;
+
+            string filtroRfc =
+                rfc?.Trim().ToUpperInvariant() ??
+                string.Empty;
+
+            string filtroNivel =
+                nivel?.Trim() ??
+                string.Empty;
+
+            string filtroEstatus =
+                string.IsNullOrWhiteSpace(estatus)
+                    ? "Activas"
+                    : estatus.Trim();
+
+            /*
+             * ==========================================================
+             * EMPRESAS MAESTRAS
+             * ==========================================================
+             *
+             * A partir de este punto la información corporativa se toma
+             * directamente del módulo Empresas.
+             *
+             * EbEmpresa solamente se conserva para recuperar el ID
+             * utilizado actualmente por Compliance y no afectar
+             * documentos, accionistas, bitácoras ni expedientes.
+             * ==========================================================
+             */
+
+            var query =
+                from empresa in _context.Set<Empresa>()
+                    .AsNoTracking()
+
+                join ebEmpresa in _context.EbEmpresas
+                    .AsNoTracking()
+
+                    on empresa.RFC equals ebEmpresa.Rfc
+                    into complianceRelacion
+
+                from ebEmpresa in complianceRelacion
+                    .DefaultIfEmpty()
+
+                select new
+                {
+                    /*
+                     * ID MAESTRO DEL MÓDULO EMPRESAS
+                     */
+                    empresaId = empresa.Id,
+
+                    /*
+                     * ID INTERNO ACTUAL DE COMPLIANCE.
+                     *
+                     * Si ya existía la empresa en Compliance,
+                     * mantenemos exactamente el mismo ID.
+                     */
+                    complianceId =
+                        ebEmpresa != null
+                            ? (int?)ebEmpresa.Id
+                            : null,
+
+                    /*
+                     * Para las empresas que ya tienen expediente
+                     * conservamos como "id" el ID histórico de Compliance.
+                     *
+                     * Si todavía no existe en Compliance utilizamos
+                     * temporalmente el ID negativo de Empresa únicamente
+                     * para mantener una llave única en la tabla.
+                     */
+                    id = empresa.Id,
+
+                    tieneRegistroCompliance =
+                        ebEmpresa != null,
+
+                    /*
+                     * ==================================================
+                     * INFORMACIÓN PROVENIENTE DEL MÓDULO EMPRESAS
+                     * ==================================================
+                     */
+
+                    razonSocial =
+                        empresa.RazonSocial ??
+                        string.Empty,
+
+                    /*
+                     * Empresa actualmente no tiene NombreCorto.
+                     * Conservamos el valor anterior de Compliance
+                     * solamente como información auxiliar.
+                     */
+                    nombreCorto =
+                        ebEmpresa != null
+                            ? ebEmpresa.NombreCorto
+                            : string.Empty,
+
+                    rfc =
+                        empresa.RFC ??
+                        string.Empty,
+
+                    nivel =
+                        empresa.Nivel != null
+                            ? empresa.Nivel.Nombre
+                            : string.Empty,
+
+                    /*
+                     * Mientras posteriormente incorporamos las
+                     * actividades económicas de Empresa, conservamos
+                     * este campo auxiliar para no alterar la tabla.
+                     */
+                    actividadComercial =
+                        ebEmpresa != null
+                            ? ebEmpresa.ActividadComercial
+                            : string.Empty,
+
+                    /*
+                     * Empresa tiene un teléfono general.
+                     * Lo mostramos aquí temporalmente en la columna
+                     * utilizada actualmente por Compliance.
+                     */
+                    telefonoBancos =
+                        empresa.Telefono ??
+                        string.Empty,
+
+                    correoBancos =
+                        empresa.CorreoBancos ??
+                        string.Empty,
+
+                    fechaConstitucion =
+                        empresa.FechaConstitucion,
+
+                    /*
+                     * Este dato todavía pertenece únicamente a
+                     * Compliance.
+                     */
+                    numeroEscritura =
+                        ebEmpresa != null
+                            ? ebEmpresa.NumeroEscritura
+                            : null,
+
+                    domicilioFiscal =
+                        empresa.DomicilioFiscal ??
+                        string.Empty,
+
+                    /*
+                     * Las observaciones siguen siendo propias de
+                     * Compliance.
+                     */
+                    observaciones =
+                        ebEmpresa != null
+                            ? ebEmpresa.Observaciones
+                            : null,
+
+                    deshabilitado =
+                        empresa.Deshabilitado != 0,
+
+                    /*
+                     * Conservamos la fecha histórica de Compliance
+                     * cuando ya existe un expediente.
+                     */
+                    fechaCreacion =
+                        ebEmpresa != null
+                            ? ebEmpresa.FechaCreacion
+                            : (DateTime?)null
+                };
+
+            /*
+             * ==========================================================
+             * FILTRO DE ESTATUS
+             * ==========================================================
+             *
+             * Ahora depende del módulo Empresas.
+             */
+            query = filtroEstatus switch
+            {
+                "Inactivas" =>
+                    query.Where(x =>
+                        x.deshabilitado),
+
+                "Todas" =>
+                    query,
+
+                _ =>
+                    query.Where(x =>
+                        !x.deshabilitado)
+            };
+
+            /*
+             * ==========================================================
+             * BÚSQUEDA GENERAL
+             * ==========================================================
+             */
+            if (!string.IsNullOrWhiteSpace(filtro))
+            {
+                query = query.Where(x =>
+                    x.razonSocial.Contains(filtro) ||
+                    x.nombreCorto.Contains(filtro) ||
+                    x.actividadComercial.Contains(filtro));
+            }
+
+            /*
+             * ==========================================================
+             * RFC
+             * ==========================================================
+             */
+            if (!string.IsNullOrWhiteSpace(filtroRfc))
+            {
+                query = query.Where(x =>
+                    x.rfc.Contains(filtroRfc));
+            }
+
+            /*
+             * ==========================================================
+             * NIVEL
+             * ==========================================================
+             */
+            if (!string.IsNullOrWhiteSpace(filtroNivel))
+            {
+                query = query.Where(x =>
+                    x.nivel.Contains(filtroNivel));
+            }
+
+            var empresas =
+                await query
+                .OrderBy(x => x.empresaId)
                 .ToListAsync();
 
             return new JsonResult(empresas);
@@ -558,7 +804,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // CONSULTAR REGISTRO
         // GET ?handler=Empresa&id=1
         // =====================================================
-        public async Task<IActionResult> OnGetEmpresaAsync(int id)
+        /*public async Task<IActionResult> OnGetEmpresaAsync(int id)
         {
             if (!await _permisosComplianceService
                     .PuedeVisualizarAsync(User))
@@ -610,6 +856,155 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     deshabilitado = empresa.Deshabilitado
                 }
             });
+        }*/
+
+        public async Task<IActionResult> OnGetEmpresaAsync(int id)
+        {
+            if (!await _permisosComplianceService
+                .PuedeVisualizarAsync(User))
+            {
+                return Forbid();
+            }
+
+            if (id <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El identificador de la empresa no es válido."
+                });
+            }
+
+            Empresa? empresaMaestra =
+                await _context.Set<Empresa>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == id
+                    );
+
+            if (empresaMaestra == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró la empresa solicitada."
+                });
+            }
+
+            string nivelNombre =
+                string.Empty;
+
+            if (empresaMaestra.NivelId.HasValue)
+            {
+                Nivel? nivel =
+                    await _context.Set<Nivel>()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x =>
+                            x.Id == empresaMaestra.NivelId.Value
+                        );
+
+                nivelNombre =
+                    nivel?.Nombre ??
+                    string.Empty;
+            }
+
+            string rfcEmpresa =
+                empresaMaestra.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            EbEmpresa? empresaCompliance =
+                null;
+
+            if (!string.IsNullOrWhiteSpace(rfcEmpresa))
+            {
+                empresaCompliance =
+                    await _context.EbEmpresas
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(x =>
+                            x.Rfc == rfcEmpresa
+                        );
+            }
+
+            /*
+             * Registrar la consulta solamente cuando exista
+             * registro interno de Compliance.
+             */
+            if (empresaCompliance != null)
+            {
+                RegistrarBitacoraEmpresa(
+                    empresaCompliance,
+                    EbAccionesBitacoraEmpresa.Consulta,
+                    exitoso: true,
+                    detalle:
+                        $"Se consultó la información de la empresa " +
+                        $"'{empresaMaestra.RazonSocial}'."
+                );
+
+                await _context.SaveChangesAsync();
+            }
+
+            return new JsonResult(new
+            {
+                success = true,
+
+                data = new
+                {
+                    id =
+                        empresaMaestra.Id,
+
+                    complianceId =
+                        empresaCompliance?.Id,
+
+                    tieneRegistroCompliance =
+                        empresaCompliance != null,
+
+                    razonSocial =
+                        empresaMaestra.RazonSocial ??
+                        string.Empty,
+
+                    nombreCorto =
+                        empresaCompliance?.NombreCorto ??
+                        string.Empty,
+
+                    rfc =
+                        empresaMaestra.RFC ??
+                        string.Empty,
+
+                    nivel =
+                        nivelNombre,
+
+                    actividadComercial =
+                        empresaCompliance?.ActividadComercial ??
+                        string.Empty,
+
+                    telefonoBancos =
+                        empresaMaestra.Telefono ??
+                        string.Empty,
+
+                    correoBancos =
+                        empresaMaestra.CorreoBancos ??
+                        string.Empty,
+
+                    fechaConstitucion =
+                        empresaMaestra.FechaConstitucion?
+                            .ToString("yyyy-MM-dd"),
+
+                    numeroEscritura =
+                        empresaCompliance?.NumeroEscritura,
+
+                    domicilioFiscal =
+                        empresaMaestra.DomicilioFiscal ??
+                        string.Empty,
+
+                    observaciones =
+                        empresaCompliance?.Observaciones,
+
+                    deshabilitado =
+                        empresaMaestra.Deshabilitado != 0
+                }
+            });
         }
 
         private static void AgregarCambioEmpresa(
@@ -645,7 +1040,8 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // CREAR EMPRESA
         // POST ?handler=Crear
         // =====================================================
-        public async Task<IActionResult> OnPostCrearAsync(
+
+        /*public async Task<IActionResult> OnPostCrearAsync(
             [FromBody] EmpresaRequest request)
         {
 
@@ -731,10 +1127,300 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 message = "La empresa se registró correctamente.",
                 id = empresa.Id
             });
+        }*/
+
+        public async Task<IActionResult> OnPostCrearAsync(
+    [FromBody] EmpresaRequest request)
+        {
+            if (!await _permisosComplianceService
+                .PuedeCrearCargarAsync(User))
+            {
+                return Forbid();
+            }
+
+            NormalizarRequest(request);
+
+            Dictionary<string, string[]> errores =
+                ValidarRequest(
+                    request,
+                    requiereId: false
+                );
+
+            if (errores.Any())
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Revisa la información capturada.",
+                    errors = errores
+                });
+            }
+
+            /*
+             * ==========================================================
+             * VALIDAR RFC EN EMPRESA MAESTRA
+             * ==========================================================
+             */
+            bool rfcEmpresaExistente =
+                await _context.Set<Empresa>()
+                    .AsNoTracking()
+                    .AnyAsync(x =>
+                        x.RFC != null &&
+                        x.RFC.ToUpper() == request.Rfc
+                    );
+
+            if (rfcEmpresaExistente)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "Ya existe una empresa registrada con este RFC.",
+
+                    errors =
+                        new Dictionary<string, string[]>
+                        {
+                            ["Rfc"] = new[]
+                            {
+                        "Ya existe una empresa registrada con este RFC."
+                            }
+                        }
+                });
+            }
+
+            /*
+             * ==========================================================
+             * VALIDAR RFC EN COMPLIANCE
+             * ==========================================================
+             */
+            bool rfcComplianceExistente =
+                await _context.EbEmpresas
+                    .IgnoreQueryFilters()
+                    .AsNoTracking()
+                    .AnyAsync(x =>
+                        x.Rfc == request.Rfc
+                    );
+
+            if (rfcComplianceExistente)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "Ya existe un registro de Compliance con este RFC.",
+
+                    errors =
+                        new Dictionary<string, string[]>
+                        {
+                            ["Rfc"] = new[]
+                            {
+                        "Ya existe un registro de Compliance con este RFC."
+                            }
+                        }
+                });
+            }
+
+            /*
+             * ==========================================================
+             * NIVEL
+             * ==========================================================
+             */
+            int? nivelId = null;
+
+            if (!string.IsNullOrWhiteSpace(request.Nivel))
+            {
+                Nivel? nivel =
+                    await _context.Set<Nivel>()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x =>
+                            x.Nombre == request.Nivel
+                        );
+
+                if (nivel == null)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "El nivel seleccionado no existe en el catálogo."
+                    });
+                }
+
+                nivelId = nivel.Id;
+            }
+
+            string usuarioId =
+                ObtenerUsuarioId();
+
+            /*
+             * ==========================================================
+             * TRANSACCIÓN
+             * ==========================================================
+             */
+            await using var transaccion =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                /*
+                 * ======================================================
+                 * CREAR EMPRESA MAESTRA
+                 * ======================================================
+                 */
+                Empresa empresaMaestra =
+                    new Empresa
+                    {
+                        RazonSocial =
+                            request.RazonSocial,
+
+                        RFC =
+                            request.Rfc,
+
+                        NivelId =
+                            nivelId,
+
+                        FechaConstitucion =
+                            request.FechaConstitucion,
+
+                        DomicilioFiscal =
+                            request.DomicilioFiscal,
+
+                        CorreoBancos =
+                            request.CorreoBancos,
+
+                        Telefono =
+                            request.TelefonoBancos,
+
+                        Deshabilitado =
+                            0
+                    };
+
+                int empresaId =
+                    await _empresaManager
+                        .CreateAsync(
+                            empresaMaestra
+                        );
+
+                if (empresaId <= 0)
+                {
+                    await transaccion.RollbackAsync();
+
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible crear la empresa en el catálogo maestro."
+                    });
+                }
+
+                /*
+                 * ======================================================
+                 * CREAR REGISTRO INTERNO COMPLIANCE
+                 * ======================================================
+                 */
+                EbEmpresa empresaCompliance =
+                    new EbEmpresa
+                    {
+                        RazonSocial =
+                            request.RazonSocial,
+
+                        NombreCorto =
+                            request.NombreCorto,
+
+                        Rfc =
+                            request.Rfc,
+
+                        Nivel =
+                            request.Nivel,
+
+                        ActividadComercial =
+                            request.ActividadComercial,
+
+                        TelefonoBancos =
+                            request.TelefonoBancos,
+
+                        CorreoBancos =
+                            request.CorreoBancos,
+
+                        FechaConstitucion =
+                            request.FechaConstitucion,
+
+                        NumeroEscritura =
+                            request.NumeroEscritura,
+
+                        DomicilioFiscal =
+                            request.DomicilioFiscal,
+
+                        Observaciones =
+                            request.Observaciones,
+
+                        Deshabilitado =
+                            false,
+
+                        Eliminado =
+                            false,
+
+                        FechaCreacion =
+                            DateTime.Now,
+
+                        UsuarioCreacionId =
+                            usuarioId
+                    };
+
+                _context.EbEmpresas.Add(
+                    empresaCompliance
+                );
+
+                await _context.SaveChangesAsync();
+
+                /*
+                 * ======================================================
+                 * BITÁCORA
+                 * ======================================================
+                 */
+                RegistrarBitacoraEmpresa(
+                    empresaCompliance,
+                    EbAccionesBitacoraEmpresa.Creacion,
+                    exitoso: true,
+                    detalle:
+                        $"Se creó la empresa " +
+                        $"'{empresaMaestra.RazonSocial}' " +
+                        $"desde Compliance."
+                );
+
+                await _context.SaveChangesAsync();
+
+                /*
+                 * ======================================================
+                 * CONFIRMAR TRANSACCIÓN
+                 * ======================================================
+                 */
+                await transaccion.CommitAsync();
+
+                return new JsonResult(new
+                {
+                    success = true,
+
+                    message =
+                        "La empresa se registró correctamente.",
+
+                    empresaId =
+                        empresaId,
+
+                    complianceId =
+                        empresaCompliance.Id
+                });
+            }
+            catch (Exception)
+            {
+                await transaccion.RollbackAsync();
+
+                throw;
+            }
         }
 
-        public async Task<IActionResult> OnPostEditarAsync(
-    [FromBody] EmpresaRequest request)
+        /*public async Task<IActionResult> OnPostEditarAsync(
+        [FromBody] EmpresaRequest request)
         {
             if (!await _permisosComplianceService
                     .PuedeModificarAsync(User))
@@ -808,10 +1494,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 });
             }
 
-            /*
-             * Guardar valores anteriores antes de modificar
-             * la entidad.
-             */
             string razonSocialAnterior =
                 empresa.RazonSocial;
 
@@ -845,9 +1527,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             string? observacionesAnterior =
                 empresa.Observaciones;
 
-            /*
-             * Asignar los valores nuevos.
-             */
             empresa.RazonSocial =
                 request.RazonSocial;
 
@@ -881,18 +1560,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             empresa.Observaciones =
                 request.Observaciones;
 
-            /*
-             * Campos reales de auditoría de EbEmpresa.
-             */
+            
             empresa.FechaActualizacion =
                 DateTime.Now;
 
             empresa.UsuarioActualizacionId =
                 ObtenerUsuarioId();
 
-            /*
-             * Identificar exactamente qué campos cambiaron.
-             */
             List<string> cambios =
                 new();
 
@@ -988,12 +1662,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         : "Se guardó la empresa sin cambios detectables."
             );
 
-            /*
-             * Guarda en una sola operación:
-             *
-             * - Los cambios de la empresa.
-             * - El registro de la bitácora.
-             */
             await _context.SaveChangesAsync();
 
             return new JsonResult(new
@@ -1002,13 +1670,509 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 message =
                     "La empresa se actualizó correctamente."
             });
+        }*/
+
+        public async Task<IActionResult> OnPostEditarAsync(
+            [FromBody] EmpresaRequest request)
+        {
+            if (!await _permisosComplianceService
+                .PuedeModificarAsync(User))
+            {
+                return Forbid();
+            }
+
+            NormalizarRequest(request);
+
+            Dictionary<string, string[]> errores =
+                ValidarRequest(
+                    request,
+                    requiereId: true
+                );
+
+            if (errores.Any())
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "Revisa la información capturada.",
+                    errors = errores
+                });
+            }
+
+            /*
+             * ==========================================================
+             * 1. LOCALIZAR EMPRESA MAESTRA
+             * ==========================================================
+             */
+            Empresa? empresaMaestra =
+                await _context.Set<Empresa>()
+                    .Include(x => x.Nivel)
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == request.Id
+                    );
+
+            if (empresaMaestra == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró la empresa solicitada."
+                });
+            }
+
+            /*
+             * Conservamos el RFC anterior porque actualmente
+             * utilizamos RFC como relación Empresa <-> EbEmpresa.
+             */
+            string rfcAnterior =
+                empresaMaestra.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            /*
+             * ==========================================================
+             * 2. VALIDAR RFC CONTRA EMPRESAS MAESTRAS
+             * ==========================================================
+             */
+            bool rfcExistente =
+                await _context.Set<Empresa>()
+                    .AsNoTracking()
+                    .AnyAsync(x =>
+                        x.Id != request.Id &&
+                        x.RFC != null &&
+                        x.RFC.ToUpper() == request.Rfc
+                    );
+
+            if (rfcExistente)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "Ya existe otra empresa registrada con este RFC.",
+
+                    errors =
+                        new Dictionary<string, string[]>
+                        {
+                            ["Rfc"] = new[]
+                            {
+                        "Ya existe otra empresa registrada con este RFC."
+                            }
+                        }
+                });
+            }
+
+            /*
+             * ==========================================================
+             * 3. LOCALIZAR REGISTRO INTERNO DE COMPLIANCE
+             * ==========================================================
+             */
+            EbEmpresa? empresaCompliance =
+                null;
+
+            if (!string.IsNullOrWhiteSpace(rfcAnterior))
+            {
+                empresaCompliance =
+                    await _context.EbEmpresas
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(x =>
+                            x.Rfc == rfcAnterior
+                        );
+            }
+
+            /*
+             * ==========================================================
+             * 4. NIVEL
+             * ==========================================================
+             */
+            int? nivelId =
+                empresaMaestra.NivelId;
+
+            if (!string.IsNullOrWhiteSpace(request.Nivel))
+            {
+                Nivel? nivel =
+                    await _context.Set<Nivel>()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x =>
+                            x.Nombre == request.Nivel
+                        );
+
+                if (nivel == null)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "El nivel seleccionado no existe en el catálogo."
+                    });
+                }
+
+                nivelId =
+                    nivel.Id;
+            }
+
+            /*
+             * ==========================================================
+             * 5. VALORES ANTERIORES DE EMPRESA MAESTRA
+             * ==========================================================
+             */
+            string razonSocialAnterior =
+                empresaMaestra.RazonSocial ??
+                string.Empty;
+
+            string domicilioAnterior =
+                empresaMaestra.DomicilioFiscal ??
+                string.Empty;
+
+            string correoBancosAnterior =
+                empresaMaestra.CorreoBancos ??
+                string.Empty;
+
+            string telefonoAnterior =
+                empresaMaestra.Telefono ??
+                string.Empty;
+
+            DateTime? fechaConstitucionAnterior =
+                empresaMaestra.FechaConstitucion;
+
+            string nivelAnterior =
+                empresaMaestra.Nivel?.Nombre ??
+                string.Empty;
+
+            /*
+             * ==========================================================
+             * 6. VALORES ANTERIORES DE COMPLIANCE
+             * ==========================================================
+             */
+            string nombreCortoAnterior =
+                empresaCompliance?.NombreCorto ??
+                string.Empty;
+
+            string actividadComercialAnterior =
+                empresaCompliance?.ActividadComercial ??
+                string.Empty;
+
+            string numeroEscrituraAnterior =
+                empresaCompliance?.NumeroEscritura ??
+                string.Empty;
+
+            string observacionesAnterior =
+                empresaCompliance?.Observaciones ??
+                string.Empty;
+
+            /*
+             * ==========================================================
+             * 7. ACTUALIZAR EMPRESA MAESTRA
+             * ==========================================================
+             */
+            empresaMaestra.RazonSocial =
+                request.RazonSocial;
+
+            empresaMaestra.RFC =
+                request.Rfc;
+
+            empresaMaestra.NivelId =
+                nivelId;
+
+            empresaMaestra.FechaConstitucion =
+                request.FechaConstitucion;
+
+            empresaMaestra.DomicilioFiscal =
+                request.DomicilioFiscal;
+
+            empresaMaestra.CorreoBancos =
+                request.CorreoBancos;
+
+            empresaMaestra.Telefono =
+                request.TelefonoBancos;
+
+            /*
+             * ==========================================================
+             * 8. CREAR REGISTRO COMPLIANCE SI NO EXISTE
+             * ==========================================================
+             *
+             * Esto soluciona el caso de empresas creadas originalmente
+             * desde el módulo Empresas y que todavía no tenían EbEmpresa.
+             */
+            bool seCreoRegistroCompliance =
+                false;
+
+            if (empresaCompliance == null)
+            {
+                empresaCompliance =
+                    new EbEmpresa
+                    {
+                        RazonSocial =
+                            request.RazonSocial,
+
+                        NombreCorto =
+                            request.NombreCorto,
+
+                        Rfc =
+                            request.Rfc,
+
+                        Nivel =
+                            request.Nivel,
+
+                        ActividadComercial =
+                            request.ActividadComercial,
+
+                        TelefonoBancos =
+                            request.TelefonoBancos,
+
+                        CorreoBancos =
+                            request.CorreoBancos,
+
+                        FechaConstitucion =
+                            request.FechaConstitucion,
+
+                        NumeroEscritura =
+                            request.NumeroEscritura,
+
+                        DomicilioFiscal =
+                            request.DomicilioFiscal,
+
+                        Observaciones =
+                            request.Observaciones,
+
+                        Deshabilitado =
+                            empresaMaestra.Deshabilitado != 0,
+
+                        Eliminado =
+                            false,
+
+                        FechaCreacion =
+                            DateTime.Now,
+
+                        UsuarioCreacionId =
+                            ObtenerUsuarioId()
+                    };
+
+                _context.EbEmpresas.Add(
+                    empresaCompliance
+                );
+
+                seCreoRegistroCompliance =
+                    true;
+            }
+            else
+            {
+                /*
+                 * ======================================================
+                 * 9. ACTUALIZAR REGISTRO COMPLIANCE EXISTENTE
+                 * ======================================================
+                 */
+                empresaCompliance.RazonSocial =
+                    request.RazonSocial;
+
+                empresaCompliance.Rfc =
+                    request.Rfc;
+
+                empresaCompliance.Nivel =
+                    request.Nivel;
+
+                empresaCompliance.CorreoBancos =
+                    request.CorreoBancos;
+
+                empresaCompliance.FechaConstitucion =
+                    request.FechaConstitucion;
+
+                empresaCompliance.DomicilioFiscal =
+                    request.DomicilioFiscal;
+
+                empresaCompliance.NombreCorto =
+                    request.NombreCorto;
+
+                empresaCompliance.ActividadComercial =
+                    request.ActividadComercial;
+
+                empresaCompliance.TelefonoBancos =
+                    request.TelefonoBancos;
+
+                empresaCompliance.NumeroEscritura =
+                    request.NumeroEscritura;
+
+                empresaCompliance.Observaciones =
+                    request.Observaciones;
+
+                empresaCompliance.Deshabilitado =
+                    empresaMaestra.Deshabilitado != 0;
+
+                empresaCompliance.Eliminado =
+                    false;
+
+                empresaCompliance.FechaActualizacion =
+                    DateTime.Now;
+
+                empresaCompliance.UsuarioActualizacionId =
+                    ObtenerUsuarioId();
+            }
+
+            /*
+             * ==========================================================
+             * 10. BITÁCORA
+             * ==========================================================
+             */
+            List<string> cambios =
+                new();
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Razón social",
+                razonSocialAnterior,
+                empresaMaestra.RazonSocial
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "RFC",
+                rfcAnterior,
+                empresaMaestra.RFC
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Nivel",
+                nivelAnterior,
+                request.Nivel
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Fecha de constitución",
+                fechaConstitucionAnterior?
+                    .ToString("dd/MM/yyyy"),
+                empresaMaestra.FechaConstitucion?
+                    .ToString("dd/MM/yyyy")
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Domicilio fiscal",
+                domicilioAnterior,
+                empresaMaestra.DomicilioFiscal
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Correo bancos",
+                correoBancosAnterior,
+                empresaMaestra.CorreoBancos
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Teléfono",
+                telefonoAnterior,
+                empresaMaestra.Telefono
+            );
+
+            /*
+             * Campos específicos de Compliance.
+             */
+            AgregarCambioEmpresa(
+                cambios,
+                "Nombre corto",
+                nombreCortoAnterior,
+                request.NombreCorto
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Actividad comercial",
+                actividadComercialAnterior,
+                request.ActividadComercial
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Número de escritura",
+                numeroEscrituraAnterior,
+                request.NumeroEscritura
+            );
+
+            AgregarCambioEmpresa(
+                cambios,
+                "Observaciones",
+                observacionesAnterior,
+                request.Observaciones
+            );
+
+            /*
+             * ==========================================================
+             * 11. GUARDAR EMPRESA + COMPLIANCE
+             * ==========================================================
+             *
+             * Primero guardamos para garantizar que EbEmpresa tenga ID
+             * si acaba de ser creada.
+             */
+            await _context.SaveChangesAsync();
+
+            /*
+             * ==========================================================
+             * 12. REGISTRAR BITÁCORA COMPLIANCE
+             * ==========================================================
+             */
+            if (seCreoRegistroCompliance)
+            {
+                RegistrarBitacoraEmpresa(
+                    empresaCompliance,
+                    EbAccionesBitacoraEmpresa.Creacion,
+                    exitoso: true,
+                    detalle:
+                        $"Se inicializó el expediente de Compliance para " +
+                        $"'{empresaMaestra.RazonSocial}' durante su edición. " +
+                        (
+                            cambios.Count > 0
+                                ? string.Join(" | ", cambios)
+                                : "Sin cambios adicionales."
+                        )
+                );
+            }
+            else
+            {
+                RegistrarBitacoraEmpresa(
+                    empresaCompliance,
+                    EbAccionesBitacoraEmpresa.Edicion,
+                    exitoso: true,
+                    detalle:
+                        cambios.Count > 0
+                            ? string.Join(
+                                " | ",
+                                cambios
+                            )
+                            : "Se guardó la empresa sin cambios detectables."
+                );
+            }
+
+            await _context.SaveChangesAsync();
+
+            /*
+             * ==========================================================
+             * 13. RESPUESTA
+             * ==========================================================
+             */
+            return new JsonResult(new
+            {
+                success = true,
+
+                message =
+                    "La empresa se actualizó correctamente.",
+
+                empresaId =
+                    empresaMaestra.Id,
+
+                complianceId =
+                    empresaCompliance.Id
+            });
         }
 
         // =====================================================
         // HABILITAR / DESHABILITAR
         // POST ?handler=CambiarEstatus
         // =====================================================
-        public async Task<IActionResult> OnPostCambiarEstatusAsync(
+        /*public async Task<IActionResult> OnPostCambiarEstatusAsync(
             [FromBody] EmpresaIdRequest request)
         {
 
@@ -1070,13 +2234,156 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 message = mensaje,
                 deshabilitado = empresa.Deshabilitado
             });
+        }*/
+
+        // =====================================================
+        // HABILITAR / DESHABILITAR EMPRESA
+        // POST ?handler=CambiarEstatus
+        // =====================================================
+        public async Task<IActionResult> OnPostCambiarEstatusAsync(
+            [FromBody] EmpresaIdRequest request)
+        {
+            if (!await _permisosComplianceService
+                .PuedeModificarAsync(User))
+            {
+                return Forbid();
+            }
+
+            if (request.Id <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El identificador de la empresa no es válido."
+                });
+            }
+
+            /*
+             * ==========================================================
+             * 1. LOCALIZAR EMPRESA MAESTRA
+             * ==========================================================
+             *
+             * request.Id corresponde ahora al Id del módulo Empresas.
+             */
+            Empresa? empresaMaestra =
+                await _context.Set<Empresa>()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == request.Id
+                    );
+
+            if (empresaMaestra == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró la empresa solicitada."
+                });
+            }
+
+            /*
+             * RFC actual utilizado para localizar, cuando exista,
+             * su registro interno histórico de Compliance.
+             */
+            string rfcEmpresa =
+                empresaMaestra.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            /*
+             * ==========================================================
+             * 2. LOCALIZAR REGISTRO INTERNO DE COMPLIANCE
+             * ==========================================================
+             */
+            EbEmpresa? empresaCompliance = null;
+
+            if (!string.IsNullOrWhiteSpace(rfcEmpresa))
+            {
+                empresaCompliance =
+                    await _context.EbEmpresas
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(x =>
+                            x.Rfc == rfcEmpresa
+                        );
+            }
+
+            /*
+             * ==========================================================
+             * 3. CAMBIAR ESTATUS EN EMPRESA MAESTRA
+             * ==========================================================
+             *
+             * Empresa utiliza:
+             *
+             * 0 = activa
+             * 1 = deshabilitada
+             */
+            bool seDeshabilita =
+                empresaMaestra.Deshabilitado == 0;
+
+            empresaMaestra.Deshabilitado =
+                seDeshabilita
+                    ? 1
+                    : 0;
+
+            /*
+             * ==========================================================
+             * 4. SINCRONIZAR ESTATUS INTERNO DE COMPLIANCE
+             * ==========================================================
+             *
+             * No es la fuente principal, pero lo mantenemos sincronizado
+             * para proteger procesos existentes que todavía utilizan
+             * EbEmpresa.
+             */
+            if (empresaCompliance != null)
+            {
+                empresaCompliance.Deshabilitado =
+                    seDeshabilita;
+
+                empresaCompliance.FechaActualizacion =
+                    DateTime.Now;
+
+                empresaCompliance.UsuarioActualizacionId =
+                    ObtenerUsuarioId();
+
+                /*
+                 * Conservamos la bitácora existente de Compliance.
+                 */
+                RegistrarBitacoraEmpresa(
+                    empresaCompliance,
+                    EbAccionesBitacoraEmpresa.CambioEstatus,
+                    exitoso: true,
+                    detalle:
+                        seDeshabilita
+                            ? $"Se deshabilitó la empresa '{empresaMaestra.RazonSocial}'."
+                            : $"Se habilitó la empresa '{empresaMaestra.RazonSocial}'."
+                );
+            }
+
+            /*
+             * ==========================================================
+             * 5. GUARDAR
+             * ==========================================================
+             */
+            await _context.SaveChangesAsync();
+
+            string mensaje =
+                seDeshabilita
+                    ? "La empresa se deshabilitó correctamente."
+                    : "La empresa se habilitó correctamente.";
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = mensaje,
+                deshabilitado = seDeshabilita
+            });
         }
 
         // =====================================================
         // ELIMINACIÓN LÓGICA
         // POST ?handler=Eliminar
         // =====================================================
-        public async Task<IActionResult> OnPostEliminarAsync(
+        /*public async Task<IActionResult> OnPostEliminarAsync(
             [FromBody] EmpresaIdRequest request)
         {
 
@@ -1143,6 +2450,139 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     $"Se eliminó lógicamente la empresa '{empresa.RazonSocial}'."
             );
 
+            await _context.SaveChangesAsync();
+
+            return new JsonResult(new
+            {
+                success = true,
+                message = "La empresa se eliminó correctamente."
+            });
+        }*/
+
+        public async Task<IActionResult> OnPostEliminarAsync(
+    [FromBody] EmpresaIdRequest request)
+        {
+            if (!await _permisosComplianceService
+                .PuedeEliminarAsync(User))
+            {
+                return Forbid();
+            }
+
+            if (request.Id <= 0)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "El identificador de la empresa no es válido."
+                });
+            }
+
+            /*
+             * ==========================================================
+             * 1. LOCALIZAR EMPRESA MAESTRA
+             * ==========================================================
+             */
+            Empresa? empresaMaestra =
+                await _context.Set<Empresa>()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == request.Id
+                    );
+
+            if (empresaMaestra == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontró la empresa solicitada."
+                });
+            }
+
+            string rfcEmpresa =
+                empresaMaestra.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            /*
+             * ==========================================================
+             * 2. LOCALIZAR REGISTRO INTERNO DE COMPLIANCE
+             * ==========================================================
+             */
+            EbEmpresa? empresaCompliance = null;
+
+            if (!string.IsNullOrWhiteSpace(rfcEmpresa))
+            {
+                empresaCompliance =
+                    await _context.EbEmpresas
+                        .IgnoreQueryFilters()
+                        .Include(x => x.Accionistas)
+                        .Include(x => x.Documentos)
+                        .FirstOrDefaultAsync(x =>
+                            x.Rfc == rfcEmpresa
+                        );
+            }
+
+            /*
+             * ==========================================================
+             * 3. PROTEGER INFORMACIÓN RELACIONADA
+             * ==========================================================
+             */
+            if (empresaCompliance != null)
+            {
+                bool tieneInformacionRelacionada =
+                    empresaCompliance.Accionistas.Any() ||
+                    empresaCompliance.Documentos.Any();
+
+                if (tieneInformacionRelacionada)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message =
+                            "La empresa tiene información relacionada. " +
+                            "Puedes deshabilitarla, pero no eliminarla."
+                    });
+                }
+            }
+
+            /*
+             * ==========================================================
+             * 4. DESHABILITAR EMPRESA MAESTRA
+             * ==========================================================
+             */
+            empresaMaestra.Deshabilitado = 1;
+
+            /*
+             * ==========================================================
+             * 5. ACTUALIZAR REGISTRO DE COMPLIANCE
+             * ==========================================================
+             */
+            if (empresaCompliance != null)
+            {
+                empresaCompliance.Eliminado = true;
+                empresaCompliance.Deshabilitado = true;
+
+                empresaCompliance.FechaActualizacion =
+                    DateTime.Now;
+
+                empresaCompliance.UsuarioActualizacionId =
+                    ObtenerUsuarioId();
+
+                RegistrarBitacoraEmpresa(
+                    empresaCompliance,
+                    EbAccionesBitacoraEmpresa.Eliminacion,
+                    exitoso: true,
+                    detalle:
+                        $"Se eliminó lógicamente la empresa " +
+                        $"'{empresaMaestra.RazonSocial}' desde Compliance."
+                );
+            }
+
+            /*
+             * ==========================================================
+             * 6. GUARDAR
+             * ==========================================================
+             */
             await _context.SaveChangesAsync();
 
             return new JsonResult(new
