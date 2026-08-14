@@ -2168,6 +2168,8 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             });
         }
 
+
+
         // =====================================================
         // HABILITAR / DESHABILITAR
         // POST ?handler=CambiarEstatus
@@ -3635,15 +3637,84 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             return errores;
         }
 
+        private async Task SincronizarAccionistasEmpresaMaestraAsync(
+            int complianceEmpresaId)
+        {
+            if (complianceEmpresaId <= 0)
+            {
+                return;
+            }
+
+            EbEmpresa? empresaCompliance =
+                await _context.EbEmpresas
+                    .IgnoreQueryFilters()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == complianceEmpresaId
+                    );
+
+            if (empresaCompliance == null)
+            {
+                return;
+            }
+
+            string rfc =
+                empresaCompliance.Rfc?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(rfc))
+            {
+                return;
+            }
+
+            Empresa? empresaMaestra =
+                await _context.Set<Empresa>()
+                    .FirstOrDefaultAsync(x =>
+                        x.RFC != null &&
+                        x.RFC.ToUpper() == rfc
+                    );
+
+            if (empresaMaestra == null)
+            {
+                return;
+            }
+
+            List<string> accionistas =
+                await _context.EbAccionistas
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.EmpresaId == complianceEmpresaId &&
+                        !x.Eliminado &&
+                        !x.Deshabilitado
+                    )
+                    .OrderByDescending(x =>
+                        x.PorcentajeParticipacion
+                    )
+                    .ThenBy(x =>
+                        x.NombreCompleto
+                    )
+                    .Select(x =>
+                        x.NombreCompleto
+                    )
+                    .ToListAsync();
+
+            empresaMaestra.Accionista =
+                accionistas.Count > 0
+                    ? string.Join(", ", accionistas)
+                    : string.Empty;
+        }
+
         // =====================================================
         // LISTAR ACCIONISTAS DE UNA EMPRESA
         // GET ?handler=Accionistas&empresaId=1
         // =====================================================
-        public async Task<IActionResult> OnGetAccionistasAsync(int empresaId)
+        public async Task<IActionResult> OnGetAccionistasAsync(
+            int empresaId)
         {
-
             if (!await _permisosComplianceService
-            .PuedeVisualizarAsync(User))
+                .PuedeVisualizarAsync(User))
             {
                 return Forbid();
             }
@@ -3653,54 +3724,410 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "El identificador de la empresa no es válido."
+                    message =
+                        "El identificador de la empresa no es válido."
                 });
             }
 
-            bool empresaExiste = await _context.EbEmpresas
-                .AsNoTracking()
-                .AnyAsync(x => x.Id == empresaId);
+            /*
+             * ==========================================================
+             * 1. LOCALIZAR EMPRESA MAESTRA
+             * ==========================================================
+             *
+             * empresaId corresponde a Empresa.Id
+             */
+            Empresa? empresaMaestra =
+                await _context.Set<Empresa>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == empresaId
+                    );
 
-            if (!empresaExiste)
+            if (empresaMaestra == null)
             {
                 return new JsonResult(new
                 {
                     success = false,
-                    message = "No se encontró la empresa solicitada."
+                    message =
+                        "No se encontró la empresa solicitada."
                 });
             }
 
-            var accionistas = await _context.EbAccionistas
-                .AsNoTracking()
-                .Where(x => x.EmpresaId == empresaId)
-                .OrderByDescending(x => x.PorcentajeParticipacion)
-                .ThenBy(x => x.NombreCompleto)
-                .Select(x => new
+            string rfcEmpresa =
+                empresaMaestra.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            /*
+             * ==========================================================
+             * 2. LOCALIZAR EbEmpresa POR RFC
+             * ==========================================================
+             */
+            EbEmpresa? empresaCompliance =
+                null;
+
+            if (!string.IsNullOrWhiteSpace(rfcEmpresa))
+            {
+                empresaCompliance =
+                    await _context.EbEmpresas
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(x =>
+                            x.Rfc != null &&
+                            x.Rfc.Trim().ToUpper() ==
+                            rfcEmpresa
+                        );
+            }
+
+            /*
+             * ==========================================================
+             * 3. CREAR EbEmpresa SI TODAVÍA NO EXISTE
+             * ==========================================================
+             */
+            if (empresaCompliance == null)
+            {
+                string nivelNombre =
+                    string.Empty;
+
+                if (empresaMaestra.NivelId.HasValue)
                 {
-                    id = x.Id,
-                    empresaId = x.EmpresaId,
-                    nombreCompleto = x.NombreCompleto,
-                    rfc = x.Rfc,
-                    porcentajeParticipacion = x.PorcentajeParticipacion,
-                    nacionalidad = x.Nacionalidad,
-                    esRepresentanteLegal = x.EsRepresentanteLegal,
-                    deshabilitado = x.Deshabilitado,
-                    fechaCreacion = x.FechaCreacion
-                })
-                .ToListAsync();
+                    Nivel? nivel =
+                        await _context.Set<Nivel>()
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(x =>
+                                x.Id ==
+                                empresaMaestra.NivelId.Value
+                            );
 
-            decimal porcentajeTotal = accionistas.Sum(
-                x => x.porcentajeParticipacion);
+                    nivelNombre =
+                        nivel?.Nombre ??
+                        string.Empty;
+                }
 
+                empresaCompliance =
+                    new EbEmpresa
+                    {
+                        RazonSocial =
+                            empresaMaestra.RazonSocial ??
+                            string.Empty,
+
+                        NombreCorto =
+                            string.Empty,
+
+                        Rfc =
+                            rfcEmpresa,
+
+                        Nivel =
+                            nivelNombre,
+
+                        ActividadComercial =
+                            null,
+
+                        TelefonoBancos =
+                            empresaMaestra.Telefono,
+
+                        CorreoBancos =
+                            empresaMaestra.CorreoBancos,
+
+                        FechaConstitucion =
+                            empresaMaestra.FechaConstitucion,
+
+                        NumeroEscritura =
+                            null,
+
+                        DomicilioFiscal =
+                            empresaMaestra.DomicilioFiscal,
+
+                        Observaciones =
+                            null,
+
+                        Deshabilitado =
+                            empresaMaestra.Deshabilitado != 0,
+
+                        Eliminado =
+                            false,
+
+                        FechaCreacion =
+                            DateTime.Now,
+
+                        UsuarioCreacionId =
+                            ObtenerUsuarioId()
+                    };
+
+                _context.EbEmpresas.Add(
+                    empresaCompliance
+                );
+
+                await _context.SaveChangesAsync();
+            }
+
+            /*
+             * Este es el ID que realmente utiliza EbAccionista.EmpresaId
+             */
+            int complianceId =
+                empresaCompliance.Id;
+
+            /*
+             * ==========================================================
+             * 4. IMPORTAR ACCIONISTA(S) DESDE Empresa.Accionista
+             * ==========================================================
+             */
+            if (!string.IsNullOrWhiteSpace(
+                empresaMaestra.Accionista))
+            {
+                string[] nombresEmpresa =
+                    empresaMaestra.Accionista
+                        .Split(
+                            new[]
+                            {
+                        ',',
+                        ';',
+                        '\n',
+                        '\r'
+                            },
+                            StringSplitOptions.RemoveEmptyEntries
+                        )
+                        .Select(x =>
+                            x.Trim()
+                        )
+                        .Where(x =>
+                            !string.IsNullOrWhiteSpace(x)
+                        )
+                        .Distinct(
+                            StringComparer.OrdinalIgnoreCase
+                        )
+                        .ToArray();
+
+                List<EbAccionista> accionistasExistentes =
+                    await _context.EbAccionistas
+                        .IgnoreQueryFilters()
+                        .Where(x =>
+                            x.EmpresaId ==
+                            complianceId &&
+                            !x.Eliminado
+                        )
+                        .ToListAsync();
+
+                bool seAgrego =
+                    false;
+
+                string usuarioId =
+                    ObtenerUsuarioId();
+
+                foreach (string nombreEmpresa in nombresEmpresa)
+                {
+                    bool yaExiste =
+                        accionistasExistentes
+                            .Any(x =>
+                                string.Equals(
+                                    x.NombreCompleto?
+                                        .Trim(),
+
+                                    nombreEmpresa,
+
+                                    StringComparison
+                                        .OrdinalIgnoreCase
+                                )
+                            );
+
+                    if (yaExiste)
+                    {
+                        continue;
+                    }
+
+                    EbAccionista nuevoAccionista =
+                        new EbAccionista
+                        {
+                            EmpresaId =
+                                complianceId,
+
+                            NombreCompleto =
+                                nombreEmpresa,
+
+                            Rfc =
+                                string.Empty,
+
+                            PorcentajeParticipacion =
+                            nombresEmpresa.Length == 1
+                                ? 100m
+                                : 0m,
+
+                            Nacionalidad =
+                                string.Empty,
+
+                            EsRepresentanteLegal =
+                                false,
+
+                            Deshabilitado =
+                                false,
+
+                            Eliminado =
+                                false,
+
+                            FechaCreacion =
+                                DateTime.Now,
+
+                            UsuarioCreacionId =
+                                usuarioId
+                        };
+
+                    _context.EbAccionistas.Add(
+                        nuevoAccionista
+                    );
+
+                    accionistasExistentes.Add(
+                        nuevoAccionista
+                    );
+
+                    seAgrego =
+                        true;
+                }
+
+                if (seAgrego)
+                {
+                    await _context.SaveChangesAsync();
+                }
+
+                List<EbAccionista> accionistasActivos =
+                    await _context.EbAccionistas
+                        .Where(x =>
+                            x.EmpresaId == complianceId &&
+                            !x.Eliminado &&
+                            !x.Deshabilitado
+                        )
+                        .ToListAsync();
+
+                if (
+                    nombresEmpresa.Length == 1 &&
+                    accionistasActivos.Count == 1 &&
+                    accionistasActivos[0].PorcentajeParticipacion == 0m &&
+                    string.Equals(
+                        accionistasActivos[0].NombreCompleto?.Trim(),
+                        nombresEmpresa[0],
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    accionistasActivos[0].PorcentajeParticipacion =
+                        100m;
+
+                    accionistasActivos[0].FechaActualizacion =
+                        DateTime.Now;
+
+                    accionistasActivos[0].UsuarioActualizacionId =
+                        ObtenerUsuarioId();
+
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            /*
+             * ==========================================================
+             * 5. LISTAR ACCIONISTAS
+             * ==========================================================
+             */
+            var accionistas =
+                await _context.EbAccionistas
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.EmpresaId ==
+                        complianceId &&
+                        !x.Eliminado
+                    )
+                    .OrderByDescending(x =>
+                        x.PorcentajeParticipacion
+                    )
+                    .ThenBy(x =>
+                        x.NombreCompleto
+                    )
+                    .Select(x => new
+                    {
+                        id =
+                            x.Id,
+
+                        empresaId =
+                            x.EmpresaId,
+
+                        nombreCompleto =
+                            x.NombreCompleto,
+
+                        rfc =
+                            x.Rfc,
+
+                        porcentajeParticipacion =
+                            x.PorcentajeParticipacion,
+
+                        nacionalidad =
+                            x.Nacionalidad,
+
+                        esRepresentanteLegal =
+                            x.EsRepresentanteLegal,
+
+                        deshabilitado =
+                            x.Deshabilitado,
+
+                        fechaCreacion =
+                            x.FechaCreacion
+                    })
+                    .ToListAsync();
+
+            /*
+             * ==========================================================
+             * 6. RESUMEN
+             * ==========================================================
+             */
+            decimal porcentajeTotal =
+                accionistas
+                    .Where(x =>
+                        !x.deshabilitado
+                    )
+                    .Sum(x =>
+                        x.porcentajeParticipacion
+                    );
+
+            decimal porcentajeDisponible =
+                100m -
+                porcentajeTotal;
+
+            if (porcentajeDisponible < 0m)
+            {
+                porcentajeDisponible =
+                    0m;
+            }
+
+            /*
+             * ==========================================================
+             * 7. RESPUESTA
+             * ==========================================================
+             */
             return new JsonResult(new
             {
                 success = true,
-                data = accionistas,
+
+                /*
+                 * ID maestro
+                 */
+                empresaId =
+                    empresaMaestra.Id,
+
+                /*
+                 * ID interno Compliance.
+                 * Este lo necesita el JS para Crear/Editar.
+                 */
+                complianceId =
+                    complianceId,
+
+                data =
+                    accionistas,
+
                 resumen = new
                 {
-                    totalAccionistas = accionistas.Count,
+                    totalAccionistas =
+                        accionistas.Count,
+
                     porcentajeTotal,
-                    porcentajeDisponible = 100m - porcentajeTotal
+
+                    porcentajeDisponible
                 }
             });
         }
@@ -3820,7 +4247,20 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 UsuarioCreacionId = usuarioId
             };
 
-            _context.EbAccionistas.Add(accionista);
+            _context.EbAccionistas.Add(
+                accionista
+            );
+
+            await _context.SaveChangesAsync();
+
+            /*
+             * Sincronizar el resumen de accionistas
+             * con el módulo principal Empresas.
+             */
+            await SincronizarAccionistasEmpresaMaestraAsync(
+                request.EmpresaId
+            );
+
             await _context.SaveChangesAsync();
 
             return new JsonResult(new
@@ -3896,6 +4336,16 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 
             await _context.SaveChangesAsync();
 
+            /*
+             * Actualizar el resumen de accionistas
+             * en Empresa.Accionista.
+             */
+            await SincronizarAccionistasEmpresaMaestraAsync(
+                accionista.EmpresaId
+            );
+
+            await _context.SaveChangesAsync();
+
             return new JsonResult(new
             {
                 success = true,
@@ -3940,14 +4390,21 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             }
 
             accionista.Deshabilitado =
-                !accionista.Deshabilitado;
+            !accionista.Deshabilitado;
 
-            accionista.FechaActualizacion = DateTime.Now;
+            accionista.FechaActualizacion =
+                DateTime.Now;
+
             accionista.UsuarioActualizacionId =
                 ObtenerUsuarioId();
 
             await _context.SaveChangesAsync();
 
+            await SincronizarAccionistasEmpresaMaestraAsync(
+                accionista.EmpresaId
+            );
+
+            await _context.SaveChangesAsync();
             string mensaje = accionista.Deshabilitado
                 ? "El accionista se deshabilitó correctamente."
                 : "El accionista se habilitó correctamente.";
@@ -4000,6 +4457,12 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             accionista.FechaActualizacion = DateTime.Now;
             accionista.UsuarioActualizacionId =
                 ObtenerUsuarioId();
+
+            await _context.SaveChangesAsync();
+
+            await SincronizarAccionistasEmpresaMaestraAsync(
+                accionista.EmpresaId
+            );
 
             await _context.SaveChangesAsync();
 

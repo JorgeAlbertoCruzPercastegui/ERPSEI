@@ -28,6 +28,7 @@ let empresasIdsEliminar = [];
 let modoEliminacion = "individual";
 let modoEmpresa = "crear";
 
+let empresaMaestraIdAccionistas = 0;
 let empresaIdAccionistas = 0;
 let empresaNombreAccionistas = "";
 
@@ -1679,20 +1680,20 @@ function accionesEmpresaFormatter(value, row) {
     const opcionAccionistas =
         permisosCompliance.puedeVisualizar
             ? `
-                <li>
-                    <button type="button"v
-                            class="dropdown-item"
-                            onclick="abrirAccionistasEmpresa(
-                            ${row.complianceId ?? 0},
+            <li>
+                <button type="button"
+                        class="dropdown-item"
+                        onclick="abrirAccionistasEmpresa(
+                            ${row.id},
                             '${escaparAtributoJs(row.razonSocial)}'
                         )">
 
-                        <i class="fa-solid fa-users me-2"></i>
-                        Accionistas
+                    <i class="fa-solid fa-users me-2"></i>
+                    Accionistas
 
-                    </button>
-                </li>
-            `
+                </button>
+            </li>
+        `
             : "";
 
     const opcionDocumentos =
@@ -2336,12 +2337,26 @@ async function abrirAccionistasEmpresa(
         return;
     }
 
-    empresaIdAccionistas = empresaId;
-    empresaNombreAccionistas = razonSocial;
+    /*
+     * ID del catálogo maestro Empresa.
+     */
+    empresaMaestraIdAccionistas =
+        Number(empresaId) || 0;
 
-    const nombreEmpresa = document.getElementById(
-        "nombreEmpresaAccionistas"
-    );
+    /*
+     * Todavía no conocemos EbEmpresa.Id.
+     * El backend lo devolverá.
+     */
+    empresaIdAccionistas =
+        0;
+
+    empresaNombreAccionistas =
+        razonSocial;
+
+    const nombreEmpresa =
+        document.getElementById(
+            "nombreEmpresaAccionistas"
+        );
 
     if (nombreEmpresa) {
         nombreEmpresa.textContent =
@@ -2357,7 +2372,11 @@ async function abrirAccionistasEmpresa(
 }
 
 async function cargarAccionistasEmpresa() {
-    if (empresaIdAccionistas <= 0) {
+    /*
+     * Para entrar a Accionistas únicamente necesitamos
+     * conocer Empresa.Id.
+     */
+    if (empresaMaestraIdAccionistas <= 0) {
         mostrarErrorAccionistas(
             "El identificador de la empresa no es válido."
         );
@@ -2366,16 +2385,26 @@ async function cargarAccionistasEmpresa() {
     }
 
     try {
-        const parametros = new URLSearchParams({
-            handler: "Accionistas",
-            empresaId: empresaIdAccionistas.toString()
-        });
+        const parametros =
+            new URLSearchParams({
+                handler:
+                    "Accionistas",
 
-        const response = await fetch(
-            `${window.location.pathname}?${parametros.toString()}`
-        );
+                /*
+                 * Enviamos Empresa.Id maestro.
+                 */
+                empresaId:
+                    empresaMaestraIdAccionistas
+                        .toString()
+            });
 
-        const resultado = await response.json();
+        const response =
+            await fetch(
+                `${window.location.pathname}?${parametros.toString()}`
+            );
+
+        const resultado =
+            await response.json();
 
         if (!resultado.success) {
             mostrarErrorAccionistas(
@@ -2386,10 +2415,36 @@ async function cargarAccionistasEmpresa() {
             return;
         }
 
-        actualizarResumenAccionistas(resultado.resumen);
-        renderizarAccionistas(resultado.data);
-    } catch (error) {
-        console.error(error);
+        /*
+         * El backend ya resolvió o creó EbEmpresa.
+         * Guardamos su ID para Nuevo/Editar accionista.
+         */
+        empresaIdAccionistas =
+            Number(
+                resultado.complianceId
+            ) || 0;
+
+        if (empresaIdAccionistas <= 0) {
+            mostrarErrorAccionistas(
+                "No fue posible inicializar el expediente de Compliance."
+            );
+
+            return;
+        }
+
+        actualizarResumenAccionistas(
+            resultado.resumen
+        );
+
+        renderizarAccionistas(
+            resultado.data
+        );
+    }
+    catch (error) {
+        console.error(
+            "Error al consultar accionistas:",
+            error
+        );
 
         mostrarErrorAccionistas(
             "Ocurrió un error al consultar los accionistas."
