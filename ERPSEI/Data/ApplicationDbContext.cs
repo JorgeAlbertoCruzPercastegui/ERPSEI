@@ -748,7 +748,7 @@ namespace ERPSEI.Data
                 entidad.Contains("servicesupportteam")
             )
             {
-                return "Incidencias";
+                return "Mesa de Ayuda";
             }
 
             return entidad;
@@ -3902,7 +3902,7 @@ namespace ERPSEI.Data
 					new Modulo() { Id = 19, Nombre = "Conciliaciones", NombreNormalizado = "conciliaciones", Deshabilitado = 0, Categoria = "erp" },
 					new Modulo() { Id = 20, Nombre = "Administrador de Comprobantes", NombreNormalizado = "administradordecomprobantes", Deshabilitado = 0, Categoria = "erp" },
                     new Modulo() { Id = 25, Nombre = "Banners", NombreNormalizado = "banners", Deshabilitado = 0, Categoria = "erp" },
-                    new Modulo() { Id = 26, Nombre = "Incidencias", NombreNormalizado = "incidencias", Deshabilitado = 0, Categoria = "erp" }
+                    new Modulo() { Id = 26, Nombre = "Mesa de Ayuda", NombreNormalizado = "mesadeayuda", Deshabilitado = 0, Categoria = "erp" }
                 );
 		}
 

@@ -1,0 +1,1926 @@
+﻿/* ============================================================
+   MESA DE AYUDA / SERVICE DESK
+   ERPSEI - INTRANET
+   ============================================================ */
+
+:root {
+    --sd-primary: #21166f;
+    --sd-primary-hover: #2f2390;
+    --sd-primary-soft: #f1effb;
+    --sd-gold: #d4ad45;
+    --sd-gold-soft: #fff8e5;
+    --sd-text: #252334;
+    --sd-muted: #777483;
+    --sd-white: #ffffff;
+    --sd-bg: #f8f8fb;
+    --sd-border: #e8e7ef;
+    --sd-success: #198754;
+    --sd-warning: #d98200;
+    --sd-danger: #dc3545;
+    --sd-info: #0d6efd;
+    --sd-radius: 14px;
+}
+
+
+/* ============================================================
+   TEMA GENERAL DE LA PÁGINA
+   Esta clase se agrega al BODY desde MesaDeAyuda.cshtml
+   ============================================================ */
+
+body.service-desk-theme {
+    min-height: 100vh;
+    position: relative;
+    background: #ffffff !important;
+    color: var(--sd-text);
+}
+
+
+    body.service-desk-theme::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient( circle at 20% 20%, rgba(33, 22, 111, .035) 0%, transparent 25% ), radial-gradient( circle at 85% 70%, rgba(33, 22, 111, .025) 0%, transparent 24% );
+        z-index: 0;
+    }
+
+
+    body.service-desk-theme > * {
+        position: relative;
+        z-index: 1;
+    }
+
+
+    /* ============================================================
+   CONTENEDOR GENERAL DEL LAYOUT
+   ============================================================ */
+
+    body.service-desk-theme .container {
+        max-width: 1280px;
+    }
+
+
+    body.service-desk-theme .layout-content > .container {
+        max-width: 1280px;
+    }
+
+
+    /* ============================================================
+   HEADER GENERAL DE LA INTRANET
+   ============================================================ */
+
+    body.service-desk-theme .header-bg {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+
+    body.service-desk-theme .header-bg-inner {
+        background: transparent !important;
+        padding-top: 22px;
+        padding-bottom: 12px;
+    }
+
+
+    /* ============================================================
+   LOGO
+   ============================================================ */
+
+    body.service-desk-theme .navbar-brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px;
+        padding: 0 !important;
+        margin: 0 !important;
+        line-height: 1;
+    }
+
+
+        body.service-desk-theme .navbar-brand img.brandimage {
+            display: block;
+            height: 58px !important;
+            width: auto !important;
+            max-height: 58px !important;
+            object-fit: contain;
+            filter: none;
+        }
+
+
+        body.service-desk-theme .navbar-brand::before {
+            content: "Intranet";
+            color: var(--sd-primary);
+            font-size: 1.15rem;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+
+
+    /* ============================================================
+   LINKS DEL HEADER
+   ============================================================ */
+
+    body.service-desk-theme header .nav-link,
+    body.service-desk-theme header .navbar .nav-link,
+    body.service-desk-theme header .navbar .dropdown-toggle,
+    body.service-desk-theme header .navbar .btn-link,
+    body.service-desk-theme header .navbar a {
+        color: var(--sd-primary) !important;
+        font-weight: 600;
+        text-decoration: none !important;
+    }
+
+
+        body.service-desk-theme header .nav-link:hover,
+        body.service-desk-theme header .navbar a:hover {
+            color: var(--sd-gold) !important;
+        }
+
+
+    /* ============================================================
+   TOPBAR / MENÚ AZUL
+   ============================================================ */
+
+    body.service-desk-theme .topbar-links {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 14px;
+        flex-wrap: wrap;
+        white-space: nowrap;
+        margin-top: 2px;
+        margin-bottom: 20px;
+        padding: 14px 24px !important;
+        border-radius: 10px;
+        background: var(--sd-primary) !important;
+        border: none !important;
+        box-shadow: none !important;
+        position: relative;
+        z-index: 5000;
+        overflow: visible !important;
+    }
+
+
+        /* TEXTO USUARIO */
+
+        body.service-desk-theme .topbar-links .small,
+        body.service-desk-theme .topbar-links .text-muted,
+        body.service-desk-theme .topbar-links b,
+        body.service-desk-theme .topbar-links strong {
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+
+
+        body.service-desk-theme .topbar-links .small {
+            flex: 0 0 auto;
+        }
+
+
+    /* ============================================================
+   NAVEGACIÓN RÁPIDA
+   ============================================================ */
+
+    body.service-desk-theme .quick-nav-wrap {
+        position: relative;
+        margin-left: auto;
+        flex: 1 1 auto;
+        min-width: 0;
+        z-index: 5001;
+        overflow: visible !important;
+    }
+
+
+    body.service-desk-theme .quick-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 1rem;
+        row-gap: .5rem;
+        white-space: normal;
+    }
+
+
+    body.service-desk-theme #quickNavMenu {
+        display: flex;
+        position: relative;
+        z-index: 5002;
+        overflow: visible !important;
+    }
+
+
+    /* ============================================================
+   LINKS DEL MENÚ
+   ============================================================ */
+
+    body.service-desk-theme .quick-link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        font-weight: 700;
+        font-size: .88rem;
+        line-height: 1.05;
+        padding: 3px 4px;
+        border-radius: 8px;
+        transition: color .18s ease, background .18s ease;
+        white-space: nowrap;
+    }
+
+
+        body.service-desk-theme .quick-link::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: -5px;
+            width: 100%;
+            height: 2px;
+            background: var(--sd-gold);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .18s ease;
+            opacity: .95;
+        }
+
+
+        body.service-desk-theme .quick-link:hover {
+            color: var(--sd-gold) !important;
+            background: transparent !important;
+        }
+
+
+            body.service-desk-theme .quick-link:hover::after {
+                transform: scaleX(1);
+            }
+
+
+        body.service-desk-theme .quick-link.active {
+            color: var(--sd-gold) !important;
+        }
+
+
+            body.service-desk-theme .quick-link.active::after {
+                transform: scaleX(1);
+            }
+
+
+    /* ============================================================
+   DROPDOWNS DEL MENÚ
+   ============================================================ */
+
+    body.service-desk-theme .quick-dd {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        z-index: 5003;
+        overflow: visible !important;
+    }
+
+
+    body.service-desk-theme .quick-dd-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        min-width: 260px;
+        margin-top: 8px;
+        background: #ffffff;
+        border: 1px solid rgba(33, 22, 111, .12);
+        border-radius: 14px;
+        padding: .55rem;
+        box-shadow: 0 18px 35px rgba(33, 22, 111, .14);
+        display: none;
+        z-index: 99999 !important;
+    }
+
+
+    body.service-desk-theme .quick-dd-menu-wide {
+        min-width: 330px;
+        max-height: 320px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+
+    body.service-desk-theme .quick-dd-item {
+        display: block;
+        padding: .6rem .8rem;
+        border-radius: 10px;
+        text-decoration: none !important;
+        color: var(--sd-primary) !important;
+        font-size: .875rem;
+        font-weight: 600;
+        transition: background .15s ease, color .15s ease;
+    }
+
+
+        body.service-desk-theme .quick-dd-item:hover {
+            background: rgba(33, 22, 111, .08);
+            color: var(--sd-primary) !important;
+        }
+
+
+    body.service-desk-theme .quick-dd.open > .quick-dd-menu {
+        display: block !important;
+    }
+
+
+    body.service-desk-theme .quick-dd.open > .quick-dd-toggle {
+        color: var(--sd-gold) !important;
+    }
+
+
+        body.service-desk-theme .quick-dd.open > .quick-dd-toggle::after {
+            transform: scaleX(1);
+        }
+
+
+    /* ============================================================
+   SECCIONES DE DROPDOWN
+   ============================================================ */
+
+    body.service-desk-theme .quick-dd-divider {
+        height: 1px;
+        margin: 8px 12px;
+        background: rgba(0, 0, 0, .1);
+    }
+
+
+    body.service-desk-theme .quick-dd-section-title {
+        padding: 5px 14px 4px;
+        color: #6c757d;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+
+    /* ============================================================
+   BOTÓN MENÚ RESPONSIVE
+   ============================================================ */
+
+    body.service-desk-theme .quick-nav-toggle {
+        border: none;
+        background: var(--sd-primary);
+        color: #ffffff;
+        border-radius: 10px;
+        padding: .35rem .65rem;
+        font-weight: 800;
+    }
+
+
+    /* ============================================================
+   NOTIFICACIONES DEL HEADER
+   ============================================================ */
+
+    body.service-desk-theme .quick-notifications {
+        position: relative;
+        z-index: 1000000 !important;
+    }
+
+
+    body.service-desk-theme .quick-notification-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 0;
+        background: var(--sd-primary);
+        color: #ffffff;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: .25s ease;
+        box-shadow: 0 6px 16px rgba(31, 20, 102, .25);
+    }
+
+
+        body.service-desk-theme .quick-notification-btn:hover {
+            background: var(--sd-gold);
+            color: var(--sd-primary);
+            transform: translateY(-2px);
+        }
+
+
+        body.service-desk-theme .quick-notification-btn i {
+            font-size: 1.15rem;
+        }
+
+
+    body.service-desk-theme .quick-notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: var(--sd-gold);
+        color: var(--sd-primary);
+        min-width: 19px;
+        height: 19px;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+
+    body.service-desk-theme .quick-notification-menu {
+        width: 360px;
+        min-height: 120px;
+        border: 0;
+        border-radius: 22px;
+        overflow: hidden;
+        padding: 0;
+        margin-top: 14px !important;
+        box-shadow: 0 20px 55px rgba(0, 0, 0, .22);
+        background: #ffffff;
+        z-index: 1000001 !important;
+    }
+
+
+    /* ============================================================
+   FOOTER
+   ============================================================ */
+
+    body.service-desk-theme .footer {
+        background: transparent !important;
+        border-top: 1px solid rgba(33, 22, 111, .12) !important;
+        margin-top: 26px;
+        padding-top: 14px;
+        padding-bottom: 12px;
+    }
+
+
+        body.service-desk-theme .footer,
+        body.service-desk-theme .footer .text-muted,
+        body.service-desk-theme .footer a,
+        body.service-desk-theme .footer .float-start,
+        body.service-desk-theme .footer .float-end {
+            color: var(--sd-primary) !important;
+        }
+
+
+            body.service-desk-theme .footer a:hover {
+                color: var(--sd-gold) !important;
+            }
+
+
+/* ============================================================
+   CONTENIDO MESA DE AYUDA
+   ============================================================ */
+
+.sd-page {
+    width: 100%;
+    min-height: 550px;
+    padding: 18px 0 30px;
+}
+
+
+/* ============================================================
+   ENCABEZADO DEL MÓDULO
+   ============================================================ */
+
+.sd-header {
+    background: #ffffff;
+    border: 1px solid var(--sd-border);
+    border-radius: var(--sd-radius);
+    padding: 24px 28px;
+    margin-bottom: 22px;
+    box-shadow: 0 3px 14px rgba(33, 22, 111, .045);
+}
+
+
+.sd-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+
+.sd-header-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+
+.sd-header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    background: var(--sd-primary-soft);
+    color: var(--sd-primary);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 22px;
+}
+
+
+.sd-title {
+    margin: 0;
+    color: var(--sd-primary);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+
+.sd-subtitle {
+    margin: 5px 0 0;
+    color: var(--sd-muted);
+    font-size: 14px;
+}
+
+
+/* ============================================================
+   BOTONES DEL MÓDULO
+   ============================================================ */
+
+.sd-btn-primary {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    min-height: 42px;
+    background: var(--sd-primary);
+    color: #ffffff;
+    border: 1px solid var(--sd-primary);
+    border-radius: 9px;
+    font-weight: 700;
+    padding: 9px 18px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+
+    .sd-btn-primary:hover {
+        background: var(--sd-primary-hover);
+        border-color: var(--sd-primary-hover);
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(33, 22, 111, .16);
+    }
+
+
+.sd-btn-outline {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 40px;
+    border: 1px solid var(--sd-primary);
+    color: var(--sd-primary);
+    background: #ffffff;
+    border-radius: 9px;
+    padding: 8px 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+
+    .sd-btn-outline:hover {
+        background: var(--sd-primary-soft);
+        color: var(--sd-primary);
+    }
+
+
+/* ============================================================
+   INDICADOR ADMIN
+   ============================================================ */
+
+.sd-admin-label {
+    display: inline-flex;
+    align-items: center;
+    background: var(--sd-primary-soft);
+    color: var(--sd-primary);
+    padding: 7px 12px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   KPI GRID
+   ============================================================ */
+
+.sd-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+
+.sd-kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--sd-border);
+    border-radius: var(--sd-radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    min-height: 104px;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+
+    .sd-kpi-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(33, 22, 111, .16);
+        box-shadow: 0 7px 18px rgba(33, 22, 111, .07);
+    }
+
+
+.sd-kpi-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+
+.sd-kpi-title {
+    color: var(--sd-muted);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+
+.sd-kpi-value {
+    color: var(--sd-text);
+    font-size: 29px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+
+.sd-kpi-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+
+.sd-kpi-purple {
+    background: #f0eefb;
+    color: var(--sd-primary);
+}
+
+
+.sd-kpi-blue {
+    background: #eaf5ff;
+    color: #0d6efd;
+}
+
+
+.sd-kpi-orange {
+    background: #fff4df;
+    color: #d98200;
+}
+
+
+.sd-kpi-green {
+    background: #e9f7ef;
+    color: #198754;
+}
+
+
+.sd-kpi-red {
+    background: #fdecec;
+    color: #dc3545;
+}
+
+
+/* ============================================================
+   PANEL PRINCIPAL
+   ============================================================ */
+
+.sd-panel {
+    background: #ffffff;
+    border: 1px solid var(--sd-border);
+    border-radius: var(--sd-radius);
+    overflow: hidden;
+    box-shadow: 0 3px 14px rgba(33, 22, 111, .045);
+}
+
+
+.sd-panel-header {
+    min-height: 78px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--sd-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+
+.sd-panel-title {
+    margin: 0;
+    color: var(--sd-text);
+    font-size: 17px;
+    font-weight: 800;
+}
+
+
+.sd-panel-subtitle {
+    color: var(--sd-muted);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+
+/* ============================================================
+   FILTROS
+   ============================================================ */
+
+.sd-filters {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--sd-border);
+    background: #fbfbfd;
+}
+
+
+    .sd-filters .form-label {
+        color: var(--sd-muted);
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+
+    .sd-filters .form-control,
+    .sd-filters .form-select,
+    .sd-filters .input-group-text {
+        min-height: 40px;
+        border-color: var(--sd-border);
+        font-size: 13px;
+    }
+
+
+    .sd-filters .form-control,
+    .sd-filters .form-select {
+        border-radius: 8px;
+    }
+
+
+        .sd-filters .form-control:focus,
+        .sd-filters .form-select:focus {
+            border-color: var(--sd-primary);
+            box-shadow: 0 0 0 .15rem rgba(33, 22, 111, .10);
+        }
+
+
+    .sd-filters .input-group .input-group-text {
+        border-radius: 8px 0 0 8px;
+        color: var(--sd-primary);
+    }
+
+
+    .sd-filters .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+    }
+
+
+/* ============================================================
+   TABLA
+   ============================================================ */
+
+.sd-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+}
+
+
+    .sd-table thead th {
+        background: #fafafd;
+        color: #696777;
+        border-bottom: 1px solid var(--sd-border);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        font-weight: 800;
+        white-space: nowrap;
+        padding: 14px 15px;
+    }
+
+
+    .sd-table tbody td {
+        vertical-align: middle;
+        padding: 15px;
+        border-color: #f0eff4;
+        color: var(--sd-text);
+        font-size: 13px;
+    }
+
+
+    .sd-table tbody tr {
+        transition: background-color .15s ease;
+    }
+
+
+        .sd-table tbody tr:hover {
+            background: #faf9ff;
+        }
+
+
+.sd-folio {
+    color: var(--sd-primary);
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+
+.sd-ticket-title {
+    color: var(--sd-text);
+    font-weight: 700;
+}
+
+
+.sd-ticket-description {
+    color: var(--sd-muted);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+
+/* ============================================================
+   ESTADOS
+   ============================================================ */
+
+.sd-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+    .sd-badge i.bi-circle-fill {
+        font-size: 6px;
+    }
+
+
+.sd-status-new {
+    background: #efeff3;
+    color: #656471;
+}
+
+
+.sd-status-assigned {
+    background: #eaf5ff;
+    color: #0d6efd;
+}
+
+
+.sd-status-progress {
+    background: #eeeafd;
+    color: var(--sd-primary);
+}
+
+
+.sd-status-waiting {
+    background: #fff4df;
+    color: #a96700;
+}
+
+
+.sd-status-resolved {
+    background: #e9f7ef;
+    color: #198754;
+}
+
+
+.sd-status-closed {
+    background: #ededed;
+    color: #444444;
+}
+
+
+.sd-status-reopened {
+    background: #e8f4fd;
+    color: #0875b5;
+}
+
+
+.sd-status-cancelled {
+    background: #fdecec;
+    color: #dc3545;
+}
+
+
+/* ============================================================
+   PRIORIDADES
+   ============================================================ */
+
+.sd-priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+
+    .sd-priority::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        flex-shrink: 0;
+        display: inline-block;
+        border-radius: 50%;
+    }
+
+
+.sd-priority-critical::before {
+    background: #dc3545;
+}
+
+
+.sd-priority-high::before {
+    background: #fd7e14;
+}
+
+
+.sd-priority-medium::before {
+    background: #ffc107;
+}
+
+
+.sd-priority-low::before {
+    background: #198754;
+}
+
+
+/* ============================================================
+   ASIGNACIÓN
+   ============================================================ */
+
+.sd-unassigned {
+    color: var(--sd-danger);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+.sd-assigned {
+    color: var(--sd-success);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   ACCIONES
+   ============================================================ */
+
+.sd-action {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    border: 1px solid var(--sd-border);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: var(--sd-primary);
+    text-decoration: none;
+    cursor: pointer;
+    transition: .15s ease;
+}
+
+
+    .sd-action:hover {
+        background: var(--sd-primary);
+        border-color: var(--sd-primary);
+        color: #ffffff;
+    }
+
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
+.sd-empty {
+    padding: 58px 20px;
+    text-align: center;
+    color: var(--sd-muted);
+}
+
+
+    .sd-empty > i {
+        display: block;
+        margin-bottom: 13px;
+        color: #c5c4ce;
+        font-size: 42px;
+    }
+
+
+.sd-empty-title {
+    color: var(--sd-text);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+
+/* ============================================================
+   MODAL CREAR TICKET
+   ============================================================ */
+
+.sd-modal .modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .18);
+}
+
+
+.sd-modal .modal-header {
+    background: var(--sd-primary);
+    color: #ffffff;
+    border: 0;
+    padding: 19px 22px;
+}
+
+
+.sd-modal .modal-title {
+    color: #ffffff;
+    font-weight: 800;
+}
+
+
+.sd-modal .modal-header .btn-close {
+    filter: invert(1);
+    opacity: .8;
+}
+
+
+    .sd-modal .modal-header .btn-close:hover {
+        opacity: 1;
+    }
+
+
+.sd-modal .modal-body {
+    padding: 24px;
+}
+
+
+.sd-modal .modal-footer {
+    border-top: 1px solid var(--sd-border);
+    padding: 16px 22px;
+    background: #ffffff;
+}
+
+
+.sd-modal .form-label {
+    color: var(--sd-text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+.sd-modal .form-control,
+.sd-modal .form-select {
+    border: 1px solid var(--sd-border);
+    border-radius: 8px;
+    min-height: 42px;
+    font-size: 14px;
+}
+
+
+.sd-modal textarea.form-control {
+    min-height: 130px;
+    resize: vertical;
+}
+
+
+.sd-modal .form-control:focus,
+.sd-modal .form-select:focus {
+    border-color: var(--sd-primary);
+    box-shadow: 0 0 0 .15rem rgba(33, 22, 111, .10);
+}
+
+
+.sd-modal .form-text {
+    color: var(--sd-muted);
+    font-size: 11px;
+}
+
+
+/* ============================================================
+   ALERTAS
+   ============================================================ */
+
+.sd-page .alert {
+    border-radius: 11px;
+    font-size: 13px;
+    border-width: 1px;
+}
+
+
+/* ============================================================
+   RESPONSIVE TABLET
+   ============================================================ */
+
+@media (max-width: 1100px) {
+
+    .sd-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE MENÚ
+   ============================================================ */
+
+@media (max-width: 991.98px) {
+
+    body.service-desk-theme .navbar-brand::before {
+        font-size: 1rem;
+    }
+
+
+    body.service-desk-theme .navbar-brand img.brandimage {
+        height: 48px !important;
+    }
+
+
+    body.service-desk-theme .topbar-links {
+        position: relative;
+        flex-direction: row !important;
+        align-items: center !important;
+        white-space: normal;
+        padding: 12px 16px !important;
+    }
+
+
+    body.service-desk-theme .quick-nav-wrap {
+        margin-left: auto;
+    }
+
+
+    body.service-desk-theme #quickNavMenu {
+        display: none !important;
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 280px;
+        z-index: 99999;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .3rem;
+        background: var(--sd-primary);
+        border: 1px solid rgba(255, 255, 255, .12);
+        border-radius: .9rem;
+        box-shadow: 0 1rem 2rem rgba(0, 0, 0, .18);
+        padding: .55rem;
+    }
+
+
+        body.service-desk-theme #quickNavMenu.is-open {
+            display: flex !important;
+        }
+
+
+    body.service-desk-theme .quick-link {
+        display: block;
+        width: 100%;
+        padding: .48rem .55rem;
+        border-radius: .55rem;
+        color: #ffffff !important;
+    }
+
+
+    body.service-desk-theme .quick-dd,
+    body.service-desk-theme .quick-dd-menu {
+        width: 100%;
+    }
+
+
+    body.service-desk-theme .quick-dd-menu {
+        position: static !important;
+        box-shadow: none !important;
+        border: 0 !important;
+        margin-top: .2rem;
+        padding-left: .55rem;
+        background: transparent;
+        display: none;
+    }
+
+
+    body.service-desk-theme .quick-dd.open > .quick-dd-menu {
+        display: block !important;
+    }
+
+
+    body.service-desk-theme .quick-dd-item {
+        color: #ffffff !important;
+    }
+
+
+        body.service-desk-theme .quick-dd-item:hover {
+            background: rgba(255, 255, 255, .12);
+            color: var(--sd-gold) !important;
+        }
+}
+
+
+/* ============================================================
+   RESPONSIVE MÓVIL
+   ============================================================ */
+
+@media (max-width: 767.98px) {
+
+    .sd-page {
+        padding-top: 12px;
+    }
+
+
+    .sd-header {
+        padding: 19px;
+    }
+
+
+    .sd-header-content {
+        align-items: stretch;
+    }
+
+
+    .sd-header-main {
+        align-items: flex-start;
+    }
+
+
+    .sd-title {
+        font-size: 23px;
+    }
+
+
+    .sd-subtitle {
+        font-size: 12px;
+    }
+
+
+    .sd-header-content > .d-flex:last-child {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+
+    .sd-header-content .sd-btn-primary {
+        flex: 1;
+    }
+
+
+    .sd-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .sd-panel-header {
+        align-items: stretch;
+    }
+
+
+        .sd-panel-header > div:last-child {
+            width: 100%;
+        }
+
+
+        .sd-panel-header .sd-btn-outline {
+            width: 100%;
+        }
+
+
+    .sd-filters {
+        padding: 16px;
+    }
+
+
+    .sd-table thead th,
+    .sd-table tbody td {
+        padding: 12px;
+    }
+
+
+    .sd-modal .modal-body {
+        padding: 18px;
+    }
+}
+
+
+/* ============================================================
+   MOBILE MUY PEQUEÑO
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+    body.service-desk-theme .topbar-links {
+        border-radius: 8px;
+    }
+
+
+    body.service-desk-theme #quickNavMenu {
+        width: min(280px, calc(100vw - 30px));
+    }
+
+
+    .sd-header-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 19px;
+    }
+
+
+    .sd-kpi-card {
+        min-height: 90px;
+    }
+}
+
+/* ============================================================
+   CORRECCIÓN Z-INDEX MODAL
+   El modal siempre debe quedar por encima del menú
+   ============================================================ */
+
+body.service-desk-theme .modal-backdrop {
+    z-index: 2000000 !important;
+}
+
+body.service-desk-theme .modal {
+    z-index: 2000001 !important;
+}
+
+body.service-desk-theme .sd-modal {
+    z-index: 2000001 !important;
+}
+
+    body.service-desk-theme .sd-modal.show {
+        z-index: 2000001 !important;
+    }
+
+    body.service-desk-theme .sd-modal .modal-dialog {
+        position: relative;
+        z-index: 2000002 !important;
+    }
+
+/* Cuando hay modal abierto, el menú deja de competir visualmente */
+body.service-desk-theme.modal-open .topbar-links,
+body.service-desk-theme.modal-open .quick-nav-wrap,
+body.service-desk-theme.modal-open #quickNavMenu,
+body.service-desk-theme.modal-open .quick-dd,
+body.service-desk-theme.modal-open .quick-dd-menu {
+    z-index: 1000 !important;
+}
+
+
+/* ============================================================
+   BACKDROP DEL MODAL
+   ============================================================ */
+
+body.service-desk-theme .modal-backdrop.show {
+    opacity: .45 !important;
+    background-color: #12101d !important;
+}
+
+
+/* ============================================================
+   FILTROS - FONDO AZUL CORPORATIVO
+   ============================================================ */
+
+.sd-filters {
+    padding: 20px 22px;
+    border-bottom: none;
+    background: #21166f !important;
+    color: #ffffff;
+    position: relative;
+}
+
+
+    /* ============================================================
+   LABELS DE FILTROS
+   ============================================================ */
+
+    .sd-filters .form-label {
+        color: #ffffff !important;
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+
+    /* ============================================================
+   INPUTS / SELECTS SOBRE FONDO AZUL
+   ============================================================ */
+
+    .sd-filters .form-control,
+    .sd-filters .form-select {
+        min-height: 42px;
+        background: #ffffff !important;
+        color: #292735;
+        border: 1px solid rgba(255, 255, 255, .35);
+        border-radius: 9px;
+        font-size: 13px;
+    }
+
+
+        .sd-filters .form-control::placeholder {
+            color: #8b8995;
+        }
+
+
+        .sd-filters .form-control:focus,
+        .sd-filters .form-select:focus {
+            background: #ffffff !important;
+            border-color: #d4ad45 !important;
+            box-shadow: 0 0 0 .18rem rgba(212, 173, 69, .18) !important;
+        }
+
+
+    /* ============================================================
+   ÍCONO BUSCADOR
+   ============================================================ */
+
+    .sd-filters .input-group-text {
+        min-height: 42px;
+        background: #ffffff !important;
+        color: #21166f !important;
+        border: 1px solid rgba(255, 255, 255, .35);
+        border-right: 0;
+        border-radius: 9px 0 0 9px;
+    }
+
+
+    .sd-filters .input-group .form-control {
+        border-left: 0;
+        border-radius: 0 9px 9px 0;
+    }
+
+
+    /* ============================================================
+   BOTÓN LIMPIAR EN FILTROS
+   ============================================================ */
+
+    .sd-filters .sd-btn-outline {
+        background: transparent !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, .75) !important;
+        min-height: 42px;
+        border-radius: 9px;
+        font-weight: 700;
+    }
+
+
+        .sd-filters .sd-btn-outline:hover {
+            background: #ffffff !important;
+            color: #21166f !important;
+            border-color: #ffffff !important;
+        }
+
+
+    /* ============================================================
+   SEPARACIÓN VISUAL FILTROS / TABLA
+   ============================================================ */
+
+    .sd-filters + .table-responsive {
+        border-top: 0;
+    }
+
+
+    /* ============================================================
+   OPCIONAL: BORDE DORADO MUY DISCRETO EN FILTROS
+   ============================================================ */
+
+    .sd-filters::after {
+        content: "";
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: 0;
+        height: 2px;
+        background: linear-gradient( 90deg, transparent, rgba(212, 173, 69, .8), transparent );
+    }
+
+/* ============================================================
+   DISEÑO PRO - PANEL TICKETS
+   ============================================================ */
+
+.sd-panel-pro {
+    background: #ffffff;
+    border: 1px solid #e7e5ef;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(33, 22, 111, .05), 0 2px 10px rgba(33, 22, 111, .03);
+}
+
+
+/* HERO */
+
+.sd-panel-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 28px 28px 24px;
+    background: linear-gradient( 135deg, rgba(33, 22, 111, .035), rgba(33, 22, 111, .015) );
+    border-bottom: 1px solid #eceaf3;
+}
+
+.sd-panel-hero-left {
+    min-width: 0;
+}
+
+.sd-panel-kicker {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(33, 22, 111, .08);
+    color: #21166f;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+.sd-panel-hero-title {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1.1;
+    font-weight: 800;
+    color: #232034;
+}
+
+.sd-panel-hero-text {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: #777483;
+    max-width: 700px;
+}
+
+.sd-panel-hero-right {
+    flex-shrink: 0;
+}
+
+.sd-btn-refresh {
+    min-width: 150px;
+}
+
+
+/* FILTROS PRO */
+
+.sd-filters-pro {
+    padding: 22px 28px 26px;
+    background: linear-gradient( 180deg, #221671 0%, #271a7e 100% );
+    position: relative;
+}
+
+    .sd-filters-pro::after {
+        content: "";
+        position: absolute;
+        left: 28px;
+        right: 28px;
+        bottom: 0;
+        height: 2px;
+        background: linear-gradient( 90deg, transparent, rgba(212, 173, 69, .95), transparent );
+    }
+
+.sd-filters-pro-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.sd-filters-pro-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.sd-filters-pro-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(255,255,255,.12);
+    color: #ffffff;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.sd-filters-pro-title {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.sd-filters-pro-subtitle {
+    color: rgba(255,255,255,.72);
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.sd-btn-filter-clear {
+    min-height: 42px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    padding: 9px 16px;
+    border-radius: 11px;
+    border: 1px solid rgba(255,255,255,.35);
+    background: rgba(255,255,255,.08);
+    color: #ffffff;
+    font-weight: 700;
+    transition: .18s ease;
+}
+
+    .sd-btn-filter-clear:hover {
+        background: #ffffff;
+        color: #21166f;
+        border-color: #ffffff;
+    }
+
+.sd-filters-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 16px;
+}
+
+.sd-filter-card {
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px;
+    padding: 16px;
+    backdrop-filter: blur(8px);
+}
+
+.sd-filter-card-lg {
+    grid-column: auto;
+}
+
+.sd-filter-label {
+    display: block;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.sd-filter-input-wrap {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.25);
+}
+
+.sd-filter-input-icon {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #21166f;
+    font-size: 18px;
+}
+
+.sd-filter-input {
+    border: 0;
+    outline: 0;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px 0 0;
+    font-size: 14px;
+    color: #292735;
+    background: #ffffff;
+}
+
+    .sd-filter-input::placeholder {
+        color: #8b8995;
+    }
+
+.sd-filter-select {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.25);
+    background: #ffffff;
+    color: #292735;
+    font-size: 14px;
+    padding: 0 14px;
+    outline: 0;
+}
+
+    .sd-filter-input:focus,
+    .sd-filter-select:focus {
+        box-shadow: 0 0 0 .18rem rgba(212, 173, 69, .18);
+    }
+
+
+/* SHELL TABLA */
+
+.sd-table-shell {
+    background: #ffffff;
+}
+
+.sd-table-shell-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 20px 28px;
+    border-bottom: 1px solid #eeecf3;
+    background: #fcfbff;
+}
+
+.sd-table-shell-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #211d35;
+}
+
+.sd-table-shell-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #f3f1fb;
+    color: #21166f;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* TABLA PRO */
+
+.sd-table-wrap {
+    background: #ffffff;
+}
+
+.sd-table-pro {
+    margin: 0;
+}
+
+    .sd-table-pro thead th {
+        background: #ffffff;
+        color: #6d6a79;
+        border-bottom: 1px solid #e7e4ef;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        font-weight: 800;
+        padding: 16px 18px;
+    }
+
+    .sd-table-pro tbody td {
+        padding: 18px;
+        border-color: #f0eef5;
+        vertical-align: middle;
+        font-size: 13px;
+    }
+
+    .sd-table-pro tbody tr {
+        transition: transform .15s ease, background-color .15s ease, box-shadow .15s ease;
+    }
+
+        .sd-table-pro tbody tr:hover {
+            background: #fbfaff;
+        }
+
+.sd-folio-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sd-folio {
+    color: #21166f;
+    font-weight: 800;
+    font-size: 13px;
+}
+
+.sd-ticket-title {
+    color: #272436;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.sd-ticket-description {
+    color: #8a8796;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.sd-chip-light {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f4f2fb;
+    color: #21166f;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+/* EMPTY PRO */
+
+.sd-empty-pro {
+    text-align: center;
+    padding: 72px 20px 80px;
+}
+
+.sd-empty-pro-illustration {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: #f6f4fb;
+    color: #c1bdcf;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 34px;
+}
+
+.sd-empty-pro-title {
+    color: #272436;
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.sd-empty-pro-text {
+    color: #7d7a89;
+    font-size: 14px;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 1100px) {
+    .sd-filters-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sd-panel-hero-title {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .sd-panel-hero {
+        padding: 22px 18px 18px;
+    }
+
+    .sd-panel-hero-title {
+        font-size: 24px;
+    }
+
+    .sd-filters-pro {
+        padding: 18px;
+    }
+
+    .sd-table-shell-head {
+        padding: 16px 18px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

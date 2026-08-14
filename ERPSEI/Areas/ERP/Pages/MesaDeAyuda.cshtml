@@ -1,0 +1,1327 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.MesaDeAyudaModel
+
+@{
+    ViewData["Title"] = "Mesa de Ayuda";
+}
+
+@section Styles
+{
+    <link rel="stylesheet"
+          href="~/css/MesaDeAyuda.css"
+          asp-append-version="true" />
+}
+
+
+<div class="sd-page">
+
+    <!-- ====================================================== -->
+    <!-- MENSAJES -->
+    <!-- ====================================================== -->
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4"
+             role="alert">
+
+            <i class="bi bi-check-circle-fill me-2"></i>
+
+            @TempData["MensajeExito"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Cerrar">
+            </button>
+
+        </div>
+    }
+
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="ModelOnly"
+             class="alert alert-danger mb-4">
+        </div>
+    }
+
+
+    <!-- ====================================================== -->
+    <!-- ENCABEZADO MESA DE AYUDA -->
+    <!-- ====================================================== -->
+
+    <section class="sd-header">
+
+        <div class="sd-header-content">
+
+            <div class="sd-header-main">
+
+                <div class="sd-header-icon">
+
+                    <i class="bi bi-headset"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h1 class="sd-title">
+                        Mesa de Ayuda
+                    </h1>
+
+
+                    @if (Model.EsAdmin)
+                    {
+                        <p class="sd-subtitle">
+
+                            Administración, asignación y seguimiento
+                            de solicitudes de soporte.
+
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="sd-subtitle">
+
+                            Reporta una incidencia o solicita soporte
+                            al área de TI.
+
+                        </p>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <div class="d-flex align-items-center gap-2">
+
+                @if (Model.EsAdmin)
+                {
+                    <span class="sd-admin-label">
+
+                        <i class="bi bi-shield-check me-1"></i>
+
+                        Administrador
+
+                    </span>
+                }
+
+
+                <button type="button"
+                        class="sd-btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalCrearTicket">
+
+                    <i class="bi bi-plus-lg me-1"></i>
+
+                    Crear Ticket
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ====================================================== -->
+    <!-- KPIs -->
+    <!-- ====================================================== -->
+
+    <section class="sd-kpi-grid">
+
+
+        <!-- ABIERTOS -->
+
+        <div class="sd-kpi-card">
+
+            <div class="sd-kpi-content">
+
+                <div>
+
+                    <div class="sd-kpi-title">
+
+                        Tickets abiertos
+
+                    </div>
+
+
+                    <div class="sd-kpi-value">
+
+                        @Model.TotalAbiertos
+
+                    </div>
+
+                </div>
+
+
+                <div class="sd-kpi-icon sd-kpi-purple">
+
+                    <i class="bi bi-inbox"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- NUEVOS -->
+
+        <div class="sd-kpi-card">
+
+            <div class="sd-kpi-content">
+
+                <div>
+
+                    <div class="sd-kpi-title">
+
+                        Nuevos
+
+                    </div>
+
+
+                    <div class="sd-kpi-value">
+
+                        @Model.TotalNuevos
+
+                    </div>
+
+                </div>
+
+
+                <div class="sd-kpi-icon sd-kpi-blue">
+
+                    <i class="bi bi-stars"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- EN PROCESO -->
+
+        <div class="sd-kpi-card">
+
+            <div class="sd-kpi-content">
+
+                <div>
+
+                    <div class="sd-kpi-title">
+
+                        En proceso
+
+                    </div>
+
+
+                    <div class="sd-kpi-value">
+
+                        @Model.TotalEnProceso
+
+                    </div>
+
+                </div>
+
+
+                <div class="sd-kpi-icon sd-kpi-orange">
+
+                    <i class="bi bi-gear"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SIN ASIGNAR / RESUELTOS -->
+
+        <div class="sd-kpi-card">
+
+            <div class="sd-kpi-content">
+
+                <div>
+
+                    <div class="sd-kpi-title">
+
+                        @if (Model.EsAdmin)
+                        {
+                            <span>
+                                Sin asignar
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                Resueltos
+                            </span>
+                        }
+
+                    </div>
+
+
+                    <div class="sd-kpi-value">
+
+                        @if (Model.EsAdmin)
+                        {
+                            @Model.TotalSinAsignar
+                        }
+                        else
+                        {
+                            @Model.TotalResueltos
+                        }
+
+                    </div>
+
+                </div>
+
+
+                @if (Model.EsAdmin)
+                {
+                    <div class="sd-kpi-icon sd-kpi-red">
+
+                        <i class="bi bi-person-x"></i>
+
+                    </div>
+                }
+                else
+                {
+                    <div class="sd-kpi-icon sd-kpi-green">
+
+                        <i class="bi bi-check-circle"></i>
+
+                    </div>
+                }
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ====================================================== -->
+    <!-- PANEL TICKETS -->
+    <!-- ====================================================== -->
+
+    <section class="sd-panel sd-panel-pro">
+
+        <!-- ====================================================== -->
+        <!-- HERO DEL PANEL -->
+        <!-- ====================================================== -->
+
+        <div class="sd-panel-hero">
+
+            <div class="sd-panel-hero-left">
+
+                <div class="sd-panel-kicker">
+                    Service Desk
+                </div>
+
+                <h2 class="sd-panel-hero-title">
+
+                    @if (Model.EsAdmin)
+                    {
+                        <span>Todos los Tickets</span>
+                    }
+                    else
+                    {
+                        <span>Mis Tickets</span>
+                    }
+
+                </h2>
+
+                <p class="sd-panel-hero-text">
+
+                    @if (Model.EsAdmin)
+                    {
+                        <span>
+                            Administra, filtra y da seguimiento a los tickets registrados en la Mesa de Ayuda.
+                        </span>
+                    }
+                    else
+                    {
+                        <span>
+                            Consulta el estado y seguimiento de tus solicitudes en tiempo real.
+                        </span>
+                    }
+
+                </p>
+
+            </div>
+
+            <div class="sd-panel-hero-right">
+
+                <button type="button"
+                        class="sd-btn-outline sd-btn-refresh"
+                        onclick="location.reload();">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Actualizar
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ====================================================== -->
+        <!-- FILTROS PRO -->
+        <!-- ====================================================== -->
+
+        <div class="sd-filters-pro">
+
+            <div class="sd-filters-pro-bar">
+
+                <div class="sd-filters-pro-title-wrap">
+
+                    <div class="sd-filters-pro-icon">
+                        <i class="bi bi-funnel"></i>
+                    </div>
+
+                    <div>
+                        <div class="sd-filters-pro-title">
+                            Filtros de búsqueda
+                        </div>
+                        <div class="sd-filters-pro-subtitle">
+                            Encuentra tickets por folio, estado o categoría.
+                        </div>
+                    </div>
+
+                </div>
+
+                <button type="button"
+                        id="btnLimpiarFiltros"
+                        class="sd-btn-filter-clear">
+
+                    <i class="bi bi-eraser me-1"></i>
+                    Limpiar filtros
+
+                </button>
+
+            </div>
+
+
+            <div class="sd-filters-grid">
+
+                <!-- BUSCAR -->
+
+                <div class="sd-filter-card sd-filter-card-lg">
+
+                    <label class="sd-filter-label">
+                        Buscar ticket
+                    </label>
+
+                    <div class="sd-filter-input-wrap">
+
+                        <div class="sd-filter-input-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+
+                        <input type="text"
+                               id="filtroBusqueda"
+                               class="sd-filter-input"
+                               autocomplete="off"
+                               placeholder="Busca por folio o asunto..." />
+
+                    </div>
+
+                </div>
+
+
+                <!-- ESTADO -->
+
+                <div class="sd-filter-card">
+
+                    <label class="sd-filter-label">
+                        Estado
+                    </label>
+
+                    <select id="filtroEstado"
+                            class="sd-filter-select">
+
+                        <option value="">Todos</option>
+                        <option value="Nuevo">Nuevo</option>
+                        <option value="Asignado">Asignado</option>
+                        <option value="En proceso">En proceso</option>
+                        <option value="Pendiente del usuario">Pendiente del usuario</option>
+                        <option value="Resuelto">Resuelto</option>
+                        <option value="Cerrado">Cerrado</option>
+                        <option value="Reabierto">Reabierto</option>
+                        <option value="Cancelado">Cancelado</option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- CATEGORÍA -->
+
+                <div class="sd-filter-card">
+
+                    <label class="sd-filter-label">
+                        Categoría
+                    </label>
+
+                    <select id="filtroCategoria"
+                            class="sd-filter-select">
+
+                        <option value="">Todas</option>
+
+                        @foreach (var categoria in Model.Categorias)
+                        {
+                            <option value="@categoria.Text">
+                                @categoria.Text
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ====================================================== -->
+        <!-- TABLA PRO -->
+        <!-- ====================================================== -->
+
+        <div class="sd-table-shell">
+
+            <div class="sd-table-shell-head">
+
+                <div class="sd-table-shell-title">
+                    Bandeja de tickets
+                </div>
+
+                <div class="sd-table-shell-badge">
+                    @Model.Tickets.Count registro(s)
+                </div>
+
+            </div>
+
+            <div class="table-responsive sd-table-wrap">
+
+                <table class="table sd-table sd-table-pro"
+                       id="tablaMesaDeAyuda">
+
+                    <thead>
+                        <tr>
+                            <th>Folio</th>
+                            <th>Asunto</th>
+                            <th>Tipo</th>
+                            <th>Categoría</th>
+                            <th>Prioridad</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+
+                            @if (Model.EsAdmin)
+                            {
+                                <th>Asignación</th>
+                            }
+
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Tickets.Any())
+                        {
+                            <tr>
+                                <td colspan="@(Model.EsAdmin ? 9 : 8)">
+
+                                    <div class="sd-empty-pro">
+
+                                        <div class="sd-empty-pro-illustration">
+                                            <i class="bi bi-inbox"></i>
+                                        </div>
+
+                                        <div class="sd-empty-pro-title">
+                                            No existen tickets registrados
+                                        </div>
+
+                                        <div class="sd-empty-pro-text">
+                                            Crea un ticket para comenzar a utilizar la Mesa de Ayuda.
+                                        </div>
+
+                                        <button type="button"
+                                                class="sd-btn-primary mt-3"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modalCrearTicket">
+
+                                            <i class="bi bi-plus-lg me-1"></i>
+                                            Crear Ticket
+
+                                        </button>
+
+                                    </div>
+
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var ticket in Model.Tickets)
+                            {
+                                string estado = ticket.Status?.Nombre ?? "";
+                                string prioridad = ticket.Priority?.Codigo ?? "";
+
+                                <tr data-folio="@ticket.Folio"
+                                    data-titulo="@ticket.Titulo"
+                                    data-estado="@estado"
+                                    data-categoria="@ticket.Category?.Nombre">
+
+                                    <!-- FOLIO -->
+                                    <td>
+                                        <div class="sd-folio-wrap">
+                                            <span class="sd-folio">@ticket.Folio</span>
+                                        </div>
+                                    </td>
+
+                                    <!-- ASUNTO -->
+                                    <td>
+                                        <div class="sd-ticket-title">
+                                            @ticket.Titulo
+                                        </div>
+
+                                        @if (!string.IsNullOrWhiteSpace(ticket.Subcategory?.Nombre))
+                                        {
+                                            <div class="sd-ticket-description">
+                                                @ticket.Subcategory.Nombre
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <!-- TIPO -->
+                                    <td>
+                                        <span class="sd-chip-light">
+                                            @ticket.TicketType?.Nombre
+                                        </span>
+                                    </td>
+
+                                    <!-- CATEGORÍA -->
+                                    <td>
+                                        @ticket.Category?.Nombre
+                                    </td>
+
+                                    <!-- PRIORIDAD -->
+                                    <td>
+                                        @if (prioridad == "CRITICA")
+                                        {
+                                            <span class="sd-priority sd-priority-critical">Crítica</span>
+                                        }
+                                        else if (prioridad == "ALTA")
+                                        {
+                                            <span class="sd-priority sd-priority-high">Alta</span>
+                                        }
+                                        else if (prioridad == "MEDIA")
+                                        {
+                                            <span class="sd-priority sd-priority-medium">Media</span>
+                                        }
+                                        else if (prioridad == "BAJA")
+                                        {
+                                            <span class="sd-priority sd-priority-low">Baja</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@ticket.Priority?.Nombre</span>
+                                        }
+                                    </td>
+
+                                    <!-- ESTADO -->
+                                    <td>
+                                        @if (ticket.StatusId == 1)
+                                        {
+                                            <span class="sd-badge sd-status-new">
+                                                <i class="bi bi-circle-fill"></i> Nuevo
+                                            </span>
+                                        }
+                                        else if (ticket.StatusId == 2)
+                                        {
+                                            <span class="sd-badge sd-status-assigned">
+                                                <i class="bi bi-person-check"></i> Asignado
+                                            </span>
+                                        }
+                                        else if (ticket.StatusId == 3)
+                                        {
+                                            <span class="sd-badge sd-status-progress">
+                                                <i class="bi bi-gear"></i> En proceso
+                                            </span>
+                                        }
+                                        else if (ticket.StatusId == 4)
+                                        {
+                                            <span class="sd-badge sd-status-waiting">
+                                                <i class="bi bi-hourglass-split"></i> Pendiente usuario
+                                            </span>
+                                        }
+                                        else if (ticket.StatusId == 5)
+                                        {
+                                            <span class="sd-badge sd-status-resolved">
+                                                <i class="bi bi-check-circle"></i> Resuelto
+                                            </span>
+                                        }
+                                        else if (ticket.StatusId == 6)
+                                        {
+                                            <span class="sd-badge sd-status-closed">
+                                                <i class="bi bi-lock"></i> Cerrado
+                                            </span>
+                                        }
+                                        else if (ticket.StatusId == 7)
+                                        {
+                                            <span class="sd-badge sd-status-reopened">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Reabierto
+                                            </span>
+                                        }
+                                        else if (ticket.StatusId == 8)
+                                        {
+                                            <span class="sd-badge sd-status-cancelled">
+                                                <i class="bi bi-x-circle"></i> Cancelado
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="sd-badge sd-status-new">
+                                                @ticket.Status?.Nombre
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <!-- FECHA -->
+                                    <td>
+                                        <div>@ticket.FechaCreacion.ToString("dd/MM/yyyy")</div>
+                                        <div class="sd-ticket-description">
+                                            @ticket.FechaCreacion.ToString("HH:mm")
+                                        </div>
+                                    </td>
+
+                                    <!-- ASIGNACIÓN -->
+                                    @if (Model.EsAdmin)
+                                    {
+                                        <td>
+                                            @if (string.IsNullOrWhiteSpace(ticket.UsuarioAsignadoId))
+                                            {
+                                                <span class="sd-unassigned">
+                                                    <i class="bi bi-person-x me-1"></i> Sin asignar
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="sd-assigned">
+                                                    <i class="bi bi-person-check me-1"></i> Asignado
+                                                </span>
+                                            }
+                                        </td>
+                                    }
+
+                                    <!-- ACCIONES -->
+                                    <td class="text-center">
+                                        <button type="button"
+                                                class="sd-action"
+                                                title="Ver ticket"
+                                                data-ticket-id="@ticket.Id">
+                                            <i class="bi bi-search"></i>
+                                        </button>
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- ========================================================== -->
+<!-- MODAL CREAR TICKET -->
+<!-- ========================================================== -->
+
+<div class="modal fade sd-modal"
+     id="modalCrearTicket"
+     tabindex="-1"
+     aria-labelledby="modalCrearTicketLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  asp-page-handler="CrearTicket">
+
+                @Html.AntiForgeryToken()
+
+
+                <!-- HEADER -->
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <h5 class="modal-title"
+                            id="modalCrearTicketLabel">
+
+                            <i class="bi bi-ticket-detailed me-2"></i>
+
+                            Crear Ticket
+
+                        </h5>
+
+
+                        <div class="small opacity-75 mt-1">
+
+                            Registra una incidencia o solicitud
+                            para el área de TI.
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <!-- BODY -->
+
+                <div class="modal-body">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+
+                    <div class="row">
+
+
+                        <!-- TIPO -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Tipo de solicitud
+
+                                <span class="text-danger">
+                                    *
+                                </span>
+
+                            </label>
+
+
+                            <select asp-for="TicketTypeId"
+                                    asp-items="Model.TiposTicket"
+                                    class="form-select">
+
+                                <option value="0">
+
+                                    Selecciona...
+
+                                </option>
+
+                            </select>
+
+
+                            <span asp-validation-for="TicketTypeId"
+                                  class="text-danger small">
+                            </span>
+
+                        </div>
+
+
+                        <!-- CATEGORÍA -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label class="form-label">
+
+                                Categoría
+
+                                <span class="text-danger">
+                                    *
+                                </span>
+
+                            </label>
+
+
+                            <select asp-for="CategoryId"
+                                    asp-items="Model.Categorias"
+                                    class="form-select"
+                                    id="CategoryId">
+
+                                <option value="0">
+
+                                    Selecciona...
+
+                                </option>
+
+                            </select>
+
+
+                            <span asp-validation-for="CategoryId"
+                                  class="text-danger small">
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- SUBCATEGORÍA -->
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+
+                            Subcategoría
+
+                        </label>
+
+
+                        <select asp-for="SubcategoryId"
+                                asp-items="Model.Subcategorias"
+                                class="form-select"
+                                id="SubcategoryId">
+
+                            <option value="">
+
+                                Selecciona...
+
+                            </option>
+
+                        </select>
+
+
+                        <span asp-validation-for="SubcategoryId"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- ASUNTO -->
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+
+                            Asunto
+
+                            <span class="text-danger">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <input asp-for="Titulo"
+                               class="form-control"
+                               maxlength="250"
+                               autocomplete="off"
+                               placeholder="Ej. No puedo conectarme a la VPN" />
+
+
+                        <span asp-validation-for="Titulo"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- DESCRIPCIÓN -->
+
+                    <div class="mb-2">
+
+                        <label class="form-label">
+
+                            Descripción
+
+                            <span class="text-danger">
+                                *
+                            </span>
+
+                        </label>
+
+
+                        <textarea asp-for="Descripcion"
+                                  class="form-control"
+                                  rows="6"
+                                  maxlength="5000"
+                                  placeholder="Describe qué sucede, desde cuándo ocurre y cualquier mensaje de error que aparezca."></textarea>
+
+
+                        <span asp-validation-for="Descripcion"
+                              class="text-danger small">
+                        </span>
+
+
+                        <div class="form-text">
+
+                            Incluye toda la información necesaria
+                            para facilitar la atención del ticket.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FOOTER -->
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
+
+
+                    <button type="submit"
+                            class="sd-btn-primary">
+
+                        <i class="bi bi-send me-1"></i>
+
+                        Crear Ticket
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+
+
+    <script>
+
+        // =========================================================
+        // APLICAR TEMA DE MESA DE AYUDA AL LAYOUT COMPLETO
+        // =========================================================
+
+        document.body.classList.add("service-desk-theme");
+
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+
+                // =================================================
+                // FILTROS
+                // =================================================
+
+                const txtBusqueda =
+                    document.getElementById(
+                        "filtroBusqueda"
+                    );
+
+
+                const filtroEstado =
+                    document.getElementById(
+                        "filtroEstado"
+                    );
+
+
+                const filtroCategoria =
+                    document.getElementById(
+                        "filtroCategoria"
+                    );
+
+
+                const btnLimpiar =
+                    document.getElementById(
+                        "btnLimpiarFiltros"
+                    );
+
+
+                function aplicarFiltros() {
+
+                    const busqueda =
+                        (
+                            txtBusqueda?.value || ""
+                        )
+                        .toLowerCase()
+                        .trim();
+
+
+                    const estado =
+                        (
+                            filtroEstado?.value || ""
+                        )
+                        .toLowerCase();
+
+
+                    const categoria =
+                        (
+                            filtroCategoria?.value || ""
+                        )
+                        .toLowerCase();
+
+
+                    const filas =
+                        document.querySelectorAll(
+                            "#tablaMesaDeAyuda tbody tr[data-folio]"
+                        );
+
+
+                    filas.forEach(
+                        function (fila) {
+
+                            const folio =
+                                (
+                                    fila.dataset.folio || ""
+                                )
+                                .toLowerCase();
+
+
+                            const titulo =
+                                (
+                                    fila.dataset.titulo || ""
+                                )
+                                .toLowerCase();
+
+
+                            const estadoFila =
+                                (
+                                    fila.dataset.estado || ""
+                                )
+                                .toLowerCase();
+
+
+                            const categoriaFila =
+                                (
+                                    fila.dataset.categoria || ""
+                                )
+                                .toLowerCase();
+
+
+                            const coincideBusqueda =
+                                !busqueda ||
+                                folio.includes(busqueda) ||
+                                titulo.includes(busqueda);
+
+
+                            const coincideEstado =
+                                !estado ||
+                                estadoFila === estado;
+
+
+                            const coincideCategoria =
+                                !categoria ||
+                                categoriaFila === categoria;
+
+
+                            fila.style.display =
+                                coincideBusqueda &&
+                                coincideEstado &&
+                                coincideCategoria
+                                    ? ""
+                                    : "none";
+                        }
+                    );
+                }
+
+
+                txtBusqueda?.addEventListener(
+                    "input",
+                    aplicarFiltros
+                );
+
+
+                filtroEstado?.addEventListener(
+                    "change",
+                    aplicarFiltros
+                );
+
+
+                filtroCategoria?.addEventListener(
+                    "change",
+                    aplicarFiltros
+                );
+
+
+                btnLimpiar?.addEventListener(
+                    "click",
+                    function () {
+
+                        if (txtBusqueda) {
+                            txtBusqueda.value = "";
+                        }
+
+
+                        if (filtroEstado) {
+                            filtroEstado.value = "";
+                        }
+
+
+                        if (filtroCategoria) {
+                            filtroCategoria.value = "";
+                        }
+
+
+                        aplicarFiltros();
+                    }
+                );
+
+
+                // =================================================
+                // SUBCATEGORÍAS DINÁMICAS
+                // =================================================
+
+                const categoriaTicket =
+                    document.getElementById(
+                        "CategoryId"
+                    );
+
+
+                const subcategoriaTicket =
+                    document.getElementById(
+                        "SubcategoryId"
+                    );
+
+
+                if (
+                    categoriaTicket &&
+                    subcategoriaTicket
+                ) {
+
+                    categoriaTicket.addEventListener(
+                        "change",
+                        async function () {
+
+                            const categoryId =
+                                this.value;
+
+
+                            subcategoriaTicket.innerHTML =
+                                '<option value="">Selecciona...</option>';
+
+
+                            if (
+                                !categoryId ||
+                                categoryId === "0"
+                            ) {
+                                return;
+                            }
+
+
+                            try {
+
+                                const response =
+                                    await fetch(
+                                        "?handler=Subcategorias&categoryId="
+                                        +
+                                        encodeURIComponent(
+                                            categoryId
+                                        )
+                                    );
+
+
+                                if (!response.ok) {
+
+                                    console.error(
+                                        "No fue posible cargar las subcategorías."
+                                    );
+
+                                    return;
+                                }
+
+
+                                const datos =
+                                    await response.json();
+
+
+                                datos.forEach(
+                                    function (item) {
+
+                                        const option =
+                                            document.createElement(
+                                                "option"
+                                            );
+
+
+                                        option.value =
+                                            item.id;
+
+
+                                        option.textContent =
+                                            item.nombre;
+
+
+                                        subcategoriaTicket
+                                            .appendChild(
+                                                option
+                                            );
+
+                                    }
+                                );
+
+                            }
+                            catch (error) {
+
+                                console.error(
+                                    "Error al cargar subcategorías:",
+                                    error
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+
+            }
+        );
+
+
+        // =========================================================
+        // QUITAR CLASE SI EL NAVEGADOR CONSERVA EL DOCUMENTO
+        // =========================================================
+
+        window.addEventListener(
+            "pagehide",
+            function () {
+
+                document.body.classList.remove(
+                    "service-desk-theme"
+                );
+
+            }
+        );
+
+    </script>
+}
