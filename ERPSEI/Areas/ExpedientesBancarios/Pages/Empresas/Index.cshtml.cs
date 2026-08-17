@@ -25,6 +25,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         private readonly AppUserManager _userManager;
         private readonly IEmpresaManager _empresaManager;
         private readonly IPermisosComplianceService _permisosComplianceService;
+        private readonly IDocumentoEmpresasComplianceService _documentoEmpresasComplianceService;
 
         public IndexModel(
             ApplicationDbContext context,
@@ -32,7 +33,8 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             IConfiguration configuration,
             AppUserManager userManager,
             IEmpresaManager empresaManager,
-            IPermisosComplianceService permisosComplianceService)
+            IPermisosComplianceService permisosComplianceService,
+            IDocumentoEmpresasComplianceService documentoEmpresasComplianceService)
         {
             _context = context;
             _environment = environment;
@@ -40,6 +42,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             _userManager = userManager;
             _empresaManager = empresaManager;
             _permisosComplianceService = permisosComplianceService;
+            _documentoEmpresasComplianceService = documentoEmpresasComplianceService;
         }
 
         public PermisosComplianceResultado
@@ -2632,6 +2635,75 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 });
             }
 
+            EbEmpresa? empresaCompliance =
+                await _context.EbEmpresas
+                    .IgnoreQueryFilters()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == empresaId &&
+                        !x.Eliminado
+                    );
+
+            if (empresaCompliance != null &&
+                !string.IsNullOrWhiteSpace(
+                    empresaCompliance.Rfc))
+            {
+                string rfcNormalizado =
+                    empresaCompliance.Rfc
+                        .Trim()
+                        .ToUpperInvariant();
+
+                Empresa? empresaMaestra =
+                    await _context.Set<Empresa>()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(x =>
+                            x.RFC != null &&
+                            x.RFC.Trim().ToUpper() ==
+                                rfcNormalizado
+                        );
+
+                if (empresaMaestra != null)
+                {
+                    try
+                    {
+                        ResultadoSincronizacionDocumental
+                            resultadoSincronizacion =
+                                await _documentoEmpresasComplianceService
+                                    .SincronizarDesdeEmpresaAsync(
+                                        empresaMaestra.Id,
+                                        empresaCompliance.Id,
+                                        ObtenerUsuarioId()
+                                    );
+                    }
+                    catch (Exception ex)
+                    {
+                        /*
+                         * La sincronización no debe romper
+                         * la consulta documental existente.
+                         *
+                         * Si falla, Compliance sigue mostrando
+                         * los documentos que ya tiene.
+                         */
+                        Console.WriteLine(
+                            "======================================"
+                        );
+
+                        Console.WriteLine(
+                            "ERROR DE SINCRONIZACIÓN " +
+                            "EMPRESAS → COMPLIANCE"
+                        );
+
+                        Console.WriteLine(
+                            ex.ToString()
+                        );
+
+                        Console.WriteLine(
+                            "======================================"
+                        );
+                    }
+                }
+            }
+
             DateTime fechaActual = DateTime.Today;
             DateTime fechaProximaVencimiento =
                 fechaActual.AddDays(30);
@@ -3348,14 +3420,18 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     ? versionesDocumento.Max(x => x.Version) + 1
                     : 1;
 
-                foreach (
-                    EbDocumento documentoAnterior
-                    in versionesDocumento.Where(x =>
-                        !x.Eliminado &&
-                        x.EsVersionActual)
-                )
+                if (!tipoDocumento.PermiteMultiplesArchivos)
                 {
-                    documentoAnterior.EsVersionActual = false;
+                    foreach (
+                        EbDocumento documentoAnterior
+                        in versionesDocumento.Where(x =>
+                            !x.Eliminado &&
+                            x.EsVersionActual
+                        )
+                    )
+                    {
+                        documentoAnterior.EsVersionActual = false;
+                    }
                 }
 
                 await using (
@@ -3434,13 +3510,59 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         : "Se cargó el documento.";
 
                 RegistrarBitacoraDocumento(
-                    documento,
-                    accionBitacora,
-                    exitoso: true,
-                    detalle: detalleBitacora
-                );
+                documento,
+                accionBitacora,
+                exitoso: true,
+                detalle: detalleBitacora
+            );
 
                 await _context.SaveChangesAsync();
+
+                /*
+                 * ==========================================================
+                 * SINCRONIZACIÓN COMPLIANCE → EMPRESAS
+                 * ==========================================================
+                 *
+                 * Solamente los tipos documentales que tengan una
+                 * equivalencia definida en
+                 * MapeoDocumentalEmpresasCompliance
+                 * serán enviados al módulo Empresas.
+                 *
+                 * Los documentos exclusivos de Compliance
+                 * simplemente serán ignorados por el servicio.
+                 */
+                try
+                {
+                    await _documentoEmpresasComplianceService
+                        .SincronizarDesdeComplianceAsync(
+                            documento.Id
+                        );
+                }
+                catch (Exception ex)
+                {
+                    /*
+                     * La carga del documento en Compliance ya fue
+                     * realizada correctamente.
+                     *
+                     * Si falla únicamente la sincronización hacia
+                     * Empresas, no cancelamos la carga original.
+                     */
+                    Console.WriteLine(
+                        "======================================"
+                    );
+
+                    Console.WriteLine(
+                        "ERROR SINCRONIZACIÓN COMPLIANCE → EMPRESAS"
+                    );
+
+                    Console.WriteLine(
+                        ex.ToString()
+                    );
+
+                    Console.WriteLine(
+                        "======================================"
+                    );
+                }
 
                 return new JsonResult(new
                 {

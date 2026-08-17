@@ -75,6 +75,13 @@ namespace ERPSEI.Data
             set;
         } = null!;
 
+        public DbSet<EbDocumentoVinculoEmpresa>
+            EbDocumentosVinculosEmpresa
+        {
+            get;
+            set;
+        } = null!;
+
         public DbSet<EbDocumento> EbDocumentos
         {
             get;
@@ -2575,6 +2582,110 @@ namespace ERPSEI.Data
 
                 entity.HasQueryFilter(x => !x.Eliminado);
             });
+
+            /*
+             * ==========================================================
+             * VÍNCULO DOCUMENTAL EMPRESAS ↔ COMPLIANCE
+             * ==========================================================
+             *
+             * Esta tabla pertenece únicamente a la capa de integración.
+             * No modifica las relaciones internas actuales de Empresas
+             * ni de Compliance.
+             */
+            b.Entity<EbDocumentoVinculoEmpresa>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "EB_DocumentosVinculosEmpresa"
+                    );
+
+                    entity.HasKey(x =>
+                        x.Id
+                    );
+
+                    entity.Property(x =>
+                            x.ArchivoEmpresaId)
+                        .HasMaxLength(450);
+
+                    entity.Property(x =>
+                            x.HashContenido)
+                        .HasMaxLength(64)
+                        .IsRequired();
+
+                    entity.Property(x =>
+                            x.Origen)
+                        .HasMaxLength(30)
+                        .IsRequired();
+
+                    entity.Property(x =>
+                            x.Activo)
+                        .IsRequired()
+                        .HasDefaultValue(true);
+
+                    entity.Property(x =>
+                            x.FechaCreacion)
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(x =>
+                        x.FechaActualizacion
+                    );
+
+                    /*
+                     * Índice principal para localizar rápidamente
+                     * la relación documental entre ambos módulos.
+                     */
+                    entity.HasIndex(x =>
+                        new
+                        {
+                            x.EmpresaMaestraId,
+                            x.EmpresaComplianceId,
+                            x.TipoArchivoEmpresaId,
+                            x.TipoDocumentoComplianceId,
+                            x.Activo
+                        }
+                    )
+                    .HasDatabaseName(
+                        "IX_EB_DocumentosVinculosEmpresa_Relacion"
+                    );
+
+                    /*
+                     * SHA-256 del contenido sincronizado.
+                     */
+                    entity.HasIndex(x =>
+                        x.HashContenido
+                    )
+                    .HasDatabaseName(
+                        "IX_EB_DocumentosVinculosEmpresa_Hash"
+                    );
+
+                    /*
+                     * ID lógico del archivo actual en Empresas.
+                     *
+                     * NO creamos FK física porque Empresas puede
+                     * eliminar y recrear ArchivoEmpresa durante
+                     * una actualización.
+                     */
+                    entity.HasIndex(x =>
+                        x.ArchivoEmpresaId
+                    )
+                    .HasDatabaseName(
+                        "IX_EB_DocumentosVinculosEmpresa_ArchivoEmpresa"
+                    );
+
+                    /*
+                     * Documento/version correspondiente en Compliance.
+                     */
+                    entity.HasIndex(x =>
+                        x.DocumentoComplianceId
+                    )
+                    .HasDatabaseName(
+                        "IX_EB_DocumentosVinculosEmpresa_DocumentoCompliance"
+                    );
+                }
+            );
         }
 
         private static void BuildNotificaciones(ModelBuilder b)

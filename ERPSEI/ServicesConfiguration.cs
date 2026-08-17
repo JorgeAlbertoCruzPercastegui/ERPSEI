@@ -265,6 +265,15 @@ namespace ERPSEI
             );
         }
 
+        /*private static void ConfigureDICompliance(
+            WebApplicationBuilder builder)
+        {
+            builder.Services
+                .AddScoped<
+                    IPermisosComplianceService,
+                    PermisosComplianceService>();
+        }*/
+
         private static void ConfigureDICompliance(
             WebApplicationBuilder builder)
         {
@@ -272,6 +281,11 @@ namespace ERPSEI
                 .AddScoped<
                     IPermisosComplianceService,
                     PermisosComplianceService>();
+
+            builder.Services
+                .AddScoped<
+                    IDocumentoEmpresasComplianceService,
+                    DocumentoEmpresasComplianceService>();
         }
 
         private static void
