@@ -2602,11 +2602,10 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // GET ?handler=Documentos&empresaId=1
         // =====================================================
         public async Task<IActionResult> OnGetDocumentosAsync(
-            int empresaId)
+    int empresaId)
         {
-
             if (!await _permisosComplianceService
-            .PuedeVisualizarAsync(User))
+                .PuedeVisualizarAsync(User))
             {
                 return Forbid();
             }
@@ -2621,20 +2620,11 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 });
             }
 
-            bool empresaExiste = await _context.EbEmpresas
-                .AsNoTracking()
-                .AnyAsync(x => x.Id == empresaId);
-
-            if (!empresaExiste)
-            {
-                return new JsonResult(new
-                {
-                    success = false,
-                    message =
-                        "No se encontró la empresa solicitada."
-                });
-            }
-
+            /*
+             * ==========================================================
+             * VALIDAR EMPRESA COMPLIANCE
+             * ==========================================================
+             */
             EbEmpresa? empresaCompliance =
                 await _context.EbEmpresas
                     .IgnoreQueryFilters()
@@ -2644,9 +2634,36 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         !x.Eliminado
                     );
 
-            if (empresaCompliance != null &&
-                !string.IsNullOrWhiteSpace(
-                    empresaCompliance.Rfc))
+            if (empresaCompliance == null)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message =
+                        "No se encontró la empresa solicitada."
+                });
+            }
+
+            /*
+             * ==========================================================
+             * SINCRONIZACIÓN EMPRESAS → COMPLIANCE
+             * ==========================================================
+             *
+             * Conservamos el comportamiento actual:
+             *
+             * al abrir Documentos se revisa si existe algún cambio
+             * proveniente del módulo Empresas.
+             *
+             * La lógica interna del servicio se encargará de evitar:
+             *
+             * - duplicados
+             * - rebotes
+             * - versiones innecesarias
+             * - reutilización de vínculos antiguos
+             * ==========================================================
+             */
+            if (!string.IsNullOrWhiteSpace(
+                empresaCompliance.Rfc))
             {
                 string rfcNormalizado =
                     empresaCompliance.Rfc
@@ -2666,23 +2683,18 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 {
                     try
                     {
-                        ResultadoSincronizacionDocumental
-                            resultadoSincronizacion =
-                                await _documentoEmpresasComplianceService
-                                    .SincronizarDesdeEmpresaAsync(
-                                        empresaMaestra.Id,
-                                        empresaCompliance.Id,
-                                        ObtenerUsuarioId()
-                                    );
+                        await _documentoEmpresasComplianceService
+                            .SincronizarDesdeEmpresaAsync(
+                                empresaMaestra.Id,
+                                empresaCompliance.Id,
+                                ObtenerUsuarioId()
+                            );
                     }
                     catch (Exception ex)
                     {
                         /*
-                         * La sincronización no debe romper
-                         * la consulta documental existente.
-                         *
-                         * Si falla, Compliance sigue mostrando
-                         * los documentos que ya tiene.
+                         * La sincronización no debe impedir consultar
+                         * los documentos existentes de Compliance.
                          */
                         Console.WriteLine(
                             "======================================"
@@ -2704,182 +2716,324 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 }
             }
 
-            DateTime fechaActual = DateTime.Today;
+            /*
+             * ==========================================================
+             * FECHAS PARA ESTATUS DOCUMENTAL
+             * ==========================================================
+             */
+            DateTime fechaActual =
+                DateTime.Today;
+
             DateTime fechaProximaVencimiento =
                 fechaActual.AddDays(30);
 
-            var tiposDocumento = await _context
-                .EbTiposDocumento
-                .AsNoTracking()
-                .Where(x =>
-                    !x.Eliminado &&
-                    !x.Deshabilitado)
-                .OrderBy(x => x.Orden)
-                .ThenBy(x => x.Nombre)
-                .Select(x => new
-                {
-                    id = x.Id,
-                    nombre = x.Nombre,
-                    categoria = x.Categoria,
-                    descripcion = x.Descripcion,
-                    esObligatorio = x.EsObligatorio,
-                    requiereFechaVencimiento =
-                        x.RequiereFechaVencimiento,
-                    permiteMultiplesArchivos =
-                        x.PermiteMultiplesArchivos,
-                    orden = x.Orden
-                })
-                .ToListAsync();
-
-            var documentosEmpresa = await _context
-                .EbDocumentos
-                .AsNoTracking()
-                .Where(x =>
-                    x.EmpresaId == empresaId &&
-                    !x.Eliminado &&
-                    x.EsVersionActual)
-                .OrderByDescending(x => x.FechaCarga)
-                .Select(x => new
-                {
-                    id = x.Id,
-                    empresaId = x.EmpresaId,
-                    tipoDocumentoId = x.TipoDocumentoId,
-                    nombreOriginal = x.NombreOriginal,
-                    nombreAlmacenado = x.NombreAlmacenado,
-                    rutaArchivo = x.RutaArchivo,
-                    extension = x.Extension,
-                    mimeType = x.MimeType,
-                    tamanoBytes = x.TamanoBytes,
-                    version = x.Version,
-                    fechaCarga = x.FechaCarga,
-                    fechaVencimiento = x.FechaVencimiento,
-                    estado = x.Estado,
-                    observaciones = x.Observaciones
-                })
-                .ToListAsync();
-
-            var documentos = tiposDocumento
-                .Select(tipo =>
-                {
-                    var archivos = documentosEmpresa
-                        .Where(x =>
-                            x.tipoDocumentoId == tipo.id)
-                        .OrderByDescending(x => x.fechaCarga)
-                        .ToList();
-
-                    string estatus;
-
-                    if (archivos.Count == 0)
+            /*
+             * ==========================================================
+             * CATÁLOGO DE TIPOS DOCUMENTALES
+             * ==========================================================
+             */
+            var tiposDocumento =
+                await _context.EbTiposDocumento
+                    .AsNoTracking()
+                    .Where(x =>
+                        !x.Eliminado &&
+                        !x.Deshabilitado
+                    )
+                    .OrderBy(x =>
+                        x.Orden
+                    )
+                    .ThenBy(x =>
+                        x.Nombre
+                    )
+                    .Select(x => new
                     {
-                        estatus = "Pendiente";
-                    }
-                    else
+                        id =
+                            x.Id,
+
+                        nombre =
+                            x.Nombre,
+
+                        categoria =
+                            x.Categoria,
+
+                        descripcion =
+                            x.Descripcion,
+
+                        esObligatorio =
+                            x.EsObligatorio,
+
+                        requiereFechaVencimiento =
+                            x.RequiereFechaVencimiento,
+
+                        permiteMultiplesArchivos =
+                            x.PermiteMultiplesArchivos,
+
+                        orden =
+                            x.Orden
+                    })
+                    .ToListAsync();
+
+            /*
+             * ==========================================================
+             * DOCUMENTOS ACTUALES
+             * ==========================================================
+             */
+            var documentosEmpresa =
+                await _context.EbDocumentos
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.EmpresaId == empresaId &&
+                        !x.Eliminado &&
+                        x.EsVersionActual
+                    )
+                    .OrderByDescending(x =>
+                        x.FechaCarga
+                    )
+                    .Select(x => new
                     {
-                        bool tieneVencidos = archivos.Any(x =>
-                            x.fechaVencimiento.HasValue &&
-                            x.fechaVencimiento.Value.Date <
-                            fechaActual
-                        );
+                        id =
+                            x.Id,
 
-                        bool tieneProximosAVencer = archivos.Any(x =>
-                            x.fechaVencimiento.HasValue &&
-                            x.fechaVencimiento.Value.Date >=
-                            fechaActual &&
-                            x.fechaVencimiento.Value.Date <=
-                            fechaProximaVencimiento
-                        );
+                        empresaId =
+                            x.EmpresaId,
 
-                        bool tieneVigentes = archivos.Any(x =>
-                            x.fechaVencimiento.HasValue &&
-                            x.fechaVencimiento.Value.Date >
-                            fechaProximaVencimiento
-                        );
+                        tipoDocumentoId =
+                            x.TipoDocumentoId,
 
-                        if (tieneVencidos)
+                        nombreOriginal =
+                            x.NombreOriginal,
+
+                        nombreAlmacenado =
+                            x.NombreAlmacenado,
+
+                        rutaArchivo =
+                            x.RutaArchivo,
+
+                        extension =
+                            x.Extension,
+
+                        mimeType =
+                            x.MimeType,
+
+                        tamanoBytes =
+                            x.TamanoBytes,
+
+                        version =
+                            x.Version,
+
+                        fechaCarga =
+                            x.FechaCarga,
+
+                        fechaVencimiento =
+                            x.FechaVencimiento,
+
+                        estado =
+                            x.Estado,
+
+                        observaciones =
+                            x.Observaciones
+                    })
+                    .ToListAsync();
+
+            /*
+             * ==========================================================
+             * CONSTRUIR RESPUESTA DOCUMENTAL
+             * ==========================================================
+             */
+            var documentos =
+                tiposDocumento
+                    .Select(tipo =>
+                    {
+                        var archivos =
+                            documentosEmpresa
+                                .Where(x =>
+                                    x.tipoDocumentoId ==
+                                        tipo.id
+                                )
+                                .OrderByDescending(x =>
+                                    x.fechaCarga
+                                )
+                                .ToList();
+
+                        string estatus;
+
+                        if (archivos.Count == 0)
                         {
-                            estatus = "Vencido";
-                        }
-                        else if (tieneProximosAVencer)
-                        {
-                            estatus = "Próximo a vencer";
-                        }
-                        else if (tieneVigentes)
-                        {
-                            estatus = "Vigente";
+                            estatus =
+                                "Pendiente";
                         }
                         else
                         {
-                            estatus = "Cargado";
+                            bool tieneVencidos =
+                                archivos.Any(x =>
+                                    x.fechaVencimiento.HasValue &&
+                                    x.fechaVencimiento.Value.Date <
+                                        fechaActual
+                                );
+
+                            bool tieneProximosAVencer =
+                                archivos.Any(x =>
+                                    x.fechaVencimiento.HasValue &&
+                                    x.fechaVencimiento.Value.Date >=
+                                        fechaActual &&
+                                    x.fechaVencimiento.Value.Date <=
+                                        fechaProximaVencimiento
+                                );
+
+                            bool tieneVigentes =
+                                archivos.Any(x =>
+                                    x.fechaVencimiento.HasValue &&
+                                    x.fechaVencimiento.Value.Date >
+                                        fechaProximaVencimiento
+                                );
+
+                            if (tieneVencidos)
+                            {
+                                estatus =
+                                    "Vencido";
+                            }
+                            else if (tieneProximosAVencer)
+                            {
+                                estatus =
+                                    "Próximo a vencer";
+                            }
+                            else if (tieneVigentes)
+                            {
+                                estatus =
+                                    "Vigente";
+                            }
+                            else
+                            {
+                                estatus =
+                                    "Cargado";
+                            }
                         }
-                    }
 
-                    return new
-                    {
-                        id = tipo.id,
-                        nombre = tipo.nombre,
-                        categoria = tipo.categoria,
-                        descripcion = tipo.descripcion,
-                        obligatorio = tipo.esObligatorio,
-                        requiereFechaVencimiento =
-                            tipo.requiereFechaVencimiento,
-                        permiteMultiples =
-                            tipo.permiteMultiplesArchivos,
-                        orden = tipo.orden,
-                        estatus,
-                        totalArchivos = archivos.Count,
-
-                        archivos = archivos.Select(archivo => new
+                        return new
                         {
-                            id = archivo.id,
-                            tipoDocumentoId =
-                                archivo.tipoDocumentoId,
-                            nombreOriginal =
-                                archivo.nombreOriginal,
-                            extension = archivo.extension,
-                            mimeType = archivo.mimeType,
-                            tamanoBytes = archivo.tamanoBytes,
-                            version = archivo.version,
-                            fechaCarga = archivo.fechaCarga,
-                            fechaVencimiento =
-                                archivo.fechaVencimiento,
-                            estado = archivo.estado,
-                            observaciones =
-                                archivo.observaciones
-                        })
-                        .ToList()
-                    };
-                })
-                .ToList();
+                            id =
+                                tipo.id,
 
-            int totalRequeridos = documentos.Count(x =>
-                x.obligatorio);
+                            nombre =
+                                tipo.nombre,
 
-            int totalCargados = documentos.Count(x =>
-                x.totalArchivos > 0);
+                            categoria =
+                                tipo.categoria,
 
-            int totalPendientes = documentos.Count(x =>
-                x.obligatorio &&
-                x.totalArchivos == 0);
+                            descripcion =
+                                tipo.descripcion,
 
-            int totalVencidos = documentos.Count(x =>
-                x.estatus == "Vencido");
+                            obligatorio =
+                                tipo.esObligatorio,
 
-            int totalProximosAVencer = documentos.Count(x =>
-                x.estatus == "Próximo a vencer");
+                            requiereFechaVencimiento =
+                                tipo.requiereFechaVencimiento,
+
+                            permiteMultiples =
+                                tipo.permiteMultiplesArchivos,
+
+                            orden =
+                                tipo.orden,
+
+                            estatus,
+
+                            totalArchivos =
+                                archivos.Count,
+
+                            archivos =
+                                archivos
+                                    .Select(archivo => new
+                                    {
+                                        id =
+                                            archivo.id,
+
+                                        tipoDocumentoId =
+                                            archivo.tipoDocumentoId,
+
+                                        nombreOriginal =
+                                            archivo.nombreOriginal,
+
+                                        extension =
+                                            archivo.extension,
+
+                                        mimeType =
+                                            archivo.mimeType,
+
+                                        tamanoBytes =
+                                            archivo.tamanoBytes,
+
+                                        version =
+                                            archivo.version,
+
+                                        fechaCarga =
+                                            archivo.fechaCarga,
+
+                                        fechaVencimiento =
+                                            archivo.fechaVencimiento,
+
+                                        estado =
+                                            archivo.estado,
+
+                                        observaciones =
+                                            archivo.observaciones
+                                    })
+                                    .ToList()
+                        };
+                    })
+                    .ToList();
+
+            /*
+             * ==========================================================
+             * RESUMEN
+             * ==========================================================
+             */
+            int totalRequeridos =
+                documentos.Count(x =>
+                    x.obligatorio
+                );
+
+            int totalCargados =
+                documentos.Count(x =>
+                    x.totalArchivos > 0
+                );
+
+            int totalPendientes =
+                documentos.Count(x =>
+                    x.obligatorio &&
+                    x.totalArchivos == 0
+                );
+
+            int totalVencidos =
+                documentos.Count(x =>
+                    x.estatus == "Vencido"
+                );
+
+            int totalProximosAVencer =
+                documentos.Count(x =>
+                    x.estatus ==
+                        "Próximo a vencer"
+                );
 
             return new JsonResult(new
             {
                 success = true,
 
-                data = documentos,
+                data =
+                    documentos,
 
                 resumen = new
                 {
-                    totalDocumentos = documentos.Count,
+                    totalDocumentos =
+                        documentos.Count,
+
                     totalRequeridos,
+
                     totalCargados,
+
                     totalPendientes,
+
                     totalVencidos,
+
                     totalProximosAVencer
                 }
             });
@@ -3510,11 +3664,11 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         : "Se cargó el documento.";
 
                 RegistrarBitacoraDocumento(
-                documento,
-                accionBitacora,
-                exitoso: true,
-                detalle: detalleBitacora
-            );
+                    documento,
+                    accionBitacora,
+                    exitoso: true,
+                    detalle: detalleBitacora
+                );
 
                 await _context.SaveChangesAsync();
 
@@ -3522,14 +3676,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                  * ==========================================================
                  * SINCRONIZACIÓN COMPLIANCE → EMPRESAS
                  * ==========================================================
-                 *
-                 * Solamente los tipos documentales que tengan una
-                 * equivalencia definida en
-                 * MapeoDocumentalEmpresasCompliance
-                 * serán enviados al módulo Empresas.
-                 *
-                 * Los documentos exclusivos de Compliance
-                 * simplemente serán ignorados por el servicio.
                  */
                 try
                 {
@@ -3540,13 +3686,6 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 }
                 catch (Exception ex)
                 {
-                    /*
-                     * La carga del documento en Compliance ya fue
-                     * realizada correctamente.
-                     *
-                     * Si falla únicamente la sincronización hacia
-                     * Empresas, no cancelamos la carga original.
-                     */
                     Console.WriteLine(
                         "======================================"
                     );
