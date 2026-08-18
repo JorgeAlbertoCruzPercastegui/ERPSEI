@@ -4310,33 +4310,49 @@ async function abrirDocumentosEmpresa(
 
     /*
      * ==========================================================
-     * IDs
+     * EMPRESA MAESTRA
      * ==========================================================
      *
-     * empresaIdDocumentos:
-     * EbEmpresa.Id utilizado por documentos y accionistas.
+     * Para ABRIR Documentos utilizaremos siempre Empresa.Id.
      *
-     * empresaMaestraIdDocumentos:
-     * Empresa.Id utilizado para información corporativa.
+     * Ya NO bloquearemos la apertura si todavía no existe
+     * EbEmpresa.Id.
+     *
+     * El backend será responsable de localizar o crear
+     * automáticamente el expediente interno de Compliance.
+     * ==========================================================
+     */
+    empresaMaestraIdDocumentos =
+        Number(
+            empresaId ?? 0
+        );
+
+    /*
+     * Conservamos el ComplianceId recibido si ya existe,
+     * pero puede venir en 0.
+     *
+     * OnGetDocumentosAsync devolverá posteriormente el
+     * ComplianceId definitivo.
      */
     empresaIdDocumentos =
-        Number(complianceId ?? 0);
-
-    empresaMaestraIdDocumentos =
-        Number(empresaId ?? 0);
+        Number(
+            complianceId ?? 0
+        );
 
     empresaNombreDocumentos =
         razonSocial;
 
-    tipoDocumentoSeleccionado = null;
+    tipoDocumentoSeleccionado =
+        null;
 
     /*
-     * La empresa puede existir en el catálogo maestro
-     * aunque todavía no tenga registro interno Compliance.
+     * Únicamente Empresa.Id maestro es obligatorio.
      */
-    if (empresaIdDocumentos <= 0) {
+    if (
+        empresaMaestraIdDocumentos <= 0
+    ) {
         mostrarResultado(
-            "La empresa todavía no cuenta con un expediente interno de Compliance.",
+            "No se identificó correctamente la empresa.",
             "error"
         );
 
@@ -4354,23 +4370,23 @@ async function abrirDocumentosEmpresa(
     }
 
     limpiarListadoDocumentos();
+
     mostrarCargaDocumentos();
 
     modalDocumentos.show();
 
+    /*
+     * Información corporativa:
+     * Empresa.Id
+     *
+     * Documentos:
+     * el backend resolverá EbEmpresa.Id.
+     */
     await Promise.all([
-        /*
-         * Información corporativa:
-         * Empresa.Id
-         */
         cargarInformacionCorporativaDocumentos(
             empresaMaestraIdDocumentos
         ),
 
-        /*
-         * Documentos:
-         * EbEmpresa.Id
-         */
         cargarDocumentosEmpresa()
     ]);
 }
@@ -4481,7 +4497,15 @@ function mostrarCargaDocumentos() {
 }
 
 async function cargarDocumentosEmpresa() {
-    if (empresaIdDocumentos <= 0) {
+
+    /*
+     * ==========================================================
+     * PARA CONSULTAR DOCUMENTOS ENTRAMOS CON Empresa.Id
+     * ==========================================================
+     */
+    if (
+        empresaMaestraIdDocumentos <= 0
+    ) {
         mostrarErrorDocumentos(
             "El identificador de la empresa no es válido."
         );
@@ -4490,14 +4514,24 @@ async function cargarDocumentosEmpresa() {
     }
 
     try {
-        const parametros = new URLSearchParams({
-            handler: "Documentos",
-            empresaId: empresaIdDocumentos.toString()
-        });
 
-        const response = await fetch(
-            `${window.location.pathname}?${parametros.toString()}`
-        );
+        const parametros =
+            new URLSearchParams({
+                handler:
+                    "Documentos",
+
+                /*
+                 * Empresa.Id maestro.
+                 */
+                empresaId:
+                    empresaMaestraIdDocumentos
+                        .toString()
+            });
+
+        const response =
+            await fetch(
+                `${window.location.pathname}?${parametros.toString()}`
+            );
 
         if (!response.ok) {
             throw new Error(
@@ -4505,7 +4539,8 @@ async function cargarDocumentosEmpresa() {
             );
         }
 
-        const resultado = await response.json();
+        const resultado =
+            await response.json();
 
         if (!resultado.success) {
             mostrarErrorDocumentos(
@@ -4516,8 +4551,42 @@ async function cargarDocumentosEmpresa() {
             return;
         }
 
+        /*
+         * ======================================================
+         * GUARDAR EbEmpresa.Id RESUELTO POR EL BACKEND
+         * ======================================================
+         *
+         * A partir de aquí:
+         *
+         * empresaIdDocumentos = EbEmpresa.Id
+         *
+         * y podrá seguir utilizándose normalmente para:
+         * - cargar
+         * - historial
+         * - eliminar
+         * - descargar
+         * - versiones
+         * ======================================================
+         */
+        empresaIdDocumentos =
+            Number(
+                resultado.complianceId ?? 0
+            );
+
+        if (
+            empresaIdDocumentos <= 0
+        ) {
+            mostrarErrorDocumentos(
+                "No fue posible inicializar el expediente de Compliance."
+            );
+
+            return;
+        }
+
         documentosEmpresaActuales =
-            Array.isArray(resultado.data)
+            Array.isArray(
+                resultado.data
+            )
                 ? resultado.data
                 : [];
 
@@ -4530,17 +4599,26 @@ async function cargarDocumentosEmpresa() {
         );
 
         document
-            .getElementById("documentosCargando")
-            ?.classList.add("d-none");
-
-        if (documentosEmpresaActuales.length === 0) {
-            const matriz = document.getElementById(
-                "matrizDocumentos"
+            .getElementById(
+                "documentosCargando"
+            )
+            ?.classList.add(
+                "d-none"
             );
+
+        if (
+            documentosEmpresaActuales.length ===
+            0
+        ) {
+            const matriz =
+                document.getElementById(
+                    "matrizDocumentos"
+                );
 
             if (matriz) {
                 matriz.innerHTML = `
                     <div class="eb-documents-empty">
+
                         <div class="eb-documents-empty-icon">
                             <i class="fa-regular fa-folder-open"></i>
                         </div>
@@ -4553,12 +4631,17 @@ async function cargarDocumentosEmpresa() {
                             El catálogo documental no contiene
                             registros activos.
                         </p>
+
                     </div>
                 `;
             }
         }
+
     } catch (error) {
-        console.error(error);
+
+        console.error(
+            error
+        );
 
         mostrarErrorDocumentos(
             "Ocurrió un error al consultar la documentación."

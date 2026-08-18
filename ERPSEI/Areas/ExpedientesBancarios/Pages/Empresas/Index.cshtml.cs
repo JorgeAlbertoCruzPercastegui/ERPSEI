@@ -3519,6 +3519,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 return new JsonResult(new
                 {
                     success = false,
+
                     message =
                         "El identificador de la empresa no es válido."
                 });
@@ -3526,23 +3527,26 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 
             /*
              * ==========================================================
-             * VALIDAR EMPRESA COMPLIANCE
+             * 1. LOCALIZAR EMPRESA MAESTRA
+             * ==========================================================
+             *
+             * A partir de ahora empresaId corresponde a Empresa.Id.
              * ==========================================================
              */
-            EbEmpresa? empresaCompliance =
-                await _context.EbEmpresas
-                    .IgnoreQueryFilters()
+            Empresa? empresaMaestra =
+                await _context
+                    .Set<Empresa>()
                     .AsNoTracking()
                     .FirstOrDefaultAsync(x =>
-                        x.Id == empresaId &&
-                        !x.Eliminado
+                        x.Id == empresaId
                     );
 
-            if (empresaCompliance == null)
+            if (empresaMaestra == null)
             {
                 return new JsonResult(new
                 {
                     success = false,
+
                     message =
                         "No se encontró la empresa solicitada."
                 });
@@ -3550,81 +3554,186 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 
             /*
              * ==========================================================
-             * SINCRONIZACIÓN EMPRESAS → COMPLIANCE
-             * ==========================================================
-             *
-             * Conservamos el comportamiento actual:
-             *
-             * al abrir Documentos se revisa si existe algún cambio
-             * proveniente del módulo Empresas.
-             *
-             * La lógica interna del servicio se encargará de evitar:
-             *
-             * - duplicados
-             * - rebotes
-             * - versiones innecesarias
-             * - reutilización de vínculos antiguos
+             * 2. NORMALIZAR RFC
              * ==========================================================
              */
-            if (!string.IsNullOrWhiteSpace(
-                empresaCompliance.Rfc))
+            string rfcEmpresa =
+                empresaMaestra.RFC?
+                    .Trim()
+                    .ToUpperInvariant()
+                ?? string.Empty;
+
+            /*
+             * ==========================================================
+             * 3. LOCALIZAR EXPEDIENTE COMPLIANCE
+             * ==========================================================
+             */
+            EbEmpresa? empresaCompliance =
+                null;
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    rfcEmpresa
+                )
+            )
             {
-                string rfcNormalizado =
-                    empresaCompliance.Rfc
-                        .Trim()
-                        .ToUpperInvariant();
-
-                Empresa? empresaMaestra =
-                    await _context.Set<Empresa>()
-                        .AsNoTracking()
+                empresaCompliance =
+                    await _context
+                        .EbEmpresas
+                        .IgnoreQueryFilters()
                         .FirstOrDefaultAsync(x =>
-                            x.RFC != null &&
-                            x.RFC.Trim().ToUpper() ==
-                                rfcNormalizado
+                            x.Rfc != null &&
+                            x.Rfc.Trim().ToUpper() ==
+                                rfcEmpresa
                         );
-
-                if (empresaMaestra != null)
-                {
-                    try
-                    {
-                        await _documentoEmpresasComplianceService
-                            .SincronizarDesdeEmpresaAsync(
-                                empresaMaestra.Id,
-                                empresaCompliance.Id,
-                                ObtenerUsuarioId()
-                            );
-                    }
-                    catch (Exception ex)
-                    {
-                        /*
-                         * La sincronización no debe impedir consultar
-                         * los documentos existentes de Compliance.
-                         */
-                        Console.WriteLine(
-                            "======================================"
-                        );
-
-                        Console.WriteLine(
-                            "ERROR DE SINCRONIZACIÓN " +
-                            "EMPRESAS → COMPLIANCE"
-                        );
-
-                        Console.WriteLine(
-                            ex.ToString()
-                        );
-
-                        Console.WriteLine(
-                            "======================================"
-                        );
-                    }
-                }
             }
 
             /*
              * ==========================================================
-             * FECHAS PARA ESTATUS DOCUMENTAL
+             * 4. CREAR EXPEDIENTE COMPLIANCE SI NO EXISTE
+             * ==========================================================
+             *
+             * Esto permite que CUALQUIER Empresa del catálogo maestro
+             * pueda abrir el modal Documentos.
+             *
+             * Si no tiene documentos:
+             *     mostrará el catálogo con documentos pendientes.
+             *
+             * Si tiene documentos en Empresas:
+             *     posteriormente serán sincronizados.
              * ==========================================================
              */
+            if (empresaCompliance == null)
+            {
+                string nivelNombre =
+                    string.Empty;
+
+                if (
+                    empresaMaestra.NivelId.HasValue
+                )
+                {
+                    Nivel? nivelEmpresa =
+                        await _context
+                            .Set<Nivel>()
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(x =>
+                                x.Id ==
+                                empresaMaestra
+                                    .NivelId
+                                    .Value
+                            );
+
+                    nivelNombre =
+                        nivelEmpresa?.Nombre ??
+                        string.Empty;
+                }
+
+                empresaCompliance =
+                    new EbEmpresa
+                    {
+                        RazonSocial =
+                            empresaMaestra.RazonSocial ??
+                            string.Empty,
+
+                        NombreCorto =
+                            string.Empty,
+
+                        Rfc =
+                            rfcEmpresa,
+
+                        Nivel =
+                            nivelNombre,
+
+                        ActividadComercial =
+                            null,
+
+                        TelefonoBancos =
+                            empresaMaestra.Telefono,
+
+                        CorreoBancos =
+                            empresaMaestra.CorreoBancos,
+
+                        FechaConstitucion =
+                            empresaMaestra.FechaConstitucion,
+
+                        NumeroEscritura =
+                            null,
+
+                        DomicilioFiscal =
+                            empresaMaestra.DomicilioFiscal,
+
+                        Observaciones =
+                            null,
+
+                        Deshabilitado =
+                            empresaMaestra.Deshabilitado != 0,
+
+                        Eliminado =
+                            false,
+
+                        FechaCreacion =
+                            DateTime.Now,
+
+                        UsuarioCreacionId =
+                            ObtenerUsuarioId()
+                    };
+
+                _context
+                    .EbEmpresas
+                    .Add(
+                        empresaCompliance
+                    );
+
+                await _context
+                    .SaveChangesAsync();
+            }
+
+            /*
+             * ==========================================================
+             * 5. ID INTERNO REAL DE COMPLIANCE
+             * ==========================================================
+             */
+            int complianceId =
+                empresaCompliance.Id;
+
+            /*
+             * ==========================================================
+             * 6. SINCRONIZAR DOCUMENTOS EMPRESAS → COMPLIANCE
+             * ==========================================================
+             */
+            try
+            {
+                await _documentoEmpresasComplianceService
+                    .SincronizarDesdeEmpresaAsync(
+                        empresaMaestra.Id,
+                        complianceId,
+                        ObtenerUsuarioId()
+                    );
+            }
+            catch (Exception ex)
+            {
+                /*
+                 * La sincronización no debe impedir abrir
+                 * el expediente documental.
+                 */
+                Console.WriteLine(
+                    "======================================"
+                );
+
+                Console.WriteLine(
+                    "ERROR DE SINCRONIZACIÓN " +
+                    "EMPRESAS → COMPLIANCE"
+                );
+
+                Console.WriteLine(
+                    ex.ToString()
+                );
+
+                Console.WriteLine(
+                    "======================================"
+                );
+            }
+
             DateTime fechaActual =
                 DateTime.Today;
 
@@ -3683,10 +3792,12 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
              * ==========================================================
              */
             var documentosEmpresa =
-                await _context.EbDocumentos
+                await _context
+                    .EbDocumentos
                     .AsNoTracking()
                     .Where(x =>
-                        x.EmpresaId == empresaId &&
+                        x.EmpresaId ==
+                            complianceId &&
                         !x.Eliminado &&
                         x.EsVersionActual
                     )
@@ -3695,45 +3806,30 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     )
                     .Select(x => new
                     {
-                        id =
-                            x.Id,
-
-                        empresaId =
-                            x.EmpresaId,
-
+                        id = x.Id,
+                        empresaId = x.EmpresaId,
                         tipoDocumentoId =
                             x.TipoDocumentoId,
-
                         nombreOriginal =
                             x.NombreOriginal,
-
                         nombreAlmacenado =
                             x.NombreAlmacenado,
-
                         rutaArchivo =
                             x.RutaArchivo,
-
                         extension =
                             x.Extension,
-
                         mimeType =
                             x.MimeType,
-
                         tamanoBytes =
                             x.TamanoBytes,
-
                         version =
                             x.Version,
-
                         fechaCarga =
                             x.FechaCarga,
-
                         fechaVencimiento =
                             x.FechaVencimiento,
-
                         estado =
                             x.Estado,
-
                         observaciones =
                             x.Observaciones
                     })
@@ -3922,13 +4018,16 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             {
                 success = true,
 
+                complianceId =
+                    complianceId,
+
                 data =
                     documentos,
 
                 resumen = new
                 {
                     totalDocumentos =
-                        documentos.Count,
+                    documentos.Count,
 
                     totalRequeridos,
 
