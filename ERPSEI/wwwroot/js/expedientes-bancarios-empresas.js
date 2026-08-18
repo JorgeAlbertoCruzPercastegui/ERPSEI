@@ -58,8 +58,24 @@ let modalSeleccionarBanco;
 /*
  * Permisos Compliance.
  */
+/*
+ * Permisos Compliance.
+ */
 let modalPermisosCompliance;
 let usuariosPermisosCompliance = [];
+
+/*
+ * Empresas permitidas por usuario.
+ */
+let modalEmpresasPermisoUsuario;
+let empresasPermisoUsuario = [];
+let usuarioEmpresasPermisoId = "";
+
+/*
+ * Evita limpiar el modal principal de permisos cuando
+ * solamente lo ocultamos para abrir el selector de empresas.
+ */
+let abriendoModalEmpresasPermiso = false;
 
 /*
  * Contiene únicamente los identificadores de usuarios
@@ -88,6 +104,11 @@ function inicializarEventosEmpresas() {
     modalPermisosCompliance =
         obtenerInstanciaModal(
             "modalPermisosCompliance"
+        );
+
+    modalEmpresasPermisoUsuario =
+        obtenerInstanciaModal(
+            "modalEmpresasPermisoUsuario"
         );
 
     modalSeleccionarBanco =
@@ -195,6 +216,9 @@ function inicializarEventosEmpresas() {
     /*
      * Limpiar búsqueda.
      */
+    /*
+ * Limpiar búsqueda.
+ */
     document
         .getElementById(
             "btnLimpiarBusquedaPermisos"
@@ -217,6 +241,80 @@ function inicializarEventosEmpresas() {
         );
 
     /*
+     * =====================================================
+     * EMPRESAS PERMITIDAS POR USUARIO
+     * =====================================================
+     */
+
+    /*
+     * Buscar empresa.
+     */
+    document
+        .getElementById(
+            "buscarEmpresaPermisoUsuario"
+        )
+        ?.addEventListener(
+            "input",
+            filtrarEmpresasPermisoUsuario
+        );
+
+    /*
+     * Limpiar búsqueda de empresas.
+     */
+    document
+        .getElementById(
+            "btnLimpiarBusquedaEmpresaPermiso"
+        )
+        ?.addEventListener(
+            "click",
+            function () {
+                const buscador =
+                    document.getElementById(
+                        "buscarEmpresaPermisoUsuario"
+                    );
+
+                if (buscador) {
+                    buscador.value = "";
+                    buscador.focus();
+                }
+
+                filtrarEmpresasPermisoUsuario();
+            }
+        );
+
+    /*
+     * Seleccionar / deseleccionar todas las empresas.
+     */
+    document
+        .getElementById(
+            "seleccionarTodasEmpresasPermiso"
+        )
+        ?.addEventListener(
+            "change",
+            function () {
+                seleccionarTodasEmpresasPermiso(
+                    this.checked
+                );
+            }
+        );
+
+    /*
+     * Limpiar selección de empresas.
+     */
+    document
+        .getElementById(
+            "btnLimpiarEmpresasPermiso"
+        )
+        ?.addEventListener(
+            "click",
+            function () {
+                seleccionarTodasEmpresasPermiso(
+                    false
+                );
+            }
+        );
+
+    /*
      * Limpiar el estado al cerrar el modal.
      */
     document
@@ -226,10 +324,45 @@ function inicializarEventosEmpresas() {
         ?.addEventListener(
             "hidden.bs.modal",
             function () {
-                limpiarPermisosCompliance();
+
+                /*
+                 * Si únicamente estamos ocultando el modal
+                 * principal para abrir Empresas permitidas,
+                 * NO limpiamos su contenido.
+                 */
+                /*
+                 * Limpiar el estado al cerrar el modal.
+                 */
+                document
+                    .getElementById(
+                        "modalPermisosCompliance"
+                    )
+                    ?.addEventListener(
+                        "hidden.bs.modal",
+                        function () {
+
+                            /*
+                             * Si únicamente ocultamos el modal principal
+                             * para abrir Empresas permitidas,
+                             * NO limpiamos su contenido.
+                             *
+                             * Restablecemos aquí la bandera porque en este
+                             * punto Bootstrap ya terminó realmente de ocultar
+                             * el modal.
+                             */
+                            if (abriendoModalEmpresasPermiso) {
+
+                                abriendoModalEmpresasPermiso =
+                                    false;
+
+                                return;
+                            }
+
+                            limpiarPermisosCompliance();
+                        }
+                    );
             }
         );
-
     document
         .getElementById(
             "btnConfirmarDescargaDocumento"
@@ -892,6 +1025,60 @@ function renderizarPermisosCompliance(
                         esAdministrador
                     )}
 
+                    <td class="text-center">
+
+                        <span class="
+                            badge
+                            bg-light
+                            text-dark
+                            border
+                            px-3
+                            py-2
+                        "
+                        data-numero-empresas-usuario="${escaparHtml(
+                            usuario.id
+                        )}">
+
+                            ${Number(
+                            usuario.numeroEmpresas ?? 0
+                        )}
+
+                        </span>
+
+                    </td>
+
+                    <td class="text-center">
+
+                        ${esAdministrador
+                                                ? `
+                                    <button type="button"
+                                            class="btn btn-sm btn-light"
+                                            disabled
+                                            title="Los administradores tienen acceso a todas las empresas">
+
+                                        <span class="eb-action-dots">
+                                            ⋮
+                                        </span>
+
+                                    </button>
+                                `
+                                                : `
+                                    <button type="button"
+                                            class="btn btn-sm eb-action-button"
+                                            title="Administrar empresas permitidas"
+                                            onclick="abrirEmpresasPermisoUsuario(
+                                                '${escaparAtributoJs(usuario.id)}'
+                                            )">
+
+                                        <span class="eb-action-dots">
+                                            ⋮
+                                        </span>
+
+                                    </button>
+                                `
+                        }
+
+                    </td>
                         </tr>
                     `;
                 }
@@ -1401,6 +1588,15 @@ function limpiarPermisosCompliance() {
     usuariosPermisosModificados.clear();
     usuariosPermisosCompliance = [];
 
+    document
+        .getElementById(
+            "mensajeEmpresasPermisosCompliance"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+
     const cuerpo =
         document.getElementById(
             "tablaPermisosComplianceBody"
@@ -1474,6 +1670,744 @@ function actualizarTotalUsuariosPermisos(
             : `${total} usuarios`;
 }
 
+// =====================================================
+// EMPRESAS PERMITIDAS POR USUARIO
+// =====================================================
+
+async function abrirEmpresasPermisoUsuario(
+    usuarioId
+) {
+    if (!modalEmpresasPermisoUsuario) {
+
+        mostrarResultado(
+            "No fue posible abrir la selección de empresas.",
+            "error"
+        );
+
+        return;
+    }
+
+    usuarioEmpresasPermisoId =
+        String(
+            usuarioId ?? ""
+        ).trim();
+
+    if (
+        usuarioEmpresasPermisoId === ""
+    ) {
+        return;
+    }
+
+    empresasPermisoUsuario = [];
+
+    const inputUsuario =
+        document.getElementById(
+            "empresasPermisoUsuarioId"
+        );
+
+    if (inputUsuario) {
+        inputUsuario.value =
+            usuarioEmpresasPermisoId;
+    }
+
+    const buscador =
+        document.getElementById(
+            "buscarEmpresaPermisoUsuario"
+        );
+
+    if (buscador) {
+        buscador.value = "";
+    }
+
+    const seleccionarTodas =
+        document.getElementById(
+            "seleccionarTodasEmpresasPermiso"
+        );
+
+    if (seleccionarTodas) {
+        seleccionarTodas.checked = false;
+        seleccionarTodas.indeterminate = false;
+    }
+
+    establecerTexto(
+        "empresasPermisoUsuarioNombre",
+        "-"
+    );
+
+    establecerTexto(
+        "empresasPermisoUsuarioCorreo",
+        "-"
+    );
+
+    establecerTexto(
+        "empresasPermisoContador",
+        "0"
+    );
+
+    document
+        .getElementById(
+            "empresasPermisoError"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "empresasPermisoVacio"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "contenedorEmpresasPermisoUsuario"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "empresasPermisoCargando"
+        )
+        ?.classList.remove(
+            "d-none"
+        );
+
+    /*
+     * Indicamos que el modal principal se oculta
+     * únicamente para abrir el selector.
+     */
+    abriendoModalEmpresasPermiso = true;
+
+    modalPermisosCompliance?.hide();
+
+    setTimeout(
+        function () {
+
+            modalEmpresasPermisoUsuario?.show();
+
+        },
+        200
+    );
+
+    await cargarEmpresasPermisoUsuario(
+        usuarioEmpresasPermisoId
+    );
+}
+
+
+async function cargarEmpresasPermisoUsuario(
+    usuarioId
+) {
+    try {
+
+        const parametros =
+            new URLSearchParams({
+                handler:
+                    "EmpresasPermisoUsuario",
+
+                usuarioId:
+                    usuarioId
+            });
+
+        const response =
+            await fetch(
+                `${window.location.pathname}?${parametros.toString()}`,
+                {
+                    method:
+                        "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
+                }
+            );
+
+        if (!response.ok) {
+
+            let mensaje =
+                "No fue posible consultar las empresas.";
+
+            if (
+                response.status === 403
+            ) {
+                mensaje =
+                    "No tienes autorización para administrar el alcance de empresas.";
+            }
+
+            throw new Error(
+                mensaje
+            );
+        }
+
+        const resultado =
+            await response.json();
+
+        if (!resultado.success) {
+
+            throw new Error(
+                resultado.message ??
+                "No fue posible consultar las empresas."
+            );
+        }
+
+        empresasPermisoUsuario =
+            Array.isArray(
+                resultado.empresas
+            )
+                ? resultado.empresas
+                : [];
+
+        establecerTexto(
+            "empresasPermisoUsuarioNombre",
+            resultado.usuario?.nombre ??
+            "-"
+        );
+
+        establecerTexto(
+            "empresasPermisoUsuarioCorreo",
+            resultado.usuario?.correo ??
+            "-"
+        );
+
+        renderizarEmpresasPermisoUsuario();
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+        document
+            .getElementById(
+                "empresasPermisoCargando"
+            )
+            ?.classList.add(
+                "d-none"
+            );
+
+        document
+            .getElementById(
+                "contenedorEmpresasPermisoUsuario"
+            )
+            ?.classList.add(
+                "d-none"
+            );
+
+        const alerta =
+            document.getElementById(
+                "empresasPermisoError"
+            );
+
+        const texto =
+            document.getElementById(
+                "empresasPermisoErrorTexto"
+            );
+
+        if (texto) {
+
+            texto.textContent =
+                error?.message ??
+                "Ocurrió un error al consultar las empresas.";
+        }
+
+        alerta?.classList.remove(
+            "d-none"
+        );
+    }
+}
+
+
+function renderizarEmpresasPermisoUsuario() {
+
+    const lista =
+        document.getElementById(
+            "listaEmpresasPermisoUsuario"
+        );
+
+    document
+        .getElementById(
+            "empresasPermisoCargando"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    if (!lista) {
+        return;
+    }
+
+    if (
+        !Array.isArray(
+            empresasPermisoUsuario
+        ) ||
+        empresasPermisoUsuario.length === 0
+    ) {
+
+        lista.innerHTML = "";
+
+        document
+            .getElementById(
+                "contenedorEmpresasPermisoUsuario"
+            )
+            ?.classList.add(
+                "d-none"
+            );
+
+        document
+            .getElementById(
+                "empresasPermisoVacio"
+            )
+            ?.classList.remove(
+                "d-none"
+            );
+
+        actualizarContadorEmpresasPermiso();
+
+        return;
+    }
+
+    document
+        .getElementById(
+            "empresasPermisoVacio"
+        )
+        ?.classList.add(
+            "d-none"
+        );
+
+    document
+        .getElementById(
+            "contenedorEmpresasPermisoUsuario"
+        )
+        ?.classList.remove(
+            "d-none"
+        );
+
+    lista.innerHTML =
+        empresasPermisoUsuario
+            .map(
+                function (empresa) {
+
+                    const checked =
+                        empresa.seleccionada
+                            ? "checked"
+                            : "";
+
+                    const estatus =
+                        empresa.deshabilitado
+                            ? `
+                                <span class="
+                                    badge
+                                    bg-secondary
+                                    ms-2
+                                ">
+                                    Inactiva
+                                </span>
+                              `
+                            : "";
+
+                    const textoBusqueda =
+                        normalizarTextoBusqueda(
+                            `${empresa.razonSocial ?? ""} ` +
+                            `${empresa.rfc ?? ""}`
+                        );
+
+                    return `
+                        <label class="
+                            list-group-item
+                            list-group-item-action
+                            d-flex
+                            align-items-center
+                            gap-3
+                            py-3
+                        "
+                        data-empresa-permiso-busqueda="${escaparHtml(
+                        textoBusqueda
+                    )}">
+
+                            <input type="checkbox"
+                                   class="
+                                       form-check-input
+                                       mt-0
+                                       empresa-permiso-checkbox
+                                   "
+                                   value="${Number(
+                        empresa.id
+                    )}"
+                                   ${checked}
+                                   onchange="
+                                       actualizarContadorEmpresasPermiso()
+                                   " />
+
+                            <div class="flex-grow-1">
+
+                                <div class="fw-semibold">
+
+                                    ${escaparHtml(
+                        empresa.razonSocial ??
+                        ""
+                    )}
+
+                                    ${estatus}
+
+                                </div>
+
+                                <div class="
+                                    small
+                                    text-muted
+                                    mt-1
+                                ">
+
+                                    RFC:
+                                    ${escaparHtml(
+                        empresa.rfc ||
+                        "Sin RFC"
+                    )}
+
+                                </div>
+
+                            </div>
+
+                        </label>
+                    `;
+                }
+            )
+            .join("");
+
+    actualizarContadorEmpresasPermiso();
+}
+
+
+function filtrarEmpresasPermisoUsuario() {
+
+    const filtro =
+        normalizarTextoBusqueda(
+            document
+                .getElementById(
+                    "buscarEmpresaPermisoUsuario"
+                )
+                ?.value ??
+            ""
+        );
+
+    const empresas =
+        document.querySelectorAll(
+            "[data-empresa-permiso-busqueda]"
+        );
+
+    let visibles = 0;
+
+    empresas.forEach(
+        function (empresa) {
+
+            const texto =
+                empresa.dataset
+                    .empresaPermisoBusqueda ??
+                "";
+
+            const visible =
+                filtro === "" ||
+                texto.includes(
+                    filtro
+                );
+
+            empresa.classList.toggle(
+                "d-none",
+                !visible
+            );
+
+            if (visible) {
+                visibles++;
+            }
+        }
+    );
+
+    const vacio =
+        document.getElementById(
+            "empresasPermisoVacio"
+        );
+
+    if (
+        empresas.length > 0 &&
+        visibles === 0
+    ) {
+
+        vacio?.classList.remove(
+            "d-none"
+        );
+
+    } else {
+
+        vacio?.classList.add(
+            "d-none"
+        );
+    }
+}
+
+
+function seleccionarTodasEmpresasPermiso(
+    seleccionar
+) {
+
+    const checkboxes =
+        document.querySelectorAll(
+            ".empresa-permiso-checkbox"
+        );
+
+    checkboxes.forEach(
+        function (checkbox) {
+
+            checkbox.checked =
+                Boolean(
+                    seleccionar
+                );
+        }
+    );
+
+    actualizarContadorEmpresasPermiso();
+}
+
+
+function actualizarContadorEmpresasPermiso() {
+
+    const checkboxes =
+        Array.from(
+            document.querySelectorAll(
+                ".empresa-permiso-checkbox"
+            )
+        );
+
+    const seleccionadas =
+        checkboxes.filter(
+            function (checkbox) {
+
+                return checkbox.checked;
+            }
+        ).length;
+
+    establecerTexto(
+        "empresasPermisoContador",
+        `${seleccionadas} de ${checkboxes.length}`
+    );
+
+    const seleccionarTodas =
+        document.getElementById(
+            "seleccionarTodasEmpresasPermiso"
+        );
+
+    if (!seleccionarTodas) {
+        return;
+    }
+
+    seleccionarTodas.checked =
+        checkboxes.length > 0 &&
+        seleccionadas ===
+        checkboxes.length;
+
+    seleccionarTodas.indeterminate =
+        seleccionadas > 0 &&
+        seleccionadas <
+        checkboxes.length;
+}
+
+
+async function guardarEmpresasPermisoUsuario() {
+
+    const boton =
+        document.getElementById(
+            "btnGuardarEmpresasPermisoUsuario"
+        );
+
+    if (!boton) {
+        return;
+    }
+
+    if (
+        usuarioEmpresasPermisoId === ""
+    ) {
+
+        mostrarResultado(
+            "No se identificó el usuario seleccionado.",
+            "error"
+        );
+
+        return;
+    }
+
+    const empresaIds =
+        Array.from(
+            document.querySelectorAll(
+                ".empresa-permiso-checkbox:checked"
+            )
+        )
+            .map(
+                function (checkbox) {
+
+                    return parseInt(
+                        checkbox.value,
+                        10
+                    );
+                }
+            )
+            .filter(
+                function (empresaId) {
+
+                    return (
+                        Number.isInteger(
+                            empresaId
+                        ) &&
+                        empresaId > 0
+                    );
+                }
+            );
+
+    const htmlOriginal =
+        boton.innerHTML;
+
+    boton.disabled = true;
+
+    boton.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin me-1"></i>' +
+        " Guardando...";
+
+    try {
+
+        const resultado =
+            await enviarJson(
+                "GuardarEmpresasPermisoUsuario",
+                {
+                    usuarioId:
+                        usuarioEmpresasPermisoId,
+
+                    empresaIds:
+                        empresaIds
+                }
+            );
+
+        if (!resultado.success) {
+
+            mostrarResultado(
+                resultado.message ??
+                "No fue posible guardar las empresas.",
+                "error"
+            );
+
+            return;
+        }
+
+        /*
+         * Cerrar selector.
+         */
+        modalEmpresasPermisoUsuario?.hide();
+
+        /*
+         * Recargar permisos para actualizar inmediatamente
+         * la columna No. Empresas.
+         */
+        await cargarPermisosCompliance();
+
+        setTimeout(
+            function () {
+
+                modalPermisosCompliance?.show();
+
+                mostrarMensajeEmpresasPermisos(
+                    resultado.message ??
+                    "Las empresas se guardaron correctamente."
+                );
+
+            },
+            200
+        );
+
+        usuarioEmpresasPermisoId =
+            "";
+
+        empresasPermisoUsuario =
+            [];
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+        mostrarResultado(
+            "Ocurrió un error al guardar las empresas permitidas.",
+            "error"
+        );
+
+    } finally {
+
+        boton.disabled =
+            false;
+
+        boton.innerHTML =
+            htmlOriginal;
+    }
+}
+
+
+function cancelarEmpresasPermisoUsuario() {
+
+    modalEmpresasPermisoUsuario?.hide();
+
+    usuarioEmpresasPermisoId =
+        "";
+
+    empresasPermisoUsuario =
+        [];
+
+    setTimeout(
+        function () {
+
+            modalPermisosCompliance?.show();
+
+        },
+        200
+    );
+}
+
+
+function mostrarMensajeEmpresasPermisos(
+    mensaje
+) {
+
+    const alerta =
+        document.getElementById(
+            "mensajeEmpresasPermisosCompliance"
+        );
+
+    const texto =
+        document.getElementById(
+            "mensajeEmpresasPermisosComplianceTexto"
+        );
+
+    if (texto) {
+
+        texto.textContent =
+            mensaje;
+    }
+
+    alerta?.classList.remove(
+        "d-none"
+    );
+
+    window.setTimeout(
+        function () {
+
+            alerta?.classList.add(
+                "d-none"
+            );
+
+        },
+        5000
+    );
+}
 function inicializarTablaEmpresas() {
     const tabla = $("#tablaEmpresas");
 

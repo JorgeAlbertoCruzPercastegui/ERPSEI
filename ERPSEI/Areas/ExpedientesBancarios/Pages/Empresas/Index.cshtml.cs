@@ -178,10 +178,10 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             return new JsonResult(empresas);
         }*/
         public async Task<IActionResult> OnGetEmpresasAsync(
-    string? busqueda,
-    string? rfc,
-    string? nivel,
-    string? estatus)
+        string? busqueda,
+        string? rfc,
+        string? nivel,
+        string? estatus)
         {
             if (!await _permisosComplianceService
                 .PuedeVisualizarAsync(User))
@@ -227,7 +227,13 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 join ebEmpresa in _context.EbEmpresas
                     .AsNoTracking()
 
-                    on empresa.RFC equals ebEmpresa.Rfc
+                    on (empresa.RFC ?? string.Empty)
+                        .Trim()
+                        .ToUpper()
+                    equals
+                       (ebEmpresa.Rfc ?? string.Empty)
+                        .Trim()
+                        .ToUpper()
                     into complianceRelacion
 
                 from ebEmpresa in complianceRelacion
@@ -410,14 +416,107 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     x.nivel.Contains(filtroNivel));
             }
 
+            /*
+ * ==========================================================
+ * FILTRAR EMPRESAS SEGÚN EL ALCANCE DEL USUARIO
+ * ==========================================================
+ */
+            string usuarioActualId =
+                ObtenerUsuarioId();
+
+            AppUser? usuarioActual =
+                await _userManager.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == usuarioActualId
+                    );
+
+            if (usuarioActual != null)
+            {
+                IList<string> rolesUsuario =
+                    await _userManager
+                        .GetRolesAsync(
+                            usuarioActual
+                        );
+
+                bool esAdministradorCompliance =
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolMaster
+                    ) ||
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolAdministrador
+                    ) ||
+                    rolesUsuario.Contains(
+                        ServicesConfiguration.RolAdministradorBancos
+                    );
+
+                /*
+                 * Los administradores siempre ven todas
+                 * las empresas.
+                 */
+                if (!esAdministradorCompliance)
+                {
+                    EbAlcanceComplianceUsuario? alcance =
+                        await _context
+                            .EbAlcancesComplianceUsuarios
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(x =>
+                                x.UsuarioId ==
+                                    usuarioActualId
+                            );
+
+                    /*
+                     * Solamente aplicamos filtro cuando el usuario
+                     * tiene restricción activa.
+                     *
+                     * Si no existe configuración todavía,
+                     * conserva el comportamiento anterior.
+                     */
+                    if (
+                        alcance?.RestringirEmpresas ==
+                        true
+                    )
+                    {
+                        List<int> empresasPermitidas =
+                            await _context
+                                .EbPermisosComplianceEmpresasUsuario
+                                .AsNoTracking()
+                                .Where(x =>
+                                    x.UsuarioId ==
+                                        usuarioActualId
+                                )
+                                .Select(x =>
+                                    x.EmpresaId
+                                )
+                                .Distinct()
+                                .ToListAsync();
+
+                        query =
+                            query.Where(x =>
+                                empresasPermitidas.Contains(
+                                    x.empresaId
+                                )
+                            );
+                    }
+                }
+            }
+
             var empresas =
-                await query
-                .OrderBy(x => x.empresaId)
+            await query
+                .OrderBy(x =>
+                    x.empresaId
+                )
                 .ToListAsync();
 
-            return new JsonResult(empresas);
+                    return new JsonResult(
+                        empresas
+                    );
         }
 
+        // =====================================================
+        // CONSULTAR USUARIOS Y PERMISOS DE COMPLIANCE
+        // GET ?handler=PermisosCompliance
+        // =====================================================
         // =====================================================
         // CONSULTAR USUARIOS Y PERMISOS DE COMPLIANCE
         // GET ?handler=PermisosCompliance
@@ -445,21 +544,28 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             }
 
             /*
-             * Usuarios activos de Identity.
+             * ==========================================================
+             * USUARIOS ACTIVOS
+             * ==========================================================
              */
             List<AppUser> usuarios =
                 await _userManager.Users
                     .AsNoTracking()
                     .Where(x =>
-                        !x.IsBanned)
+                        !x.IsBanned
+                    )
                     .OrderBy(x =>
-                        x.UserName)
+                        x.UserName
+                    )
                     .ThenBy(x =>
-                        x.Email)
+                        x.Email
+                    )
                     .ToListAsync();
 
             /*
-             * Permisos existentes, consultados una sola vez.
+             * ==========================================================
+             * PERMISOS GENERALES
+             * ==========================================================
              */
             Dictionary<string, EbPermisoComplianceUsuario>
                 permisosPorUsuario =
@@ -470,10 +576,87 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                             x => x.UsuarioId
                         );
 
-            var resultado =
-    new List<UsuarioPermisoComplianceResponse>();
+            /*
+             * ==========================================================
+             * TOTAL DE EMPRESAS MAESTRAS
+             * ==========================================================
+             */
+            int totalEmpresas =
+                await _context
+                    .Set<Empresa>()
+                    .AsNoTracking()
+                    .CountAsync(x =>
+                        x.Deshabilitado == 0
+                    );
 
-            foreach (AppUser usuario in usuarios)
+            /*
+             * ==========================================================
+             * CONFIGURACIÓN DE ALCANCE
+             * ==========================================================
+             */
+            Dictionary<string, bool>
+                alcancePorUsuario =
+                    await _context
+                        .EbAlcancesComplianceUsuarios
+                        .AsNoTracking()
+                        .ToDictionaryAsync(
+                            x => x.UsuarioId,
+                            x => x.RestringirEmpresas
+                        );
+
+            /*
+             * ==========================================================
+             * NÚMERO DE EMPRESAS ASIGNADAS
+             * ==========================================================
+             */
+            Dictionary<string, int>
+                empresasAsignadasPorUsuario =
+                    await (
+                        from permisoEmpresa
+                            in _context
+                                .EbPermisosComplianceEmpresasUsuario
+                                .AsNoTracking()
+
+                        join empresa
+                            in _context
+                                .Set<Empresa>()
+                                .AsNoTracking()
+
+                        on permisoEmpresa.EmpresaId
+                        equals empresa.Id
+
+                        where empresa.Deshabilitado == 0
+
+                        group permisoEmpresa
+                            by permisoEmpresa.UsuarioId
+                            into grupo
+
+                        select new
+                        {
+                            UsuarioId =
+                                grupo.Key,
+
+                            Total =
+                                grupo
+                                    .Select(x =>
+                                        x.EmpresaId
+                                    )
+                                    .Distinct()
+                                    .Count()
+                        }
+                    )
+                    .ToDictionaryAsync(
+                        x => x.UsuarioId,
+                        x => x.Total
+                    );
+
+            List<UsuarioPermisoComplianceResponse>
+                resultado =
+                    new();
+
+            foreach (
+                AppUser usuario
+                in usuarios)
             {
                 IList<string> rolesUsuario =
                     await _userManager
@@ -486,37 +669,82 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         ServicesConfiguration.RolMaster
                     ) ||
                     rolesUsuario.Contains(
-                        ServicesConfiguration.RolAdministrador
+                        ServicesConfiguration
+                            .RolAdministrador
                     ) ||
                     rolesUsuario.Contains(
-                        ServicesConfiguration.RolAdministradorBancos
+                        ServicesConfiguration
+                            .RolAdministradorBancos
                     );
 
                 bool esUsuarioCompliance =
                     rolesUsuario.Contains(
-                        ServicesConfiguration.RolUsuarioBancos
+                        ServicesConfiguration
+                            .RolUsuarioBancos
                     ) ||
                     rolesUsuario.Contains(
-                        ServicesConfiguration.RolUsuarioOperacionesInternas
+                        ServicesConfiguration
+                            .RolUsuarioOperacionesInternas
                     );
 
                 permisosPorUsuario.TryGetValue(
                     usuario.Id,
-                    out EbPermisoComplianceUsuario? permiso
+                    out EbPermisoComplianceUsuario?
+                        permiso
                 );
 
                 bool puedeVisualizar =
-                esAdministradorCompliance ||
-                (
-                    permiso == null &&
-                    esUsuarioCompliance
-                ) ||
-                permiso?.PuedeVisualizar == true;
+                    esAdministradorCompliance ||
+                    (
+                        permiso == null &&
+                        esUsuarioCompliance
+                    ) ||
+                    permiso?.PuedeVisualizar ==
+                        true;
+
+                /*
+                 * ======================================================
+                 * NÚMERO DE EMPRESAS
+                 * ======================================================
+                 *
+                 * Admin:
+                 * todas.
+                 *
+                 * Usuario sin restricción:
+                 * todas.
+                 *
+                 * Usuario restringido:
+                 * solamente las seleccionadas.
+                 * ======================================================
+                 */
+                alcancePorUsuario.TryGetValue(
+                    usuario.Id,
+                    out bool restringirEmpresas
+                );
+
+                int numeroEmpresas;
+
+                if (
+                    esAdministradorCompliance ||
+                    !restringirEmpresas)
+                {
+                    numeroEmpresas =
+                        totalEmpresas;
+                }
+                else
+                {
+                    empresasAsignadasPorUsuario
+                        .TryGetValue(
+                            usuario.Id,
+                            out numeroEmpresas
+                        );
+                }
 
                 resultado.Add(
                     new UsuarioPermisoComplianceResponse
                     {
-                        Id = usuario.Id,
+                        Id =
+                            usuario.Id,
 
                         Nombre =
                             ObtenerNombreUsuarioCompliance(
@@ -544,19 +772,26 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
 
                         PuedeCrearCargar =
                             esAdministradorCompliance ||
-                            permiso?.PuedeCrearCargar == true,
+                            permiso?.PuedeCrearCargar ==
+                                true,
 
                         PuedeModificar =
                             esAdministradorCompliance ||
-                            permiso?.PuedeModificar == true,
+                            permiso?.PuedeModificar ==
+                                true,
 
                         PuedeEliminar =
                             esAdministradorCompliance ||
-                            permiso?.PuedeEliminar == true,
+                            permiso?.PuedeEliminar ==
+                                true,
 
                         PuedeDescargar =
                             esAdministradorCompliance ||
-                            permiso?.PuedeDescargar == true
+                            permiso?.PuedeDescargar ==
+                                true,
+
+                        NumeroEmpresas =
+                            numeroEmpresas
                     }
                 );
             }
@@ -564,15 +799,20 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             List<UsuarioPermisoComplianceResponse>
                 usuariosOrdenados =
                     resultado
-                        .OrderBy(x => x.Nombre)
-                        .ThenBy(x => x.Correo)
+                        .OrderBy(x =>
+                            x.Nombre
+                        )
+                        .ThenBy(x =>
+                            x.Correo
+                        )
                         .ToList();
 
             return new JsonResult(
                 new
                 {
                     success = true,
-                    data = usuariosOrdenados
+                    data =
+                        usuariosOrdenados
                 }
             );
         }
@@ -801,6 +1041,670 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                     totalGuardados
                 }
             );
+        }
+
+        // =====================================================
+        // EMPRESAS PERMITIDAS POR USUARIO
+        // GET ?handler=EmpresasPermisoUsuario&usuarioId=...
+        // =====================================================
+        public async Task<IActionResult>
+            OnGetEmpresasPermisoUsuarioAsync(
+                string usuarioId)
+        {
+            /*
+             * ==========================================================
+             * VALIDAR QUE QUIEN CONSULTA PUEDA ADMINISTRAR PERMISOS
+             * ==========================================================
+             */
+            bool puedeAdministrar =
+                await _permisosComplianceService
+                    .PuedeAdministrarPermisosAsync(
+                        User
+                    );
+
+            if (!puedeAdministrar)
+            {
+                return StatusCode(
+                    StatusCodes.Status403Forbidden,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes autorización para administrar el alcance de empresas."
+                    }
+                );
+            }
+
+            usuarioId =
+                usuarioId?.Trim() ??
+                string.Empty;
+
+            if (string.IsNullOrWhiteSpace(
+                usuarioId))
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El usuario seleccionado no es válido."
+                    }
+                );
+            }
+
+            /*
+             * ==========================================================
+             * VALIDAR USUARIO DESTINO
+             * ==========================================================
+             */
+            AppUser? usuario =
+                await _userManager.Users
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == usuarioId &&
+                        !x.IsBanned
+                    );
+
+            if (usuario == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el usuario seleccionado."
+                    }
+                );
+            }
+
+            /*
+             * ==========================================================
+             * ROLES DEL USUARIO
+             * ==========================================================
+             */
+            IList<string> rolesUsuario =
+                await _userManager
+                    .GetRolesAsync(
+                        usuario
+                    );
+
+            bool esAdministradorCompliance =
+                rolesUsuario.Contains(
+                    ServicesConfiguration.RolMaster
+                ) ||
+                rolesUsuario.Contains(
+                    ServicesConfiguration.RolAdministrador
+                ) ||
+                rolesUsuario.Contains(
+                    ServicesConfiguration
+                        .RolAdministradorBancos
+                );
+
+            /*
+             * ==========================================================
+             * CONFIGURACIÓN DE ALCANCE
+             * ==========================================================
+             */
+            EbAlcanceComplianceUsuario? alcance =
+                await _context
+                    .EbAlcancesComplianceUsuarios
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x =>
+                        x.UsuarioId == usuarioId
+                    );
+
+            bool restringirEmpresas =
+                alcance?.RestringirEmpresas ??
+                false;
+
+            /*
+             * Administradores siempre tienen acceso total.
+             */
+            if (esAdministradorCompliance)
+            {
+                restringirEmpresas =
+                    false;
+            }
+
+            /*
+             * ==========================================================
+             * EMPRESAS ACTUALMENTE ASIGNADAS
+             * ==========================================================
+             */
+            List<int> empresasAsignadas =
+                await _context
+                    .EbPermisosComplianceEmpresasUsuario
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.UsuarioId == usuarioId
+                    )
+                    .Select(x =>
+                        x.EmpresaId
+                    )
+                    .Distinct()
+                    .ToListAsync();
+
+            HashSet<int> idsAsignados =
+                empresasAsignadas
+                    .ToHashSet();
+
+            /*
+             * ==========================================================
+             * CATÁLOGO MAESTRO DE EMPRESAS
+             * ==========================================================
+             *
+             * Se utilizan Empresa.Id.
+             *
+             * Incluimos activas e inactivas porque el alcance debe
+             * funcionar también cuando se consulte el filtro "Todas"
+             * o "Inactivas" dentro de Compliance.
+             * ==========================================================
+             */
+            var empresas =
+                await _context
+                    .Set<Empresa>()
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.Deshabilitado == 0
+                    )
+                    .OrderBy(x =>
+                        x.RazonSocial
+                    )
+                    .ThenBy(x =>
+                        x.Id
+                    )
+                    .Select(x => new
+                    {
+                        id =
+                            x.Id,
+
+                        razonSocial =
+                            x.RazonSocial ??
+                            string.Empty,
+
+                        rfc =
+                            x.RFC ??
+                            string.Empty,
+
+                        deshabilitado =
+                            false
+                    })
+                    .ToListAsync();
+
+            /*
+             * ==========================================================
+             * RESPUESTA
+             * ==========================================================
+             *
+             * Si NO existe restricción:
+             * todas aparecen seleccionadas visualmente.
+             *
+             * Si existe restricción:
+             * solamente aparecen seleccionadas las almacenadas
+             * en la tabla puente.
+             * ==========================================================
+             */
+            var empresasRespuesta =
+                empresas
+                    .Select(x => new
+                    {
+                        x.id,
+                        x.razonSocial,
+                        x.rfc,
+                        x.deshabilitado,
+
+                        seleccionada =
+                            esAdministradorCompliance ||
+                            !restringirEmpresas ||
+                            idsAsignados.Contains(
+                                x.id
+                            )
+                    })
+                    .ToList();
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    usuario = new
+                    {
+                        id =
+                            usuario.Id,
+
+                        nombre =
+                            ObtenerNombreUsuarioCompliance(
+                                usuario
+                            ),
+
+                        correo =
+                            usuario.Email ??
+                            string.Empty,
+
+                        roles =
+                            rolesUsuario,
+
+                        esAdministrador =
+                            esAdministradorCompliance
+                    },
+
+                    restringirEmpresas,
+
+                    totalEmpresas =
+                        empresasRespuesta.Count,
+
+                    totalSeleccionadas =
+                        empresasRespuesta.Count(x =>
+                            x.seleccionada
+                        ),
+
+                    empresas =
+                        empresasRespuesta
+                }
+            );
+        }
+
+        // =====================================================
+        // GUARDAR EMPRESAS PERMITIDAS POR USUARIO
+        // POST ?handler=GuardarEmpresasPermisoUsuario
+        // =====================================================
+        public async Task<IActionResult>
+            OnPostGuardarEmpresasPermisoUsuarioAsync(
+                [FromBody]
+        GuardarEmpresasPermisoUsuarioRequest request)
+        {
+            /*
+             * ==========================================================
+             * VALIDAR ADMINISTRACIÓN DE PERMISOS
+             * ==========================================================
+             */
+            bool puedeAdministrar =
+                await _permisosComplianceService
+                    .PuedeAdministrarPermisosAsync(
+                        User
+                    );
+
+            if (!puedeAdministrar)
+            {
+                return StatusCode(
+                    StatusCodes.Status403Forbidden,
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes autorización para administrar el alcance de empresas."
+                    }
+                );
+            }
+
+            if (request == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se recibió información para guardar."
+                    }
+                );
+            }
+
+            string usuarioId =
+                request.UsuarioId?.Trim() ??
+                string.Empty;
+
+            if (string.IsNullOrWhiteSpace(
+                usuarioId))
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El usuario seleccionado no es válido."
+                    }
+                );
+            }
+
+            /*
+             * ==========================================================
+             * VALIDAR USUARIO
+             * ==========================================================
+             */
+            AppUser? usuario =
+                await _userManager.Users
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == usuarioId &&
+                        !x.IsBanned
+                    );
+
+            if (usuario == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el usuario seleccionado."
+                    }
+                );
+            }
+
+            /*
+             * ==========================================================
+             * ADMINISTRADORES NO PUEDEN SER RESTRINGIDOS
+             * ==========================================================
+             */
+            IList<string> rolesUsuario =
+                await _userManager
+                    .GetRolesAsync(
+                        usuario
+                    );
+
+            bool esAdministradorCompliance =
+                rolesUsuario.Contains(
+                    ServicesConfiguration.RolMaster
+                ) ||
+                rolesUsuario.Contains(
+                    ServicesConfiguration.RolAdministrador
+                ) ||
+                rolesUsuario.Contains(
+                    ServicesConfiguration
+                        .RolAdministradorBancos
+                );
+
+            if (esAdministradorCompliance)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Master, Administrador y Administrador Bancos siempre tienen acceso a todas las empresas."
+                    }
+                );
+            }
+
+            /*
+             * ==========================================================
+             * NORMALIZAR IDS RECIBIDOS
+             * ==========================================================
+             */
+            List<int> idsSeleccionados =
+                (
+                    request.EmpresaIds ??
+                    new List<int>()
+                )
+                .Where(x =>
+                    x > 0
+                )
+                .Distinct()
+                .ToList();
+
+            /*
+             * ==========================================================
+             * VALIDAR QUE LAS EMPRESAS EXISTAN
+             * ==========================================================
+             */
+            List<int> todasLasEmpresas =
+                await _context
+                    .Set<Empresa>()
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.Deshabilitado == 0
+                    )
+                    .Select(x =>
+                        x.Id
+                    )
+                    .ToListAsync();
+
+            HashSet<int> idsEmpresasExistentes =
+                todasLasEmpresas
+                    .ToHashSet();
+
+            List<int> idsInvalidos =
+                idsSeleccionados
+                    .Where(x =>
+                        !idsEmpresasExistentes.Contains(
+                            x
+                        )
+                    )
+                    .ToList();
+
+            if (idsInvalidos.Count > 0)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Una o más empresas seleccionadas ya no existen."
+                    }
+                );
+            }
+
+            /*
+             * ==========================================================
+             * DETERMINAR SI REALMENTE EXISTE RESTRICCIÓN
+             * ==========================================================
+             *
+             * Todas seleccionadas:
+             *      acceso total
+             *      RestringirEmpresas = false
+             *
+             * Algunas seleccionadas:
+             *      acceso restringido
+             *
+             * Ninguna seleccionada:
+             *      acceso restringido a 0 empresas
+             *
+             * Esto permite que el modal funcione únicamente
+             * mediante checkboxes, sin agregar otra configuración
+             * complicada para el administrador.
+             * ==========================================================
+             */
+            bool restringirEmpresas =
+                idsSeleccionados.Count <
+                todasLasEmpresas.Count;
+
+            string usuarioModificacionId =
+                ObtenerUsuarioId();
+
+            DateTime fechaActual =
+                DateTime.Now;
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+            try
+            {
+                /*
+                 * ======================================================
+                 * CONFIGURACIÓN GENERAL DEL USUARIO
+                 * ======================================================
+                 */
+                EbAlcanceComplianceUsuario? alcance =
+                    await _context
+                        .EbAlcancesComplianceUsuarios
+                        .FirstOrDefaultAsync(x =>
+                            x.UsuarioId ==
+                                usuarioId
+                        );
+
+                if (alcance == null)
+                {
+                    alcance =
+                        new EbAlcanceComplianceUsuario
+                        {
+                            UsuarioId =
+                                usuarioId,
+
+                            RestringirEmpresas =
+                                restringirEmpresas,
+
+                            FechaCreacion =
+                                fechaActual,
+
+                            FechaModificacion =
+                                null,
+
+                            UsuarioModificacionId =
+                                usuarioModificacionId
+                        };
+
+                    _context
+                        .EbAlcancesComplianceUsuarios
+                        .Add(
+                            alcance
+                        );
+                }
+                else
+                {
+                    alcance.RestringirEmpresas =
+                        restringirEmpresas;
+
+                    alcance.FechaModificacion =
+                        fechaActual;
+
+                    alcance.UsuarioModificacionId =
+                        usuarioModificacionId;
+                }
+
+                /*
+                 * ======================================================
+                 * ELIMINAR ASIGNACIONES ANTERIORES
+                 * ======================================================
+                 *
+                 * No eliminamos ninguna empresa.
+                 *
+                 * Solamente reemplazamos las filas de la tabla puente
+                 * correspondientes al usuario.
+                 * ======================================================
+                 */
+                List<EbPermisoComplianceEmpresaUsuario>
+                    asignacionesActuales =
+                        await _context
+                            .EbPermisosComplianceEmpresasUsuario
+                            .Where(x =>
+                                x.UsuarioId ==
+                                    usuarioId
+                            )
+                            .ToListAsync();
+
+                if (asignacionesActuales.Count > 0)
+                {
+                    _context
+                        .EbPermisosComplianceEmpresasUsuario
+                        .RemoveRange(
+                            asignacionesActuales
+                        );
+                }
+
+                /*
+                 * ======================================================
+                 * CREAR NUEVAS ASIGNACIONES
+                 * ======================================================
+                 *
+                 * Cuando están seleccionadas TODAS las empresas,
+                 * RestringirEmpresas queda false y no necesitamos
+                 * guardar una fila por cada empresa.
+                 *
+                 * Cuando existe restricción, sí almacenamos
+                 * únicamente las seleccionadas.
+                 * ======================================================
+                 */
+                if (restringirEmpresas)
+                {
+                    foreach (
+                        int empresaId
+                        in idsSeleccionados)
+                    {
+                        EbPermisoComplianceEmpresaUsuario
+                            asignacion =
+                                new()
+                                {
+                                    UsuarioId =
+                                        usuarioId,
+
+                                    EmpresaId =
+                                        empresaId,
+
+                                    FechaCreacion =
+                                        fechaActual,
+
+                                    UsuarioCreacionId =
+                                        usuarioModificacionId
+                                };
+
+                        _context
+                            .EbPermisosComplianceEmpresasUsuario
+                            .Add(
+                                asignacion
+                            );
+                    }
+                }
+
+                await _context
+                    .SaveChangesAsync();
+
+                await transaccion
+                    .CommitAsync();
+
+                /*
+                 * ======================================================
+                 * RESPUESTA
+                 * ======================================================
+                 */
+                string mensaje;
+
+                if (!restringirEmpresas)
+                {
+                    mensaje =
+                        "El usuario tendrá acceso a todas las empresas.";
+                }
+                else if (idsSeleccionados.Count == 0)
+                {
+                    mensaje =
+                        "El usuario quedó sin empresas asignadas.";
+                }
+                else if (idsSeleccionados.Count == 1)
+                {
+                    mensaje =
+                        "Se asignó correctamente 1 empresa al usuario.";
+                }
+                else
+                {
+                    mensaje =
+                        $"Se asignaron correctamente {idsSeleccionados.Count} empresas al usuario.";
+                }
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            mensaje,
+
+                        restringirEmpresas,
+
+                        totalEmpresas =
+                            todasLasEmpresas.Count,
+
+                        totalAsignadas =
+                            restringirEmpresas
+                                ? idsSeleccionados.Count
+                                : todasLasEmpresas.Count
+                    }
+                );
+            }
+            catch
+            {
+                await transaccion
+                    .RollbackAsync();
+
+                throw;
+            }
         }
 
         // =====================================================
@@ -5511,6 +6415,21 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
             public string? Observaciones { get; set; }
         }
 
+        public class GuardarEmpresasPermisoUsuarioRequest
+        {
+            public string UsuarioId
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public List<int> EmpresaIds
+            {
+                get;
+                set;
+            } = new();
+        }
+
         public class GuardarPermisosComplianceRequest
         {
             public List<PermisoComplianceUsuarioRequest>
@@ -5627,6 +6546,18 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                 get;
                 set;
             }
+
+            public int NumeroEmpresas
+            {
+                get;
+                set;
+            }
+        }
+
+        public int NumeroEmpresas
+        {
+            get;
+            set;
         }
     }
 }

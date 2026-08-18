@@ -108,6 +108,20 @@ namespace ERPSEI.Data
             set;
         } = null!;
 
+        public DbSet<EbAlcanceComplianceUsuario>
+        EbAlcancesComplianceUsuarios
+        {
+            get;
+            set;
+        } = null!;
+
+        public DbSet<EbPermisoComplianceEmpresaUsuario>
+            EbPermisosComplianceEmpresasUsuario
+        {
+            get;
+            set;
+        } = null!;
+
         //Catálogos Administrables Empresas
         public DbSet<Origen> Origenes { get; set; }
 		public DbSet<Nivel> Niveles { get; set; }

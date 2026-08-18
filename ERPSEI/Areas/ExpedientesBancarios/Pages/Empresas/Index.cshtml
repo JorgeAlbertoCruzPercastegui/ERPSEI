@@ -293,6 +293,7 @@
 
 </div>
 
+
 @if (puedeAdministrarPermisosCompliance)
 {
     <!-- =========================================================
@@ -337,6 +338,20 @@
                 </div>
 
                 <div class="modal-body">
+
+                    <!-- =====================================================
+                     MENSAJE DE RESULTADO DE ASIGNACIÓN DE EMPRESAS
+                     ===================================================== -->
+                    <div id="mensajeEmpresasPermisosCompliance"
+                         class="alert alert-success d-none mb-3"
+                         role="alert">
+
+                        <i class="fa-solid fa-circle-check me-2"></i>
+
+                        <span id="mensajeEmpresasPermisosComplianceTexto">
+                        </span>
+
+                    </div>
 
                     <!-- Buscador de usuarios -->
                     <section class="eb-permissions-search">
@@ -507,6 +522,14 @@
                                     <th class="text-center">
                                         Descargar
                                     </th>
+
+                                    <th class="text-center">
+                                        No. Empresas
+                                    </th>
+
+                                    <th class="text-center">
+                                        Acciones
+                                    </th>
                                 </tr>
                             </thead>
 
@@ -546,6 +569,245 @@
 
                         <i class="fa-solid fa-floppy-disk me-1"></i>
                         Guardar permisos
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+}
+
+@if (Model.PermisosCompliance.PuedeAdministrarPermisos)
+{
+    <!-- =========================================================
+         MODAL EMPRESAS PERMITIDAS POR USUARIO
+         ========================================================= -->
+    <div class="modal fade"
+         id="modalEmpresasPermisoUsuario"
+         tabindex="-1"
+         aria-labelledby="modalEmpresasPermisoUsuarioTitulo"
+         aria-hidden="true">
+
+        <div class="modal-dialog
+            modal-lg
+            modal-dialog-centered
+            modal-dialog-scrollable">
+
+            <div class="modal-content">
+
+                <!-- HEADER -->
+                <div class="modal-header">
+
+                    <div>
+                        <h5 class="modal-title"
+                            id="modalEmpresasPermisoUsuarioTitulo">
+
+                            <i class="fa-solid fa-building-shield me-2"></i>
+                            Empresas permitidas
+
+                        </h5>
+
+                        <p class="eb-modal-subtitle mb-0">
+
+                            Selecciona únicamente las empresas
+                            que podrá visualizar el usuario.
+
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            aria-label="Cerrar"
+                            onclick="cancelarEmpresasPermisoUsuario()">
+                    </button>
+
+                </div>
+
+                <!-- BODY -->
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           id="empresasPermisoUsuarioId" />
+
+                    <!-- USUARIO -->
+                    <div class="mb-3">
+
+                        <div class="d-flex
+                            justify-content-between
+                            align-items-start
+                            flex-wrap
+                            gap-2">
+
+                            <div>
+
+                                <div class="small text-muted">
+                                    Usuario
+                                </div>
+
+                                <strong id="empresasPermisoUsuarioNombre">
+                                    -
+                                </strong>
+
+                                <div id="empresasPermisoUsuarioCorreo"
+                                     class="small text-muted">
+                                    -
+                                </div>
+
+                            </div>
+
+                            <div class="text-end">
+
+                                <div class="small text-muted">
+                                    Empresas seleccionadas
+                                </div>
+
+                                <strong id="empresasPermisoContador">
+                                    0
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- FILTRO -->
+                    <div class="row g-2 mb-3">
+
+                        <div class="col-12 col-md">
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </span>
+
+                                <input type="text"
+                                       id="buscarEmpresaPermisoUsuario"
+                                       class="form-control"
+                                       placeholder="Buscar por empresa o RFC..."
+                                       autocomplete="off" />
+
+                                <button type="button"
+                                        id="btnLimpiarBusquedaEmpresaPermiso"
+                                        class="btn btn-outline-secondary"
+                                        title="Limpiar búsqueda">
+
+                                    <i class="fa-solid fa-xmark"></i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ACCIONES -->
+                    <div class="d-flex
+                        justify-content-between
+                        align-items-center
+                        flex-wrap
+                        gap-2
+                        mb-3">
+
+                        <div class="form-check">
+
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="seleccionarTodasEmpresasPermiso" />
+
+                            <label class="form-check-label"
+                                   for="seleccionarTodasEmpresasPermiso">
+
+                                Seleccionar todas
+
+                            </label>
+
+                        </div>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                id="btnLimpiarEmpresasPermiso">
+
+                            <i class="fa-solid fa-eraser me-1"></i>
+                            Limpiar selección
+
+                        </button>
+
+                    </div>
+
+                    <!-- CARGANDO -->
+                    <div id="empresasPermisoCargando"
+                         class="text-center py-5 d-none">
+
+                        <div class="spinner-border text-primary"
+                             role="status">
+                        </div>
+
+                        <p class="text-muted mt-3 mb-0">
+                            Cargando empresas...
+                        </p>
+
+                    </div>
+
+                    <!-- ERROR -->
+                    <div id="empresasPermisoError"
+                         class="alert alert-danger d-none">
+
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+
+                        <span id="empresasPermisoErrorTexto">
+                        </span>
+
+                    </div>
+
+                    <!-- LISTA -->
+                    <div id="contenedorEmpresasPermisoUsuario"
+                         class="border rounded overflow-hidden">
+
+                        <div id="listaEmpresasPermisoUsuario"
+                             class="list-group list-group-flush">
+                        </div>
+
+                    </div>
+
+                    <!-- VACÍO -->
+                    <div id="empresasPermisoVacio"
+                         class="text-center py-4 text-muted d-none">
+
+                        <i class="fa-regular fa-folder-open fa-2x mb-2"></i>
+
+                        <p class="mb-0">
+                            No se encontraron empresas.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            onclick="cancelarEmpresasPermisoUsuario()">
+
+                        Cancelar
+
+                    </button>
+
+                    <button type="button"
+                            id="btnGuardarEmpresasPermisoUsuario"
+                            class="btn btn-primary"
+                            onclick="guardarEmpresasPermisoUsuario()">
+
+                        <i class="fa-regular fa-floppy-disk me-1"></i>
+                        Guardar
 
                     </button>
 

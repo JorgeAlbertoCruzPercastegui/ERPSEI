@@ -1286,8 +1286,8 @@ namespace ERPSEI.Services.Compliance
         }
 
         public async Task SincronizarDesdeComplianceAsync(
-    int documentoComplianceId,
-    CancellationToken cancellationToken = default)
+        int documentoComplianceId,
+        CancellationToken cancellationToken = default)
         {
             if (documentoComplianceId <= 0)
             {
