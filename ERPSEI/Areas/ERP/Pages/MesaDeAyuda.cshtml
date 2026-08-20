@@ -1019,28 +1019,603 @@
 
 </div>
 
+<!-- ========================================================== -->
+<!-- MODAL DETALLE DEL TICKET -->
+<!-- ========================================================== -->
+
+<div class="modal fade sd-modal"
+     id="modalDetalleTicket"
+     tabindex="-1"
+     aria-labelledby="modalDetalleTicketLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content sd-ticket-detail-modal">
+
+            <!-- ================================================== -->
+            <!-- HEADER -->
+            <!-- ================================================== -->
+
+            <div class="modal-header sd-ticket-detail-header">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="sd-detail-header-icon">
+                        <i class="bi bi-ticket-detailed"></i>
+                    </div>
+
+                    <div>
+
+                        <div class="d-flex align-items-center gap-2 mb-1">
+
+                            <h5 class="modal-title mb-0"
+                                id="modalDetalleTicketLabel">
+                                Detalle del Ticket
+                            </h5>
+
+                            <span id="detalleEstadoBadge"
+                                  class="sd-badge sd-status-new">
+                                Nuevo
+                            </span>
+
+                        </div>
+
+                        <div class="sd-detail-folio"
+                             id="detalleFolio">
+                            -
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <!-- ================================================== -->
+            <!-- BODY -->
+            <!-- ================================================== -->
+
+            <div class="modal-body">
+
+                <!-- LOADING -->
+
+                <div id="detalleTicketLoading"
+                     class="sd-detail-loading">
+
+                    <div class="spinner-border text-primary"
+                         role="status">
+                    </div>
+
+                    <div class="mt-3">
+                        Cargando información del ticket...
+                    </div>
+
+                </div>
+
+                <!-- ERROR -->
+
+                <div id="detalleTicketError"
+                     class="alert alert-danger d-none">
+                </div>
+
+                <!-- CONTENIDO -->
+
+                <div id="detalleTicketContenido"
+                     class="d-none">
+
+                    <input type="hidden"
+                           id="detalleTicketId"
+                           value="0" />
+
+                    <!-- ========================================== -->
+                    <!-- RESUMEN -->
+                    <!-- ========================================== -->
+
+                    <div class="sd-detail-grid">
+
+                        <div class="sd-detail-card">
+
+                            <div class="sd-detail-card-icon">
+                                <i class="bi bi-person"></i>
+                            </div>
+
+                            <div>
+
+                                <span class="sd-detail-label">
+                                    Solicitante
+                                </span>
+
+                                <strong id="detalleSolicitante">
+                                    -
+                                </strong>
+
+                                <small id="detalleSolicitanteCorreo">
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                        <div class="sd-detail-card">
+
+                            <div class="sd-detail-card-icon">
+                                <i class="bi bi-calendar3"></i>
+                            </div>
+
+                            <div>
+
+                                <span class="sd-detail-label">
+                                    Fecha de creación
+                                </span>
+
+                                <strong id="detalleFechaCreacion">
+                                    -
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        <div class="sd-detail-card">
+
+                            <div class="sd-detail-card-icon">
+                                <i class="bi bi-person-check"></i>
+                            </div>
+
+                            <div>
+
+                                <span class="sd-detail-label">
+                                    Técnico asignado
+                                </span>
+
+                                <strong id="detalleTecnico">
+                                    Sin asignar
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        <div class="sd-detail-card">
+
+                            <div class="sd-detail-card-icon">
+                                <i class="bi bi-diagram-3"></i>
+                            </div>
+
+                            <div>
+
+                                <span class="sd-detail-label">
+                                    Equipo
+                                </span>
+
+                                <strong id="detalleEquipo">
+                                    Sin asignar
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- INFORMACIÓN GENERAL -->
+                    <!-- ========================================== -->
+
+                    <div class="sd-detail-section">
+
+                        <div class="sd-detail-section-title">
+
+                            <i class="bi bi-info-circle"></i>
+
+                            Información del ticket
+
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="sd-detail-field-label">
+                                    Tipo
+                                </label>
+
+                                <div id="detalleTipo"
+                                     class="sd-detail-field">
+                                    -
+                                </div>
+
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="sd-detail-field-label">
+                                    Categoría
+                                </label>
+
+                                <div id="detalleCategoria"
+                                     class="sd-detail-field">
+                                    -
+                                </div>
+
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="sd-detail-field-label">
+                                    Subcategoría
+                                </label>
+
+                                <div id="detalleSubcategoria"
+                                     class="sd-detail-field">
+                                    -
+                                </div>
+
+                            </div>
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="sd-detail-field-label">
+                                    Prioridad
+                                </label>
+
+                                <div id="detallePrioridad"
+                                     class="sd-detail-field">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- ASUNTO Y DESCRIPCIÓN -->
+                    <!-- ========================================== -->
+
+                    <div class="sd-detail-section">
+
+                        <div class="sd-detail-section-title">
+
+                            <i class="bi bi-chat-left-text"></i>
+
+                            Solicitud
+
+                        </div>
+
+                        <div class="mb-4">
+
+                            <label class="sd-detail-field-label">
+                                Asunto
+                            </label>
+
+                            <div id="detalleTitulo"
+                                 class="sd-detail-title-text">
+                                -
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <label class="sd-detail-field-label">
+                                Descripción
+                            </label>
+
+                            <div id="detalleDescripcion"
+                                 class="sd-detail-description">
+                                -
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- SLA -->
+                    <!-- ========================================== -->
+
+                    <div class="sd-detail-section">
+
+                        <div class="sd-detail-section-title">
+
+                            <i class="bi bi-stopwatch"></i>
+
+                            Acuerdos de nivel de servicio
+
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+
+                                <div class="sd-sla-box">
+
+                                    <div>
+
+                                        <span>
+                                            Límite de primera respuesta
+                                        </span>
+
+                                        <strong id="detalleSlaRespuesta">
+                                            -
+                                        </strong>
+
+                                    </div>
+
+                                    <span id="detalleSlaRespuestaBadge"
+                                          class="sd-sla-status">
+                                        Vigente
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-md-6">
+
+                                <div class="sd-sla-box">
+
+                                    <div>
+
+                                        <span>
+                                            Límite de resolución
+                                        </span>
+
+                                        <strong id="detalleSlaResolucion">
+                                            -
+                                        </strong>
+
+                                    </div>
+
+                                    <span id="detalleSlaResolucionBadge"
+                                          class="sd-sla-status">
+                                        Vigente
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- ADMINISTRACIÓN -->
+                    <!-- ========================================== -->
+
+                    <div id="detallePanelAdmin"
+                         class="sd-detail-section d-none">
+
+                        <div class="sd-detail-section-title">
+
+                            <i class="bi bi-shield-check"></i>
+
+                            Gestión administrativa
+
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-lg-4">
+
+                                <label class="form-label">
+                                    Técnico asignado
+                                </label>
+
+                                <select id="detalleTecnicoSelect"
+                                        class="form-select">
+
+                                    <option value="">
+                                        Sin asignar
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="col-lg-4">
+
+                                <label class="form-label">
+                                    Prioridad
+                                </label>
+
+                                <select id="detallePrioridadSelect"
+                                        class="form-select">
+                                </select>
+
+                            </div>
+
+                            <div class="col-lg-4">
+
+                                <label class="form-label">
+                                    Estado
+                                </label>
+
+                                <select id="detalleEstadoSelect"
+                                        class="form-select">
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                        <div id="detalleAdminMensaje"
+                             class="alert d-none mt-3 mb-0"
+                             role="alert">
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+
+                            <button type="button"
+                                    id="btnGuardarCambiosTicket"
+                                    class="sd-btn-primary">
+
+                                <span id="btnGuardarCambiosTicketContenido">
+
+                                    <i class="bi bi-floppy me-1"></i>
+
+                                    Guardar cambios
+
+                                </span>
+
+                                <span id="btnGuardarCambiosTicketCargando"
+                                      class="d-none">
+
+                                    <span class="spinner-border spinner-border-sm me-2"
+                                          role="status"
+                                          aria-hidden="true">
+                                    </span>
+
+                                    Guardando...
+
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- TABS -->
+                    <!-- ========================================== -->
+
+                    <div class="sd-detail-section">
+
+                        <ul class="nav nav-tabs sd-detail-tabs"
+                            role="tablist">
+
+                            <li class="nav-item"
+                                role="presentation">
+
+                                <button class="nav-link active"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#tabComentariosTicket"
+                                        type="button">
+
+                                    <i class="bi bi-chat-dots me-1"></i>
+
+                                    Seguimiento
+
+                                </button>
+
+                            </li>
+
+                            <li class="nav-item"
+                                role="presentation">
+
+                                <button class="nav-link"
+                                        data-bs-toggle="tab"
+                                        data-bs-target="#tabHistorialTicket"
+                                        type="button">
+
+                                    <i class="bi bi-clock-history me-1"></i>
+
+                                    Historial
+
+                                </button>
+
+                            </li>
+
+                        </ul>
+
+                        <div class="tab-content pt-4">
+
+                            <!-- COMENTARIOS -->
+
+                            <div class="tab-pane fade show active"
+                                 id="tabComentariosTicket">
+
+                                <div id="detalleComentarios">
+                                </div>
+
+                            </div>
+
+                            <!-- HISTORIAL -->
+
+                            <div class="tab-pane fade"
+                                 id="tabHistorialTicket">
+
+                                <div id="detalleHistorial">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- RESOLUCIÓN -->
+                    <!-- ========================================== -->
+
+                    <div id="detalleResolucionContenedor"
+                         class="sd-detail-section d-none">
+
+                        <div class="sd-detail-section-title">
+
+                            <i class="bi bi-check-circle"></i>
+
+                            Resolución
+
+                        </div>
+
+                        <div id="detalleResolucion"
+                             class="sd-detail-description">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ================================================== -->
+            <!-- FOOTER -->
+            <!-- ================================================== -->
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+
+                    <i class="bi bi-x-lg me-1"></i>
+
+                    Cerrar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
 
 @section Scripts
 {
     <partial name="_ValidationScriptsPartial" />
 
-
     <script>
-
-        // =========================================================
-        // APLICAR TEMA DE MESA DE AYUDA AL LAYOUT COMPLETO
-        // =========================================================
-
-        document.body.classList.add("service-desk-theme");
-
-
         document.addEventListener(
             "DOMContentLoaded",
             function () {
 
-
                 // =================================================
-                // FILTROS
+                // REFERENCIAS
                 // =================================================
 
                 const txtBusqueda =
@@ -1048,101 +1623,131 @@
                         "filtroBusqueda"
                     );
 
-
                 const filtroEstado =
                     document.getElementById(
                         "filtroEstado"
                     );
-
 
                 const filtroCategoria =
                     document.getElementById(
                         "filtroCategoria"
                     );
 
-
                 const btnLimpiar =
                     document.getElementById(
                         "btnLimpiarFiltros"
                     );
 
+                const categoria =
+                    document.getElementById(
+                        "CategoryId"
+                    );
+
+                const subcategoria =
+                    document.getElementById(
+                        "SubcategoryId"
+                    );
+
+                const modalDetalleElemento =
+                    document.getElementById(
+                        "modalDetalleTicket"
+                    );
+
+                let modalDetalleTicket = null;
+
+                if (
+                    modalDetalleElemento &&
+                    typeof bootstrap !== "undefined"
+                ) {
+                    modalDetalleTicket =
+                        bootstrap.Modal.getOrCreateInstance(
+                            modalDetalleElemento
+                        );
+                }
+
+
+                // =================================================
+                // FILTROS
+                // =================================================
 
                 function aplicarFiltros() {
 
                     const busqueda =
                         (
-                            txtBusqueda?.value || ""
+                            txtBusqueda?.value ||
+                            ""
                         )
                         .toLowerCase()
                         .trim();
 
-
                     const estado =
                         (
-                            filtroEstado?.value || ""
+                            filtroEstado?.value ||
+                            ""
                         )
                         .toLowerCase();
 
-
-                    const categoria =
+                    const categoriaFiltro =
                         (
-                            filtroCategoria?.value || ""
+                            filtroCategoria?.value ||
+                            ""
                         )
                         .toLowerCase();
-
 
                     const filas =
                         document.querySelectorAll(
                             "#tablaMesaDeAyuda tbody tr[data-folio]"
                         );
 
-
                     filas.forEach(
                         function (fila) {
 
                             const folio =
                                 (
-                                    fila.dataset.folio || ""
+                                    fila.dataset.folio ||
+                                    ""
                                 )
                                 .toLowerCase();
-
 
                             const titulo =
                                 (
-                                    fila.dataset.titulo || ""
+                                    fila.dataset.titulo ||
+                                    ""
                                 )
                                 .toLowerCase();
-
 
                             const estadoFila =
                                 (
-                                    fila.dataset.estado || ""
+                                    fila.dataset.estado ||
+                                    ""
                                 )
                                 .toLowerCase();
-
 
                             const categoriaFila =
                                 (
-                                    fila.dataset.categoria || ""
+                                    fila.dataset.categoria ||
+                                    ""
                                 )
                                 .toLowerCase();
 
-
                             const coincideBusqueda =
                                 !busqueda ||
-                                folio.includes(busqueda) ||
-                                titulo.includes(busqueda);
-
+                                folio.includes(
+                                    busqueda
+                                ) ||
+                                titulo.includes(
+                                    busqueda
+                                );
 
                             const coincideEstado =
                                 !estado ||
-                                estadoFila === estado;
-
+                                estadoFila ===
+                                estado;
 
                             const coincideCategoria =
-                                !categoria ||
-                                categoriaFila === categoria;
-
+                                !categoriaFiltro ||
+                                categoriaFila ===
+                                categoriaFiltro;
 
                             fila.style.display =
                                 coincideBusqueda &&
@@ -1160,18 +1765,15 @@
                     aplicarFiltros
                 );
 
-
                 filtroEstado?.addEventListener(
                     "change",
                     aplicarFiltros
                 );
 
-
                 filtroCategoria?.addEventListener(
                     "change",
                     aplicarFiltros
                 );
-
 
                 btnLimpiar?.addEventListener(
                     "click",
@@ -1181,16 +1783,13 @@
                             txtBusqueda.value = "";
                         }
 
-
                         if (filtroEstado) {
                             filtroEstado.value = "";
                         }
 
-
                         if (filtroCategoria) {
                             filtroCategoria.value = "";
                         }
-
 
                         aplicarFiltros();
                     }
@@ -1198,37 +1797,23 @@
 
 
                 // =================================================
-                // SUBCATEGORÍAS DINÁMICAS
+                // SUBCATEGORÍAS
                 // =================================================
 
-                const categoriaTicket =
-                    document.getElementById(
-                        "CategoryId"
-                    );
-
-
-                const subcategoriaTicket =
-                    document.getElementById(
-                        "SubcategoryId"
-                    );
-
-
                 if (
-                    categoriaTicket &&
-                    subcategoriaTicket
+                    categoria &&
+                    subcategoria
                 ) {
 
-                    categoriaTicket.addEventListener(
+                    categoria.addEventListener(
                         "change",
                         async function () {
 
                             const categoryId =
                                 this.value;
 
-
-                            subcategoriaTicket.innerHTML =
+                            subcategoria.innerHTML =
                                 '<option value="">Selecciona...</option>';
-
 
                             if (
                                 !categoryId ||
@@ -1237,18 +1822,15 @@
                                 return;
                             }
 
-
                             try {
 
                                 const response =
                                     await fetch(
-                                        "?handler=Subcategorias&categoryId="
-                                        +
+                                        "?handler=Subcategorias&categoryId=" +
                                         encodeURIComponent(
                                             categoryId
                                         )
                                     );
-
 
                                 if (!response.ok) {
 
@@ -1259,10 +1841,8 @@
                                     return;
                                 }
 
-
                                 const datos =
                                     await response.json();
-
 
                                 datos.forEach(
                                     function (item) {
@@ -1272,23 +1852,17 @@
                                                 "option"
                                             );
 
-
                                         option.value =
                                             item.id;
-
 
                                         option.textContent =
                                             item.nombre;
 
-
-                                        subcategoriaTicket
-                                            .appendChild(
-                                                option
-                                            );
-
+                                        subcategoria.appendChild(
+                                            option
+                                        );
                                     }
                                 );
-
                             }
                             catch (error) {
 
@@ -1296,32 +1870,1433 @@
                                     "Error al cargar subcategorías:",
                                     error
                                 );
-
                             }
+                        }
+                    );
+                }
 
+                        // =================================================
+        // GUARDAR CAMBIOS DEL TICKET
+        // =================================================
+
+        const btnGuardarCambiosTicket =
+            document.getElementById(
+                "btnGuardarCambiosTicket"
+            );
+
+        btnGuardarCambiosTicket?.addEventListener(
+            "click",
+            async function () {
+
+                await guardarCambiosTicket();
+            }
+        );
+
+                // =================================================
+                // BOTONES VER TICKET
+                // =================================================
+
+                document.addEventListener(
+                    "click",
+                    function (event) {
+
+                        const boton =
+                            event.target.closest(
+                                ".sd-action[data-ticket-id]"
+                            );
+
+                        if (!boton) {
+                            return;
+                        }
+
+                        const ticketId =
+                            parseInt(
+                                boton.dataset.ticketId ||
+                                "0",
+                                10
+                            );
+
+                        if (
+                            Number.isNaN(ticketId) ||
+                            ticketId <= 0
+                        ) {
+                            return;
+                        }
+
+                        abrirDetalleTicket(
+                            ticketId
+                        );
+                    }
+                );
+
+
+                // =================================================
+                // ABRIR DETALLE
+                // =================================================
+
+                async function abrirDetalleTicket(
+                    ticketId
+                ) {
+
+                    prepararModalDetalle();
+
+                    if (
+                        modalDetalleTicket
+                    ) {
+                        modalDetalleTicket.show();
+                    }
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                "?handler=Ticket&id=" +
+                                encodeURIComponent(
+                                    ticketId
+                                ),
+                                {
+                                    method: "GET",
+                                    headers: {
+                                        "Accept":
+                                            "application/json"
+                                    }
+                                }
+                            );
+
+                        if (
+                            response.status === 403
+                        ) {
+                            throw new Error(
+                                "No tienes permisos para consultar este ticket."
+                            );
+                        }
+
+                        if (!response.ok) {
+                            throw new Error(
+                                "No fue posible consultar el ticket."
+                            );
+                        }
+
+                        const respuesta =
+                            await response.json();
+
+                        if (
+                            !respuesta.success
+                        ) {
+                            throw new Error(
+                                respuesta.message ||
+                                "No fue posible obtener el ticket."
+                            );
+                        }
+
+                        cargarDetalleTicket(
+                            respuesta
+                        );
+                    }
+                    catch (error) {
+
+                        mostrarErrorDetalle(
+                            error.message ||
+                            "Ocurrió un error al consultar el ticket."
+                        );
+                    }
+                }
+
+
+                // =================================================
+                // PREPARAR MODAL
+                // =================================================
+
+                        function prepararModalDetalle() {
+
+            const loading =
+                document.getElementById(
+                    "detalleTicketLoading"
+                );
+
+            const contenido =
+                document.getElementById(
+                    "detalleTicketContenido"
+                );
+
+            const error =
+                document.getElementById(
+                    "detalleTicketError"
+                );
+
+            const mensajeAdmin =
+                document.getElementById(
+                    "detalleAdminMensaje"
+                );
+
+
+            loading?.classList.remove(
+                "d-none"
+            );
+
+            contenido?.classList.add(
+                "d-none"
+            );
+
+            error?.classList.add(
+                "d-none"
+            );
+
+            mensajeAdmin?.classList.add(
+                "d-none"
+            );
+
+
+            if (error) {
+                error.textContent = "";
+            }
+
+
+            if (mensajeAdmin) {
+                mensajeAdmin.textContent = "";
+            }
+        }
+
+
+                // =================================================
+                // MOSTRAR ERROR
+                // =================================================
+
+                function mostrarErrorDetalle(
+                    mensaje
+                ) {
+
+                    const loading =
+                        document.getElementById(
+                            "detalleTicketLoading"
+                        );
+
+                    const contenido =
+                        document.getElementById(
+                            "detalleTicketContenido"
+                        );
+
+                    const error =
+                        document.getElementById(
+                            "detalleTicketError"
+                        );
+
+                    loading?.classList.add(
+                        "d-none"
+                    );
+
+                    contenido?.classList.add(
+                        "d-none"
+                    );
+
+                    if (error) {
+
+                        error.textContent =
+                            mensaje;
+
+                        error.classList.remove(
+                            "d-none"
+                        );
+                    }
+                }
+
+
+                // =================================================
+                // CARGAR INFORMACIÓN
+                // =================================================
+
+                function cargarDetalleTicket(
+                    respuesta
+                ) {
+
+                    const ticket =
+                        respuesta.ticket;
+
+                    establecerTexto(
+                        "detalleTicketId",
+                        ticket.id
+                    );
+
+                    establecerTexto(
+                        "detalleFolio",
+                        ticket.folio
+                    );
+
+                    establecerTexto(
+                        "detalleSolicitante",
+                        ticket.solicitante
+                    );
+
+                    establecerTexto(
+                        "detalleSolicitanteCorreo",
+                        ticket.solicitanteCorreo
+                    );
+
+                    establecerTexto(
+                        "detalleFechaCreacion",
+                        ticket.fechaCreacion
+                    );
+
+                    establecerTexto(
+                        "detalleTecnico",
+                        ticket.usuarioAsignado ||
+                        "Sin asignar"
+                    );
+
+                    establecerTexto(
+                        "detalleEquipo",
+                        ticket.equipoSoporte ||
+                        "Sin asignar"
+                    );
+
+                    establecerTexto(
+                        "detalleTipo",
+                        ticket.tipo
+                    );
+
+                    establecerTexto(
+                        "detalleCategoria",
+                        ticket.categoria
+                    );
+
+                    establecerTexto(
+                        "detalleSubcategoria",
+                        ticket.subcategoria
+                    );
+
+                    establecerTexto(
+                        "detallePrioridad",
+                        ticket.prioridad
+                    );
+
+                    establecerTexto(
+                        "detalleTitulo",
+                        ticket.titulo
+                    );
+
+                    establecerTexto(
+                        "detalleDescripcion",
+                        ticket.descripcion
+                    );
+
+                    establecerTexto(
+                        "detalleSlaRespuesta",
+                        ticket.fechaLimiteRespuestaSla ||
+                        "Sin definir"
+                    );
+
+                    establecerTexto(
+                        "detalleSlaResolucion",
+                        ticket.fechaLimiteResolucionSla ||
+                        "Sin definir"
+                    );
+
+
+                    configurarEstadoBadge(
+                        ticket.estadoId,
+                        ticket.estado
+                    );
+
+
+                    configurarSlaBadge(
+                        "detalleSlaRespuestaBadge",
+                        ticket.slaRespuestaVencido
+                    );
+
+                    configurarSlaBadge(
+                        "detalleSlaResolucionBadge",
+                        ticket.slaResolucionVencido
+                    );
+
+
+                    cargarComentarios(
+                        respuesta.comentarios ||
+                        []
+                    );
+
+                    cargarHistorial(
+                        respuesta.historial ||
+                        []
+                    );
+
+
+                    configurarResolucion(
+                        ticket.resolucion
+                    );
+
+
+                    configurarPanelAdmin(
+                        respuesta
+                    );
+
+
+                    const loading =
+                        document.getElementById(
+                            "detalleTicketLoading"
+                        );
+
+                    const contenido =
+                        document.getElementById(
+                            "detalleTicketContenido"
+                        );
+
+                    const error =
+                        document.getElementById(
+                            "detalleTicketError"
+                        );
+
+                    loading?.classList.add(
+                        "d-none"
+                    );
+
+                    error?.classList.add(
+                        "d-none"
+                    );
+
+                    contenido?.classList.remove(
+                        "d-none"
+                    );
+                }
+
+
+                // =================================================
+                // PANEL ADMIN
+                // =================================================
+
+                function configurarPanelAdmin(
+                    respuesta
+                ) {
+
+                    const panel =
+                        document.getElementById(
+                            "detallePanelAdmin"
+                        );
+
+                    if (
+                        !respuesta.esAdmin
+                    ) {
+
+                        panel?.classList.add(
+                            "d-none"
+                        );
+
+                        return;
+                    }
+
+                    panel?.classList.remove(
+                        "d-none"
+                    );
+
+
+                    const ticket =
+                        respuesta.ticket;
+
+
+                    // =============================================
+                    // TÉCNICOS
+                    // =============================================
+
+                    const tecnicoSelect =
+                        document.getElementById(
+                            "detalleTecnicoSelect"
+                        );
+
+                    if (tecnicoSelect) {
+
+                        tecnicoSelect.innerHTML =
+                            '<option value="">Sin asignar</option>';
+
+                        (
+                            respuesta.tecnicos ||
+                            []
+                        )
+                        .forEach(
+                            function (tecnico) {
+
+                                const option =
+                                    document.createElement(
+                                        "option"
+                                    );
+
+                                option.value =
+                                    tecnico.id;
+
+                                option.textContent =
+                                    tecnico.nombre;
+
+                                tecnicoSelect.appendChild(
+                                    option
+                                );
+                            }
+                        );
+
+                        tecnicoSelect.value =
+                            ticket.usuarioAsignadoId ||
+                            "";
+                    }
+
+
+                    // =============================================
+                    // PRIORIDADES
+                    // =============================================
+
+                    const prioridadSelect =
+                        document.getElementById(
+                            "detallePrioridadSelect"
+                        );
+
+                    if (prioridadSelect) {
+
+                        prioridadSelect.innerHTML =
+                            "";
+
+                        (
+                            respuesta.prioridades ||
+                            []
+                        )
+                        .forEach(
+                            function (prioridad) {
+
+                                const option =
+                                    document.createElement(
+                                        "option"
+                                    );
+
+                                option.value =
+                                    prioridad.id;
+
+                                option.textContent =
+                                    prioridad.nombre;
+
+                                prioridadSelect.appendChild(
+                                    option
+                                );
+                            }
+                        );
+
+                        prioridadSelect.value =
+                            String(
+                                ticket.prioridadId
+                            );
+                    }
+
+
+                    // =============================================
+                    // ESTADOS
+                    // =============================================
+
+                    const estadoSelect =
+                        document.getElementById(
+                            "detalleEstadoSelect"
+                        );
+
+                    if (estadoSelect) {
+
+                        estadoSelect.innerHTML =
+                            "";
+
+                        (
+                            respuesta.estados ||
+                            []
+                        )
+                        .forEach(
+                            function (estado) {
+
+                                const option =
+                                    document.createElement(
+                                        "option"
+                                    );
+
+                                option.value =
+                                    estado.id;
+
+                                option.textContent =
+                                    estado.nombre;
+
+                                estadoSelect.appendChild(
+                                    option
+                                );
+                            }
+                        );
+
+                        estadoSelect.value =
+                            String(
+                                ticket.estadoId
+                            );
+                    }
+                }
+
+
+                // =================================================
+                // COMENTARIOS
+                // =================================================
+
+                function cargarComentarios(
+                    comentarios
+                ) {
+
+                    const contenedor =
+                        document.getElementById(
+                            "detalleComentarios"
+                        );
+
+                    if (!contenedor) {
+                        return;
+                    }
+
+                    contenedor.innerHTML =
+                        "";
+
+                    if (
+                        comentarios.length === 0
+                    ) {
+
+                        contenedor.innerHTML = `
+                            <div class="sd-empty-detail">
+                                <i class="bi bi-chat-left-dots"></i>
+                                <strong>
+                                    Sin seguimiento registrado
+                                </strong>
+                                <span>
+                                    Todavía no existen comentarios en este ticket.
+                                </span>
+                            </div>
+                        `;
+
+                        return;
+                    }
+
+                    comentarios.forEach(
+                        function (item) {
+
+                            const bloque =
+                                document.createElement(
+                                    "div"
+                                );
+
+                            bloque.className =
+                                item.esNotaInterna
+                                    ? "sd-comment sd-comment-internal"
+                                    : "sd-comment";
+
+                            bloque.innerHTML = `
+                                <div class="sd-comment-header">
+
+                                    <div>
+
+                                        <strong>
+                                            ${escaparHtml(item.usuario)}
+                                        </strong>
+
+                                        ${
+                                            item.esNotaInterna
+                                                ? `
+                                                <span class="sd-internal-badge">
+                                                    <i class="bi bi-lock-fill"></i>
+                                                    Nota interna
+                                                </span>
+                                                `
+                                                : ""
+                                        }
+
+                                    </div>
+
+                                    <span>
+                                        ${escaparHtml(item.fecha)}
+                                    </span>
+
+                                </div>
+
+                                <div class="sd-comment-body">
+                                    ${convertirSaltosLinea(
+                                        item.comentario
+                                    )}
+                                </div>
+                            `;
+
+                            contenedor.appendChild(
+                                bloque
+                            );
+                        }
+                    );
+                }
+
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                function cargarHistorial(
+                    historial
+                ) {
+
+                    const contenedor =
+                        document.getElementById(
+                            "detalleHistorial"
+                        );
+
+                    if (!contenedor) {
+                        return;
+                    }
+
+                    contenedor.innerHTML =
+                        "";
+
+                    if (
+                        historial.length === 0
+                    ) {
+
+                        contenedor.innerHTML = `
+                            <div class="sd-empty-detail">
+                                <i class="bi bi-clock-history"></i>
+                                <strong>
+                                    Sin movimientos
+                                </strong>
+                                <span>
+                                    No existen movimientos registrados.
+                                </span>
+                            </div>
+                        `;
+
+                        return;
+                    }
+
+                    const timeline =
+                        document.createElement(
+                            "div"
+                        );
+
+                    timeline.className =
+                        "sd-history-timeline";
+
+                    historial.forEach(
+                        function (item) {
+
+                            const bloque =
+                                document.createElement(
+                                    "div"
+                                );
+
+                            bloque.className =
+                                "sd-history-item";
+
+                            bloque.innerHTML = `
+                                <div class="sd-history-dot">
+                                    <i class="bi bi-clock"></i>
+                                </div>
+
+                                <div class="sd-history-content">
+
+                                    <div class="sd-history-top">
+
+                                        <strong>
+                                            ${escaparHtml(
+                                                item.accion ||
+                                                "Movimiento"
+                                            )}
+                                        </strong>
+
+                                        <span>
+                                            ${escaparHtml(
+                                                item.fecha ||
+                                                ""
+                                            )}
+                                        </span>
+
+                                    </div>
+
+                                    <div class="sd-history-detail">
+                                        ${escaparHtml(
+                                            item.detalle ||
+                                            generarDetalleHistorial(
+                                                item
+                                            )
+                                        )}
+                                    </div>
+
+                                    <div class="sd-history-user">
+                                        <i class="bi bi-person"></i>
+                                        ${escaparHtml(
+                                            item.usuario ||
+                                            "Sistema"
+                                        )}
+                                    </div>
+
+                                </div>
+                            `;
+
+                            timeline.appendChild(
+                                bloque
+                            );
                         }
                     );
 
+                    contenedor.appendChild(
+                        timeline
+                    );
+                }
+
+
+                // =================================================
+                // RESOLUCIÓN
+                // =================================================
+
+                function configurarResolucion(
+                    resolucion
+                ) {
+
+                    const contenedor =
+                        document.getElementById(
+                            "detalleResolucionContenedor"
+                        );
+
+                    const contenido =
+                        document.getElementById(
+                            "detalleResolucion"
+                        );
+
+                    if (
+                        !resolucion ||
+                        !resolucion.trim()
+                    ) {
+
+                        contenedor?.classList.add(
+                            "d-none"
+                        );
+
+                        return;
+                    }
+
+                    if (contenido) {
+
+                        contenido.textContent =
+                            resolucion;
+                    }
+
+                    contenedor?.classList.remove(
+                        "d-none"
+                    );
+                }
+
+
+                // =================================================
+                // BADGE ESTADO
+                // =================================================
+
+                function configurarEstadoBadge(
+                    statusId,
+                    nombre
+                ) {
+
+                    const badge =
+                        document.getElementById(
+                            "detalleEstadoBadge"
+                        );
+
+                    if (!badge) {
+                        return;
+                    }
+
+                    badge.className =
+                        "sd-badge";
+
+                    let clase =
+                        "sd-status-new";
+
+                    let icono =
+                        "bi-circle-fill";
+
+                    switch (
+                        Number(statusId)
+                    ) {
+
+                        case 1:
+
+                            clase =
+                                "sd-status-new";
+
+                            icono =
+                                "bi-circle-fill";
+
+                            break;
+
+                        case 2:
+
+                            clase =
+                                "sd-status-assigned";
+
+                            icono =
+                                "bi-person-check";
+
+                            break;
+
+                        case 3:
+
+                            clase =
+                                "sd-status-progress";
+
+                            icono =
+                                "bi-gear";
+
+                            break;
+
+                        case 4:
+
+                            clase =
+                                "sd-status-waiting";
+
+                            icono =
+                                "bi-hourglass-split";
+
+                            break;
+
+                        case 5:
+
+                            clase =
+                                "sd-status-resolved";
+
+                            icono =
+                                "bi-check-circle";
+
+                            break;
+
+                        case 6:
+
+                            clase =
+                                "sd-status-closed";
+
+                            icono =
+                                "bi-lock";
+
+                            break;
+
+                        case 7:
+
+                            clase =
+                                "sd-status-progress";
+
+                            icono =
+                                "bi-arrow-counterclockwise";
+
+                            break;
+
+                        case 8:
+
+                            clase =
+                                "sd-status-cancelled";
+
+                            icono =
+                                "bi-x-circle";
+
+                            break;
+                    }
+
+                    badge.classList.add(
+                        clase
+                    );
+
+                    badge.innerHTML = `
+                        <i class="bi ${icono}"></i>
+                        ${escaparHtml(nombre || "-")}
+                    `;
+                }
+
+
+                // =================================================
+                // SLA BADGE
+                // =================================================
+
+                function configurarSlaBadge(
+                    id,
+                    vencido
+                ) {
+
+                    const badge =
+                        document.getElementById(
+                            id
+                        );
+
+                    if (!badge) {
+                        return;
+                    }
+
+                    badge.className =
+                        "sd-sla-status";
+
+                    if (vencido) {
+
+                        badge.classList.add(
+                            "sd-sla-expired"
+                        );
+
+                        badge.innerHTML =
+                            '<i class="bi bi-exclamation-triangle-fill"></i> Vencido';
+
+                        return;
+                    }
+
+                    badge.classList.add(
+                        "sd-sla-active"
+                    );
+
+                    badge.innerHTML =
+                        '<i class="bi bi-check-circle-fill"></i> Vigente';
+                }
+
+
+                // =================================================
+                // DETALLE HISTORIAL
+                // =================================================
+
+                function generarDetalleHistorial(
+                    item
+                ) {
+
+                    if (
+                        item.valorAnterior &&
+                        item.valorNuevo
+                    ) {
+
+                        return (
+                            `${item.campo || "Valor"} cambió de ` +
+                            `"${item.valorAnterior}" a ` +
+                            `"${item.valorNuevo}".`
+                        );
+                    }
+
+                    if (item.valorNuevo) {
+
+                        return (
+                            `${item.campo || "Valor"}: ` +
+                            `${item.valorNuevo}`
+                        );
+                    }
+
+                    return (
+                        item.campo ||
+                        item.accion ||
+                        "Movimiento registrado."
+                    );
+                }
+
+                        // =================================================
+        // GUARDAR CAMBIOS ADMINISTRATIVOS
+        // =================================================
+
+        async function guardarCambiosTicket() {
+
+            const ticketIdElemento =
+                document.getElementById(
+                    "detalleTicketId"
+                );
+
+            const tecnicoSelect =
+                document.getElementById(
+                    "detalleTecnicoSelect"
+                );
+
+            const prioridadSelect =
+                document.getElementById(
+                    "detallePrioridadSelect"
+                );
+
+            const estadoSelect =
+                document.getElementById(
+                    "detalleEstadoSelect"
+                );
+
+            const boton =
+                document.getElementById(
+                    "btnGuardarCambiosTicket"
+                );
+
+            const contenidoBoton =
+                document.getElementById(
+                    "btnGuardarCambiosTicketContenido"
+                );
+
+            const cargandoBoton =
+                document.getElementById(
+                    "btnGuardarCambiosTicketCargando"
+                );
+
+            const mensaje =
+                document.getElementById(
+                    "detalleAdminMensaje"
+                );
+
+            const ticketId =
+                parseInt(
+                    ticketIdElemento?.value ||
+                    "0",
+                    10
+                );
+
+            const priorityId =
+                parseInt(
+                    prioridadSelect?.value ||
+                    "0",
+                    10
+                );
+
+            const statusId =
+                parseInt(
+                    estadoSelect?.value ||
+                    "0",
+                    10
+                );
+
+            const usuarioAsignadoId =
+                tecnicoSelect?.value ||
+                null;
+
+
+            // =============================================
+            // VALIDACIONES
+            // =============================================
+
+            if (
+                Number.isNaN(ticketId) ||
+                ticketId <= 0
+            ) {
+
+                mostrarMensajeAdmin(
+                    "danger",
+                    "No fue posible identificar el ticket."
+                );
+
+                return;
+            }
+
+
+            if (
+                Number.isNaN(priorityId) ||
+                priorityId <= 0
+            ) {
+
+                mostrarMensajeAdmin(
+                    "warning",
+                    "Debes seleccionar una prioridad."
+                );
+
+                return;
+            }
+
+
+            if (
+                Number.isNaN(statusId) ||
+                statusId <= 0
+            ) {
+
+                mostrarMensajeAdmin(
+                    "warning",
+                    "Debes seleccionar un estado."
+                );
+
+                return;
+            }
+
+
+            // =============================================
+            // TOKEN ANTIFORGERY
+            // =============================================
+
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )
+                ?.value;
+
+
+            if (!token) {
+
+                mostrarMensajeAdmin(
+                    "danger",
+                    "No fue posible validar la seguridad de la solicitud."
+                );
+
+                return;
+            }
+
+
+            // =============================================
+            // ESTADO DEL BOTÓN
+            // =============================================
+
+            if (boton) {
+                boton.disabled = true;
+            }
+
+            contenidoBoton?.classList.add(
+                "d-none"
+            );
+
+            cargandoBoton?.classList.remove(
+                "d-none"
+            );
+
+            mensaje?.classList.add(
+                "d-none"
+            );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "?handler=ActualizarTicket",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+
+                                "Accept":
+                                    "application/json",
+
+                                "RequestVerificationToken":
+                                    token
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    {
+                                        ticketId:
+                                            ticketId,
+
+                                        usuarioAsignadoId:
+                                            usuarioAsignadoId,
+
+                                        priorityId:
+                                            priorityId,
+
+                                        statusId:
+                                            statusId
+                                    }
+                                )
+                        }
+                    );
+
+
+                let respuesta =
+                    null;
+
+
+                try {
+
+                    respuesta =
+                        await response.json();
+
+                }
+                catch {
+
+                    throw new Error(
+                        "El servidor respondió con un formato no válido."
+                    );
+                }
+
+
+                if (
+                    response.status === 403
+                ) {
+
+                    throw new Error(
+                        respuesta?.message ||
+                        "No tienes permisos para modificar este ticket."
+                    );
+                }
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        respuesta?.message ||
+                        "No fue posible actualizar el ticket."
+                    );
+                }
+
+
+                if (
+                    !respuesta.success
+                ) {
+
+                    throw new Error(
+                        respuesta.message ||
+                        "No fue posible actualizar el ticket."
+                    );
+                }
+
+
+                // =========================================
+                // TODO CORRECTO
+                // =========================================
+
+                mostrarMensajeAdmin(
+                    "success",
+                    respuesta.message ||
+                    "Cambios guardados correctamente."
+                );
+
+
+                if (
+                    respuesta.changed === false
+                ) {
+
+                    return;
+                }
+
+
+                /*
+                 * Dejamos un pequeño tiempo para que el usuario
+                 * vea la confirmación y después refrescamos la
+                 * pantalla.
+                 *
+                 * Esto actualiza:
+                 * KPIs
+                 * tabla
+                 * asignación
+                 * estado
+                 * prioridad
+                 */
+
+                window.setTimeout(
+                    function () {
+
+                        window.location.reload();
+
+                    },
+                    700
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error al actualizar ticket:",
+                    error
+                );
+
+
+                mostrarMensajeAdmin(
+                    "danger",
+                    error.message ||
+                    "Ocurrió un error al actualizar el ticket."
+                );
+
+            }
+            finally {
+
+                if (boton) {
+                    boton.disabled = false;
+                }
+
+                contenidoBoton?.classList.remove(
+                    "d-none"
+                );
+
+                cargandoBoton?.classList.add(
+                    "d-none"
+                );
+            }
+        }
+
+                // =================================================
+        // MENSAJE DEL PANEL ADMINISTRATIVO
+        // =================================================
+
+        function mostrarMensajeAdmin(
+            tipo,
+            texto
+        ) {
+
+            const mensaje =
+                document.getElementById(
+                    "detalleAdminMensaje"
+                );
+
+            if (!mensaje) {
+                return;
+            }
+
+            mensaje.className =
+                `alert alert-${tipo} mt-3 mb-0`;
+
+            mensaje.textContent =
+                texto;
+
+            mensaje.classList.remove(
+                "d-none"
+            );
+        }
+
+
+                // =================================================
+                // UTILIDADES
+                // =================================================
+
+                function establecerTexto(
+                    id,
+                    valor
+                ) {
+
+                    const elemento =
+                        document.getElementById(
+                            id
+                        );
+
+                    if (!elemento) {
+                        return;
+                    }
+
+                    if (
+                        elemento instanceof HTMLInputElement
+                    ) {
+
+                        elemento.value =
+                            valor ?? "";
+
+                        return;
+                    }
+
+                    elemento.textContent =
+                        valor ??
+                        "-";
+                }
+
+
+                function escaparHtml(
+                    valor
+                ) {
+
+                    const div =
+                        document.createElement(
+                            "div"
+                        );
+
+                    div.textContent =
+                        valor ??
+                        "";
+
+                    return div.innerHTML;
+                }
+
+
+                function convertirSaltosLinea(
+                    valor
+                ) {
+
+                    return escaparHtml(
+                        valor ||
+                        ""
+                    )
+                    .replace(
+                        /\n/g,
+                        "<br>"
+                    );
                 }
 
             }
         );
-
-
-        // =========================================================
-        // QUITAR CLASE SI EL NAVEGADOR CONSERVA EL DOCUMENTO
-        // =========================================================
-
-        window.addEventListener(
-            "pagehide",
-            function () {
-
-                document.body.classList.remove(
-                    "service-desk-theme"
-                );
-
-            }
-        );
-
     </script>
 }
