@@ -17,15 +17,18 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly ApplicationDbContext _context;
         private readonly AppUserManager _userManager;
         private readonly ILogger<MesaDeAyudaModel> _logger;
+        private readonly IWebHostEnvironment _environment;
 
         public MesaDeAyudaModel(
-            ApplicationDbContext context,
-            AppUserManager userManager,
-            ILogger<MesaDeAyudaModel> logger)
+        ApplicationDbContext context,
+        AppUserManager userManager,
+        ILogger<MesaDeAyudaModel> logger,
+        IWebHostEnvironment environment)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
+            _environment = environment;
         }
 
         public class ActualizarTicketRequest
@@ -37,6 +40,16 @@ namespace ERPSEI.Areas.ERP.Pages
             public int PriorityId { get; set; }
 
             public int StatusId { get; set; }
+        }
+
+        public class AgregarComentarioTicketRequest
+        {
+            public int TicketId { get; set; }
+
+            public string Comentario { get; set; } =
+                string.Empty;
+
+            public bool EsNotaInterna { get; set; }
         }
 
         // =========================================================
@@ -928,6 +941,624 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
+        // OBTENER ADJUNTOS DEL TICKET
+        // GET ?handler=Adjuntos&ticketId=1
+        // =========================================================
+
+        public async Task<IActionResult> OnGetAdjuntosAsync(
+            int ticketId)
+        {
+            AppUser? usuarioActual =
+                await _userManager.GetUserAsync(User);
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message = "La sesión del usuario no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+            ServiceTicket? ticket =
+                await _context.ServiceTickets
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x => x.Id == ticketId
+                    );
+
+            if (ticket == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message = "No se encontró el ticket."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+            bool esAdmin =
+                EsAdministradorMesa();
+
+            if (
+                !esAdmin &&
+                ticket.UsuarioSolicitanteId !=
+                usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para consultar los adjuntos de este ticket."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+            var adjuntos =
+                await (
+                    from adjunto
+                        in _context.ServiceTicketAttachments
+                            .AsNoTracking()
+
+                    join usuario
+                        in _context.Users.AsNoTracking()
+                        on adjunto.UsuarioCargaId
+                        equals usuario.Id
+
+                    where
+                        adjunto.TicketId == ticketId &&
+                        !adjunto.Eliminado
+
+                    orderby adjunto.FechaCarga descending
+
+                    select new
+                    {
+                        id =
+                            adjunto.Id,
+
+                        nombre =
+                            adjunto.NombreOriginal,
+
+                        extension =
+                            adjunto.Extension ?? string.Empty,
+
+                        mimeType =
+                            adjunto.MimeType ?? string.Empty,
+
+                        tamanoBytes =
+                            adjunto.TamanoBytes,
+
+                        tamano =
+                            FormatearTamanoArchivo(
+                                adjunto.TamanoBytes
+                            ),
+
+                        usuario =
+                            usuario.UserName ??
+                            usuario.Email ??
+                            "Usuario",
+
+                        fecha =
+                            adjunto.FechaCarga
+                                .ToString(
+                                    "dd/MM/yyyy HH:mm"
+                                ),
+
+                        urlDescarga =
+                            $"?handler=DescargarAdjunto&id={adjunto.Id}"
+                    }
+                )
+                .ToListAsync();
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+                    adjuntos
+                }
+            );
+        }
+
+        // =========================================================
+        // SUBIR ADJUNTO
+        // POST ?handler=SubirAdjunto
+        // =========================================================
+
+        public async Task<IActionResult> OnPostSubirAdjuntoAsync(
+            int ticketId,
+            IFormFile? archivo)
+        {
+            AppUser? usuarioActual =
+                await _userManager.GetUserAsync(User);
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La sesión del usuario no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+            if (ticketId <= 0)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El identificador del ticket no es válido."
+                    }
+                );
+            }
+
+            ServiceTicket? ticket =
+                await _context.ServiceTickets
+                    .FirstOrDefaultAsync(
+                        x => x.Id == ticketId
+                    );
+
+            if (ticket == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el ticket."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+            bool esAdmin =
+                EsAdministradorMesa();
+
+            if (
+                !esAdmin &&
+                ticket.UsuarioSolicitanteId !=
+                usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para adjuntar archivos a este ticket."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+            if (
+                archivo == null ||
+                archivo.Length <= 0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Selecciona un archivo."
+                    }
+                );
+            }
+
+            // =====================================================
+            // MÁXIMO 10 MB
+            // =====================================================
+
+            const long tamanoMaximo =
+                10 * 1024 * 1024;
+
+            if (
+                archivo.Length >
+                tamanoMaximo
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El archivo no puede superar los 10 MB."
+                    }
+                );
+            }
+
+            // =====================================================
+            // EXTENSIONES PERMITIDAS
+            // =====================================================
+
+            string extension =
+                Path.GetExtension(
+                    archivo.FileName
+                )
+                .ToLowerInvariant();
+
+            string[] extensionesPermitidas =
+            {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".pdf",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".txt"
+    };
+
+            if (
+                !extensionesPermitidas.Contains(
+                    extension
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Tipo de archivo no permitido. Se permiten PNG, JPG, PDF, Word, Excel y TXT."
+                    }
+                );
+            }
+
+            try
+            {
+                // =================================================
+                // CARPETA SEGURA
+                // FUERA DE WWWROOT
+                // =================================================
+
+                string carpetaTicket =
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        "App_Data",
+                        "MesaDeAyuda",
+                        "Tickets",
+                        ticket.Id.ToString()
+                    );
+
+                Directory.CreateDirectory(
+                    carpetaTicket
+                );
+
+                // =================================================
+                // NOMBRE INTERNO ALEATORIO
+                // =================================================
+
+                string nombreAlmacenado =
+                    $"{Guid.NewGuid():N}{extension}";
+
+                string rutaFisica =
+                    Path.Combine(
+                        carpetaTicket,
+                        nombreAlmacenado
+                    );
+
+                // =================================================
+                // GUARDAR ARCHIVO
+                // =================================================
+
+                await using (
+                    FileStream stream =
+                        new FileStream(
+                            rutaFisica,
+                            FileMode.CreateNew,
+                            FileAccess.Write,
+                            FileShare.None
+                        )
+                )
+                {
+                    await archivo.CopyToAsync(
+                        stream
+                    );
+                }
+
+                // =================================================
+                // RUTA RELATIVA INTERNA
+                // =================================================
+
+                string rutaRelativa =
+                    Path.Combine(
+                        "App_Data",
+                        "MesaDeAyuda",
+                        "Tickets",
+                        ticket.Id.ToString(),
+                        nombreAlmacenado
+                    )
+                    .Replace(
+                        "\\",
+                        "/"
+                    );
+
+                DateTime ahora =
+                    DateTime.Now;
+
+                // =================================================
+                // REGISTRO EN BD
+                // =================================================
+
+                ServiceTicketAttachment adjunto =
+                    new ServiceTicketAttachment
+                    {
+                        TicketId =
+                            ticket.Id,
+
+                        NombreOriginal =
+                            Path.GetFileName(
+                                archivo.FileName
+                            ),
+
+                        NombreAlmacenado =
+                            nombreAlmacenado,
+
+                        RutaArchivo =
+                            rutaRelativa,
+
+                        Extension =
+                            extension,
+
+                        MimeType =
+                            archivo.ContentType,
+
+                        TamanoBytes =
+                            archivo.Length,
+
+                        UsuarioCargaId =
+                            usuarioActual.Id,
+
+                        FechaCarga =
+                            ahora,
+
+                        Eliminado =
+                            false
+                    };
+
+                _context.ServiceTicketAttachments.Add(
+                    adjunto
+                );
+
+                // =================================================
+                // ACTUALIZAR FECHA TICKET
+                // =================================================
+
+                ticket.FechaActualizacion =
+                    ahora;
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                ServiceTicketHistory historial =
+                    new ServiceTicketHistory
+                    {
+                        TicketId =
+                            ticket.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        Accion =
+                            "Adjunto",
+
+                        Campo =
+                            "Archivo",
+
+                        ValorAnterior =
+                            null,
+
+                        ValorNuevo =
+                            adjunto.NombreOriginal,
+
+                        Detalle =
+                            $"Se adjuntó el archivo \"{adjunto.NombreOriginal}\".",
+
+                        FechaHora =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    };
+
+                _context.ServiceTicketHistories.Add(
+                    historial
+                );
+
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            "Archivo adjuntado correctamente."
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al adjuntar archivo al ticket {TicketId}.",
+                    ticketId
+                );
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Ocurrió un error al guardar el archivo."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        // =========================================================
+        // DESCARGAR ADJUNTO
+        // GET ?handler=DescargarAdjunto&id=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetDescargarAdjuntoAsync(
+                int id)
+        {
+            AppUser? usuarioActual =
+                await _userManager.GetUserAsync(User);
+
+            if (usuarioActual == null)
+            {
+                return Unauthorized();
+            }
+
+            ServiceTicketAttachment? adjunto =
+                await _context.ServiceTicketAttachments
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == id &&
+                            !x.Eliminado
+                    );
+
+            if (adjunto == null)
+            {
+                return NotFound();
+            }
+
+            ServiceTicket? ticket =
+                await _context.ServiceTickets
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                            adjunto.TicketId
+                    );
+
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+
+            bool esAdmin =
+                EsAdministradorMesa();
+
+            if (
+                !esAdmin &&
+                ticket.UsuarioSolicitanteId !=
+                usuarioActual.Id
+            )
+            {
+                return Forbid();
+            }
+
+            // =====================================================
+            // OBTENER RUTA FÍSICA
+            // =====================================================
+
+            string raizPermitida =
+                Path.GetFullPath(
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        "App_Data",
+                        "MesaDeAyuda"
+                    )
+                );
+
+            string rutaFisica =
+                Path.GetFullPath(
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        adjunto.RutaArchivo
+                            .Replace(
+                                "/",
+                                Path.DirectorySeparatorChar.ToString()
+                            )
+                    )
+                );
+
+            // =====================================================
+            // EVITAR PATH TRAVERSAL
+            // =====================================================
+
+            if (
+                !rutaFisica.StartsWith(
+                    raizPermitida,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return Forbid();
+            }
+
+            if (
+                !System.IO.File.Exists(
+                    rutaFisica
+                )
+            )
+            {
+                return NotFound();
+            }
+
+            byte[] contenido =
+                await System.IO.File.ReadAllBytesAsync(
+                    rutaFisica
+                );
+
+            string mimeType =
+                string.IsNullOrWhiteSpace(
+                    adjunto.MimeType
+                )
+                    ? "application/octet-stream"
+                    : adjunto.MimeType;
+
+            return File(
+                contenido,
+                mimeType,
+                adjunto.NombreOriginal
+            );
+        }
+
+        // =========================================================
         // ACTUALIZAR TICKET
         // POST ?handler=ActualizarTicket
         // =========================================================
@@ -1140,6 +1771,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 // =================================================
                 // VALIDAR TÉCNICO
+                // Solamente usuarios con rol "Administrador TI"
                 // =================================================
 
                 string? nuevoUsuarioAsignadoId =
@@ -1160,7 +1792,6 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     nuevoUsuarioAsignado =
                         await _context.Users
-                            .AsNoTracking()
                             .FirstOrDefaultAsync(
                                 x =>
                                     x.Id ==
@@ -1179,6 +1810,37 @@ namespace ERPSEI.Areas.ERP.Pages
                         );
                     }
 
+                    // =============================================
+                    // VALIDAR ROL ADMINISTRADOR TI
+                    // =============================================
+
+                    bool esAdministradorTi =
+                        await _userManager.IsInRoleAsync(
+                            nuevoUsuarioAsignado,
+                            "Administrador TI"
+                        );
+
+                    if (!esAdministradorTi)
+                    {
+                        return new JsonResult(
+                            new
+                            {
+                                success = false,
+                                message =
+                                    "El usuario seleccionado no cuenta con el rol Administrador TI."
+                            }
+                        )
+                        {
+                            StatusCode =
+                                StatusCodes.Status403Forbidden
+                        };
+                    }
+
+                    // =============================================
+                    // BUSCAR EQUIPO DE SOPORTE SI EXISTE
+                    // No es obligatorio para poder asignar técnico
+                    // =============================================
+
                     relacionTecnico =
                         await _context.ServiceSupportTeamUsers
                             .AsNoTracking()
@@ -1188,18 +1850,6 @@ namespace ERPSEI.Areas.ERP.Pages
                                     nuevoUsuarioAsignadoId &&
                                     x.Activo
                             );
-
-                    if (relacionTecnico == null)
-                    {
-                        return new JsonResult(
-                            new
-                            {
-                                success = false,
-                                message =
-                                    "El usuario seleccionado no pertenece a un equipo de soporte activo."
-                            }
-                        );
-                    }
                 }
 
                 DateTime ahora =
@@ -1274,15 +1924,24 @@ namespace ERPSEI.Areas.ERP.Pages
                         nuevoUsuarioAsignadoId;
 
                     if (
-                        nuevoUsuarioAsignadoId != null &&
-                        relacionTecnico != null
-                    )
+                            nuevoUsuarioAsignadoId != null
+                        )
                     {
-                        ticket.SupportTeamId =
-                            relacionTecnico.SupportTeamId;
-
                         ticket.FechaAsignacion =
                             ahora;
+
+                        if (
+                            relacionTecnico != null
+                        )
+                        {
+                            ticket.SupportTeamId =
+                                relacionTecnico.SupportTeamId;
+                        }
+                        else
+                        {
+                            ticket.SupportTeamId =
+                                null;
+                        }
                     }
                     else
                     {
@@ -1634,6 +2293,320 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
+        // AGREGAR COMENTARIO AL TICKET
+        // POST ?handler=AgregarComentario
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostAgregarComentarioAsync(
+                [FromBody]
+        AgregarComentarioTicketRequest request)
+        {
+            // =====================================================
+            // USUARIO ACTUAL
+            // =====================================================
+
+            AppUser? usuarioActual =
+                await _userManager.GetUserAsync(User);
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La sesión del usuario no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+            // =====================================================
+            // VALIDACIONES
+            // =====================================================
+
+            if (
+                request == null ||
+                request.TicketId <= 0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El ticket especificado no es válido."
+                    }
+                );
+            }
+
+            string comentario =
+                request.Comentario
+                    ?.Trim()
+                ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(
+                    comentario))
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Debes escribir un comentario."
+                    }
+                );
+            }
+
+            if (comentario.Length > 5000)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El comentario no puede superar los 5000 caracteres."
+                    }
+                );
+            }
+
+            bool esAdmin =
+                EsAdministradorMesa();
+
+            // =====================================================
+            // OBTENER TICKET
+            // =====================================================
+
+            ServiceTicket? ticket =
+                await _context.ServiceTickets
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                            request.TicketId
+                    );
+
+            if (ticket == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el ticket solicitado."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+            // =====================================================
+            // SEGURIDAD DEL SOLICITANTE
+            // =====================================================
+
+            if (
+                !esAdmin &&
+                ticket.UsuarioSolicitanteId !=
+                usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para comentar este ticket."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+            // =====================================================
+            // NOTA INTERNA
+            // =====================================================
+
+            bool esNotaInterna =
+                request.EsNotaInterna;
+
+            if (
+                esNotaInterna &&
+                !esAdmin
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para agregar notas internas."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+            try
+            {
+                DateTime ahora =
+                    DateTime.Now;
+
+                // =================================================
+                // CREAR COMENTARIO
+                // =================================================
+
+                ServiceTicketComment nuevoComentario =
+                    new ServiceTicketComment
+                    {
+                        TicketId =
+                            ticket.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        Comentario =
+                            comentario,
+
+                        EsNotaInterna =
+                            esNotaInterna,
+
+                        FechaCreacion =
+                            ahora,
+
+                        Eliminado =
+                            false
+                    };
+
+                _context.ServiceTicketComments.Add(
+                    nuevoComentario
+                );
+
+                // =================================================
+                // PRIMERA RESPUESTA DEL ÁREA TI
+                // =================================================
+
+                if (
+                    esAdmin &&
+                    !esNotaInterna &&
+                    ticket.FechaPrimeraRespuesta ==
+                    null
+                )
+                {
+                    ticket.FechaPrimeraRespuesta =
+                        ahora;
+
+                    if (
+                        ticket.FechaLimiteRespuestaSla
+                            .HasValue
+                    )
+                    {
+                        ticket.SlaRespuestaVencido =
+                            ahora >
+                            ticket
+                                .FechaLimiteRespuestaSla
+                                .Value;
+                    }
+                }
+
+                // =================================================
+                // ACTUALIZAR TICKET
+                // =================================================
+
+                ticket.FechaActualizacion =
+                    ahora;
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                ServiceTicketHistory historial =
+                    new ServiceTicketHistory
+                    {
+                        TicketId =
+                            ticket.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        Accion =
+                            esNotaInterna
+                                ? "Nota interna"
+                                : "Comentario",
+
+                        Campo =
+                            esNotaInterna
+                                ? "NotaInterna"
+                                : "Comentario",
+
+                        ValorAnterior =
+                            null,
+
+                        ValorNuevo =
+                            null,
+
+                        Detalle =
+                            esNotaInterna
+                                ? "Se agregó una nota interna al ticket."
+                                : "Se agregó un comentario de seguimiento al ticket.",
+
+                        FechaHora =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    };
+
+                _context.ServiceTicketHistories.Add(
+                    historial
+                );
+
+                await _context.SaveChangesAsync();
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            esNotaInterna
+                                ? "Nota interna agregada correctamente."
+                                : "Comentario agregado correctamente."
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al agregar comentario al ticket {TicketId}.",
+                    request.TicketId
+                );
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Ocurrió un error al guardar el comentario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        // =========================================================
         // CARGAR PANTALLA
         // =========================================================
 
@@ -1654,6 +2627,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     .Include(x => x.Category)
                     .Include(x => x.Subcategory)
                     .Include(x => x.SupportTeam);
+
 
             if (!EsAdmin)
             {
@@ -1799,52 +2773,60 @@ namespace ERPSEI.Areas.ERP.Pages
 
         // =========================================================
         // OBTENER TÉCNICOS
+        // Solamente usuarios con rol "Administrador TI"
+        // =========================================================
+
+        // =========================================================
+        // OBTENER TÉCNICOS
+        // Solamente usuarios con rol "Administrador TI"
         // =========================================================
 
         private async Task<object[]> ObtenerTecnicosAsync()
         {
+            const string rolTecnico =
+                "Administrador TI";
+
+            IList<AppUser> usuariosAdministradorTi =
+                await _userManager.GetUsersInRoleAsync(
+                    rolTecnico
+                );
+
+            if (
+                usuariosAdministradorTi == null ||
+                usuariosAdministradorTi.Count == 0
+            )
+            {
+                return Array.Empty<object>();
+            }
+
             var tecnicos =
-                await (
-                    from relacion
-                        in _context.ServiceSupportTeamUsers
-                            .AsNoTracking()
+                usuariosAdministradorTi
+                    .OrderBy(
+                        x =>
+                            x.UserName ??
+                            x.Email
+                    )
+                    .Select(
+                        usuario =>
+                            new
+                            {
+                                id =
+                                    usuario.Id,
 
-                    join usuario
-                        in _context.Users.AsNoTracking()
-                        on relacion.UserId
-                        equals usuario.Id
+                                nombre =
+                                    usuario.UserName ??
+                                    usuario.Email ??
+                                    "Usuario",
 
-                    where relacion.Activo
+                                correo =
+                                    usuario.Email ??
+                                    string.Empty
+                            }
+                    )
+                    .Cast<object>()
+                    .ToArray();
 
-                    orderby usuario.UserName
-
-                    select new
-                    {
-                        id =
-                            usuario.Id,
-
-                        nombre =
-                            usuario.UserName ??
-                            usuario.Email ??
-                            "Usuario",
-
-                        correo =
-                            usuario.Email ??
-                            string.Empty,
-
-                        equipoId =
-                            relacion.SupportTeamId,
-
-                        esResponsable =
-                            relacion.EsResponsable
-                    }
-                )
-                .Distinct()
-                .ToListAsync();
-
-            return tecnicos
-                .Cast<object>()
-                .ToArray();
+            return tecnicos;
         }
 
         // =========================================================
@@ -1900,13 +2882,15 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
-        // ADMINISTRADOR MESA DE AYUDA
+        // VALIDAR ADMINISTRADOR DE MESA DE AYUDA
+        // Administrador y Administrador TI tienen acceso FULL
         // =========================================================
 
         private bool EsAdministradorMesa()
         {
             return
                 User.IsInRole("Administrador") ||
+                User.IsInRole("Administrador TI") ||
                 User.IsInRole("Master");
         }
 
@@ -1929,6 +2913,40 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             return ip;
+        }
+
+        // =========================================================
+        // FORMATEAR TAMAÑO DE ARCHIVO
+        // =========================================================
+
+        private static string FormatearTamanoArchivo(
+            long bytes)
+        {
+            if (bytes < 1024)
+            {
+                return $"{bytes} B";
+            }
+
+            double kb =
+                bytes / 1024d;
+
+            if (kb < 1024)
+            {
+                return $"{kb:N1} KB";
+            }
+
+            double mb =
+                kb / 1024d;
+
+            if (mb < 1024)
+            {
+                return $"{mb:N1} MB";
+            }
+
+            double gb =
+                mb / 1024d;
+
+            return $"{gb:N1} GB";
         }
     }
 }

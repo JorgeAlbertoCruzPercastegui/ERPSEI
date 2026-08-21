@@ -2260,3 +2260,559 @@ header .navbar-brand {
         transform: none;
         box-shadow: none;
     }
+
+/* ============================================================
+   FASE 3 - SEGUIMIENTO / COMENTARIOS DEL TICKET
+   ============================================================ */
+
+#modalDetalleTicket .sd-comment-compose {
+    padding: 18px;
+    margin-bottom: 26px;
+    border: 1px solid #e9e7f1;
+    border-radius: 16px;
+    background: #faf9fd;
+}
+
+#modalDetalleTicket .sd-comment-compose-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 14px;
+}
+
+    #modalDetalleTicket .sd-comment-compose-header strong {
+        display: block;
+        color: #292637;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    #modalDetalleTicket .sd-comment-compose-header small {
+        display: block;
+        margin-top: 3px;
+        color: #858291;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    #modalDetalleTicket .sd-comment-compose-header > i {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 11px;
+        background: #eeebff;
+        color: #21166f;
+        font-size: 17px;
+    }
+
+/* ============================================================
+   TEXTAREA COMENTARIO
+   ============================================================ */
+
+#modalDetalleTicket #nuevoComentarioTicket {
+    min-height: 110px;
+    resize: vertical;
+    border-radius: 12px;
+    border: 1px solid #dedbe8;
+    background: #ffffff;
+    color: #292735;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 13px 14px;
+}
+
+    #modalDetalleTicket #nuevoComentarioTicket::placeholder {
+        color: #9a97a6;
+    }
+
+    #modalDetalleTicket #nuevoComentarioTicket:focus {
+        border-color: #21166f;
+        box-shadow: 0 0 0 .18rem rgba(33, 22, 111, .10);
+        outline: 0;
+    }
+
+/* ============================================================
+   NOTA INTERNA
+   ============================================================ */
+
+#modalDetalleTicket #contenedorNotaInterna {
+    position: relative;
+    padding: 12px 14px 12px 40px;
+    border: 1px solid #ebd696;
+    border-radius: 12px;
+    background: #fffaf0;
+}
+
+    #modalDetalleTicket #contenedorNotaInterna .form-check-input {
+        position: absolute;
+        left: 14px;
+        top: 14px;
+        margin: 0;
+        cursor: pointer;
+    }
+
+        #modalDetalleTicket #contenedorNotaInterna .form-check-input:checked {
+            background-color: #21166f;
+            border-color: #21166f;
+        }
+
+        #modalDetalleTicket #contenedorNotaInterna .form-check-input:focus {
+            border-color: #21166f;
+            box-shadow: 0 0 0 .15rem rgba(33, 22, 111, .12);
+        }
+
+    #modalDetalleTicket #contenedorNotaInterna .form-check-label {
+        display: block;
+        color: #745806;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    #modalDetalleTicket #contenedorNotaInterna .form-text {
+        margin-top: 4px;
+        color: #927b39;
+        font-size: 11px;
+    }
+
+/* ============================================================
+   BOTÓN ENVIAR COMENTARIO
+   ============================================================ */
+
+#modalDetalleTicket #btnEnviarComentarioTicket {
+    min-width: 180px;
+}
+
+    #modalDetalleTicket #btnEnviarComentarioTicket:disabled {
+        opacity: .65;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+/* ============================================================
+   TÍTULO DEL SEGUIMIENTO
+   ============================================================ */
+
+#modalDetalleTicket .sd-comments-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 8px;
+    margin-bottom: 14px;
+    color: #343140;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+    #modalDetalleTicket .sd-comments-title i {
+        color: #21166f;
+    }
+
+/* ============================================================
+   TARJETAS DE COMENTARIOS
+   ============================================================ */
+
+#modalDetalleTicket .sd-comment {
+    padding: 15px 17px;
+    margin-bottom: 12px;
+    border: 1px solid #ececf2;
+    border-radius: 14px;
+    background: #ffffff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+    #modalDetalleTicket .sd-comment:hover {
+        border-color: #dedbe8;
+        box-shadow: 0 3px 10px rgba(33, 22, 111, .04);
+    }
+
+/* ============================================================
+   NOTA INTERNA RENDERIZADA
+   ============================================================ */
+
+#modalDetalleTicket .sd-comment-internal {
+    border-color: #efd88e;
+    background: #fffaf0;
+}
+
+    #modalDetalleTicket .sd-comment-internal:hover {
+        border-color: #e4ca74;
+    }
+
+/* ============================================================
+   HEADER DEL COMENTARIO
+   ============================================================ */
+
+#modalDetalleTicket .sd-comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 9px;
+}
+
+    #modalDetalleTicket .sd-comment-header strong {
+        color: #323242;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    #modalDetalleTicket .sd-comment-header > span {
+        color: #9293a3;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+/* ============================================================
+   BADGE NOTA INTERNA
+   ============================================================ */
+
+#modalDetalleTicket .sd-internal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 8px;
+    padding: 4px 7px;
+    border-radius: 999px;
+    background: #fff0bd;
+    color: #866506;
+    font-size: 10px;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
+/* ============================================================
+   CUERPO DEL COMENTARIO
+   ============================================================ */
+
+#modalDetalleTicket .sd-comment-body {
+    color: #585968;
+    font-size: 13px;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+/* ============================================================
+   MENSAJES DE CONFIRMACIÓN
+   ============================================================ */
+
+#modalDetalleTicket #mensajeComentarioTicket {
+    border-radius: 11px;
+    font-size: 12px;
+}
+
+/* ============================================================
+   ESTADO VACÍO DE COMENTARIOS
+   ============================================================ */
+
+#modalDetalleTicket #detalleComentarios .sd-empty-detail {
+    min-height: 150px;
+    border: 1px dashed #dedbe8;
+    border-radius: 14px;
+    background: #fbfaff;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 767.98px) {
+
+    #modalDetalleTicket .sd-comment-compose {
+        padding: 15px;
+    }
+
+    #modalDetalleTicket .sd-comment-compose-header {
+        align-items: center;
+    }
+
+    #modalDetalleTicket .sd-comment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    #modalDetalleTicket #btnEnviarComentarioTicket {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+/* ============================================================
+   FASE 4 - ADJUNTOS / EVIDENCIAS
+   ============================================================ */
+
+#modalDetalleTicket .sd-detail-count {
+    min-width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+    border-radius: 999px;
+    background: #eeebff;
+    color: #21166f;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+#modalDetalleTicket .sd-attachment-upload {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border: 1px dashed #d8d4e8;
+    border-radius: 14px;
+    background: #faf9fd;
+}
+
+#modalDetalleTicket .sd-attachment-upload-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: #eeebff;
+    color: #21166f;
+    font-size: 20px;
+}
+
+#modalDetalleTicket .sd-attachment-upload-info {
+    flex: 1;
+    min-width: 0;
+}
+
+    #modalDetalleTicket .sd-attachment-upload-info strong {
+        display: block;
+        color: #302d40;
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    #modalDetalleTicket .sd-attachment-upload-info span {
+        display: block;
+        margin-top: 3px;
+        color: #888493;
+        font-size: 11px;
+    }
+
+#modalDetalleTicket .sd-selected-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 12px;
+    padding: 13px 15px;
+    border: 1px solid #e4e1ec;
+    border-radius: 13px;
+    background: #ffffff;
+}
+
+    #modalDetalleTicket .sd-selected-file > div {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+    }
+
+        #modalDetalleTicket .sd-selected-file > div > i {
+            color: #21166f;
+            font-size: 22px;
+        }
+
+    #modalDetalleTicket .sd-selected-file strong {
+        display: block;
+        max-width: 430px;
+        overflow: hidden;
+        color: #302d40;
+        font-size: 12px;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #modalDetalleTicket .sd-selected-file span {
+        display: block;
+        margin-top: 2px;
+        color: #918e9c;
+        font-size: 10px;
+    }
+
+#modalDetalleTicket .sd-attachments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#modalDetalleTicket .sd-attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 15px;
+    border: 1px solid #eceaf2;
+    border-radius: 13px;
+    background: #ffffff;
+}
+
+    #modalDetalleTicket .sd-attachment-item:hover {
+        border-color: #dcd7ea;
+        box-shadow: 0 3px 10px rgba(33, 22, 111, .04);
+    }
+
+#modalDetalleTicket .sd-attachment-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 11px;
+    background: #f0edff;
+    color: #21166f;
+    font-size: 18px;
+}
+
+#modalDetalleTicket .sd-attachment-info {
+    flex: 1;
+    min-width: 0;
+}
+
+    #modalDetalleTicket .sd-attachment-info strong {
+        display: block;
+        overflow: hidden;
+        color: #302d40;
+        font-size: 12px;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    #modalDetalleTicket .sd-attachment-info span {
+        display: block;
+        margin-top: 3px;
+        color: #96929f;
+        font-size: 10px;
+    }
+
+#modalDetalleTicket .sd-attachment-download {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid #ddd9eb;
+    border-radius: 10px;
+    color: #21166f;
+    background: #ffffff;
+    text-decoration: none;
+    transition: all .15s ease;
+}
+
+    #modalDetalleTicket .sd-attachment-download:hover {
+        border-color: #21166f;
+        background: #21166f;
+        color: #ffffff;
+    }
+
+#modalDetalleTicket #btnSubirArchivoTicket:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+@media (max-width: 767.98px) {
+
+    #modalDetalleTicket .sd-attachment-upload {
+        flex-wrap: wrap;
+    }
+
+    #modalDetalleTicket .sd-attachment-upload-info {
+        flex-basis: calc(100% - 60px);
+    }
+
+    #modalDetalleTicket .sd-attachment-upload .sd-btn-secondary {
+        width: 100%;
+    }
+
+    #modalDetalleTicket .sd-selected-file {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        #modalDetalleTicket .sd-selected-file strong {
+            max-width: 230px;
+        }
+
+    #modalDetalleTicket #btnSubirArchivoTicket {
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   AJUSTE VISUAL BOTÓN "SELECCIONAR ARCHIVO"
+   ============================================================ */
+
+#modalDetalleTicket #btnSeleccionarArchivoTicket {
+    min-width: 210px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 1px solid #21166f;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #21166f;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(33, 22, 111, .06);
+    transition: all .18s ease;
+}
+
+    #modalDetalleTicket #btnSeleccionarArchivoTicket i {
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    #modalDetalleTicket #btnSeleccionarArchivoTicket:hover {
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
+        box-shadow: 0 8px 18px rgba(33, 22, 111, .18);
+        transform: translateY(-1px);
+    }
+
+    #modalDetalleTicket #btnSeleccionarArchivoTicket:active {
+        transform: translateY(0);
+        box-shadow: 0 3px 10px rgba(33, 22, 111, .12);
+    }
+
+    #modalDetalleTicket #btnSeleccionarArchivoTicket:focus {
+        outline: 0;
+        box-shadow: 0 0 0 .18rem rgba(33, 22, 111, .14);
+    }
+
+    #modalDetalleTicket #btnSeleccionarArchivoTicket:disabled {
+        opacity: .65;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    #modalDetalleTicket #btnSeleccionarArchivoTicket {
+        width: 100%;
+        min-width: 0;
+    }
+}

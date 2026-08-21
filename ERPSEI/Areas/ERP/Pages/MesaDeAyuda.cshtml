@@ -1536,6 +1536,111 @@
                             <div class="tab-pane fade show active"
                                  id="tabComentariosTicket">
 
+                                <!-- ================================================ -->
+                                <!-- NUEVO COMENTARIO -->
+                                <!-- ================================================ -->
+
+                                <div class="sd-comment-compose">
+
+                                    <div class="sd-comment-compose-header">
+
+                                        <div>
+
+                                            <strong>
+                                                Agregar seguimiento
+                                            </strong>
+
+                                            <small>
+                                                Registra una respuesta o actualización
+                                                relacionada con el ticket.
+                                            </small>
+
+                                        </div>
+
+                                        <i class="bi bi-chat-square-text"></i>
+
+                                    </div>
+
+                                    <textarea id="nuevoComentarioTicket"
+                                              class="form-control"
+                                              maxlength="5000"
+                                              rows="4"
+                                              placeholder="Escribe un comentario de seguimiento..."></textarea>
+
+                                    <!-- ============================================ -->
+                                    <!-- NOTA INTERNA -->
+                                    <!-- ============================================ -->
+
+                                    <div id="contenedorNotaInterna"
+                                         class="form-check mt-3 d-none">
+
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="comentarioEsNotaInterna">
+
+                                        <label class="form-check-label"
+                                               for="comentarioEsNotaInterna">
+
+                                            <i class="bi bi-lock-fill me-1"></i>
+
+                                            Nota interna
+
+                                        </label>
+
+                                        <div class="form-text">
+                                            Las notas internas solamente serán visibles
+                                            para el equipo de TI.
+                                        </div>
+
+                                    </div>
+
+                                    <div id="mensajeComentarioTicket"
+                                         class="alert d-none mt-3 mb-0">
+                                    </div>
+
+                                    <div class="d-flex justify-content-end mt-3">
+
+                                        <button type="button"
+                                                id="btnEnviarComentarioTicket"
+                                                class="sd-btn-primary">
+
+                                            <span id="btnEnviarComentarioContenido">
+
+                                                <i class="bi bi-send me-1"></i>
+
+                                                Enviar comentario
+
+                                            </span>
+
+                                            <span id="btnEnviarComentarioCargando"
+                                                  class="d-none">
+
+                                                <span class="spinner-border spinner-border-sm me-2">
+                                                </span>
+
+                                                Enviando...
+
+                                            </span>
+
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- ================================================ -->
+                                <!-- HISTORIAL DE COMENTARIOS -->
+                                <!-- ================================================ -->
+
+                                <div class="sd-comments-title">
+
+                                    <i class="bi bi-chat-dots"></i>
+
+                                    Seguimiento del ticket
+
+                                </div>
+
                                 <div id="detalleComentarios">
                                 </div>
 
@@ -1554,6 +1659,143 @@
                         </div>
 
                     </div>
+
+                    <!-- ========================================== -->
+                    <!-- ADJUNTOS / EVIDENCIAS -->
+                    <!-- ========================================== -->
+
+                    <div class="sd-detail-section mt-4">
+
+                        <div class="sd-detail-section-title">
+
+                            <div class="d-flex align-items-center gap-2">
+
+                                <i class="bi bi-paperclip"></i>
+
+                                <span>
+                                    Adjuntos / Evidencias
+                                </span>
+
+                            </div>
+
+                            <span id="detalleAdjuntosCantidad"
+                                  class="sd-detail-count">
+                                0
+                            </span>
+
+                        </div>
+
+                        <div class="sd-attachment-upload">
+
+                            <div class="sd-attachment-upload-icon">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </div>
+
+                            <div class="sd-attachment-upload-info">
+
+                                <strong>
+                                    Agregar evidencia
+                                </strong>
+
+                                <span>
+                                    PNG, JPG, PDF, Word, Excel o TXT.
+                                    Máximo 10 MB por archivo.
+                                </span>
+
+                            </div>
+
+                            <input type="file"
+                                   id="archivoTicket"
+                                   class="d-none"
+                                   accept=".png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx,.txt" />
+
+                            <button type="button"
+                                    id="btnSeleccionarArchivoTicket"
+                                    class="sd-btn-secondary">
+
+                                <i class="bi bi-folder2-open me-1"></i>
+
+                                Seleccionar archivo
+
+                            </button>
+
+                        </div>
+
+                        <div id="archivoTicketSeleccionado"
+                             class="sd-selected-file d-none">
+
+                            <div>
+
+                                <i class="bi bi-file-earmark"></i>
+
+                                <div>
+
+                                    <strong id="archivoTicketNombre">
+                                        -
+                                    </strong>
+
+                                    <span id="archivoTicketTamano">
+                                        -
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            <button type="button"
+                                    id="btnSubirArchivoTicket"
+                                    class="sd-btn-primary">
+
+                                <span id="btnSubirArchivoContenido">
+
+                                    <i class="bi bi-cloud-arrow-up me-1"></i>
+
+                                    Subir archivo
+
+                                </span>
+
+                                <span id="btnSubirArchivoCargando"
+                                      class="d-none">
+
+                                    <span class="spinner-border spinner-border-sm me-2"
+                                          role="status"
+                                          aria-hidden="true">
+                                    </span>
+
+                                    Subiendo...
+
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                        <div id="mensajeAdjuntoTicket"
+                             class="alert d-none mt-3 mb-0"
+                             role="alert">
+                        </div>
+
+                        <div id="detalleAdjuntos"
+                             class="sd-attachments-list mt-3">
+
+                            <div class="sd-empty-detail">
+
+                                <i class="bi bi-paperclip"></i>
+
+                                <strong>
+                                    Sin archivos adjuntos
+                                </strong>
+
+                                <span>
+                                    Todavía no existen evidencias registradas.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
 
                     <!-- ========================================== -->
                     <!-- RESOLUCIÓN -->
@@ -1604,7 +1846,6 @@
 
 </div>
 
-
 @section Scripts
 {
     <partial name="_ValidationScriptsPartial" />
@@ -1651,6 +1892,71 @@
                 const modalDetalleElemento =
                     document.getElementById(
                         "modalDetalleTicket"
+                    );
+
+                // ENVIAR COMENTARIO
+
+                const btnEnviarComentarioTicket =
+                    document.getElementById(
+                        "btnEnviarComentarioTicket"
+                    );
+
+                        const archivoTicket =
+                        document.getElementById(
+                            "archivoTicket"
+                        );
+
+                    const btnSeleccionarArchivoTicket =
+                        document.getElementById(
+                            "btnSeleccionarArchivoTicket"
+                        );
+
+                    const btnSubirArchivoTicket =
+                        document.getElementById(
+                            "btnSubirArchivoTicket"
+                        );
+
+
+                    btnSeleccionarArchivoTicket
+                        ?.addEventListener(
+                            "click",
+                            function () {
+
+                                archivoTicket?.click();
+
+                            }
+                        );
+
+
+                    archivoTicket
+                        ?.addEventListener(
+                            "change",
+                            function () {
+
+                                mostrarArchivoSeleccionado();
+
+                            }
+                        );
+
+
+                    btnSubirArchivoTicket
+                        ?.addEventListener(
+                            "click",
+                            async function () {
+
+                                await subirAdjuntoTicket();
+
+                            }
+                        );
+
+                btnEnviarComentarioTicket
+                    ?.addEventListener(
+                        "click",
+                        async function () {
+
+                            await enviarComentarioTicket();
+
+                        }
                     );
 
                 let modalDetalleTicket = null;
@@ -2009,53 +2315,140 @@
 
                         function prepararModalDetalle() {
 
-            const loading =
-                document.getElementById(
-                    "detalleTicketLoading"
-                );
+                    const loading =
+                        document.getElementById(
+                            "detalleTicketLoading"
+                        );
 
-            const contenido =
-                document.getElementById(
-                    "detalleTicketContenido"
-                );
+                    const contenido =
+                        document.getElementById(
+                            "detalleTicketContenido"
+                        );
 
-            const error =
-                document.getElementById(
-                    "detalleTicketError"
-                );
+                    const error =
+                        document.getElementById(
+                            "detalleTicketError"
+                        );
 
-            const mensajeAdmin =
-                document.getElementById(
-                    "detalleAdminMensaje"
-                );
+                    const mensajeAdmin =
+                        document.getElementById(
+                            "detalleAdminMensaje"
+                        );
 
+                    const mensajeComentario =
+                        document.getElementById(
+                            "mensajeComentarioTicket"
+                        );
 
-            loading?.classList.remove(
-                "d-none"
-            );
+                    const textarea =
+                        document.getElementById(
+                            "nuevoComentarioTicket"
+                        );
 
-            contenido?.classList.add(
-                "d-none"
-            );
+                    const checkbox =
+                        document.getElementById(
+                            "comentarioEsNotaInterna"
+                        );
 
-            error?.classList.add(
-                "d-none"
-            );
+                    const mensajeAdjunto =
+                        document.getElementById(
+                            "mensajeAdjuntoTicket"
+                        );
 
-            mensajeAdmin?.classList.add(
-                "d-none"
-            );
+                    const archivoTicketInput =
+                        document.getElementById(
+                            "archivoTicket"
+                        );
 
+                    const archivoSeleccionado =
+                        document.getElementById(
+                            "archivoTicketSeleccionado"
+                        );
 
-            if (error) {
-                error.textContent = "";
-            }
+                    const contadorAdjuntos =
+                        document.getElementById(
+                            "detalleAdjuntosCantidad"
+                        );
 
+                    const detalleAdjuntos =
+                        document.getElementById(
+                            "detalleAdjuntos"
+                        );
 
-            if (mensajeAdmin) {
-                mensajeAdmin.textContent = "";
-            }
-        }
+                    loading?.classList.remove(
+                        "d-none"
+                    );
+
+                    contenido?.classList.add(
+                        "d-none"
+                    );
+
+                    error?.classList.add(
+                        "d-none"
+                    );
+
+                    mensajeAdmin?.classList.add(
+                        "d-none"
+                    );
+
+                    mensajeComentario?.classList.add(
+                        "d-none"
+                    );
+
+                    mensajeAdjunto?.classList.add(
+                        "d-none"
+                    );
+
+                    archivoSeleccionado?.classList.add(
+                        "d-none"
+                    );
+
+                    if (archivoTicketInput) {
+                        archivoTicketInput.value = "";
+                    }
+
+                    if (contadorAdjuntos) {
+                        contadorAdjuntos.textContent = "0";
+                    }
+
+                    if (detalleAdjuntos) {
+                        detalleAdjuntos.innerHTML = `
+                            <div class="sd-empty-detail">
+                                <i class="bi bi-paperclip"></i>
+                                <strong>
+                                    Sin archivos adjuntos
+                                </strong>
+                                <span>
+                                    Todavía no existen evidencias registradas.
+                                </span>
+                            </div>
+                        `;
+                    }
+
+                    if (error) {
+                        error.textContent = "";
+                    }
+
+                    if (mensajeAdmin) {
+                        mensajeAdmin.textContent = "";
+                    }
+
+                    if (mensajeComentario) {
+                        mensajeComentario.textContent = "";
+                    }
+
+                    if (mensajeAdjunto) {
+                        mensajeAdjunto.textContent = "";
+                    }
+
+                    if (textarea) {
+                        textarea.value = "";
+                    }
+
+                    if (checkbox) {
+                        checkbox.checked = false;
+                    }
+                }
 
 
                 // =================================================
@@ -2107,7 +2500,8 @@
 
                 function cargarDetalleTicket(
                     respuesta
-                ) {
+                )
+                {
 
                     const ticket =
                         respuesta.ticket;
@@ -2229,6 +2623,13 @@
                         respuesta
                     );
 
+                    configurarComentarioAdmin(
+                        respuesta.esAdmin
+                    );
+
+                    cargarAdjuntosTicket(
+                       respuesta.ticket.id
+                    );
 
                     const loading =
                         document.getElementById(
@@ -3230,6 +3631,1053 @@
             );
         }
 
+                // =================================================
+        // CONFIGURAR OPCIONES DE COMENTARIO
+        // =================================================
+
+        function configurarComentarioAdmin(
+            esAdmin
+        ) {
+
+            const contenedorNotaInterna =
+                document.getElementById(
+                    "contenedorNotaInterna"
+                );
+
+            const checkbox =
+                document.getElementById(
+                    "comentarioEsNotaInterna"
+                );
+
+            if (!contenedorNotaInterna) {
+                return;
+            }
+
+            if (esAdmin) {
+
+                contenedorNotaInterna
+                    .classList
+                    .remove(
+                        "d-none"
+                    );
+
+            }
+            else {
+
+                contenedorNotaInterna
+                    .classList
+                    .add(
+                        "d-none"
+                    );
+
+                if (checkbox) {
+                    checkbox.checked =
+                        false;
+                }
+            }
+        }
+                // =================================================
+                // ENVIAR COMENTARIO
+                // =================================================
+
+                async function enviarComentarioTicket() {
+
+                    const ticketIdElemento =
+                        document.getElementById(
+                            "detalleTicketId"
+                        );
+
+                    const textarea =
+                        document.getElementById(
+                            "nuevoComentarioTicket"
+                        );
+
+                    const checkbox =
+                        document.getElementById(
+                            "comentarioEsNotaInterna"
+                        );
+
+                    const boton =
+                        document.getElementById(
+                            "btnEnviarComentarioTicket"
+                        );
+
+                    const contenidoBoton =
+                        document.getElementById(
+                            "btnEnviarComentarioContenido"
+                        );
+
+                    const cargandoBoton =
+                        document.getElementById(
+                            "btnEnviarComentarioCargando"
+                        );
+
+                    const ticketId =
+                        parseInt(
+                            ticketIdElemento?.value ||
+                            "0",
+                            10
+                        );
+
+                    const comentario =
+                        textarea?.value
+                            ?.trim()
+                        ?? "";
+
+                    const esNotaInterna =
+                        checkbox?.checked === true;
+
+
+                    // =============================================
+                    // VALIDACIONES
+                    // =============================================
+
+                    if (
+                        Number.isNaN(ticketId) ||
+                        ticketId <= 0
+                    ) {
+
+                        mostrarMensajeComentario(
+                            "danger",
+                            "No fue posible identificar el ticket."
+                        );
+
+                        return;
+                    }
+
+
+                    if (!comentario) {
+
+                        mostrarMensajeComentario(
+                            "warning",
+                            "Escribe un comentario antes de enviarlo."
+                        );
+
+                        textarea?.focus();
+
+                        return;
+                    }
+
+
+                    if (
+                        comentario.length >
+                        5000
+                    ) {
+
+                        mostrarMensajeComentario(
+                            "warning",
+                            "El comentario no puede superar los 5000 caracteres."
+                        );
+
+                        return;
+                    }
+
+
+                    // =============================================
+                    // TOKEN ANTIFORGERY
+                    // =============================================
+
+                    const token =
+                        document.querySelector(
+                            'input[name="__RequestVerificationToken"]'
+                        )
+                        ?.value;
+
+
+                    if (!token) {
+
+                        mostrarMensajeComentario(
+                            "danger",
+                            "No fue posible validar la seguridad de la solicitud."
+                        );
+
+                        return;
+                    }
+
+
+                    // =============================================
+                    // ESTADO DEL BOTÓN
+                    // =============================================
+
+                    if (boton) {
+                        boton.disabled = true;
+                    }
+
+                    contenidoBoton?.classList.add(
+                        "d-none"
+                    );
+
+                    cargandoBoton?.classList.remove(
+                        "d-none"
+                    );
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                "?handler=AgregarComentario",
+                                {
+                                    method:
+                                        "POST",
+
+                                    headers: {
+
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "Accept":
+                                            "application/json",
+
+                                        "RequestVerificationToken":
+                                            token
+                                    },
+
+                                    body:
+                                        JSON.stringify(
+                                            {
+                                                ticketId:
+                                                    ticketId,
+
+                                                comentario:
+                                                    comentario,
+
+                                                esNotaInterna:
+                                                    esNotaInterna
+                                            }
+                                        )
+                                }
+                            );
+
+
+                        let respuesta =
+                            null;
+
+
+                        try {
+
+                            respuesta =
+                                await response.json();
+
+                        }
+                        catch {
+
+                            throw new Error(
+                                "El servidor respondió con un formato no válido."
+                            );
+                        }
+
+
+                        if (
+                            response.status === 401
+                        ) {
+
+                            throw new Error(
+                                respuesta?.message ||
+                                "Tu sesión ya no es válida. Inicia sesión nuevamente."
+                            );
+                        }
+
+
+                        if (
+                            response.status === 403
+                        ) {
+
+                            throw new Error(
+                                respuesta?.message ||
+                                "No tienes permisos para agregar este comentario."
+                            );
+                        }
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                respuesta?.message ||
+                                "No fue posible guardar el comentario."
+                            );
+                        }
+
+
+                        if (
+                            !respuesta.success
+                        ) {
+
+                            throw new Error(
+                                respuesta.message ||
+                                "No fue posible guardar el comentario."
+                            );
+                        }
+
+
+                        // =========================================
+                        // LIMPIAR FORMULARIO
+                        // =========================================
+
+                        if (textarea) {
+                            textarea.value = "";
+                        }
+
+                        if (checkbox) {
+                            checkbox.checked = false;
+                        }
+
+
+                        // =========================================
+                        // RECARGAR DETALLE SIN CERRAR MODAL
+                        // =========================================
+
+                        await recargarDetalleTicket(
+                            ticketId
+                        );
+
+
+                        // =========================================
+                        // MOSTRAR MENSAJE DESPUÉS DE RECARGAR
+                        // =========================================
+
+                        mostrarMensajeComentario(
+                            "success",
+                            respuesta.message ||
+                            "Comentario agregado correctamente."
+                        );
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Error al guardar comentario:",
+                            error
+                        );
+
+                        mostrarMensajeComentario(
+                            "danger",
+                            error.message ||
+                            "Ocurrió un error al guardar el comentario."
+                        );
+
+                    }
+                    finally {
+
+                        if (boton) {
+                            boton.disabled = false;
+                        }
+
+                        contenidoBoton?.classList.remove(
+                            "d-none"
+                        );
+
+                        cargandoBoton?.classList.add(
+                            "d-none"
+                        );
+                    }
+                }
+
+
+                // =================================================
+                // RECARGAR DETALLE DEL TICKET
+                // =================================================
+
+                async function recargarDetalleTicket(
+                    ticketId
+                ) {
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                "?handler=Ticket&id=" +
+                                encodeURIComponent(
+                                    ticketId
+                                ),
+                                {
+                                    method:
+                                        "GET",
+
+                                    headers: {
+                                        "Accept":
+                                            "application/json"
+                                    }
+                                }
+                            );
+
+
+                        if (
+                            response.status === 401
+                        ) {
+
+                            throw new Error(
+                                "Tu sesión ya no es válida."
+                            );
+                        }
+
+
+                        if (
+                            response.status === 403
+                        ) {
+
+                            throw new Error(
+                                "No tienes permisos para consultar este ticket."
+                            );
+                        }
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "No fue posible actualizar el seguimiento."
+                            );
+                        }
+
+
+                        const respuesta =
+                            await response.json();
+
+
+                        if (
+                            !respuesta.success
+                        ) {
+
+                            throw new Error(
+                                respuesta.message ||
+                                "No fue posible actualizar el detalle."
+                            );
+                        }
+
+
+                        cargarDetalleTicket(
+                            respuesta
+                        );
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Error al recargar detalle:",
+                            error
+                        );
+
+                        mostrarMensajeComentario(
+                            "danger",
+                            error.message ||
+                            "No fue posible actualizar el detalle del ticket."
+                        );
+                    }
+                }
+
+
+                // =================================================
+                // MENSAJE DEL COMENTARIO
+                // =================================================
+
+                function mostrarMensajeComentario(
+                    tipo,
+                    texto
+                ) {
+
+                    const mensaje =
+                        document.getElementById(
+                            "mensajeComentarioTicket"
+                        );
+
+                    if (!mensaje) {
+                        return;
+                    }
+
+                    mensaje.className =
+                        `alert alert-${tipo} mt-3 mb-0`;
+
+                    mensaje.textContent =
+                        texto;
+
+                    mensaje.classList.remove(
+                        "d-none"
+                    );
+                }
+
+                        // =================================================
+        // MOSTRAR ARCHIVO SELECCIONADO
+        // =================================================
+
+        function mostrarArchivoSeleccionado() {
+
+            const input =
+                document.getElementById(
+                    "archivoTicket"
+                );
+
+            const contenedor =
+                document.getElementById(
+                    "archivoTicketSeleccionado"
+                );
+
+            const nombre =
+                document.getElementById(
+                    "archivoTicketNombre"
+                );
+
+            const tamano =
+                document.getElementById(
+                    "archivoTicketTamano"
+                );
+
+            const archivo =
+                input?.files?.[0];
+
+
+            if (!archivo) {
+
+                contenedor?.classList.add(
+                    "d-none"
+                );
+
+                return;
+            }
+
+
+            if (nombre) {
+                nombre.textContent =
+                    archivo.name;
+            }
+
+
+            if (tamano) {
+                tamano.textContent =
+                    formatearTamanoArchivoJs(
+                        archivo.size
+                    );
+            }
+
+
+            contenedor?.classList.remove(
+                "d-none"
+            );
+        }
+
+
+        // =================================================
+        // SUBIR ADJUNTO
+        // =================================================
+
+        async function subirAdjuntoTicket() {
+
+            const ticketIdElemento =
+                document.getElementById(
+                    "detalleTicketId"
+                );
+
+            const input =
+                document.getElementById(
+                    "archivoTicket"
+                );
+
+            const boton =
+                document.getElementById(
+                    "btnSubirArchivoTicket"
+                );
+
+            const contenido =
+                document.getElementById(
+                    "btnSubirArchivoContenido"
+                );
+
+            const cargando =
+                document.getElementById(
+                    "btnSubirArchivoCargando"
+                );
+
+
+            const ticketId =
+                parseInt(
+                    ticketIdElemento?.value ||
+                    "0",
+                    10
+                );
+
+
+            const archivo =
+                input?.files?.[0];
+
+
+            if (
+                Number.isNaN(ticketId) ||
+                ticketId <= 0
+            ) {
+
+                mostrarMensajeAdjunto(
+                    "danger",
+                    "No fue posible identificar el ticket."
+                );
+
+                return;
+            }
+
+
+            if (!archivo) {
+
+                mostrarMensajeAdjunto(
+                    "warning",
+                    "Selecciona un archivo."
+                );
+
+                return;
+            }
+
+
+            if (
+                archivo.size >
+                10 * 1024 * 1024
+            ) {
+
+                mostrarMensajeAdjunto(
+                    "warning",
+                    "El archivo no puede superar los 10 MB."
+                );
+
+                return;
+            }
+
+
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )
+                ?.value;
+
+
+            if (!token) {
+
+                mostrarMensajeAdjunto(
+                    "danger",
+                    "No fue posible validar la seguridad de la solicitud."
+                );
+
+                return;
+            }
+
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "ticketId",
+                ticketId
+            );
+
+            formData.append(
+                "archivo",
+                archivo
+            );
+
+
+            if (boton) {
+                boton.disabled = true;
+            }
+
+            contenido?.classList.add(
+                "d-none"
+            );
+
+            cargando?.classList.remove(
+                "d-none"
+            );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "?handler=SubirAdjunto",
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "RequestVerificationToken":
+                                    token
+                            },
+
+                            body:
+                                formData
+                        }
+                    );
+
+
+                const respuesta =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        respuesta?.message ||
+                        "No fue posible subir el archivo."
+                    );
+                }
+
+
+                if (!respuesta.success) {
+
+                    throw new Error(
+                        respuesta.message ||
+                        "No fue posible subir el archivo."
+                    );
+                }
+
+
+                if (input) {
+                    input.value = "";
+                }
+
+
+                document
+                    .getElementById(
+                        "archivoTicketSeleccionado"
+                    )
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+
+
+                mostrarMensajeAdjunto(
+                    "success",
+                    respuesta.message
+                );
+
+
+                await cargarAdjuntosTicket(
+                    ticketId
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error al subir adjunto:",
+                    error
+                );
+
+
+                mostrarMensajeAdjunto(
+                    "danger",
+                    error.message ||
+                    "Ocurrió un error al subir el archivo."
+                );
+
+            }
+            finally {
+
+                if (boton) {
+                    boton.disabled = false;
+                }
+
+                contenido?.classList.remove(
+                    "d-none"
+                );
+
+                cargando?.classList.add(
+                    "d-none"
+                );
+            }
+        }
+
+
+        // =================================================
+        // CARGAR ADJUNTOS
+        // =================================================
+
+        async function cargarAdjuntosTicket(
+            ticketId
+        ) {
+
+            const contenedor =
+                document.getElementById(
+                    "detalleAdjuntos"
+                );
+
+            const contador =
+                document.getElementById(
+                    "detalleAdjuntosCantidad"
+                );
+
+
+            if (!contenedor) {
+                return;
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "?handler=Adjuntos&ticketId=" +
+                        encodeURIComponent(
+                            ticketId
+                        ),
+                        {
+                            method:
+                                "GET",
+
+                            headers: {
+                                "Accept":
+                                    "application/json"
+                            }
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "No fue posible cargar los adjuntos."
+                    );
+                }
+
+
+                const respuesta =
+                    await response.json();
+
+
+                if (!respuesta.success) {
+
+                    throw new Error(
+                        respuesta.message ||
+                        "No fue posible cargar los adjuntos."
+                    );
+                }
+
+
+                const adjuntos =
+                    respuesta.adjuntos ||
+                    [];
+
+
+                if (contador) {
+                    contador.textContent =
+                        String(
+                            adjuntos.length
+                        );
+                }
+
+
+                contenedor.innerHTML =
+                    "";
+
+
+                if (
+                    adjuntos.length === 0
+                ) {
+
+                    contenedor.innerHTML = `
+                        <div class="sd-empty-detail">
+
+                            <i class="bi bi-paperclip"></i>
+
+                            <strong>
+                                Sin archivos adjuntos
+                            </strong>
+
+                            <span>
+                                Todavía no existen evidencias registradas.
+                            </span>
+
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                adjuntos.forEach(
+                    function (archivo) {
+
+                        const elemento =
+                            document.createElement(
+                                "div"
+                            );
+
+                        elemento.className =
+                            "sd-attachment-item";
+
+
+                        elemento.innerHTML = `
+                            <div class="sd-attachment-icon">
+
+                                <i class="bi ${obtenerIconoArchivo(
+                                    archivo.extension
+                                )}"></i>
+
+                            </div>
+
+                            <div class="sd-attachment-info">
+
+                                <strong>
+                                    ${escaparHtml(
+                                        archivo.nombre
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escaparHtml(
+                                        archivo.tamano
+                                    )}
+                                    ·
+                                    ${escaparHtml(
+                                        archivo.usuario
+                                    )}
+                                    ·
+                                    ${escaparHtml(
+                                        archivo.fecha
+                                    )}
+                                </span>
+
+                            </div>
+
+                            <a href="${archivo.urlDescarga}"
+                               class="sd-attachment-download"
+                               title="Descargar archivo">
+
+                                <i class="bi bi-download"></i>
+
+                            </a>
+                        `;
+
+
+                        contenedor.appendChild(
+                            elemento
+                        );
+                    }
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Error al cargar adjuntos:",
+                    error
+                );
+
+
+                contenedor.innerHTML = `
+                    <div class="alert alert-danger mb-0">
+                        No fue posible cargar los archivos adjuntos.
+                    </div>
+                `;
+            }
+        }
+
+
+                // =================================================
+                // MENSAJE ADJUNTO
+                // =================================================
+
+                function mostrarMensajeAdjunto(
+                    tipo,
+                    texto
+                ) {
+
+                    const mensaje =
+                        document.getElementById(
+                            "mensajeAdjuntoTicket"
+                        );
+
+
+                    if (!mensaje) {
+                        return;
+                    }
+
+
+                    mensaje.className =
+                        `alert alert-${tipo} mt-3 mb-0`;
+
+
+                    mensaje.textContent =
+                        texto;
+
+
+                    mensaje.classList.remove(
+                        "d-none"
+                    );
+                }
+
+
+                // =================================================
+                // ICONO ARCHIVO
+                // =================================================
+
+                function obtenerIconoArchivo(
+                    extension
+                ) {
+
+                    switch (
+                        (
+                            extension ||
+                            ""
+                        ).toLowerCase()
+                    ) {
+
+                        case ".png":
+                        case ".jpg":
+                        case ".jpeg":
+
+                            return "bi-file-earmark-image";
+
+
+                        case ".pdf":
+
+                            return "bi-file-earmark-pdf";
+
+
+                        case ".doc":
+                        case ".docx":
+
+                            return "bi-file-earmark-word";
+
+
+                        case ".xls":
+                        case ".xlsx":
+
+                            return "bi-file-earmark-excel";
+
+
+                        default:
+
+                            return "bi-file-earmark";
+                    }
+                }
+
+
+                // =================================================
+                // FORMATEAR TAMAÑO
+                // =================================================
+
+                function formatearTamanoArchivoJs(
+                    bytes
+                ) {
+
+                    if (bytes < 1024) {
+
+                        return `${bytes} B`;
+                    }
+
+
+                    const kb =
+                        bytes / 1024;
+
+
+                    if (kb < 1024) {
+
+                        return `${kb.toFixed(1)} KB`;
+                    }
+
+
+                    const mb =
+                        kb / 1024;
+
+
+                    return `${mb.toFixed(1)} MB`;
+                }
 
                 // =================================================
                 // UTILIDADES
