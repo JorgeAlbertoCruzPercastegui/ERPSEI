@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Tsp;
 using System.ComponentModel.DataAnnotations;
 
 namespace ERPSEI.Areas.ERP.Pages
@@ -40,6 +41,8 @@ namespace ERPSEI.Areas.ERP.Pages
             public int PriorityId { get; set; }
 
             public int StatusId { get; set; }
+
+            public string? Resolucion { get; set; }
         }
 
         public class AgregarComentarioTicketRequest
@@ -581,6 +584,29 @@ namespace ERPSEI.Areas.ERP.Pages
             }
 
             // =====================================================
+            // USUARIO QUE CERRÓ EL TICKET
+            // =====================================================
+
+            AppUser? usuarioCierre =
+                null;
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    ticket.UsuarioCierreId
+                )
+            )
+            {
+                usuarioCierre =
+                    await _context.Users
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.UsuarioCierreId
+                        );
+            }
+
+            // =====================================================
             // COMENTARIOS
             // =====================================================
 
@@ -622,7 +648,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
                     select new
                     {
-                        id = comentario.Id,
+                        id =
+                            comentario.Id,
 
                         usuarioId =
                             comentario.UsuarioId,
@@ -633,7 +660,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                     usuario.UserName ??
                                     usuario.Email ??
                                     "Usuario"
-                                  )
+                                )
                                 : "Usuario",
 
                         comentario =
@@ -707,10 +734,15 @@ namespace ERPSEI.Areas.ERP.Pages
                                 : "Sistema",
 
                         fecha =
-                            evento.FechaHora
-                                .ToString(
-                                    "dd/MM/yyyy HH:mm"
-                                )
+                        evento.FechaHora
+                            .ToString(
+                                "dd/MM/yyyy HH:mm"
+                            ),
+
+                        direccionIp =
+                        esAdmin
+                            ? evento.DireccionIp
+                            : null
                     }
                 )
                 .ToListAsync();
@@ -904,6 +936,18 @@ namespace ERPSEI.Areas.ERP.Pages
                             ?.ToString(
                                 "dd/MM/yyyy HH:mm"
                             ),
+
+                    usuarioCierreId =
+                    ticket.UsuarioCierreId,
+
+                    usuarioCierre =
+                    usuarioCierre != null
+                        ? (
+                            usuarioCierre.UserName ??
+                            usuarioCierre.Email ??
+                            "Usuario"
+                        )
+                        : string.Empty,
 
                     fechaLimiteRespuestaSla =
                         ticket.FechaLimiteRespuestaSla
@@ -1558,13 +1602,8 @@ namespace ERPSEI.Areas.ERP.Pages
             );
         }
 
-        // =========================================================
-        // ACTUALIZAR TICKET
-        // POST ?handler=ActualizarTicket
-        // =========================================================
-
         public async Task<IActionResult> OnPostActualizarTicketAsync(
-            [FromBody] ActualizarTicketRequest request)
+    [FromBody] ActualizarTicketRequest request)
         {
             // =====================================================
             // VALIDAR USUARIO
@@ -1579,13 +1618,16 @@ namespace ERPSEI.Areas.ERP.Pages
                     new
                     {
                         success = false,
-                        message = "La sesión del usuario no es válida."
+                        message =
+                            "La sesión del usuario no es válida."
                     }
                 )
                 {
-                    StatusCode = StatusCodes.Status401Unauthorized
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
                 };
             }
+
 
             // =====================================================
             // VALIDAR ADMINISTRADOR
@@ -1602,9 +1644,11 @@ namespace ERPSEI.Areas.ERP.Pages
                     }
                 )
                 {
-                    StatusCode = StatusCodes.Status403Forbidden
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
                 };
             }
+
 
             // =====================================================
             // VALIDAR REQUEST
@@ -1622,6 +1666,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 );
             }
 
+
             if (request.TicketId <= 0)
             {
                 return new JsonResult(
@@ -1633,6 +1678,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     }
                 );
             }
+
 
             if (request.PriorityId <= 0)
             {
@@ -1646,6 +1692,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 );
             }
 
+
             if (request.StatusId <= 0)
             {
                 return new JsonResult(
@@ -1658,6 +1705,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 );
             }
 
+
             try
             {
                 // =================================================
@@ -1667,7 +1715,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 ServiceTicket? ticket =
                     await _context.ServiceTickets
                         .FirstOrDefaultAsync(
-                            x => x.Id == request.TicketId
+                            x =>
+                                x.Id ==
+                                request.TicketId
                         );
 
                 if (ticket == null)
@@ -1682,8 +1732,9 @@ namespace ERPSEI.Areas.ERP.Pages
                     );
                 }
 
+
                 // =================================================
-                // VALIDAR PRIORIDAD
+                // CATÁLOGOS
                 // =================================================
 
                 ServiceTicketPriority? nuevaPrioridad =
@@ -1691,7 +1742,8 @@ namespace ERPSEI.Areas.ERP.Pages
                         .AsNoTracking()
                         .FirstOrDefaultAsync(
                             x =>
-                                x.Id == request.PriorityId &&
+                                x.Id ==
+                                request.PriorityId &&
                                 x.Activo
                         );
 
@@ -1707,16 +1759,14 @@ namespace ERPSEI.Areas.ERP.Pages
                     );
                 }
 
-                // =================================================
-                // VALIDAR ESTADO
-                // =================================================
 
                 ServiceTicketStatus? nuevoEstado =
                     await _context.ServiceTicketStatuses
                         .AsNoTracking()
                         .FirstOrDefaultAsync(
                             x =>
-                                x.Id == request.StatusId &&
+                                x.Id ==
+                                request.StatusId &&
                                 x.Activo
                         );
 
@@ -1732,6 +1782,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     );
                 }
 
+
                 // =================================================
                 // INFORMACIÓN ANTERIOR
                 // =================================================
@@ -1740,24 +1791,46 @@ namespace ERPSEI.Areas.ERP.Pages
                     await _context.ServiceTicketPriorities
                         .AsNoTracking()
                         .FirstOrDefaultAsync(
-                            x => x.Id == ticket.PriorityId
+                            x =>
+                                x.Id ==
+                                ticket.PriorityId
                         );
 
                 ServiceTicketStatus? estadoAnterior =
                     await _context.ServiceTicketStatuses
                         .AsNoTracking()
                         .FirstOrDefaultAsync(
-                            x => x.Id == ticket.StatusId
+                            x =>
+                                x.Id ==
+                                ticket.StatusId
                         );
+
+
+                int estadoAnteriorId =
+                    ticket.StatusId;
+
+                string? resolucionAnterior =
+                    ticket.Resolucion;
+
+                DateTime? fechaResolucionAnterior =
+                    ticket.FechaResolucion;
+
+                DateTime? fechaCierreAnterior =
+                    ticket.FechaCierre;
 
                 string? usuarioAsignadoAnteriorId =
                     ticket.UsuarioAsignadoId;
 
+
                 AppUser? usuarioAsignadoAnterior =
                     null;
 
-                if (!string.IsNullOrWhiteSpace(
-                        usuarioAsignadoAnteriorId))
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        usuarioAsignadoAnteriorId
+                    )
+                )
                 {
                     usuarioAsignadoAnterior =
                         await _context.Users
@@ -1769,9 +1842,9 @@ namespace ERPSEI.Areas.ERP.Pages
                             );
                 }
 
+
                 // =================================================
                 // VALIDAR TÉCNICO
-                // Solamente usuarios con rol "Administrador TI"
                 // =================================================
 
                 string? nuevoUsuarioAsignadoId =
@@ -1781,14 +1854,19 @@ namespace ERPSEI.Areas.ERP.Pages
                         ? null
                         : request.UsuarioAsignadoId.Trim();
 
+
                 AppUser? nuevoUsuarioAsignado =
                     null;
 
                 ServiceSupportTeamUser? relacionTecnico =
                     null;
 
-                if (!string.IsNullOrWhiteSpace(
-                        nuevoUsuarioAsignadoId))
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        nuevoUsuarioAsignadoId
+                    )
+                )
                 {
                     nuevoUsuarioAsignado =
                         await _context.Users
@@ -1797,6 +1875,7 @@ namespace ERPSEI.Areas.ERP.Pages
                                     x.Id ==
                                     nuevoUsuarioAsignadoId
                             );
+
 
                     if (nuevoUsuarioAsignado == null)
                     {
@@ -1810,15 +1889,13 @@ namespace ERPSEI.Areas.ERP.Pages
                         );
                     }
 
-                    // =============================================
-                    // VALIDAR ROL ADMINISTRADOR TI
-                    // =============================================
 
                     bool esAdministradorTi =
                         await _userManager.IsInRoleAsync(
                             nuevoUsuarioAsignado,
                             "Administrador TI"
                         );
+
 
                     if (!esAdministradorTi)
                     {
@@ -1836,10 +1913,6 @@ namespace ERPSEI.Areas.ERP.Pages
                         };
                     }
 
-                    // =============================================
-                    // BUSCAR EQUIPO DE SOPORTE SI EXISTE
-                    // No es obligatorio para poder asignar técnico
-                    // =============================================
 
                     relacionTecnico =
                         await _context.ServiceSupportTeamUsers
@@ -1852,11 +1925,130 @@ namespace ERPSEI.Areas.ERP.Pages
                             );
                 }
 
+
+                // =================================================
+                // ESTADOS
+                // =================================================
+
+                const int ESTADO_NUEVO = 1;
+                const int ESTADO_ASIGNADO = 2;
+                const int ESTADO_EN_PROCESO = 3;
+                const int ESTADO_PENDIENTE_USUARIO = 4;
+                const int ESTADO_RESUELTO = 5;
+                const int ESTADO_CERRADO = 6;
+                const int ESTADO_REABIERTO = 7;
+                const int ESTADO_CANCELADO = 8;
+
+
+                string? resolucion =
+                    string.IsNullOrWhiteSpace(
+                        request.Resolucion
+                    )
+                        ? null
+                        : request.Resolucion.Trim();
+
+
+                // =================================================
+                // VALIDAR RESOLUCIÓN
+                // =================================================
+
+                if (
+                    request.StatusId ==
+                    ESTADO_RESUELTO
+                )
+                {
+                    if (
+                        string.IsNullOrWhiteSpace(
+                            resolucion
+                        )
+                    )
+                    {
+                        return new JsonResult(
+                            new
+                            {
+                                success = false,
+                                message =
+                                    "Debes registrar la resolución antes de marcar el ticket como Resuelto."
+                            }
+                        );
+                    }
+
+
+                    if (
+                        resolucion.Length >
+                        5000
+                    )
+                    {
+                        return new JsonResult(
+                            new
+                            {
+                                success = false,
+                                message =
+                                    "La resolución no puede superar los 5000 caracteres."
+                            }
+                        );
+                    }
+                }
+
+
+                // =================================================
+                // VALIDAR CIERRE
+                // Resuelto -> Cerrado
+                // =================================================
+
+                if (
+                    request.StatusId ==
+                        ESTADO_CERRADO &&
+                    estadoAnteriorId !=
+                        ESTADO_RESUELTO &&
+                    estadoAnteriorId !=
+                        ESTADO_CERRADO
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                "El ticket debe estar Resuelto antes de poder cerrarlo."
+                        }
+                    );
+                }
+
+
+                // =================================================
+                // VALIDAR REAPERTURA
+                // Resuelto/Cerrado -> Reabierto
+                // =================================================
+
+                if (
+                    request.StatusId ==
+                        ESTADO_REABIERTO &&
+                    estadoAnteriorId !=
+                        ESTADO_RESUELTO &&
+                    estadoAnteriorId !=
+                        ESTADO_CERRADO &&
+                    estadoAnteriorId !=
+                        ESTADO_REABIERTO
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                "Solamente un ticket Resuelto o Cerrado puede ser reabierto."
+                        }
+                    );
+                }
+
+
                 DateTime ahora =
                     DateTime.Now;
 
                 bool huboCambios =
                     false;
+
 
                 // =================================================
                 // CAMBIO DE TÉCNICO
@@ -1876,6 +2068,7 @@ namespace ERPSEI.Areas.ERP.Pages
                             )
                             : "Sin asignar";
 
+
                     string tecnicoNuevoNombre =
                         nuevoUsuarioAsignado != null
                             ? (
@@ -1885,7 +2078,8 @@ namespace ERPSEI.Areas.ERP.Pages
                             )
                             : "Sin asignar";
 
-                    ServiceTicketHistory historialAsignacion =
+
+                    _context.ServiceTicketHistories.Add(
                         new ServiceTicketHistory
                         {
                             TicketId =
@@ -1907,31 +2101,33 @@ namespace ERPSEI.Areas.ERP.Pages
                                 tecnicoNuevoNombre,
 
                             Detalle =
-                                $"Asignación modificada de \"{tecnicoAnteriorNombre}\" a \"{tecnicoNuevoNombre}\".",
+                                $"El técnico asignado cambió de \"{tecnicoAnteriorNombre}\" a \"{tecnicoNuevoNombre}\".",
 
                             FechaHora =
                                 ahora,
 
                             DireccionIp =
                                 ObtenerDireccionIp()
-                        };
-
-                    _context.ServiceTicketHistories.Add(
-                        historialAsignacion
+                        }
                     );
+
 
                     ticket.UsuarioAsignadoId =
                         nuevoUsuarioAsignadoId;
 
+
                     if (
-                            nuevoUsuarioAsignadoId != null
-                        )
+                        nuevoUsuarioAsignadoId !=
+                        null
+                    )
                     {
                         ticket.FechaAsignacion =
                             ahora;
 
+
                         if (
-                            relacionTecnico != null
+                            relacionTecnico !=
+                            null
                         )
                         {
                             ticket.SupportTeamId =
@@ -1952,9 +2148,11 @@ namespace ERPSEI.Areas.ERP.Pages
                             null;
                     }
 
+
                     huboCambios =
                         true;
                 }
+
 
                 // =================================================
                 // CAMBIO DE PRIORIDAD
@@ -1969,10 +2167,12 @@ namespace ERPSEI.Areas.ERP.Pages
                         prioridadAnterior?.Nombre ??
                         ticket.PriorityId.ToString();
 
+
                     string prioridadNuevaNombre =
                         nuevaPrioridad.Nombre;
 
-                    ServiceTicketHistory historialPrioridad =
+
+                    _context.ServiceTicketHistories.Add(
                         new ServiceTicketHistory
                         {
                             TicketId =
@@ -1994,21 +2194,20 @@ namespace ERPSEI.Areas.ERP.Pages
                                 prioridadNuevaNombre,
 
                             Detalle =
-                                $"Prioridad modificada de \"{prioridadAnteriorNombre}\" a \"{prioridadNuevaNombre}\".",
+                                $"La prioridad cambió de \"{prioridadAnteriorNombre}\" a \"{prioridadNuevaNombre}\".",
 
                             FechaHora =
                                 ahora,
 
                             DireccionIp =
                                 ObtenerDireccionIp()
-                        };
-
-                    _context.ServiceTicketHistories.Add(
-                        historialPrioridad
+                        }
                     );
+
 
                     ticket.PriorityId =
                         request.PriorityId;
+
 
                     // =============================================
                     // RECALCULAR SLA
@@ -2025,6 +2224,7 @@ namespace ERPSEI.Areas.ERP.Pages
                             );
                     }
 
+
                     if (
                         ticket.FechaResolucion ==
                         null
@@ -2036,27 +2236,31 @@ namespace ERPSEI.Areas.ERP.Pages
                             );
                     }
 
+
                     huboCambios =
                         true;
                 }
+
 
                 // =================================================
                 // CAMBIO DE ESTADO
                 // =================================================
 
                 if (
-                    ticket.StatusId !=
+                    estadoAnteriorId !=
                     request.StatusId
                 )
                 {
                     string estadoAnteriorNombre =
                         estadoAnterior?.Nombre ??
-                        ticket.StatusId.ToString();
+                        estadoAnteriorId.ToString();
+
 
                     string estadoNuevoNombre =
                         nuevoEstado.Nombre;
 
-                    ServiceTicketHistory historialEstado =
+
+                    _context.ServiceTicketHistories.Add(
                         new ServiceTicketHistory
                         {
                             TicketId =
@@ -2078,21 +2282,20 @@ namespace ERPSEI.Areas.ERP.Pages
                                 estadoNuevoNombre,
 
                             Detalle =
-                                $"Estado modificado de \"{estadoAnteriorNombre}\" a \"{estadoNuevoNombre}\".",
+                                $"El estado cambió de \"{estadoAnteriorNombre}\" a \"{estadoNuevoNombre}\".",
 
                             FechaHora =
                                 ahora,
 
                             DireccionIp =
                                 ObtenerDireccionIp()
-                        };
-
-                    _context.ServiceTicketHistories.Add(
-                        historialEstado
+                        }
                     );
+
 
                     ticket.StatusId =
                         request.StatusId;
+
 
                     // =============================================
                     // PRIMERA RESPUESTA
@@ -2107,88 +2310,310 @@ namespace ERPSEI.Areas.ERP.Pages
                             ahora;
                     }
 
+
                     // =============================================
-                    // ESTADO RESUELTO
-                    // Id 5
+                    // RESUELTO
                     // =============================================
 
                     if (
-                        request.StatusId == 5
+                        request.StatusId ==
+                        ESTADO_RESUELTO
                     )
                     {
+                        ticket.Resolucion =
+                            resolucion;
+
                         ticket.FechaResolucion =
                             ahora;
 
                         ticket.FechaCierre =
                             null;
+
+                        ticket.UsuarioCierreId =
+                            null;
+
+
+                        _context.ServiceTicketHistories.Add(
+                            new ServiceTicketHistory
+                            {
+                                TicketId =
+                                    ticket.Id,
+
+                                UsuarioId =
+                                    usuarioActual.Id,
+
+                                Accion =
+                                    "Resolución",
+
+                                Campo =
+                                    "Resolucion",
+
+                                ValorAnterior =
+                                    resolucionAnterior,
+
+                                ValorNuevo =
+                                    resolucion,
+
+                                Detalle =
+                                    $"Se registró la resolución del ticket:\n{resolucion}",
+
+                                FechaHora =
+                                    ahora,
+
+                                DireccionIp =
+                                    ObtenerDireccionIp()
+                            }
+                        );
                     }
 
+
                     // =============================================
-                    // ESTADO CERRADO
-                    // Id 6
+                    // CERRADO
                     // =============================================
 
-                    if (
-                        request.StatusId == 6
+                    else if (
+                        request.StatusId ==
+                        ESTADO_CERRADO
                     )
                     {
+                        ticket.FechaCierre =
+                            ahora;
+
+                        ticket.UsuarioCierreId =
+                            usuarioActual.Id;
+
+
+                        _context.ServiceTicketHistories.Add(
+                            new ServiceTicketHistory
+                            {
+                                TicketId =
+                                    ticket.Id,
+
+                                UsuarioId =
+                                    usuarioActual.Id,
+
+                                Accion =
+                                    "Cierre",
+
+                                Campo =
+                                    "FechaCierre",
+
+                                ValorAnterior =
+                                    fechaCierreAnterior
+                                        ?.ToString(
+                                            "dd/MM/yyyy HH:mm"
+                                        ),
+
+                                ValorNuevo =
+                                    ahora.ToString(
+                                        "dd/MM/yyyy HH:mm"
+                                    ),
+
+                                Detalle =
+                                    "El ticket fue cerrado después de haber sido resuelto.",
+
+                                FechaHora =
+                                    ahora,
+
+                                DireccionIp =
+                                    ObtenerDireccionIp()
+                            }
+                        );
+                    }
+
+
+                    // =============================================
+                    // REABIERTO
+                    // =============================================
+
+                    else if (
+                        request.StatusId ==
+                        ESTADO_REABIERTO
+                    )
+                    {
+                        string detalleReapertura =
+                            "El ticket fue reabierto para continuar con su atención.";
+
+
                         if (
-                            ticket.FechaResolucion ==
-                            null
+                            !string.IsNullOrWhiteSpace(
+                                resolucionAnterior
+                            )
                         )
                         {
-                            ticket.FechaResolucion =
-                                ahora;
+                            detalleReapertura +=
+                                $"\nResolución anterior: {resolucionAnterior}";
                         }
 
-                        ticket.FechaCierre =
-                            ahora;
-                    }
 
-                    // =============================================
-                    // ESTADO REABIERTO
-                    // Id 7
-                    // =============================================
+                        _context.ServiceTicketHistories.Add(
+                            new ServiceTicketHistory
+                            {
+                                TicketId =
+                                    ticket.Id,
 
-                    if (
-                        request.StatusId == 7
-                    )
-                    {
+                                UsuarioId =
+                                    usuarioActual.Id,
+
+                                Accion =
+                                    "Reapertura",
+
+                                Campo =
+                                    "StatusId",
+
+                                ValorAnterior =
+                                    estadoAnterior?.Nombre,
+
+                                ValorNuevo =
+                                    nuevoEstado.Nombre,
+
+                                Detalle =
+                                    detalleReapertura,
+
+                                FechaHora =
+                                    ahora,
+
+                                DireccionIp =
+                                    ObtenerDireccionIp()
+                            }
+                        );
+
+
+                        ticket.FechaResolucion =
+                            null;
+
                         ticket.FechaCierre =
                             null;
+
+                        ticket.UsuarioCierreId =
+                            null;
+
+                        ticket.Resolucion =
+                            null;
+
+
+                        // El SLA vuelve a considerarse activo.
+                        ticket.SlaResolucionVencido =
+                            ticket.FechaLimiteResolucionSla
+                                .HasValue &&
+                            ahora >
+                            ticket.FechaLimiteResolucionSla
+                                .Value;
                     }
 
+
                     // =============================================
-                    // ESTADO CANCELADO
-                    // Id 8
+                    // CANCELADO
                     // =============================================
 
-                    if (
-                        request.StatusId == 8
+                    else if (
+                        request.StatusId ==
+                        ESTADO_CANCELADO
                     )
                     {
                         ticket.FechaCierre =
                             ahora;
+
+                        ticket.UsuarioCierreId =
+                            usuarioActual.Id;
                     }
+
 
                     // =============================================
                     // ESTADOS ACTIVOS
                     // =============================================
 
-                    if (
-                        request.StatusId == 1 ||
-                        request.StatusId == 2 ||
-                        request.StatusId == 3 ||
-                        request.StatusId == 4
+                    else if (
+                        request.StatusId ==
+                            ESTADO_NUEVO ||
+                        request.StatusId ==
+                            ESTADO_ASIGNADO ||
+                        request.StatusId ==
+                            ESTADO_EN_PROCESO ||
+                        request.StatusId ==
+                            ESTADO_PENDIENTE_USUARIO
                     )
                     {
                         ticket.FechaCierre =
                             null;
+
+                        ticket.UsuarioCierreId =
+                            null;
                     }
+
 
                     huboCambios =
                         true;
                 }
+
+
+                // =================================================
+                // EDITAR RESOLUCIÓN SIN CAMBIAR ESTADO
+                // =================================================
+
+                if (
+                    estadoAnteriorId ==
+                        ESTADO_RESUELTO &&
+                    request.StatusId ==
+                        ESTADO_RESUELTO &&
+                    !string.Equals(
+                        resolucionAnterior,
+                        resolucion,
+                        StringComparison.Ordinal
+                    )
+                )
+                {
+                    ticket.Resolucion =
+                        resolucion;
+
+
+                    if (
+                        ticket.FechaResolucion ==
+                        null
+                    )
+                    {
+                        ticket.FechaResolucion =
+                            ahora;
+                    }
+
+
+                    _context.ServiceTicketHistories.Add(
+                        new ServiceTicketHistory
+                        {
+                            TicketId =
+                                ticket.Id,
+
+                            UsuarioId =
+                                usuarioActual.Id,
+
+                            Accion =
+                                "Actualización de resolución",
+
+                            Campo =
+                                "Resolucion",
+
+                            ValorAnterior =
+                                resolucionAnterior,
+
+                            ValorNuevo =
+                                resolucion,
+
+                            Detalle =
+                                $"La resolución del ticket fue actualizada:\n{resolucion}",
+
+                            FechaHora =
+                                ahora,
+
+                            DireccionIp =
+                                ObtenerDireccionIp()
+                        }
+                    );
+
+
+                    huboCambios =
+                        true;
+                }
+
 
                 // =================================================
                 // SIN CAMBIOS
@@ -2207,12 +2632,14 @@ namespace ERPSEI.Areas.ERP.Pages
                     );
                 }
 
+
                 // =================================================
-                // FECHA ACTUALIZACIÓN
+                // ACTUALIZACIÓN
                 // =================================================
 
                 ticket.FechaActualizacion =
                     ahora;
+
 
                 // =================================================
                 // SLA RESPUESTA
@@ -2220,19 +2647,23 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (
                     ticket.FechaPrimeraRespuesta ==
-                    null &&
-                    ticket.FechaLimiteRespuestaSla.HasValue
+                        null &&
+                    ticket.FechaLimiteRespuestaSla
+                        .HasValue
                 )
                 {
                     ticket.SlaRespuestaVencido =
                         ahora >
-                        ticket.FechaLimiteRespuestaSla.Value;
+                        ticket
+                            .FechaLimiteRespuestaSla
+                            .Value;
                 }
                 else
                 {
                     ticket.SlaRespuestaVencido =
                         false;
                 }
+
 
                 // =================================================
                 // SLA RESOLUCIÓN
@@ -2240,13 +2671,16 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (
                     ticket.FechaResolucion ==
-                    null &&
-                    ticket.FechaLimiteResolucionSla.HasValue
+                        null &&
+                    ticket.FechaLimiteResolucionSla
+                        .HasValue
                 )
                 {
                     ticket.SlaResolucionVencido =
                         ahora >
-                        ticket.FechaLimiteResolucionSla.Value;
+                        ticket
+                            .FechaLimiteResolucionSla
+                            .Value;
                 }
                 else
                 {
@@ -2254,17 +2688,27 @@ namespace ERPSEI.Areas.ERP.Pages
                         false;
                 }
 
+
                 // =================================================
                 // GUARDAR
                 // =================================================
 
                 await _context.SaveChangesAsync();
 
+
                 return new JsonResult(
                     new
                     {
                         success = true,
+
                         changed = true,
+
+                        ticketId =
+                            ticket.Id,
+
+                        statusId =
+                            ticket.StatusId,
+
                         message =
                             $"El ticket {ticket.Folio} fue actualizado correctamente."
                     }
@@ -2278,8 +2722,11 @@ namespace ERPSEI.Areas.ERP.Pages
                     request.TicketId
                 );
 
+
                 Response.StatusCode =
-                    StatusCodes.Status500InternalServerError;
+                    StatusCodes
+                        .Status500InternalServerError;
+
 
                 return new JsonResult(
                     new
