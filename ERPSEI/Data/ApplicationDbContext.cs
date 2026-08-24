@@ -27,6 +27,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Security.Claims;
 using ERPSEI.Data.Entities.ServiceDesk;
 using ERPSEI.Data.Entities.ExpedientesBancarios;
+using ERPSEI.Data.Entities.Adquisiciones;
 
 namespace ERPSEI.Data
 {
@@ -322,6 +323,27 @@ namespace ERPSEI.Data
         public DbSet<CorreoDominio> CorreosDominios { get; set; }
 
         private readonly AuditoriaContext? _auditoriaContext;
+
+        //Adquisiciones
+        public DbSet<AdqSolicitud> AdqSolicitudes { get; set; }
+
+        public DbSet<AdqSolicitudDetalle> AdqSolicitudesDetalle { get; set; }
+
+        public DbSet<AdqEstatus> AdqEstatus { get; set; }
+
+        public DbSet<AdqAdjunto> AdqAdjuntos { get; set; }
+
+        public DbSet<AdqHistorial> AdqHistorial { get; set; }
+
+        public DbSet<AdqAprobacion> AdqAprobaciones { get; set; }
+
+        public DbSet<AdqAsignacion> AdqAsignaciones { get; set; }
+
+        public DbSet<AdqComentario> AdqComentarios { get; set; }
+
+        public DbSet<AdqComentarioAdjunto> AdqComentariosAdjuntos { get; set; }
+
+        public DbSet<AdqPermisoUsuario> AdqPermisosUsuarios { get; set; }
 
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -857,6 +879,11 @@ namespace ERPSEI.Data
 
             //Mesa de Servicio / Incidencias
             BuildServiceDesk(
+                modelBuilder
+            );
+
+            //Adquisiciones
+            BuildAdquisiciones(
                 modelBuilder
             );
         }
@@ -1806,6 +1833,1265 @@ namespace ERPSEI.Data
                 })
                 .HasDatabaseName("IX_SD_TicketHistorial_Ticket_Fecha");
             });
+        }
+
+        private static void BuildAdquisiciones(
+    ModelBuilder b)
+        {
+            // =========================================================
+            // ESTATUS
+            // =========================================================
+
+            b.Entity<AdqEstatus>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_Estatus"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.Nombre
+                        )
+                        .IsRequired()
+                        .HasMaxLength(100);
+
+                    entity.Property(
+                            x => x.Codigo
+                        )
+                        .IsRequired()
+                        .HasMaxLength(50);
+
+                    entity.Property(
+                            x => x.Descripcion
+                        )
+                        .HasMaxLength(500);
+
+                    entity.Property(
+                            x => x.Orden
+                        )
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.Activo
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(true);
+
+                    entity.HasIndex(
+                            x => x.Codigo
+                        )
+                        .IsUnique()
+                        .HasDatabaseName(
+                            "UX_ADQ_Estatus_Codigo"
+                        );
+
+                    entity.HasIndex(
+                            x => x.Orden
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Estatus_Orden"
+                        );
+
+                    entity.HasData(
+                        new AdqEstatus
+                        {
+                            Id = 1,
+                            Nombre = "Borrador",
+                            Codigo = "BORRADOR",
+                            Descripcion =
+                                "Solicitud en proceso de captura.",
+                            Orden = 1,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 2,
+                            Nombre =
+                                "Pendiente aprobación Gerente",
+                            Codigo =
+                                "PENDIENTE_GERENTE",
+                            Descripcion =
+                                "Solicitud pendiente de aprobación por el gerente del área.",
+                            Orden = 2,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 3,
+                            Nombre =
+                                "Solicitud enviada",
+                            Codigo =
+                                "SOLICITUD_ENVIADA",
+                            Descripcion =
+                                "Solicitud enviada al área de Adquisiciones.",
+                            Orden = 3,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 4,
+                            Nombre =
+                                "En revisión por Adquisiciones",
+                            Codigo =
+                                "EN_REVISION",
+                            Descripcion =
+                                "Solicitud siendo revisada por Adquisiciones.",
+                            Orden = 4,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 5,
+                            Nombre =
+                                "Aprobada",
+                            Codigo =
+                                "APROBADA",
+                            Descripcion =
+                                "Solicitud aprobada por Adquisiciones.",
+                            Orden = 5,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 6,
+                            Nombre =
+                                "Rechazada",
+                            Codigo =
+                                "RECHAZADA",
+                            Descripcion =
+                                "Solicitud rechazada.",
+                            Orden = 6,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 7,
+                            Nombre =
+                                "Cancelada",
+                            Codigo =
+                                "CANCELADA",
+                            Descripcion =
+                                "Solicitud cancelada.",
+                            Orden = 7,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 8,
+                            Nombre =
+                                "Asignada",
+                            Codigo =
+                                "ASIGNADA",
+                            Descripcion =
+                                "Solicitud asignada a un agente de compras.",
+                            Orden = 8,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 9,
+                            Nombre =
+                                "En proceso de cotización",
+                            Codigo =
+                                "EN_COTIZACION",
+                            Descripcion =
+                                "Solicitud en proceso de cotización.",
+                            Orden = 9,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 10,
+                            Nombre =
+                                "Cotización finalizada",
+                            Codigo =
+                                "COTIZACION_FINALIZADA",
+                            Descripcion =
+                                "Proceso de cotización finalizado.",
+                            Orden = 10,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 11,
+                            Nombre =
+                                "Pendiente aprobación presupuestal",
+                            Codigo =
+                                "PENDIENTE_PRESUPUESTO",
+                            Descripcion =
+                                "Solicitud pendiente de iniciar el flujo presupuestal.",
+                            Orden = 11,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 12,
+                            Nombre =
+                                "En aprobación presupuestal",
+                            Codigo =
+                                "EN_APROBACION_PRESUPUESTAL",
+                            Descripcion =
+                                "Solicitud dentro del flujo de aprobación presupuestal.",
+                            Orden = 12,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 13,
+                            Nombre =
+                                "Aprobación presupuestal completada",
+                            Codigo =
+                                "PRESUPUESTO_APROBADO",
+                            Descripcion =
+                                "Flujo presupuestal completado.",
+                            Orden = 13,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 14,
+                            Nombre =
+                                "En proceso de pago",
+                            Codigo =
+                                "EN_PAGO",
+                            Descripcion =
+                                "Solicitud en proceso de pago.",
+                            Orden = 14,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 15,
+                            Nombre =
+                                "En proceso de compra",
+                            Codigo =
+                                "EN_COMPRA",
+                            Descripcion =
+                                "Compra en proceso.",
+                            Orden = 15,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 16,
+                            Nombre =
+                                "En proceso de entrega",
+                            Codigo =
+                                "EN_ENTREGA",
+                            Descripcion =
+                                "Compra en proceso de entrega.",
+                            Orden = 16,
+                            Activo = true
+                        },
+                        new AdqEstatus
+                        {
+                            Id = 17,
+                            Nombre =
+                                "Finalizada",
+                            Codigo =
+                                "FINALIZADA",
+                            Descripcion =
+                                "Proceso de adquisición finalizado.",
+                            Orden = 17,
+                            Activo = true
+                        }
+                    );
+                }
+            );
+
+
+            // =========================================================
+            // SOLICITUDES
+            // =========================================================
+
+            b.Entity<AdqSolicitud>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_Solicitudes"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.Folio
+                        )
+                        .IsRequired()
+                        .HasMaxLength(30);
+
+                    entity.Property(
+                            x => x.Titulo
+                        )
+                        .IsRequired()
+                        .HasMaxLength(250);
+
+                    entity.Property(
+                            x => x.FechaSolicitud
+                        )
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.UsuarioSolicitanteId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.UsuarioAsignadoId
+                        )
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.Descripcion
+                        )
+                        .IsRequired()
+                        .HasMaxLength(5000);
+
+                    entity.Property(
+                            x => x.Justificacion
+                        )
+                        .IsRequired()
+                        .HasMaxLength(5000);
+
+                    entity.Property(
+                            x => x.FechaCreacion
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(
+                            x => x.Eliminado
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.HasOne(
+                            x => x.UsuarioSolicitante
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioSolicitanteId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.UsuarioAsignado
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioAsignadoId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.EmpleadoSolicitante
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.EmpleadoSolicitanteId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.Area
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.AreaId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.Estatus
+                        )
+                        .WithMany(
+                            x => x.Solicitudes
+                        )
+                        .HasForeignKey(
+                            x => x.EstatusId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.Folio
+                        )
+                        .IsUnique()
+                        .HasDatabaseName(
+                            "UX_ADQ_Solicitudes_Folio"
+                        );
+
+                    entity.HasIndex(
+                            x => x.UsuarioSolicitanteId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Solicitudes_UsuarioSolicitante"
+                        );
+
+                    entity.HasIndex(
+                            x => x.UsuarioAsignadoId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Solicitudes_UsuarioAsignado"
+                        );
+
+                    entity.HasIndex(
+                            x => x.AreaId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Solicitudes_Area"
+                        );
+
+                    entity.HasIndex(
+                            x => x.EstatusId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Solicitudes_Estatus"
+                        );
+
+                    entity.HasIndex(
+                            x => x.FechaSolicitud
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Solicitudes_FechaSolicitud"
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.EstatusId,
+                            x.FechaSolicitud
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_Solicitudes_Estatus_Fecha"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // DETALLE DE SOLICITUD
+            // =========================================================
+
+            b.Entity<AdqSolicitudDetalle>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_SolicitudesDetalle"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.ProductoServicio
+                        )
+                        .IsRequired()
+                        .HasMaxLength(500);
+
+                    entity.Property(
+                            x => x.Cantidad
+                        )
+                        .IsRequired()
+                        .HasPrecision(
+                            18,
+                            4
+                        );
+
+                    entity.Property(
+                            x => x.Unidad
+                        )
+                        .IsRequired()
+                        .HasMaxLength(100);
+
+                    entity.Property(
+                            x => x.Descripcion
+                        )
+                        .HasMaxLength(2000);
+
+                    entity.Property(
+                            x => x.Orden
+                        )
+                        .IsRequired();
+
+                    entity.Property(
+                            x => x.Eliminado
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.HasOne(
+                            x => x.Solicitud
+                        )
+                        .WithMany(
+                            x => x.Detalles
+                        )
+                        .HasForeignKey(
+                            x => x.SolicitudId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.SolicitudId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_SolicitudesDetalle_Solicitud"
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.SolicitudId,
+                            x.Orden
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_SolicitudesDetalle_Solicitud_Orden"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // ADJUNTOS
+            // =========================================================
+
+            b.Entity<AdqAdjunto>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_Adjuntos"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.NombreOriginal
+                        )
+                        .IsRequired()
+                        .HasMaxLength(260);
+
+                    entity.Property(
+                            x => x.NombreGuardado
+                        )
+                        .IsRequired()
+                        .HasMaxLength(260);
+
+                    entity.Property(
+                            x => x.RutaArchivo
+                        )
+                        .IsRequired()
+                        .HasMaxLength(1000);
+
+                    entity.Property(
+                            x => x.Extension
+                        )
+                        .HasMaxLength(20);
+
+                    entity.Property(
+                            x => x.MimeType
+                        )
+                        .HasMaxLength(150);
+
+                    entity.Property(
+                            x => x.UsuarioCargaId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.TipoDocumento
+                        )
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasDefaultValue(
+                            "General"
+                        );
+
+                    entity.Property(
+                            x => x.FechaCarga
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(
+                            x => x.Eliminado
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.HasOne(
+                            x => x.Solicitud
+                        )
+                        .WithMany(
+                            x => x.Adjuntos
+                        )
+                        .HasForeignKey(
+                            x => x.SolicitudId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.UsuarioCarga
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioCargaId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.SolicitudId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Adjuntos_Solicitud"
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.SolicitudId,
+                            x.TipoDocumento
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_Adjuntos_Solicitud_Tipo"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // HISTORIAL
+            // =========================================================
+
+            b.Entity<AdqHistorial>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_Historial"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.UsuarioId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.TipoEvento
+                        )
+                        .IsRequired()
+                        .HasMaxLength(100);
+
+                    entity.Property(
+                            x => x.Descripcion
+                        )
+                        .IsRequired()
+                        .HasMaxLength(2000);
+
+                    entity.Property(
+                            x => x.FechaEvento
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(
+                            x => x.DireccionIp
+                        )
+                        .HasMaxLength(64);
+
+                    entity.HasOne(
+                            x => x.Solicitud
+                        )
+                        .WithMany(
+                            x => x.Historial
+                        )
+                        .HasForeignKey(
+                            x => x.SolicitudId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.Usuario
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne<AdqEstatus>()
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.EstatusAnteriorId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne<AdqEstatus>()
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.EstatusNuevoId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.SolicitudId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Historial_Solicitud"
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.SolicitudId,
+                            x.FechaEvento
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_Historial_Solicitud_Fecha"
+                        );
+
+                    entity.HasIndex(
+                            x => x.TipoEvento
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Historial_TipoEvento"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // APROBACIONES
+            // =========================================================
+
+            b.Entity<AdqAprobacion>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_Aprobaciones"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.TipoAprobacion
+                        )
+                        .IsRequired()
+                        .HasMaxLength(100);
+
+                    entity.Property(
+                            x => x.UsuarioAprobadorId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.Estatus
+                        )
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasDefaultValue(
+                            "Pendiente"
+                        );
+
+                    entity.Property(
+                            x => x.Comentario
+                        )
+                        .HasMaxLength(2000);
+
+                    entity.Property(
+                            x => x.FechaCreacion
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.HasOne(
+                            x => x.Solicitud
+                        )
+                        .WithMany(
+                            x => x.Aprobaciones
+                        )
+                        .HasForeignKey(
+                            x => x.SolicitudId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.UsuarioAprobador
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioAprobadorId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.SolicitudId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Aprobaciones_Solicitud"
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.UsuarioAprobadorId,
+                            x.Estatus
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_Aprobaciones_Usuario_Estatus"
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.SolicitudId,
+                            x.TipoAprobacion,
+                            x.Orden
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_Aprobaciones_Solicitud_Tipo_Orden"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // ASIGNACIONES
+            // =========================================================
+
+            b.Entity<AdqAsignacion>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_Asignaciones"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.UsuarioAsignadoId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.UsuarioAsignadorId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.FechaAsignacion
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(
+                            x => x.Activa
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(true);
+
+                    entity.Property(
+                            x => x.Observaciones
+                        )
+                        .HasMaxLength(2000);
+
+                    entity.HasOne(
+                            x => x.Solicitud
+                        )
+                        .WithMany(
+                            x => x.Asignaciones
+                        )
+                        .HasForeignKey(
+                            x => x.SolicitudId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.UsuarioAsignado
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioAsignadoId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.UsuarioAsignador
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioAsignadorId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.SolicitudId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_Asignaciones_Solicitud"
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.UsuarioAsignadoId,
+                            x.Activa
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_Asignaciones_Usuario_Activa"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // COMENTARIOS
+            // =========================================================
+
+            b.Entity<AdqComentario>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_Comentarios"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.UsuarioId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.Comentario
+                        )
+                        .IsRequired()
+                        .HasMaxLength(5000);
+
+                    entity.Property(
+                            x => x.EsNotaInterna
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.FechaCreacion
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(
+                            x => x.Eliminado
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.HasOne(
+                            x => x.Solicitud
+                        )
+                        .WithMany(
+                            x => x.Comentarios
+                        )
+                        .HasForeignKey(
+                            x => x.SolicitudId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasOne(
+                            x => x.Usuario
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                        x => new
+                        {
+                            x.SolicitudId,
+                            x.FechaCreacion
+                        })
+                        .HasDatabaseName(
+                            "IX_ADQ_Comentarios_Solicitud_Fecha"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // ADJUNTOS DE COMENTARIOS
+            // =========================================================
+
+            b.Entity<AdqComentarioAdjunto>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_ComentariosAdjuntos"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.NombreOriginal
+                        )
+                        .IsRequired()
+                        .HasMaxLength(260);
+
+                    entity.Property(
+                            x => x.NombreGuardado
+                        )
+                        .IsRequired()
+                        .HasMaxLength(260);
+
+                    entity.Property(
+                            x => x.RutaArchivo
+                        )
+                        .IsRequired()
+                        .HasMaxLength(1000);
+
+                    entity.Property(
+                            x => x.Extension
+                        )
+                        .HasMaxLength(20);
+
+                    entity.Property(
+                            x => x.MimeType
+                        )
+                        .HasMaxLength(150);
+
+                    entity.Property(
+                            x => x.FechaCarga
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(
+                            x => x.Eliminado
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.HasOne(
+                            x => x.Comentario
+                        )
+                        .WithMany(
+                            x => x.Adjuntos
+                        )
+                        .HasForeignKey(
+                            x => x.ComentarioId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.ComentarioId
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_ComentariosAdjuntos_Comentario"
+                        );
+                }
+            );
+
+
+            // =========================================================
+            // PERMISOS POR USUARIO
+            // =========================================================
+
+            b.Entity<AdqPermisoUsuario>(
+                entity =>
+                {
+                    entity.ToTable(
+                        "ADQ_PermisosUsuarios"
+                    );
+
+                    entity.HasKey(
+                        x => x.Id
+                    );
+
+                    entity.Property(
+                            x => x.UsuarioId
+                        )
+                        .IsRequired()
+                        .HasMaxLength(450);
+
+                    entity.Property(
+                            x => x.PuedeVisualizar
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeCrearSolicitud
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeGestionarSolicitudes
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeAprobar
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeAsignar
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeCotizar
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeGestionarProveedores
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeGenerarSolicitudPago
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeVerReportes
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.PuedeAdministrar
+                        )
+                        .IsRequired()
+                        .HasDefaultValue(false);
+
+                    entity.Property(
+                            x => x.FechaCreacion
+                        )
+                        .IsRequired()
+                        .HasDefaultValueSql(
+                            "GETDATE()"
+                        );
+
+                    entity.Property(
+                            x => x.UsuarioModificacionId
+                        )
+                        .HasMaxLength(450);
+
+                    entity.HasOne(
+                            x => x.Usuario
+                        )
+                        .WithMany()
+                        .HasForeignKey(
+                            x => x.UsuarioId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                    entity.HasIndex(
+                            x => x.UsuarioId
+                        )
+                        .IsUnique()
+                        .HasDatabaseName(
+                            "UX_ADQ_PermisosUsuarios_UsuarioId"
+                        );
+
+                    entity.HasIndex(
+                            x => x.FechaModificacion
+                        )
+                        .HasDatabaseName(
+                            "IX_ADQ_PermisosUsuarios_FechaModificacion"
+                        );
+                }
+            );
         }
 
         private static void BuildBitacoraEmpresas(
