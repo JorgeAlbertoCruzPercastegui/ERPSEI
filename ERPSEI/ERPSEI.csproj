@@ -29,6 +29,7 @@
   <ItemGroup>
     <None Include="Resources\Areas\Reportes\Pages\GeneradorContratoModel.es-MX.resx" />
     <None Include="wwwroot\js\GestorComunicadosInternos.js" />
+    <None Include="wwwroot\js\Index.js" />
     <None Include="wwwroot\lib\dearflip\fonts\themify.svg" />
     <None Include="wwwroot\lib\dearflip\images\pdfjs\annotation-check.svg" />
     <None Include="wwwroot\lib\dearflip\images\pdfjs\annotation-comment.svg" />

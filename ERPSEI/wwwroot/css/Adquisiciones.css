@@ -1,0 +1,1226 @@
+﻿.adq-page {
+    width: 100%;
+    padding: 1.5rem;
+}
+
+
+/* ============================================================
+   ENCABEZADO
+   ============================================================ */
+
+.adq-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.adq-header-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.adq-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(13, 110, 253, 0.1);
+    font-size: 1.5rem;
+}
+
+.adq-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.adq-subtitle {
+    margin: .25rem 0 0;
+    color: #6c757d;
+}
+
+
+/* ============================================================
+   INFORMACIÓN DEL USUARIO
+   ============================================================ */
+
+.adq-user-summary {
+    display: grid;
+    grid-template-columns: repeat( 4, minmax(0, 1fr) );
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.adq-user-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    padding: 1rem;
+    border: 1px solid #e6e9ef;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.adq-user-summary-label {
+    font-size: .8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+
+/* ============================================================
+   KPIs
+   ============================================================ */
+
+.adq-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat( 5, minmax(0, 1fr) );
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.adq-kpi-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 105px;
+    padding: 1rem 1.1rem;
+    border: 1px solid #e6e9ef;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.adq-kpi-label {
+    display: block;
+    margin-bottom: .4rem;
+    color: #6c757d;
+    font-size: .85rem;
+}
+
+.adq-kpi-value {
+    display: block;
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.adq-kpi-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba( 13, 110, 253, 0.08 );
+    font-size: 1.25rem;
+}
+
+
+/* ============================================================
+   PANEL DE SOLICITUDES
+   ============================================================ */
+
+.adq-panel {
+    overflow: hidden;
+    border: 1px solid #e6e9ef;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.adq-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid #e6e9ef;
+}
+
+    .adq-panel-header h2 {
+        margin: .1rem 0 .25rem;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .adq-panel-header p {
+        margin: 0;
+        color: #6c757d;
+    }
+
+.adq-panel-kicker {
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #0d6efd;
+}
+
+.adq-filter-bar {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e6e9ef;
+    background: #f8f9fb;
+}
+
+
+/* ============================================================
+   TABLA
+   ============================================================ */
+
+.adq-table {
+    margin-bottom: 0;
+}
+
+    .adq-table thead th {
+        padding: .9rem 1rem;
+        border-bottom-width: 1px;
+        white-space: nowrap;
+        font-size: .82rem;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        color: #6c757d;
+    }
+
+    .adq-table tbody td {
+        padding: 1rem;
+    }
+
+.adq-folio {
+    white-space: nowrap;
+}
+
+.adq-request-title {
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   ESTATUS
+   ============================================================ */
+
+.adq-status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: .25rem .65rem;
+    border-radius: 999px;
+    background: #eef2f7;
+    font-size: .78rem;
+    font-weight: 600;
+}
+
+    .adq-status-badge[data-status="BORRADOR"] {
+        background: #f1f3f5;
+    }
+
+    .adq-status-badge[data-status="PENDIENTE_GERENTE"],
+    .adq-status-badge[data-status="SOLICITUD_ENVIADA"] {
+        background: #fff3cd;
+    }
+
+    .adq-status-badge[data-status="EN_REVISION"],
+    .adq-status-badge[data-status="EN_COTIZACION"] {
+        background: #cff4fc;
+    }
+
+    .adq-status-badge[data-status="APROBADA"],
+    .adq-status-badge[data-status="FINALIZADA"] {
+        background: #d1e7dd;
+    }
+
+    .adq-status-badge[data-status="RECHAZADA"],
+    .adq-status-badge[data-status="CANCELADA"] {
+        background: #f8d7da;
+    }
+
+
+/* ============================================================
+   ESTADO VACÍO
+   ============================================================ */
+
+.adq-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+    .adq-empty-state i {
+        font-size: 2rem;
+    }
+
+
+/* ============================================================
+   SECCIONES DEL FORMULARIO
+   ============================================================ */
+
+.adq-form-section {
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+    scroll-margin-top: 70px;
+}
+
+    .adq-form-section:last-child {
+        border-bottom: 0;
+    }
+
+.adq-form-section-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #21166f;
+}
+
+.adq-form-section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+
+/* ============================================================
+   PRODUCTOS / SERVICIOS
+   ============================================================ */
+
+.adq-detail-row {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e4e8ee;
+    border-radius: 12px;
+    background: #fafbfc;
+}
+
+
+/* ============================================================
+   FLUJO DE APROBACIÓN
+   ============================================================ */
+
+.adq-approval-preview {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.adq-approval-step {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+    .adq-approval-step > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .adq-approval-step span:not(.adq-approval-number) {
+        font-size: .8rem;
+        color: #6c757d;
+    }
+
+.adq-approval-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #e9ecef;
+    font-weight: 700;
+}
+
+.adq-approval-step.active
+.adq-approval-number {
+    background: #21166f;
+    color: #ffffff;
+}
+
+.adq-approval-line {
+    flex: 0 0 60px;
+    height: 2px;
+    background: #dee2e6;
+}
+
+/* ============================================================
+   CAPTURA PRODUCTOS
+   ============================================================ */
+
+.adq-product-capture {
+    padding: 18px;
+    border: 1px solid #e2e6ec;
+    border-radius: 14px;
+    background: #fafbfc;
+}
+
+
+.adq-products-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+
+    .adq-products-header > div {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+
+    .adq-products-header strong {
+        color: #21166f;
+    }
+
+
+    .adq-products-header span {
+        display: inline-flex;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba( 33, 22, 111, .08 );
+        color: #21166f;
+        font-size: .75rem;
+        font-weight: 700;
+    }
+
+
+/* ============================================================
+   LISTA PRODUCTOS
+   ============================================================ */
+
+.adq-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+.adq-product-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 18px;
+    padding: 13px 15px;
+    border: 1px solid #e1e5eb;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+
+.adq-product-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+
+.adq-product-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 10px;
+    background: rgba( 33, 22, 111, .08 );
+    color: #21166f;
+}
+
+
+.adq-product-information {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+
+.adq-product-name {
+    overflow: hidden;
+    color: #212529;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.adq-product-description {
+    overflow: hidden;
+    color: #6c757d;
+    font-size: .8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.adq-product-data {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+
+    .adq-product-data > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .adq-product-data span {
+        color: #6c757d;
+        font-size: .7rem;
+        text-transform: uppercase;
+    }
+
+
+    .adq-product-data strong {
+        color: #21166f;
+        font-size: .9rem;
+    }
+
+
+.adq-product-item
+.btnEliminarDetalleAdq {
+    width: 42px;
+    height: 38px;
+}
+
+
+/* ============================================================
+   SIN PRODUCTOS
+   ============================================================ */
+
+.adq-products-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 25px 15px;
+    border: 1px dashed #d7dce4;
+    border-radius: 12px;
+    color: #6c757d;
+    text-align: center;
+}
+
+
+    .adq-products-empty i {
+        margin-bottom: 3px;
+        color: #21166f;
+        font-size: 1.4rem;
+    }
+
+
+    .adq-products-empty strong {
+        color: #495057;
+        font-size: .85rem;
+    }
+
+
+    .adq-products-empty span {
+        font-size: .78rem;
+    }
+
+
+@media (max-width: 768px) {
+
+    .adq-product-item {
+        grid-template-columns: 1fr auto;
+    }
+
+
+    .adq-product-data {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+}
+
+/* ============================================================
+   DOCUMENTACIÓN
+   ============================================================ */
+
+.adq-upload-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    border: 1px dashed #bfc7d4;
+    border-radius: 14px;
+    background: #fafbfc;
+}
+
+.adq-upload-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 12px;
+    background: rgba( 33, 22, 111, 0.08 );
+    color: #21166f;
+    font-size: 1.4rem;
+}
+
+.adq-upload-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 3px;
+}
+
+    .adq-upload-content strong {
+        color: #21166f;
+    }
+
+    .adq-upload-content span {
+        color: #6c757d;
+        font-size: .85rem;
+    }
+
+.adq-upload-box .form-control {
+    max-width: 430px;
+}
+
+
+/* ============================================================
+   LISTADO DE ARCHIVOS
+   ============================================================ */
+
+.adq-files-list {
+    display: grid;
+    grid-template-columns: repeat( 2, minmax(0, 1fr) );
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.adq-file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #e1e6ed;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+    .adq-file-item > i {
+        color: #21166f;
+        font-size: 1.25rem;
+    }
+
+    .adq-file-item > div {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .adq-file-item strong {
+        overflow: hidden;
+        color: #212529;
+        font-size: .84rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .adq-file-item span {
+        color: #6c757d;
+        font-size: .75rem;
+    }
+
+
+/* ============================================================
+   VALIDACIÓN GERENTE
+   ============================================================ */
+
+.adq-manager-validation {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid #e3e7ed;
+    border-radius: 14px;
+    background: #fafbfc;
+}
+
+.adq-manager-validation-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+    border-radius: 50%;
+    background: rgba( 33, 22, 111, 0.08 );
+    color: #21166f;
+    font-size: 1.4rem;
+}
+
+.adq-manager-validation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.adq-manager-validation-label {
+    color: #6c757d;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.adq-manager-validation-content > strong {
+    color: #21166f;
+    font-size: 1rem;
+}
+
+.adq-manager-validation-content small {
+    color: #6c757d;
+}
+
+.adq-manager-validation-ok {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    margin-top: 4px;
+    color: #198754;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.adq-manager-validation-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    margin-top: 4px;
+    color: #dc3545;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+
+/* ============================================================
+   MODAL NUEVA SOLICITUD
+   ============================================================ */
+
+#modalNuevaSolicitud {
+    z-index: 1060 !important;
+}
+
+
+    /* ============================================================
+   DIALOG DEL MODAL
+   ============================================================ */
+
+    #modalNuevaSolicitud .modal-dialog {
+        width: calc( 100% - 32px );
+        max-width: 1400px;
+        height: calc( 100vh - 24px );
+        max-height: calc( 100vh - 24px );
+        margin: 12px auto;
+        pointer-events: none;
+    }
+
+
+    /* ============================================================
+   CONTENEDOR
+   ============================================================ */
+
+    #modalNuevaSolicitud .modal-content {
+        width: 100%;
+        height: 100%;
+        max-height: calc( 100vh - 24px );
+        overflow: hidden;
+        border: none;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 24px 70px rgba( 0, 0, 0, .25 );
+        pointer-events: auto;
+    }
+
+
+    /* ============================================================
+   FORM DEL MODAL
+   MUY IMPORTANTE PARA EL SCROLL
+   ============================================================ */
+
+    #modalNuevaSolicitud
+    #formNuevaSolicitudAdq {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        max-height: 100%;
+        overflow: hidden;
+    }
+
+
+    /* ============================================================
+   HEADER DEL MODAL
+   ============================================================ */
+
+    #modalNuevaSolicitud
+    .modal-header {
+        flex: 0 0 auto;
+        padding: 18px 20px;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        z-index: 5;
+    }
+
+    #modalNuevaSolicitud
+    .modal-title {
+        margin: 0;
+        color: #21166f;
+        font-weight: 700;
+    }
+
+
+    /* ============================================================
+   BODY DEL MODAL CON SCROLL
+   ============================================================ */
+
+    #modalNuevaSolicitud
+    .modal-body {
+        position: relative;
+        flex: 1 1 0;
+        min-height: 0;
+        /*
+     * Este height: 0 es intencional.
+     * Obliga al flex a usar solamente
+     * el espacio disponible.
+     */
+        height: 0;
+        padding: 22px 20px;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        scrollbar-gutter: stable;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+
+    /* ============================================================
+   SCROLLBAR FIREFOX
+   ============================================================ */
+
+    #modalNuevaSolicitud
+    .modal-body {
+        scrollbar-width: thin;
+        scrollbar-color: #76768a #f1f2f5;
+    }
+
+
+        /* ============================================================
+   SCROLLBAR EDGE / CHROME
+   ============================================================ */
+
+        #modalNuevaSolicitud
+        .modal-body::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        #modalNuevaSolicitud
+        .modal-body::-webkit-scrollbar-track {
+            background: #f1f2f5;
+        }
+
+        #modalNuevaSolicitud
+        .modal-body::-webkit-scrollbar-thumb {
+            background: #8c8c9d;
+            border: 3px solid #f1f2f5;
+            border-radius: 999px;
+        }
+
+            #modalNuevaSolicitud
+            .modal-body::-webkit-scrollbar-thumb:hover {
+                background: #21166f;
+            }
+
+
+    /* ============================================================
+   FOOTER DEL MODAL
+   ============================================================ */
+
+    #modalNuevaSolicitud
+    .modal-footer {
+        flex: 0 0 auto;
+        padding: 14px 20px;
+        margin: 0;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        z-index: 5;
+    }
+
+
+/* ============================================================
+   BACKDROP
+   ============================================================ */
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+
+/* ============================================================
+   NAVEGACIÓN INTERNA DEL FORMULARIO
+   ============================================================ */
+
+.adq-form-navigation {
+    position: sticky;
+    top: -22px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: -22px -20px 20px;
+    padding: 12px 20px;
+    background: rgba( 255, 255, 255, .98 );
+    border-bottom: 1px solid #e6e9ef;
+    backdrop-filter: blur(8px);
+}
+
+.adq-form-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 11px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: #6b7280;
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s ease;
+}
+
+    .adq-form-nav-item span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 23px;
+        height: 23px;
+        border-radius: 50%;
+        background: #eef0f5;
+        color: #21166f;
+        font-size: .75rem;
+    }
+
+    .adq-form-nav-item:hover,
+    .adq-form-nav-item.active {
+        background: rgba( 33, 22, 111, .08 );
+        color: #21166f;
+    }
+
+        .adq-form-nav-item.active span {
+            background: #21166f;
+            color: #ffffff;
+        }
+
+
+/* ============================================================
+   BOTONES DEL MODAL
+   ============================================================ */
+
+#modalNuevaSolicitud
+.btn-primary {
+    background: #21166f;
+    border-color: #21166f;
+}
+
+    #modalNuevaSolicitud
+    .btn-primary:hover {
+        background: #30249b;
+        border-color: #30249b;
+    }
+
+#modalNuevaSolicitud
+.btn-outline-primary {
+    color: #21166f;
+    border-color: #21166f;
+}
+
+    #modalNuevaSolicitud
+    .btn-outline-primary:hover {
+        background: #21166f;
+        border-color: #21166f;
+        color: #ffffff;
+    }
+
+
+/* ============================================================
+   RESPONSIVE TABLET
+   ============================================================ */
+
+@media (max-width: 1200px) {
+
+    .adq-kpi-grid {
+        grid-template-columns: repeat( 3, 1fr );
+    }
+
+    .adq-user-summary {
+        grid-template-columns: repeat( 2, 1fr );
+    }
+}
+
+
+/* ============================================================
+   RESPONSIVE MOBILE
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    .adq-page {
+        padding: 1rem;
+    }
+
+
+    .adq-header,
+    .adq-panel-header {
+        flex-direction: column;
+    }
+
+
+    .adq-header-actions {
+        width: 100%;
+    }
+
+
+        .adq-header-actions
+        .btn {
+            width: 100%;
+        }
+
+
+    .adq-kpi-grid,
+    .adq-user-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    /* ========================================================
+       MODAL
+       ======================================================== */
+
+    #modalNuevaSolicitud
+    .modal-dialog {
+        width: calc( 100% - 16px );
+        height: calc( 100vh - 16px );
+        max-height: calc( 100vh - 16px );
+        margin: 8px auto;
+    }
+
+
+    #modalNuevaSolicitud
+    .modal-content {
+        max-height: calc( 100vh - 16px );
+        border-radius: 12px;
+    }
+
+
+    #modalNuevaSolicitud
+    .modal-header {
+        padding: 14px 16px;
+    }
+
+
+    #modalNuevaSolicitud
+    .modal-body {
+        padding: 18px 16px;
+    }
+
+
+    #modalNuevaSolicitud
+    .modal-footer {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+
+    /* ========================================================
+       DOCUMENTACIÓN
+       ======================================================== */
+
+    .adq-upload-box {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+
+        .adq-upload-box
+        .form-control {
+            max-width: none;
+        }
+
+
+    .adq-files-list {
+        grid-template-columns: 1fr;
+    }
+
+
+    /* ========================================================
+       APROBACIÓN
+       ======================================================== */
+
+    .adq-manager-validation {
+        align-items: flex-start;
+    }
+
+
+    .adq-approval-preview {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+
+    .adq-approval-line {
+        width: 2px;
+        height: 30px;
+        margin-left: 16px;
+        flex: none;
+    }
+
+
+    /* ========================================================
+       NAVEGACIÓN
+       ======================================================== */
+
+    .adq-form-navigation {
+        overflow-x: auto;
+        white-space: nowrap;
+        margin: -18px -16px 18px;
+        padding: 10px 16px;
+    }
+
+
+    .adq-form-nav-item {
+        flex: 0 0 auto;
+    }
+}
+
+
+/* ============================================================
+   MOBILE PEQUEÑO
+   ============================================================ */
+
+@media (max-width: 575.98px) {
+
+    .adq-user-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    #modalNuevaSolicitud
+    .modal-footer {
+        flex-direction: column;
+    }
+
+
+        #modalNuevaSolicitud
+        .modal-footer
+        .btn {
+            width: 100%;
+        }
+}
+
+.adq-file-item-error {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+    .adq-file-item-error > i {
+        color: #dc3545;
+    }
+
+/* ============================================================
+   ARCHIVOS MÚLTIPLES
+   ============================================================ */
+
+.adq-upload-actions {
+    flex: 0 0 auto;
+}
+
+.adq-files-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 18px;
+    color: #6c757d;
+    border: 1px dashed #d9dee7;
+    border-radius: 10px;
+    background: #fafbfc;
+}
+
+.adq-file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.adq-file-item-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+
+.adq-file-item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 9px;
+    background: rgba(33, 22, 111, .08);
+    color: #21166f;
+    font-size: 1.1rem;
+}
+
+.adq-file-item-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+    .adq-file-item-info strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+.adq-file-item-error {
+    border-color: #dc3545;
+    background: #fff5f5;
+}
+
+    .adq-file-item-error .adq-file-item-icon {
+        background: rgba(220, 53, 69, .1);
+        color: #dc3545;
+    }
+
+#contadorArchivosAdq {
+    margin-top: 4px;
+    font-size: .78rem;
+    font-weight: 600;
+}

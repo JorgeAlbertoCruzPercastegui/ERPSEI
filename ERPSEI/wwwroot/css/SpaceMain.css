@@ -1489,3 +1489,482 @@ body.module-main-theme.manuales-politicas-page {
     text-transform: uppercase;
 }
 
+/* ============================================================
+   MENÚ SUPERIOR - MÓDULOS INTERNOS
+   Adquisiciones / Mesa de Ayuda / Compliance / ERP / etc.
+   ============================================================ */
+
+.module-main-theme {
+    min-height: 100vh;
+    background: #ffffff !important;
+    color: #21166f;
+}
+
+
+    /* ============================================================
+   CONTENEDOR GENERAL
+   ============================================================ */
+
+    .module-main-theme .layout-content > .container {
+        max-width: 1280px;
+    }
+
+
+    /* ============================================================
+   BARRA SUPERIOR
+   ============================================================ */
+
+    .module-main-theme .topbar-links {
+        position: relative;
+        z-index: 5000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        row-gap: 8px;
+        flex-wrap: wrap;
+        width: 100%;
+        margin-top: 2px;
+        margin-bottom: 20px;
+        padding: 14px 24px !important;
+        background: #21166f;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 8px 20px rgba(33, 22, 111, 0.12);
+        overflow: visible !important;
+    }
+
+
+        /* ============================================================
+   TEXTO "HOLA, USUARIO"
+   ============================================================ */
+
+        .module-main-theme .topbar-links .small,
+        .module-main-theme .topbar-links .text-muted,
+        .module-main-theme .topbar-links b {
+            color: #ffffff !important;
+        }
+
+        .module-main-theme .topbar-links .small {
+            flex: 0 0 auto;
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+
+        .module-main-theme .topbar-links b {
+            font-weight: 700;
+        }
+
+
+    /* ============================================================
+   CONTENEDOR NAVEGACIÓN
+   ============================================================ */
+
+    .module-main-theme .quick-nav-wrap {
+        position: relative;
+        z-index: 5001;
+        margin-left: auto;
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: visible !important;
+    }
+
+
+    /* ============================================================
+   MENÚ
+   ============================================================ */
+
+    .module-main-theme #quickNavMenu,
+    .module-main-theme .quick-nav {
+        position: relative;
+        z-index: 5002;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 1rem;
+        row-gap: 0.5rem;
+        white-space: normal;
+        overflow: visible !important;
+    }
+
+
+    /* ============================================================
+   LINKS PRINCIPALES
+   ============================================================ */
+
+    .module-main-theme .quick-link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        padding: 3px 4px;
+        color: #ffffff !important;
+        font-size: 0.86rem;
+        font-weight: 700;
+        line-height: 1.1;
+        text-decoration: none !important;
+        border-radius: 7px;
+        white-space: nowrap;
+        transition: color 0.18s ease, background-color 0.18s ease;
+    }
+
+
+        /* Línea dorada inferior */
+
+        .module-main-theme .quick-link::after {
+            content: "";
+            position: absolute;
+            left: 4px;
+            right: 4px;
+            bottom: -5px;
+            height: 2px;
+            background: #d4ad45;
+            transform: scaleX(0);
+            transform-origin: center;
+            transition: transform 0.18s ease;
+            border-radius: 999px;
+        }
+
+
+        /* Hover */
+
+        .module-main-theme .quick-link:hover {
+            color: #d4ad45 !important;
+            background: transparent !important;
+        }
+
+            .module-main-theme .quick-link:hover::after {
+                transform: scaleX(1);
+            }
+
+
+        /* Link activo */
+
+        .module-main-theme .quick-link.active {
+            color: #d4ad45 !important;
+        }
+
+            .module-main-theme .quick-link.active::after {
+                transform: scaleX(1);
+            }
+
+
+    /* ============================================================
+   CONTENEDORES DROPDOWN
+   ============================================================ */
+
+    .module-main-theme .quick-dd {
+        position: relative;
+        z-index: 5003;
+        display: inline-flex;
+        align-items: center;
+        flex: 0 0 auto;
+        overflow: visible !important;
+    }
+
+
+    /* ============================================================
+   DROPDOWN
+   ============================================================ */
+
+    .module-main-theme .quick-dd-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        z-index: 99999 !important;
+        display: none;
+        min-width: 270px;
+        margin-top: 10px;
+        padding: 8px;
+        background: #ffffff;
+        border: 1px solid rgba(33, 22, 111, 0.12);
+        border-radius: 14px;
+        box-shadow: 0 18px 40px rgba(33, 22, 111, 0.18);
+        overflow: hidden;
+    }
+
+
+    /* Dropdown ancho */
+
+    .module-main-theme .quick-dd-menu-wide {
+        min-width: 340px;
+        max-height: 420px;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+
+    /* Mostrar dropdown */
+
+    .module-main-theme .quick-dd.open > .quick-dd-menu {
+        display: block !important;
+    }
+
+
+    /* Link padre abierto */
+
+    .module-main-theme .quick-dd.open > .quick-dd-toggle {
+        color: #d4ad45 !important;
+    }
+
+        .module-main-theme .quick-dd.open > .quick-dd-toggle::after {
+            transform: scaleX(1);
+        }
+
+
+    /* ============================================================
+   ITEMS DEL DROPDOWN
+   ============================================================ */
+
+    .module-main-theme .quick-dd-item {
+        display: block;
+        width: 100%;
+        padding: 9px 12px;
+        color: #21166f !important;
+        font-size: 0.84rem;
+        font-weight: 600;
+        line-height: 1.3;
+        text-decoration: none !important;
+        border-radius: 9px;
+        transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+        .module-main-theme .quick-dd-item:hover {
+            color: #21166f !important;
+            background: rgba(33, 22, 111, 0.08);
+            transform: translateX(2px);
+        }
+
+
+    /* ============================================================
+   SEPARADORES DEL DROPDOWN
+   ============================================================ */
+
+    .module-main-theme .quick-dd-menu hr {
+        margin: 6px 4px;
+        border-color: rgba(33, 22, 111, 0.10);
+        opacity: 1;
+    }
+
+
+    /* ============================================================
+   BOTÓN HAMBURGUESA
+   ============================================================ */
+
+    .module-main-theme .quick-nav-toggle {
+        border: none;
+        background: #21166f;
+        color: #ffffff;
+        border-radius: 10px;
+        padding: 7px 11px;
+        font-size: 1rem;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+
+    /* ============================================================
+   PROTECCIÓN DE Z-INDEX
+   ============================================================ */
+
+    .module-main-theme .topbar-links,
+    .module-main-theme .quick-nav-wrap,
+    .module-main-theme #quickNavMenu,
+    .module-main-theme .quick-dd {
+        overflow: visible !important;
+    }
+
+    .module-main-theme .topbar-links {
+        position: relative;
+        z-index: 5000;
+    }
+
+    .module-main-theme .quick-nav-wrap {
+        z-index: 5001;
+    }
+
+    .module-main-theme #quickNavMenu {
+        z-index: 5002;
+    }
+
+    .module-main-theme .quick-dd {
+        z-index: 5003;
+    }
+
+    .module-main-theme .quick-dd-menu {
+        z-index: 99999 !important;
+    }
+
+
+/* ============================================================
+   MOBILE / TABLET
+   ============================================================ */
+
+@media (max-width: 991.98px) {
+
+    .module-main-theme .topbar-links {
+        position: relative;
+        flex-direction: row !important;
+        align-items: center !important;
+        padding: 12px 16px !important;
+        white-space: normal;
+    }
+
+
+    .module-main-theme .quick-nav-wrap {
+        margin-left: auto;
+        flex: 0 0 auto;
+    }
+
+
+    /*
+     * En móvil el menú permanece oculto
+     * hasta utilizar el botón hamburguesa.
+     */
+
+    .module-main-theme #quickNavMenu {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        z-index: 99999;
+        display: none !important;
+        width: 290px;
+        padding: 8px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        background: #21166f;
+        border: 1px solid rgba( 255, 255, 255, 0.12 );
+        border-radius: 12px;
+        box-shadow: 0 18px 38px rgba( 0, 0, 0, 0.20 );
+    }
+
+
+        .module-main-theme #quickNavMenu.is-open {
+            display: flex !important;
+        }
+
+
+    .module-main-theme .quick-link {
+        display: block;
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 8px;
+    }
+
+
+        .module-main-theme .quick-link::after {
+            display: none;
+        }
+
+
+        .module-main-theme .quick-link:hover {
+            background: rgba( 255, 255, 255, 0.10 ) !important;
+        }
+
+
+    .module-main-theme .quick-dd {
+        display: block;
+        width: 100%;
+    }
+
+
+    .module-main-theme .quick-dd-menu {
+        position: static !important;
+        display: none;
+        width: 100%;
+        min-width: 0;
+        margin-top: 4px;
+        padding: 4px 4px 4px 12px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+
+    .module-main-theme
+    .quick-dd.open > .quick-dd-menu {
+        display: block !important;
+    }
+
+
+    .module-main-theme .quick-dd-item {
+        color: #ffffff !important;
+        padding: 7px 10px;
+    }
+
+
+        .module-main-theme .quick-dd-item:hover {
+            color: #d4ad45 !important;
+            background: rgba( 255, 255, 255, 0.10 );
+            transform: none;
+        }
+}
+
+
+/* ============================================================
+   MOBILE PEQUEÑO
+   ============================================================ */
+
+@media (max-width: 575.98px) {
+
+    .module-main-theme .topbar-links {
+        padding: 10px 12px !important;
+    }
+
+
+        .module-main-theme .topbar-links .small {
+            max-width: calc(100% - 55px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+
+    .module-main-theme #quickNavMenu {
+        width: min( 290px, calc(100vw - 30px) );
+    }
+}
+
+/* ============================================================
+   FIX Z-INDEX MENU VS MODALES
+   ============================================================ */
+
+.module-main-theme .topbar-links {
+    z-index: 900 !important;
+}
+
+.module-main-theme .quick-nav-wrap {
+    z-index: 901 !important;
+}
+
+.module-main-theme #quickNavMenu {
+    z-index: 902 !important;
+}
+
+.module-main-theme .quick-dd {
+    z-index: 903 !important;
+}
+
+.module-main-theme .quick-dd-menu {
+    z-index: 950 !important;
+}
+
+/*
+ * Bootstrap modal:
+ * backdrop ≈ 1050
+ * modal ≈ 1055
+ *
+ * Forzamos explícitamente para evitar que cualquier
+ * estilo general de la Intranet quede encima.
+ */
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+.modal {
+    z-index: 1060 !important;
+}

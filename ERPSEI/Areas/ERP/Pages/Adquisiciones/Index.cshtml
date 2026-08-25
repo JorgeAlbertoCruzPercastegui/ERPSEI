@@ -1,0 +1,1648 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.Adquisiciones.IndexModel
+
+@{
+    ViewData["Title"] = "Adquisiciones";
+}
+
+@section Styles
+{
+    <link rel="stylesheet"
+          href="~/css/Adquisiciones.css"
+          asp-append-version="true" />
+}
+
+
+<div class="adq-page">
+
+    @if (TempData["MensajeExito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4"
+             role="alert">
+
+            <i class="bi bi-check-circle-fill me-2"></i>
+
+            @TempData["MensajeExito"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+
+    @if (TempData["MensajeError"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4"
+             role="alert">
+
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+
+            @TempData["MensajeError"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+
+        </div>
+    }
+
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="ModelOnly"
+             class="alert alert-danger mb-4">
+        </div>
+    }
+
+
+    <!-- ====================================================== -->
+    <!-- ENCABEZADO -->
+    <!-- ====================================================== -->
+
+    <section class="adq-header">
+
+        <div class="adq-header-main">
+
+            <div class="adq-header-icon">
+
+                <i class="bi bi-cart-check"></i>
+
+            </div>
+
+
+            <div>
+
+                <h1 class="adq-title">
+                    Adquisiciones
+                </h1>
+
+                <p class="adq-subtitle">
+                    Solicitudes de compra, aprobaciones,
+                    asignaciones y seguimiento.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="adq-header-actions">
+
+            <button type="button"
+                    id="btnNuevaSolicitudAdq"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalNuevaSolicitud">
+
+                <i class="bi bi-plus-lg me-1"></i>
+
+                Nueva solicitud
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ====================================================== -->
+    <!-- DATOS DEL USUARIO -->
+    <!-- ====================================================== -->
+
+    <section class="adq-user-summary">
+
+        <div class="adq-user-summary-item">
+
+            <span class="adq-user-summary-label">
+                Solicitante
+            </span>
+
+            <strong>
+                @Model.NombreSolicitante
+            </strong>
+
+        </div>
+
+
+        <div class="adq-user-summary-item">
+
+            <span class="adq-user-summary-label">
+                Área
+            </span>
+
+            <strong>
+                @Model.NombreArea
+            </strong>
+
+        </div>
+
+
+        <div class="adq-user-summary-item">
+
+            <span class="adq-user-summary-label">
+                Jefe directo
+            </span>
+
+            <strong>
+                @Model.NombreJefe
+            </strong>
+
+        </div>
+
+
+        <div class="adq-user-summary-item">
+
+            <span class="adq-user-summary-label">
+                Aprobación
+            </span>
+
+            @if (Model.TieneJefeConfigurado)
+            {
+                <span class="badge bg-success">
+                    Configurada
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark">
+                    Pendiente de configuración
+                </span>
+            }
+
+        </div>
+
+    </section>
+
+
+    <!-- ====================================================== -->
+    <!-- KPIs -->
+    <!-- ====================================================== -->
+
+    <section class="adq-kpi-grid">
+
+        <article class="adq-kpi-card">
+
+            <div>
+
+                <span class="adq-kpi-label">
+                    Total solicitudes
+                </span>
+
+                <strong class="adq-kpi-value">
+                    @Model.TotalSolicitudes
+                </strong>
+
+            </div>
+
+
+            <div class="adq-kpi-icon">
+                <i class="bi bi-folder2-open"></i>
+            </div>
+
+        </article>
+
+
+        <article class="adq-kpi-card">
+
+            <div>
+
+                <span class="adq-kpi-label">
+                    Borradores
+                </span>
+
+                <strong class="adq-kpi-value">
+                    @Model.TotalBorradores
+                </strong>
+
+            </div>
+
+
+            <div class="adq-kpi-icon">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+
+        </article>
+
+
+        <article class="adq-kpi-card">
+
+            <div>
+
+                <span class="adq-kpi-label">
+                    Pendientes
+                </span>
+
+                <strong class="adq-kpi-value">
+                    @Model.TotalPendientes
+                </strong>
+
+            </div>
+
+
+            <div class="adq-kpi-icon">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+
+        </article>
+
+
+        <article class="adq-kpi-card">
+
+            <div>
+
+                <span class="adq-kpi-label">
+                    En proceso
+                </span>
+
+                <strong class="adq-kpi-value">
+                    @Model.TotalEnProceso
+                </strong>
+
+            </div>
+
+
+            <div class="adq-kpi-icon">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+
+        </article>
+
+
+        <article class="adq-kpi-card">
+
+            <div>
+
+                <span class="adq-kpi-label">
+                    Finalizadas
+                </span>
+
+                <strong class="adq-kpi-value">
+                    @Model.TotalFinalizadas
+                </strong>
+
+            </div>
+
+
+            <div class="adq-kpi-icon">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+
+        </article>
+
+    </section>
+
+
+    <!-- ====================================================== -->
+    <!-- MIS SOLICITUDES -->
+    <!-- ====================================================== -->
+
+    <section class="adq-panel">
+
+        <div class="adq-panel-header">
+
+            <div>
+
+                <span class="adq-panel-kicker">
+                    Adquisiciones
+                </span>
+
+                <h2>
+                    Mis solicitudes
+                </h2>
+
+                <p>
+                    Consulta el estado y seguimiento
+                    de tus solicitudes de compra.
+                </p>
+
+            </div>
+
+
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    onclick="location.reload();">
+
+                <i class="bi bi-arrow-clockwise me-1"></i>
+
+                Actualizar
+
+            </button>
+
+        </div>
+
+
+        <div class="adq-filter-bar">
+
+            <div class="row g-3">
+
+                <div class="col-12 col-lg-6">
+
+                    <label for="adqFiltroBusqueda"
+                           class="form-label">
+                        Buscar
+                    </label>
+
+                    <input type="text"
+                           id="adqFiltroBusqueda"
+                           class="form-control"
+                           placeholder="Folio, título o área..."
+                           autocomplete="off" />
+
+                </div>
+
+
+                <div class="col-12 col-lg-3">
+
+                    <label for="adqFiltroEstatus"
+                           class="form-label">
+                        Estatus
+                    </label>
+
+                    <select id="adqFiltroEstatus"
+                            class="form-select">
+
+                        <option value="">
+                            Todos
+                        </option>
+
+                        @foreach (
+                            var estatus
+                            in Model.Solicitudes
+                                .Select(x => x.Estatus)
+                                .Where(x => x != null)
+                                .GroupBy(x => x.Id)
+                                .Select(x => x.First())
+                                .OrderBy(x => x.Orden))
+                        {
+                            <option value="@estatus.Id">
+                                @estatus.Nombre
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-12 col-lg-3 d-grid align-self-end">
+
+                    <button type="button"
+                            id="btnLimpiarFiltrosAdq"
+                            class="btn btn-outline-secondary">
+
+                        <i class="bi bi-eraser me-1"></i>
+
+                        Limpiar filtros
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table align-middle adq-table"
+                   id="tablaSolicitudesAdq">
+
+                <thead>
+
+                    <tr>
+                        <th>Folio</th>
+                        <th>Solicitud</th>
+                        <th>Área</th>
+                        <th>Fecha</th>
+                        <th>Estatus</th>
+
+                        <th class="text-center">
+                            Acciones
+                        </th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    @if (Model.Solicitudes.Count == 0)
+                    {
+                        <tr class="adq-empty-row">
+
+                            <td colspan="6"
+                                class="text-center">
+
+                                <div class="adq-empty-state">
+
+                                    <i class="bi bi-inbox"></i>
+
+                                    <strong>
+                                        No tienes solicitudes registradas.
+                                    </strong>
+
+                                    <span>
+                                        Crea tu primera solicitud de compra.
+                                    </span>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (
+                            var solicitud
+                            in Model.Solicitudes)
+                        {
+                            <tr class="adq-solicitud-row"
+                                data-folio="@solicitud.Folio.ToLowerInvariant()"
+                                data-titulo="@solicitud.Titulo.ToLowerInvariant()"
+                                data-area="@(solicitud.Area?.Nombre?.ToLowerInvariant() ?? string.Empty)"
+                                data-estatus="@solicitud.EstatusId">
+
+                                <td>
+
+                                    <strong class="adq-folio">
+                                        @solicitud.Folio
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="adq-request-title">
+                                        @solicitud.Titulo
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+                                    @(solicitud.Area?.Nombre ?? "Sin área")
+                                </td>
+
+
+                                <td>
+                                    @solicitud.FechaSolicitud.ToString("dd/MM/yyyy")
+                                </td>
+
+
+                                <td>
+
+                                    <span class="adq-status-badge"
+                                          data-status="@solicitud.Estatus?.Codigo">
+
+                                        @(solicitud.Estatus?.Nombre ?? "Sin estatus")
+
+                                    </span>
+
+                                </td>
+
+
+                                <td class="text-center">
+
+                                    <div class="d-inline-flex gap-1">
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                                data-id="@solicitud.Id"
+                                                title="Ver solicitud">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </button>
+
+
+                                        @if (solicitud.EstatusId == 1)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary btnEditarSolicitudAdq"
+                                                    data-id="@solicitud.Id"
+                                                    title="Editar solicitud">
+
+                                                <i class="bi bi-pencil"></i>
+
+                                            </button>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<!-- ========================================================== -->
+<!-- MODAL NUEVA / EDITAR SOLICITUD -->
+<!-- ========================================================== -->
+
+<div class="modal fade"
+     id="modalNuevaSolicitud"
+     tabindex="-1"
+     aria-labelledby="modalNuevaSolicitudLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  id="formNuevaSolicitudAdq"
+                  enctype="multipart/form-data">
+
+                @Html.AntiForgeryToken()
+
+
+                <input type="hidden"
+                       id="SolicitudEditarId"
+                       name="SolicitudEditarId"
+                       value="@Model.SolicitudEditarId" />
+
+
+                <!-- ================================================= -->
+                <!-- HEADER -->
+                <!-- ================================================= -->
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <h5 class="modal-title"
+                            id="modalNuevaSolicitudLabel">
+
+                            <i class="bi bi-cart-plus me-2"></i>
+
+                            Nueva solicitud de compra
+
+                        </h5>
+
+
+                        <div class="small opacity-75 mt-1">
+
+                            Registra los productos o servicios
+                            requeridos para iniciar el proceso
+                            de adquisición.
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- BODY -->
+                <!-- ================================================= -->
+
+                <div class="modal-body">
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger mb-3">
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- SOLICITANTE -->
+                    <!-- ================================================= -->
+
+                    <div class="adq-form-section">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-person-badge"></i>
+
+                            Información del solicitante
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="form-label">
+                                    Solicitante
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       value="@Model.NombreSolicitante"
+                                       readonly />
+
+                            </div>
+
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="form-label">
+                                    Fecha de solicitud
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       value="@DateTime.Now.ToString("dd/MM/yyyy")"
+                                       readonly />
+
+                            </div>
+
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="form-label">
+                                    Área solicitante
+                                </label>
+
+                                <select asp-for="Input.AreaId"
+                                        asp-items="Model.Areas"
+                                        class="form-select">
+
+                                    <option value="0">
+                                        Selecciona...
+                                    </option>
+
+                                </select>
+
+                                <span asp-validation-for="Input.AreaId"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label class="form-label">
+                                    Jefe directo
+                                </label>
+
+                                <input type="text"
+                                       class="form-control"
+                                       value="@Model.NombreJefe"
+                                       readonly />
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- GENERAL -->
+                    <!-- ================================================= -->
+
+                    <div class="adq-form-section">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-card-text"></i>
+
+                            Información general
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-12">
+
+                                <label asp-for="Input.Titulo"
+                                       class="form-label">
+
+                                    Título de la solicitud
+
+                                </label>
+
+                                <input asp-for="Input.Titulo"
+                                       class="form-control"
+                                       maxlength="250"
+                                       placeholder="Ej. Compra de equipo de cómputo" />
+
+                                <span asp-validation-for="Input.Titulo"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label asp-for="Input.Descripcion"
+                                       class="form-label">
+
+                                    Descripción general
+
+                                </label>
+
+                                <textarea asp-for="Input.Descripcion"
+                                          class="form-control"
+                                          rows="3"
+                                          maxlength="5000"
+                                          placeholder="Describe de manera general el requerimiento..."></textarea>
+
+                                <span asp-validation-for="Input.Descripcion"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <label asp-for="Input.Justificacion"
+                                       class="form-label">
+
+                                    Justificación
+
+                                </label>
+
+                                <textarea asp-for="Input.Justificacion"
+                                          class="form-control"
+                                          rows="3"
+                                          maxlength="5000"
+                                          placeholder="Indica por qué se requiere realizar esta compra..."></textarea>
+
+                                <span asp-validation-for="Input.Justificacion"
+                                      class="text-danger">
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- PRODUCTOS -->
+                    <!-- ================================================= -->
+
+                    <div class="adq-form-section"
+                         id="seccionCompraAdq">
+
+                        <div class="adq-form-section-heading">
+
+                            <div class="adq-form-section-title">
+
+                                <i class="bi bi-box-seam"></i>
+
+                                Productos / Servicios
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="adq-product-capture">
+
+                            <div class="row g-3 align-items-end">
+
+                                <div class="col-xl-4 col-lg-4">
+
+                                    <label class="form-label">
+                                        Producto / Servicio
+                                    </label>
+
+                                    <input type="text"
+                                           id="adqProductoServicio"
+                                           class="form-control"
+                                           maxlength="500"
+                                           placeholder="Ej. Laptop Dell Latitude" />
+
+                                </div>
+
+
+                                <div class="col-xl-2 col-lg-2">
+
+                                    <label class="form-label">
+                                        Cantidad
+                                    </label>
+
+                                    <input type="number"
+                                           id="adqCantidad"
+                                           class="form-control"
+                                           value="1"
+                                           min="1"
+                                           step="1" />
+
+                                </div>
+
+
+                                <div class="col-xl-2 col-lg-2">
+
+                                    <label class="form-label">
+                                        Unidad
+                                    </label>
+
+                                    <select id="adqUnidad"
+                                            class="form-select">
+
+                                        <option value="">
+                                            Selecciona...
+                                        </option>
+
+                                        <option value="Pieza">
+                                            Pieza
+                                        </option>
+
+                                        <option value="Servicio">
+                                            Servicio
+                                        </option>
+
+                                        <option value="Equipo">
+                                            Equipo
+                                        </option>
+
+                                        <option value="Licencia">
+                                            Licencia
+                                        </option>
+
+                                        <option value="Caja">
+                                            Caja
+                                        </option>
+
+                                        <option value="Paquete">
+                                            Paquete
+                                        </option>
+
+                                        <option value="Metro">
+                                            Metro
+                                        </option>
+
+                                        <option value="Litro">
+                                            Litro
+                                        </option>
+
+                                        <option value="Kilogramo">
+                                            Kilogramo
+                                        </option>
+
+                                        <option value="Hora">
+                                            Hora
+                                        </option>
+
+                                        <option value="Día">
+                                            Día
+                                        </option>
+
+                                        <option value="Mes">
+                                            Mes
+                                        </option>
+
+                                        <option value="Año">
+                                            Año
+                                        </option>
+
+                                        <option value="Otro">
+                                            Otro
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+
+                                <div class="col-xl-3 col-lg-3">
+
+                                    <label class="form-label">
+                                        Descripción
+                                    </label>
+
+                                    <input type="text"
+                                           id="adqDescripcionProducto"
+                                           class="form-control"
+                                           maxlength="2000"
+                                           placeholder="Especificaciones..." />
+
+                                </div>
+
+
+                                <div class="col-xl-1 col-lg-1 d-grid">
+
+                                    <button type="button"
+                                            id="btnAgregarDetalleAdq"
+                                            class="btn btn-outline-primary"
+                                            title="Agregar producto">
+
+                                        <i class="bi bi-plus-lg"></i>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="adq-products-header mt-4">
+
+                            <div>
+
+                                <strong>
+                                    Productos agregados
+                                </strong>
+
+                                <span id="adqContadorProductos">
+                                    @Model.Input.Detalles.Count producto@(Model.Input.Detalles.Count == 1 ? "" : "s")
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div id="contenedorDetallesAdq"
+                             class="adq-products-list">
+
+                            @if (Model.Input.Detalles.Count == 0)
+                            {
+                                <div id="adqProductosVacio"
+                                     class="adq-products-empty">
+
+                                    <i class="bi bi-box"></i>
+
+                                    <strong>
+                                        Aún no has agregado productos o servicios
+                                    </strong>
+
+                                    <span>
+                                        Captura la información superior
+                                        y presiona el botón +.
+                                    </span>
+
+                                </div>
+                            }
+                            else
+                            {
+                                for (
+                                    int i = 0;
+                                    i < Model.Input.Detalles.Count;
+                                    i++)
+                                {
+                                    var detalle =
+                                        Model.Input.Detalles[i];
+
+                                    <div class="adq-product-item">
+
+                                        <div class="adq-product-main">
+
+                                            <div class="adq-product-icon">
+
+                                                <i class="bi bi-box-seam"></i>
+
+                                            </div>
+
+
+                                            <div class="adq-product-information">
+
+                                                <strong class="adq-product-name">
+                                                    @detalle.ProductoServicio
+                                                </strong>
+
+                                                <span class="adq-product-description">
+
+                                                    @(string.IsNullOrWhiteSpace(detalle.Descripcion)
+                                                        ? "Sin descripción adicional"
+                                                        : detalle.Descripcion)
+
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <div class="adq-product-data">
+
+                                            <div>
+
+                                                <span>
+                                                    Cantidad
+                                                </span>
+
+                                                <strong>
+                                                    @detalle.Cantidad
+                                                </strong>
+
+                                            </div>
+
+
+                                            <div>
+
+                                                <span>
+                                                    Unidad
+                                                </span>
+
+                                                <strong>
+                                                    @detalle.Unidad
+                                                </strong>
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <button type="button"
+                                                class="btn btn-outline-danger btnEliminarDetalleAdq"
+                                                title="Eliminar producto">
+
+                                            <i class="bi bi-trash"></i>
+
+                                        </button>
+
+
+                                        <input type="hidden"
+                                               data-field="ProductoServicio"
+                                               name="Input.Detalles[@i].ProductoServicio"
+                                               value="@detalle.ProductoServicio" />
+
+                                        <input type="hidden"
+                                               data-field="Cantidad"
+                                               name="Input.Detalles[@i].Cantidad"
+                                               value="@detalle.Cantidad" />
+
+                                        <input type="hidden"
+                                               data-field="Unidad"
+                                               name="Input.Detalles[@i].Unidad"
+                                               value="@detalle.Unidad" />
+
+                                        <input type="hidden"
+                                               data-field="Descripcion"
+                                               name="Input.Detalles[@i].Descripcion"
+                                               value="@detalle.Descripcion" />
+
+                                    </div>
+                                }
+                            }
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- DOCUMENTACIÓN -->
+                    <!-- ================================================= -->
+
+                    <div class="adq-form-section">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-paperclip"></i>
+
+                            Documentación de soporte
+
+                        </div>
+
+
+                        <div class="adq-upload-box">
+
+                            <div class="adq-upload-icon">
+
+                                <i class="bi bi-cloud-arrow-up"></i>
+
+                            </div>
+
+
+                            <div class="adq-upload-content">
+
+                                <strong>
+                                    Adjunta archivos relacionados con la solicitud
+                                </strong>
+
+                                <span>
+                                    Puedes agregarlos uno por uno
+                                    o seleccionar varios al mismo tiempo.
+                                </span>
+
+                                <small id="contadorArchivosAdq"
+                                       class="text-muted">
+
+                                    0 archivos agregados
+
+                                </small>
+
+                            </div>
+
+
+                            <div class="adq-upload-actions">
+
+                                <button type="button"
+                                        id="btnAgregarArchivosAdq"
+                                        class="btn btn-outline-primary">
+
+                                    <i class="bi bi-plus-lg me-1"></i>
+
+                                    Agregar archivos
+
+                                </button>
+
+                            </div>
+
+
+                            <!--
+                                El input real queda oculto.
+                                JS acumula los archivos con DataTransfer.
+                            -->
+
+                            <input type="file"
+                                   id="ArchivosSolicitud"
+                                   name="ArchivosSolicitud"
+                                   class="d-none"
+                                   multiple
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+
+                        </div>
+
+
+                        <div id="listaArchivosAdq"
+                             class="adq-files-list">
+
+                            <div class="adq-files-empty">
+
+                                <i class="bi bi-folder2-open"></i>
+
+                                <span>
+                                    Aún no has agregado archivos.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-text mt-2">
+
+                            Formatos permitidos:
+                            PDF, DOC, DOCX, XLS, XLSX,
+                            PNG, JPG y JPEG.
+
+                            Máximo 15 MB por archivo.
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- APROBACIÓN -->
+                    <!-- ================================================= -->
+
+                    <div class="adq-form-section">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-person-check"></i>
+
+                            Autorización de la solicitud
+
+                        </div>
+
+
+                        <div class="adq-manager-validation">
+
+                            <div class="adq-manager-validation-icon">
+
+                                @if (Model.TieneJefeConfigurado)
+                                {
+                                    <i class="bi bi-shield-check"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                }
+
+                            </div>
+
+
+                            <div class="adq-manager-validation-content">
+
+                                <span class="adq-manager-validation-label">
+                                    Gerente / jefe responsable
+                                </span>
+
+                                <strong>
+                                    @Model.NombreJefe
+                                </strong>
+
+
+                                @if (Model.TieneJefeConfigurado)
+                                {
+                                    <span class="adq-manager-validation-ok">
+
+                                        <i class="bi bi-check-circle-fill"></i>
+
+                                        Validación configurada
+
+                                    </span>
+
+                                    <small>
+                                        Al enviar la solicitud se generará
+                                        automáticamente una aprobación
+                                        pendiente para este responsable.
+                                    </small>
+                                }
+                                else
+                                {
+                                    <span class="adq-manager-validation-error">
+
+                                        <i class="bi bi-exclamation-circle-fill"></i>
+
+                                        No existe un aprobador configurado
+
+                                    </span>
+
+                                    <small>
+                                        La solicitud puede guardarse como borrador,
+                                        pero no podrá enviarse hasta configurar
+                                        correctamente al jefe del empleado.
+                                    </small>
+                                }
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="adq-approval-preview mt-4">
+
+                            <div class="adq-approval-step active">
+
+                                <span class="adq-approval-number">
+                                    1
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Solicitud
+                                    </strong>
+
+                                    <span>
+                                        Captura del usuario
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-approval-line"></div>
+
+
+                            <div class="adq-approval-step">
+
+                                <span class="adq-approval-number">
+                                    2
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Gerente del área
+                                    </strong>
+
+                                    <span>
+                                        Aprobación requerida
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-approval-line"></div>
+
+
+                            <div class="adq-approval-step">
+
+                                <span class="adq-approval-number">
+                                    3
+                                </span>
+
+                                <div>
+
+                                    <strong>
+                                        Adquisiciones
+                                    </strong>
+
+                                    <span>
+                                        Revisión y asignación
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- FOOTER -->
+                <!-- ================================================= -->
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
+
+
+                    <button type="submit"
+                            id="btnGuardarCambiosAdq"
+                            formaction="?handler=EditarSolicitud"
+                            class="btn btn-primary d-none">
+
+                        <i class="bi bi-check-lg me-1"></i>
+
+                        Guardar cambios
+
+                    </button>
+
+
+                    <button type="submit"
+                            id="btnGuardarBorradorAdq"
+                            formaction="?handler=GuardarBorrador"
+                            class="btn btn-outline-primary">
+
+                        <i class="bi bi-save me-1"></i>
+
+                        Guardar borrador
+
+                    </button>
+
+
+                    <button type="submit"
+                            id="btnEnviarSolicitudAdq"
+                            formaction="?handler=EnviarSolicitud"
+                            class="btn btn-primary"
+                            disabled>
+
+                        <i class="bi bi-send me-1"></i>
+
+                        Enviar solicitud
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================== -->
+<!-- MODAL VER SOLICITUD -->
+<!-- ========================================================== -->
+
+<div class="modal fade"
+     id="modalVerSolicitudAdq"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h5 class="modal-title">
+
+                        <i class="bi bi-eye me-2"></i>
+
+                        Detalle de solicitud
+
+                    </h5>
+
+
+                    <div class="small text-muted"
+                         id="verSolicitudFolio">
+                    </div>
+
+                </div>
+
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <div class="row g-3 mb-4">
+
+                    <div class="col-lg-6">
+
+                        <span class="adq-detail-label">
+                            Solicitud
+                        </span>
+
+                        <strong class="d-block"
+                                id="verSolicitudTitulo">
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-lg-2">
+
+                        <span class="adq-detail-label">
+                            Fecha
+                        </span>
+
+                        <strong class="d-block"
+                                id="verSolicitudFecha">
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-lg-2">
+
+                        <span class="adq-detail-label">
+                            Área
+                        </span>
+
+                        <strong class="d-block"
+                                id="verSolicitudArea">
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-lg-2">
+
+                        <span class="adq-detail-label">
+                            Estatus
+                        </span>
+
+                        <strong class="d-block"
+                                id="verSolicitudEstatus">
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <span class="adq-detail-label">
+                        Descripción
+                    </span>
+
+                    <div id="verSolicitudDescripcion">
+                    </div>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <span class="adq-detail-label">
+                        Justificación
+                    </span>
+
+                    <div id="verSolicitudJustificacion">
+                    </div>
+
+                </div>
+
+
+                <div class="mb-4">
+
+                    <div class="adq-form-section-title">
+
+                        <i class="bi bi-box-seam"></i>
+
+                        Productos / Servicios
+
+                    </div>
+
+
+                    <div id="verSolicitudProductos"
+                         class="adq-products-list">
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <div class="adq-form-section-title">
+
+                        <i class="bi bi-paperclip"></i>
+
+                        Documentación
+
+                    </div>
+
+
+                    <div id="verSolicitudDocumentos"
+                         class="adq-files-list">
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+
+                    Cerrar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="~/js/Index.js"
+            asp-append-version="true">
+    </script>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <script>
+            document.addEventListener(
+                "DOMContentLoaded",
+                function () {
+
+                    const modalElement =
+                        document.getElementById(
+                            "modalNuevaSolicitud"
+                        );
+
+                    if (!modalElement) {
+                        return;
+                    }
+
+                    bootstrap.Modal
+                        .getOrCreateInstance(
+                            modalElement
+                        )
+                        .show();
+                }
+            );
+        </script>
+    }
+}
