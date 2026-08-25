@@ -65,6 +65,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
         [BindProperty]
+        public List<int> AdjuntosEliminarIds
+        {
+            get;
+            set;
+        } = new();
+
+
+        [BindProperty]
         public int? SolicitudEditarId
         {
             get;
@@ -771,9 +779,15 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             AdqSolicitud? solicitud =
                 await _context.AdqSolicitudes
+
                     .Include(
                         x => x.Detalles
                     )
+
+                    .Include(
+                        x => x.Adjuntos
+                    )
+
                     .FirstOrDefaultAsync(
                         x =>
                             x.Id ==
@@ -790,10 +804,13 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            if (solicitud.EstatusId != 1)
+            if (
+                solicitud.EstatusId != 1 &&
+                solicitud.EstatusId != 2
+            )
             {
                 TempData["MensajeError"] =
-                    "Solamente se pueden editar solicitudes en borrador.";
+                    "La solicitud ya no puede modificarse porque ya fue aprobada por el gerente.";
 
                 return RedirectToPage();
             }
@@ -801,6 +818,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             DateTime ahora =
                 DateTime.Now;
+
+            int estatusAnterior =
+                solicitud.EstatusId;
 
 
             await using var transaccion =
@@ -825,6 +845,41 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 solicitud.FechaModificacion =
                     ahora;
 
+                // =========================================================
+                // ELIMINAR ADJUNTOS SELECCIONADOS
+                // =========================================================
+
+                if (
+                    AdjuntosEliminarIds != null &&
+                    AdjuntosEliminarIds.Count > 0
+                )
+                {
+                    List<AdqAdjunto> adjuntosEliminar =
+                        solicitud.Adjuntos
+                            .Where(
+                                x =>
+                                    AdjuntosEliminarIds.Contains(
+                                        x.Id
+                                    )
+                                    &&
+                                    !x.Eliminado
+                            )
+                            .ToList();
+
+
+                    foreach (
+                        AdqAdjunto adjunto
+                        in adjuntosEliminar
+                    )
+                    {
+                        /*
+                         * Eliminación lógica.
+                         * Conservamos el archivo físico para trazabilidad.
+                         */
+                        adjunto.Eliminado =
+                            true;
+                    }
+                }
 
                 /*
                  * Los detalles anteriores se conservan
@@ -885,7 +940,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     ahora
                 );
 
-
                 _context.AdqHistorial.Add(
                     new AdqHistorial
                     {
@@ -899,10 +953,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             "SOLICITUD_EDITADA",
 
                         Descripcion =
-                            "El usuario modificó la solicitud en borrador.",
+                            "El usuario modificó la información de la solicitud.",
 
                         EstatusAnteriorId =
-                            solicitud.EstatusId,
+                            estatusAnterior,
 
                         EstatusNuevoId =
                             solicitud.EstatusId,
@@ -957,6 +1011,340 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                 return Page();
+            }
+        }
+
+        // =========================================================
+        // ENVIAR BORRADOR EXISTENTE
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostEnviarBorradorAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            if (!SolicitudEditarId.HasValue)
+            {
+                TempData["MensajeError"] =
+                    "No se identificó el borrador a enviar.";
+
+                return RedirectToPage();
+            }
+
+
+            NormalizarInput();
+
+            ValidarDetalles();
+
+            ValidarArchivos();
+
+
+            if (!ModelState.IsValid)
+            {
+                await CargarPantallaAsync(
+                    usuarioActual
+                );
+
+                return Page();
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+
+                    .Include(
+                        x => x.Detalles
+                    )
+
+                    .Include(
+                        x => x.Adjuntos
+                    )
+
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                SolicitudEditarId.Value
+                            &&
+                            x.UsuarioSolicitanteId ==
+                                usuarioActual.Id
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return NotFound();
+            }
+
+
+            if (solicitud.EstatusId != 1)
+            {
+                TempData["MensajeError"] =
+                    "Solamente se pueden enviar solicitudes que se encuentren en borrador.";
+
+                return RedirectToPage();
+            }
+
+
+            Empleado? empleado =
+                await ObtenerEmpleadoActualAsync(
+                    usuarioActual
+                );
+
+
+            if (empleado == null)
+            {
+                TempData["MensajeError"] =
+                    "No fue posible identificar al empleado solicitante.";
+
+                return RedirectToPage();
+            }
+
+
+            Empleado? jefe =
+                await ObtenerJefeAsync(
+                    empleado
+                );
+
+
+            if (
+                jefe == null ||
+                string.IsNullOrWhiteSpace(
+                    jefe.UserId
+                )
+            )
+            {
+                TempData["MensajeError"] =
+                    "No fue posible identificar al gerente responsable.";
+
+                return RedirectToPage();
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =====================================================
+                // ACTUALIZAR DATOS DEL BORRADOR
+                // =====================================================
+
+                solicitud.Titulo =
+                    Input.Titulo;
+
+                solicitud.AreaId =
+                    Input.AreaId;
+
+                solicitud.Descripcion =
+                    Input.Descripcion;
+
+                solicitud.Justificacion =
+                    Input.Justificacion;
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                // =====================================================
+                // ELIMINAR ADJUNTOS MARCADOS
+                // =====================================================
+
+                if (
+                    AdjuntosEliminarIds != null &&
+                    AdjuntosEliminarIds.Count > 0
+                )
+                {
+                    foreach (
+                        AdqAdjunto adjunto
+                        in solicitud.Adjuntos.Where(
+                            x =>
+                                !x.Eliminado &&
+                                AdjuntosEliminarIds.Contains(
+                                    x.Id
+                                )
+                        )
+                    )
+                    {
+                        adjunto.Eliminado =
+                            true;
+                    }
+                }
+
+
+                // =====================================================
+                // ACTUALIZAR PRODUCTOS
+                // =====================================================
+
+                foreach (
+                    AdqSolicitudDetalle detalle
+                    in solicitud.Detalles.Where(
+                        x => !x.Eliminado
+                    )
+                )
+                {
+                    detalle.Eliminado =
+                        true;
+                }
+
+
+                int orden =
+                    1;
+
+
+                foreach (
+                    NuevaSolicitudDetalleInput item
+                    in Input.Detalles
+                )
+                {
+                    solicitud.Detalles.Add(
+                        new AdqSolicitudDetalle
+                        {
+                            ProductoServicio =
+                                item.ProductoServicio,
+
+                            Cantidad =
+                                item.Cantidad,
+
+                            Unidad =
+                                item.Unidad,
+
+                            Descripcion =
+                                item.Descripcion,
+
+                            Orden =
+                                orden++,
+
+                            Eliminado =
+                                false
+                        }
+                    );
+                }
+
+
+                // =====================================================
+                // AGREGAR ARCHIVOS NUEVOS
+                // =====================================================
+
+                await GuardarAdjuntosAsync(
+                    solicitud,
+                    usuarioActual,
+                    ahora
+                );
+
+
+                // =====================================================
+                // ENVIAR AL GERENTE
+                // =====================================================
+
+                solicitud.EstatusId =
+                    2;
+
+                solicitud.FechaEnvio =
+                    ahora;
+
+
+                _context.AdqAprobaciones.Add(
+                    new AdqAprobacion
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        TipoAprobacion =
+                            "GerenteArea",
+
+                        Orden =
+                            1,
+
+                        UsuarioAprobadorId =
+                            jefe.UserId,
+
+                        Estatus =
+                            "Pendiente",
+
+                        FechaCreacion =
+                            ahora
+                    }
+                );
+
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            "BORRADOR_ENVIADO",
+
+                        Descripcion =
+                            "El borrador fue actualizado y enviado para aprobación del gerente.",
+
+                        EstatusAnteriorId =
+                            1,
+
+                        EstatusNuevoId =
+                            2,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                TempData["MensajeExito"] =
+                    "La solicitud fue enviada correctamente para aprobación del gerente.";
+
+
+                return RedirectToPage();
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al enviar el borrador {SolicitudId}.",
+                    SolicitudEditarId
+                );
+
+
+                TempData["MensajeError"] =
+                    "No fue posible enviar el borrador.";
+
+
+                return RedirectToPage();
             }
         }
 

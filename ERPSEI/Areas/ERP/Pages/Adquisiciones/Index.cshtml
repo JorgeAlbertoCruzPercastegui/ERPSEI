@@ -522,7 +522,10 @@
                                         </button>
 
 
-                                        @if (solicitud.EstatusId == 1)
+                                        @if (
+                                            solicitud.EstatusId == 1 ||
+                                            solicitud.EstatusId == 2
+                                        )
                                         {
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-secondary btnEditarSolicitudAdq"
@@ -530,6 +533,17 @@
                                                     title="Editar solicitud">
 
                                                 <i class="bi bi-pencil"></i>
+
+                                            </button>
+
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger btnCancelarSolicitudUsuarioAdq"
+                                                    data-id="@solicitud.Id"
+                                                    data-folio="@solicitud.Folio"
+                                                    title="Cancelar solicitud">
+
+                                                <i class="bi bi-x-lg"></i>
 
                                             </button>
                                         }
@@ -965,6 +979,9 @@
                        id="SolicitudEditarId"
                        name="SolicitudEditarId"
                        value="@Model.SolicitudEditarId" />
+
+                <div id="contenedorAdjuntosEliminarAdq">
+                </div>
 
 
                 <!-- ================================================= -->
@@ -1780,6 +1797,17 @@
                         <i class="bi bi-check-lg me-1"></i>
 
                         Guardar cambios
+
+                    </button>
+
+                    <button type="submit"
+                            id="btnEnviarBorradorAdq"
+                            formaction="?handler=EnviarBorrador"
+                            class="btn btn-success d-none">
+
+                        <i class="bi bi-send me-1"></i>
+
+                        Guardar y enviar
 
                     </button>
 

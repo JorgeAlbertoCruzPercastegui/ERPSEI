@@ -229,6 +229,11 @@ document.addEventListener(
                 "btnGuardarCambiosAdq"
             );
 
+        const btnEnviarBorrador =
+            document.getElementById(
+                "btnEnviarBorradorAdq"
+            );
+
         const solicitudEditarId =
             document.getElementById(
                 "SolicitudEditarId"
@@ -311,6 +316,21 @@ document.addEventListener(
          * el selector.
          */
         let archivosSeleccionadosAdq =
+            [];
+
+        /*
+        * Archivos que ya existen en la BD
+        * cuando estamos editando una solicitud.
+        */
+        let archivosExistentesAdq =
+            [];
+
+
+        /*
+         * IDs de archivos existentes que el
+         * usuario decidió eliminar.
+         */
+        let adjuntosEliminarIdsAdq =
             [];
 
 
@@ -1132,6 +1152,59 @@ document.addEventListener(
                 transferencia.files;
         }
 
+        // =========================================================
+        // ARCHIVOS EXISTENTES - SINCRONIZAR ELIMINADOS
+        // =========================================================
+
+        function sincronizarAdjuntosEliminarAdq() {
+
+            const contenedor =
+                document.getElementById(
+                    "contenedorAdjuntosEliminarAdq"
+                );
+
+
+            if (!contenedor) {
+                return;
+            }
+
+
+            contenedor.innerHTML =
+                "";
+
+
+            adjuntosEliminarIdsAdq
+                .forEach(
+                    function (
+                        id
+                    ) {
+
+                        const input =
+                            document.createElement(
+                                "input"
+                            );
+
+
+                        input.type =
+                            "hidden";
+
+
+                        input.name =
+                            "AdjuntosEliminarIds";
+
+
+                        input.value =
+                            String(
+                                id
+                            );
+
+
+                        contenedor.appendChild(
+                            input
+                        );
+                    }
+                );
+        }
 
         // =========================================================
         // ARCHIVOS - RENDERIZAR
@@ -1148,24 +1221,38 @@ document.addEventListener(
                 "";
 
 
+            const existentesActivos =
+                archivosExistentesAdq
+                    .filter(
+                        function (
+                            archivo
+                        ) {
+
+                            return !adjuntosEliminarIdsAdq
+                                .includes(
+                                    Number(
+                                        archivo.id
+                                    )
+                                );
+                        }
+                    );
+
+
+            const cantidadTotal =
+                existentesActivos.length +
+                archivosSeleccionadosAdq.length;
+
+
             if (contadorArchivos) {
 
-                const cantidad =
-                    archivosSeleccionadosAdq.length;
-
-
                 contadorArchivos.textContent =
-                    cantidad === 1
+                    cantidadTotal === 1
                         ? "1 archivo agregado"
-                        : `${cantidad} archivos agregados`;
-
+                        : `${cantidadTotal} archivos agregados`;
             }
 
 
-            if (
-                archivosSeleccionadosAdq.length ===
-                0
-            ) {
+            if (cantidadTotal === 0) {
 
                 const vacio =
                     document.createElement(
@@ -1178,23 +1265,110 @@ document.addEventListener(
 
 
                 vacio.innerHTML = `
-                    <i class="bi bi-folder2-open"></i>
+            <i class="bi bi-folder2-open"></i>
 
-                    <span>
-                        Aún no has agregado archivos.
-                    </span>
-                `;
+            <span>
+                Aún no has agregado archivos.
+            </span>
+        `;
 
 
-                listaArchivos
-                    .appendChild(
-                        vacio
-                    );
+                listaArchivos.appendChild(
+                    vacio
+                );
 
 
                 return;
             }
 
+
+            // =====================================================
+            // ARCHIVOS EXISTENTES
+            // =====================================================
+
+            existentesActivos
+                .forEach(
+                    function (
+                        archivo
+                    ) {
+
+                        const item =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        item.className =
+                            "adq-file-item";
+
+
+                        item.innerHTML = `
+                    <div class="adq-file-item-main">
+
+                        <div class="adq-file-item-icon">
+
+                            <i class="bi bi-file-earmark-check"></i>
+
+                        </div>
+
+
+                        <div class="adq-file-item-info">
+
+                            <strong>
+                                ${escapeHtmlAdq(
+                            archivo.nombreOriginal
+                        )}
+                            </strong>
+
+                            <span>
+                                ${formatearTamanoAdq(
+                            archivo.tamanoBytes ?? 0
+                        )}
+                                · Archivo existente
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="d-flex gap-2">
+
+                        <a href="${escapeAttributeAdq(
+                            archivo.rutaArchivo
+                        )}"
+                           target="_blank"
+                           class="btn btn-sm btn-outline-primary"
+                           title="Abrir archivo">
+
+                            <i class="bi bi-eye"></i>
+
+                        </a>
+
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger btnEliminarArchivoExistenteAdq"
+                                data-id="${archivo.id}"
+                                title="Eliminar archivo">
+
+                            <i class="bi bi-trash"></i>
+
+                        </button>
+
+                    </div>
+                `;
+
+
+                        listaArchivos.appendChild(
+                            item
+                        );
+                    }
+                );
+
+
+            // =====================================================
+            // ARCHIVOS NUEVOS
+            // =====================================================
 
             archivosSeleccionadosAdq
                 .forEach(
@@ -1219,83 +1393,80 @@ document.addEventListener(
                             "adq-file-item";
 
 
-                        if (
-                            !validacion.valido
-                        ) {
+                        if (!validacion.valido) {
 
                             item.classList.add(
                                 "adq-file-item-error"
                             );
-
                         }
 
 
                         let estado =
-                            "Archivo válido";
+                            "Archivo nuevo";
 
 
-                        if (
-                            !validacion.formatoValido
-                        ) {
+                        if (!validacion.formatoValido) {
 
                             estado =
                                 "Formato no permitido";
-
                         }
-                        else if (
-                            !validacion.tamanoValido
-                        ) {
+                        else if (!validacion.tamanoValido) {
 
                             estado =
                                 "Supera 15 MB";
-
                         }
 
 
                         item.innerHTML = `
-                            <div class="adq-file-item-main">
+                    <div class="adq-file-item-main">
 
-                                <div class="adq-file-item-icon">
+                        <div class="adq-file-item-icon">
 
-                                    <i class="bi ${validacion.valido
-                                ? "bi-file-earmark-check"
+                            <i class="bi ${validacion.valido
+                                ? "bi-file-earmark-plus"
                                 : "bi-file-earmark-x"
                             }"></i>
 
-                                </div>
-
-                                <div class="adq-file-item-info">
-
-                                    <strong>
-                                        ${escapeHtmlAdq(archivo.name)}
-                                    </strong>
-
-                                    <span>
-                                        ${formatearTamanoAdq(archivo.size)}
-                                        ·
-                                        ${escapeHtmlAdq(estado)}
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-danger btnEliminarArchivoAdq"
-                                    data-index="${indice}"
-                                    title="Eliminar archivo">
-
-                                <i class="bi bi-trash"></i>
-
-                            </button>
-                        `;
+                        </div>
 
 
-                        listaArchivos
-                            .appendChild(
-                                item
-                            );
+                        <div class="adq-file-item-info">
 
+                            <strong>
+                                ${escapeHtmlAdq(
+                                archivo.name
+                            )}
+                            </strong>
+
+                            <span>
+                                ${formatearTamanoAdq(
+                                archivo.size
+                            )}
+                                ·
+                                ${escapeHtmlAdq(
+                                estado
+                            )}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger btnEliminarArchivoAdq"
+                            data-index="${indice}"
+                            title="Eliminar archivo">
+
+                        <i class="bi bi-trash"></i>
+
+                    </button>
+                `;
+
+
+                        listaArchivos.appendChild(
+                            item
+                        );
                     }
                 );
         }
@@ -1488,6 +1659,66 @@ document.addEventListener(
                         indice
                     );
                 }
+        );
+
+        // =========================================================
+        // ARCHIVOS EXISTENTES - ELIMINAR
+        // =========================================================
+
+        listaArchivos
+            ?.addEventListener(
+                "click",
+                function (
+                    event
+                ) {
+
+                    const boton =
+                        event.target.closest(
+                            ".btnEliminarArchivoExistenteAdq"
+                        );
+
+
+                    if (!boton) {
+                        return;
+                    }
+
+
+                    const id =
+                        Number(
+                            boton.dataset.id
+                        );
+
+
+                    if (
+                        !id ||
+                        Number.isNaN(
+                            id
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        !adjuntosEliminarIdsAdq
+                            .includes(
+                                id
+                            )
+                    ) {
+
+                        adjuntosEliminarIdsAdq
+                            .push(
+                                id
+                            );
+                    }
+
+
+                    sincronizarAdjuntosEliminarAdq();
+
+                    renderizarArchivosSeleccionadosAdq();
+
+                    actualizarEstadoEnviar();
+                }
             );
 
 
@@ -1631,15 +1862,17 @@ document.addEventListener(
                 [];
 
 
-            if (inputArchivos) {
+            archivosExistentesAdq =
+                [];
 
-                inputArchivos.value =
-                    "";
 
-            }
+            adjuntosEliminarIdsAdq =
+                [];
 
 
             sincronizarInputArchivosAdq();
+
+            sincronizarAdjuntosEliminarAdq();
 
             renderizarArchivosSeleccionadosAdq();
         }
@@ -1687,6 +1920,11 @@ document.addEventListener(
 
 
             btnGuardarCambios
+                ?.classList.add(
+                    "d-none"
+            );
+
+            btnEnviarBorrador
                 ?.classList.add(
                     "d-none"
                 );
@@ -2106,13 +2344,13 @@ document.addEventListener(
 
 
                     if (
-                        solicitud.estatusId !==
-                        1
+                        solicitud.estatusId !== 1 &&
+                        solicitud.estatusId !== 2
                     ) {
 
                         mostrarAdvertenciaAdq(
                             "Edición no disponible",
-                            "Solamente se pueden editar solicitudes en borrador."
+                            "La solicitud ya no puede modificarse porque ya fue aprobada por el gerente."
                         );
 
                         return;
@@ -2166,23 +2404,117 @@ document.addEventListener(
                                 );
 
                             }
-                        );
+                    );
+
+                    // =========================================================
+                    // CARGAR ARCHIVOS EXISTENTES
+                    // =========================================================
+
+                    archivosExistentesAdq =
+                        Array.isArray(
+                            solicitud.adjuntos
+                        )
+                            ? solicitud.adjuntos
+                                .map(
+                                    function (
+                                        archivo
+                                    ) {
+
+                                        return {
+                                            id:
+                                                Number(
+                                                    archivo.id
+                                                ),
+
+                                            nombreOriginal:
+                                                archivo.nombreOriginal,
+
+                                            rutaArchivo:
+                                                archivo.rutaArchivo,
+
+                                            extension:
+                                                archivo.extension,
+
+                                            mimeType:
+                                                archivo.mimeType,
+
+                                            tamanoBytes:
+                                                Number(
+                                                    archivo.tamanoBytes ??
+                                                    0
+                                                )
+                                        };
+                                    }
+                                )
+                            : [];
+
+
+                    adjuntosEliminarIdsAdq =
+                        [];
+
+
+                    archivosSeleccionadosAdq =
+                        [];
+
+
+                    sincronizarInputArchivosAdq();
+
+                    sincronizarAdjuntosEliminarAdq();
+
+                    renderizarArchivosSeleccionadosAdq();
 
 
                     if (tituloModal) {
 
+                        let textoEstado =
+                            "";
+
+                        if (solicitud.estatusId === 1) {
+                            textoEstado =
+                                "Borrador";
+                        }
+                        else if (solicitud.estatusId === 2) {
+                            textoEstado =
+                                "Pendiente aprobación gerente";
+                        }
+                        else if (solicitud.estatusId === 3) {
+                            textoEstado =
+                                "Solicitud enviada";
+                        }
+
+
                         tituloModal.innerHTML = `
                             <i class="bi bi-pencil-square me-2"></i>
                             Editar solicitud
+                            <small class="d-block mt-1 text-muted">
+                                ${escapeHtmlAdq(textoEstado)}
+                            </small>
                         `;
-
                     }
 
 
                     btnGuardarCambios
                         ?.classList.remove(
                             "d-none"
-                        );
+                    );
+
+                    if (
+                        solicitud.estatusId ===
+                        1
+                    ) {
+
+                        btnEnviarBorrador
+                            ?.classList.remove(
+                                "d-none"
+                            );
+                    }
+                    else {
+
+                        btnEnviarBorrador
+                            ?.classList.add(
+                                "d-none"
+                            );
+                    }
 
 
                     btnGuardarBorrador
