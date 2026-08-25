@@ -139,6 +139,114 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         } = new();
 
+        // =========================================================
+        // SOLICITUDES POR APROBAR
+        // =========================================================
+
+        public List<SolicitudPorAprobarDto> SolicitudesPorAprobar
+        {
+            get;
+            private set;
+        } = new();
+
+        // =========================================================
+        // BANDEJA DE ADQUISICIONES
+        // =========================================================
+
+        public bool EsUsuarioAdquisiciones
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeAprobarAdquisiciones
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeAsignarAdquisiciones
+        {
+            get;
+            private set;
+        }
+
+
+        public List<SolicitudAdquisicionesDto> SolicitudesAdquisiciones
+        {
+            get;
+            private set;
+        } = new();
+
+
+        public List<SelectListItem> AgentesCompras
+        {
+            get;
+            private set;
+        } = new();
+
+
+        [BindProperty]
+        public int SolicitudAdquisicionesId
+        {
+            get;
+            set;
+        }
+
+
+        [BindProperty]
+        [StringLength(
+            2000,
+            ErrorMessage =
+                "El comentario no puede superar los 2000 caracteres.")]
+        public string? ComentarioAdquisiciones
+        {
+            get;
+            set;
+        }
+
+
+        [BindProperty]
+        public string? UsuarioAsignadoAdqId
+        {
+            get;
+            set;
+        }
+
+
+        public int TotalPorAprobar
+        {
+            get
+            {
+                return SolicitudesPorAprobar.Count;
+            }
+        }
+
+
+        // =========================================================
+        // DECISIÓN DEL GERENTE
+        // =========================================================
+
+        [BindProperty]
+        public int SolicitudDecisionId
+        {
+            get;
+            set;
+        }
+
+
+        [BindProperty]
+        [StringLength(
+            2000,
+            ErrorMessage =
+                "El comentario no puede superar los 2000 caracteres.")]
+        public string? ComentarioDecision
+        {
+            get;
+            set;
+        }
 
         // =========================================================
         // KPIs
@@ -289,6 +397,116 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 get;
                 set;
             }
+        }
+
+        // =========================================================
+        // DTO SOLICITUD POR APROBAR
+        // =========================================================
+
+        public class SolicitudPorAprobarDto
+        {
+            public int SolicitudId
+            {
+                get;
+                set;
+            }
+
+
+            public string Folio
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Titulo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Solicitante
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public DateTime FechaSolicitud
+            {
+                get;
+                set;
+            }
+        }
+
+        // =========================================================
+        // DTO BANDEJA DE ADQUISICIONES
+        // =========================================================
+
+        public class SolicitudAdquisicionesDto
+        {
+            public int Id
+            {
+                get;
+                set;
+            }
+
+
+            public string Folio
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Titulo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Solicitante
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public DateTime FechaSolicitud
+            {
+                get;
+                set;
+            }
+
+
+            public int EstatusId
+            {
+                get;
+                set;
+            }
+
+
+            public string Estatus
+            {
+                get;
+                set;
+            } = string.Empty;
         }
 
 
@@ -740,6 +958,838 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                 return Page();
             }
+        }
+
+        // =========================================================
+        // APROBAR SOLICITUD COMO GERENTE
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostAprobarGerenteAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            string comentario =
+                ComentarioDecision?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                AdqAprobacion? aprobacion =
+                    await _context.AdqAprobaciones
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.SolicitudId ==
+                                    SolicitudDecisionId
+                                &&
+                                x.UsuarioAprobadorId ==
+                                    usuarioActual.Id
+                                &&
+                                x.TipoAprobacion ==
+                                    "GerenteArea"
+                                &&
+                                x.Estatus ==
+                                    "Pendiente"
+                        );
+
+
+                if (aprobacion == null)
+                {
+                    TempData["MensajeError"] =
+                        "No tienes una aprobación pendiente para esta solicitud.";
+
+                    return RedirectToPage();
+                }
+
+
+                AdqSolicitud? solicitud =
+                    await _context.AdqSolicitudes
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                    SolicitudDecisionId
+                                &&
+                                !x.Eliminado
+                        );
+
+
+                if (solicitud == null)
+                {
+                    return NotFound();
+                }
+
+
+                if (solicitud.EstatusId != 2)
+                {
+                    TempData["MensajeError"] =
+                        "La solicitud ya no se encuentra pendiente de aprobación del gerente.";
+
+                    return RedirectToPage();
+                }
+
+
+                int estatusAnterior =
+                    solicitud.EstatusId;
+
+
+                // =====================================================
+                // APROBACIÓN
+                // =====================================================
+
+                aprobacion.Estatus =
+                    "Aprobada";
+
+                aprobacion.Comentario =
+                    string.IsNullOrWhiteSpace(
+                        comentario
+                    )
+                        ? null
+                        : comentario;
+
+                aprobacion.FechaRespuesta =
+                    ahora;
+
+
+                // =====================================================
+                // LA SOLICITUD PASA A ADQUISICIONES
+                // =====================================================
+
+                solicitud.EstatusId =
+                    3;
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                // =====================================================
+                // HISTORIAL
+                // =====================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            "APROBACION_GERENTE_APROBADA",
+
+                        Descripcion =
+                            string.IsNullOrWhiteSpace(
+                                comentario
+                            )
+                                ? "El gerente aprobó la solicitud. La solicitud fue enviada al área de Adquisiciones."
+                                : $"El gerente aprobó la solicitud. Comentario: {comentario}",
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            3,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                TempData["MensajeExito"] =
+                    "La solicitud fue aprobada y enviada al área de Adquisiciones.";
+
+
+                return RedirectToPage();
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al aprobar la solicitud {SolicitudId}.",
+                    SolicitudDecisionId
+                );
+
+
+                TempData["MensajeError"] =
+                    "No fue posible aprobar la solicitud.";
+
+
+                return RedirectToPage();
+            }
+        }
+
+        // =========================================================
+        // RECHAZAR SOLICITUD COMO GERENTE
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostRechazarGerenteAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            string comentario =
+                ComentarioDecision?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    comentario
+                )
+            )
+            {
+                TempData["MensajeError"] =
+                    "Debes indicar el motivo del rechazo.";
+
+                return RedirectToPage();
+            }
+
+
+            if (comentario.Length > 2000)
+            {
+                TempData["MensajeError"] =
+                    "El comentario del rechazo no puede superar los 2000 caracteres.";
+
+                return RedirectToPage();
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                AdqAprobacion? aprobacion =
+                    await _context.AdqAprobaciones
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.SolicitudId ==
+                                    SolicitudDecisionId
+                                &&
+                                x.UsuarioAprobadorId ==
+                                    usuarioActual.Id
+                                &&
+                                x.TipoAprobacion ==
+                                    "GerenteArea"
+                                &&
+                                x.Estatus ==
+                                    "Pendiente"
+                        );
+
+
+                if (aprobacion == null)
+                {
+                    TempData["MensajeError"] =
+                        "No tienes una aprobación pendiente para esta solicitud.";
+
+                    return RedirectToPage();
+                }
+
+
+                AdqSolicitud? solicitud =
+                    await _context.AdqSolicitudes
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                    SolicitudDecisionId
+                                &&
+                                !x.Eliminado
+                        );
+
+
+                if (solicitud == null)
+                {
+                    return NotFound();
+                }
+
+
+                if (solicitud.EstatusId != 2)
+                {
+                    TempData["MensajeError"] =
+                        "La solicitud ya no se encuentra pendiente de aprobación.";
+
+                    return RedirectToPage();
+                }
+
+
+                int estatusAnterior =
+                    solicitud.EstatusId;
+
+
+                aprobacion.Estatus =
+                    "Rechazada";
+
+                aprobacion.Comentario =
+                    comentario;
+
+                aprobacion.FechaRespuesta =
+                    ahora;
+
+
+                solicitud.EstatusId =
+                    6;
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            "APROBACION_GERENTE_RECHAZADA",
+
+                        Descripcion =
+                            $"El gerente rechazó la solicitud. Motivo: {comentario}",
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            6,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                TempData["MensajeExito"] =
+                    "La solicitud fue rechazada correctamente.";
+
+
+                return RedirectToPage();
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al rechazar solicitud {SolicitudId}.",
+                    SolicitudDecisionId
+                );
+
+
+                TempData["MensajeError"] =
+                    "No fue posible rechazar la solicitud.";
+
+
+                return RedirectToPage();
+            }
+        }
+
+        // =========================================================
+        // APROBAR SOLICITUD - ADQUISICIONES
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostAprobarAdquisicionesAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+
+            if (!PuedeAprobarAdquisiciones)
+            {
+                return Forbid();
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                SolicitudAdquisicionesId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return NotFound();
+            }
+
+
+            if (solicitud.EstatusId != 3)
+            {
+                TempData["MensajeError"] =
+                    "La solicitud ya no se encuentra pendiente de revisión por Adquisiciones.";
+
+                return RedirectToPage();
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            int estatusAnterior =
+                solicitud.EstatusId;
+
+
+            solicitud.EstatusId =
+                5;
+
+
+            solicitud.FechaModificacion =
+                ahora;
+
+
+            string comentario =
+                ComentarioAdquisiciones?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            _context.AdqHistorial.Add(
+                new AdqHistorial
+                {
+                    SolicitudId =
+                        solicitud.Id,
+
+                    UsuarioId =
+                        usuarioActual.Id,
+
+                    TipoEvento =
+                        "APROBADA_ADQUISICIONES",
+
+                    Descripcion =
+                        string.IsNullOrWhiteSpace(
+                            comentario
+                        )
+                            ? "El área de Adquisiciones aprobó la solicitud."
+                            : $"El área de Adquisiciones aprobó la solicitud. Comentario: {comentario}",
+
+                    EstatusAnteriorId =
+                        estatusAnterior,
+
+                    EstatusNuevoId =
+                        5,
+
+                    FechaEvento =
+                        ahora,
+
+                    DireccionIp =
+                        ObtenerDireccionIp()
+                }
+            );
+
+
+            await _context
+                .SaveChangesAsync();
+
+
+            TempData["MensajeExito"] =
+                "La solicitud fue aprobada por Adquisiciones y ya puede asignarse a un agente.";
+
+
+            return RedirectToPage();
+        }
+
+        // =========================================================
+        // CANCELAR SOLICITUD - ADQUISICIONES
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostCancelarAdquisicionesAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+
+            if (!PuedeAprobarAdquisiciones)
+            {
+                return Forbid();
+            }
+
+
+            string comentario =
+                ComentarioAdquisiciones?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    comentario
+                )
+            )
+            {
+                TempData["MensajeError"] =
+                    "Debes indicar el motivo de la cancelación.";
+
+                return RedirectToPage();
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                SolicitudAdquisicionesId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return NotFound();
+            }
+
+
+            if (
+                solicitud.EstatusId != 3
+                &&
+                solicitud.EstatusId != 5
+            )
+            {
+                TempData["MensajeError"] =
+                    "La solicitud ya no puede ser cancelada desde esta etapa.";
+
+                return RedirectToPage();
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            int estatusAnterior =
+                solicitud.EstatusId;
+
+
+            solicitud.EstatusId =
+                7;
+
+
+            solicitud.FechaModificacion =
+                ahora;
+
+
+            _context.AdqHistorial.Add(
+                new AdqHistorial
+                {
+                    SolicitudId =
+                        solicitud.Id,
+
+                    UsuarioId =
+                        usuarioActual.Id,
+
+                    TipoEvento =
+                        "CANCELADA_ADQUISICIONES",
+
+                    Descripcion =
+                        $"Adquisiciones canceló la solicitud. Motivo: {comentario}",
+
+                    EstatusAnteriorId =
+                        estatusAnterior,
+
+                    EstatusNuevoId =
+                        7,
+
+                    FechaEvento =
+                        ahora,
+
+                    DireccionIp =
+                        ObtenerDireccionIp()
+                }
+            );
+
+
+            await _context
+                .SaveChangesAsync();
+
+
+            TempData["MensajeExito"] =
+                "La solicitud fue cancelada correctamente.";
+
+
+            return RedirectToPage();
+        }
+
+        // =========================================================
+        // ASIGNAR AGENTE DE COMPRAS
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostAsignarAgenteAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+
+            if (!PuedeAsignarAdquisiciones)
+            {
+                return Forbid();
+            }
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    UsuarioAsignadoAdqId
+                )
+            )
+            {
+                TempData["MensajeError"] =
+                    "Debes seleccionar un agente de compras.";
+
+                return RedirectToPage();
+            }
+
+
+            bool agenteValido =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                UsuarioAsignadoAdqId
+                            &&
+                            (
+                                x.PuedeGestionarSolicitudes
+                                ||
+                                x.PuedeAsignar
+                                ||
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            if (!agenteValido)
+            {
+                TempData["MensajeError"] =
+                    "El usuario seleccionado no está configurado como agente de Adquisiciones.";
+
+                return RedirectToPage();
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                SolicitudAdquisicionesId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return NotFound();
+            }
+
+
+            if (solicitud.EstatusId != 5)
+            {
+                TempData["MensajeError"] =
+                    "La solicitud debe estar aprobada antes de asignarla.";
+
+                return RedirectToPage();
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            int estatusAnterior =
+                solicitud.EstatusId;
+
+
+            solicitud.UsuarioAsignadoId =
+                UsuarioAsignadoAdqId;
+
+
+            solicitud.EstatusId =
+                8;
+
+
+            solicitud.FechaModificacion =
+                ahora;
+
+
+            _context.AdqAsignaciones.Add(
+                new AdqAsignacion
+                {
+                    SolicitudId =
+                        solicitud.Id,
+
+                    UsuarioAsignadoId =
+                        UsuarioAsignadoAdqId,
+
+                    UsuarioAsignadorId =
+                        usuarioActual.Id,
+
+                    FechaAsignacion =
+                        ahora,
+
+                    Activa =
+                        true,
+
+                    Observaciones =
+                        string.IsNullOrWhiteSpace(
+                            ComentarioAdquisiciones
+                        )
+                            ? null
+                            : ComentarioAdquisiciones.Trim()
+                }
+            );
+
+
+            _context.AdqHistorial.Add(
+                new AdqHistorial
+                {
+                    SolicitudId =
+                        solicitud.Id,
+
+                    UsuarioId =
+                        usuarioActual.Id,
+
+                    TipoEvento =
+                        "SOLICITUD_ASIGNADA",
+
+                    Descripcion =
+                        "La solicitud fue asignada a un agente de compras.",
+
+                    EstatusAnteriorId =
+                        estatusAnterior,
+
+                    EstatusNuevoId =
+                        8,
+
+                    FechaEvento =
+                        ahora,
+
+                    DireccionIp =
+                        ObtenerDireccionIp()
+                }
+            );
+
+
+            await _context
+                .SaveChangesAsync();
+
+
+            TempData["MensajeExito"] =
+                "La solicitud fue asignada correctamente.";
+
+
+            return RedirectToPage();
         }
 
 
@@ -1277,7 +2327,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
         // =========================================================
-        // DETALLE SOLICITUD
+        // DETALLE DE SOLICITUD
         // =========================================================
 
         public async Task<IActionResult>
@@ -1293,25 +2343,205 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return new JsonResult(
                     new
                     {
-                        success =
-                            false,
+                        success = false,
 
                         message =
                             "Usuario no identificado."
                     }
-                );
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
             }
 
+
+            // =====================================================
+            // VALIDAR QUE LA SOLICITUD EXISTA
+            // =====================================================
+
+            bool solicitudExiste =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.Id == id
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (!solicitudExiste)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se encontró la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // 1. PROPIETARIO DE LA SOLICITUD
+            // =====================================================
+
+            bool esPropietario =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.Id == id
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.UsuarioSolicitanteId ==
+                                usuarioActual.Id
+                    );
+
+
+            // =====================================================
+            // 2. APROBADOR / GERENTE
+            // =====================================================
+            //
+            // IMPORTANTE:
+            // No validamos aquí que siga en "Pendiente".
+            //
+            // Si el gerente aprobó o rechazó anteriormente,
+            // debe poder seguir consultando la solicitud
+            // para mantener trazabilidad.
+            // =====================================================
+
+            bool esAprobador =
+                await _context.AdqAprobaciones
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                id
+                            &&
+                            x.UsuarioAprobadorId ==
+                                usuarioActual.Id
+                    );
+
+
+            // =====================================================
+            // 3. PERSONAL DE ADQUISICIONES
+            // =====================================================
+
+            bool esUsuarioAdquisiciones =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeVisualizar
+                                ||
+                                x.PuedeGestionarSolicitudes
+                                ||
+                                x.PuedeAprobar
+                                ||
+                                x.PuedeAsignar
+                                ||
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            // =====================================================
+            // 4. AGENTE ASIGNADO
+            // =====================================================
+            //
+            // Lo dejamos preparado desde ahora para cuando
+            // lleguemos a la etapa de asignación/cotización.
+            // =====================================================
+
+            bool esAgenteAsignado =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.Id == id
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.UsuarioAsignadoId ==
+                                usuarioActual.Id
+                    );
+
+
+            // =====================================================
+            // AUTORIZACIÓN FINAL
+            // =====================================================
+
+            bool puedeConsultar =
+                esPropietario
+                ||
+                esAprobador
+                ||
+                esUsuarioAdquisiciones
+                ||
+                esAgenteAsignado;
+
+
+            if (!puedeConsultar)
+            {
+                _logger.LogWarning(
+                    "Acceso denegado al detalle de solicitud. " +
+                    "SolicitudId: {SolicitudId}, UsuarioId: {UsuarioId}, " +
+                    "Propietario: {EsPropietario}, " +
+                    "Aprobador: {EsAprobador}, " +
+                    "Adquisiciones: {EsUsuarioAdquisiciones}, " +
+                    "Asignado: {EsAgenteAsignado}",
+                    id,
+                    usuarioActual.Id,
+                    esPropietario,
+                    esAprobador,
+                    esUsuarioAdquisiciones,
+                    esAgenteAsignado
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No tienes permisos para consultar esta solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // CONSULTA DEL DETALLE
+            // =====================================================
 
             var solicitud =
                 await _context.AdqSolicitudes
                     .AsNoTracking()
                     .Where(
                         x =>
-                            x.Id == id &&
-                            !x.Eliminado &&
-                            x.UsuarioSolicitanteId ==
-                                usuarioActual.Id
+                            x.Id == id
+                            &&
+                            !x.Eliminado
                     )
                     .Select(
                         x =>
@@ -1339,58 +2569,104 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 Estatus =
                                     x.Estatus.Nombre,
 
+
+                                // =========================================
+                                // SOLICITANTE
+                                // =========================================
+
+                                Solicitante =
+                                    _context.Empleados
+                                        .Where(
+                                            empleado =>
+                                                empleado.Id ==
+                                                x.EmpleadoSolicitanteId
+                                        )
+                                        .Select(
+                                            empleado =>
+                                                empleado.NombreCompleto
+                                        )
+                                        .FirstOrDefault()
+                                    ??
+                                    _context.Users
+                                        .Where(
+                                            usuario =>
+                                                usuario.Id ==
+                                                x.UsuarioSolicitanteId
+                                        )
+                                        .Select(
+                                            usuario =>
+                                                usuario.Email
+                                                ??
+                                                usuario.UserName
+                                        )
+                                        .FirstOrDefault()
+                                    ??
+                                    "Usuario",
+
+
+                                // =========================================
+                                // PRODUCTOS / SERVICIOS
+                                // =========================================
+
                                 Detalles =
                                     x.Detalles
                                         .Where(
-                                            d =>
-                                                !d.Eliminado
+                                            detalle =>
+                                                !detalle.Eliminado
                                         )
                                         .OrderBy(
-                                            d =>
-                                                d.Orden
+                                            detalle =>
+                                                detalle.Orden
                                         )
                                         .Select(
-                                            d =>
+                                            detalle =>
                                                 new
                                                 {
-                                                    d.Id,
+                                                    detalle.Id,
 
-                                                    d.ProductoServicio,
+                                                    detalle.ProductoServicio,
 
-                                                    d.Cantidad,
+                                                    detalle.Cantidad,
 
-                                                    d.Unidad,
+                                                    detalle.Unidad,
 
-                                                    d.Descripcion
+                                                    detalle.Descripcion
                                                 }
                                         )
                                         .ToList(),
 
+
+                                // =========================================
+                                // ADJUNTOS
+                                // =========================================
+
                                 Adjuntos =
                                     x.Adjuntos
                                         .Where(
-                                            a =>
-                                                !a.Eliminado
+                                            adjunto =>
+                                                !adjunto.Eliminado
                                         )
                                         .OrderBy(
-                                            a =>
-                                                a.FechaCarga
+                                            adjunto =>
+                                                adjunto.FechaCarga
                                         )
                                         .Select(
-                                            a =>
+                                            adjunto =>
                                                 new
                                                 {
-                                                    a.Id,
+                                                    adjunto.Id,
 
-                                                    a.NombreOriginal,
+                                                    adjunto.NombreOriginal,
 
-                                                    a.RutaArchivo,
+                                                    adjunto.RutaArchivo,
 
-                                                    a.Extension,
+                                                    adjunto.Extension,
 
-                                                    a.MimeType,
+                                                    adjunto.MimeType,
 
-                                                    a.TamanoBytes
+                                                    adjunto.TamanoBytes,
+
+                                                    adjunto.FechaCarga
                                                 }
                                         )
                                         .ToList()
@@ -1404,27 +2680,278 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return new JsonResult(
                     new
                     {
-                        success =
-                            false,
+                        success = false,
 
                         message =
                             "No se encontró la solicitud."
                     }
-                );
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
             }
 
 
             return new JsonResult(
                 new
                 {
-                    success =
-                        true,
+                    success = true,
 
                     solicitud
                 }
             );
         }
 
+        // =========================================================
+        // PERMISOS DEL MÓDULO DE ADQUISICIONES
+        // =========================================================
+
+        private async Task CargarPermisosAdquisicionesAsync(
+            AppUser usuarioActual)
+        {
+            var permiso =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.UsuarioId ==
+                            usuarioActual.Id
+                    )
+                    .Select(
+                        x =>
+                            new
+                            {
+                                x.PuedeVisualizar,
+
+                                x.PuedeGestionarSolicitudes,
+
+                                x.PuedeAprobar,
+
+                                x.PuedeAsignar,
+
+                                x.PuedeCotizar,
+
+                                x.PuedeAdministrar
+                            }
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (permiso == null)
+            {
+                EsUsuarioAdquisiciones =
+                    false;
+
+                PuedeAprobarAdquisiciones =
+                    false;
+
+                PuedeAsignarAdquisiciones =
+                    false;
+
+                return;
+            }
+
+
+            EsUsuarioAdquisiciones =
+                permiso.PuedeVisualizar
+                ||
+                permiso.PuedeGestionarSolicitudes
+                ||
+                permiso.PuedeAprobar
+                ||
+                permiso.PuedeAsignar
+                ||
+                permiso.PuedeCotizar
+                ||
+                permiso.PuedeAdministrar;
+
+
+            PuedeAprobarAdquisiciones =
+                permiso.PuedeAprobar
+                ||
+                permiso.PuedeGestionarSolicitudes
+                ||
+                permiso.PuedeAdministrar;
+
+
+            PuedeAsignarAdquisiciones =
+                permiso.PuedeAsignar
+                ||
+                permiso.PuedeAdministrar;
+        }
+
+        // =========================================================
+        // CARGAR BANDEJA DE ADQUISICIONES
+        // =========================================================
+
+        private async Task CargarBandejaAdquisicionesAsync()
+        {
+            SolicitudesAdquisiciones =
+                new List<SolicitudAdquisicionesDto>();
+
+
+            if (!EsUsuarioAdquisiciones)
+            {
+                return;
+            }
+
+
+            SolicitudesAdquisiciones =
+                await (
+                    from solicitud
+                        in _context.AdqSolicitudes
+                            .AsNoTracking()
+
+                    join area
+                        in _context.Areas
+                            .AsNoTracking()
+
+                        on solicitud.AreaId
+                        equals area.Id
+
+                    join estatus
+                        in _context.AdqEstatus
+                            .AsNoTracking()
+
+                        on solicitud.EstatusId
+                        equals estatus.Id
+
+                    where
+                        !solicitud.Eliminado
+                        &&
+                        (
+                            solicitud.EstatusId == 3
+                            ||
+                            solicitud.EstatusId == 5
+                        )
+
+                    orderby
+                        solicitud.FechaSolicitud
+                            descending
+
+                    select
+                        new SolicitudAdquisicionesDto
+                        {
+                            Id =
+                                solicitud.Id,
+
+                            Folio =
+                                solicitud.Folio,
+
+                            Titulo =
+                                solicitud.Titulo,
+
+                            Solicitante =
+                                _context.Empleados
+                                    .Where(
+                                        empleado =>
+                                            empleado.Id ==
+                                            solicitud.EmpleadoSolicitanteId
+                                    )
+                                    .Select(
+                                        empleado =>
+                                            empleado.NombreCompleto
+                                    )
+                                    .FirstOrDefault()
+                                ??
+                                "Usuario",
+
+                            Area =
+                                area.Nombre,
+
+                            FechaSolicitud =
+                                solicitud.FechaSolicitud,
+
+                            EstatusId =
+                                solicitud.EstatusId,
+
+                            Estatus =
+                                estatus.Nombre
+                        }
+                )
+                .ToListAsync();
+
+
+            await CargarAgentesComprasAsync();
+        }
+
+        // =========================================================
+        // CARGAR AGENTES DE COMPRA
+        // =========================================================
+
+        private async Task CargarAgentesComprasAsync()
+        {
+            List<string> idsAgentes =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.PuedeGestionarSolicitudes
+                            ||
+                            x.PuedeAsignar
+                            ||
+                            x.PuedeCotizar
+                            ||
+                            x.PuedeAdministrar
+                    )
+                    .Select(
+                        x =>
+                            x.UsuarioId
+                    )
+                    .Distinct()
+                    .ToListAsync();
+
+
+            AgentesCompras =
+                await (
+                    from usuario
+                        in _context.Users
+                            .AsNoTracking()
+
+                    join empleado
+                        in _context.Empleados
+                            .AsNoTracking()
+
+                        on usuario.Id
+                        equals empleado.UserId
+                        into empleadoJoin
+
+                    from empleado
+                        in empleadoJoin.DefaultIfEmpty()
+
+                    where
+                        idsAgentes.Contains(
+                            usuario.Id
+                        )
+                        &&
+                        !usuario.IsBanned
+
+                    orderby
+                        empleado != null
+                            ? empleado.NombreCompleto
+                            : usuario.Email
+
+                    select
+                        new SelectListItem
+                        {
+                            Value =
+                                usuario.Id,
+
+                            Text =
+                                empleado != null
+                                    ? empleado.NombreCompleto
+                                    : (
+                                        usuario.Email
+                                        ??
+                                        usuario.UserName
+                                        ??
+                                        "Usuario"
+                                    )
+                        }
+                )
+                .ToListAsync();
+        }
 
         // =========================================================
         // CARGAR PANTALLA
@@ -1481,6 +3008,19 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             await CargarSolicitudesAsync(
                 usuarioActual
             );
+
+
+            await CargarSolicitudesPorAprobarAsync(
+                usuarioActual
+            );
+
+
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+
+            await CargarBandejaAdquisicionesAsync();
 
 
             CalcularKpis();
@@ -1641,6 +3181,87 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             x.FechaCreacion
                     )
                     .ToListAsync();
+        }
+
+        // =========================================================
+        // SOLICITUDES PENDIENTES DE APROBACIÓN DEL GERENTE
+        // =========================================================
+
+        private async Task CargarSolicitudesPorAprobarAsync(
+            AppUser usuarioActual)
+        {
+            SolicitudesPorAprobar =
+                await (
+                    from aprobacion
+                        in _context.AdqAprobaciones
+                            .AsNoTracking()
+
+                    join solicitud
+                        in _context.AdqSolicitudes
+                            .AsNoTracking()
+                        on aprobacion.SolicitudId
+                        equals solicitud.Id
+
+                    join area
+                        in _context.Areas
+                            .AsNoTracking()
+                        on solicitud.AreaId
+                        equals area.Id
+
+                    where
+                        aprobacion.UsuarioAprobadorId ==
+                            usuarioActual.Id
+                        &&
+                        aprobacion.TipoAprobacion ==
+                            "GerenteArea"
+                        &&
+                        aprobacion.Estatus ==
+                            "Pendiente"
+                        &&
+                        solicitud.EstatusId ==
+                            2
+                        &&
+                        !solicitud.Eliminado
+
+                    orderby
+                        solicitud.FechaSolicitud
+                            descending
+
+                    select
+                        new SolicitudPorAprobarDto
+                        {
+                            SolicitudId =
+                                solicitud.Id,
+
+                            Folio =
+                                solicitud.Folio,
+
+                            Titulo =
+                                solicitud.Titulo,
+
+                            Solicitante =
+                                _context.Empleados
+                                    .Where(
+                                        empleado =>
+                                            empleado.Id ==
+                                            solicitud.EmpleadoSolicitanteId
+                                    )
+                                    .Select(
+                                        empleado =>
+                                            empleado.NombreCompleto
+                                    )
+                                    .FirstOrDefault()
+                                ??
+                                "Usuario",
+
+                            Area =
+                                area.Nombre,
+
+                            FechaSolicitud =
+                                solicitud.FechaSolicitud
+                        }
+                )
+                .ToListAsync();
         }
 
 

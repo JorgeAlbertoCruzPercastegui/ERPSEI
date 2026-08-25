@@ -5,6 +5,192 @@ document.addEventListener(
     function () {
 
         // =========================================================
+        // DECISIÓN DEL GERENTE
+        // =========================================================
+
+        const modalDecisionGerenteElement =
+            document.getElementById(
+                "modalDecisionGerenteAdq"
+            );
+
+        const inputSolicitudDecision =
+            document.getElementById(
+                "SolicitudDecisionId"
+            );
+
+        const inputComentarioDecision =
+            document.getElementById(
+                "ComentarioDecision"
+            );
+
+        const tituloDecisionGerente =
+            document.getElementById(
+                "tituloDecisionGerenteAdq"
+            );
+
+        const folioDecisionGerente =
+            document.getElementById(
+                "folioDecisionGerenteAdq"
+            );
+
+        const mensajeDecisionGerente =
+            document.getElementById(
+                "mensajeDecisionGerenteAdq"
+            );
+
+        const labelComentarioDecision =
+            document.getElementById(
+                "labelComentarioDecisionAdq"
+            );
+
+        const ayudaComentarioDecision =
+            document.getElementById(
+                "ayudaComentarioDecisionAdq"
+            );
+
+        const btnConfirmarAprobacion =
+            document.getElementById(
+                "btnConfirmarAprobacionAdq"
+            );
+
+        const btnConfirmarRechazo =
+            document.getElementById(
+                "btnConfirmarRechazoAdq"
+            );
+
+
+        document.addEventListener(
+            "click",
+            function (event) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnDecisionAprobacionAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const id =
+                    boton.dataset.id;
+
+                const folio =
+                    boton.dataset.folio ??
+                    "";
+
+                const accion =
+                    boton.dataset.accion;
+
+
+                inputSolicitudDecision.value =
+                    id;
+
+                inputComentarioDecision.value =
+                    "";
+
+
+                folioDecisionGerente.textContent =
+                    folio;
+
+
+                if (
+                    accion ===
+                    "aprobar"
+                ) {
+                    tituloDecisionGerente.textContent =
+                        "Aprobar solicitud";
+
+
+                    mensajeDecisionGerente.className =
+                        "alert alert-success mb-3";
+
+
+                    mensajeDecisionGerente.innerHTML = `
+                <i class="bi bi-check-circle me-1"></i>
+
+                La solicitud será aprobada y enviada
+                al área de Adquisiciones.
+            `;
+
+
+                    labelComentarioDecision.textContent =
+                        "Comentario (opcional)";
+
+
+                    ayudaComentarioDecision.textContent =
+                        "Puedes agregar una observación para el solicitante.";
+
+
+                    inputComentarioDecision.required =
+                        false;
+
+
+                    btnConfirmarAprobacion
+                        .classList.remove(
+                            "d-none"
+                        );
+
+
+                    btnConfirmarRechazo
+                        .classList.add(
+                            "d-none"
+                        );
+                }
+                else {
+                    tituloDecisionGerente.textContent =
+                        "Rechazar solicitud";
+
+
+                    mensajeDecisionGerente.className =
+                        "alert alert-danger mb-3";
+
+
+                    mensajeDecisionGerente.innerHTML = `
+                <i class="bi bi-exclamation-triangle me-1"></i>
+
+                La solicitud quedará marcada
+                como rechazada.
+            `;
+
+
+                    labelComentarioDecision.textContent =
+                        "Motivo del rechazo";
+
+
+                    ayudaComentarioDecision.textContent =
+                        "El motivo es obligatorio y quedará registrado en el historial.";
+
+
+                    inputComentarioDecision.required =
+                        true;
+
+
+                    btnConfirmarRechazo
+                        .classList.remove(
+                            "d-none"
+                        );
+
+
+                    btnConfirmarAprobacion
+                        .classList.add(
+                            "d-none"
+                        );
+                }
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        modalDecisionGerenteElement
+                    )
+                    .show();
+
+            }
+        );
+
+        // =========================================================
         // REFERENCIAS GENERALES
         // =========================================================
 
@@ -1623,6 +1809,12 @@ document.addEventListener(
                     ).textContent =
                         solicitud.titulo;
 
+                    document.getElementById(
+                        "verSolicitudSolicitante"
+                    ).textContent =
+                        solicitud.solicitante ??
+                        "No disponible";
+
 
                     document.getElementById(
                         "verSolicitudArea"
@@ -1679,35 +1871,81 @@ document.addEventListener(
                             ) {
 
                                 const item =
-                                    crearElementoProductoAdq(
-                                        detalle.productoServicio,
-                                        detalle.cantidad,
-                                        detalle.unidad,
-                                        detalle.descripcion ??
-                                        ""
+                                    document.createElement(
+                                        "div"
                                     );
 
 
-                                item
-                                    .querySelector(
-                                        ".btnEliminarDetalleAdq"
-                                    )
-                                    ?.remove();
+                                item.className =
+                                    "adq-detail-product-item";
 
 
-                                item
-                                    .querySelectorAll(
-                                        "input"
-                                    )
-                                    .forEach(
-                                        function (
-                                            input
-                                        ) {
+                                item.innerHTML = `
+                <div class="adq-detail-product-main">
 
-                                            input.remove();
+                    <div class="adq-detail-product-icon">
 
-                                        }
-                                    );
+                        <i class="bi bi-box-seam"></i>
+
+                    </div>
+
+
+                    <div class="adq-detail-product-info">
+
+                        <span class="adq-detail-product-title">
+                            ${escapeHtmlAdq(
+                                    detalle.productoServicio
+                                )}
+                        </span>
+
+                        <span class="adq-detail-product-description">
+
+                            ${escapeHtmlAdq(
+                                    detalle.descripcion ??
+                                    "Sin descripción adicional"
+                                )
+                                    }
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="adq-detail-product-meta">
+
+                    <div>
+
+                        <span class="adq-detail-meta-label">
+                            Cantidad
+                        </span>
+
+                        <span class="adq-detail-meta-value">
+                            ${escapeHtmlAdq(
+                                        detalle.cantidad
+                                    )}
+                        </span>
+
+                    </div>
+
+
+                    <div>
+
+                        <span class="adq-detail-meta-label">
+                            Unidad
+                        </span>
+
+                        <span class="adq-detail-meta-value">
+                            ${escapeHtmlAdq(
+                                        detalle.unidad
+                                    )}
+                        </span>
+
+                    </div>
+
+                </div>
+            `;
 
 
                                 productos.appendChild(
@@ -2155,6 +2393,241 @@ document.addEventListener(
                 }
             );
 
+        // =========================================================
+        // ACCIONES DE ADQUISICIONES
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnAccionAdquisiciones"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const id =
+                    boton.dataset.id;
+
+                const folio =
+                    boton.dataset.folio ??
+                    "";
+
+                const accion =
+                    boton.dataset.accion;
+
+
+                const inputId =
+                    document.getElementById(
+                        "SolicitudAdquisicionesId"
+                    );
+
+
+                const titulo =
+                    document.getElementById(
+                        "tituloAccionAdquisiciones"
+                    );
+
+
+                const folioElemento =
+                    document.getElementById(
+                        "folioAccionAdquisiciones"
+                    );
+
+
+                const mensaje =
+                    document.getElementById(
+                        "mensajeAccionAdquisiciones"
+                    );
+
+
+                const comentario =
+                    document.getElementById(
+                        "ComentarioAdquisiciones"
+                    );
+
+
+                const labelComentario =
+                    document.getElementById(
+                        "labelComentarioAdquisiciones"
+                    );
+
+
+                const ayudaComentario =
+                    document.getElementById(
+                        "ayudaComentarioAdquisiciones"
+                    );
+
+
+                const btnAprobar =
+                    document.getElementById(
+                        "btnAprobarAdquisiciones"
+                    );
+
+
+                const btnCancelar =
+                    document.getElementById(
+                        "btnCancelarAdquisiciones"
+                    );
+
+
+                inputId.value =
+                    id;
+
+
+                folioElemento.textContent =
+                    folio;
+
+
+                comentario.value =
+                    "";
+
+
+                if (
+                    accion ===
+                    "aprobar"
+                ) {
+                    titulo.textContent =
+                        "Aprobar solicitud";
+
+
+                    mensaje.className =
+                        "alert alert-success mb-3";
+
+
+                    mensaje.innerHTML = `
+                <i class="bi bi-check-circle me-1"></i>
+
+                La solicitud será aprobada por el área
+                de Adquisiciones.
+            `;
+
+
+                    labelComentario.textContent =
+                        "Comentario (opcional)";
+
+
+                    ayudaComentario.textContent =
+                        "Puedes registrar una observación de la revisión.";
+
+
+                    comentario.required =
+                        false;
+
+
+                    btnAprobar.classList.remove(
+                        "d-none"
+                    );
+
+
+                    btnCancelar.classList.add(
+                        "d-none"
+                    );
+                }
+                else {
+                    titulo.textContent =
+                        "Cancelar solicitud";
+
+
+                    mensaje.className =
+                        "alert alert-danger mb-3";
+
+
+                    mensaje.innerHTML = `
+                <i class="bi bi-exclamation-triangle me-1"></i>
+
+                La solicitud será cancelada
+                y no continuará con el proceso de compra.
+            `;
+
+
+                    labelComentario.textContent =
+                        "Motivo de cancelación";
+
+
+                    ayudaComentario.textContent =
+                        "Este campo es obligatorio.";
+
+
+                    comentario.required =
+                        true;
+
+
+                    btnCancelar.classList.remove(
+                        "d-none"
+                    );
+
+
+                    btnAprobar.classList.add(
+                        "d-none"
+                    );
+                }
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        document.getElementById(
+                            "modalAccionAdquisiciones"
+                        )
+                    )
+                    .show();
+
+            }
+        );
+
+
+        // =========================================================
+        // ASIGNAR AGENTE
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnAsignarAdquisiciones"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                document.getElementById(
+                    "SolicitudAsignarAdqId"
+                ).value =
+                    boton.dataset.id;
+
+
+                document.getElementById(
+                    "folioAsignarAdq"
+                ).textContent =
+                    boton.dataset.folio ??
+                    "";
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        document.getElementById(
+                            "modalAsignarAdquisiciones"
+                        )
+                    )
+                    .show();
+
+            }
+        );
 
         // =========================================================
         // INICIALIZACIÓN

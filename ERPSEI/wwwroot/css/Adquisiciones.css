@@ -1224,3 +1224,262 @@
     font-size: .78rem;
     font-weight: 600;
 }
+
+/* ============================================================
+   APROBACIONES DEL GERENTE
+   ============================================================ */
+
+.adq-panel .btn-success {
+    background: #198754;
+    border-color: #198754;
+}
+
+    .adq-panel .btn-success:hover {
+        background: #157347;
+        border-color: #146c43;
+    }
+
+#modalDecisionGerenteAdq .modal-content {
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, .22);
+}
+
+#modalDecisionGerenteAdq .modal-title {
+    color: #21166f;
+    font-weight: 700;
+}
+
+#modalDecisionGerenteAdq textarea {
+    resize: vertical;
+    min-height: 110px;
+}
+
+/* ============================================================
+   DETALLE DE SOLICITUD
+   ============================================================ */
+
+#modalVerSolicitudAdq .modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+#modalVerSolicitudAdq .modal-header {
+    padding: 20px 22px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#modalVerSolicitudAdq .modal-title {
+    color: #21166f;
+    font-weight: 700;
+}
+
+.adq-detail-modal-body {
+    padding: 24px;
+}
+
+
+/* ============================================================
+   RESUMEN
+   ============================================================ */
+
+.adq-detail-summary {
+    display: grid;
+    grid-template-columns: 2fr 1.4fr 1fr 1fr 1.2fr;
+    gap: 22px;
+    padding: 18px 20px;
+    margin-bottom: 22px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fafbfc;
+}
+
+.adq-detail-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.adq-detail-label {
+    color: #21166f;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.adq-detail-value {
+    color: #343a40;
+    font-size: .95rem;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+
+/* ============================================================
+   SECCIONES
+   ============================================================ */
+
+.adq-detail-section {
+    padding: 18px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+    .adq-detail-section:last-child {
+        border-bottom: 0;
+    }
+
+.adq-detail-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: #21166f;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.adq-detail-text {
+    padding: 14px 16px;
+    border: 1px solid #e4e8ee;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #343a40;
+    font-size: .95rem;
+    font-weight: 400;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+
+/* ============================================================
+   PRODUCTOS DEL DETALLE
+   ============================================================ */
+
+.adq-detail-product-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 16px;
+    border: 1px solid #e2e6ec;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.adq-detail-product-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.adq-detail-product-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 10px;
+    background: rgba(33, 22, 111, .08);
+    color: #21166f;
+}
+
+.adq-detail-product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.adq-detail-product-title {
+    color: #343a40;
+    font-size: .95rem;
+    font-weight: 400;
+}
+
+.adq-detail-product-description {
+    color: #6c757d;
+    font-size: .82rem;
+    font-weight: 400;
+}
+
+.adq-detail-product-meta {
+    display: flex;
+    gap: 32px;
+}
+
+    .adq-detail-product-meta > div {
+        display: flex;
+        flex-direction: column;
+        min-width: 75px;
+    }
+
+.adq-detail-meta-label {
+    color: #6c757d;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.adq-detail-meta-value {
+    color: #343a40;
+    font-size: .9rem;
+    font-weight: 400;
+}
+
+
+/* ============================================================
+   RESPONSIVE DETALLE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+
+    .adq-detail-summary {
+        grid-template-columns: repeat( 2, minmax(0, 1fr) );
+    }
+}
+
+@media (max-width: 768px) {
+
+    .adq-detail-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-detail-product-item {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-detail-product-meta {
+        padding-left: 54px;
+    }
+}
+
+/* ============================================================
+   BANDEJA DE ADQUISICIONES
+   ============================================================ */
+
+#modalAccionAdquisiciones .modal-content,
+#modalAsignarAdquisiciones .modal-content {
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, .22);
+}
+
+
+#modalAccionAdquisiciones .modal-title,
+#modalAsignarAdquisiciones .modal-title {
+    color: #21166f;
+    font-weight: 700;
+}
+
+
+#modalAccionAdquisiciones textarea,
+#modalAsignarAdquisiciones textarea {
+    resize: vertical;
+}
