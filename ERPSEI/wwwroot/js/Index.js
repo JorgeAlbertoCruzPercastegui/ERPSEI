@@ -2630,6 +2630,242 @@ document.addEventListener(
         );
 
         // =========================================================
+        // ACCIONES DE ADQUISICIONES
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnAccionAdquisiciones"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const id =
+                    boton.dataset.id;
+
+                const folio =
+                    boton.dataset.folio ??
+                    "";
+
+                const accion =
+                    boton.dataset.accion;
+
+
+                const inputId =
+                    document.getElementById(
+                        "SolicitudAdquisicionesId"
+                    );
+
+
+                const titulo =
+                    document.getElementById(
+                        "tituloAccionAdquisiciones"
+                    );
+
+
+                const folioElemento =
+                    document.getElementById(
+                        "folioAccionAdquisiciones"
+                    );
+
+
+                const mensaje =
+                    document.getElementById(
+                        "mensajeAccionAdquisiciones"
+                    );
+
+
+                const comentario =
+                    document.getElementById(
+                        "ComentarioAdquisiciones"
+                    );
+
+
+                const labelComentario =
+                    document.getElementById(
+                        "labelComentarioAdquisiciones"
+                    );
+
+
+                const ayudaComentario =
+                    document.getElementById(
+                        "ayudaComentarioAdquisiciones"
+                    );
+
+
+                const btnAprobar =
+                    document.getElementById(
+                        "btnAprobarAdquisiciones"
+                    );
+
+
+                const btnCancelar =
+                    document.getElementById(
+                        "btnCancelarAdquisiciones"
+                    );
+
+
+                inputId.value =
+                    id;
+
+
+                folioElemento.textContent =
+                    folio;
+
+
+                comentario.value =
+                    "";
+
+
+                if (
+                    accion ===
+                    "aprobar"
+                ) {
+                    titulo.textContent =
+                        "Aprobar solicitud";
+
+
+                    mensaje.className =
+                        "alert alert-success mb-3";
+
+
+                    mensaje.innerHTML = `
+                <i class="bi bi-check-circle me-1"></i>
+
+                La solicitud será aprobada por el área
+                de Adquisiciones.
+            `;
+
+
+                    labelComentario.textContent =
+                        "Comentario (opcional)";
+
+
+                    ayudaComentario.textContent =
+                        "Puedes registrar una observación de la revisión.";
+
+
+                    comentario.required =
+                        false;
+
+
+                    btnAprobar.classList.remove(
+                        "d-none"
+                    );
+
+
+                    btnCancelar.classList.add(
+                        "d-none"
+                    );
+                }
+                else {
+                    titulo.textContent =
+                        "Cancelar solicitud";
+
+
+                    mensaje.className =
+                        "alert alert-danger mb-3";
+
+
+                    mensaje.innerHTML = `
+                <i class="bi bi-exclamation-triangle me-1"></i>
+
+                La solicitud será cancelada
+                y no continuará con el proceso de compra.
+            `;
+
+
+                    labelComentario.textContent =
+                        "Motivo de cancelación";
+
+
+                    ayudaComentario.textContent =
+                        "Este campo es obligatorio.";
+
+
+                    comentario.required =
+                        true;
+
+
+                    btnCancelar.classList.remove(
+                        "d-none"
+                    );
+
+
+                    btnAprobar.classList.add(
+                        "d-none"
+                    );
+                }
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        document.getElementById(
+                            "modalAccionAdquisiciones"
+                        )
+                    )
+                    .show();
+
+            }
+        );
+
+
+        // =========================================================
+        // ASIGNAR AGENTE
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnAsignarAdquisiciones"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                document.getElementById(
+                    "SolicitudAsignarAdqId"
+                ).value =
+                    boton.dataset.id;
+
+
+                document.getElementById(
+                    "folioAsignarAdq"
+                ).textContent =
+                    boton.dataset.folio ??
+                    "";
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        document.getElementById(
+                            "modalAsignarAdquisiciones"
+                        )
+                    )
+                    .show();
+
+            }
+        );
+
+        // =========================================================
         // INICIALIZACIÓN
         // =========================================================
 

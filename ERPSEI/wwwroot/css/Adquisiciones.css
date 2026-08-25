@@ -1483,3 +1483,25 @@
 #modalAsignarAdquisiciones textarea {
     resize: vertical;
 }
+
+/* ============================================================
+   MODALES BANDEJA ADQUISICIONES
+   ============================================================ */
+
+#modalAccionAdquisiciones .modal-content,
+#modalAsignarAdquisiciones .modal-content {
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, .22);
+}
+
+#modalAccionAdquisiciones .modal-title,
+#modalAsignarAdquisiciones .modal-title {
+    color: #21166f;
+    font-weight: 700;
+}
+
+#modalAccionAdquisiciones textarea,
+#modalAsignarAdquisiciones textarea {
+    resize: vertical;
+}

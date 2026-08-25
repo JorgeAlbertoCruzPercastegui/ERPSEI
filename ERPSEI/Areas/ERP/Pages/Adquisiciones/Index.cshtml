@@ -774,11 +774,8 @@
 
                 </div>
 
-
                 <span class="badge bg-primary fs-6">
-
                     @Model.SolicitudesAdquisiciones.Count
-
                 </span>
 
             </div>
@@ -810,39 +807,18 @@
                         <thead>
 
                             <tr>
-
-                                <th>
-                                    Folio
-                                </th>
-
-                                <th>
-                                    Solicitud
-                                </th>
-
-                                <th>
-                                    Solicitante
-                                </th>
-
-                                <th>
-                                    Área
-                                </th>
-
-                                <th>
-                                    Fecha
-                                </th>
-
-                                <th>
-                                    Estatus
-                                </th>
-
+                                <th>Folio</th>
+                                <th>Solicitud</th>
+                                <th>Solicitante</th>
+                                <th>Área</th>
+                                <th>Fecha</th>
+                                <th>Estatus</th>
                                 <th class="text-center">
                                     Acciones
                                 </th>
-
                             </tr>
 
                         </thead>
-
 
                         <tbody>
 
@@ -853,56 +829,38 @@
                                 <tr>
 
                                     <td>
-
                                         <strong class="adq-folio">
                                             @solicitud.Folio
                                         </strong>
-
                                     </td>
-
 
                                     <td>
                                         @solicitud.Titulo
                                     </td>
 
-
                                     <td>
                                         @solicitud.Solicitante
                                     </td>
-
 
                                     <td>
                                         @solicitud.Area
                                     </td>
 
-
                                     <td>
-
-                                        @solicitud
-                                        .FechaSolicitud
-                                        .ToString(
-                                        "dd/MM/yyyy"
-                                        )
-
+                                        @solicitud.FechaSolicitud.ToString("dd/MM/yyyy")
                                     </td>
-
 
                                     <td>
 
                                         <span class="adq-status-badge">
-
                                             @solicitud.Estatus
-
                                         </span>
 
                                     </td>
 
-
                                     <td class="text-center">
 
                                         <div class="d-inline-flex gap-1">
-
-                                            <!-- VER -->
 
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
@@ -914,12 +872,11 @@
                                             </button>
 
 
-                                            <!-- APROBAR / CANCELAR -->
                                             @if (
-                                                                                        solicitud.EstatusId == 3
-                                                                                        &&
-                                                                                        Model.PuedeAprobarAdquisiciones
-                                                                                    )
+                                                solicitud.EstatusId == 3
+                                                &&
+                                                Model.PuedeAprobarAdquisiciones
+                                            )
                                             {
                                                 <button type="button"
                                                         class="btn btn-sm btn-success btnAccionAdquisiciones"
@@ -946,12 +903,11 @@
                                             }
 
 
-                                            <!-- ASIGNAR -->
                                             @if (
-                                                                                        solicitud.EstatusId == 5
-                                                                                        &&
-                                                                                        Model.PuedeAsignarAdquisiciones
-                                                                                    )
+                                                solicitud.EstatusId == 5
+                                                &&
+                                                Model.PuedeAsignarAdquisiciones
+                                            )
                                             {
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-primary btnAsignarAdquisiciones"
@@ -2465,6 +2421,260 @@
 
                     </button>
 
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-person-check me-1"></i>
+
+                        Asignar agente
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================== -->
+<!-- MODAL ACCIÓN ADQUISICIONES -->
+<!-- ========================================================== -->
+
+<div class="modal fade"
+     id="modalAccionAdquisiciones"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  id="formAccionAdquisiciones">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       id="SolicitudAdquisicionesId"
+                       name="SolicitudAdquisicionesId" />
+
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <h5 class="modal-title"
+                            id="tituloAccionAdquisiciones">
+
+                            Gestión de solicitud
+
+                        </h5>
+
+                        <small class="text-muted"
+                               id="folioAccionAdquisiciones">
+                        </small>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div id="mensajeAccionAdquisiciones"
+                         class="alert mb-3">
+                    </div>
+
+
+                    <div>
+
+                        <label for="ComentarioAdquisiciones"
+                               class="form-label fw-bold"
+                               id="labelComentarioAdquisiciones">
+
+                            Comentario
+
+                        </label>
+
+
+                        <textarea id="ComentarioAdquisiciones"
+                                  name="ComentarioAdquisiciones"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="2000"
+                                  placeholder="Escribe un comentario..."></textarea>
+
+
+                        <div class="form-text"
+                             id="ayudaComentarioAdquisiciones">
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cerrar
+
+                    </button>
+
+
+                    <button type="submit"
+                            id="btnAprobarAdquisiciones"
+                            formaction="?handler=AprobarAdquisiciones"
+                            class="btn btn-success d-none">
+
+                        <i class="bi bi-check-lg me-1"></i>
+
+                        Aprobar solicitud
+
+                    </button>
+
+
+                    <button type="submit"
+                            id="btnCancelarAdquisiciones"
+                            formaction="?handler=CancelarAdquisiciones"
+                            class="btn btn-danger d-none">
+
+                        <i class="bi bi-x-lg me-1"></i>
+
+                        Confirmar cancelación
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================== -->
+<!-- MODAL ASIGNAR AGENTE -->
+<!-- ========================================================== -->
+
+<div class="modal fade"
+     id="modalAsignarAdquisiciones"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  asp-page-handler="AsignarAgente">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       id="SolicitudAsignarAdqId"
+                       name="SolicitudAdquisicionesId" />
+
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <h5 class="modal-title">
+
+                            <i class="bi bi-person-plus me-2"></i>
+
+                            Asignar agente de compras
+
+                        </h5>
+
+                        <small id="folioAsignarAdq"
+                               class="text-muted">
+                        </small>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-bold">
+                            Agente de compras
+                        </label>
+
+                        <select name="UsuarioAsignadoAdqId"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Selecciona...
+                            </option>
+
+                            @foreach (
+                                var agente
+                                in Model.AgentesCompras)
+                            {
+                                <option value="@agente.Value">
+                                    @agente.Text
+                                </option>
+                            }
+
+                        </select>
+
+                    </div>
+
+
+                    <div>
+
+                        <label class="form-label fw-bold">
+                            Observaciones
+                        </label>
+
+                        <textarea name="ComentarioAdquisiciones"
+                                  class="form-control"
+                                  rows="3"
+                                  maxlength="2000"
+                                  placeholder="Observaciones opcionales..."></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
 
                     <button type="submit"
                             class="btn btn-primary">

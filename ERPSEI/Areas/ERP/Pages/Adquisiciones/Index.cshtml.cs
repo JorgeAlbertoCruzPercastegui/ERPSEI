@@ -1412,19 +1412,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 solicitud.EstatusId;
 
 
-            solicitud.EstatusId =
-                5;
-
-
-            solicitud.FechaModificacion =
-                ahora;
-
-
             string comentario =
                 ComentarioAdquisiciones?
                     .Trim()
                 ??
                 string.Empty;
+
+
+            solicitud.EstatusId =
+                5;
+
+            solicitud.FechaModificacion =
+                ahora;
 
 
             _context.AdqHistorial.Add(
@@ -1560,7 +1559,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             solicitud.EstatusId =
                 7;
-
 
             solicitud.FechaModificacion =
                 ahora;
