@@ -58,6 +58,26 @@ document.addEventListener(
                 "btnConfirmarRechazoAdq"
             );
 
+        const btnEditarDesdeDetalle =
+            document.getElementById(
+                "btnEditarDesdeDetalleAdq"
+            );
+
+
+        const btnCancelarDesdeDetalle =
+            document.getElementById(
+                "btnCancelarDesdeDetalleAdq"
+            );
+
+
+        const btnEnviarDesdeDetalle =
+            document.getElementById(
+                "btnEnviarDesdeDetalleAdq"
+            );
+
+        let solicitudDetalleActualAdq =
+            null;
+
 
         document.addEventListener(
             "click",
@@ -369,6 +389,46 @@ document.addEventListener(
                 "btnLimpiarFiltrosAdq"
             );
 
+        // =========================================================
+        // PAGINACIÓN - REFERENCIAS
+        // =========================================================
+
+        const paginacionLista =
+            document.getElementById(
+                "adqPaginacionLista"
+            );
+
+
+        const paginacionContenedor =
+            document.getElementById(
+                "paginacionSolicitudesAdq"
+            );
+
+
+        const paginaInicio =
+            document.getElementById(
+                "adqPaginaInicio"
+            );
+
+
+        const paginaFin =
+            document.getElementById(
+                "adqPaginaFin"
+            );
+
+
+        const paginaTotal =
+            document.getElementById(
+                "adqPaginaTotal"
+            );
+
+
+        const registrosPorPaginaAdq =
+            10;
+
+
+        let paginaActualAdq =
+            1;
 
         // =========================================================
         // UTILIDADES
@@ -2035,6 +2095,9 @@ document.addEventListener(
                             boton.dataset.id
                         );
 
+                    solicitudDetalleActualAdq =
+                        solicitud;
+
 
                     document.getElementById(
                         "verSolicitudFolio"
@@ -2281,6 +2344,86 @@ document.addEventListener(
 
                     }
 
+                    // =========================================================
+                    // ACCIONES DISPONIBLES DESDE EL DETALLE
+                    // =========================================================
+
+                    btnEditarDesdeDetalle
+                        ?.classList.add(
+                            "d-none"
+                        );
+
+
+                    btnCancelarDesdeDetalle
+                        ?.classList.add(
+                            "d-none"
+                        );
+
+
+                    btnEnviarDesdeDetalle
+                        ?.classList.add(
+                            "d-none"
+                        );
+
+
+                    /*
+                     * Borrador:
+                     * editar + cancelar + enviar.
+                     */
+                    if (
+                        solicitud.estatusId ===
+                        1
+                    ) {
+                        btnEditarDesdeDetalle
+                            ?.classList.remove(
+                                "d-none"
+                            );
+
+                        btnCancelarDesdeDetalle
+                            ?.classList.remove(
+                                "d-none"
+                            );
+
+                        btnEnviarDesdeDetalle
+                            ?.classList.remove(
+                                "d-none"
+                            );
+                    }
+
+
+                    /*
+                     * Pendiente del gerente:
+                     * editar + cancelar.
+                     */
+                    else if (
+                        solicitud.estatusId ===
+                        2
+                    ) {
+                        btnEditarDesdeDetalle
+                            ?.classList.remove(
+                                "d-none"
+                            );
+
+                        btnCancelarDesdeDetalle
+                            ?.classList.remove(
+                                "d-none"
+                            );
+                    }
+
+
+                    /*
+                     * Gerente ya aprobó y llegó a Adquisiciones:
+                     * ya no puede editar, solamente cancelar.
+                     */
+                    else if (
+                        solicitud.estatusId ===
+                        3
+                    ) {
+                        btnCancelarDesdeDetalle
+                            ?.classList.remove(
+                                "d-none"
+                            );
+                    }
 
                     bootstrap.Modal
                         .getOrCreateInstance(
@@ -2310,6 +2453,202 @@ document.addEventListener(
             }
         );
 
+        // =========================================================
+        // EDITAR DESDE DETALLE
+        // =========================================================
+
+        btnEditarDesdeDetalle
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        !solicitudDetalleActualAdq
+                    ) {
+                        return;
+                    }
+
+
+                    const id =
+                        solicitudDetalleActualAdq.id;
+
+
+                    bootstrap.Modal
+                        .getInstance(
+                            modalVerSolicitudElement
+                        )
+                        ?.hide();
+
+
+                    const botonEditar =
+                        document.querySelector(
+                            `.btnEditarSolicitudAdq[data-id="${id}"]`
+                        );
+
+
+                    botonEditar?.click();
+                }
+        );
+
+        // =========================================================
+        // CANCELAR DESDE DETALLE
+        // =========================================================
+
+        btnCancelarDesdeDetalle
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        !solicitudDetalleActualAdq
+                    ) {
+                        return;
+                    }
+
+
+                    abrirCancelacionSolicitudUsuarioAdq(
+                        solicitudDetalleActualAdq.id,
+                        solicitudDetalleActualAdq.folio
+                    );
+
+
+                    bootstrap.Modal
+                        .getInstance(
+                            modalVerSolicitudElement
+                        )
+                        ?.hide();
+                }
+            );
+
+        // =========================================================
+        // ABRIR CANCELACIÓN DEL SOLICITANTE
+        // =========================================================
+
+        function abrirCancelacionSolicitudUsuarioAdq(
+            id,
+            folio
+        ) {
+
+            const modalElement =
+                document.getElementById(
+                    "modalCancelarSolicitudUsuarioAdq"
+                );
+
+
+            const inputId =
+                document.getElementById(
+                    "SolicitudCancelarUsuarioId"
+                );
+
+
+            const folioElemento =
+                document.getElementById(
+                    "folioCancelarSolicitudUsuarioAdq"
+                );
+
+
+            const motivo =
+                document.getElementById(
+                    "MotivoCancelacionUsuario"
+                );
+
+
+            if (
+                !modalElement ||
+                !inputId
+            ) {
+                return;
+            }
+
+
+            inputId.value =
+                id;
+
+
+            if (folioElemento) {
+                folioElemento.textContent =
+                    folio ?? "";
+            }
+
+
+            if (motivo) {
+                motivo.value =
+                    "";
+            }
+
+
+            bootstrap.Modal
+                .getOrCreateInstance(
+                    modalElement
+                )
+                .show();
+        }
+
+        // =========================================================
+        // CANCELAR DESDE MIS SOLICITUDES
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnCancelarSolicitudUsuarioAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                abrirCancelacionSolicitudUsuarioAdq(
+                    boton.dataset.id,
+                    boton.dataset.folio
+                );
+            }
+        );
+
+        // =========================================================
+        // ENVIAR BORRADOR DESDE DETALLE
+        // =========================================================
+
+        btnEnviarDesdeDetalle
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        !solicitudDetalleActualAdq ||
+                        solicitudDetalleActualAdq.estatusId !== 1
+                    ) {
+                        return;
+                    }
+
+
+                    const id =
+                        solicitudDetalleActualAdq.id;
+
+
+                    bootstrap.Modal
+                        .getInstance(
+                            modalVerSolicitudElement
+                        )
+                        ?.hide();
+
+
+                    const botonEditar =
+                        document.querySelector(
+                            `.btnEditarSolicitudAdq[data-id="${id}"]`
+                        );
+
+
+                    botonEditar?.click();
+                }
+            );
 
         // =========================================================
         // EDITAR SOLICITUD
@@ -2565,7 +2904,13 @@ document.addEventListener(
         // FILTROS
         // =========================================================
 
-        function aplicarFiltros() {
+        // =========================================================
+        // FILTROS + PAGINACIÓN
+        // =========================================================
+
+        function aplicarFiltros(
+            reiniciarPagina = true
+        ) {
 
             const texto =
                 filtroBusqueda
@@ -2582,61 +2927,434 @@ document.addEventListener(
 
 
             const filas =
-                document.querySelectorAll(
-                    "#tablaSolicitudesAdq .adq-solicitud-row"
+                Array.from(
+                    document.querySelectorAll(
+                        "#tablaSolicitudesAdq .adq-solicitud-row"
+                    )
                 );
 
 
-            filas.forEach(
-                function (
-                    fila
-                ) {
+            const filasFiltradas =
+                filas.filter(
+                    function (
+                        fila
+                    ) {
 
-                    const folio =
-                        fila.dataset.folio ??
-                        "";
+                        const folio =
+                            fila.dataset.folio ??
+                            "";
 
-                    const titulo =
-                        fila.dataset.titulo ??
-                        "";
+                        const titulo =
+                            fila.dataset.titulo ??
+                            "";
 
-                    const area =
-                        fila.dataset.area ??
-                        "";
+                        const area =
+                            fila.dataset.area ??
+                            "";
 
-                    const filaEstatus =
-                        fila.dataset.estatus ??
-                        "";
-
-
-                    const coincideTexto =
-                        !texto ||
-                        folio.includes(
-                            texto
-                        ) ||
-                        titulo.includes(
-                            texto
-                        ) ||
-                        area.includes(
-                            texto
-                        );
+                        const filaEstatus =
+                            fila.dataset.estatus ??
+                            "";
 
 
-                    const coincideEstatus =
-                        !estatus ||
-                        filaEstatus ===
-                        estatus;
+                        const coincideTexto =
+                            !texto ||
+                            folio.includes(
+                                texto
+                            ) ||
+                            titulo.includes(
+                                texto
+                            ) ||
+                            area.includes(
+                                texto
+                            );
 
 
-                    fila.classList.toggle(
-                        "d-none",
-                        !(
+                        const coincideEstatus =
+                            !estatus ||
+                            filaEstatus ===
+                            estatus;
+
+
+                        return (
                             coincideTexto &&
                             coincideEstatus
-                        )
+                        );
+                    }
+                );
+
+
+            if (
+                reiniciarPagina
+            ) {
+                paginaActualAdq =
+                    1;
+            }
+
+
+            renderizarPaginaSolicitudesAdq(
+                filas,
+                filasFiltradas
+            );
+        }
+
+        // =========================================================
+        // RENDERIZAR PÁGINA DE SOLICITUDES
+        // =========================================================
+
+        function renderizarPaginaSolicitudesAdq(
+            todasLasFilas,
+            filasFiltradas
+        ) {
+
+            /*
+             * Primero ocultamos absolutamente
+             * todas las filas.
+             */
+            todasLasFilas
+                .forEach(
+                    function (
+                        fila
+                    ) {
+
+                        fila.classList.add(
+                            "d-none"
+                        );
+                    }
+                );
+
+
+            const totalRegistros =
+                filasFiltradas.length;
+
+
+            const totalPaginas =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        totalRegistros /
+                        registrosPorPaginaAdq
+                    )
+                );
+
+
+            /*
+             * Evitamos quedar en una página
+             * que ya no exista después de filtrar.
+             */
+            if (
+                paginaActualAdq >
+                totalPaginas
+            ) {
+
+                paginaActualAdq =
+                    totalPaginas;
+            }
+
+
+            const inicio =
+                (
+                    paginaActualAdq -
+                    1
+                ) *
+                registrosPorPaginaAdq;
+
+
+            const fin =
+                Math.min(
+                    inicio +
+                    registrosPorPaginaAdq,
+                    totalRegistros
+                );
+
+
+            /*
+             * Mostramos únicamente los registros
+             * correspondientes a la página.
+             */
+            filasFiltradas
+                .slice(
+                    inicio,
+                    fin
+                )
+                .forEach(
+                    function (
+                        fila
+                    ) {
+
+                        fila.classList.remove(
+                            "d-none"
+                        );
+                    }
+                );
+
+
+            actualizarInformacionPaginacionAdq(
+                inicio,
+                fin,
+                totalRegistros
+            );
+
+
+            renderizarControlesPaginacionAdq(
+                totalPaginas,
+                totalRegistros
+            );
+        }
+
+        // =========================================================
+        // INFORMACIÓN DE PAGINACIÓN
+        // =========================================================
+
+        function actualizarInformacionPaginacionAdq(
+            inicio,
+            fin,
+            total
+        ) {
+
+            if (
+                paginaInicio
+            ) {
+
+                paginaInicio.textContent =
+                    total === 0
+                        ? "0"
+                        : String(
+                            inicio + 1
+                        );
+            }
+
+
+            if (
+                paginaFin
+            ) {
+
+                paginaFin.textContent =
+                    String(
+                        fin
+                    );
+            }
+
+
+            if (
+                paginaTotal
+            ) {
+
+                paginaTotal.textContent =
+                    String(
+                        total
+                    );
+            }
+        }
+
+        // =========================================================
+        // CONTROLES DE PAGINACIÓN
+        // =========================================================
+
+        function renderizarControlesPaginacionAdq(
+            totalPaginas,
+            totalRegistros
+        ) {
+
+            if (
+                !paginacionLista ||
+                !paginacionContenedor
+            ) {
+                return;
+            }
+
+
+            paginacionLista.innerHTML =
+                "";
+
+
+            /*
+             * Si no existen registros,
+             * ocultamos completamente el paginador.
+             */
+            if (
+                totalRegistros === 0
+            ) {
+
+                paginacionContenedor
+                    .classList
+                    .add(
+                        "d-none"
                     );
 
+                return;
+            }
+
+
+            paginacionContenedor
+                .classList
+                .remove(
+                    "d-none"
+                );
+
+
+            // =====================================================
+            // ANTERIOR
+            // =====================================================
+
+            crearBotonPaginacionAdq(
+                "Anterior",
+                paginaActualAdq - 1,
+                paginaActualAdq === 1,
+                false
+            );
+
+
+            // =====================================================
+            // NÚMEROS
+            // =====================================================
+
+            for (
+                let pagina = 1;
+                pagina <= totalPaginas;
+                pagina++
+            ) {
+
+                crearBotonPaginacionAdq(
+                    String(
+                        pagina
+                    ),
+                    pagina,
+                    false,
+                    pagina === paginaActualAdq
+                );
+            }
+
+
+            // =====================================================
+            // SIGUIENTE
+            // =====================================================
+
+            crearBotonPaginacionAdq(
+                "Siguiente",
+                paginaActualAdq + 1,
+                paginaActualAdq ===
+                totalPaginas,
+                false
+            );
+        }
+
+        // =========================================================
+        // CREAR BOTÓN DE PAGINACIÓN
+        // =========================================================
+
+        function crearBotonPaginacionAdq(
+            texto,
+            pagina,
+            deshabilitado,
+            activo
+        ) {
+
+            if (
+                !paginacionLista
+            ) {
+                return;
+            }
+
+
+            const item =
+                document.createElement(
+                    "li"
+                );
+
+
+            item.className =
+                "page-item";
+
+
+            if (
+                deshabilitado
+            ) {
+
+                item.classList.add(
+                    "disabled"
+                );
+            }
+
+
+            if (
+                activo
+            ) {
+
+                item.classList.add(
+                    "active"
+                );
+            }
+
+
+            const boton =
+                document.createElement(
+                    "button"
+                );
+
+
+            boton.type =
+                "button";
+
+
+            boton.className =
+                "page-link";
+
+
+            boton.textContent =
+                texto;
+
+
+            boton.disabled =
+                deshabilitado;
+
+
+            boton.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        deshabilitado
+                    ) {
+                        return;
+                    }
+
+
+                    paginaActualAdq =
+                        pagina;
+
+
+                    aplicarFiltros(
+                        false
+                    );
+
+
+                    /*
+                     * Regresamos suavemente
+                     * al inicio de la tabla.
+                     */
+                    document
+                        .getElementById(
+                            "tablaSolicitudesAdq"
+                        )
+                        ?.scrollIntoView({
+                            behavior:
+                                "smooth",
+
+                            block:
+                                "start"
+                        });
                 }
+            );
+
+
+            item.appendChild(
+                boton
+            );
+
+
+            paginacionLista.appendChild(
+                item
             );
         }
 
@@ -2644,14 +3362,24 @@ document.addEventListener(
         filtroBusqueda
             ?.addEventListener(
                 "input",
-                aplicarFiltros
+                function () {
+
+                    aplicarFiltros(
+                        true
+                    );
+                }
             );
 
 
         filtroEstatus
             ?.addEventListener(
                 "change",
-                aplicarFiltros
+                function () {
+
+                    aplicarFiltros(
+                        true
+                    );
+                }
             );
 
 
@@ -2679,8 +3407,16 @@ document.addEventListener(
 
                     }
 
+                    paginaActualAdq =
+                        1;
 
-                    aplicarFiltros();
+
+                    aplicarFiltros(
+                        true
+                    );
+
+
+                    //aplicarFiltros();
                 }
             );
 
@@ -3210,6 +3946,10 @@ document.addEventListener(
         renderizarArchivosSeleccionadosAdq();
 
         actualizarEstadoEnviar();
+
+        aplicarFiltros(
+            true
+        );
 
     }
 );

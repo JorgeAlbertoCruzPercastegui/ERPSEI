@@ -562,63 +562,81 @@
 
         </div>
 
+        <!-- ====================================================== -->
+        <!-- PAGINACIÓN -->
+        <!-- ====================================================== -->
+
+        <div id="paginacionSolicitudesAdq"
+             class="adq-pagination-container">
+
+            <div class="adq-pagination-info">
+
+                Mostrando
+                <strong id="adqPaginaInicio">0</strong>
+                -
+                <strong id="adqPaginaFin">0</strong>
+                de
+                <strong id="adqPaginaTotal">0</strong>
+                solicitudes
+
+            </div>
+
+
+            <nav aria-label="Paginación de solicitudes">
+
+                <ul id="adqPaginacionLista"
+                    class="pagination pagination-sm mb-0">
+
+                    <!-- JS genera los botones -->
+
+                </ul>
+
+            </nav>
+
+        </div>
+
     </section>
 
     <!-- ====================================================== -->
     <!-- SOLICITUDES POR APROBAR -->
     <!-- ====================================================== -->
+    @if (
+        Model.SolicitudesPorAprobar != null &&
+        Model.SolicitudesPorAprobar.Count > 0
+    )
+    {
+        <section class="adq-panel mt-4">
 
-    <section class="adq-panel mt-4">
+            <div class="adq-panel-header">
 
-        <div class="adq-panel-header">
+                <div>
 
-            <div>
+                    <span class="adq-panel-kicker">
+                        Aprobaciones
+                    </span>
 
-                <span class="adq-panel-kicker">
-                    Aprobaciones
-                </span>
+                    <h2>
+                        Solicitudes por aprobar
+                    </h2>
 
-                <h2>
-                    Solicitudes por aprobar
-                </h2>
+                    <p>
+                        Solicitudes pendientes de tu validación
+                        como jefe o gerente del área.
+                    </p>
 
-                <p>
-                    Solicitudes pendientes de tu validación
-                    como jefe o gerente del área.
-                </p>
-
-            </div>
-
-
-            <span class="badge bg-warning text-dark fs-6">
-
-                @Model.TotalPorAprobar
-                pendiente@(Model.TotalPorAprobar == 1 ? "" : "s")
-
-            </span>
-
-        </div>
+                </div>
 
 
-        @if (Model.SolicitudesPorAprobar.Count == 0)
-        {
-            <div class="adq-empty-state">
+                <span class="badge bg-warning text-dark fs-6">
 
-                <i class="bi bi-check2-circle"></i>
+                    @Model.TotalPorAprobar
+                    pendiente@(Model.TotalPorAprobar == 1 ? "" : "s")
 
-                <strong>
-                    No tienes solicitudes pendientes de aprobación.
-                </strong>
-
-                <span>
-                    Cuando seas responsable de aprobar una solicitud,
-                    aparecerá en esta sección.
                 </span>
 
             </div>
-        }
-        else
-        {
+
+
             <div class="table-responsive">
 
                 <table class="table align-middle adq-table mb-0">
@@ -660,16 +678,15 @@
 
                         @foreach (
                             var solicitud
-                            in Model.SolicitudesPorAprobar)
+                            in Model.SolicitudesPorAprobar
+                        )
                         {
                             <tr>
 
                                 <td>
 
                                     <strong class="adq-folio">
-
                                         @solicitud.Folio
-
                                     </strong>
 
                                 </td>
@@ -678,25 +695,19 @@
                                 <td>
 
                                     <strong>
-
                                         @solicitud.Titulo
-
                                     </strong>
 
                                 </td>
 
 
                                 <td>
-
                                     @solicitud.Solicitante
-
                                 </td>
 
 
                                 <td>
-
                                     @solicitud.Area
-
                                 </td>
 
 
@@ -758,9 +769,9 @@
                 </table>
 
             </div>
-        }
 
-    </section>
+        </section>
+    }
 
     <!-- ====================================================== -->
     <!-- BANDEJA DE ADQUISICIONES -->
@@ -2061,6 +2072,39 @@
 
                 </button>
 
+
+                <button type="button"
+                        id="btnEditarDesdeDetalleAdq"
+                        class="btn btn-outline-primary d-none">
+
+                    <i class="bi bi-pencil me-1"></i>
+
+                    Editar
+
+                </button>
+
+
+                <button type="button"
+                        id="btnCancelarDesdeDetalleAdq"
+                        class="btn btn-outline-danger d-none">
+
+                    <i class="bi bi-x-circle me-1"></i>
+
+                    Cancelar solicitud
+
+                </button>
+
+
+                <button type="button"
+                        id="btnEnviarDesdeDetalleAdq"
+                        class="btn btn-primary d-none">
+
+                    <i class="bi bi-send me-1"></i>
+
+                    Enviar solicitud
+
+                </button>
+
             </div>
 
         </div>
@@ -2710,6 +2754,125 @@
                         <i class="bi bi-person-check me-1"></i>
 
                         Asignar agente
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================================== -->
+<!-- MODAL CANCELAR SOLICITUD DEL USUARIO -->
+<!-- ========================================================== -->
+
+<div class="modal fade"
+     id="modalCancelarSolicitudUsuarioAdq"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form method="post"
+                  asp-page-handler="CancelarSolicitudUsuario">
+
+                @Html.AntiForgeryToken()
+
+
+                <input type="hidden"
+                       id="SolicitudCancelarUsuarioId"
+                       name="SolicitudCancelarUsuarioId" />
+
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <h5 class="modal-title">
+
+                            <i class="bi bi-x-circle me-2"></i>
+
+                            Cancelar solicitud
+
+                        </h5>
+
+                        <small class="text-muted"
+                               id="folioCancelarSolicitudUsuarioAdq">
+                        </small>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="alert alert-warning">
+
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+
+                        La solicitud dejará de continuar en el proceso de compra.
+
+                    </div>
+
+
+                    <div>
+
+                        <label for="MotivoCancelacionUsuario"
+                               class="form-label fw-bold">
+
+                            Motivo de cancelación
+                        </label>
+
+
+                        <textarea id="MotivoCancelacionUsuario"
+                                  name="MotivoCancelacionUsuario"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="2000"
+                                  required
+                                  placeholder="Indica por qué ya no requieres esta compra..."></textarea>
+
+                        <div class="form-text">
+                            El motivo quedará registrado en el historial.
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Regresar
+
+                    </button>
+
+
+                    <button type="submit"
+                            class="btn btn-danger">
+
+                        <i class="bi bi-x-lg me-1"></i>
+
+                        Confirmar cancelación
 
                     </button>
 

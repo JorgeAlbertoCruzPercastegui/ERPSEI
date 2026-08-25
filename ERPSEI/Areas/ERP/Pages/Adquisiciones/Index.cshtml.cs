@@ -79,6 +79,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             set;
         }
 
+        [BindProperty]
+        public int SolicitudCancelarUsuarioId
+        {
+            get;
+            set;
+        }
+
+
+        [BindProperty]
+        [StringLength(
+            2000,
+            ErrorMessage =
+                "El motivo no puede superar los 2000 caracteres."
+        )]
+        public string? MotivoCancelacionUsuario
+        {
+            get;
+            set;
+        }
 
         // =========================================================
         // USUARIO
@@ -2176,6 +2195,214 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             return RedirectToPage();
+        }
+
+        // =========================================================
+        // CANCELAR SOLICITUD - SOLICITANTE
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostCancelarSolicitudUsuarioAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            string motivo =
+                MotivoCancelacionUsuario?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    motivo
+                )
+            )
+            {
+                TempData["MensajeError"] =
+                    "Debes indicar el motivo de la cancelación.";
+
+                return RedirectToPage();
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                SolicitudCancelarUsuarioId
+                            &&
+                            x.UsuarioSolicitanteId ==
+                                usuarioActual.Id
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return NotFound();
+            }
+
+
+            /*
+             * El usuario solamente puede cancelar antes
+             * de que Adquisiciones apruebe la solicitud.
+             */
+            if (
+                solicitud.EstatusId != 1 &&
+                solicitud.EstatusId != 2 &&
+                solicitud.EstatusId != 3
+            )
+            {
+                TempData["MensajeError"] =
+                    "La solicitud ya no puede cancelarse porque avanzó en el proceso de compra.";
+
+                return RedirectToPage();
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            int estatusAnterior =
+                solicitud.EstatusId;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =====================================================
+                // SI ESTABA PENDIENTE DEL GERENTE
+                // =====================================================
+
+                if (estatusAnterior == 2)
+                {
+                    List<AdqAprobacion> aprobacionesPendientes =
+                        await _context.AdqAprobaciones
+                            .Where(
+                                x =>
+                                    x.SolicitudId ==
+                                        solicitud.Id
+                                    &&
+                                    x.TipoAprobacion ==
+                                        "GerenteArea"
+                                    &&
+                                    x.Estatus ==
+                                        "Pendiente"
+                            )
+                            .ToListAsync();
+
+
+                    foreach (
+                        AdqAprobacion aprobacion
+                        in aprobacionesPendientes
+                    )
+                    {
+                        aprobacion.Estatus =
+                            "Cancelada";
+
+                        aprobacion.Comentario =
+                            "La solicitud fue cancelada por el solicitante.";
+
+                        aprobacion.FechaRespuesta =
+                            ahora;
+                    }
+                }
+
+
+                // =====================================================
+                // CANCELAR SOLICITUD
+                // =====================================================
+
+                solicitud.EstatusId =
+                    7;
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                // =====================================================
+                // HISTORIAL
+                // =====================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            "SOLICITUD_CANCELADA_USUARIO",
+
+                        Descripcion =
+                            $"El solicitante canceló la solicitud. Motivo: {motivo}",
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            7,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                TempData["MensajeExito"] =
+                    "La solicitud fue cancelada correctamente.";
+
+
+                return RedirectToPage();
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al cancelar la solicitud {SolicitudId}.",
+                    SolicitudCancelarUsuarioId
+                );
+
+
+                TempData["MensajeError"] =
+                    "No fue posible cancelar la solicitud.";
+
+
+                return RedirectToPage();
+            }
         }
 
 
