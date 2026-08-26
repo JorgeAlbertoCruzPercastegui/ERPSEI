@@ -694,21 +694,71 @@
 		var msgAgregarActividad = '@Localizer["AgregarActividad"]';
 		var sinActividad = '@Localizer["SinActividad"]';
 		var actividadRepetida = '@Localizer["ActividadRepetida"]';
-		var arrTiposDocumentos = {
+			var arrTiposDocumentos = {
 			"1": '@Localizer["CSF"]',
+
+			/*
+			 * INE general de la empresa.
+			 *
+			 * Este documento NO corresponde al
+			 * INE de accionistas de Compliance.
+			 */
 			"2": '@Localizer["INE"]',
+
 			"3": '@Localizer["RFC"]',
+
 			"4": '@Localizer["ComprobanteDomicilio"]',
+
 			"5": '@Localizer["Otro"]',
-			"6": '@Localizer["CER"]',
+
+			/*
+			 * Internamente sigue siendo:
+			 *
+			 * FileTypes.CER = 6
+			 *
+			 * Únicamente cambiamos el texto mostrado
+			 * al usuario.
+			 */
+			"6": "Certificado FIEL",
+
 			"7": '@Localizer["KEY"]',
+
 			"8": '@Localizer["Logo"]',
+
 			"9": '@Localizer["HojaMembretada"]',
+
 			"10": '@Localizer["INE2"]',
+
 			"11": '@Localizer["INE3"]',
-			"12": '@Localizer["Organigrama"]',
-			"13": '@Localizer["ActaConstitutiva"]'
+
+			"12": '@Localizer["ActaConstitutiva"]',
+
+			"13": '@Localizer["Organigrama"]',
+
+			/*
+			 * Documentos compartidos con Compliance.
+			 */
+			"14": "Actas o instrumentos adicionales",
+
+			"15": "Poder notarial",
+
+			/*
+			 * INE exclusivo de accionistas.
+			 *
+			 * Es independiente del Tipo 2.
+			 */
+
+			"17": "CSF accionistas",
+
+			"18": "Comprobante domicilio accionistas",
+
+			"19": "Declaración anual o mensual",
+
+			"20": "Opinión de cumplimiento SAT",
+
+			"21": "Prueba de vida"
 		};
+
 		var invalidFormatTitle = '@Localizer["InvalidFormatTitle"]';
 		var invalidFormatMsg = '@Localizer["InvalidFormatMsg"]';
 

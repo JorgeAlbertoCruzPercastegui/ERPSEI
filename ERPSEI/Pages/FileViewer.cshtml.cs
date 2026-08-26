@@ -104,34 +104,123 @@ namespace ERPSEI.Pages
 						break;
 				}
 
-				if (ftr == null) { return RedirectToPage("/404"); }
-				if (ftr.src.Length <= 0) { return RedirectToPage("/404"); }
+                if (ftr == null)
+                {
+                    return RedirectToPage("/404");
+                }
 
-				switch (ftr.extension)
-				{
-					case "pdf":
-						HtmlContainer = $"<iframe id=\"fileContainer\" style=\"position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;\"></iframe>";
-						Base64 = ftr.src;
-						Extension = ftr.extension;
-						break;
-					case "png":
-					case "jpg":
-					case "jpeg":
-						HtmlContainer = $"<img id=\"fileContainer\" style=\"height:100%\" />";
-						Base64 = ftr.src;
-						Extension = ftr.extension;
-						break;
-					default:
-						//Show page file not viewable
-						HtmlContainer = $"<div class=\"container\">" +
-											$"<h1>{localizer["DownloadFileTitle"]}</h1>" +
-											$"<p>{localizer["DownloadFileInstructions"]}</p>" +
-											$"<a id=\"fileContainer\" href=\"{Url.Page("FileViewer", "DownloadFile", new { fileId, moduleName })}\" download class=\"btn btn-primary\">{localizer["DownloadFileTitle"]}</a>" +
-										$"</div>";
-						break;
-				}
+                if (string.IsNullOrWhiteSpace(ftr.src))
+                {
+                    return RedirectToPage("/404");
+                }
 
-				return Page();
+                /*
+                 * ==========================================================
+                 * NORMALIZAR EXTENSIÓN
+                 * ==========================================================
+                 *
+                 * Algunos archivos pueden guardar:
+                 *
+                 * pdf
+                 * .pdf
+                 * PDF
+                 * .PDF
+                 *
+                 * Todos deben interpretarse como "pdf".
+                 * ==========================================================
+                 */
+                string extensionNormalizada =
+                    (ftr.extension ?? string.Empty)
+                        .Trim()
+                        .TrimStart('.')
+                        .ToLowerInvariant();
+
+                switch (extensionNormalizada)
+                {
+                    case "pdf":
+                        HtmlContainer =
+                            "<iframe " +
+                            "id=\"fileContainer\" " +
+                            "style=\"" +
+                                "position:fixed;" +
+                                "top:0;" +
+                                "left:0;" +
+                                "bottom:0;" +
+                                "right:0;" +
+                                "width:100%;" +
+                                "height:100%;" +
+                                "border:none;" +
+                                "margin:0;" +
+                                "padding:0;" +
+                                "overflow:hidden;" +
+                                "z-index:999999;" +
+                            "\">" +
+                            "</iframe>";
+
+                        Base64 =
+                            ftr.src;
+
+                        Extension =
+                            extensionNormalizada;
+
+                        break;
+
+                    case "png":
+                    case "jpg":
+                    case "jpeg":
+                        HtmlContainer =
+                            "<img " +
+                            "id=\"fileContainer\" " +
+                            "style=\"" +
+                                "max-width:100%;" +
+                                "max-height:100vh;" +
+                                "display:block;" +
+                                "margin:auto;" +
+                            "\" />";
+
+                        Base64 =
+                            ftr.src;
+
+                        Extension =
+                            extensionNormalizada;
+
+                        break;
+
+                    default:
+                        /*
+                         * Archivos que el navegador no puede visualizar
+                         * directamente:
+                         *
+                         * DOC / DOCX
+                         * CER
+                         * KEY
+                         * XLS / XLSX
+                         * etc.
+                         */
+                        HtmlContainer =
+                            "<div class=\"container\">" +
+                                $"<h1>{localizer["DownloadFileTitle"]}</h1>" +
+                                $"<p>{localizer["DownloadFileInstructions"]}</p>" +
+                                $"<a id=\"fileContainer\" " +
+                                    $"href=\"{Url.Page(
+                                        "FileViewer",
+                                        "DownloadFile",
+                                        new
+                                        {
+                                            fileId,
+                                            moduleName
+                                        }
+                                    )}\" " +
+                                    "download " +
+                                    "class=\"btn btn-primary\">" +
+                                    $"{localizer["DownloadFileTitle"]}" +
+                                "</a>" +
+                            "</div>";
+
+                        break;
+                }
+
+                return Page();
 			}
 			catch (Exception)
 			{
@@ -168,19 +257,62 @@ namespace ERPSEI.Pages
             return ftr;
 		}
 
-		private FileToRender? GetArchivoEmpresaB64(string fileId)
-		{
-			FileToRender ftr = new();
-			ArchivoEmpresa? f2 = archivoEmpresaManager.GetFileById(fileId);
-			if (f2 == null) { return null; }
-			ftr.src = Convert.ToBase64String(f2.Archivo);
-			ftr.name = f2.Nombre;
-			ftr.extension = f2.Extension;
+        private FileToRender? GetArchivoEmpresaB64(
+        string fileId)
+        {
+            ArchivoEmpresa? archivo =
+                archivoEmpresaManager
+                    .GetFileById(fileId);
 
-            return ftr;
-		}
+            if (
+                archivo == null ||
+                archivo.Archivo == null ||
+                archivo.Archivo.Length == 0
+            )
+            {
+                return null;
+            }
 
-		private async Task<FileToRender?> GetPrefacturaB64(int idPf) 
+            string extension =
+                (archivo.Extension ?? string.Empty)
+                    .Trim()
+                    .TrimStart('.')
+                    .ToLowerInvariant();
+
+            /*
+             * Si por alguna razón Extension viene vacía,
+             * intentamos obtenerla del Nombre.
+             */
+            if (
+                string.IsNullOrWhiteSpace(extension) &&
+                !string.IsNullOrWhiteSpace(archivo.Nombre)
+            )
+            {
+                extension =
+                    Path.GetExtension(
+                        archivo.Nombre
+                    )
+                    .Trim()
+                    .TrimStart('.')
+                    .ToLowerInvariant();
+            }
+
+            return new FileToRender
+            {
+                src =
+                    Convert.ToBase64String(
+                        archivo.Archivo
+                    ),
+
+                name =
+                    archivo.Nombre ?? "Documento",
+
+                extension =
+                    extension
+            };
+        }
+
+        private async Task<FileToRender?> GetPrefacturaB64(int idPf) 
         {
 			FileToRender ftr = new();
 

@@ -7,28 +7,43 @@
          * EMPRESAS → COMPLIANCE
          * ==========================================================
          *
-         * Estos documentos pueden viajar desde Empresas hacia
-         * Compliance.
+         * TipoArchivoEmpresa.Id → EbTipoDocumento.Id
          *
          * IMPORTANTE:
-         * INE2 e INE3 NO se sincronizan.
-         * Únicamente INE (TipoArchivoId = 2).
+         *
+         * 12 = Acta Constitutiva
+         * 13 = Organigrama
+         *
+         * El INE general de Empresas (Tipo 2) ya NO se sincroniza
+         * como INE de accionistas.
+         *
+         * Para ello ahora existe específicamente:
+         *
+         * 16 = INEAccionistas
+         *      ↕
+         * 7  = INE accionistas
+         * ==========================================================
          */
-        private static readonly IReadOnlyDictionary<int, int>
+        private static readonly
+            IReadOnlyDictionary<int, int>
             EmpresaACompliance =
                 new Dictionary<int, int>
                 {
-                    [1] = 1,   // CSF → Constancia de Situación Fiscal
-
-                    [2] = 7,   // INE → INE de accionistas
-                               // SOLO la primera INE de Empresas
-
-                    [4] = 3,   // ComprobanteDomicilio
-                    [5] = 15,  // Otro
-                    [6] = 2,   // CER → Certificado FIEL
-                    [9] = 10,  // Hoja membretada
-                    [12] = 11, // Organigrama
-                    [13] = 4   // Acta constitutiva
+                    [1] = 1,
+                    [2] = 7,
+                    [4] = 3,
+                    [5] = 15,
+                    [6] = 2,
+                    [9] = 10,
+                    [12] = 4,
+                    [13] = 11,
+                    [14] = 5,
+                    [15] = 6,
+                    [17] = 8,
+                    [18] = 9,
+                    [19] = 12,
+                    [20] = 13,
+                    [21] = 14
                 };
 
         /*
@@ -36,31 +51,39 @@
          * COMPLIANCE → EMPRESAS
          * ==========================================================
          *
-         * Aquí las equivalencias son explícitas.
+         * EbTipoDocumento.Id → TipoArchivoEmpresa.Id
          *
-         * NO incluimos Compliance 7 (INE de accionistas)
-         * porque Compliance permite múltiples INEs y Empresas
-         * solamente tiene un campo INE principal que queremos
-         * sincronizar.
-         *
-         * Esto evita sobrescribir INE, INE2 o INE3 de forma
-         * ambigua.
+         * Ahora todos los documentos que tienen una equivalencia
+         * real pueden sincronizarse también en sentido inverso.
+         * ==========================================================
          */
-        private static readonly IReadOnlyDictionary<int, int>
+        private static readonly
+            IReadOnlyDictionary<int, int>
             ComplianceAEmpresa =
                 new Dictionary<int, int>
                 {
-                    [1] = 1,   // Constancia Fiscal → CSF
-                    [3] = 4,   // Comprobante domicilio
-                    [15] = 5,  // Otro
-                    [2] = 6,   // Certificado FIEL → CER
-                    [10] = 9,  // Hoja membretada
-                    [11] = 12, // Organigrama
-                    [4] = 13   // Acta constitutiva
+                    [1] = 1,
+                    [2] = 6,
+                    [3] = 4,
+                    [4] = 12,
+                    [5] = 14,
+                    [6] = 15,
+
+                    [7] = 2,
+
+                    [8] = 17,
+                    [9] = 18,
+                    [10] = 9,
+                    [11] = 13,
+                    [12] = 19,
+                    [13] = 20,
+                    [14] = 21,
+                    [15] = 5
                 };
 
-        public static int? ObtenerTipoCompliance(
-            int tipoArchivoEmpresaId)
+        public static int?
+            ObtenerTipoCompliance(
+                int tipoArchivoEmpresaId)
         {
             if (
                 EmpresaACompliance.TryGetValue(
@@ -75,8 +98,9 @@
             return null;
         }
 
-        public static int? ObtenerTipoEmpresa(
-            int tipoDocumentoComplianceId)
+        public static int?
+            ObtenerTipoEmpresa(
+                int tipoDocumentoComplianceId)
         {
             if (
                 ComplianceAEmpresa.TryGetValue(
@@ -91,23 +115,26 @@
             return null;
         }
 
-        public static bool PuedeSincronizarDesdeEmpresa(
-            int tipoArchivoEmpresaId)
+        public static bool
+            PuedeSincronizarDesdeEmpresa(
+                int tipoArchivoEmpresaId)
         {
             return EmpresaACompliance.ContainsKey(
                 tipoArchivoEmpresaId
             );
         }
 
-        public static bool PuedeSincronizarDesdeCompliance(
-            int tipoDocumentoComplianceId)
+        public static bool
+            PuedeSincronizarDesdeCompliance(
+                int tipoDocumentoComplianceId)
         {
             return ComplianceAEmpresa.ContainsKey(
                 tipoDocumentoComplianceId
             );
         }
 
-        public static IReadOnlyDictionary<int, int>
+        public static
+            IReadOnlyDictionary<int, int>
             ObtenerEquivalencias()
         {
             return EmpresaACompliance;

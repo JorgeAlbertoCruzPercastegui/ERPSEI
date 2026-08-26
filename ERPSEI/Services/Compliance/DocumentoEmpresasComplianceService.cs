@@ -727,6 +727,98 @@ namespace ERPSEI.Services.Compliance
                          */
                         if (documentoCoincidente != null)
                         {
+
+                            /*
+ * ==========================================================
+ * ACTUALIZAR METADATOS DEL DOCUMENTO EXISTENTE
+ * ==========================================================
+ *
+ * Si el archivo ya estaba sincronizado pero su
+ * NombreOriginal quedó sin extensión, corregimos únicamente
+ * los metadatos.
+ *
+ * NO se crea una nueva versión.
+ * NO se duplica el archivo.
+ * ==========================================================
+ */
+                            string extensionCorrecta =
+                                NormalizarExtension(
+                                    archivoEmpresa.Extension
+                                );
+
+                            if (string.IsNullOrWhiteSpace(
+                                extensionCorrecta))
+                            {
+                                extensionCorrecta =
+                                    NormalizarExtension(
+                                        Path.GetExtension(
+                                            archivoEmpresa.Nombre ??
+                                            string.Empty
+                                        )
+                                    );
+                            }
+
+                            string nombreOriginalCorrecto =
+                                Path.GetFileName(
+                                    archivoEmpresa.Nombre ??
+                                    string.Empty
+                                );
+
+                            if (string.IsNullOrWhiteSpace(
+                                nombreOriginalCorrecto))
+                            {
+                                nombreOriginalCorrecto =
+                                    "Documento";
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(
+                                extensionCorrecta))
+                            {
+                                string extensionNombreActual =
+                                    NormalizarExtension(
+                                        Path.GetExtension(
+                                            nombreOriginalCorrecto
+                                        )
+                                    );
+
+                                if (string.IsNullOrWhiteSpace(
+                                    extensionNombreActual))
+                                {
+                                    nombreOriginalCorrecto =
+                                        $"{nombreOriginalCorrecto}.{extensionCorrecta}";
+                                }
+                            }
+
+                            bool metadatosModificados =
+                                !string.Equals(
+                                    documentoCoincidente.NombreOriginal,
+                                    nombreOriginalCorrecto,
+                                    StringComparison.OrdinalIgnoreCase
+                                ) ||
+                                !string.Equals(
+                                    NormalizarExtension(
+                                        documentoCoincidente.Extension
+                                    ),
+                                    extensionCorrecta,
+                                    StringComparison.OrdinalIgnoreCase
+                                );
+
+                            if (metadatosModificados)
+                            {
+                                documentoCoincidente.NombreOriginal =
+                                    nombreOriginalCorrecto;
+
+                                documentoCoincidente.Extension =
+                                    extensionCorrecta;
+
+                                documentoCoincidente.MimeType =
+                                    ObtenerMimeType(
+                                        extensionCorrecta
+                                    );
+
+                                cambiosVinculos++;
+                            }
+
                             /*
                              * Para tipos únicos debe quedar solamente
                              * un vínculo activo.
@@ -985,18 +1077,48 @@ namespace ERPSEI.Services.Compliance
                          * ==============================================
                          */
                         string nombreOriginal =
-                            Path.GetFileName(
-                                archivoEmpresa.Nombre ??
-                                string.Empty
-                            );
+                        Path.GetFileName(
+                            archivoEmpresa.Nombre ??
+                            string.Empty
+                        );
 
                         if (string.IsNullOrWhiteSpace(
                             nombreOriginal))
                         {
-                            nombreOriginal =
-                                string.IsNullOrWhiteSpace(extension)
-                                    ? "Documento"
-                                    : $"Documento.{extension}";
+                            nombreOriginal = "Documento";
+                        }
+
+                        /*
+                         * ==========================================================
+                         * GARANTIZAR EXTENSIÓN EN EL NOMBRE ORIGINAL
+                         * ==========================================================
+                         *
+                         * En Empresas el nombre y la extensión pueden almacenarse
+                         * por separado:
+                         *
+                         * Nombre    = "Banorte"
+                         * Extension = "pdf"
+                         *
+                         * Compliance necesita:
+                         *
+                         * NombreOriginal = "Banorte.pdf"
+                         * ==========================================================
+                         */
+                        if (!string.IsNullOrWhiteSpace(extension))
+                        {
+                            string extensionNombre =
+                                NormalizarExtension(
+                                    Path.GetExtension(
+                                        nombreOriginal
+                                    )
+                                );
+
+                            if (string.IsNullOrWhiteSpace(
+                                extensionNombre))
+                            {
+                                nombreOriginal =
+                                    $"{nombreOriginal}.{extension}";
+                            }
                         }
 
                         /*
@@ -1286,9 +1408,14 @@ namespace ERPSEI.Services.Compliance
         }
 
         public async Task SincronizarDesdeComplianceAsync(
-        int documentoComplianceId,
-        CancellationToken cancellationToken = default)
+    int documentoComplianceId,
+    CancellationToken cancellationToken = default)
         {
+            /*
+             * ==========================================================
+             * VALIDAR IDENTIFICADOR
+             * ==========================================================
+             */
             if (documentoComplianceId <= 0)
             {
                 throw new ArgumentOutOfRangeException(
@@ -1298,7 +1425,7 @@ namespace ERPSEI.Services.Compliance
 
             /*
              * ==========================================================
-             * OBTENER DOCUMENTO DE COMPLIANCE
+             * OBTENER DOCUMENTO ACTUAL DE COMPLIANCE
              * ==========================================================
              */
             EbDocumento? documentoCompliance =
@@ -1320,17 +1447,8 @@ namespace ERPSEI.Services.Compliance
 
             /*
              * ==========================================================
-             * VALIDAR MAPEO COMPLIANCE → EMPRESAS
+             * OBTENER EQUIVALENCIA COMPLIANCE → EMPRESAS
              * ==========================================================
-             *
-             * Si el tipo documental no tiene equivalencia,
-             * permanece únicamente en Compliance.
-             *
-             * Ejemplos:
-             * - INE de accionistas
-             * - Opinión SAT
-             * - Prueba de vida
-             * - Poder notarial
              */
             int? tipoArchivoEmpresaId =
                 MapeoDocumentalEmpresasCompliance
@@ -1339,6 +1457,32 @@ namespace ERPSEI.Services.Compliance
                     );
 
             if (!tipoArchivoEmpresaId.HasValue)
+            {
+                return;
+            }
+
+            /*
+             * ==========================================================
+             * OBTENER CONFIGURACIÓN DEL TIPO DOCUMENTAL
+             * ==========================================================
+             *
+             * Necesitamos conocer si el tipo permite múltiples archivos.
+             * ==========================================================
+             */
+            EbTipoDocumento? tipoDocumento =
+                await _context.EbTiposDocumento
+                    .IgnoreQueryFilters()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                documentoCompliance.TipoDocumentoId &&
+                            !x.Eliminado &&
+                            !x.Deshabilitado,
+                        cancellationToken
+                    );
+
+            if (tipoDocumento == null)
             {
                 return;
             }
@@ -1452,11 +1596,6 @@ namespace ERPSEI.Services.Compliance
                 return;
             }
 
-            /*
-             * ==========================================================
-             * CALCULAR SHA-256
-             * ==========================================================
-             */
             string hashCompliance =
                 CalcularSha256(
                     contenido
@@ -1464,64 +1603,298 @@ namespace ERPSEI.Services.Compliance
 
             /*
              * ==========================================================
-             * BUSCAR ARCHIVO EQUIVALENTE EN EMPRESAS
+             * OBTENER TODOS LOS ARCHIVOS DEL MISMO TIPO EN EMPRESAS
              * ==========================================================
              *
-             * Para los tipos que estamos sincronizando de regreso,
-             * manejamos un ArchivoEmpresa principal por tipo.
+             * IMPORTANTE:
              *
-             * INE NO entra aquí porque no tiene mapeo inverso.
+             * Ya NO usamos FirstOrDefault por tipo.
+             *
+             * Un tipo múltiple puede contener:
+             *
+             * ArchivoEmpresa A
+             * ArchivoEmpresa B
+             * ArchivoEmpresa C
+             *
+             * todos con el mismo TipoArchivoId.
+             * ==========================================================
              */
-            ArchivoEmpresa? archivoEmpresa =
+            List<ArchivoEmpresa> archivosEmpresa =
                 await _context.Set<ArchivoEmpresa>()
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.EmpresaId ==
-                                empresaMaestra.Id &&
-                            x.TipoArchivoId ==
-                                tipoArchivoEmpresaId.Value,
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.EmpresaId ==
+                            empresaMaestra.Id &&
+                        x.TipoArchivoId ==
+                            tipoArchivoEmpresaId.Value
+                    )
+                    .ToListAsync(
                         cancellationToken
                     );
 
+            ArchivoEmpresa? archivoEmpresa =
+                null;
+
             /*
              * ==========================================================
-             * SI YA EXISTE EL MISMO CONTENIDO
+             * 1. BUSCAR VÍNCULO EXACTO
+             * ==========================================================
+             *
+             * Esta es la forma más confiable de identificar qué
+             * ArchivoEmpresa corresponde al EbDocumento.
              * ==========================================================
              */
+            EbDocumentoVinculoEmpresa? vinculoExacto =
+                await _context
+                    .EbDocumentosVinculosEmpresa
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.EmpresaMaestraId ==
+                            empresaMaestra.Id &&
+
+                        x.EmpresaComplianceId ==
+                            empresaCompliance.Id &&
+
+                        x.TipoArchivoEmpresaId ==
+                            tipoArchivoEmpresaId.Value &&
+
+                        x.TipoDocumentoComplianceId ==
+                            documentoCompliance.TipoDocumentoId &&
+
+                        x.DocumentoComplianceId ==
+                            documentoCompliance.Id &&
+
+                        x.ArchivoEmpresaId != null
+                    )
+                    .OrderByDescending(x =>
+                        x.Activo
+                    )
+                    .ThenByDescending(x =>
+                        x.FechaActualizacion ??
+                        x.FechaCreacion
+                    )
+                    .FirstOrDefaultAsync(
+                        cancellationToken
+                    );
+
             if (
-                archivoEmpresa != null &&
-                archivoEmpresa.Archivo != null &&
-                archivoEmpresa.Archivo.Length > 0
-            )
+                vinculoExacto != null &&
+                !string.IsNullOrWhiteSpace(
+                    vinculoExacto.ArchivoEmpresaId))
             {
+                archivoEmpresa =
+                    archivosEmpresa
+                        .FirstOrDefault(x =>
+                            string.Equals(
+                                x.Id,
+                                vinculoExacto.ArchivoEmpresaId,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        );
+            }
+
+            /*
+             * ==========================================================
+             * 2. BUSCAR MISMO CONTENIDO POR SHA-256
+             * ==========================================================
+             *
+             * Esto evita duplicados aunque todavía no exista vínculo.
+             * ==========================================================
+             */
+            ArchivoEmpresa? archivoMismoContenido =
+                null;
+
+            foreach (
+                ArchivoEmpresa candidato
+                in archivosEmpresa)
+            {
+                if (
+                    candidato.Archivo == null ||
+                    candidato.Archivo.Length == 0)
+                {
+                    continue;
+                }
+
                 string hashEmpresa =
                     CalcularSha256(
-                        archivoEmpresa.Archivo
+                        candidato.Archivo
                     );
 
                 if (string.Equals(
                     hashEmpresa,
                     hashCompliance,
-                    StringComparison.OrdinalIgnoreCase
-                ))
+                    StringComparison.OrdinalIgnoreCase))
                 {
-                    /*
-                     * El documento ya está sincronizado.
-                     *
-                     * Solo aseguramos que exista el vínculo.
-                     */
-                    await RegistrarOActualizarVinculoDesdeComplianceAsync(
-                        empresaMaestra.Id,
-                        empresaCompliance.Id,
-                        tipoArchivoEmpresaId.Value,
-                        documentoCompliance,
-                        archivoEmpresa,
-                        hashCompliance,
-                        cancellationToken
-                    );
+                    archivoMismoContenido =
+                        candidato;
 
-                    return;
+                    break;
                 }
+            }
+
+            /*
+             * Si el mismo contenido ya existe en Empresas,
+             * NO creamos ni actualizamos otro archivo.
+             *
+             * Únicamente garantizamos el vínculo.
+             */
+            if (archivoMismoContenido != null)
+            {
+                await RegistrarOActualizarVinculoDesdeComplianceAsync(
+                    empresaMaestra.Id,
+                    empresaCompliance.Id,
+                    tipoArchivoEmpresaId.Value,
+                    documentoCompliance,
+                    archivoMismoContenido,
+                    hashCompliance,
+                    cancellationToken
+                );
+
+                return;
+            }
+
+            /*
+             * ==========================================================
+             * 3. TIPO DOCUMENTAL ÚNICO
+             * ==========================================================
+             *
+             * Para documentos únicos queremos actualizar el
+             * ArchivoEmpresa que representa el documento actual.
+             *
+             * Prioridad:
+             *
+             * 1. vínculo exacto
+             * 2. vínculo activo conocido del mismo tipo
+             * 3. único ArchivoEmpresa existente
+             * 4. crear uno nuevo
+             * ==========================================================
+             */
+            if (!tipoDocumento.PermiteMultiplesArchivos)
+            {
+                /*
+                 * Si el vínculo exacto ya encontró el archivo,
+                 * lo conservamos.
+                 */
+                if (archivoEmpresa == null)
+                {
+                    EbDocumentoVinculoEmpresa?
+                        vinculoActivo =
+                            await _context
+                                .EbDocumentosVinculosEmpresa
+                                .AsNoTracking()
+                                .Where(x =>
+                                    x.EmpresaMaestraId ==
+                                        empresaMaestra.Id &&
+
+                                    x.EmpresaComplianceId ==
+                                        empresaCompliance.Id &&
+
+                                    x.TipoArchivoEmpresaId ==
+                                        tipoArchivoEmpresaId.Value &&
+
+                                    x.TipoDocumentoComplianceId ==
+                                        documentoCompliance
+                                            .TipoDocumentoId &&
+
+                                    x.Activo &&
+
+                                    x.ArchivoEmpresaId != null
+                                )
+                                .OrderByDescending(x =>
+                                    x.FechaActualizacion ??
+                                    x.FechaCreacion
+                                )
+                                .FirstOrDefaultAsync(
+                                    cancellationToken
+                                );
+
+                    if (
+                        vinculoActivo != null &&
+                        !string.IsNullOrWhiteSpace(
+                            vinculoActivo.ArchivoEmpresaId))
+                    {
+                        archivoEmpresa =
+                            archivosEmpresa
+                                .FirstOrDefault(x =>
+                                    string.Equals(
+                                        x.Id,
+                                        vinculoActivo
+                                            .ArchivoEmpresaId,
+                                        StringComparison
+                                            .OrdinalIgnoreCase
+                                    )
+                                );
+                    }
+                }
+
+                /*
+                 * Si solamente existe un ArchivoEmpresa para este tipo,
+                 * no existe ambigüedad.
+                 */
+                if (
+                    archivoEmpresa == null &&
+                    archivosEmpresa.Count == 1)
+                {
+                    archivoEmpresa =
+                        archivosEmpresa[0];
+                }
+
+                /*
+                 * Si hay varios archivos históricos y ninguno tiene
+                 * vínculo reconocible, NO elegimos uno arbitrariamente.
+                 *
+                 * Se crea uno nuevo para evitar sobrescribir un
+                 * documento histórico incorrecto.
+                 */
+                if (
+                    archivoEmpresa == null &&
+                    archivosEmpresa.Count > 1)
+                {
+                    _logger.LogWarning(
+                        "Existen {CantidadArchivos} ArchivoEmpresa " +
+                        "para el tipo único {TipoArchivoEmpresaId} " +
+                        "de la empresa {EmpresaId}, pero ninguno pudo " +
+                        "identificarse mediante vínculo o hash. " +
+                        "Se creará un nuevo archivo para evitar " +
+                        "sobrescribir información histórica.",
+                        archivosEmpresa.Count,
+                        tipoArchivoEmpresaId.Value,
+                        empresaMaestra.Id
+                    );
+                }
+            }
+            else
+            {
+                /*
+                 * ======================================================
+                 * TIPO DOCUMENTAL MÚLTIPLE
+                 * ======================================================
+                 *
+                 * Para tipos múltiples solamente actualizamos un archivo
+                 * cuando existe un vínculo EXACTO.
+                 *
+                 * Si no hay vínculo ni coincidencia SHA:
+                 *
+                 * se crea un NUEVO ArchivoEmpresa.
+                 *
+                 * Ejemplos:
+                 *
+                 * - Actas adicionales
+                 * - Poder notarial
+                 * - INE accionistas
+                 * - CSF accionistas
+                 * - Comprobante domicilio accionistas
+                 * - Declaraciones
+                 * - Prueba de vida
+                 * ======================================================
+                 */
+
+                /*
+                 * `archivoEmpresa` únicamente tendrá valor aquí si
+                 * fue localizado mediante vínculo exacto.
+                 *
+                 * No hacemos ninguna selección por TipoArchivoId.
+                 */
             }
 
             /*
@@ -1532,7 +1905,7 @@ namespace ERPSEI.Services.Compliance
             if (archivoEmpresa != null)
             {
                 ArchivoEmpresa archivoActualizado =
-                    new ArchivoEmpresa
+                    new()
                     {
                         Id =
                             archivoEmpresa.Id,
@@ -1564,10 +1937,20 @@ namespace ERPSEI.Services.Compliance
             }
             else
             {
+                /*
+                 * ======================================================
+                 * CREAR NUEVO ArchivoEmpresa
+                 * ======================================================
+                 *
+                 * Este camino es el comportamiento normal para un
+                 * documento múltiple nuevo.
+                 * ======================================================
+                 */
                 archivoEmpresa =
                     new ArchivoEmpresa
                     {
-                        Id = string.Empty,
+                        Id =
+                            string.Empty,
 
                         EmpresaId =
                             empresaMaestra.Id,

@@ -4978,23 +4978,114 @@ namespace ERPSEI.Data
 
 			b.Entity<ProductoServicio>().HasMany(p => p.ProductosServiciosPerfil).WithOne(p => p.ProductoServicio).OnDelete(DeleteBehavior.NoAction);
 
-			b.Entity<TipoArchivoEmpresa>()
-				.HasData(
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.CSF, "CSF"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.INE, "INE"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.RFC, "RFC"),
-                    new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.ComprobanteDomicilio, "ComprobanteDomicilio"),
-                    new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.Otro, "Otro"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.CER, "CER"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.KEY, "KEY"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.Logo, "Logo"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.HojaMembretada, "HojaMembretada"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.INE2, "INE2"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.INE3, "INE3"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.ActaConstitutiva, "ActaConstitutiva"),
-					new TipoArchivoEmpresa((int)Entities.Empresas.FileTypes.Organigrama, "Organigrama")
-				);
-		}
+            b.Entity<TipoArchivoEmpresa>()
+            .HasData(
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.CSF,
+                    "CSF"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.INE,
+                    "INE"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.RFC,
+                    "RFC"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.ComprobanteDomicilio,
+                    "ComprobanteDomicilio"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.Otro,
+                    "Otro"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.CER,
+                    "CER"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.KEY,
+                    "KEY"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.Logo,
+                    "Logo"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.HojaMembretada,
+                    "HojaMembretada"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.INE2,
+                    "INE2"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.INE3,
+                    "INE3"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.Organigrama,
+                    "Organigrama"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.ActaConstitutiva,
+                    "ActaConstitutiva"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.ActasAdicionales,
+                    "ActasAdicionales"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.PoderNotarial,
+                    "PoderNotarial"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.INEAccionistas,
+                    "INEAccionistas"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.CSFAccionistas,
+                    "CSFAccionistas"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.ComprobanteDomicilioAccionistas,
+                    "ComprobanteDomicilioAccionistas"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.DeclaracionAnualMensual,
+                    "DeclaracionAnualMensual"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.OpinionCumplimientoSAT,
+                    "OpinionCumplimientoSAT"
+                ),
+
+                new TipoArchivoEmpresa(
+                    (int)Entities.Empresas.FileTypes.PruebaVida,
+                    "PruebaVida"
+                )
+            );
+        }
 
 		private static void BuildEmpleados(ModelBuilder b)
 		{
@@ -5017,21 +5108,64 @@ namespace ERPSEI.Data
 
 
             b.Entity<TipoArchivo>()
-				.HasData(
-					new TipoArchivo((int)Entities.Empleados.FileTypes.ImagenPerfil, "Imagen de perfil"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.ActaNacimiento, "Acta de nacimiento"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.CURP, "CURP"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.CLABE, "CLABE"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.ComprobanteDomicilio, "Comprobante de domicilio"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.CSF, "CSF"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.INE, "INE"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.RFC, "RFC"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.ComprobanteEstudios, "Comprobante de estudios"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.NSS, "NSS"),
-					new TipoArchivo((int)Entities.Empleados.FileTypes.Otro, "Otro")
-				);
+            .HasData(
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.ImagenPerfil,
+                    "Imagen de perfil"
+                ),
 
-			b.Entity<EstadoCivil>()
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.ActaNacimiento,
+                    "Acta de nacimiento"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.CURP,
+                    "CURP"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.CLABE,
+                    "CLABE"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.ComprobanteDomicilio,
+                    "Comprobante de domicilio"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.CSF,
+                    "CSF"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.INE,
+                    "INE"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.RFC,
+                    "RFC"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.ComprobanteEstudios,
+                    "Comprobante de estudios"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.NSS,
+                    "NSS"
+                ),
+
+                new TipoArchivo(
+                    (int)Entities.Empleados.FileTypes.Otro,
+                    "Otro"
+                )
+            );
+
+            b.Entity<EstadoCivil>()
 				.HasData(
 					new EstadoCivil() { Id = 1, Nombre = "Soltero" },
 					new EstadoCivil() { Id = 2, Nombre = "Casado" }

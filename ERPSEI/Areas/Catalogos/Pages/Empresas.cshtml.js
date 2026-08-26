@@ -659,15 +659,21 @@ function establecerDatosAdicionales(row, action) {
                         <div id="fileName${tipoArchivoId}" class="align-self-center col-10 ${nameClass} p-2" style="display:flex; color:dimgray">${nameHTML}</div>
                         <div class="align-self-center col-1">
                             <input type="file"
-                                   actualizar="${actualizar}"
-                                   id="selector${tipoArchivoId}"
-                                   ${archivo ? `sourceId="${archivo.id}" safeL="${archivo.safeL}" sourceName="${archivo.nombre}.${archivo.extension}" sourceLength="${archivo.fileSize}"` : ""}
-                                   tipoArchivoId="${tipoArchivoId}"
-                                   containerName="container${tipoArchivoId}"
-                                   fileIconName="fileIcon${tipoArchivoId}"
-                                   fileNameName="fileName${tipoArchivoId}"
-                                   onchange="onDocumentSelectorChanged(this, '${allowedExtensions}');"
-                                   accept="${mimeTypes}" hidden />
+                               actualizar="${actualizar}"
+                               id="selector${tipoArchivoId}"
+                               ${archivo
+                                            ? `sourceId="${archivo.id}"
+                                       safeL="${archivo.safeL}"
+                                       sourceName="${archivo.nombre}.${archivo.extension}"
+                                       sourceLength="${archivo.fileSize}"`
+                                            : ""}
+                               tipoArchivoId="${tipoArchivoId}"
+                               containerName="container${tipoArchivoId}"
+                               fileIconName="fileIcon${tipoArchivoId}"
+                               fileNameName="fileName${tipoArchivoId}"
+                               onchange="onDocumentSelectorChanged(this, '${allowedExtensions}');"
+                               accept="${mimeTypes}"
+                               hidden />
                             ${menuHTML}
                         </div>
                     </div>
@@ -814,12 +820,27 @@ function initializeDisableableButtons(isConsulta = false) {
 }
 //Función para capturar el clic en el botón de ver, que dispara la visualización del archivo.
 function onVerDocumentClick(button) {
-    let inputName = button.getAttribute("inputName");
-    let input = document.getElementById(inputName);
-    let oParams = {safeL: input.getAttribute("safeL")}
+    let inputName =
+        button.getAttribute("inputName");
 
-    if (oParams.safeL.length >= 1) { window.open(`/FileViewer?safeL=${encodeURIComponent(oParams.safeL)}`, "_blank"); }
+    let input =
+        document.getElementById(inputName);
+
+    if (!input) {
+        return;
+    }
+
+    let safeL =
+        input.getAttribute("safeL") || "";
+
+    if (safeL.length >= 1) {
+        window.open(
+            `/FileViewer?safeL=${encodeURIComponent(safeL)}`,
+            "_blank"
+        );
+    }
 }
+
 //Función para capturar el clic en el botón de edición, que dispara la apertura del selector de archivo.
 function onEditDocumentClick(button) {
     let inputName = button.getAttribute("inputName");
