@@ -78,6 +78,435 @@ document.addEventListener(
         let solicitudDetalleActualAdq =
             null;
 
+        const badgeMensajesPendientesAdq =
+            document.getElementById(
+                "badgeMensajesPendientesAdq"
+            );
+
+        let intervaloSeguimientoAdq =
+            null;
+
+        // =========================================================
+        // CHAT / HISTORIAL
+        // =========================================================
+
+        const itemTabSeguimientoAdq =
+            document.getElementById(
+                "itemTabSeguimientoAdq"
+            );
+
+
+        const itemTabHistorialAdq =
+            document.getElementById(
+                "itemTabHistorialAdq"
+            );
+
+
+        const listaComentariosAdq =
+            document.getElementById(
+                "listaComentariosAdq"
+            );
+
+
+        const listaHistorialAdq =
+            document.getElementById(
+                "listaHistorialAdq"
+            );
+
+
+        const inputSolicitudComentarioAdq =
+            document.getElementById(
+                "SolicitudComentarioId"
+            );
+
+
+        const inputNuevoComentarioAdq =
+            document.getElementById(
+                "NuevoComentarioAdq"
+            );
+
+
+        const btnEnviarComentarioAdq =
+            document.getElementById(
+                "btnEnviarComentarioAdq"
+            );
+
+
+        const seguimientoEstatusAdq =
+            document.getElementById(
+                "seguimientoEstatusAdq"
+            );
+
+
+        const formComentarioAdq =
+            document.getElementById(
+                "formComentarioAdq"
+            );
+
+        // =========================================================
+        // OBTENER CHAT / HISTORIAL
+        // =========================================================
+
+        async function obtenerSeguimientoAdq(
+            solicitudId
+        ) {
+
+            const response =
+                await fetch(
+                    `?handler=SeguimientoSolicitud&id=${encodeURIComponent(
+                        solicitudId
+                    )}`,
+                    {
+                        method:
+                            "GET",
+
+                        headers: {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        }
+                    }
+                );
+
+
+            const resultado =
+                await response.json();
+
+
+            if (
+                !response.ok
+                ||
+                !resultado.success
+            ) {
+
+                throw new Error(
+                    resultado.message
+                    ??
+                    "No fue posible consultar el seguimiento."
+                );
+            }
+
+
+            return resultado.seguimiento;
+        }
+
+        // =========================================================
+        // RENDERIZAR CHAT
+        // =========================================================
+
+        function renderizarComentariosAdq(
+            comentarios
+        ) {
+
+            if (
+                !listaComentariosAdq
+            ) {
+                return;
+            }
+
+
+            listaComentariosAdq.innerHTML =
+                "";
+
+
+            if (
+                !Array.isArray(
+                    comentarios
+                )
+                ||
+                comentarios.length ===
+                0
+            ) {
+
+                listaComentariosAdq.innerHTML = `
+                    <div class="adq-chat-empty">
+
+                        <i class="bi bi-chat-square-dots"></i>
+
+                        <strong>
+                            Aún no hay mensajes
+                        </strong>
+
+                        <span>
+                            Inicia la conversación relacionada
+                            con esta solicitud.
+                        </span>
+
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            comentarios.forEach(
+                function (
+                    comentario
+                ) {
+
+                    const elemento =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    elemento.className =
+                        comentario.esUsuarioActual
+                            ? "adq-chat-message adq-chat-message-own"
+                            : "adq-chat-message";
+
+
+                    const fecha =
+                        new Date(
+                            comentario.fechaCreacion
+                        );
+
+
+                    elemento.innerHTML = `
+                        <div class="adq-chat-message-header">
+
+                            <strong>
+                                ${comentario.esUsuarioActual
+                            ? "Tú"
+                            : escapeHtmlAdq(
+                                comentario.usuario
+                            )
+                        }
+                            </strong>
+
+                            <span>
+                                ${fecha.toLocaleString(
+                            "es-MX"
+                        )}
+                            </span>
+
+                        </div>
+
+
+                        <div class="adq-chat-bubble">
+                            ${escapeHtmlAdq(
+                            comentario.comentario
+                        )}
+                        </div>
+                    `;
+
+
+                    listaComentariosAdq
+                        .appendChild(
+                            elemento
+                        );
+                }
+            );
+
+
+            listaComentariosAdq.scrollTop =
+                listaComentariosAdq.scrollHeight;
+        }
+
+        // =========================================================
+        // RENDERIZAR HISTORIAL
+        // =========================================================
+
+        function renderizarHistorialAdq(
+            historial
+        ) {
+
+            if (
+                !listaHistorialAdq
+            ) {
+                return;
+            }
+
+
+            listaHistorialAdq.innerHTML =
+                "";
+
+
+            if (
+                !Array.isArray(
+                    historial
+                )
+                ||
+                historial.length ===
+                0
+            ) {
+
+                listaHistorialAdq.innerHTML = `
+                    <div class="text-muted small">
+                        No existen movimientos registrados.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            historial.forEach(
+                function (
+                    evento
+                ) {
+
+                    const fecha =
+                        new Date(
+                            evento.fechaEvento
+                        );
+
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "adq-history-item";
+
+
+                    item.innerHTML = `
+                        <div class="adq-history-marker">
+
+                            <i class="bi bi-circle-fill"></i>
+
+                        </div>
+
+
+                        <div class="adq-history-content">
+
+                            <strong>
+                                ${escapeHtmlAdq(
+                        evento.descripcion
+                    )}
+                            </strong>
+
+                            <span>
+                                ${escapeHtmlAdq(
+                        evento.usuario
+                        ||
+                        "Sistema"
+                    )
+                        }
+                                ·
+                                ${fecha.toLocaleString(
+                            "es-MX"
+                        )}
+                            </span>
+
+                        </div>
+                    `;
+
+
+                    listaHistorialAdq
+                        .appendChild(
+                            item
+                        );
+                }
+            );
+        }
+
+        // =========================================================
+        // CARGAR SEGUIMIENTO
+        // =========================================================
+
+        async function cargarSeguimientoAdq(
+            solicitudId
+        ) {
+
+            const seguimiento =
+                await obtenerSeguimientoAdq(
+                    solicitudId
+                );
+
+            if (
+                badgeMensajesPendientesAdq
+            ) {
+
+                const pendientes =
+                    Number(
+                        seguimiento.mensajesPendientes ??
+                        0
+                    );
+
+
+                if (
+                    pendientes > 0
+                ) {
+
+                    badgeMensajesPendientesAdq
+                        .classList
+                        .remove(
+                            "d-none"
+                        );
+
+
+                    badgeMensajesPendientesAdq.textContent =
+                        String(
+                            pendientes
+                        );
+
+                }
+                else {
+
+                    badgeMensajesPendientesAdq
+                        .classList
+                        .add(
+                            "d-none"
+                        );
+
+
+                    badgeMensajesPendientesAdq.textContent =
+                        "";
+                }
+            }
+
+
+            if (
+                inputSolicitudComentarioAdq
+            ) {
+
+                inputSolicitudComentarioAdq.value =
+                    String(
+                        solicitudId
+                    );
+            }
+
+
+            if (
+                seguimientoEstatusAdq
+            ) {
+
+                seguimientoEstatusAdq.textContent =
+                    seguimiento.estatus
+                    ??
+                    "";
+            }
+
+
+            /*
+             * La escritura del chat la determina el backend.
+             * Puede incluir solicitante, gerente/aprobador,
+             * Adquisiciones y agente asignado.
+             */
+            if (
+                formComentarioAdq
+            ) {
+
+                formComentarioAdq.classList.toggle(
+                    "d-none",
+                    seguimiento.puedeEscribir !==
+                    true
+                );
+            }
+
+
+            renderizarComentariosAdq(
+                seguimiento.comentarios
+            );
+
+
+            renderizarHistorialAdq(
+                seguimiento.historial
+            );
+        }
+
 
         document.addEventListener(
             "click",
@@ -129,11 +558,11 @@ document.addEventListener(
 
 
                     mensajeDecisionGerente.innerHTML = `
-                <i class="bi bi-check-circle me-1"></i>
+                        <i class="bi bi-check-circle me-1"></i>
 
-                La solicitud será aprobada y enviada
-                al área de Adquisiciones.
-            `;
+                        La solicitud será aprobada y enviada
+                        al área de Adquisiciones.
+                    `;
 
 
                     labelComentarioDecision.textContent =
@@ -169,11 +598,11 @@ document.addEventListener(
 
 
                     mensajeDecisionGerente.innerHTML = `
-                <i class="bi bi-exclamation-triangle me-1"></i>
+                        <i class="bi bi-exclamation-triangle me-1"></i>
 
-                La solicitud quedará marcada
-                como rechazada.
-            `;
+                        La solicitud quedará marcada
+                        como rechazada.
+                    `;
 
 
                     labelComentarioDecision.textContent =
@@ -339,9 +768,9 @@ document.addEventListener(
             [];
 
         /*
-        * Archivos que ya existen en la BD
-        * cuando estamos editando una solicitud.
-        */
+         * Archivos que ya existen en la BD
+         * cuando estamos editando una solicitud.
+         */
         let archivosExistentesAdq =
             [];
 
@@ -428,6 +857,57 @@ document.addEventListener(
 
 
         let paginaActualAdq =
+            1;
+
+
+        // =========================================================
+        // HISTORIAL DE APROBACIONES - FILTROS + PAGINACIÓN
+        // =========================================================
+
+        const filtroHistorialAprobacionesAdq =
+            document.getElementById(
+                "adqFiltroHistorialAprobaciones"
+            );
+
+        const filtroDecisionHistorialAdq =
+            document.getElementById(
+                "adqFiltroDecisionHistorial"
+            );
+
+        const btnLimpiarHistorialAprobacionesAdq =
+            document.getElementById(
+                "btnLimpiarHistorialAprobaciones"
+            );
+
+        const paginacionHistorialAdq =
+            document.getElementById(
+                "paginacionHistorialAprobacionesAdq"
+            );
+
+        const listaPaginacionHistorialAdq =
+            document.getElementById(
+                "adqHistorialPaginacionLista"
+            );
+
+        const historialPaginaInicioAdq =
+            document.getElementById(
+                "adqHistorialPaginaInicio"
+            );
+
+        const historialPaginaFinAdq =
+            document.getElementById(
+                "adqHistorialPaginaFin"
+            );
+
+        const historialPaginaTotalAdq =
+            document.getElementById(
+                "adqHistorialPaginaTotal"
+            );
+
+        const registrosPorPaginaHistorialAdq =
+            10;
+
+        let paginaActualHistorialAdq =
             1;
 
         // =========================================================
@@ -1325,12 +1805,12 @@ document.addEventListener(
 
 
                 vacio.innerHTML = `
-            <i class="bi bi-folder2-open"></i>
+                    <i class="bi bi-folder2-open"></i>
 
-            <span>
-                Aún no has agregado archivos.
-            </span>
-        `;
+                    <span>
+                        Aún no has agregado archivos.
+                    </span>
+                `;
 
 
                 listaArchivos.appendChild(
@@ -1363,60 +1843,60 @@ document.addEventListener(
 
 
                         item.innerHTML = `
-                    <div class="adq-file-item-main">
+                            <div class="adq-file-item-main">
 
-                        <div class="adq-file-item-icon">
+                                <div class="adq-file-item-icon">
 
-                            <i class="bi bi-file-earmark-check"></i>
+                                    <i class="bi bi-file-earmark-check"></i>
 
-                        </div>
+                                </div>
 
 
-                        <div class="adq-file-item-info">
+                                <div class="adq-file-item-info">
 
-                            <strong>
-                                ${escapeHtmlAdq(
+                                    <strong>
+                                        ${escapeHtmlAdq(
                             archivo.nombreOriginal
                         )}
-                            </strong>
+                                    </strong>
 
-                            <span>
-                                ${formatearTamanoAdq(
+                                    <span>
+                                        ${formatearTamanoAdq(
                             archivo.tamanoBytes ?? 0
                         )}
-                                · Archivo existente
-                            </span>
+                                        · Archivo existente
+                                    </span>
 
-                        </div>
+                                </div>
 
-                    </div>
+                            </div>
 
 
-                    <div class="d-flex gap-2">
+                            <div class="d-flex gap-2">
 
-                        <a href="${escapeAttributeAdq(
+                                <a href="${escapeAttributeAdq(
                             archivo.rutaArchivo
                         )}"
-                           target="_blank"
-                           class="btn btn-sm btn-outline-primary"
-                           title="Abrir archivo">
+                                   target="_blank"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Abrir archivo">
 
-                            <i class="bi bi-eye"></i>
+                                    <i class="bi bi-eye"></i>
 
-                        </a>
+                                </a>
 
 
-                        <button type="button"
-                                class="btn btn-sm btn-outline-danger btnEliminarArchivoExistenteAdq"
-                                data-id="${archivo.id}"
-                                title="Eliminar archivo">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger btnEliminarArchivoExistenteAdq"
+                                        data-id="${archivo.id}"
+                                        title="Eliminar archivo">
 
-                            <i class="bi bi-trash"></i>
+                                    <i class="bi bi-trash"></i>
 
-                        </button>
+                                </button>
 
-                    </div>
-                `;
+                            </div>
+                        `;
 
 
                         listaArchivos.appendChild(
@@ -1478,50 +1958,50 @@ document.addEventListener(
 
 
                         item.innerHTML = `
-                    <div class="adq-file-item-main">
+                            <div class="adq-file-item-main">
 
-                        <div class="adq-file-item-icon">
+                                <div class="adq-file-item-icon">
 
-                            <i class="bi ${validacion.valido
+                                    <i class="bi ${validacion.valido
                                 ? "bi-file-earmark-plus"
                                 : "bi-file-earmark-x"
                             }"></i>
 
-                        </div>
+                                </div>
 
 
-                        <div class="adq-file-item-info">
+                                <div class="adq-file-item-info">
 
-                            <strong>
-                                ${escapeHtmlAdq(
+                                    <strong>
+                                        ${escapeHtmlAdq(
                                 archivo.name
                             )}
-                            </strong>
+                                    </strong>
 
-                            <span>
-                                ${formatearTamanoAdq(
+                                    <span>
+                                        ${formatearTamanoAdq(
                                 archivo.size
                             )}
-                                ·
-                                ${escapeHtmlAdq(
+                                        ·
+                                        ${escapeHtmlAdq(
                                 estado
                             )}
-                            </span>
+                                    </span>
 
-                        </div>
+                                </div>
 
-                    </div>
+                            </div>
 
 
-                    <button type="button"
-                            class="btn btn-sm btn-outline-danger btnEliminarArchivoAdq"
-                            data-index="${indice}"
-                            title="Eliminar archivo">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger btnEliminarArchivoAdq"
+                                    data-index="${indice}"
+                                    title="Eliminar archivo">
 
-                        <i class="bi bi-trash"></i>
+                                <i class="bi bi-trash"></i>
 
-                    </button>
-                `;
+                            </button>
+                        `;
 
 
                         listaArchivos.appendChild(
@@ -1719,7 +2199,7 @@ document.addEventListener(
                         indice
                     );
                 }
-        );
+            );
 
         // =========================================================
         // ARCHIVOS EXISTENTES - ELIMINAR
@@ -1982,7 +2462,7 @@ document.addEventListener(
             btnGuardarCambios
                 ?.classList.add(
                     "d-none"
-            );
+                );
 
             btnEnviarBorrador
                 ?.classList.add(
@@ -2099,6 +2579,130 @@ document.addEventListener(
                         solicitud;
 
 
+                    /*
+                     * Siempre reiniciamos el detalle
+                     * en la pestaña Información.
+                     */
+                    const tabInformacion =
+                        document.getElementById(
+                            "tabInformacionAdq"
+                        );
+
+
+                    if (
+                        tabInformacion
+                    ) {
+
+                        bootstrap.Tab
+                            .getOrCreateInstance(
+                                tabInformacion
+                            )
+                            .show();
+                    }
+
+
+                    /*
+                     * El chat comienza cuando el usuario
+                     * ya envió la solicitud.
+                     */
+                    if (
+                        solicitud.estatusId !==
+                        1
+                    ) {
+
+                        itemTabSeguimientoAdq
+                            ?.classList.remove(
+                                "d-none"
+                            );
+
+
+                        itemTabHistorialAdq
+                            ?.classList.remove(
+                                "d-none"
+                            );
+
+
+                        try {
+
+                            await cargarSeguimientoAdq(
+                                solicitud.id
+                            );
+
+                            if (
+                                intervaloSeguimientoAdq
+                            ) {
+
+                                clearInterval(
+                                    intervaloSeguimientoAdq
+                                );
+                            }
+
+                            intervaloSeguimientoAdq =
+                                setInterval(
+                                    async function () {
+
+                                        if (
+                                            !solicitudDetalleActualAdq?.id
+                                        ) {
+                                            return;
+                                        }
+
+                                        try {
+
+                                            await cargarSeguimientoAdq(
+                                                solicitudDetalleActualAdq.id
+                                            );
+
+                                        }
+                                        catch (
+                                        error
+                                        ) {
+
+                                            console.error(
+                                                "Error al actualizar seguimiento:",
+                                                error
+                                            );
+                                        }
+
+                                    },
+                                    20000
+                                );
+
+                        }
+                        catch (
+                        error
+                        ) {
+
+                            console.error(
+                                "Error al cargar seguimiento:",
+                                error
+                            );
+                        }
+
+                    }
+                    else {
+
+                        itemTabSeguimientoAdq
+                            ?.classList.add(
+                                "d-none"
+                            );
+
+
+                        itemTabHistorialAdq
+                            ?.classList.add(
+                                "d-none"
+                            );
+
+
+                        if (
+                            inputNuevoComentarioAdq
+                        ) {
+
+                            inputNuevoComentarioAdq.value =
+                                "";
+                        }
+                    }
+
                     document.getElementById(
                         "verSolicitudFolio"
                     ).textContent =
@@ -2182,71 +2786,70 @@ document.addEventListener(
 
 
                                 item.innerHTML = `
-                <div class="adq-detail-product-main">
+                                    <div class="adq-detail-product-main">
 
-                    <div class="adq-detail-product-icon">
+                                        <div class="adq-detail-product-icon">
 
-                        <i class="bi bi-box-seam"></i>
+                                            <i class="bi bi-box-seam"></i>
 
-                    </div>
+                                        </div>
 
 
-                    <div class="adq-detail-product-info">
+                                        <div class="adq-detail-product-info">
 
-                        <span class="adq-detail-product-title">
-                            ${escapeHtmlAdq(
+                                            <span class="adq-detail-product-title">
+                                                ${escapeHtmlAdq(
                                     detalle.productoServicio
                                 )}
-                        </span>
+                                            </span>
 
-                        <span class="adq-detail-product-description">
+                                            <span class="adq-detail-product-description">
 
-                            ${escapeHtmlAdq(
+                                                ${escapeHtmlAdq(
                                     detalle.descripcion ??
                                     "Sin descripción adicional"
-                                )
-                                    }
+                                )}
 
-                        </span>
+                                            </span>
 
-                    </div>
+                                        </div>
 
-                </div>
-
-
-                <div class="adq-detail-product-meta">
-
-                    <div>
-
-                        <span class="adq-detail-meta-label">
-                            Cantidad
-                        </span>
-
-                        <span class="adq-detail-meta-value">
-                            ${escapeHtmlAdq(
-                                        detalle.cantidad
-                                    )}
-                        </span>
-
-                    </div>
+                                    </div>
 
 
-                    <div>
+                                    <div class="adq-detail-product-meta">
 
-                        <span class="adq-detail-meta-label">
-                            Unidad
-                        </span>
+                                        <div>
 
-                        <span class="adq-detail-meta-value">
-                            ${escapeHtmlAdq(
-                                        detalle.unidad
-                                    )}
-                        </span>
+                                            <span class="adq-detail-meta-label">
+                                                Cantidad
+                                            </span>
 
-                    </div>
+                                            <span class="adq-detail-meta-value">
+                                                ${escapeHtmlAdq(
+                                    detalle.cantidad
+                                )}
+                                            </span>
 
-                </div>
-            `;
+                                        </div>
+
+
+                                        <div>
+
+                                            <span class="adq-detail-meta-label">
+                                                Unidad
+                                            </span>
+
+                                            <span class="adq-detail-meta-value">
+                                                ${escapeHtmlAdq(
+                                    detalle.unidad
+                                )}
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+                                `;
 
 
                                 productos.appendChild(
@@ -2322,7 +2925,9 @@ document.addEventListener(
                                             <div class="adq-file-item-info">
 
                                                 <strong>
-                                                    ${escapeHtmlAdq(archivo.nombreOriginal)}
+                                                    ${escapeHtmlAdq(
+                                        archivo.nombreOriginal
+                                    )}
                                                 </strong>
 
                                                 <span>
@@ -2454,6 +3059,47 @@ document.addEventListener(
         );
 
         // =========================================================
+        // DETENER ACTUALIZACIÓN DEL CHAT AL CERRAR DETALLE
+        // =========================================================
+
+        modalVerSolicitudElement
+            ?.addEventListener(
+                "hidden.bs.modal",
+                function () {
+
+                    if (
+                        intervaloSeguimientoAdq
+                    ) {
+
+                        clearInterval(
+                            intervaloSeguimientoAdq
+                        );
+
+                        intervaloSeguimientoAdq =
+                            null;
+                    }
+
+                    solicitudDetalleActualAdq =
+                        null;
+
+                    if (
+                        badgeMensajesPendientesAdq
+                    ) {
+
+                        badgeMensajesPendientesAdq
+                            .classList
+                            .add(
+                                "d-none"
+                            );
+
+                        badgeMensajesPendientesAdq.textContent =
+                            "";
+                    }
+                }
+            );
+
+
+        // =========================================================
         // EDITAR DESDE DETALLE
         // =========================================================
 
@@ -2488,7 +3134,7 @@ document.addEventListener(
 
                     botonEditar?.click();
                 }
-        );
+            );
 
         // =========================================================
         // CANCELAR DESDE DETALLE
@@ -2743,7 +3389,7 @@ document.addEventListener(
                                 );
 
                             }
-                    );
+                        );
 
                     // =========================================================
                     // CARGAR ARCHIVOS EXISTENTES
@@ -2835,7 +3481,7 @@ document.addEventListener(
                     btnGuardarCambios
                         ?.classList.remove(
                             "d-none"
-                    );
+                        );
 
                     if (
                         solicitud.estatusId ===
@@ -2901,11 +3547,7 @@ document.addEventListener(
 
 
         // =========================================================
-        // FILTROS
-        // =========================================================
-
-        // =========================================================
-        // FILTROS + PAGINACIÓN
+        // FILTROS + PAGINACIÓN - MIS SOLICITUDES
         // =========================================================
 
         function aplicarFiltros(
@@ -3414,9 +4056,6 @@ document.addEventListener(
                     aplicarFiltros(
                         true
                     );
-
-
-                    //aplicarFiltros();
                 }
             );
 
@@ -3572,11 +4211,11 @@ document.addEventListener(
 
 
                     mensaje.innerHTML = `
-                <i class="bi bi-check-circle me-1"></i>
+                        <i class="bi bi-check-circle me-1"></i>
 
-                La solicitud será aprobada por el área
-                de Adquisiciones.
-            `;
+                        La solicitud será aprobada por el área
+                        de Adquisiciones.
+                    `;
 
 
                     labelComentario.textContent =
@@ -3610,11 +4249,11 @@ document.addEventListener(
 
 
                     mensaje.innerHTML = `
-                <i class="bi bi-exclamation-triangle me-1"></i>
+                        <i class="bi bi-exclamation-triangle me-1"></i>
 
-                La solicitud será cancelada
-                y no continuará con el proceso de compra.
-            `;
+                        La solicitud será cancelada
+                        y no continuará con el proceso de compra.
+                    `;
 
 
                     labelComentario.textContent =
@@ -3698,240 +4337,636 @@ document.addEventListener(
         );
 
         // =========================================================
-        // ACCIONES DE ADQUISICIONES
+        // ENVIAR MENSAJE DEL CHAT
         // =========================================================
 
-        document.addEventListener(
-            "click",
-            function (
-                event
+        btnEnviarComentarioAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const solicitudId =
+                        Number(
+                            inputSolicitudComentarioAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    const comentario =
+                        inputNuevoComentarioAdq
+                            ?.value
+                            .trim()
+                        ??
+                        "";
+
+
+                    if (
+                        !solicitudId
+                    ) {
+
+                        return;
+                    }
+
+
+                    if (
+                        !comentario
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Mensaje requerido",
+                            "Escribe un mensaje antes de enviarlo."
+                        );
+
+
+                        inputNuevoComentarioAdq
+                            ?.focus();
+
+
+                        return;
+                    }
+
+
+                    const token =
+                        document.querySelector(
+                            'input[name="__RequestVerificationToken"]'
+                        )
+                            ?.value;
+
+
+                    const datos =
+                        new FormData();
+
+
+                    datos.append(
+                        "SolicitudComentarioId",
+                        String(
+                            solicitudId
+                        )
+                    );
+
+
+                    datos.append(
+                        "NuevoComentarioAdq",
+                        comentario
+                    );
+
+
+                    try {
+
+                        btnEnviarComentarioAdq.disabled =
+                            true;
+
+
+                        const contenidoOriginal =
+                            btnEnviarComentarioAdq.innerHTML;
+
+
+                        btnEnviarComentarioAdq.innerHTML = `
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                            Enviando...
+                        `;
+
+
+                        try {
+
+                            const response =
+                                await fetch(
+                                    "?handler=AgregarComentarioAdq",
+                                    {
+                                        method:
+                                            "POST",
+
+                                        headers: {
+                                            "RequestVerificationToken":
+                                                token
+                                                ??
+                                                ""
+                                        },
+
+                                        body:
+                                            datos
+                                    }
+                                );
+
+
+                            const resultado =
+                                await response.json();
+
+
+                            if (
+                                !response.ok
+                                ||
+                                !resultado.success
+                            ) {
+
+                                throw new Error(
+                                    resultado.message
+                                    ??
+                                    "No fue posible enviar el mensaje."
+                                );
+                            }
+
+
+                            if (
+                                inputNuevoComentarioAdq
+                            ) {
+
+                                inputNuevoComentarioAdq.value =
+                                    "";
+                            }
+
+
+                            await cargarSeguimientoAdq(
+                                solicitudId
+                            );
+
+                        }
+                        finally {
+
+                            btnEnviarComentarioAdq.disabled =
+                                false;
+
+
+                            btnEnviarComentarioAdq.innerHTML =
+                                contenidoOriginal;
+                        }
+
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible enviar",
+                            error.message
+                            ??
+                            "Ocurrió un error al enviar el mensaje."
+                        );
+                    }
+                }
+            );
+
+        // =========================================================
+        // HISTORIAL DE APROBACIONES - FILTROS
+        // =========================================================
+
+        function aplicarFiltrosHistorialAdq(
+            reiniciarPagina = true
+        ) {
+
+            const texto =
+                filtroHistorialAprobacionesAdq
+                    ?.value
+                    .trim()
+                    .toLowerCase()
+                ??
+                "";
+
+            const decision =
+                filtroDecisionHistorialAdq
+                    ?.value
+                    .trim()
+                    .toLowerCase()
+                ??
+                "";
+
+            const filas =
+                Array.from(
+                    document.querySelectorAll(
+                        "#tablaHistorialAprobacionesAdq .adq-historial-aprobacion-row"
+                    )
+                );
+
+            const filasFiltradas =
+                filas.filter(
+                    function (
+                        fila
+                    ) {
+
+                        const folio =
+                            fila.dataset.folio ??
+                            "";
+
+                        const titulo =
+                            fila.dataset.titulo ??
+                            "";
+
+                        const solicitante =
+                            fila.dataset.solicitante ??
+                            "";
+
+                        const area =
+                            fila.dataset.area ??
+                            "";
+
+                        const decisionFila =
+                            fila.dataset.decision ??
+                            "";
+
+                        const coincideTexto =
+                            !texto
+                            ||
+                            folio.includes(
+                                texto
+                            )
+                            ||
+                            titulo.includes(
+                                texto
+                            )
+                            ||
+                            solicitante.includes(
+                                texto
+                            )
+                            ||
+                            area.includes(
+                                texto
+                            );
+
+                        const coincideDecision =
+                            !decision
+                            ||
+                            decisionFila ===
+                            decision;
+
+                        return (
+                            coincideTexto
+                            &&
+                            coincideDecision
+                        );
+                    }
+                );
+
+            if (
+                reiniciarPagina
             ) {
 
-                const boton =
-                    event.target.closest(
-                        ".btnAccionAdquisiciones"
-                    );
+                paginaActualHistorialAdq =
+                    1;
+            }
+
+            renderizarPaginaHistorialAdq(
+                filas,
+                filasFiltradas
+            );
+        }
 
 
-                if (!boton) {
-                    return;
-                }
+        // =========================================================
+        // HISTORIAL DE APROBACIONES - RENDERIZAR PÁGINA
+        // =========================================================
 
+        function renderizarPaginaHistorialAdq(
+            todasLasFilas,
+            filasFiltradas
+        ) {
 
-                const id =
-                    boton.dataset.id;
-
-                const folio =
-                    boton.dataset.folio ??
-                    "";
-
-                const accion =
-                    boton.dataset.accion;
-
-
-                const inputId =
-                    document.getElementById(
-                        "SolicitudAdquisicionesId"
-                    );
-
-
-                const titulo =
-                    document.getElementById(
-                        "tituloAccionAdquisiciones"
-                    );
-
-
-                const folioElemento =
-                    document.getElementById(
-                        "folioAccionAdquisiciones"
-                    );
-
-
-                const mensaje =
-                    document.getElementById(
-                        "mensajeAccionAdquisiciones"
-                    );
-
-
-                const comentario =
-                    document.getElementById(
-                        "ComentarioAdquisiciones"
-                    );
-
-
-                const labelComentario =
-                    document.getElementById(
-                        "labelComentarioAdquisiciones"
-                    );
-
-
-                const ayudaComentario =
-                    document.getElementById(
-                        "ayudaComentarioAdquisiciones"
-                    );
-
-
-                const btnAprobar =
-                    document.getElementById(
-                        "btnAprobarAdquisiciones"
-                    );
-
-
-                const btnCancelar =
-                    document.getElementById(
-                        "btnCancelarAdquisiciones"
-                    );
-
-
-                inputId.value =
-                    id;
-
-
-                folioElemento.textContent =
-                    folio;
-
-
-                comentario.value =
-                    "";
-
-
-                if (
-                    accion ===
-                    "aprobar"
+            todasLasFilas.forEach(
+                function (
+                    fila
                 ) {
-                    titulo.textContent =
-                        "Aprobar solicitud";
 
-
-                    mensaje.className =
-                        "alert alert-success mb-3";
-
-
-                    mensaje.innerHTML = `
-                <i class="bi bi-check-circle me-1"></i>
-
-                La solicitud será aprobada por el área
-                de Adquisiciones.
-            `;
-
-
-                    labelComentario.textContent =
-                        "Comentario (opcional)";
-
-
-                    ayudaComentario.textContent =
-                        "Puedes registrar una observación de la revisión.";
-
-
-                    comentario.required =
-                        false;
-
-
-                    btnAprobar.classList.remove(
-                        "d-none"
-                    );
-
-
-                    btnCancelar.classList.add(
+                    fila.classList.add(
                         "d-none"
                     );
                 }
-                else {
-                    titulo.textContent =
-                        "Cancelar solicitud";
+            );
 
+            const totalRegistros =
+                filasFiltradas.length;
 
-                    mensaje.className =
-                        "alert alert-danger mb-3";
-
-
-                    mensaje.innerHTML = `
-                <i class="bi bi-exclamation-triangle me-1"></i>
-
-                La solicitud será cancelada
-                y no continuará con el proceso de compra.
-            `;
-
-
-                    labelComentario.textContent =
-                        "Motivo de cancelación";
-
-
-                    ayudaComentario.textContent =
-                        "Este campo es obligatorio.";
-
-
-                    comentario.required =
-                        true;
-
-
-                    btnCancelar.classList.remove(
-                        "d-none"
-                    );
-
-
-                    btnAprobar.classList.add(
-                        "d-none"
-                    );
-                }
-
-
-                bootstrap.Modal
-                    .getOrCreateInstance(
-                        document.getElementById(
-                            "modalAccionAdquisiciones"
-                        )
+            const totalPaginas =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        totalRegistros /
+                        registrosPorPaginaHistorialAdq
                     )
-                    .show();
+                );
 
-            }
-        );
-
-
-        // =========================================================
-        // ASIGNAR AGENTE
-        // =========================================================
-
-        document.addEventListener(
-            "click",
-            function (
-                event
+            if (
+                paginaActualHistorialAdq >
+                totalPaginas
             ) {
 
-                const boton =
-                    event.target.closest(
-                        ".btnAsignarAdquisiciones"
+                paginaActualHistorialAdq =
+                    totalPaginas;
+            }
+
+            const inicio =
+                (
+                    paginaActualHistorialAdq -
+                    1
+                )
+                *
+                registrosPorPaginaHistorialAdq;
+
+            const fin =
+                Math.min(
+                    inicio +
+                    registrosPorPaginaHistorialAdq,
+                    totalRegistros
+                );
+
+            filasFiltradas
+                .slice(
+                    inicio,
+                    fin
+                )
+                .forEach(
+                    function (
+                        fila
+                    ) {
+
+                        fila.classList.remove(
+                            "d-none"
+                        );
+                    }
+                );
+
+            actualizarInformacionHistorialAdq(
+                inicio,
+                fin,
+                totalRegistros
+            );
+
+            renderizarPaginacionHistorialAdq(
+                totalPaginas,
+                totalRegistros
+            );
+        }
+
+
+        // =========================================================
+        // HISTORIAL DE APROBACIONES - INFORMACIÓN
+        // =========================================================
+
+        function actualizarInformacionHistorialAdq(
+            inicio,
+            fin,
+            total
+        ) {
+
+            if (
+                historialPaginaInicioAdq
+            ) {
+
+                historialPaginaInicioAdq.textContent =
+                    total === 0
+                        ? "0"
+                        : String(
+                            inicio + 1
+                        );
+            }
+
+            if (
+                historialPaginaFinAdq
+            ) {
+
+                historialPaginaFinAdq.textContent =
+                    String(
+                        fin
+                    );
+            }
+
+            if (
+                historialPaginaTotalAdq
+            ) {
+
+                historialPaginaTotalAdq.textContent =
+                    String(
+                        total
+                    );
+            }
+        }
+
+
+        // =========================================================
+        // HISTORIAL DE APROBACIONES - PAGINACIÓN
+        // =========================================================
+
+        function renderizarPaginacionHistorialAdq(
+            totalPaginas,
+            totalRegistros
+        ) {
+
+            if (
+                !listaPaginacionHistorialAdq
+                ||
+                !paginacionHistorialAdq
+            ) {
+                return;
+            }
+
+            listaPaginacionHistorialAdq.innerHTML =
+                "";
+
+            if (
+                totalRegistros === 0
+            ) {
+
+                paginacionHistorialAdq
+                    .classList
+                    .add(
+                        "d-none"
+                    );
+
+                return;
+            }
+
+            paginacionHistorialAdq
+                .classList
+                .remove(
+                    "d-none"
+                );
+
+            crearBotonPaginacionHistorialAdq(
+                "Anterior",
+                paginaActualHistorialAdq - 1,
+                paginaActualHistorialAdq === 1,
+                false
+            );
+
+            for (
+                let pagina = 1;
+                pagina <= totalPaginas;
+                pagina++
+            ) {
+
+                crearBotonPaginacionHistorialAdq(
+                    String(
+                        pagina
+                    ),
+                    pagina,
+                    false,
+                    pagina ===
+                    paginaActualHistorialAdq
+                );
+            }
+
+            crearBotonPaginacionHistorialAdq(
+                "Siguiente",
+                paginaActualHistorialAdq + 1,
+                paginaActualHistorialAdq ===
+                totalPaginas,
+                false
+            );
+        }
+
+
+        function crearBotonPaginacionHistorialAdq(
+            texto,
+            pagina,
+            deshabilitado = false,
+            activo = false
+        ) {
+
+            if (
+                !listaPaginacionHistorialAdq
+            ) {
+                return;
+            }
+
+            const item =
+                document.createElement(
+                    "li"
+                );
+
+            item.className =
+                "page-item";
+
+            if (
+                activo
+            ) {
+
+                item.classList.add(
+                    "active"
+                );
+            }
+
+            if (
+                deshabilitado
+            ) {
+
+                item.classList.add(
+                    "disabled"
+                );
+            }
+
+            const boton =
+                document.createElement(
+                    "button"
+                );
+
+            boton.type =
+                "button";
+
+            boton.className =
+                "page-link";
+
+            boton.textContent =
+                texto;
+
+            boton.disabled =
+                deshabilitado;
+
+            boton.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        deshabilitado
+                    ) {
+                        return;
+                    }
+
+                    paginaActualHistorialAdq =
+                        pagina;
+
+                    aplicarFiltrosHistorialAdq(
+                        false
                     );
 
 
-                if (!boton) {
-                    return;
-                }
-
-
-                document.getElementById(
-                    "SolicitudAsignarAdqId"
-                ).value =
-                    boton.dataset.id;
-
-
-                document.getElementById(
-                    "folioAsignarAdq"
-                ).textContent =
-                    boton.dataset.folio ??
-                    "";
-
-
-                bootstrap.Modal
-                    .getOrCreateInstance(
-                        document.getElementById(
-                            "modalAsignarAdquisiciones"
+                    document
+                        .getElementById(
+                            "tablaHistorialAprobacionesAdq"
                         )
-                    )
-                    .show();
+                        ?.scrollIntoView({
+                            behavior:
+                                "smooth",
 
-            }
-        );
+                            block:
+                                "start"
+                        });
+                }
+            );
+
+            item.appendChild(
+                boton
+            );
+
+            listaPaginacionHistorialAdq
+                .appendChild(
+                    item
+                );
+        }
+
+
+        // =========================================================
+        // HISTORIAL DE APROBACIONES - EVENTOS
+        // =========================================================
+
+        filtroHistorialAprobacionesAdq
+            ?.addEventListener(
+                "input",
+                function () {
+
+                    aplicarFiltrosHistorialAdq(
+                        true
+                    );
+                }
+            );
+
+        filtroDecisionHistorialAdq
+            ?.addEventListener(
+                "change",
+                function () {
+
+                    aplicarFiltrosHistorialAdq(
+                        true
+                    );
+                }
+            );
+
+        btnLimpiarHistorialAprobacionesAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        filtroHistorialAprobacionesAdq
+                    ) {
+
+                        filtroHistorialAprobacionesAdq.value =
+                            "";
+                    }
+
+                    if (
+                        filtroDecisionHistorialAdq
+                    ) {
+
+                        filtroDecisionHistorialAdq.value =
+                            "";
+                    }
+
+                    aplicarFiltrosHistorialAdq(
+                        true
+                    );
+                }
+            );
+
 
         // =========================================================
         // INICIALIZACIÓN
@@ -3948,6 +4983,10 @@ document.addEventListener(
         actualizarEstadoEnviar();
 
         aplicarFiltros(
+            true
+        );
+
+        aplicarFiltrosHistorialAdq(
             true
         );
 

@@ -86,6 +86,26 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             set;
         }
 
+        [BindProperty]
+        public int SolicitudComentarioId
+        {
+            get;
+            set;
+        }
+
+
+        [BindProperty]
+        [StringLength(
+            5000,
+            ErrorMessage =
+                "El comentario no puede superar los 5000 caracteres."
+        )]
+        public string? NuevoComentarioAdq
+        {
+            get;
+            set;
+        }
+
 
         [BindProperty]
         [StringLength(
@@ -144,6 +164,148 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         }
 
+        public class AdqComentarioSeguimientoDto
+        {
+            public int Id
+            {
+                get;
+                set;
+            }
+
+            public string UsuarioId
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Usuario
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Comentario
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public DateTime FechaCreacion
+            {
+                get;
+                set;
+            }
+
+            public bool EsUsuarioActual
+            {
+                get;
+                set;
+            }
+        }
+
+        public class AdqAprobacionHistorialDto
+        {
+            public int SolicitudId
+            {
+                get;
+                set;
+            }
+
+            public string Folio
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Titulo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Solicitante
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Decision
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string? Comentario
+            {
+                get;
+                set;
+            }
+
+            public DateTime? FechaRespuesta
+            {
+                get;
+                set;
+            }
+
+            public int EstatusSolicitudId
+            {
+                get;
+                set;
+            }
+
+            public string EstatusSolicitud
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public int MensajesPendientes
+            {
+                get;
+                set;
+            }
+        }
+
+
+        public class AdqHistorialSeguimientoDto
+        {
+            public int Id
+            {
+                get;
+                set;
+            }
+
+            public string TipoEvento
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Descripcion
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public DateTime FechaEvento
+            {
+                get;
+                set;
+            }
+
+            public string Usuario
+            {
+                get;
+                set;
+            } = string.Empty;
+        }
+
 
         // =========================================================
         // CATÁLOGOS
@@ -175,6 +337,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             get;
             private set;
         } = new();
+
+        public List<AdqAprobacionHistorialDto>
+        HistorialAprobaciones
+        {
+            get;
+            set;
+        } = new();
+
+        public int TotalHistorialAprobaciones =>
+        HistorialAprobaciones.Count;
 
         // =========================================================
         // BANDEJA DE ADQUISICIONES
@@ -313,6 +485,188 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         }
 
+        // =========================================================
+        // HISTORIAL DE APROBACIONES DEL GERENTE
+        // =========================================================
+
+        // =========================================================
+        // HISTORIAL DE APROBACIONES DEL GERENTE
+        // =========================================================
+
+        private async Task
+            CargarHistorialAprobacionesAsync(
+                AppUser usuarioActual)
+        {
+            HistorialAprobaciones =
+                await (
+                    from aprobacion
+                        in _context.AdqAprobaciones
+                            .AsNoTracking()
+
+                    join solicitud
+                        in _context.AdqSolicitudes
+                            .AsNoTracking()
+                        on aprobacion.SolicitudId
+                        equals solicitud.Id
+
+                    join estatus
+                        in _context.AdqEstatus
+                            .AsNoTracking()
+                        on solicitud.EstatusId
+                        equals estatus.Id
+
+                    join empleado
+                        in _context.Empleados
+                            .AsNoTracking()
+                        on solicitud.EmpleadoSolicitanteId
+                        equals empleado.Id
+                        into empleadoJoin
+
+                    from empleado
+                        in empleadoJoin.DefaultIfEmpty()
+
+                    join area
+                        in _context.Areas
+                            .AsNoTracking()
+                        on solicitud.AreaId
+                        equals area.Id
+                        into areaJoin
+
+                    from area
+                        in areaJoin.DefaultIfEmpty()
+
+                    where
+                        aprobacion.UsuarioAprobadorId ==
+                            usuarioActual.Id
+                        &&
+                        aprobacion.TipoAprobacion ==
+                            "GerenteArea"
+                        &&
+                        (
+                            aprobacion.Estatus ==
+                                "Aprobada"
+                            ||
+                            aprobacion.Estatus ==
+                                "Rechazada"
+                            ||
+                            aprobacion.Estatus ==
+                                "Cancelada"
+                        )
+                        &&
+                        !solicitud.Eliminado
+
+                    orderby
+                        aprobacion.FechaRespuesta descending
+
+                    select
+                        new AdqAprobacionHistorialDto
+                        {
+                            SolicitudId =
+                                solicitud.Id,
+
+                            Folio =
+                                solicitud.Folio,
+
+                            Titulo =
+                                solicitud.Titulo,
+
+                            Solicitante =
+                                empleado != null
+                                    ? empleado.NombreCompleto
+                                    : "No disponible",
+
+                            Area =
+                                area != null
+                                    ? area.Nombre
+                                    : "No disponible",
+
+                            Decision =
+                                aprobacion.Estatus,
+
+                            Comentario =
+                                aprobacion.Comentario,
+
+                            FechaRespuesta =
+                                aprobacion.FechaRespuesta,
+
+                            EstatusSolicitudId =
+                                solicitud.EstatusId,
+
+                            EstatusSolicitud =
+                                estatus.Nombre
+                        }
+                )
+                .ToListAsync();
+
+
+            // =====================================================
+            // MENSAJES PENDIENTES DE RESPUESTA
+            // =====================================================
+
+            foreach (
+                AdqAprobacionHistorialDto item
+                in HistorialAprobaciones
+            )
+            {
+                /*
+                 * Obtenemos el último mensaje enviado por
+                 * el gerente dentro de esta solicitud.
+                 */
+                DateTime? ultimoMensajePropio =
+                    await _context.AdqComentarios
+                        .AsNoTracking()
+                        .Where(
+                            x =>
+                                x.SolicitudId ==
+                                    item.SolicitudId
+                                &&
+                                x.UsuarioId ==
+                                    usuarioActual.Id
+                                &&
+                                !x.Eliminado
+                                &&
+                                !x.EsNotaInterna
+                        )
+                        .MaxAsync(
+                            x =>
+                                (DateTime?)
+                                x.FechaCreacion
+                        );
+
+
+                /*
+                 * Se consideran pendientes todos los mensajes
+                 * enviados por otra persona después de la última
+                 * respuesta del gerente.
+                 *
+                 * Si el gerente nunca ha contestado, todos los
+                 * mensajes existentes de otras personas quedan
+                 * como pendientes.
+                 */
+                item.MensajesPendientes =
+                    await _context.AdqComentarios
+                        .AsNoTracking()
+                        .CountAsync(
+                            x =>
+                                x.SolicitudId ==
+                                    item.SolicitudId
+                                &&
+                                x.UsuarioId !=
+                                    usuarioActual.Id
+                                &&
+                                !x.Eliminado
+                                &&
+                                !x.EsNotaInterna
+                                &&
+                                (
+                                    !ultimoMensajePropio.HasValue
+                                    ||
+                                    x.FechaCreacion >
+                                        ultimoMensajePropio.Value
+                                )
+                        );
+            }
+        }
 
         // =========================================================
         // INPUT SOLICITUD
@@ -3317,6 +3671,702 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
         // =========================================================
+        // SEGUIMIENTO / CHAT DE LA SOLICITUD
+        // =========================================================
+
+        // =========================================================
+        // SEGUIMIENTO / CHAT DE LA SOLICITUD
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetSeguimientoSolicitudAsync(
+                int id)
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .Include(
+                        x => x.Estatus
+                    )
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == id
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR ACCESO
+            // =====================================================
+
+            bool esSolicitante =
+                solicitud.UsuarioSolicitanteId ==
+                    usuarioActual.Id;
+
+
+            /*
+             * Un gerente que participó en el flujo de aprobación
+             * conserva acceso al seguimiento de la solicitud,
+             * incluso después de aprobarla o rechazarla.
+             */
+            bool esAprobador =
+                await _context.AdqAprobaciones
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            x.UsuarioAprobadorId ==
+                                usuarioActual.Id
+                    );
+
+
+            AdqPermisoUsuario? permisoAdquisiciones =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                    );
+
+
+            bool esUsuarioAdquisiciones =
+                permisoAdquisiciones != null
+                &&
+                (
+                    permisoAdquisiciones.PuedeVisualizar
+                    ||
+                    permisoAdquisiciones.PuedeGestionarSolicitudes
+                    ||
+                    permisoAdquisiciones.PuedeAprobar
+                    ||
+                    permisoAdquisiciones.PuedeAsignar
+                    ||
+                    permisoAdquisiciones.PuedeCotizar
+                    ||
+                    permisoAdquisiciones.PuedeAdministrar
+                );
+
+
+            bool esAgenteAsignado =
+                await _context.AdqAsignaciones
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            x.UsuarioAsignadoId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                    );
+
+
+            if (
+                !esSolicitante
+                &&
+                !esAprobador
+                &&
+                !esUsuarioAdquisiciones
+                &&
+                !esAgenteAsignado
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para consultar el seguimiento de esta solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // BORRADOR TODAVÍA NO TIENE CHAT
+            // =====================================================
+
+            if (
+                solicitud.EstatusId ==
+                1
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El chat estará disponible cuando la solicitud sea enviada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // COMENTARIOS
+            // =====================================================
+
+            List<AdqComentarioSeguimientoDto> comentarios =
+                await (
+                    from comentario
+                        in _context.AdqComentarios
+                            .AsNoTracking()
+
+                    join usuario
+                        in _context.Users
+                            .AsNoTracking()
+                        on comentario.UsuarioId
+                        equals usuario.Id
+
+                    where
+                        comentario.SolicitudId ==
+                            solicitud.Id
+                        &&
+                        !comentario.Eliminado
+                        &&
+                        !comentario.EsNotaInterna
+
+                    orderby
+                        comentario.FechaCreacion
+
+                    select
+                        new AdqComentarioSeguimientoDto
+                        {
+                            Id =
+                                comentario.Id,
+
+                            UsuarioId =
+                                comentario.UsuarioId,
+
+                            Usuario =
+                                usuario.Email
+                                ??
+                                usuario.UserName
+                                ??
+                                "Usuario",
+
+                            Comentario =
+                                comentario.Comentario,
+
+                            FechaCreacion =
+                                comentario.FechaCreacion,
+
+                            EsUsuarioActual =
+                                comentario.UsuarioId ==
+                                    usuarioActual.Id
+                        }
+                )
+                .ToListAsync();
+
+
+            // =====================================================
+            // MENSAJES PENDIENTES DE RESPUESTA
+            // =====================================================
+
+            /*
+             * Tomamos el último mensaje que escribió
+             * el usuario que está viendo el chat.
+             */
+            DateTime? ultimoMensajePropio =
+                comentarios
+                    .Where(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                    )
+                    .Select(
+                        x =>
+                            (DateTime?)
+                            x.FechaCreacion
+                    )
+                    .Max();
+
+
+            /*
+             * Cualquier mensaje posterior enviado por otra
+             * persona significa que existe conversación
+             * pendiente de respuesta.
+             *
+             * Cuando el usuario responde, su mensaje pasa
+             * a ser el último y el contador vuelve a cero.
+             */
+            int mensajesPendientes =
+                comentarios.Count(
+                    x =>
+                        x.UsuarioId !=
+                            usuarioActual.Id
+                        &&
+                        (
+                            !ultimoMensajePropio.HasValue
+                            ||
+                            x.FechaCreacion >
+                                ultimoMensajePropio.Value
+                        )
+                );
+
+
+            // =====================================================
+            // HISTORIAL
+            // =====================================================
+
+            List<AdqHistorialSeguimientoDto> historial =
+                await (
+                    from evento
+                        in _context.AdqHistorial
+                            .AsNoTracking()
+
+                    join usuario
+                        in _context.Users
+                            .AsNoTracking()
+                        on evento.UsuarioId
+                        equals usuario.Id
+                        into usuarioJoin
+
+                    from usuario
+                        in usuarioJoin.DefaultIfEmpty()
+
+                    where
+                        evento.SolicitudId ==
+                            solicitud.Id
+
+                    orderby
+                        evento.FechaEvento descending
+
+                    select
+                        new AdqHistorialSeguimientoDto
+                        {
+                            Id =
+                                evento.Id,
+
+                            TipoEvento =
+                                evento.TipoEvento,
+
+                            Descripcion =
+                                evento.Descripcion,
+
+                            FechaEvento =
+                                evento.FechaEvento,
+
+                            Usuario =
+                                usuario != null
+                                    ? (
+                                        usuario.Email
+                                        ??
+                                        usuario.UserName
+                                        ??
+                                        "Usuario"
+                                    )
+                                    : "Sistema"
+                        }
+                )
+                .ToListAsync();
+
+
+            // =====================================================
+            // ¿PUEDE ESCRIBIR EN EL CHAT?
+            // =====================================================
+
+            /*
+             * Ahora el gerente/aprobador también puede
+             * participar en la conversación.
+             */
+            bool puedeEscribir =
+                esSolicitante
+                ||
+                esAprobador
+                ||
+                esUsuarioAdquisiciones
+                ||
+                esAgenteAsignado;
+
+
+            // =====================================================
+            // RESPUESTA
+            // =====================================================
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    seguimiento =
+                        new
+                        {
+                            solicitudId =
+                                solicitud.Id,
+
+                            folio =
+                                solicitud.Folio,
+
+                            estatusId =
+                                solicitud.EstatusId,
+
+                            estatus =
+                                solicitud.Estatus?.Nombre
+                                ??
+                                "Sin estatus",
+
+                            puedeEscribir,
+
+                            mensajesPendientes,
+
+                            comentarios,
+
+                            historial
+                        }
+                }
+            );
+        }
+
+        // =========================================================
+        // ENVIAR MENSAJE DEL CHAT
+        // =========================================================
+
+        // =========================================================
+        // ENVIAR MENSAJE DEL CHAT
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostAgregarComentarioAdqAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            string comentario =
+                NuevoComentarioAdq?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            // =====================================================
+            // VALIDACIONES
+            // =====================================================
+
+            if (
+                SolicitudComentarioId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    comentario
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Escribe un mensaje antes de enviarlo."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                comentario.Length >
+                5000
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El mensaje no puede superar los 5000 caracteres."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                SolicitudComentarioId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // NO PERMITIR CHAT EN BORRADOR
+            // =====================================================
+
+            if (
+                solicitud.EstatusId ==
+                1
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Debes enviar la solicitud antes de utilizar el chat."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR PARTICIPANTES DEL CHAT
+            // =====================================================
+
+            bool esSolicitante =
+                solicitud.UsuarioSolicitanteId ==
+                    usuarioActual.Id;
+
+
+            /*
+             * Gerente / jefe que forme o haya formado
+             * parte del flujo de aprobación.
+             */
+            bool esAprobador =
+                await _context.AdqAprobaciones
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            x.UsuarioAprobadorId ==
+                                usuarioActual.Id
+                    );
+
+
+            bool esUsuarioAdquisiciones =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeGestionarSolicitudes
+                                ||
+                                x.PuedeAprobar
+                                ||
+                                x.PuedeAsignar
+                                ||
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            bool esAgenteAsignado =
+                await _context.AdqAsignaciones
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            x.UsuarioAsignadoId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                    );
+
+
+            if (
+                !esSolicitante
+                &&
+                !esAprobador
+                &&
+                !esUsuarioAdquisiciones
+                &&
+                !esAgenteAsignado
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para participar en este chat."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // REGISTRAR MENSAJE
+            // =====================================================
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            AdqComentario nuevoComentario =
+                new()
+                {
+                    SolicitudId =
+                        solicitud.Id,
+
+                    UsuarioId =
+                        usuarioActual.Id,
+
+                    Comentario =
+                        comentario,
+
+                    EsNotaInterna =
+                        false,
+
+                    FechaCreacion =
+                        ahora,
+
+                    Eliminado =
+                        false
+                };
+
+
+            _context.AdqComentarios.Add(
+                nuevoComentario
+            );
+
+
+            await _context
+                .SaveChangesAsync();
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+                    message =
+                        "Mensaje enviado correctamente.",
+
+                    comentarioId =
+                        nuevoComentario.Id
+                }
+            );
+        }
+
+        // =========================================================
         // PERMISOS DEL MÓDULO DE ADQUISICIONES
         // =========================================================
 
@@ -3584,14 +4634,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             NombreSolicitante =
-                EmpleadoActual?.NombreCompleto ??
-                usuarioActual.UserName ??
-                usuarioActual.Email ??
+                EmpleadoActual?.NombreCompleto
+                ??
+                usuarioActual.UserName
+                ??
+                usuarioActual.Email
+                ??
                 "Usuario";
 
 
             NombreArea =
-                EmpleadoActual?.Area?.Nombre ??
+                EmpleadoActual?.Area?.Nombre
+                ??
                 "Sin área asignada";
 
 
@@ -3604,14 +4658,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             TieneJefeConfigurado =
-                jefe != null &&
+                jefe != null
+                &&
                 !string.IsNullOrWhiteSpace(
                     jefe.UserId
                 );
 
 
             NombreJefe =
-                jefe?.NombreCompleto ??
+                jefe?.NombreCompleto
+                ??
                 "Sin jefe configurado";
 
 
@@ -3628,6 +4684,15 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             );
 
 
+            /*
+             * Historial del gerente:
+             * aprobadas, rechazadas y canceladas.
+             */
+            await CargarHistorialAprobacionesAsync(
+                usuarioActual
+            );
+
+
             await CargarPermisosAdquisicionesAsync(
                 usuarioActual
             );
@@ -3640,7 +4705,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             if (
-                Input.AreaId == 0 &&
+                Input.AreaId == 0
+                &&
                 EmpleadoActual?.AreaId != null
             )
             {

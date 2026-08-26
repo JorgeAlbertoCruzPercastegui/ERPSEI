@@ -562,6 +562,7 @@
 
         </div>
 
+
         <!-- ====================================================== -->
         <!-- PAGINACIÓN -->
         <!-- ====================================================== -->
@@ -597,13 +598,14 @@
 
     </section>
 
+
     <!-- ====================================================== -->
     <!-- SOLICITUDES POR APROBAR -->
     <!-- ====================================================== -->
     @if (
-        Model.SolicitudesPorAprobar != null &&
-        Model.SolicitudesPorAprobar.Count > 0
-    )
+            Model.SolicitudesPorAprobar != null &&
+            Model.SolicitudesPorAprobar.Count > 0
+        )
     {
         <section class="adq-panel mt-4">
 
@@ -772,6 +774,384 @@
 
         </section>
     }
+
+
+    <!-- ====================================================== -->
+    <!-- HISTORIAL DE APROBACIONES -->
+    <!-- ====================================================== -->
+    @if (
+            Model.HistorialAprobaciones != null &&
+            Model.HistorialAprobaciones.Count > 0
+        )
+    {
+        <section class="adq-panel mt-4">
+
+            <div class="adq-panel-header">
+
+                <div>
+
+                    <span class="adq-panel-kicker">
+                        Aprobaciones
+                    </span>
+
+                    <h2>
+                        Historial de aprobaciones
+                    </h2>
+
+                    <p>
+                        Consulta las solicitudes que ya fueron
+                        atendidas dentro de tu flujo de aprobación.
+                    </p>
+
+                </div>
+
+
+                <span class="badge bg-secondary fs-6">
+
+                    @Model.TotalHistorialAprobaciones
+                    registro@(Model.TotalHistorialAprobaciones == 1 ? "" : "s")
+
+                </span>
+
+            </div>
+
+
+            <!-- ====================================================== -->
+            <!-- FILTROS DEL HISTORIAL -->
+            <!-- ====================================================== -->
+
+            <div class="adq-filter-bar">
+
+                <div class="row g-3">
+
+                    <div class="col-12 col-lg-6">
+
+                        <label for="adqFiltroHistorialAprobaciones"
+                               class="form-label">
+
+                            Buscar
+
+                        </label>
+
+                        <input type="text"
+                               id="adqFiltroHistorialAprobaciones"
+                               class="form-control"
+                               placeholder="Folio, solicitud, solicitante o área..."
+                               autocomplete="off" />
+
+                    </div>
+
+
+                    <div class="col-12 col-lg-3">
+
+                        <label for="adqFiltroDecisionHistorial"
+                               class="form-label">
+
+                            Decisión
+
+                        </label>
+
+                        <select id="adqFiltroDecisionHistorial"
+                                class="form-select">
+
+                            <option value="">
+                                Todas
+                            </option>
+
+                            <option value="aprobada">
+                                Aprobadas
+                            </option>
+
+                            <option value="rechazada">
+                                Rechazadas
+                            </option>
+
+                            <option value="cancelada">
+                                Canceladas
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="col-12 col-lg-3 d-grid align-self-end">
+
+                        <button type="button"
+                                id="btnLimpiarHistorialAprobaciones"
+                                class="btn btn-outline-secondary">
+
+                            <i class="bi bi-eraser me-1"></i>
+
+                            Limpiar filtros
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ====================================================== -->
+            <!-- TABLA DEL HISTORIAL -->
+            <!-- ====================================================== -->
+
+            <div class="table-responsive">
+
+                <table class="table align-middle adq-table mb-0"
+                       id="tablaHistorialAprobacionesAdq">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Folio
+                            </th>
+
+                            <th>
+                                Solicitud
+                            </th>
+
+                            <th>
+                                Solicitante
+                            </th>
+
+                            <th>
+                                Área
+                            </th>
+
+                            <th>
+                                Decisión
+                            </th>
+
+                            <th>
+                                Fecha de decisión
+                            </th>
+
+                            <th>
+                                Estatus actual
+                            </th>
+
+                            <th class="text-center">
+                                Mensajes
+                            </th>
+
+                            <th class="text-center">
+                                Acción
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (
+                            var aprobacion
+                            in Model.HistorialAprobaciones
+                        )
+                        {
+                            <tr class="adq-historial-aprobacion-row"
+                                data-folio="@aprobacion.Folio.ToLowerInvariant()"
+                                data-titulo="@aprobacion.Titulo.ToLowerInvariant()"
+                                data-solicitante="@aprobacion.Solicitante.ToLowerInvariant()"
+                                data-area="@aprobacion.Area.ToLowerInvariant()"
+                                data-decision="@aprobacion.Decision.ToLowerInvariant()">
+
+                                <td>
+
+                                    <strong class="adq-folio">
+                                        @aprobacion.Folio
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    <strong>
+                                        @aprobacion.Titulo
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+                                    @aprobacion.Solicitante
+                                </td>
+
+
+                                <td>
+                                    @aprobacion.Area
+                                </td>
+
+
+                                <td>
+
+                                    @if (
+                                        aprobacion.Decision ==
+                                        "Aprobada"
+                                    )
+                                    {
+                                        <span class="badge bg-success">
+
+                                            <i class="bi bi-check-circle me-1"></i>
+
+                                            Aprobada
+
+                                        </span>
+                                    }
+                                    else if (
+                                        aprobacion.Decision ==
+                                        "Rechazada"
+                                    )
+                                    {
+                                        <span class="badge bg-danger">
+
+                                            <i class="bi bi-x-circle me-1"></i>
+
+                                            Rechazada
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+
+                                            <i class="bi bi-slash-circle me-1"></i>
+
+                                            Cancelada
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <td>
+
+                                    @(
+                                        aprobacion.FechaRespuesta
+                                            ?.ToString(
+                                                "dd/MM/yyyy HH:mm"
+                                            )
+                                        ??
+                                        "-"
+                                    )
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="adq-status-badge">
+                                        @aprobacion.EstatusSolicitud
+                                    </span>
+
+                                </td>
+
+
+                                <td class="text-center">
+
+                                    @if (
+                                        aprobacion.MensajesPendientes > 0
+                                    )
+                                    {
+                                        <span class="badge bg-danger adq-chat-pending-badge"
+                                              title="Mensajes pendientes de respuesta">
+
+                                            <i class="bi bi-chat-dots-fill me-1"></i>
+
+                                            @aprobacion.MensajesPendientes
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">
+
+                                            <i class="bi bi-check2 me-1"></i>
+
+                                            Al día
+
+                                        </span>
+                                    }
+
+                                </td>
+
+
+                                <td class="text-center">
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                            data-id="@aprobacion.SolicitudId"
+                                            title="Ver solicitud">
+
+                                        <i class="bi bi-eye"></i>
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- ====================================================== -->
+            <!-- PAGINACIÓN DEL HISTORIAL -->
+            <!-- ====================================================== -->
+
+            <div id="paginacionHistorialAprobacionesAdq"
+                 class="adq-pagination-container">
+
+                <div class="adq-pagination-info">
+
+                    Mostrando
+
+                    <strong id="adqHistorialPaginaInicio">
+                        0
+                    </strong>
+
+                    -
+
+                    <strong id="adqHistorialPaginaFin">
+                        0
+                    </strong>
+
+                    de
+
+                    <strong id="adqHistorialPaginaTotal">
+                        0
+                    </strong>
+
+                    registros
+
+                </div>
+
+
+                <nav aria-label="Paginación del historial de aprobaciones">
+
+                    <ul id="adqHistorialPaginacionLista"
+                        class="pagination pagination-sm mb-0">
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </section>
+    }
+
 
     <!-- ====================================================== -->
     <!-- BANDEJA DE ADQUISICIONES -->
@@ -1811,6 +2191,7 @@
 
                     </button>
 
+
                     <button type="submit"
                             id="btnEnviarBorradorAdq"
                             formaction="?handler=EnviarBorrador"
@@ -1902,159 +2283,448 @@
             <div class="modal-body adq-detail-modal-body">
 
                 <!-- ====================================================== -->
-                <!-- RESUMEN -->
+                <!-- PESTAÑAS -->
                 <!-- ====================================================== -->
 
-                <div class="adq-detail-summary">
+                <ul class="nav nav-tabs adq-detail-tabs"
+                    id="tabsDetalleSolicitudAdq"
+                    role="tablist">
 
-                    <div class="adq-detail-field adq-detail-field-wide">
+                    <!-- INFORMACIÓN -->
 
-                        <span class="adq-detail-label">
-                            Solicitud
-                        </span>
+                    <li class="nav-item"
+                        role="presentation">
 
-                        <div class="adq-detail-value"
-                             id="verSolicitudTitulo">
+                        <button class="nav-link active"
+                                id="tabInformacionAdq"
+                                data-bs-toggle="tab"
+                                data-bs-target="#contenidoInformacionAdq"
+                                type="button"
+                                role="tab">
+
+                            <i class="bi bi-file-text me-1"></i>
+
+                            Información
+
+                        </button>
+
+                    </li>
+
+
+                    <!-- CHAT -->
+
+                    <li class="nav-item d-none"
+                        id="itemTabSeguimientoAdq"
+                        role="presentation">
+
+                        <button class="nav-link"
+                                id="tabSeguimientoAdq"
+                                data-bs-toggle="tab"
+                                data-bs-target="#contenidoSeguimientoAdq"
+                                type="button"
+                                role="tab">
+
+                            <i class="bi bi-chat-dots me-1"></i>
+
+                            Chat de seguimiento
+
+                            <span id="badgeMensajesPendientesAdq"
+                                  class="badge bg-danger ms-1 d-none">
+                            </span>
+
+                        </button>
+
+                    </li>
+
+
+                    <!-- HISTORIAL -->
+
+                    <li class="nav-item d-none"
+                        id="itemTabHistorialAdq"
+                        role="presentation">
+
+                        <button class="nav-link"
+                                id="tabHistorialAdq"
+                                data-bs-toggle="tab"
+                                data-bs-target="#contenidoHistorialAdq"
+                                type="button"
+                                role="tab">
+
+                            <i class="bi bi-clock-history me-1"></i>
+
+                            Historial
+
+                        </button>
+
+                    </li>
+
+                </ul>
+
+
+                <!-- ====================================================== -->
+                <!-- CONTENIDO DE LAS PESTAÑAS -->
+                <!-- ====================================================== -->
+
+                <div class="tab-content adq-detail-tab-content">
+
+
+                    <!-- ================================================== -->
+                    <!-- INFORMACIÓN -->
+                    <!-- ================================================== -->
+
+                    <div class="tab-pane fade show active"
+                         id="contenidoInformacionAdq"
+                         role="tabpanel">
+
+
+                        <!-- ====================================================== -->
+                        <!-- RESUMEN -->
+                        <!-- ====================================================== -->
+
+                        <div class="adq-detail-summary">
+
+                            <div class="adq-detail-field adq-detail-field-wide">
+
+                                <span class="adq-detail-label">
+                                    Solicitud
+                                </span>
+
+                                <div class="adq-detail-value"
+                                     id="verSolicitudTitulo">
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-detail-field">
+
+                                <span class="adq-detail-label">
+                                    Solicitante
+                                </span>
+
+                                <div class="adq-detail-value"
+                                     id="verSolicitudSolicitante">
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-detail-field">
+
+                                <span class="adq-detail-label">
+                                    Fecha
+                                </span>
+
+                                <div class="adq-detail-value"
+                                     id="verSolicitudFecha">
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-detail-field">
+
+                                <span class="adq-detail-label">
+                                    Área
+                                </span>
+
+                                <div class="adq-detail-value"
+                                     id="verSolicitudArea">
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-detail-field">
+
+                                <span class="adq-detail-label">
+                                    Estatus
+                                </span>
+
+                                <div class="adq-detail-value"
+                                     id="verSolicitudEstatus">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ====================================================== -->
+                        <!-- DESCRIPCIÓN -->
+                        <!-- ====================================================== -->
+
+                        <div class="adq-detail-section">
+
+                            <div class="adq-detail-section-title">
+
+                                <i class="bi bi-card-text"></i>
+
+                                Descripción
+
+                            </div>
+
+                            <div class="adq-detail-text"
+                                 id="verSolicitudDescripcion">
+                            </div>
+
+                        </div>
+
+
+                        <!-- ====================================================== -->
+                        <!-- JUSTIFICACIÓN -->
+                        <!-- ====================================================== -->
+
+                        <div class="adq-detail-section">
+
+                            <div class="adq-detail-section-title">
+
+                                <i class="bi bi-chat-left-text"></i>
+
+                                Justificación
+
+                            </div>
+
+                            <div class="adq-detail-text"
+                                 id="verSolicitudJustificacion">
+                            </div>
+
+                        </div>
+
+
+                        <!-- ====================================================== -->
+                        <!-- PRODUCTOS -->
+                        <!-- ====================================================== -->
+
+                        <div class="adq-detail-section">
+
+                            <div class="adq-detail-section-title">
+
+                                <i class="bi bi-box-seam"></i>
+
+                                Productos / Servicios
+
+                            </div>
+
+
+                            <div id="verSolicitudProductos"
+                                 class="adq-products-list">
+                            </div>
+
+                        </div>
+
+
+                        <!-- ====================================================== -->
+                        <!-- DOCUMENTACIÓN -->
+                        <!-- ====================================================== -->
+
+                        <div class="adq-detail-section">
+
+                            <div class="adq-detail-section-title">
+
+                                <i class="bi bi-paperclip"></i>
+
+                                Documentación
+
+                            </div>
+
+
+                            <div id="verSolicitudDocumentos"
+                                 class="adq-files-list">
+                            </div>
+
                         </div>
 
                     </div>
 
 
-                    <div class="adq-detail-field">
+                    <!-- ================================================== -->
+                    <!-- CHAT DE SEGUIMIENTO -->
+                    <!-- ================================================== -->
 
-                        <span class="adq-detail-label">
-                            Solicitante
-                        </span>
+                    <div class="tab-pane fade"
+                         id="contenidoSeguimientoAdq"
+                         role="tabpanel">
 
-                        <div class="adq-detail-value"
-                             id="verSolicitudSolicitante">
+                        <div class="adq-followup-wrapper">
+
+                            <!-- ENCABEZADO DEL CHAT -->
+
+                            <div class="adq-followup-header">
+
+                                <div>
+
+                                    <span class="adq-detail-label">
+                                        Comunicación de la solicitud
+                                    </span>
+
+                                    <strong>
+                                        Chat de seguimiento
+                                    </strong>
+
+                                    <small class="text-muted d-block">
+                                        Comunicación entre el solicitante,
+                                        el responsable de aprobación
+                                        y el área de Adquisiciones.
+                                    </small>
+
+                                </div>
+
+
+                                <div class="text-end">
+
+                                    <span class="adq-detail-label">
+                                        Estatus actual
+                                    </span>
+
+                                    <div>
+
+                                        <span id="seguimientoEstatusAdq"
+                                              class="badge bg-primary">
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- MENSAJES -->
+
+                            <div id="listaComentariosAdq"
+                                 class="adq-chat-list">
+
+                                <div class="adq-chat-empty">
+
+                                    <i class="bi bi-chat-square-dots"></i>
+
+                                    <strong>
+                                        Aún no hay mensajes
+                                    </strong>
+
+                                    <span>
+                                        Inicia la conversación relacionada
+                                        con esta solicitud.
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- NUEVO MENSAJE -->
+
+                            <div id="formComentarioAdq"
+                                 class="adq-chat-compose">
+
+                                <input type="hidden"
+                                       id="SolicitudComentarioId" />
+
+
+                                <label for="NuevoComentarioAdq"
+                                       class="form-label fw-semibold">
+
+                                    Nuevo mensaje
+
+                                </label>
+
+
+                                <textarea id="NuevoComentarioAdq"
+                                          class="form-control"
+                                          rows="3"
+                                          maxlength="5000"
+                                          placeholder="Escribe un mensaje relacionado con esta solicitud..."></textarea>
+
+
+                                <!-- ARCHIVOS SELECCIONADOS PARA EL MENSAJE -->
+
+                                <div id="listaAdjuntosComentarioAdq"
+                                     class="mt-2">
+                                </div>
+
+
+                                <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
+
+                                    <div>
+
+                                        <button type="button"
+                                                id="btnSeleccionarAdjuntoComentarioAdq"
+                                                class="btn btn-outline-secondary">
+
+                                            <i class="bi bi-paperclip me-1"></i>
+
+                                            Adjuntar archivo
+
+                                        </button>
+
+
+                                        <input type="file"
+                                               id="archivoComentarioAdq"
+                                               class="d-none"
+                                               multiple
+                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+
+                                    </div>
+
+
+                                    <button type="button"
+                                            id="btnEnviarComentarioAdq"
+                                            class="btn btn-primary">
+
+                                        <i class="bi bi-send me-1"></i>
+
+                                        Enviar mensaje
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
                         </div>
 
                     </div>
 
 
-                    <div class="adq-detail-field">
+                    <!-- ================================================== -->
+                    <!-- HISTORIAL -->
+                    <!-- ================================================== -->
 
-                        <span class="adq-detail-label">
-                            Fecha
-                        </span>
+                    <div class="tab-pane fade"
+                         id="contenidoHistorialAdq"
+                         role="tabpanel">
 
-                        <div class="adq-detail-value"
-                             id="verSolicitudFecha">
+                        <div class="adq-history-wrapper">
+
+                            <div class="adq-form-section-title">
+
+                                <i class="bi bi-clock-history"></i>
+
+                                Historial de la solicitud
+
+                            </div>
+
+
+                            <div class="text-muted small mb-3">
+
+                                Consulta los movimientos y cambios
+                                realizados durante el proceso de compra.
+
+                            </div>
+
+
+                            <div id="listaHistorialAdq"
+                                 class="adq-history-list">
+
+                                <div class="text-muted small">
+                                    Cargando historial...
+                                </div>
+
+                            </div>
+
                         </div>
 
-                    </div>
-
-
-                    <div class="adq-detail-field">
-
-                        <span class="adq-detail-label">
-                            Área
-                        </span>
-
-                        <div class="adq-detail-value"
-                             id="verSolicitudArea">
-                        </div>
-
-                    </div>
-
-
-                    <div class="adq-detail-field">
-
-                        <span class="adq-detail-label">
-                            Estatus
-                        </span>
-
-                        <div class="adq-detail-value"
-                             id="verSolicitudEstatus">
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- ====================================================== -->
-                <!-- DESCRIPCIÓN -->
-                <!-- ====================================================== -->
-
-                <div class="adq-detail-section">
-
-                    <div class="adq-detail-section-title">
-
-                        <i class="bi bi-card-text"></i>
-
-                        Descripción
-
-                    </div>
-
-                    <div class="adq-detail-text"
-                         id="verSolicitudDescripcion">
-                    </div>
-
-                </div>
-
-
-                <!-- ====================================================== -->
-                <!-- JUSTIFICACIÓN -->
-                <!-- ====================================================== -->
-
-                <div class="adq-detail-section">
-
-                    <div class="adq-detail-section-title">
-
-                        <i class="bi bi-chat-left-text"></i>
-
-                        Justificación
-
-                    </div>
-
-                    <div class="adq-detail-text"
-                         id="verSolicitudJustificacion">
-                    </div>
-
-                </div>
-
-
-                <!-- ====================================================== -->
-                <!-- PRODUCTOS -->
-                <!-- ====================================================== -->
-
-                <div class="adq-detail-section">
-
-                    <div class="adq-detail-section-title">
-
-                        <i class="bi bi-box-seam"></i>
-
-                        Productos / Servicios
-
-                    </div>
-
-
-                    <div id="verSolicitudProductos"
-                         class="adq-products-list">
-                    </div>
-
-                </div>
-
-
-                <!-- ====================================================== -->
-                <!-- DOCUMENTACIÓN -->
-                <!-- ====================================================== -->
-
-                <div class="adq-detail-section">
-
-                    <div class="adq-detail-section-title">
-
-                        <i class="bi bi-paperclip"></i>
-
-                        Documentación
-
-                    </div>
-
-
-                    <div id="verSolicitudDocumentos"
-                         class="adq-files-list">
                     </div>
 
                 </div>
@@ -2112,6 +2782,7 @@
     </div>
 
 </div>
+
 
 <!-- ========================================================== -->
 <!-- MODAL DECISIÓN GERENTE -->
@@ -2243,6 +2914,7 @@
 
 </div>
 
+
 <!-- ========================================================== -->
 <!-- MODAL ACCIÓN ADQUISICIONES -->
 <!-- ========================================================== -->
@@ -2373,6 +3045,7 @@
     </div>
 
 </div>
+
 
 <!-- ========================================================== -->
 <!-- MODAL ASIGNAR AGENTE -->
@@ -2513,259 +3186,6 @@
 
 </div>
 
-<!-- ========================================================== -->
-<!-- MODAL ACCIÓN ADQUISICIONES -->
-<!-- ========================================================== -->
-
-<div class="modal fade"
-     id="modalAccionAdquisiciones"
-     tabindex="-1"
-     aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <form method="post"
-                  id="formAccionAdquisiciones">
-
-                @Html.AntiForgeryToken()
-
-                <input type="hidden"
-                       id="SolicitudAdquisicionesId"
-                       name="SolicitudAdquisicionesId" />
-
-
-                <div class="modal-header">
-
-                    <div>
-
-                        <h5 class="modal-title"
-                            id="tituloAccionAdquisiciones">
-
-                            Gestión de solicitud
-
-                        </h5>
-
-                        <small class="text-muted"
-                               id="folioAccionAdquisiciones">
-                        </small>
-
-                    </div>
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Cerrar">
-                    </button>
-
-                </div>
-
-
-                <div class="modal-body">
-
-                    <div id="mensajeAccionAdquisiciones"
-                         class="alert mb-3">
-                    </div>
-
-
-                    <div>
-
-                        <label for="ComentarioAdquisiciones"
-                               class="form-label fw-bold"
-                               id="labelComentarioAdquisiciones">
-
-                            Comentario
-
-                        </label>
-
-
-                        <textarea id="ComentarioAdquisiciones"
-                                  name="ComentarioAdquisiciones"
-                                  class="form-control"
-                                  rows="4"
-                                  maxlength="2000"
-                                  placeholder="Escribe un comentario..."></textarea>
-
-
-                        <div class="form-text"
-                             id="ayudaComentarioAdquisiciones">
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
-
-                        Cerrar
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnAprobarAdquisiciones"
-                            formaction="?handler=AprobarAdquisiciones"
-                            class="btn btn-success d-none">
-
-                        <i class="bi bi-check-lg me-1"></i>
-
-                        Aprobar solicitud
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnCancelarAdquisiciones"
-                            formaction="?handler=CancelarAdquisiciones"
-                            class="btn btn-danger d-none">
-
-                        <i class="bi bi-x-lg me-1"></i>
-
-                        Confirmar cancelación
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</div>
-
-<!-- ========================================================== -->
-<!-- MODAL ASIGNAR AGENTE -->
-<!-- ========================================================== -->
-
-<div class="modal fade"
-     id="modalAsignarAdquisiciones"
-     tabindex="-1"
-     aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <form method="post"
-                  asp-page-handler="AsignarAgente">
-
-                @Html.AntiForgeryToken()
-
-                <input type="hidden"
-                       id="SolicitudAsignarAdqId"
-                       name="SolicitudAdquisicionesId" />
-
-
-                <div class="modal-header">
-
-                    <div>
-
-                        <h5 class="modal-title">
-
-                            <i class="bi bi-person-plus me-2"></i>
-
-                            Asignar agente de compras
-
-                        </h5>
-
-                        <small id="folioAsignarAdq"
-                               class="text-muted">
-                        </small>
-
-                    </div>
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Cerrar">
-                    </button>
-
-                </div>
-
-
-                <div class="modal-body">
-
-                    <div class="mb-3">
-
-                        <label class="form-label fw-bold">
-                            Agente de compras
-                        </label>
-
-                        <select name="UsuarioAsignadoAdqId"
-                                class="form-select"
-                                required>
-
-                            <option value="">
-                                Selecciona...
-                            </option>
-
-                            @foreach (
-                                var agente
-                                in Model.AgentesCompras)
-                            {
-                                <option value="@agente.Value">
-                                    @agente.Text
-                                </option>
-                            }
-
-                        </select>
-
-                    </div>
-
-
-                    <div>
-
-                        <label class="form-label fw-bold">
-                            Observaciones
-                        </label>
-
-                        <textarea name="ComentarioAdquisiciones"
-                                  class="form-control"
-                                  rows="3"
-                                  maxlength="2000"
-                                  placeholder="Observaciones opcionales..."></textarea>
-
-                    </div>
-
-                </div>
-
-
-                <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
-
-                        Cancelar
-
-                    </button>
-
-                    <button type="submit"
-                            class="btn btn-primary">
-
-                        <i class="bi bi-person-check me-1"></i>
-
-                        Asignar agente
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</div>
 
 <!-- ========================================================== -->
 <!-- MODAL CANCELAR SOLICITUD DEL USUARIO -->
@@ -2836,6 +3256,7 @@
                                class="form-label fw-bold">
 
                             Motivo de cancelación
+
                         </label>
 
 
@@ -2885,6 +3306,7 @@
     </div>
 
 </div>
+
 
 @section Scripts
 {
