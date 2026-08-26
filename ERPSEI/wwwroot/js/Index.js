@@ -144,6 +144,31 @@ document.addEventListener(
             );
 
         // =========================================================
+        // ARCHIVOS DEL CHAT
+        // =========================================================
+
+        const btnSeleccionarAdjuntoComentarioAdq =
+            document.getElementById(
+                "btnSeleccionarAdjuntoComentarioAdq"
+            );
+
+
+        const inputArchivoComentarioAdq =
+            document.getElementById(
+                "archivoComentarioAdq"
+            );
+
+
+        const listaAdjuntosComentarioAdq =
+            document.getElementById(
+                "listaAdjuntosComentarioAdq"
+            );
+
+
+        let archivosComentarioSeleccionadosAdq =
+            [];
+
+        // =========================================================
         // OBTENER CHAT / HISTORIAL
         // =========================================================
 
@@ -218,21 +243,21 @@ document.addEventListener(
             ) {
 
                 listaComentariosAdq.innerHTML = `
-                    <div class="adq-chat-empty">
+            <div class="adq-chat-empty">
 
-                        <i class="bi bi-chat-square-dots"></i>
+                <i class="bi bi-chat-square-dots"></i>
 
-                        <strong>
-                            Aún no hay mensajes
-                        </strong>
+                <strong>
+                    Aún no hay mensajes
+                </strong>
 
-                        <span>
-                            Inicia la conversación relacionada
-                            con esta solicitud.
-                        </span>
+                <span>
+                    Inicia la conversación relacionada
+                    con esta solicitud.
+                </span>
 
-                    </div>
-                `;
+            </div>
+        `;
 
                 return;
             }
@@ -261,33 +286,144 @@ document.addEventListener(
                         );
 
 
-                    elemento.innerHTML = `
-                        <div class="adq-chat-message-header">
+                    const adjuntos =
+                        Array.isArray(
+                            comentario.adjuntos
+                        )
+                            ? comentario.adjuntos
+                            : [];
 
-                            <strong>
-                                ${comentario.esUsuarioActual
+
+                    let htmlComentario =
+                        "";
+
+
+                    /*
+                     * Un mensaje puede contener solamente
+                     * archivos, por eso el texto es opcional.
+                     */
+                    if (
+                        comentario.comentario
+                        &&
+                        comentario.comentario.trim()
+                    ) {
+                        htmlComentario = `
+                    <div class="adq-chat-bubble">
+                        ${escapeHtmlAdq(
+                            comentario.comentario
+                        )}
+                    </div>
+                `;
+                    }
+
+
+                    let htmlAdjuntos =
+                        "";
+
+
+                    if (
+                        adjuntos.length >
+                        0
+                    ) {
+
+                        htmlAdjuntos = `
+                    <div class="adq-chat-attachments">
+
+                        ${adjuntos
+                                .map(
+                                    function (
+                                        archivo
+                                    ) {
+
+                                        return `
+                                            <a href="${escapeAttributeAdq(
+                                                                                    archivo.rutaArchivo
+                                                                                )}"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               class="adq-chat-attachment"
+                                               title="Abrir ${escapeAttributeAdq(
+                                                                                    archivo.nombreOriginal
+                                                                                )}">
+
+                                                <div class="adq-chat-file-icon">
+
+                                                    <i class="bi bi-file-earmark"></i>
+
+                                                </div>
+
+
+                                                <div class="adq-chat-file-name">
+
+                                                    ${escapeHtmlAdq(
+                                                                                    archivo.nombreOriginal
+                                                                                )}
+
+                                                </div>
+
+
+                                                <div class="adq-chat-file-size">
+
+                                                    ${formatearTamanoAdq(
+                                                                                    Number(
+                                                                                        archivo.tamanoBytes
+                                                                                        ??
+                                                                                        0
+                                                                                    )
+                                                                                )}
+
+                                                </div>
+
+
+                                                <div class="adq-chat-file-action">
+
+                                                    <i class="bi bi-box-arrow-up-right"></i>
+
+                                                </div>
+
+                                            </a>
+                                        `;
+                                    }
+                                )
+                                .join(
+                                    ""
+                                )
+                            }
+
+                    </div>
+                `;
+                    }
+
+
+                    elemento.innerHTML = `
+                <div class="adq-chat-message-header">
+
+                    <strong>
+
+                        ${comentario.esUsuarioActual
                             ? "Tú"
                             : escapeHtmlAdq(
                                 comentario.usuario
                             )
                         }
-                            </strong>
 
-                            <span>
-                                ${fecha.toLocaleString(
+                    </strong>
+
+                    <span>
+
+                        ${fecha.toLocaleString(
                             "es-MX"
                         )}
-                            </span>
 
-                        </div>
+                    </span>
+
+                </div>
 
 
-                        <div class="adq-chat-bubble">
-                            ${escapeHtmlAdq(
-                            comentario.comentario
-                        )}
-                        </div>
-                    `;
+                ${htmlComentario}
+
+                ${htmlAdjuntos}
+            `;
 
 
                     listaComentariosAdq
@@ -1030,6 +1166,323 @@ document.addEventListener(
                 `${titulo}\n${mensaje}`
             );
         }
+
+        // =========================================================
+        // CHAT - RENDERIZAR ARCHIVOS SELECCIONADOS
+        // =========================================================
+
+        function renderizarAdjuntosComentarioSeleccionadosAdq() {
+
+            if (
+                !listaAdjuntosComentarioAdq
+            ) {
+                return;
+            }
+
+
+            listaAdjuntosComentarioAdq.innerHTML =
+                "";
+
+
+            if (
+                archivosComentarioSeleccionadosAdq.length ===
+                0
+            ) {
+                return;
+            }
+
+
+            archivosComentarioSeleccionadosAdq
+                .forEach(
+                    function (
+                        archivo,
+                        indice
+                    ) {
+
+                        const item =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        item.className =
+                            "adq-chat-selected-file";
+
+
+                        item.innerHTML = `
+                            <div class="adq-chat-file-icon">
+
+                                <i class="bi bi-file-earmark"></i>
+
+                            </div>
+
+
+                            <div class="adq-chat-file-name"
+                                 title="${escapeAttributeAdq(
+                                                    archivo.name
+                                                )}">
+
+                                ${escapeHtmlAdq(
+                                                    archivo.name
+                                                )}
+
+                            </div>
+
+
+                            <div class="adq-chat-file-size">
+
+                                ${formatearTamanoAdq(
+                                                    archivo.size
+                                                )}
+
+                            </div>
+
+
+                            <button type="button"
+                                    class="adq-chat-file-action adq-chat-file-remove btnEliminarAdjuntoComentarioAdq"
+                                    data-index="${indice}"
+                                    title="Quitar archivo"
+                                    aria-label="Quitar archivo">
+
+                                <i class="bi bi-x-lg"></i>
+
+                            </button>
+                        `;
+
+
+                        listaAdjuntosComentarioAdq
+                            .appendChild(
+                                item
+                            );
+                    }
+                );
+        }
+
+
+        // =========================================================
+        // CHAT - AGREGAR ARCHIVOS
+        // =========================================================
+
+        function agregarAdjuntosComentarioAdq(
+            archivosNuevos
+        ) {
+
+            const clavesExistentes =
+                new Set(
+                    archivosComentarioSeleccionadosAdq
+                        .map(
+                            obtenerClaveArchivoAdq
+                        )
+                );
+
+
+            archivosNuevos.forEach(
+                function (
+                    archivo
+                ) {
+
+                    const clave =
+                        obtenerClaveArchivoAdq(
+                            archivo
+                        );
+
+
+                    /*
+                     * Evitamos agregar el mismo archivo
+                     * varias veces.
+                     */
+                    if (
+                        clavesExistentes.has(
+                            clave
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    const validacion =
+                        archivoValidoAdq(
+                            archivo
+                        );
+
+
+                    if (
+                        !validacion.formatoValido
+                    ) {
+                        mostrarAdvertenciaAdq(
+                            "Formato no permitido",
+                            `El archivo ${archivo.name} no tiene un formato permitido.`
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        !validacion.tamanoValido
+                    ) {
+                        mostrarAdvertenciaAdq(
+                            "Archivo demasiado grande",
+                            `El archivo ${archivo.name} supera el límite de 15 MB.`
+                        );
+
+                        return;
+                    }
+
+
+                    archivosComentarioSeleccionadosAdq
+                        .push(
+                            archivo
+                        );
+
+
+                    clavesExistentes.add(
+                        clave
+                    );
+                }
+            );
+
+
+            renderizarAdjuntosComentarioSeleccionadosAdq();
+        }
+
+
+        // =========================================================
+        // CHAT - ELIMINAR ARCHIVO SELECCIONADO
+        // =========================================================
+
+        function eliminarAdjuntoComentarioAdq(
+            indice
+        ) {
+
+            if (
+                indice < 0
+                ||
+                indice >=
+                archivosComentarioSeleccionadosAdq.length
+            ) {
+                return;
+            }
+
+
+            archivosComentarioSeleccionadosAdq
+                .splice(
+                    indice,
+                    1
+                );
+
+
+            renderizarAdjuntosComentarioSeleccionadosAdq();
+        }
+
+
+        // =========================================================
+        // CHAT - LIMPIAR ARCHIVOS
+        // =========================================================
+
+        function limpiarAdjuntosComentarioAdq() {
+
+            archivosComentarioSeleccionadosAdq =
+                [];
+
+
+            if (
+                inputArchivoComentarioAdq
+            ) {
+                inputArchivoComentarioAdq.value =
+                    "";
+            }
+
+
+            renderizarAdjuntosComentarioSeleccionadosAdq();
+        }
+
+        // =========================================================
+        // CHAT - EVENTOS DE ARCHIVOS
+        // =========================================================
+
+        btnSeleccionarAdjuntoComentarioAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    inputArchivoComentarioAdq
+                        ?.click();
+                }
+            );
+
+
+        inputArchivoComentarioAdq
+            ?.addEventListener(
+                "change",
+                function () {
+
+                    const archivos =
+                        Array.from(
+                            inputArchivoComentarioAdq.files
+                            ??
+                            []
+                        );
+
+
+                    agregarAdjuntosComentarioAdq(
+                        archivos
+                    );
+
+
+                    /*
+                     * Limpiamos el input real para permitir
+                     * volver a seleccionar archivos.
+                     *
+                     * Los File quedan almacenados en nuestro
+                     * arreglo independiente.
+                     */
+                    inputArchivoComentarioAdq.value =
+                        "";
+                }
+            );
+
+
+        listaAdjuntosComentarioAdq
+            ?.addEventListener(
+                "click",
+                function (
+                    event
+                ) {
+
+                    const boton =
+                        event.target.closest(
+                            ".btnEliminarAdjuntoComentarioAdq"
+                        );
+
+
+                    if (
+                        !boton
+                    ) {
+                        return;
+                    }
+
+
+                    const indice =
+                        Number(
+                            boton.dataset.index
+                        );
+
+
+                    if (
+                        Number.isNaN(
+                            indice
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    eliminarAdjuntoComentarioAdq(
+                        indice
+                    );
+                }
+            );
 
 
         // =========================================================
@@ -2575,6 +3028,16 @@ document.addEventListener(
                             boton.dataset.id
                         );
 
+                    limpiarAdjuntosComentarioAdq();
+
+
+                    if (
+                        inputNuevoComentarioAdq
+                    ) {
+                        inputNuevoComentarioAdq.value =
+                            "";
+                    }
+
                     solicitudDetalleActualAdq =
                         solicitud;
 
@@ -3077,6 +3540,16 @@ document.addEventListener(
 
                         intervaloSeguimientoAdq =
                             null;
+
+                        limpiarAdjuntosComentarioAdq();
+
+
+                        if (
+                            inputNuevoComentarioAdq
+                        ) {
+                            inputNuevoComentarioAdq.value =
+                                "";
+                        }
                     }
 
                     solicitudDetalleActualAdq =
@@ -4340,6 +4813,10 @@ document.addEventListener(
         // ENVIAR MENSAJE DEL CHAT
         // =========================================================
 
+        // =========================================================
+        // ENVIAR MENSAJE DEL CHAT
+        // =========================================================
+
         btnEnviarComentarioAdq
             ?.addEventListener(
                 "click",
@@ -4365,18 +4842,27 @@ document.addEventListener(
                     if (
                         !solicitudId
                     ) {
-
                         return;
                     }
 
 
+                    /*
+                     * Permitimos:
+                     *
+                     * mensaje
+                     * mensaje + archivo
+                     * solo archivo
+                     */
                     if (
                         !comentario
+                        &&
+                        archivosComentarioSeleccionadosAdq.length ===
+                        0
                     ) {
 
                         mostrarAdvertenciaAdq(
                             "Mensaje requerido",
-                            "Escribe un mensaje antes de enviarlo."
+                            "Escribe un mensaje o adjunta al menos un archivo."
                         );
 
 
@@ -4413,6 +4899,27 @@ document.addEventListener(
                     );
 
 
+                    /*
+                     * ASP.NET Core enlazará cada elemento
+                     * con:
+                     *
+                     * List<IFormFile> ArchivosComentarioAdq
+                     */
+                    archivosComentarioSeleccionadosAdq
+                        .forEach(
+                            function (
+                                archivo
+                            ) {
+
+                                datos.append(
+                                    "ArchivosComentarioAdq",
+                                    archivo,
+                                    archivo.name
+                                );
+                            }
+                        );
+
+
                     try {
 
                         btnEnviarComentarioAdq.disabled =
@@ -4424,9 +4931,9 @@ document.addEventListener(
 
 
                         btnEnviarComentarioAdq.innerHTML = `
-                            <span class="spinner-border spinner-border-sm me-1"></span>
-                            Enviando...
-                        `;
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Enviando...
+                `;
 
 
                         try {
@@ -4469,6 +4976,10 @@ document.addEventListener(
                             }
 
 
+                            // ==========================================
+                            // LIMPIAR MENSAJE
+                            // ==========================================
+
                             if (
                                 inputNuevoComentarioAdq
                             ) {
@@ -4477,6 +4988,17 @@ document.addEventListener(
                                     "";
                             }
 
+
+                            // ==========================================
+                            // LIMPIAR ARCHIVOS
+                            // ==========================================
+
+                            limpiarAdjuntosComentarioAdq();
+
+
+                            // ==========================================
+                            // RECARGAR CHAT
+                            // ==========================================
 
                             await cargarSeguimientoAdq(
                                 solicitudId

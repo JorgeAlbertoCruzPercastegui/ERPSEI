@@ -93,6 +93,13 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             set;
         }
 
+        [BindProperty]
+        public List<IFormFile> ArchivosComentarioAdq
+        {
+            get;
+            set;
+        } = new();
+
 
         [BindProperty]
         [StringLength(
@@ -164,6 +171,45 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         }
 
+        public class AdqComentarioAdjuntoDto
+        {
+            public int Id
+            {
+                get;
+                set;
+            }
+
+            public string NombreOriginal
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string RutaArchivo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string? Extension
+            {
+                get;
+                set;
+            }
+
+            public string? MimeType
+            {
+                get;
+                set;
+            }
+
+            public long TamanoBytes
+            {
+                get;
+                set;
+            }
+        }
+
         public class AdqComentarioSeguimientoDto
         {
             public int Id
@@ -201,6 +247,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 get;
                 set;
             }
+
+            public List<AdqComentarioAdjuntoDto> Adjuntos
+            {
+                get;
+                set;
+            } = new();
         }
 
         public class AdqAprobacionHistorialDto
@@ -484,10 +536,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             get;
             private set;
         }
-
-        // =========================================================
-        // HISTORIAL DE APROBACIONES DEL GERENTE
-        // =========================================================
 
         // =========================================================
         // HISTORIAL DE APROBACIONES DEL GERENTE
@@ -3092,6 +3140,230 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
         // =========================================================
+        // VALIDAR ARCHIVOS DEL CHAT
+        // =========================================================
+
+        private string? ValidarArchivosComentarioAdq()
+        {
+            if (
+                ArchivosComentarioAdq == null
+                ||
+                ArchivosComentarioAdq.Count ==
+                0
+            )
+            {
+                return null;
+            }
+
+
+            string[] extensionesPermitidas =
+                    {
+                ".pdf",
+                ".doc",
+                ".docx",
+                ".xls",
+                ".xlsx",
+                ".png",
+                ".jpg",
+                ".jpeg"
+            };
+
+
+            const long tamanoMaximo =
+                15L *
+                1024L *
+                1024L;
+
+
+            foreach (
+                IFormFile archivo
+                in ArchivosComentarioAdq
+            )
+            {
+                if (
+                    archivo.Length <=
+                    0
+                )
+                {
+                    return
+                        $"El archivo {archivo.FileName} está vacío.";
+                }
+
+
+                if (
+                    archivo.Length >
+                    tamanoMaximo
+                )
+                {
+                    return
+                        $"El archivo {archivo.FileName} supera el límite de 15 MB.";
+                }
+
+
+                string extension =
+                    Path.GetExtension(
+                        archivo.FileName
+                    )
+                    .ToLowerInvariant();
+
+
+                if (
+                    !extensionesPermitidas.Contains(
+                        extension
+                    )
+                )
+                {
+                    return
+                        $"El formato del archivo {archivo.FileName} no está permitido.";
+                }
+            }
+
+
+            return null;
+        }
+
+        // =========================================================
+        // GUARDAR ADJUNTOS DEL CHAT
+        // =========================================================
+
+        private async Task GuardarAdjuntosComentarioAdqAsync(
+            AdqComentario comentario,
+            DateTime ahora)
+        {
+            if (
+                ArchivosComentarioAdq == null
+                ||
+                ArchivosComentarioAdq.Count ==
+                0
+            )
+            {
+                return;
+            }
+
+
+            string carpetaRelativa =
+                Path.Combine(
+                    "uploads",
+                    "adquisiciones",
+                    comentario.SolicitudId.ToString(),
+                    "comentarios",
+                    comentario.Id.ToString()
+                );
+
+
+            string carpetaFisica =
+                Path.Combine(
+                    _environment.WebRootPath,
+                    carpetaRelativa
+                );
+
+
+            Directory.CreateDirectory(
+                carpetaFisica
+            );
+
+
+            foreach (
+                IFormFile archivo
+                in ArchivosComentarioAdq
+            )
+            {
+                if (
+                    archivo.Length <=
+                    0
+                )
+                {
+                    continue;
+                }
+
+
+                string extension =
+                    Path.GetExtension(
+                        archivo.FileName
+                    )
+                    .ToLowerInvariant();
+
+
+                string nombreGuardado =
+                    Guid.NewGuid()
+                        .ToString(
+                            "N"
+                        )
+                    +
+                    extension;
+
+
+                string rutaFisica =
+                    Path.Combine(
+                        carpetaFisica,
+                        nombreGuardado
+                    );
+
+
+                await using (
+                    FileStream stream =
+                        new(
+                            rutaFisica,
+                            FileMode.Create
+                        )
+                )
+                {
+                    await archivo.CopyToAsync(
+                        stream
+                    );
+                }
+
+
+                string rutaWeb =
+                    "/" +
+                    Path.Combine(
+                        carpetaRelativa,
+                        nombreGuardado
+                    )
+                    .Replace(
+                        "\\",
+                        "/"
+                    );
+
+
+                _context.AdqComentariosAdjuntos.Add(
+                    new AdqComentarioAdjunto
+                    {
+                        ComentarioId =
+                            comentario.Id,
+
+                        NombreOriginal =
+                            Path.GetFileName(
+                                archivo.FileName
+                            ),
+
+                        NombreGuardado =
+                            nombreGuardado,
+
+                        RutaArchivo =
+                            rutaWeb,
+
+                        Extension =
+                            extension,
+
+                        MimeType =
+                            archivo.ContentType,
+
+                        TamanoBytes =
+                            archivo.Length,
+
+                        FechaCarga =
+                            ahora,
+
+                        Eliminado =
+                            false
+                    }
+                );
+            }
+        }
+
+
+        // =========================================================
         // GUARDAR ADJUNTOS
         // =========================================================
 
@@ -3674,10 +3946,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // SEGUIMIENTO / CHAT DE LA SOLICITUD
         // =========================================================
 
-        // =========================================================
-        // SEGUIMIENTO / CHAT DE LA SOLICITUD
-        // =========================================================
-
         public async Task<IActionResult>
             OnGetSeguimientoSolicitudAsync(
                 int id)
@@ -3909,6 +4177,96 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 )
                 .ToListAsync();
 
+            // =====================================================
+            // ADJUNTOS DE LOS MENSAJES
+            // =====================================================
+
+            if (
+                comentarios.Count >
+                0
+            )
+            {
+                List<int> comentarioIds =
+                    comentarios
+                        .Select(
+                            x =>
+                                x.Id
+                        )
+                        .ToList();
+
+
+                var adjuntosComentarios =
+                    await _context.AdqComentariosAdjuntos
+                        .AsNoTracking()
+                        .Where(
+                            x =>
+                                comentarioIds.Contains(
+                                    x.ComentarioId
+                                )
+                                &&
+                                !x.Eliminado
+                        )
+                        .Select(
+                            x =>
+                                new
+                                {
+                                    x.Id,
+
+                                    x.ComentarioId,
+
+                                    x.NombreOriginal,
+
+                                    x.RutaArchivo,
+
+                                    x.Extension,
+
+                                    x.MimeType,
+
+                                    x.TamanoBytes
+                                }
+                        )
+                        .ToListAsync();
+
+
+                foreach (
+                    AdqComentarioSeguimientoDto comentario
+                    in comentarios
+                )
+                {
+                    comentario.Adjuntos =
+                        adjuntosComentarios
+                            .Where(
+                                x =>
+                                    x.ComentarioId ==
+                                        comentario.Id
+                            )
+                            .Select(
+                                x =>
+                                    new AdqComentarioAdjuntoDto
+                                    {
+                                        Id =
+                                            x.Id,
+
+                                        NombreOriginal =
+                                            x.NombreOriginal,
+
+                                        RutaArchivo =
+                                            x.RutaArchivo,
+
+                                        Extension =
+                                            x.Extension,
+
+                                        MimeType =
+                                            x.MimeType,
+
+                                        TamanoBytes =
+                                            x.TamanoBytes
+                                    }
+                            )
+                            .ToList();
+                }
+            }
+
 
             // =====================================================
             // MENSAJES PENDIENTES DE RESPUESTA
@@ -4073,10 +4431,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // ENVIAR MENSAJE DEL CHAT
         // =========================================================
 
-        // =========================================================
-        // ENVIAR MENSAJE DEL CHAT
-        // =========================================================
-
         public async Task<IActionResult>
             OnPostAgregarComentarioAdqAsync()
         {
@@ -4090,6 +4444,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
                             "No fue posible identificar al usuario."
                     }
@@ -4101,15 +4456,22 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            string comentario =
+            string comentarioTexto =
                 NuevoComentarioAdq?
                     .Trim()
                 ??
                 string.Empty;
 
 
+            bool tieneArchivos =
+                ArchivosComentarioAdq != null
+                &&
+                ArchivosComentarioAdq.Count >
+                0;
+
+
             // =====================================================
-            // VALIDACIONES
+            // VALIDAR SOLICITUD
             // =====================================================
 
             if (
@@ -4121,6 +4483,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
                             "La solicitud no es válida."
                     }
@@ -4132,18 +4495,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =====================================================
+            // MENSAJE O ARCHIVO OBLIGATORIO
+            // =====================================================
+
             if (
                 string.IsNullOrWhiteSpace(
-                    comentario
+                    comentarioTexto
                 )
+                &&
+                !tieneArchivos
             )
             {
                 return new JsonResult(
                     new
                     {
                         success = false,
+
                         message =
-                            "Escribe un mensaje antes de enviarlo."
+                            "Escribe un mensaje o adjunta al menos un archivo."
                     }
                 )
                 {
@@ -4154,7 +4524,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             if (
-                comentario.Length >
+                comentarioTexto.Length >
                 5000
             )
             {
@@ -4162,8 +4532,39 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
                             "El mensaje no puede superar los 5000 caracteres."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR ARCHIVOS
+            // =====================================================
+
+            string? errorArchivos =
+                ValidarArchivosComentarioAdq();
+
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    errorArchivos
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            errorArchivos
                     }
                 )
                 {
@@ -4190,6 +4591,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
                             "No se encontró la solicitud."
                     }
@@ -4201,10 +4603,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            // =====================================================
-            // NO PERMITIR CHAT EN BORRADOR
-            // =====================================================
-
             if (
                 solicitud.EstatusId ==
                 1
@@ -4214,6 +4612,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
                             "Debes enviar la solicitud antes de utilizar el chat."
                     }
@@ -4225,19 +4624,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            // =====================================================
-            // VALIDAR PARTICIPANTES DEL CHAT
-            // =====================================================
-
             bool esSolicitante =
                 solicitud.UsuarioSolicitanteId ==
                     usuarioActual.Id;
 
 
-            /*
-             * Gerente / jefe que forme o haya formado
-             * parte del flujo de aprobación.
-             */
             bool esAprobador =
                 await _context.AdqAprobaciones
                     .AsNoTracking()
@@ -4302,6 +4693,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
                             "No tienes permisos para participar en este chat."
                     }
@@ -4313,57 +4705,103 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            // =====================================================
-            // REGISTRAR MENSAJE
-            // =====================================================
-
             DateTime ahora =
                 DateTime.Now;
 
 
-            AdqComentario nuevoComentario =
-                new()
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                AdqComentario nuevoComentario =
+                    new()
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        Comentario =
+                            comentarioTexto,
+
+                        EsNotaInterna =
+                            false,
+
+                        FechaCreacion =
+                            ahora,
+
+                        Eliminado =
+                            false
+                    };
+
+
+                _context.AdqComentarios.Add(
+                    nuevoComentario
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await GuardarAdjuntosComentarioAdqAsync(
+                    nuevoComentario,
+                    ahora
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            "Mensaje enviado correctamente.",
+
+                        comentarioId =
+                            nuevoComentario.Id
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al enviar mensaje de seguimiento de la solicitud {SolicitudId}.",
+                    SolicitudComentarioId
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No fue posible enviar el mensaje."
+                    }
+                )
                 {
-                    SolicitudId =
-                        solicitud.Id,
-
-                    UsuarioId =
-                        usuarioActual.Id,
-
-                    Comentario =
-                        comentario,
-
-                    EsNotaInterna =
-                        false,
-
-                    FechaCreacion =
-                        ahora,
-
-                    Eliminado =
-                        false
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
                 };
-
-
-            _context.AdqComentarios.Add(
-                nuevoComentario
-            );
-
-
-            await _context
-                .SaveChangesAsync();
-
-
-            return new JsonResult(
-                new
-                {
-                    success = true,
-                    message =
-                        "Mensaje enviado correctamente.",
-
-                    comentarioId =
-                        nuevoComentario.Id
-                }
-            );
+            }
         }
 
         // =========================================================

@@ -1590,3 +1590,238 @@
             flex-wrap: wrap;
         }
 }
+
+/* =========================================================
+   CHAT - ARCHIVOS
+   ========================================================= */
+
+.adq-chat-attachments,
+#listaAdjuntosComentarioAdq {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+
+/* =========================================================
+   ARCHIVO SELECCIONADO / ARCHIVO ENVIADO
+   ========================================================= */
+
+.adq-chat-selected-file,
+.adq-chat-attachment {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto 36px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 50px;
+    padding: 7px 9px;
+    border: 1px solid #dfe3eb;
+    border-radius: 10px;
+    background: #ffffff;
+    text-decoration: none;
+    transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+
+    /* =========================================================
+   ARCHIVO ENVIADO - HOVER
+   ========================================================= */
+
+    .adq-chat-attachment:hover {
+        border-color: #b8c7ea;
+        background: #f8faff;
+        box-shadow: 0 3px 10px rgba(28, 49, 94, 0.08);
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+
+/* =========================================================
+   ICONO
+   ========================================================= */
+
+.adq-chat-file-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #3155c6;
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   NOMBRE
+   ========================================================= */
+
+.adq-chat-file-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #20264a;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+
+/* =========================================================
+   TAMAÑO
+   ========================================================= */
+
+.adq-chat-file-size {
+    white-space: nowrap;
+    color: #7b8496;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   ACCIÓN
+   ========================================================= */
+
+.adq-chat-file-action {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #637087;
+    font-size: 15px;
+    transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+
+/* =========================================================
+   ABRIR ARCHIVO
+   ========================================================= */
+
+.adq-chat-attachment:hover .adq-chat-file-action {
+    background: #e9efff;
+    color: #2456d8;
+}
+
+
+/* =========================================================
+   ELIMINAR ARCHIVO
+   ========================================================= */
+
+.adq-chat-file-remove {
+    cursor: pointer;
+}
+
+
+    .adq-chat-file-remove:hover {
+        background: #fff0f1;
+        color: #dc3545;
+    }
+
+
+/* =========================================================
+   CONTENEDOR DE ARCHIVOS ANTES DE ENVIAR
+   ========================================================= */
+
+#listaAdjuntosComentarioAdq:not(:empty) {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+
+/* =========================================================
+   ARCHIVOS DENTRO DE LA BURBUJA
+   ========================================================= */
+
+.adq-chat-message .adq-chat-attachments {
+    margin-top: 8px;
+}
+
+
+/* =========================================================
+   MENSAJE PROPIO
+   ========================================================= */
+
+.adq-chat-message-own .adq-chat-attachment {
+    border-color: #d9dcff;
+    background: #ffffff;
+}
+
+
+.adq-chat-message-own .adq-chat-file-icon {
+    background: #eef0ff;
+    color: #393ebf;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .adq-chat-selected-file,
+    .adq-chat-attachment {
+        grid-template-columns: 34px minmax(0, 1fr) 32px;
+    }
+
+
+    .adq-chat-file-size {
+        display: none;
+    }
+
+
+    .adq-chat-file-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+    }
+}
+
+/* =========================================================
+   CHAT - COMPOSITOR DE MENSAJES
+   ========================================================= */
+
+#formComentarioAdq {
+    padding: 18px;
+    border: 1px solid #e3e7ee;
+    border-radius: 12px;
+    background: #fafbfc;
+}
+
+
+#NuevoComentarioAdq {
+    min-height: 105px;
+    border-color: #d6dce5;
+    border-radius: 9px;
+    background: #ffffff;
+    resize: vertical;
+}
+
+
+    #NuevoComentarioAdq:focus {
+        border-color: #9fb4e8;
+        box-shadow: 0 0 0 3px rgba(49, 85, 198, 0.08);
+    }
+
+
+#btnSeleccionarAdjuntoComentarioAdq {
+    border-radius: 8px;
+}
+
+
+#btnEnviarComentarioAdq {
+    min-width: 155px;
+    border-radius: 8px;
+    font-weight: 600;
+}
