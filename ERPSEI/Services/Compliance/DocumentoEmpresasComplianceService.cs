@@ -71,7 +71,9 @@ namespace ERPSEI.Services.Compliance
                 await _context.Set<Empresa>()
                     .AsNoTracking()
                     .AnyAsync(
-                        x => x.Id == empresaMaestraId,
+                        x =>
+                            x.Id == empresaMaestraId &&
+                            x.Deshabilitado == 0,
                         cancellationToken
                     );
 
@@ -602,6 +604,58 @@ namespace ERPSEI.Services.Compliance
                          * Es más seguro ignorarlo que crear una
                          * versión incorrecta.
                          */
+                        if (
+                            candidatoSeleccionado == null &&
+                            documentosCompliance.Count == 0)
+                        {
+                            List<(
+                                ArchivoEmpresa Archivo,
+                                int TipoArchivoEmpresaId,
+                                int TipoComplianceId,
+                                EbTipoDocumento TipoDocumento
+                            )> candidatosIniciales =
+                                candidatosTipo
+                                    .OrderBy(x =>
+                                        x.Archivo.Nombre ??
+                                        string.Empty,
+                                        StringComparer.OrdinalIgnoreCase
+                                    )
+                                    .ThenBy(x =>
+                                        x.Archivo.Id,
+                                        StringComparer.OrdinalIgnoreCase
+                                    )
+                                    .ToList();
+
+                            archivosAProcesar.AddRange(
+                                candidatosIniciales
+                            );
+
+                            _logger.LogInformation(
+                                "Sincronización inicial del tipo único " +
+                                "{TipoDocumentoId} para la empresa " +
+                                "{EmpresaId}. Se importarán " +
+                                "{CantidadArchivos} archivos como versiones.",
+                                tipoComplianceId,
+                                empresaMaestraId,
+                                candidatosIniciales.Count
+                            );
+
+                            continue;
+                        }
+
+                        /*
+                         * ==============================================
+                         * 6. AMBIGÜEDAD EN SINCRONIZACIÓN POSTERIOR
+                         * ==============================================
+                         *
+                         * Si Compliance YA tiene información y aun así
+                         * no podemos identificar de forma segura el
+                         * ArchivoEmpresa correspondiente, NO elegimos
+                         * uno al azar.
+                         *
+                         * Esto protege documentos que ya fueron
+                         * sincronizados anteriormente.
+                         */
                         if (candidatoSeleccionado == null)
                         {
                             ignorados +=
@@ -729,18 +783,18 @@ namespace ERPSEI.Services.Compliance
                         {
 
                             /*
- * ==========================================================
- * ACTUALIZAR METADATOS DEL DOCUMENTO EXISTENTE
- * ==========================================================
- *
- * Si el archivo ya estaba sincronizado pero su
- * NombreOriginal quedó sin extensión, corregimos únicamente
- * los metadatos.
- *
- * NO se crea una nueva versión.
- * NO se duplica el archivo.
- * ==========================================================
- */
+                         * ==========================================================
+                         * ACTUALIZAR METADATOS DEL DOCUMENTO EXISTENTE
+                         * ==========================================================
+                         *
+                         * Si el archivo ya estaba sincronizado pero su
+                         * NombreOriginal quedó sin extensión, corregimos únicamente
+                         * los metadatos.
+                         *
+                         * NO se crea una nueva versión.
+                         * NO se duplica el archivo.
+                         * ==========================================================
+                         */
                             string extensionCorrecta =
                                 NormalizarExtension(
                                     archivoEmpresa.Extension
@@ -826,6 +880,38 @@ namespace ERPSEI.Services.Compliance
                             if (!tipoDocumento
                                 .PermiteMultiplesArchivos)
                             {
+
+                                foreach (
+                                var pendienteAnterior
+                                in vinculosPendientes.Where(x =>
+                                    x.Vinculo.EmpresaMaestraId ==
+                                        empresaMaestraId &&
+
+                                    x.Vinculo.EmpresaComplianceId ==
+                                        complianceId &&
+
+                                    x.Vinculo.TipoDocumentoComplianceId ==
+                                        tipoComplianceId &&
+
+                                    (
+                                        x.Vinculo.DocumentoComplianceId !=
+                                            documentoCoincidente.Id ||
+
+                                        x.Vinculo.ArchivoEmpresaId !=
+                                            archivoEmpresaId
+                                    ) &&
+
+                                    x.Vinculo.Activo
+                                ))
+                                {
+                                    pendienteAnterior.Vinculo.Activo =
+                                        false;
+
+                                    pendienteAnterior.Vinculo.FechaActualizacion =
+                                        DateTime.Now;
+
+                                    cambiosVinculos++;
+                                }
                                 List<EbDocumentoVinculoEmpresa>
                                     vinculosAnteriores =
                                         await _context
@@ -1001,6 +1087,42 @@ namespace ERPSEI.Services.Compliance
                         if (!tipoDocumento
                             .PermiteMultiplesArchivos)
                         {
+                            /*
+                             * ==========================================================
+                             * DESACTIVAR VÍNCULOS PENDIENTES DEL MISMO TIPO
+                             * ==========================================================
+                             *
+                             * Durante una sincronización inicial pueden crearse varias
+                             * versiones en la misma ejecución.
+                             *
+                             * Como los vínculos nuevos todavía no se han guardado
+                             * físicamente en la BD, también debemos desactivar
+                             * los vínculos pendientes anteriores en memoria.
+                             */
+                            foreach (
+                                var pendienteAnterior
+                                in vinculosPendientes.Where(x =>
+                                    x.Vinculo.EmpresaMaestraId ==
+                                        empresaMaestraId &&
+
+                                    x.Vinculo.EmpresaComplianceId ==
+                                        complianceId &&
+
+                                    x.Vinculo.TipoDocumentoComplianceId ==
+                                        tipoComplianceId &&
+
+                                    x.Vinculo.Activo
+                                ))
+                            {
+                                pendienteAnterior.Vinculo.Activo =
+                                    false;
+
+                                pendienteAnterior.Vinculo.FechaActualizacion =
+                                    DateTime.Now;
+
+                                cambiosVinculos++;
+                            }
+
                             foreach (
                                 EbDocumento documentoAnterior
                                 in documentosCompliance.Where(x =>
@@ -1531,7 +1653,8 @@ namespace ERPSEI.Services.Compliance
                         x =>
                             x.RFC != null &&
                             x.RFC.Trim().ToUpper() ==
-                                rfcNormalizado,
+                                rfcNormalizado &&
+                            x.Deshabilitado == 0,
                         cancellationToken
                     );
 
