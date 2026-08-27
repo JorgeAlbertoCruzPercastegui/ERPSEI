@@ -164,7 +164,6 @@ document.addEventListener(
                 "listaAdjuntosComentarioAdq"
             );
 
-
         let archivosComentarioSeleccionadosAdq =
             [];
 
@@ -5511,6 +5510,55 @@ document.addEventListener(
         aplicarFiltrosHistorialAdq(
             true
         );
+
+        // =========================================================
+        // ABRIR SOLICITUD DESDE NOTIFICACIÓN
+        // =========================================================
+
+        const parametrosUrlAdq =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        const solicitudAbrirIdAdq =
+            Number(
+                parametrosUrlAdq.get(
+                    "openId"
+                )
+                ??
+                0
+            );
+
+
+        if (
+            solicitudAbrirIdAdq > 0
+        ) {
+
+            const botonSolicitudAdq =
+                document.querySelector(
+                    `.btnVerSolicitudAdq[data-id="${solicitudAbrirIdAdq}"]`
+                );
+
+
+            if (
+                botonSolicitudAdq
+            ) {
+
+                /*
+                 * Reutilizamos exactamente el mismo flujo
+                 * que ya utiliza el botón del ojo.
+                 */
+                setTimeout(
+                    function () {
+
+                        botonSolicitudAdq.click();
+
+                    },
+                    250
+                );
+            }
+        }
 
     }
 );

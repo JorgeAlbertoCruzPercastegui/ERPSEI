@@ -713,7 +713,7 @@
    ============================================================ */
 
 #modalNuevaSolicitud {
-    z-index: 1060 !important;
+    z-index: 3000001 !important;
 }
 
 
@@ -868,7 +868,7 @@
    ============================================================ */
 
 .modal-backdrop {
-    z-index: 1050 !important;
+    z-index: 3000000 !important;
 }
 
 
@@ -1824,4 +1824,190 @@
     min-width: 155px;
     border-radius: 8px;
     font-weight: 600;
+}
+
+/* =====================================================
+   NOTIFICACIONES ENCIMA DEL MENÚ - ADQUISICIONES
+   ===================================================== */
+
+/*
+ * Toda la zona superior debe compartir
+ * un contexto de apilamiento superior.
+ */
+body.module-main-theme header,
+body.module-main-theme .header-bg,
+body.module-main-theme .header-bg-inner,
+body.module-main-theme nav.navbar,
+body.module-main-theme .navbar-collapse,
+body.module-main-theme .header-right-tools {
+    position: relative !important;
+    z-index: 999998 !important;
+    overflow: visible !important;
+}
+
+
+/* =====================================================
+   CONTENEDOR DERECHO DEL HEADER
+   ===================================================== */
+
+body.module-main-theme .header-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 999999 !important;
+}
+
+
+/* =====================================================
+   CAMPANA
+   ===================================================== */
+
+body.module-main-theme .quick-notifications {
+    position: relative !important;
+    z-index: 1000000 !important;
+}
+
+
+/* =====================================================
+   PANEL DE NOTIFICACIONES
+   ===================================================== */
+
+body.module-main-theme .quick-notification-menu {
+    position: absolute !important;
+    z-index: 1000001 !important;
+    width: 360px;
+    min-height: 120px;
+    border: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    padding: 0;
+    margin-top: 14px !important;
+    background: #ffffff;
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.22);
+}
+
+
+/* =====================================================
+   MENÚ CORPORATIVO DEBAJO DE NOTIFICACIONES
+   ===================================================== */
+
+body.module-main-theme .topbar-links {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+
+body.module-main-theme .quick-nav-wrap {
+    position: relative !important;
+    z-index: 5001 !important;
+}
+
+
+body.module-main-theme #quickNavMenu {
+    position: relative !important;
+    z-index: 5002 !important;
+}
+
+
+body.module-main-theme .quick-dd {
+    position: relative !important;
+    z-index: 5003 !important;
+}
+
+
+body.module-main-theme .quick-dd-menu {
+    z-index: 99999 !important;
+}
+
+/* =====================================================
+   ENCABEZADO SUPERIOR - IGUAL AL MENÚ PRINCIPAL
+   ===================================================== */
+
+body.module-main-theme .navbar-brand {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin-left: 28px !important;
+    color: #21166f !important;
+    text-decoration: none !important;
+}
+
+
+    /* =====================================================
+   TEXTO "INTRANET"
+   ===================================================== */
+
+    body.module-main-theme .navbar-brand::before {
+        content: "Intranet";
+        display: inline-block;
+        color: #21166f;
+        font-size: 1.15rem;
+        font-weight: 600;
+        line-height: 1;
+        margin-right: 4px;
+    }
+
+
+    /* =====================================================
+   SI EXISTE LOGOTIPO EN EL BRAND
+   ===================================================== */
+
+    body.module-main-theme
+    .navbar-brand
+    img.brandimage {
+        height: 58px !important;
+        width: auto !important;
+        max-height: 58px !important;
+        object-fit: contain;
+    }
+
+/* =====================================================
+   ESPACIADO SUPERIOR DEL HEADER
+   ===================================================== */
+
+body.module-main-theme header {
+    padding-top: 18px;
+}
+
+
+body.module-main-theme .navbar {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+/* =====================================================
+   MODALES SIEMPRE ENCIMA DEL HEADER - ADQUISICIONES
+   ===================================================== */
+
+/*
+ * El header y las notificaciones utilizan z-index altos.
+ * Por ello los modales de Adquisiciones deben vivir
+ * en una capa superior.
+ */
+
+body.module-main-theme .modal-backdrop {
+    z-index: 3000000 !important;
+}
+
+
+/* =====================================================
+   MODALES DEL MÓDULO
+   ===================================================== */
+
+body.module-main-theme #modalNuevaSolicitud,
+body.module-main-theme #modalVerSolicitudAdq,
+body.module-main-theme #modalDecisionGerenteAdq,
+body.module-main-theme #modalAccionAdquisiciones,
+body.module-main-theme #modalAsignarAdquisiciones {
+    z-index: 3000001 !important;
+}
+
+
+/* =====================================================
+   CONTENIDO DEL MODAL
+   ===================================================== */
+
+body.module-main-theme .modal.show {
+    z-index: 3000001 !important;
 }

@@ -2,6 +2,7 @@
 using ERPSEI.Data.Entities.Adquisiciones;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Usuarios;
+using ERPSEI.Data.Entities.Intranet;
 using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
@@ -1931,6 +1932,41 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 await _context
                     .SaveChangesAsync();
 
+                // =====================================================
+                // NOTIFICAR A ADQUISICIONES
+                // =====================================================
+
+                List<string> usuariosAdquisiciones =
+                    await _context.AdqPermisosUsuarios
+                        .AsNoTracking()
+                        .Where(
+                            x =>
+                                x.PuedeGestionarSolicitudes
+                                ||
+                                x.PuedeAprobar
+                                ||
+                                x.PuedeAdministrar
+                        )
+                        .Select(
+                            x =>
+                                x.UsuarioId
+                        )
+                        .Distinct()
+                        .ToListAsync();
+
+
+                await CrearNotificacionAdquisicionesAsync(
+                    usuariosAdquisiciones,
+
+                    "Nueva solicitud de compra",
+
+                    $"La solicitud {solicitud.Folio} - {solicitud.Titulo} fue aprobada por el gerente y requiere revisión de Adquisiciones.",
+
+                    $"/ERP/Adquisiciones?openId={solicitud.Id}",
+
+                    usuarioActual.Id
+                );
+
 
                 await transaccion
                     .CommitAsync();
@@ -2464,10 +2500,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 UsuarioAsignadoAdqId
                             &&
                             (
-                                x.PuedeGestionarSolicitudes
-                                ||
-                                x.PuedeAsignar
-                                ||
                                 x.PuedeCotizar
                                 ||
                                 x.PuedeAdministrar
@@ -2478,7 +2510,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             if (!agenteValido)
             {
                 TempData["MensajeError"] =
-                    "El usuario seleccionado no está configurado como agente de Adquisiciones.";
+                    "El usuario seleccionado no está configurado como agente de compras.";
 
                 return RedirectToPage();
             }
@@ -2590,6 +2622,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             await _context
                 .SaveChangesAsync();
+
+            // =====================================================
+            // NOTIFICAR AL AGENTE ASIGNADO
+            // =====================================================
+
+            await CrearNotificacionAdquisicionesAsync(
+                new[]
+                {
+                UsuarioAsignadoAdqId
+                },
+
+                "Nueva orden de compra asignada",
+
+                $"Se te asignó la solicitud {solicitud.Folio} - {solicitud.Titulo} para continuar con el proceso de compra.",
+
+                $"/ERP/Adquisiciones?openId={solicitud.Id}",
+
+                usuarioActual.Id
+            );
 
 
             TempData["MensajeExito"] =
@@ -4808,6 +4859,102 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // PERMISOS DEL MÓDULO DE ADQUISICIONES
         // =========================================================
 
+        private async Task CrearNotificacionAdquisicionesAsync(
+            IEnumerable<string> usuariosDestinoIds,
+            string titulo,
+            string descripcion,
+            string url,
+            string? usuarioCreadorId)
+        {
+            List<string> destinatarios =
+                usuariosDestinoIds
+                    .Where(
+                        x =>
+                            !string.IsNullOrWhiteSpace(
+                                x
+                            )
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            if (
+                destinatarios.Count ==
+                0
+            )
+            {
+                return;
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            NotificacionIntranet notificacion =
+                new()
+                {
+                    Titulo =
+                        titulo,
+
+                    Descripcion =
+                        descripcion,
+
+                    Tipo =
+                        "Adquisiciones",
+
+                    Modulo =
+                        "Adquisiciones",
+
+                    Url =
+                        url,
+
+                    Icono =
+                        "bi bi-cart-check-fill",
+
+                    FechaPublicacion =
+                        ahora,
+
+                    Activa =
+                        true,
+
+                    UserIdCreador =
+                        usuarioCreadorId
+                };
+
+
+            foreach (
+                string usuarioId
+                in destinatarios
+            )
+            {
+                notificacion.UsuariosNotificados.Add(
+                    new NotificacionIntranetUsuario
+                    {
+                        UserId =
+                            usuarioId,
+
+                        Leida =
+                            false,
+
+                        FechaCreacion =
+                            ahora
+                    }
+                );
+            }
+
+
+            _context.NotificacionesIntranet.Add(
+                notificacion
+            );
+
+
+            await _context
+                .SaveChangesAsync();
+        }
+
+
+
         private async Task CargarPermisosAdquisicionesAsync(
             AppUser usuarioActual)
         {
@@ -4983,15 +5130,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         private async Task CargarAgentesComprasAsync()
         {
+
             List<string> idsAgentes =
                 await _context.AdqPermisosUsuarios
                     .AsNoTracking()
                     .Where(
                         x =>
-                            x.PuedeGestionarSolicitudes
-                            ||
-                            x.PuedeAsignar
-                            ||
                             x.PuedeCotizar
                             ||
                             x.PuedeAdministrar
