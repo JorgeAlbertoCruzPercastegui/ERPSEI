@@ -21,6 +21,11 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             set;
         }
 
+        public int? CotizacionDetalleId
+        {
+            get;
+            set;
+        }
 
         [Required]
         [StringLength(300)]
@@ -103,6 +108,12 @@ namespace ERPSEI.Data.Entities.Adquisiciones
 
         [ForeignKey(nameof(CotizacionId))]
         public virtual AdqCotizacion? Cotizacion
+        {
+            get;
+            set;
+        }
+
+        public AdqCotizacionDetalle? CotizacionDetalle
         {
             get;
             set;

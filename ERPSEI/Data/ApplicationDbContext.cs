@@ -955,7 +955,13 @@ namespace ERPSEI.Data
                         .OnDelete(
                             DeleteBehavior.Restrict
                         );
-        }
+
+            b.Entity<AdqCotizacionAdjunto>()
+            .HasOne(x => x.CotizacionDetalle)
+            .WithMany(x => x.Adjuntos)
+            .HasForeignKey(x => x.CotizacionDetalleId)
+            .OnDelete(DeleteBehavior.Restrict);
+                }
 
 
         private static void BuildServiceDesk(ModelBuilder b)

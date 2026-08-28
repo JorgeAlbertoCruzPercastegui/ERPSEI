@@ -96,5 +96,11 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             get;
             set;
         }
+
+        public ICollection<AdqCotizacionAdjunto> Adjuntos
+        {
+            get;
+            set;
+        } = new List<AdqCotizacionAdjunto>();
     }
 }

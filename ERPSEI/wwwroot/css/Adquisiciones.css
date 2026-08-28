@@ -2056,6 +2056,109 @@ body.module-main-theme .modal.show {
         background: #fafaff;
     }
 
+/* =========================================================
+   ESTATUS DE ÓRDENES ASIGNADAS
+   ========================================================= */
+
+.adq-assigned-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 170px;
+    min-height: 38px;
+    padding: 7px 14px;
+    border: 1px solid #dfe4f2;
+    border-radius: 999px;
+    background: #f3f5fb;
+    color: #394056;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+}
+
+
+    /* En proceso de cotización */
+
+    .adq-assigned-status[data-status="EN_COTIZACION"],
+    .adq-assigned-status[data-status="En proceso de cotización"] {
+        border-color: #cfd7ff;
+        background: #eef1ff;
+        color: #21166f;
+    }
+
+
+    /* Asignada */
+
+    .adq-assigned-status[data-status="ASIGNADA"],
+    .adq-assigned-status[data-status="Asignada"] {
+        border-color: #dce3ec;
+        background: #f1f4f8;
+        color: #344054;
+    }
+
+
+/* =========================================================
+   ACCIONES DE ÓRDENES ASIGNADAS
+   ========================================================= */
+
+.adq-assigned-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+
+    .adq-assigned-actions .btn {
+        min-height: 38px;
+        border-radius: 9px;
+    }
+
+
+/* =========================================================
+   BOTÓN COTIZAR
+   ========================================================= */
+
+.adq-btn-cotizar {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-width: 105px;
+    min-height: 38px;
+    padding: 7px 13px;
+    border: 1px solid #0d6efd;
+    border-radius: 9px;
+    background: #0d6efd;
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+
+    .adq-btn-cotizar:hover {
+        border-color: #0b5ed7;
+        background: #0b5ed7;
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+
+    .adq-btn-cotizar i {
+        flex: 0 0 auto;
+        font-size: 0.95rem;
+    }
+
+
+    .adq-btn-cotizar span {
+        display: inline-block;
+    }
+
 
 /* =========================================================
    MENSAJES PENDIENTES
@@ -2390,3 +2493,712 @@ body.module-main-theme .modal.show {
         gap: 8px;
     }
 }
+
+/* =========================================================
+   HISTORIAL DE COTIZACIONES
+   ========================================================= */
+
+.adq-quote-history-header {
+    justify-content: space-between;
+}
+
+
+.adq-quote-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+
+.adq-quote-history-card {
+    overflow: hidden;
+    border: 1px solid #e3e6ed;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+
+.adq-quote-history-card-best {
+    border-color: #b7ddc8;
+    background: #fbfffc;
+}
+
+
+.adq-quote-history-card-main {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) minmax(130px, auto) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+}
+
+
+.adq-quote-history-position {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(33, 22, 111, 0.08);
+    color: #21166f;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+
+.adq-quote-history-provider {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+
+    .adq-quote-history-provider strong {
+        color: #252a34;
+    }
+
+
+    .adq-quote-history-provider small {
+        margin-top: 2px;
+        color: #7a8190;
+    }
+
+
+.adq-quote-history-amount {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+
+    .adq-quote-history-amount span {
+        color: #7b8190;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+
+
+    .adq-quote-history-amount strong {
+        color: #21166f;
+        font-size: 1rem;
+    }
+
+
+.adq-quote-best-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #d1e7dd;
+    color: #146c43;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+/* =========================================================
+   CABECERA COMPLETA DEL PROVEEDOR
+   ========================================================= */
+
+.adq-quote-provider-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 18px 16px;
+}
+
+
+.adq-quote-provider-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    margin-top: 2px;
+    border-radius: 50%;
+    background: rgba(33, 22, 111, 0.08);
+    color: #21166f;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+
+.adq-quote-provider-content {
+    flex: 1;
+    min-width: 0;
+}
+
+
+.adq-quote-provider-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+
+.adq-quote-provider-identity {
+    min-width: 0;
+}
+
+
+.adq-quote-provider-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+
+.adq-quote-provider-name {
+    color: #21166f;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+
+.adq-quote-provider-subtitle {
+    display: block;
+    margin-top: 3px;
+    color: #8a909c;
+    font-size: 0.75rem;
+}
+
+
+.adq-quote-provider-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 0 0 auto;
+}
+
+
+/* =========================================================
+   INFORMACIÓN DEL PROVEEDOR
+   ========================================================= */
+
+.adq-quote-provider-data-grid {
+    display: grid;
+    grid-template-columns: repeat( 4, minmax(0, 1fr) );
+    gap: 10px;
+    margin-top: 16px;
+}
+
+
+.adq-quote-provider-data-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding: 11px 12px;
+    border: 1px solid #e7e9ef;
+    border-radius: 10px;
+    background: #fafbfc;
+}
+
+
+.adq-quote-provider-data-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 8px;
+    background: rgba(33, 22, 111, 0.07);
+    color: #21166f;
+    font-size: 0.9rem;
+}
+
+
+.adq-quote-provider-data-item > div:last-child {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+
+.adq-quote-provider-data-item span {
+    color: #838a98;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+
+.adq-quote-provider-data-item strong {
+    margin-top: 2px;
+    overflow: hidden;
+    color: #343a40;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   TOTAL DEL PROVEEDOR
+   ========================================================= */
+
+.adq-quote-provider-actions
+.adq-quote-history-amount {
+    min-width: 145px;
+    text-align: right;
+}
+
+
+    .adq-quote-provider-actions
+    .adq-quote-history-amount span {
+        display: block;
+        margin-bottom: 2px;
+        color: #7a8190;
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+
+    .adq-quote-provider-actions
+    .adq-quote-history-amount strong {
+        color: #21166f;
+        font-size: 1.15rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+@media (max-width: 1200px) {
+
+    .adq-quote-provider-data-grid {
+        grid-template-columns: repeat( 2, minmax(0, 1fr) );
+    }
+}
+
+
+@media (max-width: 768px) {
+
+    .adq-quote-provider-top {
+        flex-direction: column;
+    }
+
+
+    .adq-quote-provider-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+
+    .adq-quote-provider-data-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-quote-provider-actions
+    .adq-quote-history-amount {
+        min-width: 0;
+        text-align: left;
+    }
+}
+
+
+/* =========================================================
+   DETALLE EXPANDIBLE
+   ========================================================= */
+
+.adq-quote-history-detail {
+    padding: 0 16px 16px;
+}
+
+
+.adq-quote-expanded-detail {
+    padding: 16px;
+    border-top: 1px solid #e7e9ef;
+    background: #fafbfc;
+}
+
+
+.adq-quote-expanded-section + .adq-quote-expanded-section {
+    margin-top: 18px;
+}
+
+
+.adq-quote-expanded-title {
+    margin-bottom: 10px;
+    color: #21166f;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   PRODUCTO COTIZADO
+   ========================================================= */
+
+.adq-quote-detail-product {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(220px, 0.8fr);
+    align-items: center;
+    gap: 18px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e6e8ed;
+}
+
+
+    .adq-quote-detail-product:last-child {
+        border-bottom: 0;
+    }
+
+
+.adq-quote-detail-product-main {
+    display: flex;
+    flex-direction: column;
+}
+
+
+    .adq-quote-detail-product-main small {
+        margin-top: 2px;
+        color: #7a8190;
+    }
+
+
+.adq-quote-detail-data {
+    display: flex;
+    gap: 22px;
+}
+
+
+    .adq-quote-detail-data > div {
+        display: flex;
+        flex-direction: column;
+    }
+
+
+    .adq-quote-detail-data span,
+    .adq-quote-detail-label {
+        color: #7a8190;
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+
+    .adq-quote-detail-data strong {
+        font-size: 0.85rem;
+    }
+
+
+/* =========================================================
+   ARCHIVOS
+   ========================================================= */
+
+.adq-quote-detail-files,
+.adq-quote-additional-files {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+
+.adq-quote-file-link {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 9px;
+    border: 1px solid #dde2ea;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #343a40;
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+
+    .adq-quote-file-link:hover {
+        border-color: #b8c4e6;
+        background: #f7f8ff;
+        color: #21166f;
+    }
+
+
+    .adq-quote-file-link span {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+    .adq-quote-file-link small {
+        color: #89909d;
+        white-space: nowrap;
+    }
+
+
+.adq-quote-no-files {
+    color: #8b909b;
+    font-size: 0.8rem;
+}
+
+
+.adq-quote-observations {
+    padding: 12px;
+    border: 1px solid #e0e4ea;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #495057;
+    white-space: pre-wrap;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .adq-quote-history-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .adq-quote-history-card-main {
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+    }
+
+
+    .adq-quote-history-amount {
+        grid-column: 2;
+        text-align: left;
+    }
+
+
+    .btnVerDetalleCotizacionAdq {
+        grid-column: 3;
+        grid-row: 1 / span 2;
+    }
+
+
+    .adq-quote-detail-product {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-quote-detail-data {
+        flex-wrap: wrap;
+    }
+}
+
+/* =========================================================
+   CLASIFICACIÓN DE PRECIOS DE COTIZACIÓN
+   ========================================================= */
+
+.adq-quote-price-low {
+    border-color: #a9d6bd;
+    background: #fbfffc;
+}
+
+
+.adq-quote-price-medium {
+    border-color: #ecd88c;
+    background: #fffdf7;
+}
+
+
+.adq-quote-price-high {
+    border-color: #efb0b6;
+    background: #fffafa;
+}
+
+
+.adq-quote-price-equal {
+    border-color: #cfd5df;
+    background: #fbfcfe;
+}
+
+
+/* =========================================================
+   BADGES DE COMPARATIVO
+   ========================================================= */
+
+.adq-quote-price-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+.adq-quote-price-badge-low {
+    border: 1px solid #b6ddc7;
+    background: #dff4e8;
+    color: #157347;
+}
+
+
+.adq-quote-price-badge-medium {
+    border: 1px solid #ead58b;
+    background: #fff3cd;
+    color: #8a6500;
+}
+
+
+.adq-quote-price-badge-high {
+    border: 1px solid #f0b7bd;
+    background: #f8d7da;
+    color: #b02a37;
+}
+
+
+.adq-quote-price-badge-equal {
+    border: 1px solid #d7dce5;
+    background: #eef1f5;
+    color: #5f6877;
+}
+
+
+/* =========================================================
+   ACENTO LATERAL
+   ========================================================= */
+
+.adq-quote-price-low {
+    border-left: 4px solid #198754;
+}
+
+
+.adq-quote-price-medium {
+    border-left: 4px solid #e0a800;
+}
+
+
+.adq-quote-price-high {
+    border-left: 4px solid #dc3545;
+}
+
+
+.adq-quote-price-equal {
+    border-left: 4px solid #88909c;
+}
+
+/* =========================================================
+   COMPARATIVO ECONÓMICO DE COTIZACIONES
+   ========================================================= */
+
+.adq-quote-price-low {
+    border-left: 4px solid #198754;
+    border-color: #b8ddc8;
+    background: #fbfffc;
+}
+
+.adq-quote-price-medium {
+    border-left: 4px solid #e0a800;
+    border-color: #ead996;
+    background: #fffdf7;
+}
+
+.adq-quote-price-high {
+    border-left: 4px solid #dc3545;
+    border-color: #efb8be;
+    background: #fffafa;
+}
+
+.adq-quote-price-equal {
+    border-left: 4px solid #98a1ad;
+    border-color: #d8dde5;
+}
+
+
+/* =========================================================
+   BADGES DE PRECIO
+   ========================================================= */
+
+.adq-quote-price-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: .69rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.adq-quote-price-badge-low {
+    border: 1px solid #a9d8bd;
+    background: #dff4e8;
+    color: #146c43;
+}
+
+.adq-quote-price-badge-medium {
+    border: 1px solid #e8d071;
+    background: #fff3cd;
+    color: #806000;
+}
+
+.adq-quote-price-badge-high {
+    border: 1px solid #edafb6;
+    background: #f8d7da;
+    color: #b02a37;
+}
+
+.adq-quote-price-badge-equal {
+    border: 1px solid #d4d9e1;
+    background: #eef1f5;
+    color: #5e6673;
+}
+
+
+/* =========================================================
+   COTIZACIÓN SELECCIONADA
+   ========================================================= */
+
+.adq-quote-history-card-selected {
+    position: relative;
+    box-shadow: 0 0 0 2px rgba(33, 22, 111, .16), 0 10px 24px rgba(33, 22, 111, .08);
+}
+
+.adq-quote-selected-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid rgba(33, 22, 111, .18);
+    border-radius: 999px;
+    background: rgba(33, 22, 111, .09);
+    color: #21166f;
+    font-size: .69rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.adq-btn-selected {
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   ACCIONES DEL COMPARATIVO
+   ========================================================= */
+
+.adq-quote-provider-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+    .adq-quote-provider-actions .btn {
+        white-space: nowrap;
+    }

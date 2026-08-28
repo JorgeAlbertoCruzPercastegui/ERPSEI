@@ -1473,9 +1473,9 @@
 
                                     </td>
 
-                                    <td>
+                                    <td class="text-center align-middle">
 
-                                        <span class="adq-status-badge"
+                                        <span class="adq-status-badge adq-assigned-status"
                                               data-status="@orden.Estatus">
 
                                             @orden.Estatus
@@ -1486,7 +1486,7 @@
 
                                     <td class="text-center">
 
-                                        <div class="d-inline-flex align-items-center gap-2">
+                                        <div class="adq-assigned-actions">
 
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
@@ -1526,13 +1526,15 @@
                                             )
                                             {
                                                 <button type="button"
-                                                        class="btn btn-sm btn-primary btnGenerarCotizacionAdq"
+                                                        class="btn btn-sm btnGenerarCotizacionAdq adq-btn-cotizar"
                                                         data-id="@orden.Id"
-                                                        title="Generar cotización">
+                                                        title="Gestionar cotización">
 
-                                                    <i class="bi bi-receipt"></i>
+                                                    <i class="bi bi-file-earmark-text"></i>
 
-                                                    Cotizar
+                                                    <span>
+                                                        Cotizar
+                                                    </span>
 
                                                 </button>
                                             }
@@ -1627,12 +1629,86 @@
                            asp-for="InputCotizacion.SolicitudId"
                            id="cotizacionSolicitudIdAdq" />
 
+                    <!-- ====================================================== -->
+                    <!-- COTIZACIONES REGISTRADAS -->
+                    <!-- ====================================================== -->
+
+                    <section class="adq-quote-section mb-4 d-none"
+                             id="seccionCotizacionesRegistradasAdq">
+
+                        <div class="adq-quote-section-header adq-quote-history-header">
+
+                            <div class="d-flex align-items-center gap-3">
+
+                                <div class="adq-quote-section-icon">
+
+                                    <i class="bi bi-receipt-cutoff"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <h6>
+                                        Cotizaciones registradas
+                                    </h6>
+
+                                    <span>
+                                        Proveedores que ya participan en esta solicitud.
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="d-flex align-items-center gap-2">
+
+                                <span class="badge rounded-pill text-bg-light"
+                                      id="contadorCotizacionesAdq">
+
+                                    0 cotizaciones
+
+                                </span>
+
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary"
+                                        id="btnAgregarProveedorAlternativoAdq">
+
+                                    <i class="bi bi-plus-lg me-1"></i>
+
+                                    Agregar proveedor alternativo
+
+                                </button>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-success d-none"
+                                        id="btnFinalizarCotizacionAdq">
+
+                                    <i class="bi bi-check2-circle me-1"></i>
+
+                                    Finalizar cotización
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <div id="listaCotizacionesRegistradasAdq"
+                             class="adq-quote-history-list">
+                        </div>
+
+                    </section>
+
 
                     <!-- ============================================== -->
                     <!-- PROVEEDOR -->
                     <!-- ============================================== -->
 
-                    <section class="adq-quote-section">
+                    <section class="adq-quote-section"
+                             id="seccionCapturaProveedorAdq">
 
                         <div class="adq-quote-section-header">
 
@@ -1816,6 +1892,10 @@
 
                                         </th>
 
+                                        <th style="min-width: 230px;">
+                                            Evidencia
+                                        </th>
+
                                     </tr>
 
                                 </thead>
@@ -1825,7 +1905,7 @@
 
                                     <tr>
 
-                                        <td colspan="5"
+                                        <td colspan="6"
                                             class="text-center text-muted py-4">
 
                                             Selecciona una solicitud para cotizar.
@@ -2025,11 +2105,11 @@
                                 <div>
 
                                     <h6>
-                                        Documento de cotización
+                                        Archivos adicionales
                                     </h6>
 
                                     <span>
-                                        Adjunta la evidencia recibida del proveedor.
+                                        Adjunta documentación complementaria de la cotización, como condiciones comerciales, fichas técnicas u otros archivos de soporte.
                                     </span>
 
                                 </div>
@@ -2045,13 +2125,19 @@
                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                                    required />
 
+                            <div id="listaArchivosCotizacionAdq"
+                                 class="adq-files-list mt-3">
+                            </div>
+
+                            <div id="contadorArchivosCotizacionAdq"
+                                 class="form-text mt-2">
+                                0 archivos seleccionados.
+                            </div>
 
                             <div class="form-text">
-
-                                Formatos permitidos:
+                                Archivos opcionales. Formatos permitidos:
                                 PDF, Word, Excel, PNG y JPG.
                                 Máximo 15 MB por archivo.
-
                             </div>
 
                         </section>
