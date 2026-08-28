@@ -168,6 +168,660 @@ document.addEventListener(
             [];
 
         // =========================================================
+        // COTIZACIONES
+        // =========================================================
+
+        const modalCotizacionElement =
+            document.getElementById(
+                "modalCotizacionAdq"
+            );
+
+
+        const formCotizacionAdq =
+            document.getElementById(
+                "formCotizacionAdq"
+            );
+
+
+        const cotizacionSolicitudIdAdq =
+            document.getElementById(
+                "cotizacionSolicitudIdAdq"
+            );
+
+
+        const folioCotizacionAdq =
+            document.getElementById(
+                "folioCotizacionAdq"
+            );
+
+
+        const contenedorDetallesCotizacionAdq =
+            document.getElementById(
+                "contenedorDetallesCotizacionAdq"
+            );
+
+
+        const cotizacionAplicaIvaAdq =
+            document.getElementById(
+                "cotizacionAplicaIvaAdq"
+            );
+
+
+        const cotizacionPorcentajeIvaAdq =
+            document.getElementById(
+                "cotizacionPorcentajeIvaAdq"
+            );
+
+
+        const cotizacionSubtotalAdq =
+            document.getElementById(
+                "cotizacionSubtotalAdq"
+            );
+
+
+        const cotizacionIvaAdq =
+            document.getElementById(
+                "cotizacionIvaAdq"
+            );
+
+
+        const cotizacionTotalAdq =
+            document.getElementById(
+                "cotizacionTotalAdq"
+            );
+
+
+        const cotizacionIvaLabelAdq =
+            document.getElementById(
+                "cotizacionIvaLabelAdq"
+            );
+
+        // =========================================================
+        // FORMATEAR MONEDA
+        // =========================================================
+
+        function formatearMonedaCotizacionAdq(
+            valor
+        ) {
+
+            const numero =
+                Number(
+                    valor ?? 0
+                );
+
+
+            return numero.toLocaleString(
+                "es-MX",
+                {
+                    style:
+                        "currency",
+
+                    currency:
+                        "MXN"
+                }
+            );
+        }
+
+
+        // =========================================================
+        // CALCULAR COTIZACIÓN
+        // =========================================================
+
+        function calcularCotizacionAdq() {
+
+            let subtotal =
+                0;
+
+
+            document
+                .querySelectorAll(
+                    ".cotizacion-precio-unitario-adq"
+                )
+                .forEach(
+                    function (input) {
+
+                        const cantidad =
+                            Number(
+                                input.dataset.cantidad
+                                ??
+                                0
+                            );
+
+
+                        const precio =
+                            Number(
+                                input.value
+                                ??
+                                0
+                            );
+
+
+                        const importe =
+                            cantidad *
+                            precio;
+
+
+                        subtotal +=
+                            importe;
+
+
+                        const fila =
+                            input.closest(
+                                "tr"
+                            );
+
+
+                        const importeElement =
+                            fila?.querySelector(
+                                ".cotizacion-importe-adq"
+                            );
+
+
+                        if (
+                            importeElement
+                        ) {
+
+                            importeElement.textContent =
+                                formatearMonedaCotizacionAdq(
+                                    importe
+                                );
+                        }
+                    }
+                );
+
+
+            const aplicaIva =
+                cotizacionAplicaIvaAdq?.checked
+                ??
+                false;
+
+
+            const porcentajeIva =
+                aplicaIva
+                    ? Number(
+                        cotizacionPorcentajeIvaAdq?.value
+                        ??
+                        0
+                    )
+                    : 0;
+
+
+            const importeIva =
+                subtotal *
+                (
+                    porcentajeIva /
+                    100
+                );
+
+
+            const total =
+                subtotal +
+                importeIva;
+
+
+            if (
+                cotizacionSubtotalAdq
+            ) {
+
+                cotizacionSubtotalAdq.textContent =
+                    formatearMonedaCotizacionAdq(
+                        subtotal
+                    );
+            }
+
+
+            if (
+                cotizacionIvaAdq
+            ) {
+
+                cotizacionIvaAdq.textContent =
+                    formatearMonedaCotizacionAdq(
+                        importeIva
+                    );
+            }
+
+
+            if (
+                cotizacionTotalAdq
+            ) {
+
+                cotizacionTotalAdq.textContent =
+                    formatearMonedaCotizacionAdq(
+                        total
+                    );
+            }
+
+
+            if (
+                cotizacionIvaLabelAdq
+            ) {
+
+                cotizacionIvaLabelAdq.textContent =
+                    aplicaIva
+                        ? `IVA ${porcentajeIva}%`
+                        : "IVA";
+            }
+
+
+            if (
+                cotizacionPorcentajeIvaAdq
+            ) {
+
+                cotizacionPorcentajeIvaAdq.disabled =
+                    !aplicaIva;
+            }
+        }
+
+        // =========================================================
+        // RENDERIZAR PRODUCTOS DE COTIZACIÓN
+        // =========================================================
+
+        function renderizarDetallesCotizacionAdq(
+            detalles
+        ) {
+
+            if (
+                !contenedorDetallesCotizacionAdq
+            ) {
+                return;
+            }
+
+
+            contenedorDetallesCotizacionAdq.innerHTML =
+                "";
+
+
+            if (
+                !Array.isArray(
+                    detalles
+                )
+                ||
+                detalles.length ===
+                0
+            ) {
+
+                contenedorDetallesCotizacionAdq.innerHTML = `
+            <tr>
+
+                <td colspan="5"
+                    class="text-center text-muted py-4">
+
+                    La solicitud no contiene productos.
+
+                </td>
+
+            </tr>
+        `;
+
+                return;
+            }
+
+
+            detalles.forEach(
+                function (
+                    detalle,
+                    index
+                ) {
+
+                    const fila =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    const cantidad =
+                        Number(
+                            detalle.cantidad
+                            ??
+                            0
+                        );
+
+
+                    fila.innerHTML = `
+                <td>
+
+                    <strong>
+                        ${escapeHtmlAdq(
+                        detalle.productoServicio
+                        ??
+                        ""
+                    )}
+                    </strong>
+
+                    ${detalle.descripcion
+                            ? `
+                                <small class="d-block text-muted mt-1">
+
+                                    ${escapeHtmlAdq(
+                                detalle.descripcion
+                            )}
+
+                                </small>
+                            `
+                            : ""
+                        }
+
+                    <input type="hidden"
+                           name="InputCotizacion.Detalles[${index}].SolicitudDetalleId"
+                           value="${Number(
+                            detalle.id
+                            ??
+                            0
+                        )}" />
+
+                </td>
+
+
+                <td>
+
+                    ${cantidad}
+
+                </td>
+
+
+                <td>
+
+                    ${escapeHtmlAdq(
+                            detalle.unidad
+                            ??
+                            ""
+                        )}
+
+                </td>
+
+
+                <td>
+
+                    <div class="input-group input-group-sm">
+
+                        <span class="input-group-text">
+                            $
+                        </span>
+
+                        <input type="number"
+                               class="form-control cotizacion-precio-unitario-adq"
+                               name="InputCotizacion.Detalles[${index}].PrecioUnitario"
+                               min="0.01"
+                               step="0.01"
+                               data-cantidad="${cantidad}"
+                               required />
+
+                    </div>
+
+                </td>
+
+
+                <td class="text-end">
+
+                    <strong class="cotizacion-importe-adq">
+                        $0.00
+                    </strong>
+
+                </td>
+            `;
+
+
+                    contenedorDetallesCotizacionAdq
+                        .appendChild(
+                            fila
+                        );
+                }
+            );
+
+
+            calcularCotizacionAdq();
+        }
+
+        // =========================================================
+        // ABRIR COTIZACIÓN
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            async function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnGenerarCotizacionAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const solicitudId =
+                    Number(
+                        boton.dataset.id
+                        ??
+                        0
+                    );
+
+
+                if (
+                    solicitudId <=
+                    0
+                ) {
+                    return;
+                }
+
+
+                try {
+
+                    boton.disabled =
+                        true;
+
+
+                    const solicitud =
+                        await obtenerSolicitudAdq(
+                            solicitudId
+                        );
+
+
+                    if (
+                        !solicitud
+                    ) {
+                        throw new Error(
+                            "No fue posible obtener la solicitud."
+                        );
+                    }
+
+
+                    if (
+                        cotizacionSolicitudIdAdq
+                    ) {
+
+                        cotizacionSolicitudIdAdq.value =
+                            String(
+                                solicitud.id
+                            );
+                    }
+
+
+                    if (
+                        folioCotizacionAdq
+                    ) {
+
+                        folioCotizacionAdq.textContent =
+                            `${solicitud.folio ?? ""} · ${solicitud.titulo ?? ""}`;
+                    }
+
+
+                    if (
+                        formCotizacionAdq
+                    ) {
+
+                        formCotizacionAdq.reset();
+                    }
+
+
+                    /*
+                     * reset() restaura el hidden,
+                     * así que volvemos a colocar el ID.
+                     */
+                    if (
+                        cotizacionSolicitudIdAdq
+                    ) {
+
+                        cotizacionSolicitudIdAdq.value =
+                            String(
+                                solicitud.id
+                            );
+                    }
+
+
+                    if (
+                        cotizacionAplicaIvaAdq
+                    ) {
+
+                        cotizacionAplicaIvaAdq.checked =
+                            true;
+                    }
+
+
+                    if (
+                        cotizacionPorcentajeIvaAdq
+                    ) {
+
+                        cotizacionPorcentajeIvaAdq.value =
+                            "16";
+                    }
+
+
+                    renderizarDetallesCotizacionAdq(
+                        solicitud.detalles
+                    );
+
+
+                    bootstrap.Modal
+                        .getOrCreateInstance(
+                            modalCotizacionElement
+                        )
+                        .show();
+
+                }
+                catch (
+                error
+                ) {
+
+                    console.error(
+                        "Error al preparar cotización:",
+                        error
+                    );
+
+
+                    alert(
+                        error.message
+                        ??
+                        "No fue posible preparar la cotización."
+                    );
+
+                }
+                finally {
+
+                    boton.disabled =
+                        false;
+                }
+            }
+        );
+
+        // =========================================================
+        // EVENTOS DE CÁLCULO
+        // =========================================================
+
+        document.addEventListener(
+            "input",
+            function (
+                event
+            ) {
+
+                if (
+                    event.target.matches(
+                        ".cotizacion-precio-unitario-adq"
+                    )
+                ) {
+
+                    calcularCotizacionAdq();
+                }
+            }
+        );
+
+
+        cotizacionPorcentajeIvaAdq
+            ?.addEventListener(
+                "input",
+                calcularCotizacionAdq
+            );
+
+
+        cotizacionAplicaIvaAdq
+            ?.addEventListener(
+                "change",
+                calcularCotizacionAdq
+            );
+
+        // =========================================================
+        // MIS ÓRDENES ASIGNADAS - ABRIR CHAT
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (event) {
+
+                const botonChat =
+                    event.target.closest(
+                        ".btnChatOrdenAdq"
+                    );
+
+                if (!botonChat) {
+                    return;
+                }
+
+                const solicitudId =
+                    Number(
+                        botonChat.dataset.id
+                        ??
+                        0
+                    );
+
+                if (solicitudId <= 0) {
+                    return;
+                }
+
+                const botonVer =
+                    document.querySelector(
+                        `.btnVerSolicitudAdq[data-id="${solicitudId}"]`
+                    );
+
+                if (!botonVer) {
+                    return;
+                }
+
+                botonVer.click();
+
+
+                setTimeout(
+                    function () {
+
+                        const tabChat =
+                            document.querySelector(
+                                "#tabSeguimientoAdq"
+                            );
+
+                        if (tabChat) {
+                            tabChat.click();
+                        }
+
+                    },
+                    350
+                );
+            }
+        );
+
+        // =========================================================
         // OBTENER CHAT / HISTORIAL
         // =========================================================
 

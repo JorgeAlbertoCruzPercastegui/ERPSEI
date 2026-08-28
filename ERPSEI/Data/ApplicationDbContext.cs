@@ -345,6 +345,25 @@ namespace ERPSEI.Data
 
         public DbSet<AdqPermisoUsuario> AdqPermisosUsuarios { get; set; }
 
+        //Adquisiciones Cotizaciones
+        public DbSet<AdqCotizacion> AdqCotizaciones
+        {
+            get;
+            set;
+        }
+
+        public DbSet<AdqCotizacionDetalle> AdqCotizacionDetalles
+        {
+            get;
+            set;
+        }
+
+        public DbSet<AdqCotizacionAdjunto> AdqCotizacionAdjuntos
+        {
+            get;
+            set;
+        }
+
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -886,7 +905,58 @@ namespace ERPSEI.Data
             BuildAdquisiciones(
                 modelBuilder
             );
+
+            //Adquisiciones
+            BuildAdquisicionesCotizaciones(
+                modelBuilder
+            );
+
+
         }
+
+        private static void BuildAdquisicionesCotizaciones(ModelBuilder b)
+        {
+            b.Entity<AdqCotizacion>()
+            .HasOne(
+                x => x.Solicitud
+            )
+            .WithMany()
+            .HasForeignKey(
+                x => x.SolicitudId
+            )
+            .OnDelete(
+                DeleteBehavior.Restrict
+            );
+
+                        b.Entity<AdqCotizacionDetalle>()
+                        .HasOne(
+                            x => x.Cotizacion
+                        )
+                        .WithMany(
+                            x => x.Detalles
+                        )
+                        .HasForeignKey(
+                            x => x.CotizacionId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+
+                        b.Entity<AdqCotizacionAdjunto>()
+                        .HasOne(
+                            x => x.Cotizacion
+                        )
+                        .WithMany(
+                            x => x.Adjuntos
+                        )
+                        .HasForeignKey(
+                            x => x.CotizacionId
+                        )
+                        .OnDelete(
+                            DeleteBehavior.Restrict
+                        );
+        }
+
 
         private static void BuildServiceDesk(ModelBuilder b)
         {
@@ -1835,8 +1905,7 @@ namespace ERPSEI.Data
             });
         }
 
-        private static void BuildAdquisiciones(
-    ModelBuilder b)
+        private static void BuildAdquisiciones(ModelBuilder b)
         {
             // =========================================================
             // ESTATUS

@@ -432,6 +432,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         } = new();
 
+        public List<OrdenAsignadaDto> OrdenesAsignadas
+        {
+            get;
+            private set;
+        } = new();
+
+        public bool EsAgenteCompras
+        {
+            get;
+            private set;
+        }
+
 
         public List<SelectListItem> AgentesCompras
         {
@@ -475,6 +487,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return SolicitudesPorAprobar.Count;
             }
         }
+
+        // =========================================================
+        // COTIZACIONES
+        // =========================================================
+
+        [BindProperty]
+        public CotizacionInput InputCotizacion
+        {
+            get;
+            set;
+        } = new();
+
+
+        [BindProperty]
+        public List<IFormFile> ArchivosCotizacion
+        {
+            get;
+            set;
+        } = new();
 
 
         // =========================================================
@@ -937,6 +968,245 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 get;
                 set;
             } = string.Empty;
+        }
+
+        // =========================================================
+        // DTO MIS ÓRDENES ASIGNADAS
+        // =========================================================
+
+        public class OrdenAsignadaDto
+        {
+            public int Id
+            {
+                get;
+                set;
+            }
+
+            public string Folio
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Titulo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Solicitante
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public DateTime FechaSolicitud
+            {
+                get;
+                set;
+            }
+
+            public DateTime? FechaAsignacion
+            {
+                get;
+                set;
+            }
+
+            public int EstatusId
+            {
+                get;
+                set;
+            }
+
+            public string Estatus
+            {
+                get;
+                set;
+            } = string.Empty;
+
+            public int MensajesPendientes
+            {
+                get;
+                set;
+            }
+        }
+
+        // =========================================================
+        // INPUT COTIZACIÓN
+        // =========================================================
+
+        public class CotizacionInput
+        {
+            [Range(
+                1,
+                int.MaxValue,
+                ErrorMessage =
+                    "No se identificó la solicitud a cotizar."
+            )]
+            public int SolicitudId
+            {
+                get;
+                set;
+            }
+
+
+            [Required(
+                ErrorMessage =
+                    "El nombre del proveedor es obligatorio."
+            )]
+            [StringLength(
+                250,
+                ErrorMessage =
+                    "El nombre del proveedor no puede superar los 250 caracteres."
+            )]
+            public string NombreProveedor
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            [StringLength(
+                50,
+                ErrorMessage =
+                    "El RFC no puede superar los 50 caracteres."
+            )]
+            public string? RfcProveedor
+            {
+                get;
+                set;
+            }
+
+
+            [StringLength(
+                250,
+                ErrorMessage =
+                    "El contacto no puede superar los 250 caracteres."
+            )]
+            public string? ContactoProveedor
+            {
+                get;
+                set;
+            }
+
+
+            [EmailAddress(
+                ErrorMessage =
+                    "El correo electrónico del proveedor no es válido."
+            )]
+            [StringLength(
+                250,
+                ErrorMessage =
+                    "El correo electrónico no puede superar los 250 caracteres."
+            )]
+            public string? EmailProveedor
+            {
+                get;
+                set;
+            }
+
+
+            [StringLength(
+                50,
+                ErrorMessage =
+                    "El teléfono no puede superar los 50 caracteres."
+            )]
+            public string? TelefonoProveedor
+            {
+                get;
+                set;
+            }
+
+
+            public bool AplicaIva
+            {
+                get;
+                set;
+            } = true;
+
+
+            [Range(
+                0,
+                100,
+                ErrorMessage =
+                    "El porcentaje de IVA debe encontrarse entre 0 y 100."
+            )]
+            public decimal PorcentajeIva
+            {
+                get;
+                set;
+            } = 16m;
+
+
+            [StringLength(
+                3000,
+                ErrorMessage =
+                    "Las observaciones no pueden superar los 3000 caracteres."
+            )]
+            public string? Observaciones
+            {
+                get;
+                set;
+            }
+
+
+            public List<CotizacionDetalleInput> Detalles
+            {
+                get;
+                set;
+            } = new();
+        }
+
+
+        // =========================================================
+        // INPUT DETALLE COTIZACIÓN
+        // =========================================================
+
+        public class CotizacionDetalleInput
+        {
+            [Range(
+                1,
+                int.MaxValue,
+                ErrorMessage =
+                    "No se identificó el producto de la solicitud."
+            )]
+            public int SolicitudDetalleId
+            {
+                get;
+                set;
+            }
+
+
+            [Range(
+                typeof(decimal),
+                "0.01",
+                "9999999999999999",
+                ErrorMessage =
+                    "El precio unitario debe ser mayor a cero."
+            )]
+            public decimal PrecioUnitario
+            {
+                get;
+                set;
+            }
+
+
+            [StringLength(
+                2000,
+                ErrorMessage =
+                    "La descripción no puede superar los 2000 caracteres."
+            )]
+            public string? DescripcionProveedor
+            {
+                get;
+                set;
+            }
         }
 
 
@@ -2651,6 +2921,722 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
         // =========================================================
+        // GUARDAR COTIZACIÓN
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostGuardarCotizacionAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return Challenge();
+            }
+
+
+            // =====================================================
+            // VALIDAR QUE SEA AGENTE DE COMPRAS
+            // =====================================================
+
+            bool esAgenteCompras =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            if (!esAgenteCompras)
+            {
+                return Forbid();
+            }
+
+
+            // =====================================================
+            // NORMALIZAR DATOS
+            // =====================================================
+
+            InputCotizacion.NombreProveedor =
+                InputCotizacion.NombreProveedor?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            InputCotizacion.RfcProveedor =
+                string.IsNullOrWhiteSpace(
+                    InputCotizacion.RfcProveedor
+                )
+                    ? null
+                    : InputCotizacion.RfcProveedor
+                        .Trim()
+                        .ToUpperInvariant();
+
+
+            InputCotizacion.ContactoProveedor =
+                string.IsNullOrWhiteSpace(
+                    InputCotizacion.ContactoProveedor
+                )
+                    ? null
+                    : InputCotizacion.ContactoProveedor
+                        .Trim();
+
+
+            InputCotizacion.EmailProveedor =
+                string.IsNullOrWhiteSpace(
+                    InputCotizacion.EmailProveedor
+                )
+                    ? null
+                    : InputCotizacion.EmailProveedor
+                        .Trim()
+                        .ToLowerInvariant();
+
+
+            InputCotizacion.TelefonoProveedor =
+                string.IsNullOrWhiteSpace(
+                    InputCotizacion.TelefonoProveedor
+                )
+                    ? null
+                    : InputCotizacion.TelefonoProveedor
+                        .Trim();
+
+
+            InputCotizacion.Observaciones =
+                string.IsNullOrWhiteSpace(
+                    InputCotizacion.Observaciones
+                )
+                    ? null
+                    : InputCotizacion.Observaciones
+                        .Trim();
+
+
+            // =====================================================
+            // VALIDACIÓN BÁSICA
+            // =====================================================
+
+            if (
+                InputCotizacion.Detalles == null
+                ||
+                InputCotizacion.Detalles.Count == 0
+            )
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "La cotización debe contener al menos un producto o servicio."
+                );
+            }
+
+
+            string? errorArchivos =
+                ValidarArchivosCotizacionAdq();
+
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    errorArchivos
+                )
+            )
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    errorArchivos
+                );
+            }
+
+
+            if (!ModelState.IsValid)
+            {
+                TempData["MensajeError"] =
+                    ModelState.Values
+                        .SelectMany(
+                            x => x.Errors
+                        )
+                        .Select(
+                            x => x.ErrorMessage
+                        )
+                        .FirstOrDefault(
+                            x =>
+                                !string.IsNullOrWhiteSpace(
+                                    x
+                                )
+                        )
+                    ??
+                    "Verifica la información de la cotización.";
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            InputCotizacion.SolicitudId
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // CONSULTAR SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .Include(
+                        x => x.Detalles
+                    )
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                InputCotizacion.SolicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return NotFound();
+            }
+
+
+            // =====================================================
+            // SEGURIDAD:
+            // SOLAMENTE EL AGENTE ASIGNADO PUEDE COTIZAR
+            // =====================================================
+
+            if (
+                solicitud.UsuarioAsignadoId !=
+                    usuarioActual.Id
+            )
+            {
+                TempData["MensajeError"] =
+                    "La solicitud no se encuentra asignada a tu usuario.";
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            solicitud.Id
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // ESTADO PERMITIDO
+            // =====================================================
+
+            if (
+                solicitud.EstatusId != 8
+                &&
+                solicitud.EstatusId != 9
+            )
+            {
+                TempData["MensajeError"] =
+                    "La solicitud no se encuentra disponible para cotización.";
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            solicitud.Id
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // DETALLES ORIGINALES DE LA SOLICITUD
+            // =====================================================
+
+            List<AdqSolicitudDetalle> detallesSolicitud =
+                solicitud.Detalles
+                    .Where(
+                        x => !x.Eliminado
+                    )
+                    .OrderBy(
+                        x => x.Orden
+                    )
+                    .ToList();
+
+
+            if (detallesSolicitud.Count == 0)
+            {
+                TempData["MensajeError"] =
+                    "La solicitud no contiene productos activos para cotizar.";
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            solicitud.Id
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // VALIDAR QUE SE COTICEN TODOS LOS PRODUCTOS
+            // =====================================================
+
+            List<int> idsSolicitud =
+                detallesSolicitud
+                    .Select(
+                        x => x.Id
+                    )
+                    .OrderBy(
+                        x => x
+                    )
+                    .ToList();
+
+
+            List<int> idsCotizados =
+                InputCotizacion.Detalles
+                    .Select(
+                        x => x.SolicitudDetalleId
+                    )
+                    .Distinct()
+                    .OrderBy(
+                        x => x
+                    )
+                    .ToList();
+
+
+            if (
+                idsSolicitud.Count !=
+                    idsCotizados.Count
+                ||
+                !idsSolicitud.SequenceEqual(
+                    idsCotizados
+                )
+            )
+            {
+                TempData["MensajeError"] =
+                    "La cotización debe incluir todos los productos activos de la solicitud.";
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            solicitud.Id
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // VALIDAR PRECIOS
+            // =====================================================
+
+            if (
+                InputCotizacion.Detalles.Any(
+                    x =>
+                        x.PrecioUnitario <=
+                        0
+                )
+            )
+            {
+                TempData["MensajeError"] =
+                    "Todos los productos deben tener un precio unitario mayor a cero.";
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            solicitud.Id
+                    }
+                );
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =================================================
+                // RECALCULAR IMPORTES EN EL SERVIDOR
+                // =================================================
+
+                decimal subtotal =
+                    0m;
+
+
+                List<AdqCotizacionDetalle>
+                    detallesCotizacion =
+                        new();
+
+
+                int orden =
+                    1;
+
+
+                foreach (
+                    AdqSolicitudDetalle detalleSolicitud
+                    in detallesSolicitud
+                )
+                {
+                    CotizacionDetalleInput?
+                        detalleInput =
+                            InputCotizacion.Detalles
+                                .FirstOrDefault(
+                                    x =>
+                                        x.SolicitudDetalleId ==
+                                            detalleSolicitud.Id
+                                );
+
+
+                    if (detalleInput == null)
+                    {
+                        throw new InvalidOperationException(
+                            "No fue posible relacionar uno de los productos de la cotización."
+                        );
+                    }
+
+
+                    decimal precioUnitario =
+                        decimal.Round(
+                            detalleInput.PrecioUnitario,
+                            2,
+                            MidpointRounding.AwayFromZero
+                        );
+
+
+                    decimal importe =
+                        decimal.Round(
+                            detalleSolicitud.Cantidad *
+                            precioUnitario,
+                            2,
+                            MidpointRounding.AwayFromZero
+                        );
+
+
+                    subtotal +=
+                        importe;
+
+
+                    detallesCotizacion.Add(
+                        new AdqCotizacionDetalle
+                        {
+                            ProductoServicio =
+                                detalleSolicitud.ProductoServicio,
+
+                            Descripcion =
+                                string.IsNullOrWhiteSpace(
+                                    detalleInput.DescripcionProveedor
+                                )
+                                    ? detalleSolicitud.Descripcion
+                                    : detalleInput
+                                        .DescripcionProveedor
+                                        .Trim(),
+
+                            Cantidad =
+                                detalleSolicitud.Cantidad,
+
+                            Unidad =
+                                detalleSolicitud.Unidad,
+
+                            PrecioUnitario =
+                                precioUnitario,
+
+                            Importe =
+                                importe,
+
+                            Orden =
+                                orden++,
+
+                            Eliminado =
+                                false
+                        }
+                    );
+                }
+
+
+                subtotal =
+                    decimal.Round(
+                        subtotal,
+                        2,
+                        MidpointRounding.AwayFromZero
+                    );
+
+
+                // =================================================
+                // IVA
+                // =================================================
+
+                decimal porcentajeIva =
+                    InputCotizacion.AplicaIva
+                        ? InputCotizacion.PorcentajeIva
+                        : 0m;
+
+
+                decimal importeIva =
+                    InputCotizacion.AplicaIva
+                        ? decimal.Round(
+                            subtotal *
+                            (
+                                porcentajeIva /
+                                100m
+                            ),
+                            2,
+                            MidpointRounding.AwayFromZero
+                        )
+                        : 0m;
+
+
+                decimal total =
+                    decimal.Round(
+                        subtotal +
+                        importeIva,
+                        2,
+                        MidpointRounding.AwayFromZero
+                    );
+
+
+                // =================================================
+                // SABER SI ES LA PRIMERA COTIZACIÓN
+                // =================================================
+
+                bool existeCotizacion =
+                    await _context.AdqCotizaciones
+                        .AsNoTracking()
+                        .AnyAsync(
+                            x =>
+                                x.SolicitudId ==
+                                    solicitud.Id
+                                &&
+                                !x.Eliminado
+                        );
+
+
+                // =================================================
+                // CREAR COTIZACIÓN
+                // =================================================
+
+                AdqCotizacion cotizacion =
+                    new()
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        ProveedorId =
+                            null,
+
+                        NombreProveedor =
+                            InputCotizacion.NombreProveedor,
+
+                        RfcProveedor =
+                            InputCotizacion.RfcProveedor,
+
+                        ContactoProveedor =
+                            InputCotizacion.ContactoProveedor,
+
+                        EmailProveedor =
+                            InputCotizacion.EmailProveedor,
+
+                        TelefonoProveedor =
+                            InputCotizacion.TelefonoProveedor,
+
+                        Subtotal =
+                            subtotal,
+
+                        AplicaIva =
+                            InputCotizacion.AplicaIva,
+
+                        PorcentajeIva =
+                            porcentajeIva,
+
+                        ImporteIva =
+                            importeIva,
+
+                        Total =
+                            total,
+
+                        Observaciones =
+                            InputCotizacion.Observaciones,
+
+                        EsPrincipal =
+                            !existeCotizacion,
+
+                        Finalizada =
+                            false,
+
+                        Eliminado =
+                            false,
+
+                        UsuarioCreadorId =
+                            usuarioActual.Id,
+
+                        FechaCreacion =
+                            ahora,
+
+                        FechaModificacion =
+                            null,
+
+                        FechaFinalizacion =
+                            null
+                    };
+
+
+                foreach (
+                    AdqCotizacionDetalle detalle
+                    in detallesCotizacion
+                )
+                {
+                    cotizacion.Detalles.Add(
+                        detalle
+                    );
+                }
+
+
+                _context.AdqCotizaciones.Add(
+                    cotizacion
+                );
+
+
+                /*
+                 * Primer guardado para obtener
+                 * el ID identity de la cotización.
+                 */
+                await _context
+                    .SaveChangesAsync();
+
+
+                // =================================================
+                // ARCHIVOS DE LA COTIZACIÓN
+                // =================================================
+
+                await GuardarAdjuntosCotizacionAdqAsync(
+                    cotizacion,
+                    usuarioActual,
+                    ahora
+                );
+
+
+                // =================================================
+                // ESTATUS DE LA SOLICITUD
+                // =================================================
+
+                int estatusAnterior =
+                    solicitud.EstatusId;
+
+
+                if (
+                    solicitud.EstatusId ==
+                    8
+                )
+                {
+                    solicitud.EstatusId =
+                        9;
+
+                    solicitud.FechaModificacion =
+                        ahora;
+                }
+
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            estatusAnterior == 8
+                                ? "COTIZACION_INICIADA"
+                                : "COTIZACION_AGREGADA",
+
+                        Descripcion =
+                            estatusAnterior == 8
+                                ? $"El agente inició la etapa de cotización con el proveedor {cotizacion.NombreProveedor}."
+                                : $"Se agregó una cotización del proveedor {cotizacion.NombreProveedor}.",
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            solicitud.EstatusId,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                TempData["MensajeExito"] =
+                    existeCotizacion
+                        ? "La cotización del proveedor se agregó correctamente."
+                        : "La cotización se creó correctamente y la solicitud pasó a En cotización.";
+
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            solicitud.Id
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al guardar cotización de la solicitud {SolicitudId}.",
+                    InputCotizacion.SolicitudId
+                );
+
+
+                TempData["MensajeError"] =
+                    "No fue posible guardar la cotización.";
+
+
+                return RedirectToPage(
+                    new
+                    {
+                        openId =
+                            InputCotizacion.SolicitudId
+                    }
+                );
+            }
+        }
+
+        // =========================================================
         // CANCELAR SOLICITUD - SOLICITANTE
         // =========================================================
 
@@ -3066,6 +4052,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         );
                     }
 
+                    // =====================================================
+                    // NOTIFICAR AL JEFE DIRECTO
+                    // =====================================================
+
+                    await CrearNotificacionAdquisicionesAsync(
+                        new[]
+                        {
+                        jefe.UserId
+                        },
+
+                        "Solicitud pendiente de aprobación",
+
+                        $"La solicitud {solicitud.Folio} - {solicitud.Titulo} requiere tu aprobación como jefe directo.",
+
+                        $"/ERP/Adquisiciones?openId={solicitud.Id}",
+
+                        usuarioActual.Id
+                    );
+
 
                     _context.AdqAprobaciones.Add(
                         new AdqAprobacion
@@ -3271,6 +4276,241 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             return null;
+        }
+
+        // =========================================================
+        // VALIDAR ARCHIVOS DE COTIZACIÓN
+        // =========================================================
+
+        private string? ValidarArchivosCotizacionAdq()
+        {
+            /*
+             * Una cotización debe tener por lo menos
+             * un documento de soporte.
+             */
+            if (
+                ArchivosCotizacion == null
+                ||
+                ArchivosCotizacion.Count ==
+                0
+            )
+            {
+                return
+                    "Debes adjuntar al menos un archivo de cotización.";
+            }
+
+
+            string[] extensionesPermitidas =
+            {
+                ".pdf",
+                ".doc",
+                ".docx",
+                ".xls",
+                ".xlsx",
+                ".png",
+                ".jpg",
+                ".jpeg"
+            };
+
+
+            const long tamanoMaximo =
+                15L *
+                1024L *
+                1024L;
+
+
+            foreach (
+                IFormFile archivo
+                in ArchivosCotizacion
+            )
+            {
+                if (
+                    archivo == null
+                    ||
+                    archivo.Length <=
+                        0
+                )
+                {
+                    return
+                        "Uno de los archivos de cotización está vacío.";
+                }
+
+
+                if (
+                    archivo.Length >
+                    tamanoMaximo
+                )
+                {
+                    return
+                        $"El archivo {archivo.FileName} supera el límite de 15 MB.";
+                }
+
+
+                string extension =
+                    Path.GetExtension(
+                        archivo.FileName
+                    )
+                    .ToLowerInvariant();
+
+
+                if (
+                    !extensionesPermitidas.Contains(
+                        extension
+                    )
+                )
+                {
+                    return
+                        $"El formato del archivo {archivo.FileName} no está permitido.";
+                }
+            }
+
+
+            return null;
+        }
+
+        // =========================================================
+        // GUARDAR ADJUNTOS DE COTIZACIÓN
+        // =========================================================
+
+        private async Task
+            GuardarAdjuntosCotizacionAdqAsync(
+                AdqCotizacion cotizacion,
+                AppUser usuarioActual,
+                DateTime ahora)
+        {
+            if (
+                ArchivosCotizacion == null
+                ||
+                ArchivosCotizacion.Count ==
+                0
+            )
+            {
+                return;
+            }
+
+
+            string carpetaRelativa =
+                Path.Combine(
+                    "uploads",
+                    "adquisiciones",
+                    cotizacion.SolicitudId
+                        .ToString(),
+                    "cotizaciones",
+                    cotizacion.Id
+                        .ToString()
+                );
+
+
+            string carpetaFisica =
+                Path.Combine(
+                    _environment.WebRootPath,
+                    carpetaRelativa
+                );
+
+
+            Directory.CreateDirectory(
+                carpetaFisica
+            );
+
+
+            foreach (
+                IFormFile archivo
+                in ArchivosCotizacion
+            )
+            {
+                if (
+                    archivo == null
+                    ||
+                    archivo.Length <=
+                        0
+                )
+                {
+                    continue;
+                }
+
+
+                string extension =
+                    Path.GetExtension(
+                        archivo.FileName
+                    )
+                    .ToLowerInvariant();
+
+
+                string nombreAlmacenado =
+                    $"{Guid.NewGuid():N}{extension}";
+
+
+                string rutaFisica =
+                    Path.Combine(
+                        carpetaFisica,
+                        nombreAlmacenado
+                    );
+
+
+                await using (
+                    FileStream stream =
+                        new(
+                            rutaFisica,
+                            FileMode.Create
+                        )
+                )
+                {
+                    await archivo.CopyToAsync(
+                        stream
+                    );
+                }
+
+
+                string rutaPublica =
+                    "/" +
+                    Path.Combine(
+                        carpetaRelativa,
+                        nombreAlmacenado
+                    )
+                    .Replace(
+                        "\\",
+                        "/"
+                    );
+
+
+                cotizacion.Adjuntos.Add(
+                    new AdqCotizacionAdjunto
+                    {
+                        NombreOriginal =
+                            Path.GetFileName(
+                                archivo.FileName
+                            ),
+
+                        NombreAlmacenado =
+                            nombreAlmacenado,
+
+                        RutaArchivo =
+                            rutaPublica,
+
+                        Extension =
+                            extension,
+
+                        MimeType =
+                            string.IsNullOrWhiteSpace(
+                                archivo.ContentType
+                            )
+                                ? "application/octet-stream"
+                                : archivo.ContentType,
+
+                        TamanoBytes =
+                            archivo.Length,
+
+                        UsuarioCargaId =
+                            usuarioActual.Id,
+
+                        FechaCarga =
+                            ahora,
+
+                        Eliminado =
+                            false
+                    }
+                );
+            }
         }
 
         // =========================================================
@@ -5283,6 +6523,15 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             await CargarBandejaAdquisicionesAsync();
 
 
+            // =========================================================
+            // MIS ÓRDENES ASIGNADAS
+            // =========================================================
+
+            await CargarOrdenesAsignadasAsync(
+                usuarioActual
+            );
+
+
             CalcularKpis();
 
 
@@ -5295,6 +6544,140 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 Input.AreaId =
                     EmpleadoActual.AreaId.Value;
             }
+        }
+
+        // =========================================================
+        // CARGAR MIS ÓRDENES ASIGNADAS
+        // =========================================================
+
+        private async Task CargarOrdenesAsignadasAsync(
+            AppUser usuarioActual)
+        {
+            EsAgenteCompras =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+            if (!EsAgenteCompras)
+            {
+                OrdenesAsignadas =
+                    new List<OrdenAsignadaDto>();
+
+                return;
+            }
+
+            OrdenesAsignadas =
+                await (
+                    from solicitud
+                        in _context.AdqSolicitudes
+                            .AsNoTracking()
+
+                    join estatus
+                        in _context.AdqEstatus
+                            .AsNoTracking()
+                        on solicitud.EstatusId
+                        equals estatus.Id
+
+                    join empleado
+                        in _context.Empleados
+                            .AsNoTracking()
+                        on solicitud.EmpleadoSolicitanteId
+                        equals empleado.Id
+                        into empleadoJoin
+
+                    from empleado
+                        in empleadoJoin.DefaultIfEmpty()
+
+                    join area
+                        in _context.Areas
+                            .AsNoTracking()
+                        on solicitud.AreaId
+                        equals area.Id
+                        into areaJoin
+
+                    from area
+                        in areaJoin.DefaultIfEmpty()
+
+                    where
+                        solicitud.UsuarioAsignadoId ==
+                            usuarioActual.Id
+                        &&
+                        !solicitud.Eliminado
+                        &&
+                        solicitud.EstatusId >= 8
+
+                    orderby
+                        solicitud.FechaModificacion descending,
+                        solicitud.FechaSolicitud descending
+
+                    select new OrdenAsignadaDto
+                    {
+                        Id =
+                            solicitud.Id,
+
+                        Folio =
+                            solicitud.Folio,
+
+                        Titulo =
+                            solicitud.Titulo,
+
+                        Solicitante =
+                            empleado != null
+                                ? empleado.NombreCompleto
+                                : "Sin información",
+
+                        Area =
+                            area != null
+                                ? area.Nombre
+                                : "Sin área",
+
+                        FechaSolicitud =
+                            solicitud.FechaSolicitud,
+
+                        FechaAsignacion =
+                            _context.AdqAsignaciones
+                                .Where(
+                                    x =>
+                                        x.SolicitudId ==
+                                            solicitud.Id
+                                        &&
+                                        x.UsuarioAsignadoId ==
+                                            usuarioActual.Id
+                                        &&
+                                        x.Activa
+                                )
+                                .OrderByDescending(
+                                    x =>
+                                        x.FechaAsignacion
+                                )
+                                .Select(
+                                    x =>
+                                        (DateTime?)
+                                        x.FechaAsignacion
+                                )
+                                .FirstOrDefault(),
+
+                        EstatusId =
+                            solicitud.EstatusId,
+
+                        Estatus =
+                            estatus.Nombre,
+
+                        MensajesPendientes =
+                            0
+                    }
+                )
+                .ToListAsync();
         }
 
 

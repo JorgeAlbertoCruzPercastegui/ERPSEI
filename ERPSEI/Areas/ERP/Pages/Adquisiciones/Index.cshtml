@@ -1342,7 +1342,753 @@
         </section>
     }
 
+    @if (Model.EsAgenteCompras)
+    {
+        <section class="adq-panel mt-4">
+
+            <div class="adq-panel-header">
+
+                <div>
+
+                    <span class="adq-panel-kicker">
+                        Gestión de compras
+                    </span>
+
+                    <h2>
+                        Mis órdenes asignadas
+                    </h2>
+
+                    <p>
+                        Solicitudes asignadas para continuar con el proceso de compra.
+                    </p>
+
+                </div>
+
+                <div class="adq-assigned-counter">
+
+                    <i class="bi bi-bag-check"></i>
+
+                    <span>
+                        @Model.OrdenesAsignadas.Count
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            @if (Model.OrdenesAsignadas.Any())
+            {
+                <div class="table-responsive">
+
+                    <table class="table adq-table align-middle"
+                           id="tablaOrdenesAsignadasAdq">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Folio
+                                </th>
+
+                                <th>
+                                    Solicitud
+                                </th>
+
+                                <th>
+                                    Solicitante
+                                </th>
+
+                                <th>
+                                    Área
+                                </th>
+
+                                <th>
+                                    Asignada
+                                </th>
+
+                                <th>
+                                    Estatus
+                                </th>
+
+                                <th class="text-center">
+                                    Acciones
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (
+                                var orden
+                                in Model.OrdenesAsignadas
+                            )
+                            {
+                                <tr class="adq-assigned-row"
+                                    data-id="@orden.Id">
+
+                                    <td>
+
+                                        <strong class="adq-folio">
+                                            @orden.Folio
+                                        </strong>
+
+                                    </td>
+
+                                    <td>
+
+                                        <div class="adq-assigned-title">
+                                            @orden.Titulo
+                                        </div>
+
+                                    </td>
+
+                                    <td>
+                                        @orden.Solicitante
+                                    </td>
+
+                                    <td>
+                                        @orden.Area
+                                    </td>
+
+                                    <td>
+
+                                        @if (
+                                            orden.FechaAsignacion.HasValue
+                                        )
+                                        {
+                                            @orden.FechaAsignacion.Value.ToString(
+                                                "dd/MM/yyyy HH:mm"
+                                            )
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                -
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <td>
+
+                                        <span class="adq-status-badge"
+                                              data-status="@orden.Estatus">
+
+                                            @orden.Estatus
+
+                                        </span>
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <div class="d-inline-flex align-items-center gap-2">
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                                    data-id="@orden.Id"
+                                                    title="Ver solicitud">
+
+                                                <i class="bi bi-eye"></i>
+
+                                            </button>
+
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-secondary btnChatOrdenAdq"
+                                                    data-id="@orden.Id"
+                                                    title="Abrir chat">
+
+                                                <i class="bi bi-chat-dots"></i>
+
+                                                @if (
+                                                    orden.MensajesPendientes > 0
+                                                )
+                                                {
+                                                    <span class="adq-chat-unread-badge">
+
+                                                        @orden.MensajesPendientes
+
+                                                    </span>
+                                                }
+
+                                            </button>
+
+
+                                            @if (
+                                                orden.EstatusId == 8
+                                                ||
+                                                orden.EstatusId == 9
+                                            )
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-sm btn-primary btnGenerarCotizacionAdq"
+                                                        data-id="@orden.Id"
+                                                        title="Generar cotización">
+
+                                                    <i class="bi bi-receipt"></i>
+
+                                                    Cotizar
+
+                                                </button>
+                                            }
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+            else
+            {
+                <div class="adq-empty-state">
+
+                    <i class="bi bi-bag-check"></i>
+
+                    <strong>
+                        No tienes órdenes asignadas
+                    </strong>
+
+                    <span>
+                        Las solicitudes que te asignen aparecerán aquí.
+                    </span>
+
+                </div>
+            }
+
+        </section>
+    }
+
 </div>
+
+<!-- ====================================================== -->
+<!-- MODAL COTIZACIÓN -->
+<!-- ====================================================== -->
+
+<div class="modal fade"
+     id="modalCotizacionAdq"
+     tabindex="-1"
+     aria-labelledby="modalCotizacionAdqLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content adq-quote-modal">
+
+            <form method="post"
+                  enctype="multipart/form-data"
+                  asp-page-handler="GuardarCotizacion"
+                  id="formCotizacionAdq">
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <span class="adq-modal-kicker">
+                            Gestión de compras
+                        </span>
+
+                        <h5 class="modal-title"
+                            id="modalCotizacionAdqLabel">
+
+                            Generar cotización
+
+                        </h5>
+
+                        <small class="text-muted"
+                               id="folioCotizacionAdq">
+                        </small>
+
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           asp-for="InputCotizacion.SolicitudId"
+                           id="cotizacionSolicitudIdAdq" />
+
+
+                    <!-- ============================================== -->
+                    <!-- PROVEEDOR -->
+                    <!-- ============================================== -->
+
+                    <section class="adq-quote-section">
+
+                        <div class="adq-quote-section-header">
+
+                            <div class="adq-quote-section-icon">
+
+                                <i class="bi bi-building"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h6>
+                                    Datos del proveedor
+                                </h6>
+
+                                <span>
+                                    Información general del proveedor que emite la cotización.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-12 col-lg-6">
+
+                                <label class="form-label"
+                                       asp-for="InputCotizacion.NombreProveedor">
+
+                                    Proveedor
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <input asp-for="InputCotizacion.NombreProveedor"
+                                       class="form-control"
+                                       id="cotizacionNombreProveedorAdq"
+                                       autocomplete="off"
+                                       maxlength="250"
+                                       required />
+
+                            </div>
+
+
+                            <div class="col-12 col-lg-3">
+
+                                <label class="form-label"
+                                       asp-for="InputCotizacion.RfcProveedor">
+
+                                    RFC
+
+                                </label>
+
+                                <input asp-for="InputCotizacion.RfcProveedor"
+                                       class="form-control text-uppercase"
+                                       id="cotizacionRfcProveedorAdq"
+                                       autocomplete="off"
+                                       maxlength="50" />
+
+                            </div>
+
+
+                            <div class="col-12 col-lg-3">
+
+                                <label class="form-label"
+                                       asp-for="InputCotizacion.TelefonoProveedor">
+
+                                    Teléfono
+
+                                </label>
+
+                                <input asp-for="InputCotizacion.TelefonoProveedor"
+                                       class="form-control"
+                                       id="cotizacionTelefonoProveedorAdq"
+                                       autocomplete="off"
+                                       maxlength="50" />
+
+                            </div>
+
+
+                            <div class="col-12 col-lg-6">
+
+                                <label class="form-label"
+                                       asp-for="InputCotizacion.ContactoProveedor">
+
+                                    Contacto
+
+                                </label>
+
+                                <input asp-for="InputCotizacion.ContactoProveedor"
+                                       class="form-control"
+                                       id="cotizacionContactoProveedorAdq"
+                                       autocomplete="off"
+                                       maxlength="250" />
+
+                            </div>
+
+
+                            <div class="col-12 col-lg-6">
+
+                                <label class="form-label"
+                                       asp-for="InputCotizacion.EmailProveedor">
+
+                                    Correo electrónico
+
+                                </label>
+
+                                <input asp-for="InputCotizacion.EmailProveedor"
+                                       type="email"
+                                       class="form-control"
+                                       id="cotizacionEmailProveedorAdq"
+                                       autocomplete="off"
+                                       maxlength="250" />
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- ============================================== -->
+                    <!-- PRODUCTOS -->
+                    <!-- ============================================== -->
+
+                    <section class="adq-quote-section mt-4">
+
+                        <div class="adq-quote-section-header">
+
+                            <div class="adq-quote-section-icon">
+
+                                <i class="bi bi-box-seam"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h6>
+                                    Productos y servicios
+                                </h6>
+
+                                <span>
+                                    Captura el precio ofrecido por el proveedor.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="table-responsive">
+
+                            <table class="table align-middle adq-table adq-quote-table">
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Producto / servicio
+                                        </th>
+
+                                        <th>
+                                            Cantidad
+                                        </th>
+
+                                        <th>
+                                            Unidad
+                                        </th>
+
+                                        <th style="min-width: 170px;">
+                                            Precio unitario
+                                        </th>
+
+                                        <th style="min-width: 150px;"
+                                            class="text-end">
+
+                                            Importe
+
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody id="contenedorDetallesCotizacionAdq">
+
+                                    <tr>
+
+                                        <td colspan="5"
+                                            class="text-center text-muted py-4">
+
+                                            Selecciona una solicitud para cotizar.
+
+                                        </td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- ============================================== -->
+                    <!-- IVA Y TOTALES -->
+                    <!-- ============================================== -->
+
+                    <div class="row g-4 mt-1">
+
+                        <div class="col-12 col-lg-7">
+
+                            <section class="adq-quote-section h-100">
+
+                                <div class="adq-quote-section-header">
+
+                                    <div class="adq-quote-section-icon">
+
+                                        <i class="bi bi-percent"></i>
+
+                                    </div>
+
+                                    <div>
+
+                                        <h6>
+                                            Impuestos y observaciones
+                                        </h6>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="row g-3">
+
+                                    <div class="col-12 col-md-4">
+
+                                        <div class="form-check form-switch mt-4">
+
+                                            <input asp-for="InputCotizacion.AplicaIva"
+                                                   class="form-check-input"
+                                                   type="checkbox"
+                                                   id="cotizacionAplicaIvaAdq" />
+
+                                            <label class="form-check-label"
+                                                   for="cotizacionAplicaIvaAdq">
+
+                                                Aplicar IVA
+
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-12 col-md-4">
+
+                                        <label class="form-label"
+                                               asp-for="InputCotizacion.PorcentajeIva">
+
+                                            IVA %
+
+                                        </label>
+
+                                        <div class="input-group">
+
+                                            <input asp-for="InputCotizacion.PorcentajeIva"
+                                                   type="number"
+                                                   class="form-control"
+                                                   id="cotizacionPorcentajeIvaAdq"
+                                                   min="0"
+                                                   max="100"
+                                                   step="0.01"
+                                                   value="16" />
+
+                                            <span class="input-group-text">
+                                                %
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-12">
+
+                                        <label class="form-label"
+                                               asp-for="InputCotizacion.Observaciones">
+
+                                            Observaciones
+
+                                        </label>
+
+                                        <textarea asp-for="InputCotizacion.Observaciones"
+                                                  class="form-control"
+                                                  id="cotizacionObservacionesAdq"
+                                                  rows="4"
+                                                  maxlength="3000"
+                                                      placeholder="Condiciones comerciales, vigencia, tiempo de entrega, comentarios del proveedor...">
+                                        </textarea>
+
+                                        </div>
+
+                                    </div>
+
+                                </section>
+
+                            </div>
+
+
+                            <div class="col-12 col-lg-5">
+
+                                <section class="adq-quote-summary">
+
+                                    <div class="adq-quote-summary-title">
+
+                                        <i class="bi bi-calculator"></i>
+
+                                        Resumen de cotización
+
+                                    </div>
+
+
+                                    <div class="adq-quote-summary-row">
+
+                                        <span>
+                                            Subtotal
+                                        </span>
+
+                                        <strong id="cotizacionSubtotalAdq">
+                                            $0.00
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="adq-quote-summary-row">
+
+                                        <span id="cotizacionIvaLabelAdq">
+                                            IVA 16%
+                                        </span>
+
+                                        <strong id="cotizacionIvaAdq">
+                                            $0.00
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="adq-quote-summary-total">
+
+                                        <span>
+                                            Total
+                                        </span>
+
+                                        <strong id="cotizacionTotalAdq">
+                                            $0.00
+                                        </strong>
+
+                                    </div>
+
+                                </section>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ============================================== -->
+                        <!-- ARCHIVO -->
+                        <!-- ============================================== -->
+
+                        <section class="adq-quote-section mt-4">
+
+                            <div class="adq-quote-section-header">
+
+                                <div class="adq-quote-section-icon">
+
+                                    <i class="bi bi-paperclip"></i>
+
+                                </div>
+
+                                <div>
+
+                                    <h6>
+                                        Documento de cotización
+                                    </h6>
+
+                                    <span>
+                                        Adjunta la evidencia recibida del proveedor.
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <input type="file"
+                                   asp-for="ArchivosCotizacion"
+                                   id="ArchivosCotizacionAdq"
+                                   class="form-control"
+                                   multiple
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                   required />
+
+
+                            <div class="form-text">
+
+                                Formatos permitidos:
+                                PDF, Word, Excel, PNG y JPG.
+                                Máximo 15 MB por archivo.
+
+                            </div>
+
+                        </section>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancelar
+
+                        </button>
+
+
+                        <button type="submit"
+                                class="btn btn-primary"
+                                id="btnGuardarCotizacionAdq">
+
+                            <i class="bi bi-check2-circle me-1"></i>
+
+                            Guardar cotización
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
 
 
 <!-- ========================================================== -->
