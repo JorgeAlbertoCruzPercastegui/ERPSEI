@@ -1653,6 +1653,11 @@
                            asp-for="InputCotizacion.SolicitudId"
                            id="cotizacionSolicitudIdAdq" />
 
+                    <input type="hidden"
+                           id="cotizacionEditarIdAdq"
+                           name="cotizacionEditarId"
+                           value="0" />
+
                     <!-- ====================================================== -->
                     <!-- COTIZACIONES REGISTRADAS -->
                     <!-- ====================================================== -->
@@ -1685,7 +1690,7 @@
                             </div>
 
 
-                            <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex align-items-center flex-wrap gap-2">
 
                                 <span class="badge rounded-pill text-bg-light"
                                       id="contadorCotizacionesAdq">
@@ -1693,6 +1698,47 @@
                                     0 cotizaciones
 
                                 </span>
+
+
+                                <!-- ====================================================== -->
+                                <!-- ACCIONES SOBRE COTIZACIONES SELECCIONADAS -->
+                                <!-- ====================================================== -->
+
+                                <div id="accionesSeleccionCotizacionesAdq"
+                                     class="d-none align-items-center gap-2">
+
+                                    <span class="adq-quote-selection-counter"
+                                          id="contadorSeleccionCotizacionesAdq">
+
+                                        0 seleccionadas
+
+                                    </span>
+
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary"
+                                            id="btnEditarCotizacionSeleccionadaAdq"
+                                            disabled>
+
+                                        <i class="bi bi-pencil-square me-1"></i>
+
+                                        Editar
+
+                                    </button>
+
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            id="btnEliminarCotizacionesSeleccionadasAdq"
+                                            disabled>
+
+                                        <i class="bi bi-trash3 me-1"></i>
+
+                                        Eliminar
+
+                                    </button>
+
+                                </div>
 
 
                                 <button type="button"
@@ -1704,6 +1750,7 @@
                                     Agregar proveedor alternativo
 
                                 </button>
+
 
                                 <button type="button"
                                         class="btn btn-sm btn-success d-none"
@@ -1736,23 +1783,56 @@
 
                         <div class="adq-quote-section-header">
 
-                            <div class="adq-quote-section-icon">
+                            <div class="adq-quote-section-icon"
+                                 id="iconoModoCotizacionAdq">
 
                                 <i class="bi bi-building"></i>
 
                             </div>
 
-                            <div>
 
-                                <h6>
-                                    Datos del proveedor
-                                </h6>
+                            <div class="flex-grow-1">
 
-                                <span>
+                                <div class="d-flex align-items-center gap-2">
+
+                                    <h6 id="tituloCapturaCotizacionAdq"
+                                        class="mb-0">
+
+                                        Datos del proveedor
+
+                                    </h6>
+
+
+                                    <span id="badgeEdicionCotizacionAdq"
+                                          class="badge rounded-pill text-bg-primary d-none">
+
+                                        <i class="bi bi-pencil-square me-1"></i>
+
+                                        Editando
+
+                                    </span>
+
+                                </div>
+
+
+                                <span id="subtituloCapturaCotizacionAdq">
+
                                     Información general del proveedor que emite la cotización.
+
                                 </span>
 
                             </div>
+
+
+                            <button type="button"
+                                    id="btnCancelarEdicionCotizacionAdq"
+                                    class="btn btn-sm btn-outline-secondary d-none">
+
+                                <i class="bi bi-x-lg me-1"></i>
+
+                                Cancelar edición
+
+                            </button>
 
                         </div>
 
@@ -2142,12 +2222,14 @@
 
 
                             <input type="file"
-                                   asp-for="ArchivosCotizacion"
                                    id="ArchivosCotizacionAdq"
+                                   name="ArchivosCotizacion"
                                    class="form-control"
                                    multiple
-                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                   required />
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+
+                            <div id="archivosCotizacionEliminarInputsAdq">
+                            </div>
 
                             <div id="listaArchivosCotizacionAdq"
                                  class="adq-files-list mt-3">
@@ -2184,9 +2266,13 @@
                                 class="btn btn-primary"
                                 id="btnGuardarCotizacionAdq">
 
-                            <i class="bi bi-check2-circle me-1"></i>
+                            <i class="bi bi-check2-circle me-1"
+                                   id="iconoGuardarCotizacionAdq">
+                            </i>
 
-                            Guardar cotización
+                            <span id="textoGuardarCotizacionAdq">
+                                Guardar cotización
+                            </span>
 
                         </button>
 

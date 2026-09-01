@@ -253,6 +253,65 @@ document.addEventListener(
                 "contadorCotizacionesAdq"
             );
 
+        const accionesSeleccionCotizacionesAdq =
+            document.getElementById(
+                "accionesSeleccionCotizacionesAdq"
+            );
+
+
+        const contadorSeleccionCotizacionesAdq =
+            document.getElementById(
+                "contadorSeleccionCotizacionesAdq"
+            );
+
+
+        const btnEditarCotizacionSeleccionadaAdq =
+            document.getElementById(
+                "btnEditarCotizacionSeleccionadaAdq"
+            );
+
+
+        const btnEliminarCotizacionesSeleccionadasAdq =
+            document.getElementById(
+                "btnEliminarCotizacionesSeleccionadasAdq"
+            );
+
+
+        const cotizacionEditarIdAdq =
+            document.getElementById(
+                "cotizacionEditarIdAdq"
+            );
+
+
+        const tituloCapturaCotizacionAdq =
+            document.getElementById(
+                "tituloCapturaCotizacionAdq"
+            );
+
+
+        const subtituloCapturaCotizacionAdq =
+            document.getElementById(
+                "subtituloCapturaCotizacionAdq"
+            );
+
+
+        const badgeEdicionCotizacionAdq =
+            document.getElementById(
+                "badgeEdicionCotizacionAdq"
+            );
+
+
+        const btnCancelarEdicionCotizacionAdq =
+            document.getElementById(
+                "btnCancelarEdicionCotizacionAdq"
+            );
+
+
+        const textoGuardarCotizacionAdq =
+            document.getElementById(
+                "textoGuardarCotizacionAdq"
+            );
+
 
         const btnAgregarProveedorAlternativoAdq =
             document.getElementById(
@@ -272,6 +331,13 @@ document.addEventListener(
 
 
         let solicitudCotizacionActualAdq =
+            null;
+
+        let cotizacionesRegistradasActualesAdq =
+            [];
+
+
+        let cotizacionEditandoActualAdq =
             null;
 
         const archivosCotizacionAdq =
@@ -294,6 +360,49 @@ document.addEventListener(
 
         let archivosCotizacionSeleccionadosAdq =
             [];
+
+        let archivosCotizacionEliminadosAdq =
+            new Set();
+
+
+        const archivosCotizacionEliminarInputsAdq =
+            document.getElementById(
+                "archivosCotizacionEliminarInputsAdq"
+            );
+
+        // =========================================================
+        // DEFINIR HANDLER AL GUARDAR COTIZACIÓN
+        // =========================================================
+
+        formCotizacionAdq
+            ?.addEventListener(
+                "submit",
+                function () {
+
+                    const cotizacionEditarId =
+                        Number(
+                            cotizacionEditarIdAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        cotizacionEditarId >
+                        0
+                    ) {
+
+                        formCotizacionAdq.action =
+                            `${window.location.pathname}?handler=EditarCotizacion`;
+                    }
+                    else {
+
+                        formCotizacionAdq.action =
+                            `${window.location.pathname}?handler=GuardarCotizacion`;
+                    }
+                }
+            );
 
         const modalPresupuestoElementAdq =
             document.getElementById(
@@ -640,6 +749,57 @@ document.addEventListener(
         }
 
         // =========================================================
+        // SINCRONIZAR ARCHIVOS EXISTENTES MARCADOS PARA ELIMINAR
+        // =========================================================
+
+        function sincronizarArchivosCotizacionEliminarAdq() {
+
+            if (
+                !archivosCotizacionEliminarInputsAdq
+            ) {
+                return;
+            }
+
+
+            archivosCotizacionEliminarInputsAdq.innerHTML =
+                "";
+
+
+            archivosCotizacionEliminadosAdq
+                .forEach(
+                    function (
+                        archivoId
+                    ) {
+
+                        const input =
+                            document.createElement(
+                                "input"
+                            );
+
+
+                        input.type =
+                            "hidden";
+
+
+                        input.name =
+                            "ArchivosCotizacionEliminarIds";
+
+
+                        input.value =
+                            String(
+                                archivoId
+                            );
+
+
+                        archivosCotizacionEliminarInputsAdq
+                            .appendChild(
+                                input
+                            );
+                    }
+                );
+        }
+
+        // =========================================================
         // RENDERIZAR ARCHIVOS ADICIONALES DE COTIZACIÓN
         // =========================================================
 
@@ -656,9 +816,50 @@ document.addEventListener(
                 "";
 
 
+            const archivosExistentesTodos =
+                cotizacionEditandoActualAdq
+                    &&
+                    Array.isArray(
+                        cotizacionEditandoActualAdq.archivosAdicionales
+                    )
+                    ? cotizacionEditandoActualAdq.archivosAdicionales
+                    : [];
+
+
+            const archivosExistentes =
+                archivosExistentesTodos
+                    .filter(
+                        function (
+                            archivo
+                        ) {
+
+                            return !archivosCotizacionEliminadosAdq.has(
+                                Number(
+                                    archivo.id
+                                    ??
+                                    0
+                                )
+                            );
+                        }
+                    );
+
+
+            const totalExistentes =
+                archivosExistentes.length;
+
+
+            const totalNuevos =
+                archivosCotizacionSeleccionadosAdq.length;
+
+
+            // =====================================================
+            // SIN ARCHIVOS
+            // =====================================================
+
             if (
-                archivosCotizacionSeleccionadosAdq.length ===
-                0
+                totalExistentes === 0
+                &&
+                totalNuevos === 0
             ) {
 
                 listaArchivosCotizacionAdq.innerHTML = `
@@ -667,7 +868,7 @@ document.addEventListener(
                 <i class="bi bi-paperclip"></i>
 
                 <span>
-                    No hay archivos adicionales seleccionados.
+                    No hay archivos adicionales.
                 </span>
 
             </div>
@@ -679,7 +880,9 @@ document.addEventListener(
                 ) {
 
                     contadorArchivosCotizacionAdq.textContent =
-                        "0 archivos seleccionados.";
+                        cotizacionEditandoActualAdq
+                            ? "Sin archivos adicionales. Este apartado es opcional."
+                            : "0 archivos seleccionados.";
                 }
 
 
@@ -687,8 +890,168 @@ document.addEventListener(
             }
 
 
-            archivosCotizacionSeleccionadosAdq
-                .forEach(
+            // =====================================================
+            // ARCHIVOS EXISTENTES
+            // =====================================================
+
+            if (
+                totalExistentes > 0
+            ) {
+
+                const tituloExistentes =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                tituloExistentes.className =
+                    "small fw-semibold text-muted mb-2";
+
+
+                tituloExistentes.innerHTML = `
+            <i class="bi bi-folder-check me-1"></i>
+            Archivos actuales
+        `;
+
+
+                listaArchivosCotizacionAdq
+                    .appendChild(
+                        tituloExistentes
+                    );
+
+
+                archivosExistentes.forEach(
+                    function (
+                        archivo
+                    ) {
+
+                        const archivoId =
+                            Number(
+                                archivo.id
+                                ??
+                                0
+                            );
+
+
+                        const item =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        item.className =
+                            "adq-file-item mb-2";
+
+
+                        item.innerHTML = `
+                    <div class="adq-file-item-main">
+
+                        <div class="adq-file-item-icon">
+                            <i class="bi bi-file-earmark-check"></i>
+                        </div>
+
+
+                        <div class="adq-file-item-info">
+
+                            <strong title="${escapeAttributeAdq(
+                            archivo.nombreOriginal
+                            ??
+                            "Archivo"
+                        )}">
+
+                                ${escapeHtmlAdq(
+                            archivo.nombreOriginal
+                            ??
+                            "Archivo"
+                        )}
+
+                            </strong>
+
+                            <span>
+                                Archivo existente
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="d-flex align-items-center gap-2">
+
+                        <a href="${escapeAttributeAdq(
+                            archivo.rutaArchivo
+                            ??
+                            "#"
+                        )}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="btn btn-sm btn-outline-primary"
+                           title="Ver archivo">
+
+                            <i class="bi bi-eye"></i>
+
+                        </a>
+
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger btnEliminarArchivoExistenteCotizacionAdq"
+                                data-archivo-id="${archivoId}"
+                                title="Eliminar archivo">
+
+                            <i class="bi bi-trash"></i>
+
+                        </button>
+
+                    </div>
+                `;
+
+
+                        listaArchivosCotizacionAdq
+                            .appendChild(
+                                item
+                            );
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // ARCHIVOS NUEVOS
+            // =====================================================
+
+            if (
+                totalNuevos > 0
+            ) {
+
+                const tituloNuevos =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                tituloNuevos.className =
+                    totalExistentes > 0
+                        ? "small fw-semibold text-muted mt-3 mb-2"
+                        : "small fw-semibold text-muted mb-2";
+
+
+                tituloNuevos.innerHTML = `
+            <i class="bi bi-cloud-arrow-up me-1"></i>
+
+            ${cotizacionEditandoActualAdq
+                        ? "Nuevos archivos"
+                        : "Archivos seleccionados"
+                    }
+        `;
+
+
+                listaArchivosCotizacionAdq
+                    .appendChild(
+                        tituloNuevos
+                    );
+
+
+                archivosCotizacionSeleccionadosAdq.forEach(
                     function (
                         archivo,
                         index
@@ -701,16 +1064,14 @@ document.addEventListener(
 
 
                         item.className =
-                            "adq-file-item";
+                            "adq-file-item mb-2";
 
 
                         item.innerHTML = `
                     <div class="adq-file-item-main">
 
                         <div class="adq-file-item-icon">
-
                             <i class="bi bi-file-earmark"></i>
-
                         </div>
 
 
@@ -719,9 +1080,11 @@ document.addEventListener(
                             <strong title="${escapeAttributeAdq(
                             archivo.name
                         )}">
+
                                 ${escapeHtmlAdq(
                             archivo.name
                         )}
+
                             </strong>
 
                             <span>
@@ -738,7 +1101,7 @@ document.addEventListener(
                     <button type="button"
                             class="btn btn-sm btn-outline-danger btnEliminarArchivoCotizacionAdq"
                             data-index="${index}"
-                            title="Quitar archivo">
+                            title="Quitar archivo nuevo">
 
                         <i class="bi bi-trash"></i>
 
@@ -752,22 +1115,35 @@ document.addEventListener(
                             );
                     }
                 );
+            }
 
+
+            // =====================================================
+            // CONTADOR
+            // =====================================================
 
             if (
                 contadorArchivosCotizacionAdq
             ) {
 
-                const total =
-                    archivosCotizacionSeleccionadosAdq.length;
+                if (
+                    cotizacionEditandoActualAdq
+                ) {
 
+                    contadorArchivosCotizacionAdq.textContent =
+                        `${totalExistentes} existentes · ${totalNuevos} nuevos · Opcional al editar.`;
+                }
+                else {
 
-                contadorArchivosCotizacionAdq.textContent =
-                    total === 1
-                        ? "1 archivo seleccionado."
-                        : `${total} archivos seleccionados.`;
+                    contadorArchivosCotizacionAdq.textContent =
+                        totalNuevos === 1
+                            ? "1 archivo seleccionado."
+                            : `${totalNuevos} archivos seleccionados.`;
+                }
             }
         }
+
+
 
         // =========================================================
         // CLAVE ÚNICA DE ARCHIVO
@@ -884,7 +1260,7 @@ document.addEventListener(
 
                     renderizarArchivosCotizacionSeleccionadosAdq();
                 }
-        );
+            );
 
         // =========================================================
         // ELIMINAR ARCHIVO ADICIONAL
@@ -933,6 +1309,88 @@ document.addEventListener(
 
 
                 sincronizarArchivosCotizacionAdq();
+
+                renderizarArchivosCotizacionSeleccionadosAdq();
+            }
+        );
+
+        // =========================================================
+        // MARCAR ARCHIVO EXISTENTE PARA ELIMINAR
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            async function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnEliminarArchivoExistenteCotizacionAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const archivoId =
+                    Number(
+                        boton.dataset.archivoId
+                        ??
+                        0
+                    );
+
+
+                if (
+                    archivoId <= 0
+                ) {
+                    return;
+                }
+
+
+                const confirmado =
+                    await confirmarAccionAdq(
+                        {
+                            titulo:
+                                "Eliminar archivo",
+
+                            mensaje:
+                                `
+                        <p class="mb-0">
+                            El archivo dejará de formar parte de esta cotización
+                            cuando guardes los cambios.
+                        </p>
+                        `,
+
+                            textoConfirmar:
+                                "Eliminar",
+
+                            textoCancelar:
+                                "Cancelar",
+
+                            tipo:
+                                "danger",
+
+                            icono:
+                                "bi-trash"
+                        }
+                    );
+
+
+                if (!confirmado) {
+                    return;
+                }
+
+
+                archivosCotizacionEliminadosAdq.add(
+                    archivoId
+                );
+
+
+                sincronizarArchivosCotizacionEliminarAdq();
+
 
                 renderizarArchivosCotizacionSeleccionadosAdq();
             }
@@ -1915,94 +2373,6 @@ document.addEventListener(
         );
 
         // =========================================================
-        // REABRIR ETAPA DE COTIZACIÓN
-        // =========================================================
-
-        async function reabrirCotizacionAdq(
-            solicitudId
-        ) {
-
-            const token =
-                document.querySelector(
-                    'input[name="__RequestVerificationToken"]'
-                )
-                    ?.value
-                ??
-                "";
-
-
-            const datos =
-                new FormData();
-
-
-            datos.append(
-                "__RequestVerificationToken",
-                token
-            );
-
-
-            datos.append(
-                "solicitudId",
-                String(
-                    solicitudId
-                )
-            );
-
-
-            const response =
-                await fetch(
-                    "?handler=ReabrirCotizacion",
-                    {
-                        method:
-                            "POST",
-
-                        body:
-                            datos,
-
-                        headers:
-                        {
-                            "X-Requested-With":
-                                "XMLHttpRequest"
-                        }
-                    }
-                );
-
-
-            let resultado =
-                null;
-
-
-            try {
-
-                resultado =
-                    await response.json();
-
-            }
-            catch {
-
-                resultado =
-                    null;
-            }
-
-
-            if (
-                !response.ok
-                ||
-                !resultado?.success
-            ) {
-
-                throw new Error(
-                    resultado?.message
-                    ??
-                    "No fue posible reabrir la cotización."
-                );
-            }
-
-
-            return resultado;
-        }
-
-        // =========================================================
         // FORMATEAR TAMAÑO DE ARCHIVO
         // =========================================================
 
@@ -2115,6 +2485,227 @@ document.addEventListener(
                 .join(
                     ""
                 );
+        }
+
+        // =========================================================
+        // MOSTRAR EVIDENCIAS EXISTENTES DURANTE EDICIÓN
+        // =========================================================
+
+        function mostrarEvidenciasExistentesEdicionAdq(
+            cotizacion
+        ) {
+
+            const detalles =
+                Array.isArray(
+                    cotizacion?.detalles
+                )
+                    ? [...cotizacion.detalles]
+                    : [];
+
+
+            detalles.sort(
+                function (
+                    a,
+                    b
+                ) {
+
+                    return Number(
+                        a.orden
+                        ??
+                        0
+                    )
+                        -
+                        Number(
+                            b.orden
+                            ??
+                            0
+                        );
+                }
+            );
+
+
+            const filas =
+                Array.from(
+                    contenedorDetallesCotizacionAdq
+                        ?.querySelectorAll(
+                            "tr"
+                        )
+                    ??
+                    []
+                );
+
+
+            filas.forEach(
+                function (
+                    fila,
+                    index
+                ) {
+
+                    const detalleCotizacion =
+                        detalles[
+                        index
+                        ];
+
+
+                    if (
+                        !detalleCotizacion
+                    ) {
+                        return;
+                    }
+
+
+                    const inputEvidencia =
+                        fila.querySelector(
+                            ".cotizacion-evidencia-adq"
+                        );
+
+
+                    if (
+                        !inputEvidencia
+                    ) {
+                        return;
+                    }
+
+
+                    const evidencias =
+                        Array.isArray(
+                            detalleCotizacion.evidencias
+                        )
+                            ? detalleCotizacion.evidencias
+                            : [];
+
+
+                    // =====================================================
+                    // EVIDENCIA OBLIGATORIA SÓLO SI NO EXISTE UNA ACTUAL
+                    // =====================================================
+
+                    inputEvidencia.required =
+                        evidencias.length ===
+                        0;
+
+
+                    const contenedorActual =
+                        fila.querySelector(
+                            ".adq-evidencia-existente-edicion"
+                        );
+
+
+                    contenedorActual
+                        ?.remove();
+
+
+                    const contenedor =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    contenedor.className =
+                        "adq-evidencia-existente-edicion mt-2";
+
+
+                    if (
+                        evidencias.length ===
+                        0
+                    ) {
+
+                        contenedor.innerHTML = `
+                        <div class="small text-danger">
+
+                            <i class="bi bi-exclamation-circle me-1"></i>
+
+                            No existe evidencia registrada.
+                            Debes seleccionar un archivo antes de guardar.
+
+                        </div>
+                    `;
+                    }
+                    else {
+
+                        const archivosHtml =
+                            evidencias
+                                .map(
+                                    function (
+                                        archivo
+                                    ) {
+
+                                        return `
+                                    <a href="${escapeAttributeAdq(
+                                            archivo.rutaArchivo
+                                            ??
+                                            "#"
+                                        )}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="d-flex align-items-center gap-2 text-decoration-none mb-1">
+
+                                        <i class="bi bi-file-earmark-check text-success"></i>
+
+                                        <span class="text-truncate">
+                                            ${escapeHtmlAdq(
+                                            archivo.nombreOriginal
+                                            ??
+                                            "Evidencia"
+                                        )}
+                                        </span>
+
+                                    </a>
+                                `;
+                                    }
+                                )
+                                .join(
+                                    ""
+                                );
+
+
+                        contenedor.innerHTML = `
+                    <div class="small fw-semibold text-success mb-1">
+
+                        <i class="bi bi-check-circle-fill me-1"></i>
+
+                        Evidencia actual
+
+                    </div>
+
+                    ${archivosHtml}
+
+                    <div class="small text-muted mt-1">
+
+                        El archivo de arriba se conservará.
+                        Selecciona uno nuevo únicamente si deseas reemplazarlo.
+
+                    </div>
+                `;
+                    }
+
+
+                    inputEvidencia
+                        .insertAdjacentElement(
+                            "afterend",
+                            contenedor
+                        );
+
+
+                    const ayuda =
+                        inputEvidencia
+                            .parentElement
+                            ?.querySelector(
+                                "small.text-muted"
+                            );
+
+
+                    if (
+                        ayuda
+                    ) {
+
+                        ayuda.textContent =
+                            evidencias.length >
+                                0
+                                ? "Opcional al editar · La evidencia actual se conservará si no seleccionas otra."
+                                : "Obligatorio · Debes cargar evidencia para este producto. Máximo 15 MB.";
+                    }
+                }
+            );
         }
 
         // =========================================================
@@ -2316,9 +2907,25 @@ document.addEventListener(
             }
 
 
+            // =====================================================
+            // GUARDAR COTIZACIONES EN MEMORIA
+            // =====================================================
+
+            cotizacionesRegistradasActualesAdq =
+                Array.isArray(
+                    cotizaciones
+                )
+                    ? cotizaciones
+                    : [];
+
+
             listaCotizacionesRegistradasAdq.innerHTML =
                 "";
 
+
+            // =====================================================
+            // SIN COTIZACIONES
+            // =====================================================
 
             if (
                 !Array.isArray(
@@ -2352,14 +2959,49 @@ document.addEventListener(
                     );
 
 
+                accionesSeleccionCotizacionesAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+
+
+                accionesSeleccionCotizacionesAdq
+                    ?.classList
+                    .remove(
+                        "d-flex"
+                    );
+
+
+                actualizarAccionesCotizacionesAdq();
+
+
                 return;
             }
 
+
+            // =====================================================
+            // MOSTRAR SECCIÓN
+            // =====================================================
 
             seccionCotizacionesRegistradasAdq
                 .classList
                 .remove(
                     "d-none"
+                );
+
+
+            accionesSeleccionCotizacionesAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            accionesSeleccionCotizacionesAdq
+                ?.classList
+                .add(
+                    "d-flex"
                 );
 
 
@@ -2427,8 +3069,10 @@ document.addEventListener(
                         cotizacion
                     ) {
 
-                        return cotizacion.esPrincipal ===
-                            true;
+                        return (
+                            cotizacion.esPrincipal ===
+                            true
+                        );
                     }
                 );
 
@@ -2449,6 +3093,10 @@ document.addEventListener(
                     );
             }
 
+
+            // =====================================================
+            // RENDERIZAR COTIZACIONES
+            // =====================================================
 
             cotizaciones.forEach(
                 function (
@@ -2504,6 +3152,10 @@ document.addEventListener(
                         1;
 
 
+                    // =================================================
+                    // CREAR TARJETA
+                    // =================================================
+
                     const tarjeta =
                         document.createElement(
                             "article"
@@ -2513,6 +3165,16 @@ document.addEventListener(
                     tarjeta.className =
                         "adq-quote-history-card";
 
+
+                    tarjeta.dataset.cotizacionId =
+                        String(
+                            cotizacionId
+                        );
+
+
+                    // =================================================
+                    // CLASIFICACIÓN DE PRECIO
+                    // =================================================
 
                     if (
                         esMenor
@@ -2565,6 +3227,10 @@ document.addEventListener(
                         );
                     }
 
+
+                    // =================================================
+                    // INFORMACIÓN DEL PROVEEDOR
+                    // =================================================
 
                     const rfc =
                         cotizacion.rfcProveedor
@@ -2670,6 +3336,10 @@ document.addEventListener(
                     }
 
 
+                    // =================================================
+                    // BADGE DE COTIZACIÓN SELECCIONADA
+                    // =================================================
+
                     const badgeSeleccionada =
                         esSeleccionada
                             ? `
@@ -2683,6 +3353,10 @@ document.addEventListener(
                     `
                             : "";
 
+
+                    // =================================================
+                    // BOTÓN SELECCIONAR
+                    // =================================================
 
                     const botonSeleccion =
                         esSeleccionada
@@ -2716,8 +3390,27 @@ document.addEventListener(
                     `;
 
 
+                    // =================================================
+                    // HTML DE TARJETA
+                    // =================================================
+
                     tarjeta.innerHTML = `
                 <div class="adq-quote-provider-header">
+
+                    <div class="adq-quote-card-selector">
+
+                        <input type="checkbox"
+                               class="form-check-input checkboxCotizacionAdq"
+                               value="${cotizacionId}"
+                               data-cotizacion-id="${cotizacionId}"
+                               aria-label="Seleccionar cotización de ${escapeAttributeAdq(
+                        cotizacion.nombreProveedor
+                        ??
+                        "Proveedor"
+                    )}" />
+
+                    </div>
+
 
                     <div class="adq-quote-provider-number">
 
@@ -2744,7 +3437,9 @@ document.addEventListener(
 
                                     </strong>
 
+
                                     ${badgePrecio}
+
 
                                     ${badgeSeleccionada}
 
@@ -2752,7 +3447,9 @@ document.addEventListener(
 
 
                                 <span class="adq-quote-provider-subtitle">
+
                                     Información general del proveedor
+
                                 </span>
 
                             </div>
@@ -2767,9 +3464,11 @@ document.addEventListener(
                                     </span>
 
                                     <strong>
+
                                         ${formatearMonedaCotizacionAdq(
                         total
                     )}
+
                                     </strong>
 
                                 </div>
@@ -2803,6 +3502,7 @@ document.addEventListener(
 
                                 </div>
 
+
                                 <div>
 
                                     <span>
@@ -2810,12 +3510,14 @@ document.addEventListener(
                                     </span>
 
                                     <strong>
+
                                         ${rfc
                             ? escapeHtmlAdq(
                                 rfc
                             )
                             : "No registrado"
                         }
+
                                     </strong>
 
                                 </div>
@@ -2831,6 +3533,7 @@ document.addEventListener(
 
                                 </div>
 
+
                                 <div>
 
                                     <span>
@@ -2838,12 +3541,14 @@ document.addEventListener(
                                     </span>
 
                                     <strong>
+
                                         ${contacto
                             ? escapeHtmlAdq(
                                 contacto
                             )
                             : "No registrado"
                         }
+
                                     </strong>
 
                                 </div>
@@ -2859,6 +3564,7 @@ document.addEventListener(
 
                                 </div>
 
+
                                 <div>
 
                                     <span>
@@ -2866,12 +3572,14 @@ document.addEventListener(
                                     </span>
 
                                     <strong>
+
                                         ${correo
                             ? escapeHtmlAdq(
                                 correo
                             )
                             : "No registrado"
                         }
+
                                     </strong>
 
                                 </div>
@@ -2887,6 +3595,7 @@ document.addEventListener(
 
                                 </div>
 
+
                                 <div>
 
                                     <span>
@@ -2894,12 +3603,14 @@ document.addEventListener(
                                     </span>
 
                                     <strong>
+
                                         ${telefono
                             ? escapeHtmlAdq(
                                 telefono
                             )
                             : "No registrado"
                         }
+
                                     </strong>
 
                                 </div>
@@ -2930,7 +3641,1321 @@ document.addEventListener(
                         );
                 }
             );
+
+
+            // =====================================================
+            // REINICIAR ESTADO DE SELECCIÓN
+            // =====================================================
+
+            actualizarAccionesCotizacionesAdq();
         }
+
+        // =========================================================
+        // OBTENER COTIZACIONES MARCADAS
+        // =========================================================
+
+        function obtenerCotizacionesMarcadasAdq() {
+
+            return Array.from(
+                document.querySelectorAll(
+                    ".checkboxCotizacionAdq:checked"
+                )
+            )
+                .map(
+                    function (
+                        checkbox
+                    ) {
+
+                        return Number(
+                            checkbox.dataset.cotizacionId
+                            ??
+                            0
+                        );
+                    }
+                )
+                .filter(
+                    function (
+                        id
+                    ) {
+
+                        return id >
+                            0;
+                    }
+                );
+        }
+
+
+        // =========================================================
+        // ACTUALIZAR ACCIONES DE COTIZACIONES
+        // =========================================================
+
+        function actualizarAccionesCotizacionesAdq() {
+
+            const seleccionadas =
+                obtenerCotizacionesMarcadasAdq();
+
+
+            const total =
+                seleccionadas.length;
+
+
+            if (
+                contadorSeleccionCotizacionesAdq
+            ) {
+
+                contadorSeleccionCotizacionesAdq.textContent =
+                    total ===
+                        1
+                        ? "1 seleccionada"
+                        : `${total} seleccionadas`;
+            }
+
+
+            if (
+                btnEditarCotizacionSeleccionadaAdq
+            ) {
+
+                btnEditarCotizacionSeleccionadaAdq.disabled =
+                    total ===
+                    0;
+            }
+
+
+            if (
+                btnEliminarCotizacionesSeleccionadasAdq
+            ) {
+
+                btnEliminarCotizacionesSeleccionadasAdq.disabled =
+                    total ===
+                    0;
+            }
+        }
+
+
+        // =========================================================
+        // CAMBIO DE SELECCIÓN
+        // =========================================================
+
+        document.addEventListener(
+            "change",
+            function (
+                event
+            ) {
+
+                const checkbox =
+                    event.target.closest(
+                        ".checkboxCotizacionAdq"
+                    );
+
+
+                if (!checkbox) {
+                    return;
+                }
+
+
+                const tarjeta =
+                    checkbox.closest(
+                        ".adq-quote-history-card"
+                    );
+
+
+                tarjeta
+                    ?.classList
+                    .toggle(
+                        "adq-quote-card-checked",
+                        checkbox.checked
+                    );
+
+
+                actualizarAccionesCotizacionesAdq();
+            }
+        );
+
+        // =========================================================
+        // EDITAR COTIZACIÓN SELECCIONADA
+        // =========================================================
+
+        btnEditarCotizacionSeleccionadaAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const seleccionadas =
+                        obtenerCotizacionesMarcadasAdq();
+
+
+                    if (
+                        seleccionadas.length ===
+                        0
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Selecciona una cotización",
+                            "Debes seleccionar una cotización para poder editarla."
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        seleccionadas.length >
+                        1
+                    ) {
+
+                        await confirmarAccionAdq(
+                            {
+                                titulo:
+                                    "Solo una cotización",
+
+                                mensaje:
+                                    `
+                            <p class="mb-3">
+                                Para editar una cotización debes seleccionar solamente un registro.
+                            </p>
+
+                            <div class="alert alert-info mb-0">
+
+                                <div class="d-flex gap-2">
+
+                                    <i class="bi bi-info-circle-fill"></i>
+
+                                    <div>
+                                        Actualmente tienes seleccionadas
+                                        <strong>
+                                            ${seleccionadas.length}
+                                        </strong>
+                                        cotizaciones.
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            `,
+
+                                textoConfirmar:
+                                    "Entendido",
+
+                                textoCancelar:
+                                    "Cerrar",
+
+                                tipo:
+                                    "primary",
+
+                                icono:
+                                    "bi-pencil-square"
+                            }
+                        );
+
+                        return;
+                    }
+
+
+                    const cotizacionId =
+                        Number(
+                            seleccionadas[0]
+                        );
+
+
+                    // =====================================================
+                    // IDENTIFICAR SOLICITUD
+                    // =====================================================
+
+                    const solicitudId =
+                        Number(
+                            solicitudCotizacionActualAdq
+                                ?.id
+                            ??
+                            cotizacionSolicitudIdAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <=
+                        0
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Solicitud no identificada",
+                            "No fue posible identificar la solicitud de la cotización."
+                        );
+
+                        return;
+                    }
+
+
+                    // =====================================================
+                    // CONSULTAR INFORMACIÓN ACTUALIZADA DESDE BD
+                    // =====================================================
+
+                    let cotizacionesActualizadas =
+                        [];
+
+
+                    try {
+
+                        cotizacionesActualizadas =
+                            await obtenerCotizacionesSolicitudAdq(
+                                solicitudId
+                            );
+
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        console.error(
+                            "Error al consultar la cotización para edición:",
+                            error
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible editar",
+                            error.message
+                            ??
+                            "No fue posible consultar la información actualizada de la cotización."
+                        );
+
+                        return;
+                    }
+
+
+                    cotizacionesRegistradasActualesAdq =
+                        Array.isArray(
+                            cotizacionesActualizadas
+                        )
+                            ? cotizacionesActualizadas
+                            : [];
+
+
+                    const cotizacion =
+                        cotizacionesRegistradasActualesAdq
+                            .find(
+                                function (
+                                    item
+                                ) {
+
+                                    return Number(
+                                        item.id
+                                        ??
+                                        0
+                                    ) ===
+                                        cotizacionId;
+                                }
+                            );
+
+
+                    if (
+                        !cotizacion
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible editar",
+                            "No se encontró la información de la cotización seleccionada."
+                        );
+
+                        return;
+                    }
+
+
+                    // =====================================================
+                    // ACTIVAR MODO EDICIÓN
+                    // =====================================================
+
+                    cotizacionEditandoActualAdq =
+                        cotizacion;
+
+
+                    archivosCotizacionEliminadosAdq =
+                        new Set();
+
+
+                    sincronizarArchivosCotizacionEliminarAdq();
+
+
+                    if (
+                        cotizacionEditarIdAdq
+                    ) {
+
+                        cotizacionEditarIdAdq.value =
+                            String(
+                                cotizacionId
+                            );
+                    }
+
+
+                    if (
+                        formCotizacionAdq
+                    ) {
+
+                        formCotizacionAdq.action =
+                            `${window.location.pathname}?handler=EditarCotizacion`;
+                    }
+
+
+                    // =====================================================
+                    // DATOS DEL PROVEEDOR
+                    // =====================================================
+
+                    const nombreProveedor =
+                        document.getElementById(
+                            "cotizacionNombreProveedorAdq"
+                        );
+
+
+                    const rfc =
+                        document.getElementById(
+                            "cotizacionRfcProveedorAdq"
+                        );
+
+
+                    const telefono =
+                        document.getElementById(
+                            "cotizacionTelefonoProveedorAdq"
+                        );
+
+
+                    const contacto =
+                        document.getElementById(
+                            "cotizacionContactoProveedorAdq"
+                        );
+
+
+                    const email =
+                        document.getElementById(
+                            "cotizacionEmailProveedorAdq"
+                        );
+
+
+                    const observaciones =
+                        document.getElementById(
+                            "cotizacionObservacionesAdq"
+                        );
+
+
+                    if (
+                        nombreProveedor
+                    ) {
+
+                        nombreProveedor.value =
+                            cotizacion.nombreProveedor
+                            ??
+                            "";
+                    }
+
+
+                    if (
+                        rfc
+                    ) {
+
+                        rfc.value =
+                            cotizacion.rfcProveedor
+                            ??
+                            "";
+                    }
+
+
+                    if (
+                        telefono
+                    ) {
+
+                        telefono.value =
+                            cotizacion.telefonoProveedor
+                            ??
+                            "";
+                    }
+
+
+                    if (
+                        contacto
+                    ) {
+
+                        contacto.value =
+                            cotizacion.contactoProveedor
+                            ??
+                            "";
+                    }
+
+
+                    if (
+                        email
+                    ) {
+
+                        email.value =
+                            cotizacion.emailProveedor
+                            ??
+                            "";
+                    }
+
+
+                    if (
+                        observaciones
+                    ) {
+
+                        observaciones.value =
+                            cotizacion.observaciones
+                            ??
+                            "";
+                    }
+
+
+                    // =====================================================
+                    // IVA
+                    // =====================================================
+
+                    if (
+                        cotizacionAplicaIvaAdq
+                    ) {
+
+                        cotizacionAplicaIvaAdq.checked =
+                            cotizacion.aplicaIva ===
+                            true;
+                    }
+
+
+                    if (
+                        cotizacionPorcentajeIvaAdq
+                    ) {
+
+                        cotizacionPorcentajeIvaAdq.value =
+                            String(
+                                cotizacion.porcentajeIva
+                                ??
+                                16
+                            );
+                    }
+
+
+                    // =====================================================
+                    // VOLVER A CREAR PRODUCTOS
+                    // =====================================================
+
+                    renderizarDetallesCotizacionAdq(
+                        solicitudCotizacionActualAdq
+                            ?.detalles
+                        ??
+                        []
+                    );
+
+
+                    // =====================================================
+                    // CARGAR PRECIOS Y DESCRIPCIONES
+                    // =====================================================
+
+                    const detallesCotizacion =
+                        Array.isArray(
+                            cotizacion.detalles
+                        )
+                            ? [...cotizacion.detalles]
+                            : [];
+
+
+                    detallesCotizacion.sort(
+                        function (
+                            a,
+                            b
+                        ) {
+
+                            return Number(
+                                a.orden
+                                ??
+                                0
+                            )
+                                -
+                                Number(
+                                    b.orden
+                                    ??
+                                    0
+                                );
+                        }
+                    );
+
+
+                    const filasDetalles =
+                        Array.from(
+                            contenedorDetallesCotizacionAdq
+                                ?.querySelectorAll(
+                                    "tr"
+                                )
+                            ??
+                            []
+                        );
+
+
+                    filasDetalles.forEach(
+                        function (
+                            fila,
+                            index
+                        ) {
+
+                            const detalleCotizacion =
+                                detallesCotizacion[
+                                index
+                                ];
+
+
+                            if (
+                                !detalleCotizacion
+                            ) {
+                                return;
+                            }
+
+
+                            const inputPrecio =
+                                fila.querySelector(
+                                    ".cotizacion-precio-unitario-adq"
+                                );
+
+
+                            if (
+                                inputPrecio
+                            ) {
+
+                                inputPrecio.value =
+                                    String(
+                                        detalleCotizacion.precioUnitario
+                                        ??
+                                        0
+                                    );
+                            }
+
+
+                            const inputDescripcion =
+                                fila.querySelector(
+                                    'textarea[name$=".DescripcionProveedor"], input[name$=".DescripcionProveedor"]'
+                                );
+
+
+                            if (
+                                inputDescripcion
+                            ) {
+
+                                inputDescripcion.value =
+                                    detalleCotizacion.descripcion
+                                    ??
+                                    "";
+                            }
+                        }
+                    );
+
+
+                    // =====================================================
+                    // EVIDENCIAS EXISTENTES
+                    // =====================================================
+
+                    mostrarEvidenciasExistentesEdicionAdq(
+                        cotizacion
+                    );
+
+
+                    // =====================================================
+                    // ARCHIVOS ADICIONALES
+                    // =====================================================
+
+                    archivosCotizacionSeleccionadosAdq =
+                        [];
+
+
+                    sincronizarArchivosCotizacionAdq();
+
+
+                    renderizarArchivosCotizacionSeleccionadosAdq();
+
+
+                    calcularCotizacionAdq();
+
+
+                    // =====================================================
+                    // INTERFAZ DE EDICIÓN
+                    // =====================================================
+
+                    seccionCapturaProveedorAdq
+                        ?.classList
+                        .add(
+                            "adq-quote-editing"
+                        );
+
+
+                    badgeEdicionCotizacionAdq
+                        ?.classList
+                        .remove(
+                            "d-none"
+                        );
+
+
+                    btnCancelarEdicionCotizacionAdq
+                        ?.classList
+                        .remove(
+                            "d-none"
+                        );
+
+
+                    if (
+                        tituloCapturaCotizacionAdq
+                    ) {
+
+                        tituloCapturaCotizacionAdq.textContent =
+                            "Editar cotización";
+                    }
+
+
+                    if (
+                        subtituloCapturaCotizacionAdq
+                    ) {
+
+                        subtituloCapturaCotizacionAdq.textContent =
+                            `Modificando la propuesta de ${cotizacion.nombreProveedor ?? "Proveedor"}.`;
+                    }
+
+
+                    if (
+                        textoGuardarCotizacionAdq
+                    ) {
+
+                        textoGuardarCotizacionAdq.textContent =
+                            "Guardar cambios";
+                    }
+
+
+                    // =====================================================
+                    // BAJAR AL FORMULARIO
+                    // =====================================================
+
+                    setTimeout(
+                        function () {
+
+                            seccionCapturaProveedorAdq
+                                ?.scrollIntoView(
+                                    {
+                                        behavior:
+                                            "smooth",
+
+                                        block:
+                                            "start"
+                                    }
+                                );
+
+                        },
+                        100
+                    );
+                }
+            );
+
+        // =========================================================
+        // ELIMINAR COTIZACIONES SELECCIONADAS
+        // =========================================================
+
+        btnEliminarCotizacionesSeleccionadasAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const seleccionadas =
+                        obtenerCotizacionesMarcadasAdq();
+
+
+                    if (
+                        seleccionadas.length ===
+                        0
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Selecciona una cotización",
+                            "Debes seleccionar al menos una cotización para eliminar."
+                        );
+
+                        return;
+                    }
+
+
+                    // =====================================================
+                    // OBTENER NOMBRES DE PROVEEDORES
+                    // =====================================================
+
+                    const cotizacionesSeleccionadas =
+                        cotizacionesRegistradasActualesAdq
+                            .filter(
+                                function (
+                                    cotizacion
+                                ) {
+
+                                    return seleccionadas.includes(
+                                        Number(
+                                            cotizacion.id
+                                            ??
+                                            0
+                                        )
+                                    );
+                                }
+                            );
+
+
+                    const proveedoresHtml =
+                        cotizacionesSeleccionadas
+                            .map(
+                                function (
+                                    cotizacion
+                                ) {
+
+                                    return `
+                                <li class="mb-1">
+                                    <strong>
+                                        ${escapeHtmlAdq(
+                                        cotizacion.nombreProveedor
+                                        ??
+                                        "Proveedor"
+                                    )}
+                                    </strong>
+
+                                    <span class="text-muted ms-1">
+                                        ${formatearMonedaCotizacionAdq(
+                                        cotizacion.total
+                                        ??
+                                        0
+                                    )}
+                                    </span>
+                                </li>
+                            `;
+                                }
+                            )
+                            .join(
+                                ""
+                            );
+
+
+                    // =====================================================
+                    // CONFIRMACIÓN
+                    // =====================================================
+
+                    const confirmado =
+                        await confirmarAccionAdq(
+                            {
+                                titulo:
+                                    seleccionadas.length ===
+                                        1
+                                        ? "Eliminar cotización"
+                                        : "Eliminar cotizaciones",
+
+                                mensaje:
+                                    `
+                            <p class="mb-3">
+
+                                ${seleccionadas.length ===
+                                        1
+                                        ? "¿Deseas eliminar la cotización seleccionada?"
+                                        : `¿Deseas eliminar las ${seleccionadas.length} cotizaciones seleccionadas?`
+                                    }
+
+                            </p>
+
+
+                            ${proveedoresHtml
+                                        ? `
+                                        <div class="border rounded p-3 mb-3 bg-light">
+
+                                            <div class="small fw-semibold text-muted mb-2">
+                                                Cotizaciones seleccionadas
+                                            </div>
+
+                                            <ul class="mb-0 ps-3">
+                                                ${proveedoresHtml}
+                                            </ul>
+
+                                        </div>
+                                    `
+                                        : ""
+                                    }
+
+
+                            <div class="alert alert-danger mb-0">
+
+                                <div class="d-flex gap-2">
+
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                    <div>
+
+                                        Las cotizaciones seleccionadas serán
+                                        retiradas del comparativo.
+
+                                        <div class="small mt-1">
+                                            Esta acción se registrará en el historial.
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            `,
+
+                                textoConfirmar:
+                                    seleccionadas.length ===
+                                        1
+                                        ? "Eliminar"
+                                        : `Eliminar ${seleccionadas.length}`,
+
+                                textoCancelar:
+                                    "Cancelar",
+
+                                tipo:
+                                    "danger",
+
+                                icono:
+                                    "bi-trash3"
+                            }
+                        );
+
+
+                    if (
+                        !confirmado
+                    ) {
+                        return;
+                    }
+
+
+                    // =====================================================
+                    // PREPARAR REQUEST
+                    // =====================================================
+
+                    const token =
+                        formCotizacionAdq
+                            ?.querySelector(
+                                'input[name="__RequestVerificationToken"]'
+                            )
+                            ?.value
+                        ??
+                        "";
+
+
+                    const datos =
+                        new FormData();
+
+
+                    datos.append(
+                        "__RequestVerificationToken",
+                        token
+                    );
+
+
+                    seleccionadas.forEach(
+                        function (
+                            cotizacionId
+                        ) {
+
+                            datos.append(
+                                "cotizacionIds",
+                                String(
+                                    cotizacionId
+                                )
+                            );
+                        }
+                    );
+
+
+                    // =====================================================
+                    // BLOQUEAR BOTÓN
+                    // =====================================================
+
+                    const htmlOriginal =
+                        btnEliminarCotizacionesSeleccionadasAdq.innerHTML;
+
+
+                    try {
+
+                        btnEliminarCotizacionesSeleccionadasAdq.disabled =
+                            true;
+
+
+                        btnEditarCotizacionSeleccionadaAdq.disabled =
+                            true;
+
+
+                        btnEliminarCotizacionesSeleccionadasAdq.innerHTML =
+                            `
+                        <span class="spinner-border spinner-border-sm me-1"
+                              role="status"
+                              aria-hidden="true">
+                        </span>
+
+                        Eliminando...
+                    `;
+
+
+                        // =================================================
+                        // ELIMINAR
+                        // =================================================
+
+                        const response =
+                            await fetch(
+                                "?handler=EliminarCotizaciones",
+                                {
+                                    method:
+                                        "POST",
+
+                                    body:
+                                        datos,
+
+                                    headers:
+                                    {
+                                        "X-Requested-With":
+                                            "XMLHttpRequest"
+                                    }
+                                }
+                            );
+
+
+                        let resultado =
+                            null;
+
+
+                        try {
+
+                            resultado =
+                                await response.json();
+
+                        }
+                        catch {
+
+                            resultado =
+                                null;
+                        }
+
+
+                        if (
+                            !response.ok
+                            ||
+                            !resultado?.success
+                        ) {
+
+                            throw new Error(
+                                resultado?.message
+                                ??
+                                "No fue posible eliminar las cotizaciones seleccionadas."
+                            );
+                        }
+
+
+                        // =================================================
+                        // SI SE ESTABA EDITANDO UNA ELIMINADA,
+                        // SALIMOS DEL MODO EDICIÓN
+                        // =================================================
+
+                        const cotizacionEditandoId =
+                            Number(
+                                cotizacionEditarIdAdq
+                                    ?.value
+                                ??
+                                0
+                            );
+
+
+                        if (
+                            cotizacionEditandoId >
+                            0
+                            &&
+                            seleccionadas.includes(
+                                cotizacionEditandoId
+                            )
+                        ) {
+
+                            cotizacionEditandoActualAdq =
+                                null;
+
+
+                            archivosCotizacionEliminadosAdq =
+                                new Set();
+
+
+                            sincronizarArchivosCotizacionEliminarAdq();
+
+
+                            if (
+                                cotizacionEditarIdAdq
+                            ) {
+
+                                cotizacionEditarIdAdq.value =
+                                    "0";
+                            }
+
+
+                            if (
+                                formCotizacionAdq
+                            ) {
+
+                                formCotizacionAdq.reset();
+
+
+                                formCotizacionAdq.action =
+                                    `${window.location.pathname}?handler=GuardarCotizacion`;
+                            }
+
+
+                            seccionCapturaProveedorAdq
+                                ?.classList
+                                .remove(
+                                    "adq-quote-editing"
+                                );
+
+
+                            badgeEdicionCotizacionAdq
+                                ?.classList
+                                .add(
+                                    "d-none"
+                                );
+
+
+                            btnCancelarEdicionCotizacionAdq
+                                ?.classList
+                                .add(
+                                    "d-none"
+                                );
+
+
+                            if (
+                                tituloCapturaCotizacionAdq
+                            ) {
+
+                                tituloCapturaCotizacionAdq.textContent =
+                                    "Datos del proveedor";
+                            }
+
+
+                            if (
+                                subtituloCapturaCotizacionAdq
+                            ) {
+
+                                subtituloCapturaCotizacionAdq.textContent =
+                                    "Información general del proveedor que emite la cotización.";
+                            }
+
+
+                            if (
+                                textoGuardarCotizacionAdq
+                            ) {
+
+                                textoGuardarCotizacionAdq.textContent =
+                                    "Guardar cotización";
+                            }
+
+
+                            archivosCotizacionSeleccionadosAdq =
+                                [];
+
+
+                            sincronizarArchivosCotizacionAdq();
+
+
+                            renderizarDetallesCotizacionAdq(
+                                solicitudCotizacionActualAdq
+                                    ?.detalles
+                                ??
+                                []
+                            );
+
+
+                            renderizarArchivosCotizacionSeleccionadosAdq();
+
+
+                            calcularCotizacionAdq();
+                        }
+
+
+                        // =================================================
+                        // RECARGAR COMPARATIVO SIN CERRAR MODAL
+                        // =================================================
+
+                        const solicitudId =
+                            Number(
+                                resultado.solicitudId
+                                ??
+                                solicitudCotizacionActualAdq
+                                    ?.id
+                                ??
+                                0
+                            );
+
+
+                        const cotizacionesActualizadas =
+                            await obtenerCotizacionesSolicitudAdq(
+                                solicitudId
+                            );
+
+
+                        renderizarCotizacionesRegistradasAdq(
+                            cotizacionesActualizadas
+                        );
+
+
+                        // =================================================
+                        // MENSAJE
+                        // =================================================
+
+                        await confirmarAccionAdq(
+                            {
+                                titulo:
+                                    "Cotizaciones actualizadas",
+
+                                mensaje:
+                                    `
+                                <p class="mb-0">
+
+                                    ${escapeHtmlAdq(
+                                        resultado.message
+                                        ??
+                                        "La eliminación se realizó correctamente."
+                                    )}
+
+                                </p>
+                            `,
+
+                                textoConfirmar:
+                                    "Entendido",
+
+                                textoCancelar:
+                                    "Cerrar",
+
+                                tipo:
+                                    "success",
+
+                                icono:
+                                    "bi-check-circle-fill"
+                            }
+                        );
+
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        console.error(
+                            "Error al eliminar cotizaciones:",
+                            error
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible eliminar",
+                            error.message
+                            ??
+                            "Ocurrió un error al eliminar las cotizaciones seleccionadas."
+                        );
+
+                    }
+                    finally {
+
+                        btnEliminarCotizacionesSeleccionadasAdq.innerHTML =
+                            htmlOriginal;
+
+
+                        actualizarAccionesCotizacionesAdq();
+                    }
+                }
+            );
+
+        // =========================================================
+        // CANCELAR EDICIÓN DE COTIZACIÓN
+        // =========================================================
+
+        btnCancelarEdicionCotizacionAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    cotizacionEditandoActualAdq =
+                        null;
+
+                    archivosCotizacionEliminadosAdq =
+                        new Set();
+
+
+                    sincronizarArchivosCotizacionEliminarAdq();
+
+                    if (
+                        formCotizacionAdq
+                    ) {
+
+                        formCotizacionAdq.action =
+                            `${window.location.pathname}?handler=GuardarCotizacion`;
+                    }
+
+
+                    if (
+                        cotizacionEditarIdAdq
+                    ) {
+
+                        cotizacionEditarIdAdq.value =
+                            "0";
+                    }
+
+
+                    formCotizacionAdq
+                        ?.reset();
+
+
+                    seccionCapturaProveedorAdq
+                        ?.classList
+                        .remove(
+                            "adq-quote-editing"
+                        );
+
+
+                    badgeEdicionCotizacionAdq
+                        ?.classList
+                        .add(
+                            "d-none"
+                        );
+
+
+                    btnCancelarEdicionCotizacionAdq
+                        ?.classList
+                        .add(
+                            "d-none"
+                        );
+
+
+                    if (
+                        tituloCapturaCotizacionAdq
+                    ) {
+
+                        tituloCapturaCotizacionAdq.textContent =
+                            "Datos del proveedor";
+                    }
+
+
+                    if (
+                        subtituloCapturaCotizacionAdq
+                    ) {
+
+                        subtituloCapturaCotizacionAdq.textContent =
+                            "Información general del proveedor que emite la cotización.";
+                    }
+
+
+                    if (
+                        textoGuardarCotizacionAdq
+                    ) {
+
+                        textoGuardarCotizacionAdq.textContent =
+                            "Guardar cotización";
+                    }
+
+
+                    renderizarDetallesCotizacionAdq(
+                        solicitudCotizacionActualAdq
+                            ?.detalles
+                        ??
+                        []
+                    );
+
+
+                    calcularCotizacionAdq();
+                }
+            );
 
         // =========================================================
         // VER / OCULTAR DETALLE DE COTIZACIÓN
@@ -3300,7 +5325,7 @@ document.addEventListener(
                 `;
                     }
                 }
-        );
+            );
 
         // =========================================================
         // REABRIR / MODIFICAR COTIZACIONES
@@ -3457,6 +5482,86 @@ document.addEventListener(
                 !solicitudCotizacionActualAdq
             ) {
                 return;
+            }
+
+            // =====================================================
+            // SALIR COMPLETAMENTE DEL MODO EDICIÓN
+            // =====================================================
+
+            cotizacionEditandoActualAdq =
+                null;
+
+
+            archivosCotizacionEliminadosAdq =
+                new Set();
+
+
+            sincronizarArchivosCotizacionEliminarAdq();
+
+
+            if (
+                cotizacionEditarIdAdq
+            ) {
+
+                cotizacionEditarIdAdq.value =
+                    "0";
+            }
+
+
+            if (
+                formCotizacionAdq
+            ) {
+
+                formCotizacionAdq.action =
+                    `${window.location.pathname}?handler=GuardarCotizacion`;
+            }
+
+
+            seccionCapturaProveedorAdq
+                ?.classList
+                .remove(
+                    "adq-quote-editing"
+                );
+
+
+            badgeEdicionCotizacionAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            btnCancelarEdicionCotizacionAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            if (
+                tituloCapturaCotizacionAdq
+            ) {
+
+                tituloCapturaCotizacionAdq.textContent =
+                    "Datos del proveedor";
+            }
+
+
+            if (
+                subtituloCapturaCotizacionAdq
+            ) {
+
+                subtituloCapturaCotizacionAdq.textContent =
+                    "Información general del proveedor que emite la cotización.";
+            }
+
+
+            if (
+                textoGuardarCotizacionAdq
+            ) {
+
+                textoGuardarCotizacionAdq.textContent =
+                    "Guardar cotización";
             }
 
 
@@ -3836,30 +5941,30 @@ document.addEventListener(
 
                             <strong>
                                 ${escapeHtmlAdq(
-                                            detalle.productoServicio
-                                            ??
-                                            ""
-                                        )}
+                        detalle.productoServicio
+                        ??
+                        ""
+                    )}
                             </strong>
 
                             ${detalle.descripcion
-                                                ? `
+                            ? `
                                         <small class="d-block text-muted mt-1">
                                             ${escapeHtmlAdq(
-                                                    detalle.descripcion
-                                                )}
+                                detalle.descripcion
+                            )}
                                         </small>
                                     `
-                                                : ""
-                                            }
+                            : ""
+                        }
 
                             <input type="hidden"
                                    name="InputCotizacion.Detalles[${index}].SolicitudDetalleId"
                                    value="${Number(
-                                                detalle.id
-                                                ??
-                                                0
-                                            )}" />
+                            detalle.id
+                            ??
+                            0
+                        )}" />
 
                         </td>
 
@@ -3871,10 +5976,10 @@ document.addEventListener(
 
                         <td>
                             ${escapeHtmlAdq(
-                                                detalle.unidad
-                                                ??
-                                                ""
-                                            )}
+                            detalle.unidad
+                            ??
+                            ""
+                        )}
                         </td>
 
 
@@ -4016,6 +6121,25 @@ document.addEventListener(
 
                     archivosCotizacionSeleccionadosAdq =
                         [];
+
+                    cotizacionEditandoActualAdq =
+                        null;
+
+
+                    archivosCotizacionEliminadosAdq =
+                        new Set();
+
+
+                    sincronizarArchivosCotizacionEliminarAdq();
+
+
+                    if (
+                        cotizacionEditarIdAdq
+                    ) {
+
+                        cotizacionEditarIdAdq.value =
+                            "0";
+                    }
 
 
                     sincronizarArchivosCotizacionAdq();
@@ -4368,14 +6492,14 @@ document.addEventListener(
 
                                         return `
                                             <a href="${escapeAttributeAdq(
-                                                                                    archivo.rutaArchivo
-                                                                                )}"
+                                            archivo.rutaArchivo
+                                        )}"
                                                target="_blank"
                                                rel="noopener noreferrer"
                                                class="adq-chat-attachment"
                                                title="Abrir ${escapeAttributeAdq(
-                                                                                    archivo.nombreOriginal
-                                                                                )}">
+                                            archivo.nombreOriginal
+                                        )}">
 
                                                 <div class="adq-chat-file-icon">
 
@@ -4387,8 +6511,8 @@ document.addEventListener(
                                                 <div class="adq-chat-file-name">
 
                                                     ${escapeHtmlAdq(
-                                                                                    archivo.nombreOriginal
-                                                                                )}
+                                            archivo.nombreOriginal
+                                        )}
 
                                                 </div>
 
@@ -4396,12 +6520,12 @@ document.addEventListener(
                                                 <div class="adq-chat-file-size">
 
                                                     ${formatearTamanoAdq(
-                                                                                    Number(
-                                                                                        archivo.tamanoBytes
-                                                                                        ??
-                                                                                        0
-                                                                                    )
-                                                                                )}
+                                            Number(
+                                                archivo.tamanoBytes
+                                                ??
+                                                0
+                                            )
+                                        )}
 
                                                 </div>
 
@@ -5367,12 +7491,12 @@ document.addEventListener(
 
                             <div class="adq-chat-file-name"
                                  title="${escapeAttributeAdq(
-                                                    archivo.name
-                                                )}">
+                            archivo.name
+                        )}">
 
                                 ${escapeHtmlAdq(
-                                                    archivo.name
-                                                )}
+                            archivo.name
+                        )}
 
                             </div>
 
@@ -5380,8 +7504,8 @@ document.addEventListener(
                             <div class="adq-chat-file-size">
 
                                 ${formatearTamanoAdq(
-                                                    archivo.size
-                                                )}
+                            archivo.size
+                        )}
 
                             </div>
 
@@ -9177,6 +11301,7 @@ document.addEventListener(
                     }
                 }
             );
+           
 
         // =========================================================
         // HISTORIAL DE APROBACIONES - FILTROS
@@ -9661,7 +11786,7 @@ document.addEventListener(
         );
 
         // =========================================================
-        // ABRIR SOLICITUD DESDE NOTIFICACIÓN
+        // ABRIR SOLICITUD / COTIZACIÓN DESDE URL
         // =========================================================
 
         const parametrosUrlAdq =
@@ -9680,8 +11805,54 @@ document.addEventListener(
             );
 
 
+        const cotizacionAbrirIdAdq =
+            Number(
+                parametrosUrlAdq.get(
+                    "openCotizacionId"
+                )
+                ??
+                0
+            );
+
+
+        // =========================================================
+        // ABRIR DIRECTAMENTE GESTIÓN DE COTIZACIONES
+        // =========================================================
+
         if (
-            solicitudAbrirIdAdq > 0
+            cotizacionAbrirIdAdq >
+            0
+        ) {
+
+            const botonCotizacionAdq =
+                document.querySelector(
+                    `.btnGenerarCotizacionAdq[data-id="${cotizacionAbrirIdAdq}"]`
+                );
+
+
+            if (
+                botonCotizacionAdq
+            ) {
+
+                setTimeout(
+                    function () {
+
+                        botonCotizacionAdq.click();
+
+                    },
+                    250
+                );
+            }
+        }
+
+
+        // =========================================================
+        // ABRIR DETALLE NORMAL DE SOLICITUD
+        // =========================================================
+
+        else if (
+            solicitudAbrirIdAdq >
+            0
         ) {
 
             const botonSolicitudAdq =
@@ -9694,10 +11865,6 @@ document.addEventListener(
                 botonSolicitudAdq
             ) {
 
-                /*
-                 * Reutilizamos exactamente el mismo flujo
-                 * que ya utiliza el botón del ojo.
-                 */
                 setTimeout(
                     function () {
 
