@@ -1539,6 +1539,30 @@
                                                 </button>
                                             }
 
+                                            @if (orden.EstatusId == 10)
+                                            {
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-primary btnReabrirCotizacionAdq"
+                                                        data-id="@orden.Id"
+                                                        data-folio="@orden.Folio"
+                                                        title="Modificar cotizaciones">
+
+                                                    <i class="bi bi-pencil-square"></i>
+
+                                                </button>
+
+
+                                                <button type="button"
+                                                        class="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center btnSolicitarPresupuestoAdq"
+                                                        data-id="@orden.Id"
+                                                        title="Solicitar aprobación presupuestal"
+                                                        style="width: 38px; height: 38px; padding: 0;">
+
+                                                    <i class="bi bi-cash-stack"></i>
+
+                                                </button>
+                                            }
+
                                         </div>
 
                                     </td>
@@ -2169,6 +2193,189 @@
                     </div>
 
                 </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ====================================================== -->
+    <!-- MODAL SOLICITUD DE APROBACIÓN PRESUPUESTAL -->
+    <!-- ====================================================== -->
+
+    <div class="modal fade"
+         id="modalPresupuestoAdq"
+         tabindex="-1"
+         aria-labelledby="modalPresupuestoAdqLabel"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+
+            <div class="modal-content adq-budget-modal">
+
+                <div class="modal-header">
+
+                    <div>
+                        <span class="adq-modal-kicker">
+                            Gestión presupuestal
+                        </span>
+
+                        <h5 class="modal-title"
+                            id="modalPresupuestoAdqLabel">
+                            Solicitar aprobación presupuestal
+                        </h5>
+
+                        <small class="text-muted"
+                               id="folioPresupuestoAdq">
+                        </small>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           id="presupuestoSolicitudIdAdq" />
+
+
+                    <div class="adq-budget-summary">
+
+                        <div class="adq-budget-summary-header">
+
+                            <div>
+                                <span class="adq-budget-label">
+                                    Cotización seleccionada
+                                </span>
+
+                                <h6 id="proveedorPresupuestoAdq"
+                                    class="mb-0">
+                                    -
+                                </h6>
+                            </div>
+
+                            <span class="adq-budget-approved-badge">
+                                <i class="bi bi-check-circle-fill"></i>
+                                Finalizada
+                            </span>
+
+                        </div>
+
+
+                        <div class="adq-budget-values">
+
+                            <div class="adq-budget-value-item">
+
+                                <span>
+                                    Subtotal
+                                </span>
+
+                                <strong id="subtotalPresupuestoAdq">
+                                    $0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div class="adq-budget-value-item">
+
+                                <span>
+                                    IVA
+                                </span>
+
+                                <strong id="ivaPresupuestoAdq">
+                                    $0.00
+                                </strong>
+
+                            </div>
+
+
+                            <div class="adq-budget-value-item adq-budget-total">
+
+                                <span>
+                                    Total a solicitar
+                                </span>
+
+                                <strong id="totalPresupuestoAdq">
+                                    $0.00
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mt-4">
+
+                        <label for="comentarioPresupuestoAdq"
+                               class="form-label fw-semibold">
+                            Comentario para aprobación
+                        </label>
+
+                        <textarea id="comentarioPresupuestoAdq"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="3000"
+                                  placeholder="Agrega alguna observación para el responsable presupuestal..."></textarea>
+
+                        <div class="form-text">
+                            Opcional · Máximo 3000 caracteres.
+                        </div>
+
+                    </div>
+
+
+                    <div class="alert alert-light border mt-4 mb-0">
+
+                        <div class="d-flex gap-2">
+
+                            <i class="bi bi-info-circle text-primary"></i>
+
+                            <div>
+                                <strong>
+                                    ¿Qué sucederá?
+                                </strong>
+
+                                <div class="small text-muted mt-1">
+                                    La solicitud será enviada al responsable de aprobación presupuestal y ya no podrá modificarse la cotización seleccionada durante esta etapa.
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-primary"
+                            id="btnConfirmarPresupuestoAdq">
+
+                        <i class="bi bi-send me-1"></i>
+
+                        Enviar a aprobación
+
+                    </button>
+
+                </div>
 
             </div>
 

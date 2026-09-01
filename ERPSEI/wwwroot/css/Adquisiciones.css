@@ -3202,3 +3202,323 @@ body.module-main-theme .modal.show {
     .adq-quote-provider-actions .btn {
         white-space: nowrap;
     }
+
+/* =========================================================
+   APROBACIÓN PRESUPUESTAL
+   ========================================================= */
+
+.adq-btn-presupuesto {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.adq-budget-modal {
+    border: 0;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.adq-budget-summary {
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    background: #fff;
+}
+
+.adq-budget-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.adq-budget-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #6b7280;
+}
+
+.adq-budget-approved-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: #ecfdf3;
+    color: #157347;
+    font-size: .8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.adq-budget-values {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.adq-budget-value-item {
+    padding: 14px;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+    .adq-budget-value-item span {
+        display: block;
+        margin-bottom: 5px;
+        color: #6b7280;
+        font-size: .82rem;
+    }
+
+    .adq-budget-value-item strong {
+        display: block;
+        font-size: 1rem;
+        color: #111827;
+    }
+
+.adq-budget-total {
+    background: #eef6ff;
+}
+
+    .adq-budget-total strong {
+        font-size: 1.2rem;
+        color: #0d6efd;
+    }
+
+@media (max-width: 767.98px) {
+
+    .adq-budget-summary-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .adq-budget-values {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   MODAL DE CONFIRMACIÓN / ADVERTENCIAS - ADQUISICIONES
+   ========================================================= */
+
+.adq-confirm-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 4000000 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, .58);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .15s ease, visibility .15s ease;
+}
+
+
+    /* =========================================================
+   OVERLAY VISIBLE
+   ========================================================= */
+
+    .adq-confirm-overlay.adq-confirm-overlay-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+
+/* =========================================================
+   VENTANA
+   ========================================================= */
+
+.adq-confirm-dialog {
+    position: relative;
+    z-index: 4000001 !important;
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, .95);
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 30px 90px rgba(15, 23, 42, .35);
+    transform: translateY(10px) scale(.985);
+    transition: transform .15s ease;
+}
+
+
+.adq-confirm-overlay-visible
+.adq-confirm-dialog {
+    transform: translateY(0) scale(1);
+}
+
+
+/* =========================================================
+   CUERPO
+   ========================================================= */
+
+.adq-confirm-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px 24px 20px;
+}
+
+
+/* =========================================================
+   ICONO
+   ========================================================= */
+
+.adq-confirm-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    border-radius: 14px;
+    font-size: 1.35rem;
+}
+
+
+.adq-confirm-icon-primary {
+    background: #eef4ff;
+    color: #0d6efd;
+}
+
+
+.adq-confirm-icon-success {
+    background: #ecfdf3;
+    color: #198754;
+}
+
+
+.adq-confirm-icon-warning {
+    background: #fff8e6;
+    color: #d99500;
+}
+
+
+.adq-confirm-icon-danger {
+    background: #fff0f1;
+    color: #dc3545;
+}
+
+
+/* =========================================================
+   CONTENIDO
+   ========================================================= */
+
+.adq-confirm-content {
+    flex: 1;
+    min-width: 0;
+}
+
+
+.adq-confirm-title {
+    margin: 2px 0 8px;
+    color: #21166f;
+    font-size: 1.08rem;
+    font-weight: 700;
+}
+
+
+.adq-confirm-message {
+    color: #5f6b7a;
+    font-size: .92rem;
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   DATOS DESTACADOS
+   ========================================================= */
+
+.adq-confirm-data {
+    padding: 14px;
+    border: 1px solid #e6eaf0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+
+.adq-confirm-data-item +
+.adq-confirm-data-item {
+    margin-top: 12px;
+}
+
+
+.adq-confirm-data-item span {
+    display: block;
+    margin-bottom: 3px;
+    color: #7a8492;
+    font-size: .76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .025em;
+}
+
+
+.adq-confirm-data-item strong {
+    display: block;
+    color: #111827;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.adq-confirm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 24px 20px;
+    border-top: 1px solid #edf0f4;
+    background: #ffffff;
+}
+
+
+    .adq-confirm-footer .btn {
+        min-height: 40px;
+        border-radius: 9px;
+        font-weight: 600;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 575.98px) {
+
+    .adq-confirm-overlay {
+        padding: 12px;
+    }
+
+
+    .adq-confirm-dialog {
+        max-width: 100%;
+    }
+
+
+    .adq-confirm-body {
+        padding: 20px;
+    }
+
+
+    .adq-confirm-footer {
+        padding: 14px 20px 20px;
+    }
+}

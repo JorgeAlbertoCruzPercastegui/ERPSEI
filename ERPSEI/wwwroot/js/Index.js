@@ -295,6 +295,316 @@ document.addEventListener(
         let archivosCotizacionSeleccionadosAdq =
             [];
 
+        const modalPresupuestoElementAdq =
+            document.getElementById(
+                "modalPresupuestoAdq"
+            );
+
+        const presupuestoSolicitudIdAdq =
+            document.getElementById(
+                "presupuestoSolicitudIdAdq"
+            );
+
+        const folioPresupuestoAdq =
+            document.getElementById(
+                "folioPresupuestoAdq"
+            );
+
+        const proveedorPresupuestoAdq =
+            document.getElementById(
+                "proveedorPresupuestoAdq"
+            );
+
+        const subtotalPresupuestoAdq =
+            document.getElementById(
+                "subtotalPresupuestoAdq"
+            );
+
+        const ivaPresupuestoAdq =
+            document.getElementById(
+                "ivaPresupuestoAdq"
+            );
+
+        const totalPresupuestoAdq =
+            document.getElementById(
+                "totalPresupuestoAdq"
+            );
+
+        const comentarioPresupuestoAdq =
+            document.getElementById(
+                "comentarioPresupuestoAdq"
+            );
+
+        const btnConfirmarPresupuestoAdq =
+            document.getElementById(
+                "btnConfirmarPresupuestoAdq"
+            );
+
+        let solicitudPresupuestoActualAdq = null;
+
+        // =========================================================
+        // MODAL DE CONFIRMACIÓN REUTILIZABLE
+        // =========================================================
+
+        function confirmarAccionAdq({
+            titulo = "Confirmar acción",
+            mensaje = "",
+            textoConfirmar = "Confirmar",
+            textoCancelar = "Cancelar",
+            tipo = "primary",
+            icono = "bi-question-circle"
+        } = {}) {
+
+            return new Promise(
+                function (resolve) {
+
+                    let overlay =
+                        document.getElementById(
+                            "adqConfirmacionOverlay"
+                        );
+
+
+                    if (overlay) {
+                        overlay.remove();
+                    }
+
+
+                    overlay =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    overlay.id =
+                        "adqConfirmacionOverlay";
+
+
+                    overlay.className =
+                        "adq-confirm-overlay";
+
+
+                    const clasesBoton =
+                    {
+                        primary:
+                            "btn-primary",
+
+                        success:
+                            "btn-success",
+
+                        warning:
+                            "btn-warning",
+
+                        danger:
+                            "btn-danger"
+                    };
+
+
+                    const claseBoton =
+                        clasesBoton[tipo]
+                        ??
+                        "btn-primary";
+
+
+                    overlay.innerHTML = `
+                <div class="adq-confirm-dialog"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-labelledby="adqConfirmacionTitulo">
+
+                    <div class="adq-confirm-body">
+
+                        <div class="adq-confirm-icon adq-confirm-icon-${tipo}">
+                            <i class="bi ${icono}"></i>
+                        </div>
+
+                        <div class="adq-confirm-content">
+
+                            <h5 id="adqConfirmacionTitulo"
+                                class="adq-confirm-title">
+                                ${escapeHtmlAdq(
+                        titulo
+                    )}
+                            </h5>
+
+                            <div class="adq-confirm-message">
+                                ${mensaje}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="adq-confirm-footer">
+
+                        <button type="button"
+                                class="btn btn-light"
+                                data-adq-confirmar="cancelar">
+                            ${escapeHtmlAdq(
+                        textoCancelar
+                    )}
+                        </button>
+
+                        <button type="button"
+                                class="btn ${claseBoton}"
+                                data-adq-confirmar="aceptar">
+
+                            <i class="bi bi-check2-circle me-1"></i>
+
+                            ${escapeHtmlAdq(
+                        textoConfirmar
+                    )}
+
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+
+
+                    document.body.appendChild(
+                        overlay
+                    );
+
+
+                    const btnAceptar =
+                        overlay.querySelector(
+                            '[data-adq-confirmar="aceptar"]'
+                        );
+
+
+                    const btnCancelar =
+                        overlay.querySelector(
+                            '[data-adq-confirmar="cancelar"]'
+                        );
+
+
+                    let terminado =
+                        false;
+
+
+                    function cerrar(
+                        resultado
+                    ) {
+
+                        if (terminado) {
+                            return;
+                        }
+
+
+                        terminado =
+                            true;
+
+
+                        overlay.classList.remove(
+                            "adq-confirm-overlay-visible"
+                        );
+
+
+                        setTimeout(
+                            function () {
+
+                                overlay.remove();
+
+                            },
+                            150
+                        );
+
+
+                        document.removeEventListener(
+                            "keydown",
+                            manejarEscape
+                        );
+
+
+                        resolve(
+                            resultado
+                        );
+                    }
+
+
+                    function manejarEscape(
+                        event
+                    ) {
+
+                        if (
+                            event.key ===
+                            "Escape"
+                        ) {
+
+                            cerrar(
+                                false
+                            );
+                        }
+                    }
+
+
+                    btnAceptar
+                        ?.addEventListener(
+                            "click",
+                            function () {
+
+                                cerrar(
+                                    true
+                                );
+                            }
+                        );
+
+
+                    btnCancelar
+                        ?.addEventListener(
+                            "click",
+                            function () {
+
+                                cerrar(
+                                    false
+                                );
+                            }
+                        );
+
+
+                    overlay.addEventListener(
+                        "click",
+                        function (
+                            event
+                        ) {
+
+                            if (
+                                event.target ===
+                                overlay
+                            ) {
+
+                                cerrar(
+                                    false
+                                );
+                            }
+                        }
+                    );
+
+
+                    document.addEventListener(
+                        "keydown",
+                        manejarEscape
+                    );
+
+
+                    requestAnimationFrame(
+                        function () {
+
+                            overlay.classList.add(
+                                "adq-confirm-overlay-visible"
+                            );
+
+
+                            btnCancelar
+                                ?.focus();
+                        }
+                    );
+                }
+            );
+        }
+
         // =========================================================
         // SINCRONIZAR ARCHIVOS ADICIONALES DE COTIZACIÓN
         // =========================================================
@@ -673,6 +983,519 @@ document.addEventListener(
                 : [];
         }
 
+        function obtenerCotizacionSeleccionadaAdq(
+            cotizaciones
+        ) {
+
+            if (
+                !Array.isArray(
+                    cotizaciones
+                )
+            ) {
+                return null;
+            }
+
+
+            return cotizaciones.find(
+                function (
+                    cotizacion
+                ) {
+
+                    return (
+                        cotizacion.esPrincipal ===
+                        true
+                        &&
+                        cotizacion.finalizada ===
+                        true
+                    );
+                }
+            )
+                ?? null;
+        }
+
+        async function solicitarPresupuestoAdq(
+            solicitudId,
+            comentario
+        ) {
+
+            const formData =
+                new FormData();
+
+
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )
+                    ?.value
+                ?? "";
+
+
+            formData.append(
+                "__RequestVerificationToken",
+                token
+            );
+
+
+            formData.append(
+                "solicitudId",
+                String(
+                    solicitudId
+                )
+            );
+
+
+            formData.append(
+                "comentario",
+                comentario
+                ??
+                ""
+            );
+
+
+            const response =
+                await fetch(
+                    "?handler=SolicitarPresupuesto",
+                    {
+                        method:
+                            "POST",
+
+                        headers:
+                        {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        },
+
+                        body:
+                            formData
+                    }
+                );
+
+
+            let resultado = null;
+
+
+            try {
+
+                resultado =
+                    await response.json();
+
+            }
+            catch {
+
+                resultado =
+                {
+                    success:
+                        false,
+
+                    message:
+                        "El servidor devolvió una respuesta no válida."
+                };
+            }
+
+
+            if (
+                !response.ok
+                ||
+                !resultado?.success
+            ) {
+
+                throw new Error(
+                    resultado?.message
+                    ??
+                    "No fue posible solicitar la aprobación presupuestal."
+                );
+            }
+
+
+            return resultado;
+        }
+
+        // =========================================================
+        // ABRIR SOLICITUD DE PRESUPUESTO
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            async function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnSolicitarPresupuestoAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const solicitudId =
+                    Number(
+                        boton.dataset.id
+                        ??
+                        0
+                    );
+
+
+                if (
+                    solicitudId <=
+                    0
+                ) {
+                    return;
+                }
+
+
+                try {
+
+                    boton.disabled =
+                        true;
+
+
+                    const [
+                        solicitud,
+                        cotizaciones
+                    ] =
+                        await Promise.all(
+                            [
+                                obtenerSolicitudAdq(
+                                    solicitudId
+                                ),
+
+                                obtenerCotizacionesSolicitudAdq(
+                                    solicitudId
+                                )
+                            ]
+                        );
+
+
+                    if (!solicitud) {
+
+                        throw new Error(
+                            "No fue posible obtener la solicitud."
+                        );
+                    }
+
+
+                    const cotizacionSeleccionada =
+                        obtenerCotizacionSeleccionadaAdq(
+                            cotizaciones
+                        );
+
+
+                    if (!cotizacionSeleccionada) {
+
+                        throw new Error(
+                            "No existe una cotización seleccionada y finalizada."
+                        );
+                    }
+
+
+                    solicitudPresupuestoActualAdq =
+                    {
+                        solicitud:
+                            solicitud,
+
+                        cotizacion:
+                            cotizacionSeleccionada
+                    };
+
+
+                    if (
+                        presupuestoSolicitudIdAdq
+                    ) {
+
+                        presupuestoSolicitudIdAdq.value =
+                            String(
+                                solicitud.id
+                            );
+                    }
+
+
+                    if (
+                        folioPresupuestoAdq
+                    ) {
+
+                        folioPresupuestoAdq.textContent =
+                            `${solicitud.folio ?? ""} · ${solicitud.titulo ?? ""}`;
+                    }
+
+
+                    if (
+                        proveedorPresupuestoAdq
+                    ) {
+
+                        proveedorPresupuestoAdq.textContent =
+                            cotizacionSeleccionada.nombreProveedor
+                            ??
+                            "Proveedor";
+                    }
+
+
+                    if (
+                        subtotalPresupuestoAdq
+                    ) {
+
+                        subtotalPresupuestoAdq.textContent =
+                            formatearMonedaAdq(
+                                cotizacionSeleccionada.subtotal
+                                ??
+                                0
+                            );
+                    }
+
+
+                    if (
+                        ivaPresupuestoAdq
+                    ) {
+
+                        ivaPresupuestoAdq.textContent =
+                            formatearMonedaAdq(
+                                cotizacionSeleccionada.importeIva
+                                ??
+                                0
+                            );
+                    }
+
+
+                    if (
+                        totalPresupuestoAdq
+                    ) {
+
+                        totalPresupuestoAdq.textContent =
+                            formatearMonedaAdq(
+                                cotizacionSeleccionada.total
+                                ??
+                                0
+                            );
+                    }
+
+
+                    if (
+                        comentarioPresupuestoAdq
+                    ) {
+
+                        comentarioPresupuestoAdq.value =
+                            "";
+                    }
+
+
+                    bootstrap.Modal
+                        .getOrCreateInstance(
+                            modalPresupuestoElementAdq
+                        )
+                        .show();
+
+                }
+                catch (
+                error
+                ) {
+
+                    console.error(
+                        "Error al preparar aprobación presupuestal:",
+                        error
+                    );
+
+
+                    mostrarAdvertenciaAdq(
+                        "No fue posible continuar",
+                        error.message
+                        ??
+                        "No fue posible preparar la solicitud presupuestal."
+                    );
+                }
+                finally {
+
+                    boton.disabled =
+                        false;
+                }
+            }
+        );
+
+        function formatearMonedaAdq(
+            valor
+        ) {
+
+            return Number(
+                valor
+                ??
+                0
+            ).toLocaleString(
+                "es-MX",
+                {
+                    style:
+                        "currency",
+
+                    currency:
+                        "MXN"
+                }
+            );
+        }
+
+        // =========================================================
+        // CONFIRMAR SOLICITUD DE PRESUPUESTO
+        // =========================================================
+
+        btnConfirmarPresupuestoAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const solicitudId =
+                        Number(
+                            presupuestoSolicitudIdAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <=
+                        0
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Solicitud no identificada",
+                            "No fue posible identificar la solicitud."
+                        );
+
+                        return;
+                    }
+
+
+                    const comentario =
+                        comentarioPresupuestoAdq
+                            ?.value
+                            ?.trim()
+                        ??
+                        "";
+
+
+                    const confirmado =
+                        await confirmarAccionAdq(
+                            {
+                                titulo:
+                                    "Enviar a aprobación presupuestal",
+
+                                mensaje:
+                                    `
+                <p class="mb-3">
+                    Confirma el envío de esta solicitud para autorización presupuestal.
+                </p>
+
+                <div class="adq-confirm-data">
+
+                    <div class="adq-confirm-data-item">
+
+                        <span>
+                            Monto solicitado
+                        </span>
+
+                        <strong class="text-primary fs-4">
+                            ${escapeHtmlAdq(
+                                        totalPresupuestoAdq
+                                            ?.textContent
+                                        ??
+                                        "$0.00"
+                                    )}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                <div class="small text-muted mt-3">
+                    La solicitud avanzará a la etapa
+                    <strong>Pendiente de presupuesto</strong>.
+                </div>
+                `,
+
+                                textoConfirmar:
+                                    "Enviar a aprobación",
+
+                                textoCancelar:
+                                    "Cancelar",
+
+                                tipo:
+                                    "primary",
+
+                                icono:
+                                    "bi-cash-stack"
+                            }
+                        );
+
+
+                    if (!confirmado) {
+                        return;
+                    }
+
+
+                    try {
+
+                        btnConfirmarPresupuestoAdq.disabled =
+                            true;
+
+
+                        btnConfirmarPresupuestoAdq.innerHTML =
+                            `
+                    <span class="spinner-border spinner-border-sm me-1"
+                          role="status"
+                          aria-hidden="true">
+                    </span>
+                    Enviando...
+                    `;
+
+
+                        await solicitarPresupuestoAdq(
+                            solicitudId,
+                            comentario
+                        );
+
+
+                        bootstrap.Modal
+                            .getInstance(
+                                modalPresupuestoElementAdq
+                            )
+                            ?.hide();
+
+
+                        window.location.reload();
+
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        console.error(
+                            "Error al solicitar presupuesto:",
+                            error
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible enviar la solicitud",
+                            error.message
+                            ??
+                            "Ocurrió un error al solicitar la aprobación presupuestal."
+                        );
+                    }
+                    finally {
+
+                        btnConfirmarPresupuestoAdq.disabled =
+                            false;
+
+
+                        btnConfirmarPresupuestoAdq.innerHTML =
+                            `
+                    <i class="bi bi-send me-1"></i>
+                    Enviar a aprobación
+                    `;
+                    }
+                }
+            );
+
         // =========================================================
         // TOKEN ANTIFORGERY - COTIZACIONES
         // =========================================================
@@ -847,6 +1670,331 @@ document.addEventListener(
                     resultado?.message
                     ??
                     "No fue posible finalizar la cotización."
+                );
+            }
+
+
+            return resultado;
+        }
+
+        // =========================================================
+        // REABRIR ETAPA DE COTIZACIÓN
+        // =========================================================
+
+        async function reabrirCotizacionAdq(
+            solicitudId
+        ) {
+
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )
+                    ?.value
+                ??
+                "";
+
+
+            const datos =
+                new FormData();
+
+
+            datos.append(
+                "__RequestVerificationToken",
+                token
+            );
+
+
+            datos.append(
+                "solicitudId",
+                String(
+                    solicitudId
+                )
+            );
+
+
+            const response =
+                await fetch(
+                    "?handler=ReabrirCotizacion",
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            datos,
+
+                        headers:
+                        {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        }
+                    }
+                );
+
+
+            let resultado =
+                null;
+
+
+            try {
+
+                resultado =
+                    await response.json();
+
+            }
+            catch {
+
+                resultado =
+                    null;
+            }
+
+
+            if (
+                !response.ok
+                ||
+                !resultado?.success
+            ) {
+
+                throw new Error(
+                    resultado?.message
+                    ??
+                    "No fue posible reabrir la cotización."
+                );
+            }
+
+
+            return resultado;
+        }
+
+        // =========================================================
+        // MODIFICAR / REABRIR COTIZACIONES
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            async function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnReabrirCotizacionAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const solicitudId =
+                    Number(
+                        boton.dataset.id
+                        ??
+                        0
+                    );
+
+
+                const folio =
+                    boton.dataset.folio
+                    ??
+                    "la solicitud";
+
+
+                if (
+                    solicitudId <=
+                    0
+                ) {
+                    return;
+                }
+
+
+                const confirmado =
+                    await confirmarAccionAdq(
+                        {
+                            titulo:
+                                "Modificar cotizaciones",
+
+                            mensaje:
+                                `
+                        <p class="mb-3">
+                            Vas a reabrir la etapa de cotización de
+                            <strong>${escapeHtmlAdq(
+                                    folio
+                                )}</strong>.
+                        </p>
+
+                        <div class="alert alert-warning mb-0">
+
+                            <div class="d-flex gap-2">
+
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                <div>
+                                    Podrás agregar nuevas propuestas,
+                                    modificar la selección actual y
+                                    volver a finalizar la etapa antes
+                                    de solicitar presupuesto.
+                                </div>
+
+                            </div>
+
+                        </div>
+                        `,
+
+                            textoConfirmar:
+                                "Modificar cotizaciones",
+
+                            textoCancelar:
+                                "Cancelar",
+
+                            tipo:
+                                "warning",
+
+                            icono:
+                                "bi-pencil-square"
+                        }
+                    );
+
+
+                if (!confirmado) {
+                    return;
+                }
+
+
+                try {
+
+                    boton.disabled =
+                        true;
+
+
+                    boton.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Abriendo...
+            `;
+
+
+                    await reabrirCotizacionAdq(
+                        solicitudId
+                    );
+
+
+                    window.location.reload();
+
+                }
+                catch (
+                error
+                ) {
+
+                    console.error(
+                        "Error al reabrir cotización:",
+                        error
+                    );
+
+
+                    mostrarAdvertenciaAdq(
+                        "No fue posible modificar las cotizaciones",
+                        error.message
+                        ??
+                        "Ocurrió un error."
+                    );
+
+
+                    boton.disabled =
+                        false;
+
+
+                    boton.innerHTML = `
+                <i class="bi bi-pencil-square"></i>
+
+                <span>
+                    Modificar cotizaciones
+                </span>
+            `;
+                }
+            }
+        );
+
+        // =========================================================
+        // REABRIR ETAPA DE COTIZACIÓN
+        // =========================================================
+
+        async function reabrirCotizacionAdq(
+            solicitudId
+        ) {
+
+            const token =
+                document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )
+                    ?.value
+                ??
+                "";
+
+
+            const datos =
+                new FormData();
+
+
+            datos.append(
+                "__RequestVerificationToken",
+                token
+            );
+
+
+            datos.append(
+                "solicitudId",
+                String(
+                    solicitudId
+                )
+            );
+
+
+            const response =
+                await fetch(
+                    "?handler=ReabrirCotizacion",
+                    {
+                        method:
+                            "POST",
+
+                        body:
+                            datos,
+
+                        headers:
+                        {
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        }
+                    }
+                );
+
+
+            let resultado =
+                null;
+
+
+            try {
+
+                resultado =
+                    await response.json();
+
+            }
+            catch {
+
+                resultado =
+                    null;
+            }
+
+
+            if (
+                !response.ok
+                ||
+                !resultado?.success
+            ) {
+
+                throw new Error(
+                    resultado?.message
+                    ??
+                    "No fue posible reabrir la cotización."
                 );
             }
 
@@ -1898,96 +3046,75 @@ document.addEventListener(
                     return;
                 }
 
+                const confirmado =
+                    await confirmarAccionAdq(
+                        {
+                            titulo:
+                                "Seleccionar cotización",
 
-                let confirmado =
-                    false;
+                            mensaje:
+                                `
+                <p class="mb-3">
+                    Confirma que deseas seleccionar esta cotización como la propuesta elegida.
+                </p>
 
+                <div class="adq-confirm-data">
 
-                if (
-                    window.Swal
-                ) {
+                    <div class="adq-confirm-data-item">
 
-                    const resultado =
-                        await Swal.fire(
-                            {
-                                icon:
-                                    "question",
+                        <span>
+                            Proveedor
+                        </span>
 
-                                title:
-                                    "Seleccionar cotización",
-
-                                html: `
-                            <div class="text-start">
-
-                                <p class="mb-2">
-                                    Esta propuesta será marcada como la
-                                    cotización seleccionada para continuar
-                                    con la adquisición.
-                                </p>
-
-                                <div class="border rounded-3 p-3 mt-3">
-
-                                    <div class="small text-muted">
-                                        Proveedor
-                                    </div>
-
-                                    <strong>
-                                        ${escapeHtmlAdq(
+                        <strong>
+                            ${escapeHtmlAdq(
                                     proveedor
+                                    ??
+                                    "Proveedor"
                                 )}
-                                    </strong>
+                        </strong>
 
-                                    <div class="small text-muted mt-3">
-                                        Total
-                                    </div>
+                    </div>
 
-                                    <strong class="fs-5">
-                                        ${formatearMonedaCotizacionAdq(
+                    <div class="adq-confirm-data-item">
+
+                        <span>
+                            Total
+                        </span>
+
+                        <strong class="text-success fs-5">
+                            ${formatearMonedaCotizacionAdq(
                                     total
                                 )}
-                                    </strong>
+                        </strong>
 
-                                </div>
+                    </div>
 
-                            </div>
-                        `,
+                </div>
 
-                                showCancelButton:
-                                    true,
+                <div class="small text-muted mt-3">
+                    Puedes cambiar la selección mientras la etapa de cotización no haya sido finalizada.
+                </div>
+                `,
 
-                                confirmButtonText:
-                                    "Sí, seleccionar",
+                            textoConfirmar:
+                                "Seleccionar",
 
-                                cancelButtonText:
-                                    "Cancelar",
+                            textoCancelar:
+                                "Cancelar",
 
-                                confirmButtonColor:
-                                    "#198754",
+                            tipo:
+                                "success",
 
-                                reverseButtons:
-                                    true
-                            }
-                        );
-
-
-                    confirmado =
-                        resultado.isConfirmed;
-                }
-                else {
-
-                    confirmado =
-                        window.confirm(
-                            `¿Seleccionar la cotización de ${proveedor} por ${formatearMonedaCotizacionAdq(
-                                total
-                            )}?`
-                        );
-                }
+                            icono:
+                                "bi-file-earmark-check"
+                        }
+                    );
 
 
                 if (!confirmado) {
                     return;
                 }
-
 
                 try {
 
@@ -1995,8 +3122,6 @@ document.addEventListener(
                         true;
 
 
-                    const contenidoAnterior =
-                        boton.innerHTML;
 
 
                     boton.innerHTML = `
@@ -2028,30 +3153,6 @@ document.addEventListener(
                         cotizaciones
                     );
 
-
-                    if (
-                        window.Swal
-                    ) {
-
-                        await Swal.fire(
-                            {
-                                icon:
-                                    "success",
-
-                                title:
-                                    "Cotización seleccionada",
-
-                                text:
-                                    "La propuesta fue marcada correctamente.",
-
-                                timer:
-                                    1800,
-
-                                showConfirmButton:
-                                    false
-                            }
-                        );
-                    }
 
                 }
                 catch (
@@ -2105,73 +3206,46 @@ document.addEventListener(
                     }
 
 
-                    let confirmado =
-                        false;
+                    const confirmado =
+                        await confirmarAccionAdq(
+                            {
+                                titulo:
+                                    "Finalizar cotización",
 
+                                mensaje:
+                                    `
+                <p class="mb-3">
+                    La cotización seleccionada será utilizada para continuar con el proceso de adquisición.
+                </p>
 
-                    if (
-                        window.Swal
-                    ) {
+                <div class="alert alert-warning mb-0">
 
-                        const resultado =
-                            await Swal.fire(
-                                {
-                                    icon:
-                                        "warning",
+                    <div class="d-flex gap-2">
 
-                                    title:
-                                        "Finalizar cotización",
+                        <i class="bi bi-exclamation-triangle-fill"></i>
 
-                                    html: `
-                                <div class="text-start">
+                        <div>
+                            Después de finalizar esta etapa ya no podrás cambiar el proveedor desde la fase de cotización.
+                        </div>
 
-                                    <p>
-                                        La cotización seleccionada será
-                                        utilizada para continuar con el
-                                        proceso de adquisición.
-                                    </p>
+                    </div>
 
-                                    <div class="alert alert-warning mb-0">
+                </div>
+                `,
 
-                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                textoConfirmar:
+                                    "Finalizar cotización",
 
-                                        Después de finalizar esta etapa
-                                        ya no podrás cambiar el proveedor
-                                        desde la fase de cotización.
+                                textoCancelar:
+                                    "Regresar",
 
-                                    </div>
+                                tipo:
+                                    "success",
 
-                                </div>
-                            `,
-
-                                    showCancelButton:
-                                        true,
-
-                                    confirmButtonText:
-                                        "Finalizar cotización",
-
-                                    cancelButtonText:
-                                        "Regresar",
-
-                                    confirmButtonColor:
-                                        "#198754",
-
-                                    reverseButtons:
-                                        true
-                                }
-                            );
-
-
-                        confirmado =
-                            resultado.isConfirmed;
-                    }
-                    else {
-
-                        confirmado =
-                            window.confirm(
-                                "¿Deseas finalizar la etapa de cotización?"
-                            );
-                    }
+                                icono:
+                                    "bi-check2-circle"
+                            }
+                        );
 
 
                     if (!confirmado) {
@@ -2191,60 +3265,9 @@ document.addEventListener(
                 `;
 
 
-                        const resultado =
-                            await finalizarCotizacionAdq(
-                                solicitudId
-                            );
-
-
-                        if (
-                            window.Swal
-                        ) {
-
-                            await Swal.fire(
-                                {
-                                    icon:
-                                        "success",
-
-                                    title:
-                                        "Cotización finalizada",
-
-                                    html: `
-                                <div class="text-start">
-
-                                    <div class="small text-muted">
-                                        Proveedor seleccionado
-                                    </div>
-
-                                    <strong>
-                                        ${escapeHtmlAdq(
-                                        resultado.proveedor
-                                        ??
-                                        ""
-                                    )}
-                                    </strong>
-
-                                    <div class="small text-muted mt-3">
-                                        Total
-                                    </div>
-
-                                    <strong class="fs-5">
-                                        ${formatearMonedaCotizacionAdq(
-                                        resultado.total
-                                        ??
-                                        0
-                                    )}
-                                    </strong>
-
-                                </div>
-                            `,
-
-                                    confirmButtonText:
-                                        "Continuar"
-                                }
-                            );
-                        }
-
+                        await finalizarCotizacionAdq(
+                            solicitudId
+                        );
 
                         window.location.reload();
 
@@ -2277,7 +3300,152 @@ document.addEventListener(
                 `;
                     }
                 }
-            );
+        );
+
+        // =========================================================
+        // REABRIR / MODIFICAR COTIZACIONES
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            async function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnReabrirCotizacionAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                const solicitudId =
+                    Number(
+                        boton.dataset.id
+                        ??
+                        0
+                    );
+
+
+                const folio =
+                    boton.dataset.folio
+                    ??
+                    "la solicitud";
+
+
+                if (
+                    solicitudId <=
+                    0
+                ) {
+                    return;
+                }
+
+
+                const confirmado =
+                    await confirmarAccionAdq(
+                        {
+                            titulo:
+                                "Modificar cotizaciones",
+
+                            mensaje:
+                                `
+                        <p class="mb-3">
+                            Vas a reabrir la etapa de cotización de
+                            <strong>${escapeHtmlAdq(
+                                    folio
+                                )}</strong>.
+                        </p>
+
+                        <div class="alert alert-warning mb-0">
+
+                            <div class="d-flex gap-2">
+
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                <div>
+                                    La cotización seleccionada dejará de estar finalizada y podrás agregar nuevas propuestas o cambiar la selección antes de solicitar presupuesto.
+                                </div>
+
+                            </div>
+
+                        </div>
+                        `,
+
+                            textoConfirmar:
+                                "Modificar cotizaciones",
+
+                            textoCancelar:
+                                "Cancelar",
+
+                            tipo:
+                                "warning",
+
+                            icono:
+                                "bi-pencil-square"
+                        }
+                    );
+
+
+                if (!confirmado) {
+                    return;
+                }
+
+
+                try {
+
+                    boton.disabled =
+                        true;
+
+
+                    boton.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Abriendo...
+            `;
+
+
+                    await reabrirCotizacionAdq(
+                        solicitudId
+                    );
+
+
+                    window.location.reload();
+
+                }
+                catch (
+                error
+                ) {
+
+                    console.error(
+                        "Error al reabrir cotización:",
+                        error
+                    );
+
+
+                    mostrarAdvertenciaAdq(
+                        "No fue posible modificar las cotizaciones",
+                        error.message
+                        ??
+                        "Ocurrió un error."
+                    );
+
+
+                    boton.disabled =
+                        false;
+
+
+                    boton.innerHTML = `
+                <i class="bi bi-pencil-square"></i>
+                <span>
+                    Modificar cotizaciones
+                </span>
+            `;
+                }
+            }
+        );
 
         // =========================================================
         // PREPARAR NUEVA COTIZACIÓN / PROVEEDOR ALTERNATIVO
@@ -2922,11 +4090,11 @@ document.addEventListener(
                         error
                     );
 
-
-                    alert(
+                    mostrarAdvertenciaAdq(
+                        "No fue posible preparar la cotización.",
                         error.message
                         ??
-                        "No fue posible preparar la cotización."
+                        "Ocurrió un error."
                     );
 
                 }
@@ -4014,19 +5182,136 @@ document.addEventListener(
             mensaje
         ) {
 
-            if (window.Swal) {
+            const overlayAnterior =
+                document.getElementById(
+                    "adqMensajeOverlay"
+                );
 
-                Swal.fire({
-                    icon: "warning",
-                    title: titulo,
-                    text: mensaje
-                });
 
-                return;
+            overlayAnterior
+                ?.remove();
+
+
+            const overlay =
+                document.createElement(
+                    "div"
+                );
+
+
+            overlay.id =
+                "adqMensajeOverlay";
+
+
+            overlay.className =
+                "adq-confirm-overlay";
+
+
+            overlay.innerHTML = `
+        <div class="adq-confirm-dialog"
+             role="alertdialog"
+             aria-modal="true">
+
+            <div class="adq-confirm-body">
+
+                <div class="adq-confirm-icon adq-confirm-icon-warning">
+
+                    <i class="bi bi-exclamation-triangle"></i>
+
+                </div>
+
+
+                <div class="adq-confirm-content">
+
+                    <h5 class="adq-confirm-title">
+
+                        ${escapeHtmlAdq(
+                titulo
+                ??
+                "Advertencia"
+            )}
+
+                    </h5>
+
+                    <div class="adq-confirm-message">
+
+                        ${escapeHtmlAdq(
+                mensaje
+                ??
+                "Ocurrió un error."
+            )}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="adq-confirm-footer">
+
+                <button type="button"
+                        class="btn btn-primary"
+                        data-adq-mensaje-aceptar>
+
+                    <i class="bi bi-check2 me-1"></i>
+
+                    Entendido
+
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+
+            document.body.appendChild(
+                overlay
+            );
+
+
+            const boton =
+                overlay.querySelector(
+                    "[data-adq-mensaje-aceptar]"
+                );
+
+
+            function cerrar() {
+
+                overlay.classList.remove(
+                    "adq-confirm-overlay-visible"
+                );
+
+
+                setTimeout(
+                    function () {
+
+                        overlay.remove();
+
+                    },
+                    150
+                );
             }
 
-            alert(
-                `${titulo}\n${mensaje}`
+
+            boton
+                ?.addEventListener(
+                    "click",
+                    cerrar
+                );
+
+
+            requestAnimationFrame(
+                function () {
+
+                    overlay.classList.add(
+                        "adq-confirm-overlay-visible"
+                    );
+
+
+                    boton
+                        ?.focus();
+                }
             );
         }
 

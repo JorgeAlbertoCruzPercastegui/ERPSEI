@@ -1639,10 +1639,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
 
-        // =========================================================
-        // GUARDAR BORRADOR
-        // =========================================================
-
         public async Task<IActionResult>
             OnPostGuardarBorradorAsync()
         {
@@ -1656,7 +1652,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =========================================================
+            // VALIDACIÓN EXCLUSIVA DEL FORMULARIO DE SOLICITUD
+            // =========================================================
+
+            ModelState.Clear();
+
+
             NormalizarInput();
+
+
+            TryValidateModel(
+                Input,
+                nameof(Input)
+            );
+
 
             ValidarDetalles();
 
@@ -1730,7 +1740,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =========================================================
+            // VALIDACIÓN EXCLUSIVA DEL FORMULARIO DE SOLICITUD
+            // =========================================================
+
+            ModelState.Clear();
+
+
             NormalizarInput();
+
+
+            TryValidateModel(
+                Input,
+                nameof(Input)
+            );
+
 
             ValidarDetalles();
 
@@ -1738,7 +1762,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             Empleado? empleado =
-                await ObtenerEmpleadoActualAsync(
+                            await ObtenerEmpleadoActualAsync(
                     usuarioActual
                 );
 
@@ -1855,12 +1879,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =========================================================
+            // VALIDACIÓN EXCLUSIVA DEL FORMULARIO DE SOLICITUD
+            // =========================================================
+
+            ModelState.Clear();
+
+
             NormalizarInput();
+
+
+            TryValidateModel(
+                Input,
+                nameof(Input)
+            );
+
 
             ValidarDetalles();
 
             ValidarArchivos();
-
 
             if (!ModelState.IsValid)
             {
@@ -2135,7 +2172,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =========================================================
+            // VALIDACIÓN EXCLUSIVA DEL FORMULARIO DE SOLICITUD
+            // =========================================================
+
+            ModelState.Clear();
+
+
             NormalizarInput();
+
+
+            TryValidateModel(
+                Input,
+                nameof(Input)
+            );
+
 
             ValidarDetalles();
 
@@ -4928,6 +4979,925 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
         }
 
+        // =========================================================
+        // REABRIR ETAPA DE COTIZACIÓN
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostReabrirCotizacionAsync(
+                int solicitudId)
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Tu sesión ya no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                solicitudId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se identificó la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR PERMISO
+            // =====================================================
+
+            bool esAgenteCompras =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            if (!esAgenteCompras)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para modificar las cotizaciones."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // CONSULTAR SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud no existe."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // SOLAMENTE AGENTE ASIGNADO
+            // =====================================================
+
+            if (
+                solicitud.UsuarioAsignadoId !=
+                usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Solamente el agente asignado puede modificar las cotizaciones."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // SOLAMENTE DESDE COTIZACIÓN FINALIZADA
+            // =====================================================
+
+            if (
+                solicitud.EstatusId !=
+                10
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud ya no se encuentra disponible para modificar cotizaciones."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // NO PERMITIR SI YA EXISTE PROCESO PRESUPUESTAL ACTIVO
+            // =====================================================
+
+            bool existePresupuestoActivo =
+                await _context.AdqAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                            &&
+                            (
+                                x.Estatus ==
+                                    "Pendiente"
+                                ||
+                                x.Estatus ==
+                                    "EnRevision"
+                                ||
+                                x.Estatus ==
+                                    "Aprobada"
+                            )
+                    );
+
+
+            if (existePresupuestoActivo)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud ya cuenta con un proceso presupuestal activo y las cotizaciones ya no pueden modificarse."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            List<AdqCotizacion> cotizaciones =
+                await _context.AdqCotizaciones
+                    .Where(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                    )
+                    .ToListAsync();
+
+
+            if (
+                cotizaciones.Count ==
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No existen cotizaciones registradas para reabrir."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            int estatusAnterior =
+                solicitud.EstatusId;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =================================================
+                // QUITAR CIERRE DE COTIZACIONES
+                // =================================================
+
+                foreach (
+                    AdqCotizacion cotizacion
+                    in cotizaciones
+                )
+                {
+                    cotizacion.Finalizada =
+                        false;
+
+                    cotizacion.FechaFinalizacion =
+                        null;
+
+                    cotizacion.FechaModificacion =
+                        ahora;
+                }
+
+
+                // =================================================
+                // 10 → 9
+                // =================================================
+
+                solicitud.EstatusId =
+                    9;
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            "COTIZACION_REABIERTA",
+
+                        Descripcion =
+                            "El agente reabrió la etapa de cotización para revisar o registrar nuevas propuestas.",
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            9,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            "La etapa de cotización fue reabierta correctamente.",
+
+                        solicitudId =
+                            solicitud.Id,
+
+                        estatusId =
+                            solicitud.EstatusId
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al reabrir cotización de solicitud {SolicitudId}.",
+                    solicitudId
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No fue posible reabrir la etapa de cotización."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        // =========================================================
+        // SOLICITAR APROBACIÓN PRESUPUESTAL
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostSolicitarPresupuestoAsync(
+                int solicitudId,
+                string? comentario)
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Tu sesión ya no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                solicitudId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se identificó la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            comentario =
+                string.IsNullOrWhiteSpace(
+                    comentario
+                )
+                    ? null
+                    : comentario.Trim();
+
+
+            if (
+                comentario?.Length >
+                3000
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El comentario no puede superar los 3000 caracteres."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR QUE SEA AGENTE DE COMPRAS
+            // =====================================================
+
+            bool esAgenteCompras =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            if (!esAgenteCompras)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para solicitar aprobación presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // CONSULTAR SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud no existe."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // SOLAMENTE EL AGENTE ASIGNADO
+            // =====================================================
+
+            if (
+                solicitud.UsuarioAsignadoId !=
+                    usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Solamente el agente asignado puede solicitar la aprobación presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // ESTATUS PERMITIDO
+            // =====================================================
+
+            if (
+                solicitud.EstatusId !=
+                10
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud debe tener la cotización finalizada antes de solicitar presupuesto."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // OBTENER COTIZACIÓN SELECCIONADA Y FINALIZADA
+            // =====================================================
+
+            List<AdqCotizacion> cotizacionesSeleccionadas =
+                await _context.AdqCotizaciones
+                    .Where(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.EsPrincipal
+                            &&
+                            x.Finalizada
+                    )
+                    .ToListAsync();
+
+
+            if (
+                cotizacionesSeleccionadas.Count ==
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No existe una cotización seleccionada y finalizada para esta solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            if (
+                cotizacionesSeleccionadas.Count >
+                1
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Existe más de una cotización seleccionada. Revisa la información antes de continuar."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            AdqCotizacion cotizacion =
+                cotizacionesSeleccionadas[0];
+
+
+            // =====================================================
+            // EVITAR SOLICITUD PRESUPUESTAL DUPLICADA
+            // =====================================================
+
+            bool existeSolicitudPresupuesto =
+                await _context.AdqAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                            &&
+                            (
+                                x.Estatus ==
+                                    "Pendiente"
+                                ||
+                                x.Estatus ==
+                                    "EnRevision"
+                                ||
+                                x.Estatus ==
+                                    "Aprobada"
+                            )
+                    );
+
+
+            if (existeSolicitudPresupuesto)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud ya cuenta con un proceso presupuestal activo."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // RESPONSABLES DE APROBACIÓN PRESUPUESTAL
+            // =====================================================
+
+            List<string> usuariosAprobadores =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.PuedeAprobarPresupuesto
+                            ||
+                            x.PuedeAdministrar
+                    )
+                    .Select(
+                        x =>
+                            x.UsuarioId
+                    )
+                    .Where(
+                        x =>
+                            !string.IsNullOrWhiteSpace(
+                                x
+                            )
+                    )
+                    .Distinct()
+                    .ToListAsync();
+
+
+            if (
+                usuariosAprobadores.Count ==
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No existen usuarios configurados para aprobar presupuestos."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+            int estatusAnterior =
+                solicitud.EstatusId;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =================================================
+                // CREAR SOLICITUD PRESUPUESTAL
+                // =================================================
+
+                AdqAprobacionPresupuestal aprobacionPresupuestal =
+                    new()
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        CotizacionId =
+                            cotizacion.Id,
+
+                        MontoSolicitado =
+                            cotizacion.Total,
+
+                        UsuarioSolicitaId =
+                            usuarioActual.Id,
+
+                        FechaSolicitud =
+                            ahora,
+
+                        UsuarioAprobadorId =
+                            null,
+
+                        FechaRespuesta =
+                            null,
+
+                        Estatus =
+                            "Pendiente",
+
+                        ComentarioSolicitud =
+                            comentario,
+
+                        ComentarioRespuesta =
+                            null,
+
+                        Eliminado =
+                            false
+                    };
+
+
+                _context.AdqAprobacionesPresupuestales.Add(
+                    aprobacionPresupuestal
+                );
+
+
+                // =================================================
+                // CAMBIAR ESTATUS: 10 → 11
+                // =================================================
+
+                solicitud.EstatusId =
+                    11;
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            "PRESUPUESTO_SOLICITADO",
+
+                        Descripcion =
+                            string.IsNullOrWhiteSpace(
+                                comentario
+                            )
+                                ? $"El agente solicitó aprobación presupuestal para la cotización de {cotizacion.NombreProveedor} por un monto de {cotizacion.Total:C2}."
+                                : $"El agente solicitó aprobación presupuestal para la cotización de {cotizacion.NombreProveedor} por un monto de {cotizacion.Total:C2}. Comentario: {comentario}",
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            11,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                // =================================================
+                // NOTIFICAR A RESPONSABLES DE PRESUPUESTO
+                // =================================================
+
+                await CrearNotificacionAdquisicionesAsync(
+                    usuariosAprobadores,
+
+                    "Aprobación presupuestal pendiente",
+
+                    $"La solicitud {solicitud.Folio} - {solicitud.Titulo} requiere aprobación presupuestal por {cotizacion.Total:C2}. Proveedor seleccionado: {cotizacion.NombreProveedor}.",
+
+                    $"/ERP/Adquisiciones?openId={solicitud.Id}",
+
+                    usuarioActual.Id
+                );
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            "La solicitud fue enviada correctamente a aprobación presupuestal.",
+
+                        solicitudId =
+                            solicitud.Id,
+
+                        aprobacionPresupuestalId =
+                            aprobacionPresupuestal.Id,
+
+                        estatusId =
+                            11,
+
+                        proveedor =
+                            cotizacion.NombreProveedor,
+
+                        subtotal =
+                            cotizacion.Subtotal,
+
+                        iva =
+                            cotizacion.ImporteIva,
+
+                        total =
+                            cotizacion.Total
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al solicitar aprobación presupuestal de la solicitud {SolicitudId}.",
+                    solicitud.Id
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible solicitar la aprobación presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
 
         // =========================================================
         // GUARDAR EVIDENCIA POR PRODUCTO DE COTIZACIÓN
@@ -4940,7 +5910,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 IFormFile archivo,
                 AppUser usuarioActual,
                 DateTime ahora)
-        {
+            {
             if (
                 archivo == null
                 ||
@@ -4950,7 +5920,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             {
                 return;
             }
-
 
             string carpetaRelativa =
                 Path.Combine(

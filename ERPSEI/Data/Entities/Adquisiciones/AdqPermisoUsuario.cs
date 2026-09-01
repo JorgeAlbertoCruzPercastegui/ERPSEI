@@ -58,6 +58,12 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             set;
         }
 
+        public bool PuedeAprobarPresupuesto
+        {
+            get;
+            set;
+        }
+
         public bool PuedeGestionarProveedores
         {
             get;

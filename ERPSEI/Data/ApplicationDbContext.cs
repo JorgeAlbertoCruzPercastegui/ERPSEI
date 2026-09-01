@@ -364,6 +364,8 @@ namespace ERPSEI.Data
             set;
         }
 
+        public DbSet<AdqAprobacionPresupuestal> AdqAprobacionesPresupuestales { get; set; }
+
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -917,51 +919,92 @@ namespace ERPSEI.Data
         private static void BuildAdquisicionesCotizaciones(ModelBuilder b)
         {
             b.Entity<AdqCotizacion>()
-            .HasOne(
-                x => x.Solicitud
-            )
-            .WithMany()
-            .HasForeignKey(
-                x => x.SolicitudId
-            )
-            .OnDelete(
-                DeleteBehavior.Restrict
-            );
+                .HasOne(
+                    x => x.Solicitud
+                )
+                .WithMany()
+                .HasForeignKey(
+                    x => x.SolicitudId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
 
-                        b.Entity<AdqCotizacionDetalle>()
-                        .HasOne(
-                            x => x.Cotizacion
-                        )
-                        .WithMany(
-                            x => x.Detalles
-                        )
-                        .HasForeignKey(
-                            x => x.CotizacionId
-                        )
-                        .OnDelete(
-                            DeleteBehavior.Restrict
-                        );
 
-                        b.Entity<AdqCotizacionAdjunto>()
-                        .HasOne(
-                            x => x.Cotizacion
-                        )
-                        .WithMany(
-                            x => x.Adjuntos
-                        )
-                        .HasForeignKey(
-                            x => x.CotizacionId
-                        )
-                        .OnDelete(
-                            DeleteBehavior.Restrict
-                        );
+            b.Entity<AdqCotizacionDetalle>()
+                .HasOne(
+                    x => x.Cotizacion
+                )
+                .WithMany(
+                    x => x.Detalles
+                )
+                .HasForeignKey(
+                    x => x.CotizacionId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
 
             b.Entity<AdqCotizacionAdjunto>()
-            .HasOne(x => x.CotizacionDetalle)
-            .WithMany(x => x.Adjuntos)
-            .HasForeignKey(x => x.CotizacionDetalleId)
-            .OnDelete(DeleteBehavior.Restrict);
-                }
+                .HasOne(
+                    x => x.Cotizacion
+                )
+                .WithMany(
+                    x => x.Adjuntos
+                )
+                .HasForeignKey(
+                    x => x.CotizacionId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b.Entity<AdqCotizacionAdjunto>()
+                .HasOne(
+                    x => x.CotizacionDetalle
+                )
+                .WithMany(
+                    x => x.Adjuntos
+                )
+                .HasForeignKey(
+                    x => x.CotizacionDetalleId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            // =========================================================
+            // APROBACIÓN PRESUPUESTAL
+            // =========================================================
+
+            b.Entity<AdqAprobacionPresupuestal>()
+                .HasOne(
+                    x => x.Solicitud
+                )
+                .WithMany()
+                .HasForeignKey(
+                    x => x.SolicitudId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b.Entity<AdqAprobacionPresupuestal>()
+                .HasOne(
+                    x => x.Cotizacion
+                )
+                .WithMany()
+                .HasForeignKey(
+                    x => x.CotizacionId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+        }
 
 
         private static void BuildServiceDesk(ModelBuilder b)
