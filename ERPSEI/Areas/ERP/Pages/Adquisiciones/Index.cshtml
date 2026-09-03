@@ -92,6 +92,20 @@
 
         <div class="adq-header-actions">
 
+            @if (Model.EsUsuarioAdquisiciones)
+            {
+                <button type="button"
+                        id="btnPermisosAdquisicionesAdq"
+                        class="btn btn-outline-secondary">
+
+                    <i class="bi bi-shield-lock me-1"></i>
+
+                    Permisos
+
+                </button>
+            }
+
+
             <button type="button"
                     id="btnNuevaSolicitudAdq"
                     class="btn btn-primary"
@@ -107,6 +121,272 @@
         </div>
 
     </section>
+
+    <!-- ========================================================== -->
+    <!-- MODAL PERMISOS DE ADQUISICIONES -->
+    <!-- ========================================================== -->
+
+    <div class="modal fade"
+         id="modalPermisosAdquisicionesAdq"
+         tabindex="-1"
+         aria-labelledby="modalPermisosAdquisicionesAdqTitulo"
+         aria-hidden="true">
+
+        <div class="modal-dialog
+            modal-xl
+            modal-dialog-centered
+            modal-dialog-scrollable">
+
+            <div class="modal-content adq-permissions-modal">
+
+                <!-- ================================================== -->
+                <!-- HEADER -->
+                <!-- ================================================== -->
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <h5 class="modal-title"
+                            id="modalPermisosAdquisicionesAdqTitulo">
+
+                            <i class="bi bi-shield-lock-fill me-2"></i>
+
+                            Permisos de Adquisiciones
+
+                        </h5>
+
+
+                        <p class="mb-0 small text-muted">
+
+                            Administra los permisos operativos y los niveles
+                            de aprobación presupuestal.
+
+                        </p>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <!-- ================================================== -->
+                <!-- BODY -->
+                <!-- ================================================== -->
+
+                <div class="modal-body">
+
+                    <!-- BUSCADOR -->
+
+                    <div class="adq-permissions-toolbar mb-3">
+
+                        <div class="input-group">
+
+                            <span class="input-group-text">
+
+                                <i class="bi bi-search"></i>
+
+                            </span>
+
+
+                            <input type="text"
+                                   id="buscarPermisoAdquisicionesAdq"
+                                   class="form-control"
+                                   placeholder="Buscar usuario o correo..."
+                                   autocomplete="off" />
+
+
+                            <button type="button"
+                                    id="btnLimpiarBusquedaPermisosAdq"
+                                    class="btn btn-outline-secondary">
+
+                                <i class="bi bi-x-lg"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- MENSAJE -->
+
+                    <div id="mensajePermisosAdquisicionesAdq"
+                         class="alert d-none"
+                         role="alert">
+                    </div>
+
+
+                    <!-- LOADING -->
+
+                    <div id="cargandoPermisosAdquisicionesAdq"
+                         class="text-center py-5 d-none">
+
+                        <div class="spinner-border text-primary"
+                             role="status">
+                        </div>
+
+
+                        <div class="mt-3 text-muted">
+
+                            Cargando permisos...
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- TABLA -->
+
+                    <div id="contenedorPermisosAdquisicionesAdq"
+                         class="table-responsive">
+
+                        <table class="table
+                            align-middle
+                            table-hover
+                            adq-table
+                            adq-permissions-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Usuario
+                                    </th>
+
+                                    <th class="text-center">
+                                        Visualizar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Crear solicitud
+                                    </th>
+
+                                    <th class="text-center">
+                                        Gestionar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Aprobar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Asignar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Cotizar
+                                    </th>
+
+                                    <th class="text-center">
+                                        Proveedores
+                                    </th>
+
+                                    <th class="text-center">
+                                        Pago
+                                    </th>
+
+                                    <th class="text-center">
+                                        Reportes
+                                    </th>
+
+                                    <th class="text-center">
+                                        Presupuesto
+                                    </th>
+
+                                    <th>
+                                        Nivel presupuestal
+                                    </th>
+
+                                    <th class="text-center">
+                                        Administrar
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="tablaPermisosAdquisicionesAdqBody">
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- VACÍO -->
+
+                    <div id="sinPermisosAdquisicionesAdq"
+                         class="adq-empty-state d-none">
+
+                        <i class="bi bi-people"></i>
+
+                        <strong>
+                            No se encontraron usuarios.
+                        </strong>
+
+                        <span>
+                            No hay registros que coincidan con la búsqueda.
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================================================== -->
+                <!-- FOOTER -->
+                <!-- ================================================== -->
+
+                <div class="modal-footer">
+
+                    <div class="me-auto">
+
+                        <span id="totalUsuariosPermisosAdq"
+                              class="text-muted small">
+
+                            0 usuarios
+
+                        </span>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cerrar
+
+                    </button>
+
+
+                    <button type="button"
+                            id="btnGuardarPermisosAdquisicionesAdq"
+                            class="btn btn-primary"
+                            disabled>
+
+                        <i class="bi bi-floppy me-1"></i>
+
+                        Guardar permisos
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 
     <!-- ====================================================== -->
@@ -1338,6 +1618,247 @@
 
                 </div>
             }
+
+        </section>
+    }
+
+    <!-- ========================================================= -->
+    <!-- APROBACIONES PRESUPUESTALES PENDIENTES -->
+    <!-- ========================================================= -->
+    @if (Model.TotalAprobacionesPresupuestalesPendientes > 0)
+    {
+        <section class="adq-section mb-4"
+                 id="seccionAprobacionesPresupuestalesAdq">
+
+            <div class="adq-section-header">
+
+                <div>
+
+                    <div class="d-flex align-items-center gap-2">
+
+                        <div class="adq-section-icon">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+
+                        <div>
+
+                            <h5 class="mb-1">
+                                Aprobaciones presupuestales
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Solicitudes pendientes de tu autorización.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="adq-assigned-counter">
+
+                    <i class="bi bi-hourglass-split"></i>
+
+                    <span>
+                        @Model.TotalAprobacionesPresupuestalesPendientes
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-responsive mt-3">
+
+                <table class="table align-middle mb-0">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Folio
+                            </th>
+
+                            <th>
+                                Solicitud
+                            </th>
+
+                            <th>
+                                Etapa
+                            </th>
+
+                            <th>
+                                Proveedor
+                            </th>
+
+                            <th class="text-end">
+                                Monto
+                            </th>
+
+                            <th>
+                                Fecha
+                            </th>
+
+                            <th class="text-center">
+                                Acciones
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (
+                            var aprobacion
+                            in Model.AprobacionesPresupuestalesPendientes
+                        )
+                        {
+                            <tr class="adq-budget-approval-row">
+
+                                <td>
+
+                                    <strong>
+                                        @aprobacion.Folio
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        @aprobacion.Titulo
+                                    </div>
+
+                                    <div class="small text-muted">
+
+                                        @aprobacion.Solicitante
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                aprobacion.Area
+                                            )
+                                        )
+                                        {
+                                            <span>
+                                                · @aprobacion.Area
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+
+                                        Nivel @aprobacion.Orden
+
+                                    </span>
+
+                                    <div class="small text-muted mt-1">
+                                        @aprobacion.NombreEtapa
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        @aprobacion.Proveedor
+                                    </div>
+
+                                </td>
+
+
+                                <td class="text-end">
+
+                                    <strong>
+                                        @aprobacion.Monto.ToString("C2")
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    @aprobacion.FechaSolicitud
+                                    .ToString(
+                                    "dd/MM/yyyy HH:mm"
+                                    )
+
+                                </td>
+
+
+                                <td class="text-center">
+
+                                    <div class="d-flex justify-content-center gap-2">
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-primary btnVerAprobacionPresupuestalAdq"
+                                                data-solicitud-id="@aprobacion.SolicitudId"
+                                                data-detalle-id="@aprobacion.DetalleId"
+                                                data-folio="@aprobacion.Folio"
+                                                data-titulo="@aprobacion.Titulo"
+                                                data-etapa="@aprobacion.NombreEtapa"
+                                                data-orden="@aprobacion.Orden"
+                                                data-proveedor="@aprobacion.Proveedor"
+                                                data-monto="@aprobacion.Monto"
+                                                data-solicitante="@aprobacion.Solicitante"
+                                                data-area="@aprobacion.Area"
+                                                data-comentario="@aprobacion.ComentarioSolicitud"
+                                                title="Ver información">
+
+                                            <i class="bi bi-eye"></i>
+
+                                        </button>
+
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-success btnAprobarPresupuestoAdq"
+                                                data-solicitud-id="@aprobacion.SolicitudId"
+                                                data-detalle-id="@aprobacion.DetalleId"
+                                                data-folio="@aprobacion.Folio"
+                                                data-etapa="@aprobacion.NombreEtapa"
+                                                title="Aprobar">
+
+                                            <i class="bi bi-check-lg"></i>
+
+                                        </button>
+
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger btnDeclinarPresupuestoAdq"
+                                                data-solicitud-id="@aprobacion.SolicitudId"
+                                                data-detalle-id="@aprobacion.DetalleId"
+                                                data-folio="@aprobacion.Folio"
+                                                data-etapa="@aprobacion.NombreEtapa"
+                                                title="Declinar">
+
+                                            <i class="bi bi-x-lg"></i>
+
+                                        </button>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
 
         </section>
     }
@@ -4431,6 +4952,299 @@
     </div>
 
 </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL APROBACIÓN PRESUPUESTAL -->
+    <!-- ========================================================= -->
+
+    <div class="modal fade"
+         id="modalAprobacionPresupuestalAdq"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+            <div class="modal-content">
+
+                <!-- HEADER -->
+                <div class="modal-header">
+
+                    <div>
+
+                        <div class="d-flex align-items-center gap-2">
+
+                            <div class="adq-section-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+
+                            <div>
+
+                                <h5 class="modal-title mb-1">
+                                    Aprobación presupuestal
+                                </h5>
+
+                                <div class="small text-muted"
+                                     id="folioAprobacionPresupuestalAdq">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <!-- BODY -->
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           id="detalleAprobacionPresupuestalIdAdq"
+                           value="0" />
+
+
+                    <input type="hidden"
+                           id="solicitudAprobacionPresupuestalIdAdq"
+                           value="0" />
+
+
+                    <!-- RESUMEN -->
+                    <div class="row g-3 mb-4">
+
+                        <div class="col-md-6">
+
+                            <div class="border rounded-3 p-3 h-100">
+
+                                <div class="small text-muted mb-1">
+                                    Solicitud
+                                </div>
+
+                                <div class="fw-semibold"
+                                     id="tituloAprobacionPresupuestalAdq">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-3">
+
+                            <div class="border rounded-3 p-3 h-100">
+
+                                <div class="small text-muted mb-1">
+                                    Etapa actual
+                                </div>
+
+                                <div class="fw-semibold"
+                                     id="etapaAprobacionPresupuestalAdq">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-3">
+
+                            <div class="border rounded-3 p-3 h-100">
+
+                                <div class="small text-muted mb-1">
+                                    Monto
+                                </div>
+
+                                <div class="fw-bold fs-5"
+                                     id="montoAprobacionPresupuestalAdq">
+                                    $0.00
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="row g-3 mb-4">
+
+                        <div class="col-md-4">
+
+                            <div class="border rounded-3 p-3 h-100">
+
+                                <div class="small text-muted mb-1">
+                                    Solicitante
+                                </div>
+
+                                <div class="fw-semibold"
+                                     id="solicitanteAprobacionPresupuestalAdq">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div class="border rounded-3 p-3 h-100">
+
+                                <div class="small text-muted mb-1">
+                                    Área
+                                </div>
+
+                                <div class="fw-semibold"
+                                     id="areaAprobacionPresupuestalAdq">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div class="border rounded-3 p-3 h-100">
+
+                                <div class="small text-muted mb-1">
+                                    Proveedor
+                                </div>
+
+                                <div class="fw-semibold"
+                                     id="proveedorAprobacionPresupuestalAdq">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- COMENTARIO ORIGINAL -->
+                    <div class="mb-4">
+
+                        <label class="form-label fw-semibold">
+                            Comentario de solicitud presupuestal
+                        </label>
+
+                        <div class="border rounded-3 p-3 bg-light"
+                             id="comentarioSolicitudPresupuestalAdq">
+                            Sin comentarios.
+                        </div>
+
+                    </div>
+
+
+                    <!-- ACCESOS -->
+                    <div class="mb-4">
+
+                        <div class="d-flex flex-wrap gap-2">
+
+                            <button type="button"
+                                    class="btn btn-outline-primary"
+                                    id="btnVerSolicitudDesdeAprobacionAdq">
+
+                                <i class="bi bi-eye me-1"></i>
+
+                                Ver solicitud
+
+                            </button>
+
+
+                            <button type="button"
+                                    class="btn btn-outline-secondary"
+                                    id="btnVerChatDesdeAprobacionAdq">
+
+                                <i class="bi bi-chat-dots me-1"></i>
+
+                                Seguimiento / Chat
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- COMENTARIO DE DECISIÓN -->
+                    <div class="mb-2">
+
+                        <label for="comentarioDecisionPresupuestalAdq"
+                               class="form-label fw-semibold">
+
+                            Comentario de decisión
+
+                        </label>
+
+                        <textarea id="comentarioDecisionPresupuestalAdq"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="3000"
+                                  placeholder="Agrega un comentario u observación..."></textarea>
+
+                        <div class="form-text">
+                            Máximo 3000 caracteres.
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cerrar
+
+                    </button>
+
+
+                    <button type="button"
+                            class="btn btn-outline-danger"
+                            id="btnDeclinarAprobacionPresupuestalAdq">
+
+                        <i class="bi bi-x-circle me-1"></i>
+
+                        Declinar
+
+                    </button>
+
+
+                    <button type="button"
+                            class="btn btn-success"
+                            id="btnAprobarAprobacionPresupuestalAdq">
+
+                        <i class="bi bi-check-circle me-1"></i>
+
+                        Aprobar
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 
 @section Scripts

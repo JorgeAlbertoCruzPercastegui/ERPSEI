@@ -64,6 +64,12 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             set;
         }
 
+        public int? NivelPresupuestal
+        {
+            get;
+            set;
+        }
+
         public bool PuedeGestionarProveedores
         {
             get;

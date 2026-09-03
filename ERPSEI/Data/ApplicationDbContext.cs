@@ -366,6 +366,13 @@ namespace ERPSEI.Data
 
         public DbSet<AdqAprobacionPresupuestal> AdqAprobacionesPresupuestales { get; set; }
 
+        public DbSet<AdqAprobacionPresupuestalDetalle>
+        AdqAprobacionesPresupuestalesDetalle
+        {
+            get;
+            set;
+        }
+
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -1956,6 +1963,37 @@ namespace ERPSEI.Data
 
         private static void BuildAdquisiciones(ModelBuilder b)
         {
+
+            b
+            .Entity<AdqAprobacionPresupuestalDetalle>()
+            .HasOne(
+                x =>
+                    x.AprobacionPresupuestal
+            )
+            .WithMany(
+                x =>
+                    x.Detalles
+            )
+            .HasForeignKey(
+                x =>
+                    x.AprobacionPresupuestalId
+            )
+            .OnDelete(
+                DeleteBehavior.Restrict
+            );
+
+            b
+            .Entity<AdqAprobacionPresupuestalDetalle>()
+            .HasIndex(
+                x =>
+                    new
+                    {
+                        x.AprobacionPresupuestalId,
+                        x.Orden
+                    }
+            )
+            .IsUnique();
+
             // =========================================================
             // ESTATUS
             // =========================================================

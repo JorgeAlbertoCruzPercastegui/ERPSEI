@@ -675,6 +675,349 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
         // =========================================================
+        // INPUT - PERMISOS DE ADQUISICIONES
+        // =========================================================
+
+        public class GuardarPermisosAdquisicionesRequest
+        {
+            public List<PermisoAdquisicionesInput> Permisos
+            {
+                get;
+                set;
+            } = new();
+        }
+
+
+        public class PermisoAdquisicionesInput
+        {
+            public string UsuarioId
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public bool PuedeVisualizar
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeCrearSolicitud
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeGestionarSolicitudes
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeAprobar
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeAsignar
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeCotizar
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeGestionarProveedores
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeGenerarSolicitudPago
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeVerReportes
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeAprobarPresupuesto
+            {
+                get;
+                set;
+            }
+
+
+            public int? NivelPresupuestal
+            {
+                get;
+                set;
+            }
+
+
+            public bool PuedeAdministrar
+            {
+                get;
+                set;
+            }
+        }
+
+        public class AprobacionPresupuestalPendienteDto
+        {
+            public int DetalleId
+            {
+                get;
+                set;
+            }
+
+
+            public int SolicitudId
+            {
+                get;
+                set;
+            }
+
+
+            public int AprobacionPresupuestalId
+            {
+                get;
+                set;
+            }
+
+
+            public int Orden
+            {
+                get;
+                set;
+            }
+
+
+            public string NombreEtapa
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Folio
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Titulo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Proveedor
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public decimal Monto
+            {
+                get;
+                set;
+            }
+
+
+            public DateTime FechaSolicitud
+            {
+                get;
+                set;
+            }
+
+
+            public string Solicitante
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string? ComentarioSolicitud
+            {
+                get;
+                set;
+            }
+        }
+
+        public List<AprobacionPresupuestalPendienteDto>
+            AprobacionesPresupuestalesPendientes
+        {
+            get;
+            private set;
+        } = new();
+
+
+        public int TotalAprobacionesPresupuestalesPendientes =>
+            AprobacionesPresupuestalesPendientes.Count;
+
+        // =========================================================
+        // CARGAR APROBACIONES PRESUPUESTALES PENDIENTES
+        // =========================================================
+
+        private async Task
+            CargarAprobacionesPresupuestalesPendientesAsync(
+                AppUser usuarioActual)
+        {
+            AprobacionesPresupuestalesPendientes =
+                await (
+                    from detalle
+                        in _context
+                            .AdqAprobacionesPresupuestalesDetalle
+                            .AsNoTracking()
+
+                    join aprobacion
+                        in _context
+                            .AdqAprobacionesPresupuestales
+                            .AsNoTracking()
+                        on detalle.AprobacionPresupuestalId
+                        equals aprobacion.Id
+
+                    join solicitud
+                        in _context
+                            .AdqSolicitudes
+                            .AsNoTracking()
+                        on aprobacion.SolicitudId
+                        equals solicitud.Id
+
+                    join cotizacion
+                        in _context
+                            .AdqCotizaciones
+                            .AsNoTracking()
+                        on aprobacion.CotizacionId
+                        equals cotizacion.Id
+
+                    join area
+                        in _context
+                            .Areas
+                            .AsNoTracking()
+                        on solicitud.AreaId
+                        equals area.Id
+                        into areaJoin
+
+                    from area
+                        in areaJoin.DefaultIfEmpty()
+
+                    join empleado
+                        in _context
+                            .Empleados
+                            .AsNoTracking()
+                        on solicitud.EmpleadoSolicitanteId
+                        equals empleado.Id
+                        into empleadoJoin
+
+                    from empleado
+                        in empleadoJoin.DefaultIfEmpty()
+
+                    where
+                        detalle.UsuarioAprobadorId ==
+                            usuarioActual.Id
+                        &&
+                        detalle.EsActual
+                        &&
+                        detalle.Estatus ==
+                            "Pendiente"
+                        &&
+                        !detalle.Eliminado
+                        &&
+                        !aprobacion.Eliminado
+                        &&
+                        !solicitud.Eliminado
+                        &&
+                        !cotizacion.Eliminado
+                        &&
+                        solicitud.EstatusId ==
+                            12
+
+                    orderby
+                        aprobacion.FechaSolicitud
+                            ascending
+
+                    select
+                        new AprobacionPresupuestalPendienteDto
+                        {
+                            DetalleId =
+                                detalle.Id,
+
+                            SolicitudId =
+                                solicitud.Id,
+
+                            AprobacionPresupuestalId =
+                                aprobacion.Id,
+
+                            Orden =
+                                detalle.Orden,
+
+                            NombreEtapa =
+                                detalle.NombreEtapa,
+
+                            Folio =
+                                solicitud.Folio,
+
+                            Titulo =
+                                solicitud.Titulo,
+
+                            Proveedor =
+                                cotizacion.NombreProveedor,
+
+                            Monto =
+                                aprobacion.MontoSolicitado,
+
+                            FechaSolicitud =
+                                aprobacion.FechaSolicitud,
+
+                            Solicitante =
+                                empleado != null
+                                    ? empleado.NombreCompleto
+                                    : "No disponible",
+
+                            Area =
+                                area != null
+                                    ? area.Nombre
+                                    : "No disponible",
+
+                            ComentarioSolicitud =
+                                aprobacion.ComentarioSolicitud
+                        }
+                )
+                .ToListAsync();
+        }
+
+        // =========================================================
         // CARGAR COTIZACIONES DE LA SOLICITUD
         // =========================================================
 
@@ -6921,53 +7264,127 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
-
             // =====================================================
-            // RESPONSABLES DE APROBACIÓN PRESUPUESTAL
+            // RESPONSABLES DEL FLUJO PRESUPUESTAL
             // =====================================================
 
-            List<string> usuariosAprobadores =
+            List<AdqPermisoUsuario> responsablesPresupuesto =
                 await _context.AdqPermisosUsuarios
                     .AsNoTracking()
                     .Where(
                         x =>
                             x.PuedeAprobarPresupuesto
-                            ||
-                            x.PuedeAdministrar
+                            &&
+                            x.NivelPresupuestal.HasValue
+                            &&
+                            x.NivelPresupuestal.Value >= 1
+                            &&
+                            x.NivelPresupuestal.Value <= 4
                     )
-                    .Select(
-                        x =>
-                            x.UsuarioId
-                    )
-                    .Where(
-                        x =>
-                            !string.IsNullOrWhiteSpace(
-                                x
-                            )
-                    )
-                    .Distinct()
                     .ToListAsync();
 
 
-            if (
-                usuariosAprobadores.Count ==
-                0
+            // =====================================================
+            // VALIDAR EXACTAMENTE UN RESPONSABLE POR NIVEL
+            // =====================================================
+
+            for (
+                int nivel = 1;
+                nivel <= 4;
+                nivel++
             )
             {
-                return new JsonResult(
-                    new
-                    {
-                        success = false,
-                        message =
-                            "No existen usuarios configurados para aprobar presupuestos."
-                    }
+                int totalNivel =
+                    responsablesPresupuesto.Count(
+                        x =>
+                            x.NivelPresupuestal ==
+                                nivel
+                    );
+
+
+                if (
+                    totalNivel ==
+                    0
                 )
                 {
-                    StatusCode =
-                        StatusCodes.Status409Conflict
-                };
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                $"No existe un responsable configurado para el nivel presupuestal {nivel}."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status409Conflict
+                    };
+                }
+
+
+                if (
+                    totalNivel >
+                    1
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                $"Existe más de un responsable configurado para el nivel presupuestal {nivel}. Debe existir únicamente uno."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status409Conflict
+                    };
+                }
             }
 
+
+            // =====================================================
+            // OBTENER RESPONSABLES
+            // =====================================================
+
+            string usuarioNivel1 =
+                responsablesPresupuesto
+                    .Single(
+                        x =>
+                            x.NivelPresupuestal ==
+                                1
+                    )
+                    .UsuarioId;
+
+
+            string usuarioNivel2 =
+                responsablesPresupuesto
+                    .Single(
+                        x =>
+                            x.NivelPresupuestal ==
+                                2
+                    )
+                    .UsuarioId;
+
+
+            string usuarioNivel3 =
+                responsablesPresupuesto
+                    .Single(
+                        x =>
+                            x.NivelPresupuestal ==
+                                3
+                    )
+                    .UsuarioId;
+
+
+            string usuarioNivel4 =
+                responsablesPresupuesto
+                    .Single(
+                        x =>
+                            x.NivelPresupuestal ==
+                                4
+                    )
+                    .UsuarioId;
 
             DateTime ahora =
                 DateTime.Now;
@@ -7029,13 +7446,181 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     aprobacionPresupuestal
                 );
 
+                // =================================================
+                // GUARDAR CABECERA PARA OBTENER ID
+                // =================================================
+
+                await _context
+                    .SaveChangesAsync();
+
 
                 // =================================================
-                // CAMBIAR ESTATUS: 10 → 11
+                // CREAR CADENA DE APROBACIÓN PRESUPUESTAL
+                // =================================================
+
+                List<AdqAprobacionPresupuestalDetalle>
+                    detallesAprobacion =
+                    new()
+                    {
+        new AdqAprobacionPresupuestalDetalle
+        {
+            AprobacionPresupuestalId =
+                aprobacionPresupuestal.Id,
+
+            Orden =
+                1,
+
+            TipoAprobador =
+                "GERENCIA_ADQUISICIONES",
+
+            NombreEtapa =
+                "Gerente del área de Adquisiciones",
+
+            UsuarioAprobadorId =
+                usuarioNivel1,
+
+            Estatus =
+                "Pendiente",
+
+            EsActual =
+                true,
+
+            Comentario =
+                null,
+
+            FechaDecision =
+                null,
+
+            FechaCreacion =
+                ahora,
+
+            Eliminado =
+                false
+        },
+
+        new AdqAprobacionPresupuestalDetalle
+        {
+            AprobacionPresupuestalId =
+                aprobacionPresupuestal.Id,
+
+            Orden =
+                2,
+
+            TipoAprobador =
+                "PLANEACION_FINANCIERA",
+
+            NombreEtapa =
+                "Planeación financiera",
+
+            UsuarioAprobadorId =
+                usuarioNivel2,
+
+            Estatus =
+                "EnEspera",
+
+            EsActual =
+                false,
+
+            Comentario =
+                null,
+
+            FechaDecision =
+                null,
+
+            FechaCreacion =
+                ahora,
+
+            Eliminado =
+                false
+        },
+
+        new AdqAprobacionPresupuestalDetalle
+        {
+            AprobacionPresupuestalId =
+                aprobacionPresupuestal.Id,
+
+            Orden =
+                3,
+
+            TipoAprobador =
+                "DIRECCION_OPERACIONES",
+
+            NombreEtapa =
+                "Dirección de Operaciones Internas",
+
+            UsuarioAprobadorId =
+                usuarioNivel3,
+
+            Estatus =
+                "EnEspera",
+
+            EsActual =
+                false,
+
+            Comentario =
+                null,
+
+            FechaDecision =
+                null,
+
+            FechaCreacion =
+                ahora,
+
+            Eliminado =
+                false
+        },
+
+        new AdqAprobacionPresupuestalDetalle
+        {
+            AprobacionPresupuestalId =
+                aprobacionPresupuestal.Id,
+
+            Orden =
+                4,
+
+            TipoAprobador =
+                "DIRECCION_GENERAL",
+
+            NombreEtapa =
+                "Dirección General / Socios",
+
+            UsuarioAprobadorId =
+                usuarioNivel4,
+
+            Estatus =
+                "EnEspera",
+
+            EsActual =
+                false,
+
+            Comentario =
+                null,
+
+            FechaDecision =
+                null,
+
+            FechaCreacion =
+                ahora,
+
+            Eliminado =
+                false
+        }
+                    };
+
+
+                _context
+                    .AdqAprobacionesPresupuestalesDetalle
+                    .AddRange(
+                        detallesAprobacion
+                    );
+
+
+                // =================================================
+                // CAMBIAR ESTATUS: 10 → 12
                 // =================================================
 
                 solicitud.EstatusId =
-                    11;
+                    12;
 
                 solicitud.FechaModificacion =
                     ahora;
@@ -7055,20 +7640,20 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             usuarioActual.Id,
 
                         TipoEvento =
-                            "PRESUPUESTO_SOLICITADO",
+                            "FLUJO_PRESUPUESTAL_INICIADO",
 
                         Descripcion =
                             string.IsNullOrWhiteSpace(
                                 comentario
                             )
-                                ? $"El agente solicitó aprobación presupuestal para la cotización de {cotizacion.NombreProveedor} por un monto de {cotizacion.Total:C2}."
-                                : $"El agente solicitó aprobación presupuestal para la cotización de {cotizacion.NombreProveedor} por un monto de {cotizacion.Total:C2}. Comentario: {comentario}",
+                                ? $"Se inició el flujo de aprobación presupuestal para la cotización de {cotizacion.NombreProveedor} por un monto de {cotizacion.Total:C2}."
+                                : $"Se inició el flujo de aprobación presupuestal para la cotización de {cotizacion.NombreProveedor} por un monto de {cotizacion.Total:C2}. Comentario: {comentario}",
 
                         EstatusAnteriorId =
                             estatusAnterior,
 
                         EstatusNuevoId =
-                            11,
+                            12,
 
                         FechaEvento =
                             ahora,
@@ -7082,22 +7667,24 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 await _context
                     .SaveChangesAsync();
 
+                // =====================================================
+                // NOTIFICAR SOLO AL APROBADOR ACTUAL - NIVEL 1
+                // =====================================================
+
+                await CrearNotificacionAdquisicionesAsync(
+                    new List<string>
+                    {
+                    usuarioNivel1
+                    },
+                    "Aprobación presupuestal pendiente",
+                    $"La solicitud {solicitud.Folio} - {solicitud.Titulo} requiere tu aprobación presupuestal por {cotizacion.Total:C2}. Proveedor seleccionado: {cotizacion.NombreProveedor}.",
+                    $"/ERP/Adquisiciones?openId={solicitud.Id}",
+                    usuarioActual.Id
+                );
 
                 // =================================================
                 // NOTIFICAR A RESPONSABLES DE PRESUPUESTO
                 // =================================================
-
-                await CrearNotificacionAdquisicionesAsync(
-                    usuariosAprobadores,
-
-                    "Aprobación presupuestal pendiente",
-
-                    $"La solicitud {solicitud.Folio} - {solicitud.Titulo} requiere aprobación presupuestal por {cotizacion.Total:C2}. Proveedor seleccionado: {cotizacion.NombreProveedor}.",
-
-                    $"/ERP/Adquisiciones?openId={solicitud.Id}",
-
-                    usuarioActual.Id
-                );
 
 
                 await transaccion
@@ -7110,7 +7697,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         success = true,
 
                         message =
-                            "La solicitud fue enviada correctamente a aprobación presupuestal.",
+                        "El flujo de aprobación presupuestal se inició correctamente.",
 
                         solicitudId =
                             solicitud.Id,
@@ -7119,7 +7706,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             aprobacionPresupuestal.Id,
 
                         estatusId =
-                            11,
+                            12,
 
                         proveedor =
                             cotizacion.NombreProveedor,
@@ -7154,6 +7741,598 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         success = false,
                         message =
                             "No fue posible solicitar la aprobación presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        // =========================================================
+        // DECISIÓN DE APROBACIÓN PRESUPUESTAL
+        // POST ?handler=DecisionPresupuestal
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostDecisionPresupuestalAsync(
+                int detalleId,
+                string decision,
+                string? comentario)
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            decision =
+                decision?
+                    .Trim()
+                    .ToUpperInvariant()
+                ??
+                string.Empty;
+
+
+            comentario =
+                comentario?
+                    .Trim();
+
+
+            if (
+                detalleId <= 0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La aprobación seleccionada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                decision != "APROBAR"
+                &&
+                decision != "DECLINAR"
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La decisión enviada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                comentario?.Length >
+                3000
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El comentario no puede superar los 3000 caracteres."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            AdqAprobacionPresupuestalDetalle? detalleActual =
+                await _context
+                    .AdqAprobacionesPresupuestalesDetalle
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                detalleId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                detalleActual == null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la aprobación presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR QUE SEA LA ETAPA ACTUAL
+            // =====================================================
+
+            if (
+                !detalleActual.EsActual
+                ||
+                detalleActual.Estatus !=
+                    "Pendiente"
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Esta etapa ya no se encuentra pendiente de aprobación."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR QUE EL USUARIO SEA EL APROBADOR ASIGNADO
+            // =====================================================
+
+            if (
+                detalleActual.UsuarioAprobadorId !=
+                usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes autorización para responder esta aprobación presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            AdqAprobacionPresupuestal? aprobacion =
+                await _context
+                    .AdqAprobacionesPresupuestales
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                detalleActual.AprobacionPresupuestalId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                aprobacion == null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró el flujo presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context
+                    .AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                aprobacion.SolicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud == null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la solicitud relacionada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =================================================
+                // DECLINAR
+                // =================================================
+
+                if (
+                    decision ==
+                    "DECLINAR"
+                )
+                {
+                    detalleActual.Estatus =
+                        "Declinada";
+
+                    detalleActual.EsActual =
+                        false;
+
+                    detalleActual.Comentario =
+                        comentario;
+
+                    detalleActual.FechaDecision =
+                        ahora;
+
+
+                    aprobacion.Estatus =
+                        "Declinada";
+
+                    aprobacion.UsuarioAprobadorId =
+                        usuarioActual.Id;
+
+                    aprobacion.FechaRespuesta =
+                        ahora;
+
+                    aprobacion.ComentarioRespuesta =
+                        comentario;
+
+
+                    // La solicitud deja el flujo aprobado.
+                    // Conservamos el estatus 12 por ahora hasta definir
+                    // si negocio quiere regresar a cotización o cancelar.
+                    solicitud.FechaModificacion =
+                        ahora;
+
+
+                    _context.AdqHistorial.Add(
+                        new AdqHistorial
+                        {
+                            SolicitudId =
+                                solicitud.Id,
+
+                            TipoEvento =
+                                "PRESUPUESTO_DECLINADO",
+
+                            Descripcion =
+                                string.IsNullOrWhiteSpace(
+                                    comentario
+                                )
+                                    ? $"La etapa {detalleActual.NombreEtapa} declinó la aprobación presupuestal."
+                                    : $"La etapa {detalleActual.NombreEtapa} declinó la aprobación presupuestal. Comentario: {comentario}",
+
+                            UsuarioId =
+                                usuarioActual.Id,
+
+                            EstatusAnteriorId =
+                                solicitud.EstatusId,
+
+                            EstatusNuevoId =
+                                solicitud.EstatusId,
+
+                            FechaEvento =
+                                ahora
+                        }
+                    );
+
+
+                    await _context
+                        .SaveChangesAsync();
+
+
+                    await transaccion
+                        .CommitAsync();
+
+
+                    return new JsonResult(
+                        new
+                        {
+                            success = true,
+                            finalizada = true,
+                            aprobada = false,
+                            message =
+                                "La aprobación presupuestal fue declinada."
+                        }
+                    );
+                }
+
+
+                // =================================================
+                // APROBAR ETAPA ACTUAL
+                // =================================================
+
+                detalleActual.Estatus =
+                    "Aprobada";
+
+                detalleActual.EsActual =
+                    false;
+
+                detalleActual.Comentario =
+                    comentario;
+
+                detalleActual.FechaDecision =
+                    ahora;
+
+
+                AdqAprobacionPresupuestalDetalle? siguienteEtapa =
+                    await _context
+                        .AdqAprobacionesPresupuestalesDetalle
+                        .Where(
+                            x =>
+                                x.AprobacionPresupuestalId ==
+                                    aprobacion.Id
+                                &&
+                                !x.Eliminado
+                                &&
+                                x.Orden >
+                                    detalleActual.Orden
+                        )
+                        .OrderBy(
+                            x =>
+                                x.Orden
+                        )
+                        .FirstOrDefaultAsync();
+
+
+                // =================================================
+                // TODAVÍA EXISTE OTRA ETAPA
+                // =================================================
+
+                if (
+                    siguienteEtapa != null
+                )
+                {
+                    siguienteEtapa.Estatus =
+                        "Pendiente";
+
+                    siguienteEtapa.EsActual =
+                        true;
+
+
+                    aprobacion.Estatus =
+                        "EnRevision";
+
+                    aprobacion.UsuarioAprobadorId =
+                        siguienteEtapa.UsuarioAprobadorId;
+
+                    aprobacion.FechaRespuesta =
+                        null;
+
+                    aprobacion.ComentarioRespuesta =
+                        null;
+
+
+                    _context.AdqHistorial.Add(
+                        new AdqHistorial
+                        {
+                            SolicitudId =
+                                solicitud.Id,
+
+                            TipoEvento =
+                                "ETAPA_PRESUPUESTAL_APROBADA",
+
+                            Descripcion =
+                                $"La etapa {detalleActual.NombreEtapa} aprobó el presupuesto. El flujo continúa con {siguienteEtapa.NombreEtapa}.",
+
+                            UsuarioId =
+                                usuarioActual.Id,
+
+                            EstatusAnteriorId =
+                                solicitud.EstatusId,
+
+                            EstatusNuevoId =
+                                solicitud.EstatusId,
+
+                            FechaEvento =
+                                ahora
+                        }
+                    );
+
+
+                    await _context
+                        .SaveChangesAsync();
+
+
+                    if (
+                        !string.IsNullOrWhiteSpace(
+                            siguienteEtapa.UsuarioAprobadorId
+                        )
+                    )
+                    {
+                        await CrearNotificacionAdquisicionesAsync(
+                            new List<string>
+                            {
+                        siguienteEtapa.UsuarioAprobadorId
+                            },
+                            "Aprobación presupuestal pendiente",
+                            $"La solicitud {solicitud.Folio} - {solicitud.Titulo} requiere tu aprobación presupuestal en la etapa {siguienteEtapa.NombreEtapa}.",
+                            $"/ERP/Adquisiciones?openId={solicitud.Id}",
+                            usuarioActual.Id
+                        );
+                    }
+
+
+                    await transaccion
+                        .CommitAsync();
+
+
+                    return new JsonResult(
+                        new
+                        {
+                            success = true,
+                            finalizada = false,
+                            aprobada = true,
+                            siguienteEtapa =
+                                siguienteEtapa.NombreEtapa,
+
+                            message =
+                                $"Etapa aprobada. El flujo continúa con {siguienteEtapa.NombreEtapa}."
+                        }
+                    );
+                }
+
+
+                // =================================================
+                // ÚLTIMA ETAPA APROBADA
+                // =================================================
+
+                aprobacion.Estatus =
+                    "Aprobada";
+
+                aprobacion.UsuarioAprobadorId =
+                    usuarioActual.Id;
+
+                aprobacion.FechaRespuesta =
+                    ahora;
+
+                aprobacion.ComentarioRespuesta =
+                    comentario;
+
+
+                int estatusAnterior =
+                    solicitud.EstatusId;
+
+
+                solicitud.EstatusId =
+                    13;
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        TipoEvento =
+                            "PRESUPUESTO_APROBADO",
+
+                        Descripcion =
+                            "El flujo de aprobación presupuestal fue aprobado en todas sus etapas.",
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            13,
+
+                        FechaEvento =
+                            ahora
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+                        finalizada = true,
+                        aprobada = true,
+                        estatusId = 13,
+
+                        message =
+                            "El presupuesto fue aprobado correctamente en todas sus etapas."
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al procesar la aprobación presupuestal {DetalleId}.",
+                    detalleId
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Ocurrió un error al procesar la aprobación presupuestal."
                     }
                 )
                 {
@@ -7408,7 +8587,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                         "GerenteArea"
                                     &&
                                     x.Estatus ==
-                                        "Pendiente"
+                                        "EnRevision"
                             )
                             .ToListAsync();
 
@@ -9943,7 +11122,646 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 .SaveChangesAsync();
         }
 
+        // =========================================================
+        // CONSULTAR PERMISOS DE ADQUISICIONES
+        // GET ?handler=PermisosUsuariosAdquisiciones
+        // =========================================================
 
+        public async Task<IActionResult>
+            OnGetPermisosUsuariosAdquisicionesAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            // =====================================================
+            // SOLO ADMINISTRADORES DE ADQUISICIONES
+            // =====================================================
+
+            bool puedeAdministrar =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.PuedeAdministrar
+                    );
+
+
+            if (!puedeAdministrar)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para administrar los permisos de Adquisiciones."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // USUARIOS ACTIVOS
+            // =====================================================
+
+            List<AppUser> usuarios =
+                await _userManager.Users
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            !x.IsBanned
+                    )
+                    .OrderBy(
+                        x =>
+                            x.UserName
+                    )
+                    .ThenBy(
+                        x =>
+                            x.Email
+                    )
+                    .ToListAsync();
+
+
+            // =====================================================
+            // PERMISOS ACTUALES
+            // =====================================================
+
+            Dictionary<string, AdqPermisoUsuario>
+                permisosPorUsuario =
+                    await _context.AdqPermisosUsuarios
+                        .AsNoTracking()
+                        .ToDictionaryAsync(
+                            x =>
+                                x.UsuarioId
+                        );
+
+
+            List<object> resultado =
+                new();
+
+
+            foreach (
+                AppUser usuario
+                in usuarios
+            )
+            {
+                permisosPorUsuario.TryGetValue(
+                    usuario.Id,
+                    out AdqPermisoUsuario? permiso
+                );
+
+
+                string nombre =
+                    !string.IsNullOrWhiteSpace(
+                        usuario.UserName
+                    )
+                        ? usuario.UserName
+                        : usuario.Email
+                            ??
+                            "Usuario";
+
+
+                resultado.Add(
+                    new
+                    {
+                        id = usuario.Id,
+
+                        nombre,
+
+                        correo =
+                            usuario.Email
+                            ??
+                            usuario.UserName
+                            ??
+                            string.Empty,
+
+                        puedeVisualizar =
+                            permiso?.PuedeVisualizar
+                            ??
+                            false,
+
+                        puedeCrearSolicitud =
+                            permiso?.PuedeCrearSolicitud
+                            ??
+                            false,
+
+                        puedeGestionarSolicitudes =
+                            permiso?.PuedeGestionarSolicitudes
+                            ??
+                            false,
+
+                        puedeAprobar =
+                            permiso?.PuedeAprobar
+                            ??
+                            false,
+
+                        puedeAsignar =
+                            permiso?.PuedeAsignar
+                            ??
+                            false,
+
+                        puedeCotizar =
+                            permiso?.PuedeCotizar
+                            ??
+                            false,
+
+                        puedeGestionarProveedores =
+                            permiso?.PuedeGestionarProveedores
+                            ??
+                            false,
+
+                        puedeGenerarSolicitudPago =
+                            permiso?.PuedeGenerarSolicitudPago
+                            ??
+                            false,
+
+                        puedeVerReportes =
+                            permiso?.PuedeVerReportes
+                            ??
+                            false,
+
+                        puedeAprobarPresupuesto =
+                            permiso?.PuedeAprobarPresupuesto
+                            ??
+                            false,
+
+                        nivelPresupuestal =
+                            permiso?.NivelPresupuestal,
+
+                        puedeAdministrar =
+                            permiso?.PuedeAdministrar
+                            ??
+                            false
+                    }
+                );
+            }
+
+
+            return new JsonResult(
+                new
+                {
+                    success =
+                        true,
+
+                    data =
+                        resultado
+                }
+            );
+        }
+
+        // =========================================================
+        // GUARDAR PERMISOS DE ADQUISICIONES
+        // POST ?handler=GuardarPermisosUsuariosAdquisiciones
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostGuardarPermisosUsuariosAdquisicionesAsync(
+                [FromBody]
+        GuardarPermisosAdquisicionesRequest request)
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (usuarioActual == null)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR PERMISO DE ADMINISTRACIÓN
+            // =====================================================
+
+            bool puedeAdministrar =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.PuedeAdministrar
+                    );
+
+
+            if (!puedeAdministrar)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para administrar los permisos de Adquisiciones."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR REQUEST
+            // =====================================================
+
+            if (
+                request == null
+                ||
+                request.Permisos == null
+                ||
+                request.Permisos.Count == 0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se recibieron permisos para guardar."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR USUARIOS REPETIDOS
+            // =====================================================
+
+            bool existenUsuariosDuplicados =
+                request.Permisos
+                    .Where(
+                        x =>
+                            !string.IsNullOrWhiteSpace(
+                                x.UsuarioId
+                            )
+                    )
+                    .GroupBy(
+                        x =>
+                            x.UsuarioId
+                    )
+                    .Any(
+                        x =>
+                            x.Count() >
+                            1
+                    );
+
+
+            if (existenUsuariosDuplicados)
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Se detectaron usuarios duplicados en la configuración de permisos."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR NIVELES PRESUPUESTALES
+            // =====================================================
+
+            foreach (
+                PermisoAdquisicionesInput item
+                in request.Permisos
+            )
+            {
+                if (
+                    string.IsNullOrWhiteSpace(
+                        item.UsuarioId
+                    )
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                "Se recibió un usuario inválido."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status400BadRequest
+                    };
+                }
+
+
+                if (
+                    item.PuedeAprobarPresupuesto
+                    &&
+                    (
+                        !item.NivelPresupuestal.HasValue
+                        ||
+                        item.NivelPresupuestal.Value <
+                            1
+                        ||
+                        item.NivelPresupuestal.Value >
+                            4
+                    )
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                "Los usuarios que aprueban presupuesto deben tener un nivel presupuestal entre 1 y 4."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status400BadRequest
+                    };
+                }
+            }
+
+
+            // =====================================================
+            // VALIDAR QUE LOS USUARIOS EXISTAN
+            // =====================================================
+
+            List<string> idsUsuarios =
+                request.Permisos
+                    .Select(
+                        x =>
+                            x.UsuarioId.Trim()
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            List<string> usuariosExistentes =
+                await _userManager.Users
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            idsUsuarios.Contains(
+                                x.Id
+                            )
+                            &&
+                            !x.IsBanned
+                    )
+                    .Select(
+                        x =>
+                            x.Id
+                    )
+                    .ToListAsync();
+
+
+            if (
+                usuariosExistentes.Count !=
+                idsUsuarios.Count
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Uno o más usuarios no existen o se encuentran deshabilitados."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =================================================
+                // PERMISOS EXISTENTES
+                // =================================================
+
+                Dictionary<string, AdqPermisoUsuario>
+                    permisosExistentes =
+                        await _context.AdqPermisosUsuarios
+                            .Where(
+                                x =>
+                                    idsUsuarios.Contains(
+                                        x.UsuarioId
+                                    )
+                            )
+                            .ToDictionaryAsync(
+                                x =>
+                                    x.UsuarioId
+                            );
+
+
+                int totalGuardados =
+                    0;
+
+
+                foreach (
+                    PermisoAdquisicionesInput item
+                    in request.Permisos
+                )
+                {
+                    string usuarioId =
+                        item.UsuarioId.Trim();
+
+
+                    if (
+                        !permisosExistentes.TryGetValue(
+                            usuarioId,
+                            out AdqPermisoUsuario? permiso
+                        )
+                    )
+                    {
+                        permiso =
+                            new AdqPermisoUsuario
+                            {
+                                UsuarioId =
+                                    usuarioId,
+
+                                FechaCreacion =
+                                    ahora
+                            };
+
+
+                        _context.AdqPermisosUsuarios.Add(
+                            permiso
+                        );
+
+
+                        permisosExistentes[
+                            usuarioId
+                        ] =
+                            permiso;
+                    }
+
+
+                    // =============================================
+                    // PERMISOS GENERALES
+                    // =============================================
+
+                    permiso.PuedeVisualizar =
+                        item.PuedeVisualizar;
+
+                    permiso.PuedeCrearSolicitud =
+                        item.PuedeCrearSolicitud;
+
+                    permiso.PuedeGestionarSolicitudes =
+                        item.PuedeGestionarSolicitudes;
+
+                    permiso.PuedeAprobar =
+                        item.PuedeAprobar;
+
+                    permiso.PuedeAsignar =
+                        item.PuedeAsignar;
+
+                    permiso.PuedeCotizar =
+                        item.PuedeCotizar;
+
+                    permiso.PuedeGestionarProveedores =
+                        item.PuedeGestionarProveedores;
+
+                    permiso.PuedeGenerarSolicitudPago =
+                        item.PuedeGenerarSolicitudPago;
+
+                    permiso.PuedeVerReportes =
+                        item.PuedeVerReportes;
+
+                    permiso.PuedeAdministrar =
+                        item.PuedeAdministrar;
+
+
+                    // =============================================
+                    // APROBACIÓN PRESUPUESTAL
+                    // =============================================
+
+                    permiso.PuedeAprobarPresupuesto =
+                        item.PuedeAprobarPresupuesto;
+
+
+                    permiso.NivelPresupuestal =
+                        item.PuedeAprobarPresupuesto
+                            ? item.NivelPresupuestal
+                            : null;
+
+
+                    // =============================================
+                    // AUDITORÍA DE MODIFICACIÓN
+                    // =============================================
+
+                    permiso.FechaModificacion =
+                        ahora;
+
+                    permiso.UsuarioModificacionId =
+                        usuarioActual.Id;
+
+
+                    totalGuardados++;
+                }
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success =
+                            true,
+
+                        message =
+                            totalGuardados == 1
+                                ? "Los permisos del usuario se guardaron correctamente."
+                                : $"Se guardaron correctamente los permisos de {totalGuardados} usuarios.",
+
+                        totalGuardados
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al guardar permisos de Adquisiciones."
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Ocurrió un error al guardar los permisos de Adquisiciones."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
 
         private async Task CargarPermisosAdquisicionesAsync(
             AppUser usuarioActual)
@@ -10256,16 +12074,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             );
 
 
-            /*
-             * Historial del gerente:
-             * aprobadas, rechazadas y canceladas.
-             */
             await CargarHistorialAprobacionesAsync(
                 usuarioActual
             );
 
 
             await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+
+            // =========================================================
+            // APROBACIONES PRESUPUESTALES PENDIENTES
+            // =========================================================
+
+            await CargarAprobacionesPresupuestalesPendientesAsync(
                 usuarioActual
             );
 

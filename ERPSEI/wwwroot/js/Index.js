@@ -452,6 +452,1970 @@ document.addEventListener(
         let solicitudPresupuestoActualAdq = null;
 
         // =========================================================
+        // APROBACIÓN PRESUPUESTAL
+        // =========================================================
+
+        const modalAprobacionPresupuestalElementAdq =
+            document.getElementById(
+                "modalAprobacionPresupuestalAdq"
+            );
+
+
+        const detalleAprobacionPresupuestalIdAdq =
+            document.getElementById(
+                "detalleAprobacionPresupuestalIdAdq"
+            );
+
+
+        const solicitudAprobacionPresupuestalIdAdq =
+            document.getElementById(
+                "solicitudAprobacionPresupuestalIdAdq"
+            );
+
+
+        const folioAprobacionPresupuestalAdq =
+            document.getElementById(
+                "folioAprobacionPresupuestalAdq"
+            );
+
+
+        const tituloAprobacionPresupuestalAdq =
+            document.getElementById(
+                "tituloAprobacionPresupuestalAdq"
+            );
+
+
+        const etapaAprobacionPresupuestalAdq =
+            document.getElementById(
+                "etapaAprobacionPresupuestalAdq"
+            );
+
+
+        const montoAprobacionPresupuestalAdq =
+            document.getElementById(
+                "montoAprobacionPresupuestalAdq"
+            );
+
+
+        const solicitanteAprobacionPresupuestalAdq =
+            document.getElementById(
+                "solicitanteAprobacionPresupuestalAdq"
+            );
+
+
+        const areaAprobacionPresupuestalAdq =
+            document.getElementById(
+                "areaAprobacionPresupuestalAdq"
+            );
+
+
+        const proveedorAprobacionPresupuestalAdq =
+            document.getElementById(
+                "proveedorAprobacionPresupuestalAdq"
+            );
+
+
+        const comentarioSolicitudPresupuestalAdq =
+            document.getElementById(
+                "comentarioSolicitudPresupuestalAdq"
+            );
+
+
+        const comentarioDecisionPresupuestalAdq =
+            document.getElementById(
+                "comentarioDecisionPresupuestalAdq"
+            );
+
+
+        const btnVerSolicitudDesdeAprobacionAdq =
+            document.getElementById(
+                "btnVerSolicitudDesdeAprobacionAdq"
+            );
+
+
+        const btnVerChatDesdeAprobacionAdq =
+            document.getElementById(
+                "btnVerChatDesdeAprobacionAdq"
+            );
+
+
+        const btnAprobarAprobacionPresupuestalAdq =
+            document.getElementById(
+                "btnAprobarAprobacionPresupuestalAdq"
+            );
+
+
+        const btnDeclinarAprobacionPresupuestalAdq =
+            document.getElementById(
+                "btnDeclinarAprobacionPresupuestalAdq"
+            );
+
+
+        let modalAprobacionPresupuestalAdq =
+            null;
+
+        function abrirModalAprobacionPresupuestalAdq(
+            boton
+        ) {
+
+            if (
+                !modalAprobacionPresupuestalElementAdq
+            ) {
+                return;
+            }
+
+
+            const solicitudId =
+                Number(
+                    boton.dataset.solicitudId
+                    ??
+                    0
+                );
+
+
+            const detalleId =
+                Number(
+                    boton.dataset.detalleId
+                    ??
+                    0
+                );
+
+
+            if (
+                solicitudId <= 0
+                ||
+                detalleId <= 0
+            ) {
+                return;
+            }
+
+
+            if (
+                detalleAprobacionPresupuestalIdAdq
+            ) {
+                detalleAprobacionPresupuestalIdAdq.value =
+                    String(
+                        detalleId
+                    );
+            }
+
+
+            if (
+                solicitudAprobacionPresupuestalIdAdq
+            ) {
+                solicitudAprobacionPresupuestalIdAdq.value =
+                    String(
+                        solicitudId
+                    );
+            }
+
+
+            if (
+                folioAprobacionPresupuestalAdq
+            ) {
+                folioAprobacionPresupuestalAdq.textContent =
+                    boton.dataset.folio
+                    ??
+                    "-";
+            }
+
+
+            if (
+                tituloAprobacionPresupuestalAdq
+            ) {
+                tituloAprobacionPresupuestalAdq.textContent =
+                    boton.dataset.titulo
+                    ??
+                    "-";
+            }
+
+
+            if (
+                etapaAprobacionPresupuestalAdq
+            ) {
+
+                const orden =
+                    boton.dataset.orden
+                    ??
+                    "";
+
+
+                const etapa =
+                    boton.dataset.etapa
+                    ??
+                    "-";
+
+
+                etapaAprobacionPresupuestalAdq.textContent =
+                    orden
+                        ? `Nivel ${orden} · ${etapa}`
+                        : etapa;
+            }
+
+
+            if (
+                montoAprobacionPresupuestalAdq
+            ) {
+
+                montoAprobacionPresupuestalAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            boton.dataset.monto
+                            ??
+                            0
+                        )
+                    );
+            }
+
+
+            if (
+                solicitanteAprobacionPresupuestalAdq
+            ) {
+                solicitanteAprobacionPresupuestalAdq.textContent =
+                    boton.dataset.solicitante
+                    ??
+                    "-";
+            }
+
+
+            if (
+                areaAprobacionPresupuestalAdq
+            ) {
+                areaAprobacionPresupuestalAdq.textContent =
+                    boton.dataset.area
+                    ??
+                    "-";
+            }
+
+
+            if (
+                proveedorAprobacionPresupuestalAdq
+            ) {
+                proveedorAprobacionPresupuestalAdq.textContent =
+                    boton.dataset.proveedor
+                    ??
+                    "-";
+            }
+
+
+            if (
+                comentarioSolicitudPresupuestalAdq
+            ) {
+
+                comentarioSolicitudPresupuestalAdq.textContent =
+                    boton.dataset.comentario
+                    ??
+                    "Sin comentarios.";
+            }
+
+
+            if (
+                comentarioDecisionPresupuestalAdq
+            ) {
+                comentarioDecisionPresupuestalAdq.value =
+                    "";
+            }
+
+
+            modalAprobacionPresupuestalAdq =
+                bootstrap.Modal.getOrCreateInstance(
+                    modalAprobacionPresupuestalElementAdq
+                );
+
+
+            modalAprobacionPresupuestalAdq.show();
+        }
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnVerAprobacionPresupuestalAdq, " +
+                        ".btnAprobarPresupuestoAdq, " +
+                        ".btnDeclinarPresupuestoAdq"
+                    );
+
+
+                if (!boton) {
+                    return;
+                }
+
+
+                abrirModalAprobacionPresupuestalAdq(
+                    boton
+                );
+            }
+        );
+
+        btnVerSolicitudDesdeAprobacionAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    const solicitudId =
+                        Number(
+                            solicitudAprobacionPresupuestalIdAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <= 0
+                    ) {
+                        return;
+                    }
+
+
+                    const botonVer =
+                        document.querySelector(
+                            `.btnVerSolicitudAdq[data-id="${solicitudId}"]`
+                        );
+
+
+                    botonVer?.click();
+                }
+            );
+
+
+        btnVerChatDesdeAprobacionAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    const solicitudId =
+                        Number(
+                            solicitudAprobacionPresupuestalIdAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <= 0
+                    ) {
+                        return;
+                    }
+
+
+                    const botonVer =
+                        document.querySelector(
+                            `.btnVerSolicitudAdq[data-id="${solicitudId}"]`
+                        );
+
+
+                    if (
+                        !botonVer
+                    ) {
+                        return;
+                    }
+
+
+                    botonVer.click();
+
+
+                    setTimeout(
+                        function () {
+
+                            const tabSeguimiento =
+                                document.querySelector(
+                                    "#tabSeguimientoAdq"
+                                );
+
+
+                            tabSeguimiento?.click();
+
+                        },
+                        350
+                    );
+                }
+        );
+
+        // =========================================================
+        // ENVIAR DECISIÓN PRESUPUESTAL
+        // =========================================================
+
+        async function enviarDecisionPresupuestalAdq(
+            decision
+        ) {
+
+            const detalleId =
+                Number(
+                    detalleAprobacionPresupuestalIdAdq
+                        ?.value
+                    ??
+                    0
+                );
+
+
+            if (
+                detalleId <= 0
+            ) {
+
+                mostrarAdvertenciaAdq(
+                    "Aprobación no válida",
+                    "No fue posible identificar la aprobación presupuestal."
+                );
+
+
+                return;
+            }
+
+
+            const comentario =
+                comentarioDecisionPresupuestalAdq
+                    ?.value
+                    ?.trim()
+                ??
+                "";
+
+
+            if (
+                comentario.length >
+                3000
+            ) {
+
+                mostrarAdvertenciaAdq(
+                    "Comentario demasiado largo",
+                    "El comentario no puede superar los 3000 caracteres."
+                );
+
+
+                comentarioDecisionPresupuestalAdq
+                    ?.focus();
+
+
+                return;
+            }
+
+
+            const esAprobacion =
+                decision ===
+                "APROBAR";
+
+
+            const confirmado =
+                await confirmarAccionAdq(
+                    {
+                        titulo:
+                            esAprobacion
+                                ? "Aprobar presupuesto"
+                                : "Declinar presupuesto",
+
+                        mensaje:
+                            esAprobacion
+                                ? `
+                            <p class="mb-0">
+                                ¿Confirmas la aprobación de esta etapa presupuestal?
+                            </p>
+                          `
+                                : `
+                            <p class="mb-0">
+                                ¿Confirmas que deseas declinar esta etapa presupuestal?
+                            </p>
+                          `,
+
+                        textoConfirmar:
+                            esAprobacion
+                                ? "Aprobar"
+                                : "Declinar",
+
+                        textoCancelar:
+                            "Cancelar",
+
+                        tipo:
+                            esAprobacion
+                                ? "success"
+                                : "danger",
+
+                        icono:
+                            esAprobacion
+                                ? "bi-check-circle"
+                                : "bi-x-circle"
+                    }
+                );
+
+
+            if (
+                !confirmado
+            ) {
+                return;
+            }
+
+
+            const boton =
+                esAprobacion
+                    ? btnAprobarAprobacionPresupuestalAdq
+                    : btnDeclinarAprobacionPresupuestalAdq;
+
+
+            const htmlOriginal =
+                boton?.innerHTML;
+
+
+            if (
+                boton
+            ) {
+
+                boton.disabled =
+                    true;
+
+
+                boton.innerHTML =
+                    `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Procesando...
+            `;
+            }
+
+
+            if (
+                btnAprobarAprobacionPresupuestalAdq
+            ) {
+                btnAprobarAprobacionPresupuestalAdq.disabled =
+                    true;
+            }
+
+
+            if (
+                btnDeclinarAprobacionPresupuestalAdq
+            ) {
+                btnDeclinarAprobacionPresupuestalAdq.disabled =
+                    true;
+            }
+
+
+            try {
+
+                const token =
+                    document.querySelector(
+                        'input[name="__RequestVerificationToken"]'
+                    )
+                        ?.value
+                    ??
+                    "";
+
+
+                const formData =
+                    new FormData();
+
+
+                formData.append(
+                    "__RequestVerificationToken",
+                    token
+                );
+
+
+                formData.append(
+                    "detalleId",
+                    String(
+                        detalleId
+                    )
+                );
+
+
+                formData.append(
+                    "decision",
+                    decision
+                );
+
+
+                formData.append(
+                    "comentario",
+                    comentario
+                );
+
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=DecisionPresupuestal`,
+                        {
+                            method:
+                                "POST",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            },
+
+                            body:
+                                formData
+                        }
+                    );
+
+
+                let resultado =
+                    null;
+
+
+                try {
+
+                    resultado =
+                        await respuesta.json();
+
+                }
+                catch {
+
+                    resultado =
+                    {
+                        success:
+                            false,
+
+                        message:
+                            "El servidor devolvió una respuesta no válida."
+                    };
+                }
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible procesar la aprobación presupuestal."
+                    );
+                }
+
+
+                modalAprobacionPresupuestalAdq
+                    ?.hide();
+
+
+                mostrarAdvertenciaAdq(
+                    esAprobacion
+                        ? "Aprobación registrada"
+                        : "Aprobación declinada",
+
+                    resultado.message
+                    ??
+                    (
+                        esAprobacion
+                            ? "La etapa presupuestal fue aprobada correctamente."
+                            : "La etapa presupuestal fue declinada."
+                    )
+                );
+
+
+                setTimeout(
+                    function () {
+
+                        window.location.reload();
+
+                    },
+                    900
+                );
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                mostrarAdvertenciaAdq(
+                    "No fue posible procesar la aprobación",
+                    error.message
+                    ??
+                    "Ocurrió un error al procesar la decisión."
+                );
+            }
+            finally {
+
+                if (
+                    boton
+                    &&
+                    htmlOriginal
+                ) {
+
+                    boton.innerHTML =
+                        htmlOriginal;
+                }
+
+
+                if (
+                    btnAprobarAprobacionPresupuestalAdq
+                ) {
+
+                    btnAprobarAprobacionPresupuestalAdq.disabled =
+                        false;
+                }
+
+
+                if (
+                    btnDeclinarAprobacionPresupuestalAdq
+                ) {
+
+                    btnDeclinarAprobacionPresupuestalAdq.disabled =
+                        false;
+                }
+            }
+        }
+
+        btnAprobarAprobacionPresupuestalAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    enviarDecisionPresupuestalAdq(
+                        "APROBAR"
+                    );
+                }
+            );
+
+
+        btnDeclinarAprobacionPresupuestalAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    enviarDecisionPresupuestalAdq(
+                        "DECLINAR"
+                    );
+                }
+            );
+
+        // =========================================================
+        // PERMISOS DE ADQUISICIONES
+        // =========================================================
+
+        const btnPermisosAdquisicionesAdq =
+            document.getElementById(
+                "btnPermisosAdquisicionesAdq"
+            );
+
+
+        const modalPermisosAdquisicionesElementAdq =
+            document.getElementById(
+                "modalPermisosAdquisicionesAdq"
+            );
+
+
+        const tablaPermisosAdquisicionesAdqBody =
+            document.getElementById(
+                "tablaPermisosAdquisicionesAdqBody"
+            );
+
+
+        const cargandoPermisosAdquisicionesAdq =
+            document.getElementById(
+                "cargandoPermisosAdquisicionesAdq"
+            );
+
+
+        const contenedorPermisosAdquisicionesAdq =
+            document.getElementById(
+                "contenedorPermisosAdquisicionesAdq"
+            );
+
+
+        const sinPermisosAdquisicionesAdq =
+            document.getElementById(
+                "sinPermisosAdquisicionesAdq"
+            );
+
+
+        const mensajePermisosAdquisicionesAdq =
+            document.getElementById(
+                "mensajePermisosAdquisicionesAdq"
+            );
+
+
+        const buscarPermisoAdquisicionesAdq =
+            document.getElementById(
+                "buscarPermisoAdquisicionesAdq"
+            );
+
+
+        const btnLimpiarBusquedaPermisosAdq =
+            document.getElementById(
+                "btnLimpiarBusquedaPermisosAdq"
+            );
+
+
+        const btnGuardarPermisosAdquisicionesAdq =
+            document.getElementById(
+                "btnGuardarPermisosAdquisicionesAdq"
+            );
+
+
+        const totalUsuariosPermisosAdq =
+            document.getElementById(
+                "totalUsuariosPermisosAdq"
+            );
+
+
+        let modalPermisosAdquisicionesAdq =
+            null;
+
+
+        let usuariosPermisosAdquisicionesAdq =
+            [];
+
+
+        const usuariosPermisosModificadosAdq =
+            new Set();
+
+        // =========================================================
+        // MOSTRAR MENSAJE DE PERMISOS
+        // =========================================================
+
+        function mostrarMensajePermisosAdq(
+            mensaje,
+            tipo = "danger"
+        ) {
+
+            if (
+                !mensajePermisosAdquisicionesAdq
+            ) {
+                return;
+            }
+
+
+            mensajePermisosAdquisicionesAdq.className =
+                `alert alert-${tipo}`;
+
+
+            mensajePermisosAdquisicionesAdq.textContent =
+                mensaje;
+
+
+            mensajePermisosAdquisicionesAdq.classList.remove(
+                "d-none"
+            );
+        }
+
+
+        // =========================================================
+        // OCULTAR MENSAJE DE PERMISOS
+        // =========================================================
+
+        function ocultarMensajePermisosAdq() {
+
+            mensajePermisosAdquisicionesAdq
+                ?.classList.add(
+                    "d-none"
+                );
+        }
+
+
+        // =========================================================
+        // TEXTO DEL NIVEL PRESUPUESTAL
+        // =========================================================
+
+        function obtenerNombreNivelPresupuestalAdq(
+            nivel
+        ) {
+
+            switch (
+            Number(
+                nivel
+            )
+            ) {
+
+                case 1:
+                    return "Gerencia de Adquisiciones";
+
+                case 2:
+                    return "Planeación Financiera";
+
+                case 3:
+                    return "Dirección de Operaciones Internas";
+
+                case 4:
+                    return "Dirección General / Socios";
+
+                default:
+                    return "";
+            }
+        }
+
+
+        // =========================================================
+        // CREAR SELECT DE NIVEL
+        // =========================================================
+
+        function crearSelectNivelPresupuestalAdq(
+            usuario
+        ) {
+
+            const nivel =
+                Number(
+                    usuario.nivelPresupuestal
+                    ??
+                    0
+                );
+
+
+            const deshabilitado =
+                !usuario.puedeAprobarPresupuesto;
+
+
+            return `
+        <select class="form-select form-select-sm adq-permiso-nivel"
+                data-usuario-id="${escapeAttributeAdq(
+                usuario.id
+            )}"
+                ${deshabilitado ? "disabled" : ""}>
+
+            <option value="">
+                Seleccionar...
+            </option>
+
+            <option value="1"
+                ${nivel === 1 ? "selected" : ""}>
+                1 - Gerencia de Adquisiciones
+            </option>
+
+            <option value="2"
+                ${nivel === 2 ? "selected" : ""}>
+                2 - Planeación Financiera
+            </option>
+
+            <option value="3"
+                ${nivel === 3 ? "selected" : ""}>
+                3 - Dirección de Operaciones Internas
+            </option>
+
+            <option value="4"
+                ${nivel === 4 ? "selected" : ""}>
+                4 - Dirección General / Socios
+            </option>
+
+        </select>
+    `;
+        }
+
+
+        // =========================================================
+        // CHECKBOX DE PERMISO
+        // =========================================================
+
+        function crearCheckboxPermisoAdq(
+            usuarioId,
+            permiso,
+            valor
+        ) {
+
+            return `
+        <div class="form-check d-flex justify-content-center">
+
+            <input type="checkbox"
+                   class="form-check-input adq-permiso-checkbox"
+                   data-usuario-id="${escapeAttributeAdq(
+                usuarioId
+            )}"
+                   data-permiso="${escapeAttributeAdq(
+                permiso
+            )}"
+                   ${valor ? "checked" : ""} />
+
+        </div>
+    `;
+        }
+
+
+        // =========================================================
+        // RENDERIZAR PERMISOS
+        // =========================================================
+
+        function renderizarPermisosAdquisicionesAdq(
+            usuarios
+        ) {
+
+            if (
+                !tablaPermisosAdquisicionesAdqBody
+            ) {
+                return;
+            }
+
+
+            tablaPermisosAdquisicionesAdqBody.innerHTML =
+                "";
+
+
+            if (
+                !Array.isArray(
+                    usuarios
+                )
+                ||
+                usuarios.length ===
+                0
+            ) {
+
+                contenedorPermisosAdquisicionesAdq
+                    ?.classList.add(
+                        "d-none"
+                    );
+
+
+                sinPermisosAdquisicionesAdq
+                    ?.classList.remove(
+                        "d-none"
+                    );
+
+
+                if (
+                    totalUsuariosPermisosAdq
+                ) {
+
+                    totalUsuariosPermisosAdq.textContent =
+                        "0 usuarios";
+                }
+
+
+                return;
+            }
+
+
+            contenedorPermisosAdquisicionesAdq
+                ?.classList.remove(
+                    "d-none"
+                );
+
+
+            sinPermisosAdquisicionesAdq
+                ?.classList.add(
+                    "d-none"
+                );
+
+
+            usuarios.forEach(
+                function (
+                    usuario
+                ) {
+
+                    const fila =
+                        document.createElement(
+                            "tr"
+                        );
+
+
+                    fila.dataset.usuarioId =
+                        usuario.id;
+
+
+                    fila.dataset.busqueda =
+                        (
+                            `${usuario.nombre ?? ""} ` +
+                            `${usuario.correo ?? ""}`
+                        )
+                            .toLowerCase();
+
+
+                    fila.innerHTML = `
+
+                <td>
+
+                    <div class="fw-semibold">
+                        ${escapeHtmlAdq(
+                        usuario.nombre
+                        ??
+                        "Usuario"
+                    )}
+                    </div>
+
+                    <div class="small text-muted">
+                        ${escapeHtmlAdq(
+                        usuario.correo
+                        ??
+                        ""
+                    )}
+                    </div>
+
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeVisualizar",
+                        usuario.puedeVisualizar
+                    )}
+                </td>
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeCrearSolicitud",
+                        usuario.puedeCrearSolicitud
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeGestionarSolicitudes",
+                        usuario.puedeGestionarSolicitudes
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeAprobar",
+                        usuario.puedeAprobar
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeAsignar",
+                        usuario.puedeAsignar
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeCotizar",
+                        usuario.puedeCotizar
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeGestionarProveedores",
+                        usuario.puedeGestionarProveedores
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeGenerarSolicitudPago",
+                        usuario.puedeGenerarSolicitudPago
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeVerReportes",
+                        usuario.puedeVerReportes
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeAprobarPresupuesto",
+                        usuario.puedeAprobarPresupuesto
+                    )}
+                </td>
+
+
+                <td>
+                    ${crearSelectNivelPresupuestalAdq(
+                        usuario
+                    )}
+                </td>
+
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeAdministrar",
+                        usuario.puedeAdministrar
+                    )}
+                </td>
+            `;
+
+
+                    tablaPermisosAdquisicionesAdqBody
+                        .appendChild(
+                            fila
+                        );
+                }
+            );
+
+
+            actualizarTotalPermisosAdq();
+        }
+
+        // =========================================================
+        // MARCAR USUARIO COMO MODIFICADO
+        // =========================================================
+
+        function marcarPermisoUsuarioModificadoAdq(
+            usuarioId
+        ) {
+
+            usuariosPermisosModificadosAdq.add(
+                String(
+                    usuarioId
+                )
+            );
+
+
+            if (
+                btnGuardarPermisosAdquisicionesAdq
+            ) {
+
+                btnGuardarPermisosAdquisicionesAdq.disabled =
+                    usuariosPermisosModificadosAdq.size ===
+                    0;
+            }
+        }
+
+
+        // =========================================================
+        // CAMBIO EN CHECKBOX
+        // =========================================================
+
+        tablaPermisosAdquisicionesAdqBody
+            ?.addEventListener(
+                "change",
+                function (
+                    event
+                ) {
+
+                    const elemento =
+                        event.target;
+
+
+                    if (
+                        !(elemento instanceof HTMLElement)
+                    ) {
+                        return;
+                    }
+
+
+                    const usuarioId =
+                        elemento.dataset.usuarioId;
+
+
+                    if (
+                        !usuarioId
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        elemento.classList.contains(
+                            "adq-permiso-checkbox"
+                        )
+                    ) {
+
+                        const permiso =
+                            elemento.dataset.permiso;
+
+
+                        if (
+                            permiso ===
+                            "puedeAprobarPresupuesto"
+                        ) {
+
+                            const fila =
+                                elemento.closest(
+                                    "tr"
+                                );
+
+
+                            const selectNivel =
+                                fila?.querySelector(
+                                    ".adq-permiso-nivel"
+                                );
+
+
+                            if (
+                                selectNivel
+                            ) {
+
+                                selectNivel.disabled =
+                                    !elemento.checked;
+
+
+                                if (
+                                    !elemento.checked
+                                ) {
+
+                                    selectNivel.value =
+                                        "";
+                                }
+                            }
+                        }
+
+
+                        marcarPermisoUsuarioModificadoAdq(
+                            usuarioId
+                        );
+
+
+                        return;
+                    }
+
+
+                    if (
+                        elemento.classList.contains(
+                            "adq-permiso-nivel"
+                        )
+                    ) {
+
+                        marcarPermisoUsuarioModificadoAdq(
+                            usuarioId
+                        );
+                    }
+                }
+        );
+
+        // =========================================================
+        // CARGAR PERMISOS DESDE BACKEND
+        // =========================================================
+
+        async function cargarPermisosAdquisicionesAdq() {
+
+            ocultarMensajePermisosAdq();
+
+
+            usuariosPermisosModificadosAdq.clear();
+
+
+            if (
+                btnGuardarPermisosAdquisicionesAdq
+            ) {
+
+                btnGuardarPermisosAdquisicionesAdq.disabled =
+                    true;
+            }
+
+
+            cargandoPermisosAdquisicionesAdq
+                ?.classList.remove(
+                    "d-none"
+                );
+
+
+            contenedorPermisosAdquisicionesAdq
+                ?.classList.add(
+                    "d-none"
+                );
+
+
+            sinPermisosAdquisicionesAdq
+                ?.classList.add(
+                    "d-none"
+                );
+
+
+            try {
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=PermisosUsuariosAdquisiciones`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await respuesta.json();
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado.success
+                ) {
+
+                    throw new Error(
+                        resultado.message
+                        ??
+                        "No fue posible cargar los permisos."
+                    );
+                }
+
+
+                usuariosPermisosAdquisicionesAdq =
+                    Array.isArray(
+                        resultado.data
+                    )
+                        ? resultado.data
+                        : [];
+
+
+                renderizarPermisosAdquisicionesAdq(
+                    usuariosPermisosAdquisicionesAdq
+                );
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                mostrarMensajePermisosAdq(
+                    error.message
+                    ??
+                    "Ocurrió un error al cargar los permisos."
+                );
+            }
+            finally {
+
+                cargandoPermisosAdquisicionesAdq
+                    ?.classList.add(
+                        "d-none"
+                    );
+            }
+        }
+
+        btnPermisosAdquisicionesAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    if (
+                        !modalPermisosAdquisicionesElementAdq
+                    ) {
+                        return;
+                    }
+
+
+                    modalPermisosAdquisicionesAdq =
+                        bootstrap.Modal.getOrCreateInstance(
+                            modalPermisosAdquisicionesElementAdq
+                        );
+
+
+                    modalPermisosAdquisicionesAdq.show();
+
+
+                    await cargarPermisosAdquisicionesAdq();
+                }
+        );
+
+        function actualizarTotalPermisosAdq() {
+
+            const filasVisibles =
+                tablaPermisosAdquisicionesAdqBody
+                    ?.querySelectorAll(
+                        "tr:not(.d-none)"
+                    )
+                ??
+                [];
+
+
+            if (
+                totalUsuariosPermisosAdq
+            ) {
+
+                const total =
+                    filasVisibles.length;
+
+
+                totalUsuariosPermisosAdq.textContent =
+                    `${total} usuario${total === 1 ? "" : "s"}`;
+            }
+        }
+
+
+        function filtrarPermisosAdquisicionesAdq() {
+
+            const texto =
+                (
+                    buscarPermisoAdquisicionesAdq
+                        ?.value
+                    ??
+                    ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+
+            const filas =
+                tablaPermisosAdquisicionesAdqBody
+                    ?.querySelectorAll(
+                        "tr"
+                    )
+                ??
+                [];
+
+
+            filas.forEach(
+                function (
+                    fila
+                ) {
+
+                    const busqueda =
+                        fila.dataset.busqueda
+                        ??
+                        "";
+
+
+                    const visible =
+                        !texto
+                        ||
+                        busqueda.includes(
+                            texto
+                        );
+
+
+                    fila.classList.toggle(
+                        "d-none",
+                        !visible
+                    );
+                }
+            );
+
+
+            actualizarTotalPermisosAdq();
+        }
+
+
+        buscarPermisoAdquisicionesAdq
+            ?.addEventListener(
+                "input",
+                filtrarPermisosAdquisicionesAdq
+            );
+
+
+        btnLimpiarBusquedaPermisosAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        buscarPermisoAdquisicionesAdq
+                    ) {
+
+                        buscarPermisoAdquisicionesAdq.value =
+                            "";
+                    }
+
+
+                    filtrarPermisosAdquisicionesAdq();
+
+
+                    buscarPermisoAdquisicionesAdq
+                        ?.focus();
+                }
+        );
+
+        // =========================================================
+        // OBTENER VALOR DE CHECKBOX DE PERMISO
+        // =========================================================
+
+        function obtenerCheckboxPermisoAdq(
+            fila,
+            permiso
+        ) {
+
+            const checkbox =
+                fila.querySelector(
+                    `.adq-permiso-checkbox[data-permiso="${permiso}"]`
+                );
+
+
+            return checkbox
+                ? checkbox.checked
+                : false;
+        }
+
+
+        // =========================================================
+        // OBTENER PERMISOS MODIFICADOS
+        // =========================================================
+
+        function obtenerPermisosAdquisicionesFormularioAdq() {
+
+            const resultado =
+                [];
+
+
+            usuariosPermisosModificadosAdq.forEach(
+                function (
+                    usuarioId
+                ) {
+
+                    const fila =
+                        tablaPermisosAdquisicionesAdqBody
+                            ?.querySelector(
+                                `tr[data-usuario-id="${CSS.escape(usuarioId)}"]`
+                            );
+
+
+                    if (
+                        !fila
+                    ) {
+                        return;
+                    }
+
+
+                    const puedeAprobarPresupuesto =
+                        obtenerCheckboxPermisoAdq(
+                            fila,
+                            "puedeAprobarPresupuesto"
+                        );
+
+
+                    const selectNivel =
+                        fila.querySelector(
+                            ".adq-permiso-nivel"
+                        );
+
+
+                    const nivelPresupuestal =
+                        puedeAprobarPresupuesto
+                            &&
+                            selectNivel
+                            &&
+                            selectNivel.value
+                            ? Number(
+                                selectNivel.value
+                            )
+                            : null;
+
+
+                    resultado.push(
+                        {
+                            usuarioId:
+                                usuarioId,
+
+                            puedeVisualizar:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeVisualizar"
+                                ),
+
+                            puedeCrearSolicitud:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeCrearSolicitud"
+                                ),
+
+                            puedeGestionarSolicitudes:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeGestionarSolicitudes"
+                                ),
+
+                            puedeAprobar:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeAprobar"
+                                ),
+
+                            puedeAsignar:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeAsignar"
+                                ),
+
+                            puedeCotizar:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeCotizar"
+                                ),
+
+                            puedeGestionarProveedores:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeGestionarProveedores"
+                                ),
+
+                            puedeGenerarSolicitudPago:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeGenerarSolicitudPago"
+                                ),
+
+                            puedeVerReportes:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeVerReportes"
+                                ),
+
+                            puedeAprobarPresupuesto:
+                                puedeAprobarPresupuesto,
+
+                            nivelPresupuestal:
+                                nivelPresupuestal,
+
+                            puedeAdministrar:
+                                obtenerCheckboxPermisoAdq(
+                                    fila,
+                                    "puedeAdministrar"
+                                )
+                        }
+                    );
+                }
+            );
+
+
+            return resultado;
+        }
+
+        // =========================================================
+        // VALIDAR PERMISOS PRESUPUESTALES
+        // =========================================================
+
+        function validarPermisosPresupuestalesAdq(
+            permisos
+        ) {
+
+            for (
+                const permiso
+                of permisos
+            ) {
+
+                if (
+                    permiso.puedeAprobarPresupuesto
+                    &&
+                    (
+                        !permiso.nivelPresupuestal
+                        ||
+                        permiso.nivelPresupuestal <
+                        1
+                        ||
+                        permiso.nivelPresupuestal >
+                        4
+                    )
+                ) {
+
+                    mostrarAdvertenciaAdq(
+                        "Nivel presupuestal requerido",
+                        "Todo usuario con permiso para aprobar presupuesto debe tener asignado un nivel presupuestal."
+                    );
+
+
+                    return false;
+                }
+            }
+
+
+            return true;
+        }
+
+        // =========================================================
+        // GUARDAR PERMISOS DE ADQUISICIONES
+        // =========================================================
+
+        async function guardarPermisosAdquisicionesAdq() {
+
+            if (
+                !btnGuardarPermisosAdquisicionesAdq
+            ) {
+                return;
+            }
+
+
+            const permisos =
+                obtenerPermisosAdquisicionesFormularioAdq();
+
+
+            if (
+                permisos.length ===
+                0
+            ) {
+
+                mostrarAdvertenciaAdq(
+                    "Sin cambios",
+                    "No se detectaron cambios en los permisos."
+                );
+
+
+                return;
+            }
+
+
+            if (
+                !validarPermisosPresupuestalesAdq(
+                    permisos
+                )
+            ) {
+                return;
+            }
+
+
+            const confirmado =
+                await confirmarAccionAdq(
+                    {
+                        titulo:
+                            "Guardar permisos",
+
+                        mensaje:
+                            "Se actualizarán los permisos seleccionados del módulo de Adquisiciones.",
+
+                        textoConfirmar:
+                            "Guardar",
+
+                        textoCancelar:
+                            "Cancelar",
+
+                        tipo:
+                            "primary",
+
+                        icono:
+                            "bi-shield-check"
+                    }
+                );
+
+
+            if (
+                !confirmado
+            ) {
+                return;
+            }
+
+
+            const htmlOriginal =
+                btnGuardarPermisosAdquisicionesAdq.innerHTML;
+
+
+            btnGuardarPermisosAdquisicionesAdq.disabled =
+                true;
+
+
+            btnGuardarPermisosAdquisicionesAdq.innerHTML =
+                `
+            <span class="spinner-border spinner-border-sm me-1"></span>
+            Guardando...
+        `;
+
+
+            ocultarMensajePermisosAdq();
+
+
+            try {
+
+                const token =
+                    document.querySelector(
+                        'input[name="__RequestVerificationToken"]'
+                    )
+                        ?.value;
+
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=GuardarPermisosUsuariosAdquisiciones`,
+                        {
+                            method:
+                                "POST",
+
+                            headers:
+                            {
+                                "Content-Type":
+                                    "application/json",
+
+                                "X-Requested-With":
+                                    "XMLHttpRequest",
+
+                                "RequestVerificationToken":
+                                    token
+                                    ??
+                                    ""
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    {
+                                        permisos:
+                                            permisos
+                                    }
+                                )
+                        }
+                    );
+
+
+                const resultado =
+                    await respuesta.json();
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado.success
+                ) {
+
+                    throw new Error(
+                        resultado.message
+                        ??
+                        "No fue posible guardar los permisos."
+                    );
+                }
+
+
+                usuariosPermisosModificadosAdq.clear();
+
+
+                mostrarMensajePermisosAdq(
+                    resultado.message
+                    ??
+                    "Los permisos se guardaron correctamente.",
+                    "success"
+                );
+
+
+                await cargarPermisosAdquisicionesAdq();
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                mostrarMensajePermisosAdq(
+                    error.message
+                    ??
+                    "Ocurrió un error al guardar los permisos."
+                );
+            }
+            finally {
+
+                btnGuardarPermisosAdquisicionesAdq.innerHTML =
+                    htmlOriginal;
+
+
+                btnGuardarPermisosAdquisicionesAdq.disabled =
+                    usuariosPermisosModificadosAdq.size ===
+                    0;
+            }
+        }
+
+        btnGuardarPermisosAdquisicionesAdq
+            ?.addEventListener(
+                "click",
+                guardarPermisosAdquisicionesAdq
+            );
+
+        // =========================================================
         // MODAL DE CONFIRMACIÓN REUTILIZABLE
         // =========================================================
 

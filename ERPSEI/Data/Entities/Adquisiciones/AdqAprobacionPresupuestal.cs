@@ -43,5 +43,13 @@ namespace ERPSEI.Data.Entities.Adquisiciones
         public AdqSolicitud Solicitud { get; set; } = null!;
 
         public AdqCotizacion Cotizacion { get; set; } = null!;
+
+        public ICollection<AdqAprobacionPresupuestalDetalle>
+        Detalles
+            {
+                get;
+                set;
+            } =
+        new List<AdqAprobacionPresupuestalDetalle>();
     }
 }
