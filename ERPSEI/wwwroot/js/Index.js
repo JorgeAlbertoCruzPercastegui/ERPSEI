@@ -364,11 +364,197 @@ document.addEventListener(
         let archivosCotizacionEliminadosAdq =
             new Set();
 
+        let reabrirAprobacionDespuesDetalleAdq =
+            false;
+
 
         const archivosCotizacionEliminarInputsAdq =
             document.getElementById(
                 "archivosCotizacionEliminarInputsAdq"
             );
+
+        const modalConfirmacionDecisionPresupuestalElementAdq =
+            document.getElementById(
+                "modalConfirmacionDecisionPresupuestalAdq"
+            );
+
+        const modalResultadoDecisionPresupuestalElementAdq =
+            document.getElementById(
+                "modalResultadoDecisionPresupuestalAdq"
+            );
+
+        const tituloConfirmacionDecisionPresupuestalAdq =
+            document.getElementById(
+                "tituloConfirmacionDecisionPresupuestalAdq"
+            );
+
+        const folioConfirmacionDecisionPresupuestalAdq =
+            document.getElementById(
+                "folioConfirmacionDecisionPresupuestalAdq"
+            );
+
+        const mensajeConfirmacionDecisionPresupuestalAdq =
+            document.getElementById(
+                "mensajeConfirmacionDecisionPresupuestalAdq"
+            );
+
+        const etapaConfirmacionDecisionPresupuestalAdq =
+            document.getElementById(
+                "etapaConfirmacionDecisionPresupuestalAdq"
+            );
+
+        const btnConfirmarDecisionPresupuestalAdq =
+            document.getElementById(
+                "btnConfirmarDecisionPresupuestalAdq"
+            );
+
+        const tituloResultadoDecisionPresupuestalAdq =
+            document.getElementById(
+                "tituloResultadoDecisionPresupuestalAdq"
+            );
+
+        const mensajeResultadoDecisionPresupuestalAdq =
+            document.getElementById(
+                "mensajeResultadoDecisionPresupuestalAdq"
+            );
+
+
+        let decisionPresupuestalPendienteAdq =
+            null;
+
+        let temporizadorResultadoPresupuestalAdq =
+            null;
+
+        function abrirConfirmacionDecisionPresupuestalAdq(
+            datos
+        ) {
+
+            if (
+                !datos
+                ||
+                !datos.detalleId
+                ||
+                !datos.decision
+            ) {
+                return;
+            }
+
+
+            decisionPresupuestalPendienteAdq =
+                datos;
+
+
+            const esAprobacion =
+                datos.decision ===
+                "APROBAR";
+
+
+            if (
+                tituloConfirmacionDecisionPresupuestalAdq
+            ) {
+
+                tituloConfirmacionDecisionPresupuestalAdq.textContent =
+                    esAprobacion
+                        ? "Confirmar aprobación"
+                        : "Confirmar declinación";
+            }
+
+
+            if (
+                folioConfirmacionDecisionPresupuestalAdq
+            ) {
+
+                folioConfirmacionDecisionPresupuestalAdq.textContent =
+                    datos.folio
+                    ??
+                    "";
+            }
+
+
+            if (
+                mensajeConfirmacionDecisionPresupuestalAdq
+            ) {
+
+                mensajeConfirmacionDecisionPresupuestalAdq.textContent =
+                    esAprobacion
+                        ? "¿Estás seguro de que deseas aprobar esta solicitud presupuestal?"
+                        : "¿Estás seguro de que deseas declinar esta solicitud presupuestal?";
+            }
+
+
+            if (
+                etapaConfirmacionDecisionPresupuestalAdq
+            ) {
+
+                etapaConfirmacionDecisionPresupuestalAdq.textContent =
+                    datos.etapa
+                        ? `Etapa: ${datos.etapa}`
+                        : "";
+            }
+
+
+            if (
+                btnConfirmarDecisionPresupuestalAdq
+            ) {
+
+                btnConfirmarDecisionPresupuestalAdq.className =
+                    esAprobacion
+                        ? "btn btn-success"
+                        : "btn btn-danger";
+
+
+                btnConfirmarDecisionPresupuestalAdq.innerHTML =
+                    esAprobacion
+                        ? `<i class="bi bi-check-circle me-1"></i> Sí, aprobar`
+                        : `<i class="bi bi-x-circle me-1"></i> Sí, declinar`;
+            }
+
+
+            bootstrap.Modal
+                .getOrCreateInstance(
+                    modalConfirmacionDecisionPresupuestalElementAdq
+                )
+                .show();
+        }
+
+        // =========================================================
+        // CONFIGURACIÓN DE APROBADORES PRESUPUESTALES
+        // =========================================================
+
+        const btnConfigurarAprobadoresAdq =
+            document.getElementById(
+                "btnConfigurarAprobadoresAdq"
+            );
+
+
+        const modalConfigurarAprobadoresElementAdq =
+            document.getElementById(
+                "modalConfigurarAprobadoresAdq"
+            );
+
+
+        const tablaConfiguracionAprobadoresAdqBody =
+            document.getElementById(
+                "tablaConfiguracionAprobadoresAdqBody"
+            );
+
+
+        const btnGuardarConfiguracionAprobadoresAdq =
+            document.getElementById(
+                "btnGuardarConfiguracionAprobadoresAdq"
+            );
+
+
+        let modalConfigurarAprobadoresAdq =
+            null;
+
+
+        let usuariosConfiguracionAprobadoresAdq =
+            [];
+
+
+        let etapasConfiguracionAprobadoresAdq =
+            [];
 
         // =========================================================
         // DEFINIR HANDLER AL GUARDAR COTIZACIÓN
@@ -732,22 +918,127 @@ document.addEventListener(
                 event
             ) {
 
-                const boton =
+                // =====================================================
+                // OJO - VER INFORMACIÓN
+                // =====================================================
+
+                const botonVer =
                     event.target.closest(
-                        ".btnVerAprobacionPresupuestalAdq, " +
-                        ".btnAprobarPresupuestoAdq, " +
-                        ".btnDeclinarPresupuestoAdq"
+                        ".btnVerAprobacionPresupuestalAdq"
                     );
 
 
-                if (!boton) {
+                if (
+                    botonVer
+                ) {
+
+                    abrirModalAprobacionPresupuestalAdq(
+                        botonVer
+                    );
+
+
                     return;
                 }
 
 
-                abrirModalAprobacionPresupuestalAdq(
-                    boton
-                );
+                // =====================================================
+                // APROBAR
+                // =====================================================
+
+                const botonAprobar =
+                    event.target.closest(
+                        ".btnAprobarPresupuestoAdq"
+                    );
+
+
+                if (
+                    botonAprobar
+                ) {
+
+                    abrirConfirmacionDecisionPresupuestalAdq(
+                        {
+                            detalleId:
+                                Number(
+                                    botonAprobar.dataset.detalleId
+                                    ??
+                                    0
+                                ),
+
+                            solicitudId:
+                                Number(
+                                    botonAprobar.dataset.solicitudId
+                                    ??
+                                    0
+                                ),
+
+                            folio:
+                                botonAprobar.dataset.folio
+                                ??
+                                "",
+
+                            etapa:
+                                botonAprobar.dataset.etapa
+                                ??
+                                "",
+
+                            decision:
+                                "APROBAR"
+                        }
+                    );
+
+
+                    return;
+                }
+
+
+                // =====================================================
+                // DECLINAR
+                // =====================================================
+
+                const botonDeclinar =
+                    event.target.closest(
+                        ".btnDeclinarPresupuestoAdq"
+                    );
+
+
+                if (
+                    botonDeclinar
+                ) {
+
+                    abrirConfirmacionDecisionPresupuestalAdq(
+                        {
+                            detalleId:
+                                Number(
+                                    botonDeclinar.dataset.detalleId
+                                    ??
+                                    0
+                                ),
+
+                            solicitudId:
+                                Number(
+                                    botonDeclinar.dataset.solicitudId
+                                    ??
+                                    0
+                                ),
+
+                            folio:
+                                botonDeclinar.dataset.folio
+                                ??
+                                "",
+
+                            etapa:
+                                botonDeclinar.dataset.etapa
+                                ??
+                                "",
+
+                            decision:
+                                "DECLINAR"
+                        }
+                    );
+
+
+                    return;
+                }
             }
         );
 
@@ -768,17 +1059,63 @@ document.addEventListener(
                     if (
                         solicitudId <= 0
                     ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Solicitud no identificada",
+                            "No fue posible identificar la solicitud."
+                        );
+
                         return;
                     }
 
 
-                    const botonVer =
-                        document.querySelector(
-                            `.btnVerSolicitudAdq[data-id="${solicitudId}"]`
+                    reabrirAprobacionDespuesDetalleAdq =
+                        true;
+
+
+                    modalAprobacionPresupuestalElementAdq
+                        ?.addEventListener(
+                            "hidden.bs.modal",
+                            function () {
+
+                                const botonTemporal =
+                                    document.createElement(
+                                        "button"
+                                    );
+
+
+                                botonTemporal.type =
+                                    "button";
+
+                                botonTemporal.className =
+                                    "btnVerSolicitudAdq d-none";
+
+                                botonTemporal.dataset.id =
+                                    String(
+                                        solicitudId
+                                    );
+
+
+                                document.body.appendChild(
+                                    botonTemporal
+                                );
+
+
+                                botonTemporal.click();
+
+
+                                botonTemporal.remove();
+
+                            },
+                            {
+                                once:
+                                    true
+                            }
                         );
 
 
-                    botonVer?.click();
+                    modalAprobacionPresupuestalAdq
+                        ?.hide();
                 }
             );
 
@@ -800,42 +1137,145 @@ document.addEventListener(
                     if (
                         solicitudId <= 0
                     ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Solicitud no identificada",
+                            "No fue posible identificar la solicitud."
+                        );
+
                         return;
                     }
 
 
-                    const botonVer =
-                        document.querySelector(
-                            `.btnVerSolicitudAdq[data-id="${solicitudId}"]`
+                    const modalVerSolicitudElementAdq =
+                        document.getElementById(
+                            "modalVerSolicitudAdq"
                         );
 
 
+                    reabrirAprobacionDespuesDetalleAdq =
+                        true;
+
+
+                    modalAprobacionPresupuestalElementAdq
+                        ?.addEventListener(
+                            "hidden.bs.modal",
+                            function () {
+
+                                if (
+                                    modalVerSolicitudElementAdq
+                                ) {
+
+                                    modalVerSolicitudElementAdq
+                                        .addEventListener(
+                                            "shown.bs.modal",
+                                            function () {
+
+                                                const tabSeguimiento =
+                                                    document.getElementById(
+                                                        "tabSeguimientoAdq"
+                                                    );
+
+
+                                                if (
+                                                    tabSeguimiento
+                                                ) {
+
+                                                    bootstrap.Tab
+                                                        .getOrCreateInstance(
+                                                            tabSeguimiento
+                                                        )
+                                                        .show();
+                                                }
+
+                                            },
+                                            {
+                                                once:
+                                                    true
+                                            }
+                                        );
+                                }
+
+
+                                const botonTemporal =
+                                    document.createElement(
+                                        "button"
+                                    );
+
+
+                                botonTemporal.type =
+                                    "button";
+
+                                botonTemporal.className =
+                                    "btnVerSolicitudAdq d-none";
+
+                                botonTemporal.dataset.id =
+                                    String(
+                                        solicitudId
+                                    );
+
+
+                                document.body.appendChild(
+                                    botonTemporal
+                                );
+
+
+                                botonTemporal.click();
+
+
+                                botonTemporal.remove();
+
+                            },
+                            {
+                                once:
+                                    true
+                            }
+                        );
+
+
+                    modalAprobacionPresupuestalAdq
+                        ?.hide();
+                }
+            );
+
+        const modalVerSolicitudElementDesdePresupuestoAdq =
+            document.getElementById(
+                "modalVerSolicitudAdq"
+            );
+
+
+        modalVerSolicitudElementDesdePresupuestoAdq
+            ?.addEventListener(
+                "hidden.bs.modal",
+                function () {
+
                     if (
-                        !botonVer
+                        !reabrirAprobacionDespuesDetalleAdq
                     ) {
                         return;
                     }
 
 
-                    botonVer.click();
+                    reabrirAprobacionDespuesDetalleAdq =
+                        false;
 
 
-                    setTimeout(
-                        function () {
-
-                            const tabSeguimiento =
-                                document.querySelector(
-                                    "#tabSeguimientoAdq"
-                                );
+                    if (
+                        !modalAprobacionPresupuestalElementAdq
+                    ) {
+                        return;
+                    }
 
 
-                            tabSeguimiento?.click();
+                    modalAprobacionPresupuestalAdq =
+                        bootstrap.Modal.getOrCreateInstance(
+                            modalAprobacionPresupuestalElementAdq
+                        );
 
-                        },
-                        350
-                    );
+
+                    modalAprobacionPresupuestalAdq.show();
                 }
-        );
+            );
 
         // =========================================================
         // ENVIAR DECISIÓN PRESUPUESTAL
@@ -1169,8 +1609,41 @@ document.addEventListener(
                 "click",
                 function () {
 
-                    enviarDecisionPresupuestalAdq(
-                        "APROBAR"
+                    abrirConfirmacionDecisionPresupuestalAdq(
+                        {
+                            detalleId:
+                                Number(
+                                    detalleAprobacionPresupuestalIdAdq
+                                        ?.value
+                                    ??
+                                    0
+                                ),
+
+                            solicitudId:
+                                Number(
+                                    solicitudAprobacionPresupuestalIdAdq
+                                        ?.value
+                                    ??
+                                    0
+                                ),
+
+                            folio:
+                                folioAprobacionPresupuestalAdq
+                                    ?.textContent
+                                    ?.trim()
+                                ??
+                                "",
+
+                            etapa:
+                                etapaAprobacionPresupuestalAdq
+                                    ?.textContent
+                                    ?.trim()
+                                ??
+                                "",
+
+                            decision:
+                                "APROBAR"
+                        }
                     );
                 }
             );
@@ -1181,9 +1654,258 @@ document.addEventListener(
                 "click",
                 function () {
 
-                    enviarDecisionPresupuestalAdq(
-                        "DECLINAR"
+                    abrirConfirmacionDecisionPresupuestalAdq(
+                        {
+                            detalleId:
+                                Number(
+                                    detalleAprobacionPresupuestalIdAdq
+                                        ?.value
+                                    ??
+                                    0
+                                ),
+
+                            solicitudId:
+                                Number(
+                                    solicitudAprobacionPresupuestalIdAdq
+                                        ?.value
+                                    ??
+                                    0
+                                ),
+
+                            folio:
+                                folioAprobacionPresupuestalAdq
+                                    ?.textContent
+                                    ?.trim()
+                                ??
+                                "",
+
+                            etapa:
+                                etapaAprobacionPresupuestalAdq
+                                    ?.textContent
+                                    ?.trim()
+                                ??
+                                "",
+
+                            decision:
+                                "DECLINAR"
+                        }
                     );
+                }
+        );
+
+        btnConfirmarDecisionPresupuestalAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const datos =
+                        decisionPresupuestalPendienteAdq;
+
+
+                    if (
+                        !datos
+                        ||
+                        Number(
+                            datos.detalleId
+                        ) <= 0
+                    ) {
+                        return;
+                    }
+
+
+                    try {
+
+                        btnConfirmarDecisionPresupuestalAdq.disabled =
+                            true;
+
+
+                        const comentario =
+                            document.getElementById(
+                                "comentarioDecisionPresupuestalAdq"
+                            )
+                                ?.value
+                                ?.trim()
+                            ??
+                            "";
+
+
+                        const formData =
+                            new FormData();
+
+
+                        formData.append(
+                            "detalleId",
+                            String(
+                                datos.detalleId
+                            )
+                        );
+
+                        formData.append(
+                            "decision",
+                            datos.decision
+                        );
+
+                        formData.append(
+                            "comentario",
+                            comentario
+                        );
+
+
+                        const token =
+                            document.querySelector(
+                                'input[name="__RequestVerificationToken"]'
+                            )
+                                ?.value
+                            ??
+                            "";
+
+
+                        const response =
+                            await fetch(
+                                "?handler=DecisionPresupuestal",
+                                {
+                                    method:
+                                        "POST",
+
+                                    headers:
+                                    {
+                                        "RequestVerificationToken":
+                                            token,
+
+                                        "X-Requested-With":
+                                            "XMLHttpRequest"
+                                    },
+
+                                    body:
+                                        formData
+                                }
+                            );
+
+
+                        const resultado =
+                            await response.json();
+
+
+                        if (
+                            !response.ok
+                            ||
+                            !resultado?.success
+                        ) {
+
+                            throw new Error(
+                                resultado?.message
+                                ??
+                                "No fue posible registrar la decisión."
+                            );
+                        }
+
+
+                        bootstrap.Modal
+                            .getInstance(
+                                modalConfirmacionDecisionPresupuestalElementAdq
+                            )
+                            ?.hide();
+
+
+                        if (
+                            tituloResultadoDecisionPresupuestalAdq
+                        ) {
+
+                            tituloResultadoDecisionPresupuestalAdq.textContent =
+                                datos.decision ===
+                                    "APROBAR"
+                                    ? "Solicitud aprobada"
+                                    : "Solicitud declinada";
+                        }
+
+
+                        if (
+                            mensajeResultadoDecisionPresupuestalAdq
+                        ) {
+
+                            mensajeResultadoDecisionPresupuestalAdq.textContent =
+                                resultado.message
+                                ??
+                                (
+                                    datos.decision ===
+                                        "APROBAR"
+                                        ? "La aprobación se registró correctamente."
+                                        : "La declinación se registró correctamente."
+                                );
+                        }
+
+
+                        bootstrap.Modal
+                            .getOrCreateInstance(
+                                modalResultadoDecisionPresupuestalElementAdq
+                            )
+                            .show();
+
+
+                        if (
+                            temporizadorResultadoPresupuestalAdq
+                        ) {
+
+                            clearTimeout(
+                                temporizadorResultadoPresupuestalAdq
+                            );
+                        }
+
+
+                        temporizadorResultadoPresupuestalAdq =
+                            setTimeout(
+                                function () {
+
+                                    bootstrap.Modal
+                                        .getInstance(
+                                            modalResultadoDecisionPresupuestalElementAdq
+                                        )
+                                        ?.hide();
+
+                                },
+                                5000
+                            );
+
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible completar la acción",
+                            error.message
+                            ??
+                            "Ocurrió un error al registrar la decisión."
+                        );
+
+                    }
+                    finally {
+
+                        btnConfirmarDecisionPresupuestalAdq.disabled =
+                            false;
+                    }
+                }
+        );
+
+        modalResultadoDecisionPresupuestalElementAdq
+            ?.addEventListener(
+                "hidden.bs.modal",
+                function () {
+
+                    if (
+                        temporizadorResultadoPresupuestalAdq
+                    ) {
+
+                        clearTimeout(
+                            temporizadorResultadoPresupuestalAdq
+                        );
+
+                        temporizadorResultadoPresupuestalAdq =
+                            null;
+                    }
+
+
+                    window.location.reload();
                 }
             );
 
@@ -1310,6 +2032,842 @@ document.addEventListener(
                 );
         }
 
+        function crearOpcionesUsuariosAprobadoresAdq(
+            usuarioSeleccionadoId
+        ) {
+
+            let html =
+                `
+            <option value="">
+                Selecciona un usuario...
+            </option>
+        `;
+
+
+            for (
+                const usuario
+                of usuariosConfiguracionAprobadoresAdq
+            ) {
+
+                const seleccionado =
+                    String(
+                        usuario.id
+                    ) ===
+                    String(
+                        usuarioSeleccionadoId
+                        ??
+                        ""
+                    );
+
+
+                const texto =
+                    usuario.nombre
+                    +
+                    (
+                        usuario.email
+                            &&
+                            usuario.email !==
+                            usuario.nombre
+                            ? ` (${usuario.email})`
+                            : ""
+                    );
+
+
+                html +=
+                    `
+                <option
+                    value="${escapeHtmlAdq(usuario.id)}"
+                    ${seleccionado ? "selected" : ""}>
+
+                    ${escapeHtmlAdq(texto)}
+
+                </option>
+            `;
+            }
+
+
+            return html;
+        }
+
+        function crearOpcionesCopiaDesdeAdq(
+            ordenSeleccionado
+        ) {
+
+            const opciones =
+                [
+                    {
+                        orden: 1,
+                        texto: "Después de Gerencia de Adquisiciones"
+                    },
+                    {
+                        orden: 2,
+                        texto: "Después de Planeación Financiera"
+                    },
+                    {
+                        orden: 3,
+                        texto: "Después de Dirección de Operaciones Internas"
+                    },
+                    {
+                        orden: 4,
+                        texto: "Después de Dirección General / Socios"
+                    }
+                ];
+
+
+            let html =
+                `
+            <option value="">
+                Selecciona una etapa...
+            </option>
+        `;
+
+
+            for (
+                const opcion
+                of opciones
+            ) {
+
+                html +=
+                    `
+                <option
+                    value="${opcion.orden}"
+                    ${Number(
+                        ordenSeleccionado
+                    ) ===
+                        opcion.orden
+                        ? "selected"
+                        : ""
+                    }>
+
+                    ${opcion.texto}
+
+                </option>
+            `;
+            }
+
+
+            return html;
+        }
+
+        function renderizarConfiguracionAprobadoresAdq() {
+
+            if (
+                !tablaConfiguracionAprobadoresAdqBody
+            ) {
+                return;
+            }
+
+
+            tablaConfiguracionAprobadoresAdqBody.innerHTML =
+                "";
+
+
+            for (
+                const etapa
+                of etapasConfiguracionAprobadoresAdq
+            ) {
+
+                const fila =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                fila.dataset.orden =
+                    String(
+                        etapa.orden
+                    );
+
+
+                fila.innerHTML =
+                    `
+                <td>
+
+                    <div class="fw-semibold">
+                        Nivel ${etapa.orden}
+                    </div>
+
+                    <div class="small text-muted">
+                        ${escapeHtmlAdq(etapa.nombreEtapa)}
+                    </div>
+
+                </td>
+
+
+                <td>
+
+                    <select
+                        class="form-select form-select-sm adq-config-responsable"
+                        data-orden="${etapa.orden}">
+
+                        ${crearOpcionesUsuariosAprobadoresAdq(
+                        etapa.usuarioResponsableId
+                    )}
+
+                    </select>
+
+                </td>
+
+
+                <td>
+
+                    <select
+                        class="form-select form-select-sm adq-config-asistente"
+                        data-orden="${etapa.orden}">
+
+                        ${crearOpcionesUsuariosAprobadoresAdq(
+                        etapa.usuarioAsistenteId
+                    )}
+
+                    </select>
+
+                </td>
+
+
+                <td class="text-center">
+
+                    <input
+                        type="checkbox"
+                        class="form-check-input adq-config-copia"
+                        data-orden="${etapa.orden}"
+                        ${etapa.asistenteRecibeCopia
+                        ? "checked"
+                        : ""
+                    } />
+
+                </td>
+
+
+                <td>
+
+                    <select
+                        class="form-select form-select-sm adq-config-copia-desde"
+                        data-orden="${etapa.orden}"
+                        ${etapa.asistenteRecibeCopia
+                        ? ""
+                        : "disabled"
+                    }>
+
+                        ${crearOpcionesCopiaDesdeAdq(
+                        etapa.recibirCopiaDesdeOrden
+                    )}
+
+                    </select>
+
+                </td>
+            `;
+
+
+                tablaConfiguracionAprobadoresAdqBody
+                    .appendChild(
+                        fila
+                    );
+            }
+        }
+
+        async function cargarConfiguracionAprobadoresAdq() {
+
+            if (
+                !tablaConfiguracionAprobadoresAdqBody
+            ) {
+                return;
+            }
+
+
+            tablaConfiguracionAprobadoresAdqBody.innerHTML =
+                `
+            <tr>
+
+                <td colspan="5"
+                    class="text-center py-5">
+
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+
+                    Cargando configuración...
+
+                </td>
+
+            </tr>
+        `;
+
+
+            try {
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=ConfiguracionAprobacionPresupuestal`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await respuesta.json();
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible cargar la configuración."
+                    );
+                }
+
+
+                usuariosConfiguracionAprobadoresAdq =
+                    resultado.usuarios
+                    ??
+                    [];
+
+
+                etapasConfiguracionAprobadoresAdq =
+                    resultado.etapas
+                    ??
+                    [];
+
+
+                renderizarConfiguracionAprobadoresAdq();
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                tablaConfiguracionAprobadoresAdqBody.innerHTML =
+                    `
+                <tr>
+
+                    <td colspan="5"
+                        class="text-center py-5 text-danger">
+
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+
+                        No fue posible cargar la configuración.
+
+                    </td>
+
+                </tr>
+            `;
+
+
+                mostrarAdvertenciaAdq(
+                    "Configuración no disponible",
+                    error.message
+                );
+            }
+        }
+
+        btnConfigurarAprobadoresAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    if (
+                        !modalConfigurarAprobadoresElementAdq
+                    ) {
+                        return;
+                    }
+
+
+                    modalConfigurarAprobadoresAdq =
+                        bootstrap.Modal.getOrCreateInstance(
+                            modalConfigurarAprobadoresElementAdq
+                        );
+
+
+                    modalConfigurarAprobadoresAdq.show();
+
+
+                    await cargarConfiguracionAprobadoresAdq();
+                }
+        );
+
+        tablaConfiguracionAprobadoresAdqBody
+            ?.addEventListener(
+                "change",
+                function (
+                    event
+                ) {
+
+                    const elemento =
+                        event.target;
+
+
+                    if (
+                        !(elemento instanceof HTMLInputElement)
+                        ||
+                        !elemento.classList.contains(
+                            "adq-config-copia"
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    const fila =
+                        elemento.closest(
+                            "tr"
+                        );
+
+
+                    const select =
+                        fila?.querySelector(
+                            ".adq-config-copia-desde"
+                        );
+
+
+                    if (
+                        !(select instanceof HTMLSelectElement)
+                    ) {
+                        return;
+                    }
+
+
+                    select.disabled =
+                        !elemento.checked;
+
+
+                    if (
+                        !elemento.checked
+                    ) {
+                        select.value =
+                            "";
+                    }
+                }
+        );
+
+        function obtenerConfiguracionAprobadoresFormularioAdq() {
+
+            const resultado =
+                [];
+
+
+            const filas =
+                tablaConfiguracionAprobadoresAdqBody
+                    ?.querySelectorAll(
+                        "tr[data-orden]"
+                    )
+                ??
+                [];
+
+
+            for (
+                const fila
+                of filas
+            ) {
+
+                const orden =
+                    Number(
+                        fila.dataset.orden
+                    );
+
+
+                const responsable =
+                    fila.querySelector(
+                        ".adq-config-responsable"
+                    );
+
+
+                const asistente =
+                    fila.querySelector(
+                        ".adq-config-asistente"
+                    );
+
+
+                const copia =
+                    fila.querySelector(
+                        ".adq-config-copia"
+                    );
+
+
+                const copiaDesde =
+                    fila.querySelector(
+                        ".adq-config-copia-desde"
+                    );
+
+
+                resultado.push(
+                    {
+                        orden,
+
+                        usuarioResponsableId:
+                            responsable?.value
+                            ||
+                            null,
+
+                        usuarioAsistenteId:
+                            asistente?.value
+                            ||
+                            null,
+
+                        asistenteRecibeCopia:
+                            copia?.checked
+                            ??
+                            false,
+
+                        recibirCopiaDesdeOrden:
+                            copia?.checked
+                                &&
+                                copiaDesde?.value
+                                ? Number(
+                                    copiaDesde.value
+                                )
+                                : null
+                    }
+                );
+            }
+
+
+            return resultado;
+        }
+
+        btnGuardarConfiguracionAprobadoresAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const etapas =
+                        obtenerConfiguracionAprobadoresFormularioAdq();
+
+
+                    if (
+                        etapas.length !==
+                        4
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Configuración incompleta",
+                            "No fue posible identificar las cuatro etapas."
+                        );
+
+
+                        return;
+                    }
+
+
+                    for (
+                        const etapa
+                        of etapas
+                    ) {
+
+                        if (
+                            !etapa.usuarioResponsableId
+                        ) {
+
+                            mostrarAdvertenciaAdq(
+                                "Responsable requerido",
+                                `Debes seleccionar un responsable para el Nivel ${etapa.orden}.`
+                            );
+
+
+                            return;
+                        }
+
+
+                        if (
+                            etapa.asistenteRecibeCopia
+                            &&
+                            !etapa.usuarioAsistenteId
+                        ) {
+
+                            mostrarAdvertenciaAdq(
+                                "Asistente requerido",
+                                `Selecciona un asistente para el Nivel ${etapa.orden}.`
+                            );
+
+
+                            return;
+                        }
+
+
+                        if (
+                            etapa.asistenteRecibeCopia
+                            &&
+                            !etapa.recibirCopiaDesdeOrden
+                        ) {
+
+                            mostrarAdvertenciaAdq(
+                                "Etapa requerida",
+                                `Selecciona desde qué etapa recibirá copia el asistente del Nivel ${etapa.orden}.`
+                            );
+
+
+                            return;
+                        }
+                    }
+
+
+                    const confirmado =
+                        await confirmarAccionAdq(
+                            {
+                                titulo:
+                                    "Guardar configuración",
+
+                                mensaje:
+                                    `
+                                <p class="mb-0">
+                                    ¿Confirmas la configuración de responsables
+                                    y asistentes del flujo presupuestal?
+                                </p>
+                            `,
+
+                                textoConfirmar:
+                                    "Guardar",
+
+                                textoCancelar:
+                                    "Cancelar",
+
+                                tipo:
+                                    "primary",
+
+                                icono:
+                                    "bi-floppy"
+                            }
+                        );
+
+
+                    if (
+                        !confirmado
+                    ) {
+                        return;
+                    }
+
+
+                    const htmlOriginal =
+                        btnGuardarConfiguracionAprobadoresAdq
+                            .innerHTML;
+
+
+                    btnGuardarConfiguracionAprobadoresAdq.disabled =
+                        true;
+
+
+                    btnGuardarConfiguracionAprobadoresAdq.innerHTML =
+                        `
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Guardando...
+                `;
+
+
+                    try {
+
+                        const token =
+                            document.querySelector(
+                                'input[name="__RequestVerificationToken"]'
+                            )
+                                ?.value
+                            ??
+                            "";
+
+
+                        const respuesta =
+                            await fetch(
+                                `${window.location.pathname}?handler=GuardarConfiguracionAprobacionPresupuestal`,
+                                {
+                                    method:
+                                        "POST",
+
+                                    headers:
+                                    {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "RequestVerificationToken":
+                                            token,
+
+                                        "X-Requested-With":
+                                            "XMLHttpRequest"
+                                    },
+
+                                    body:
+                                        JSON.stringify(
+                                            {
+                                                etapas
+                                            }
+                                        )
+                                }
+                            );
+
+
+                        const resultado =
+                            await respuesta.json();
+
+
+                        if (
+                            !respuesta.ok
+                            ||
+                            !resultado?.success
+                        ) {
+
+                            throw new Error(
+                                resultado?.message
+                                ??
+                                "No fue posible guardar la configuración."
+                            );
+                        }
+
+
+                        modalConfigurarAprobadoresAdq
+                            ?.hide();
+
+
+                        mostrarAdvertenciaAdq(
+                            "Configuración guardada",
+                            resultado.message
+                            ??
+                            "La configuración fue guardada correctamente."
+                        );
+
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        console.error(
+                            error
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible guardar",
+                            error.message
+                            ??
+                            "Ocurrió un error al guardar la configuración."
+                        );
+
+                    }
+                    finally {
+
+                        btnGuardarConfiguracionAprobadoresAdq.disabled =
+                            false;
+
+
+                        btnGuardarConfiguracionAprobadoresAdq.innerHTML =
+                            htmlOriginal;
+                    }
+                }
+            );
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const botonVer =
+                    event.target.closest(
+                        ".btnVerSeguimientoPresupuestalAdq"
+                    );
+
+
+                if (
+                    botonVer
+                ) {
+
+                    const solicitudId =
+                        Number(
+                            botonVer.dataset.solicitudId
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <= 0
+                    ) {
+                        return;
+                    }
+
+
+                    const botonSolicitud =
+                        document.querySelector(
+                            `.btnVerSolicitudAdq[data-id="${solicitudId}"]`
+                        );
+
+
+                    botonSolicitud?.click();
+
+
+                    return;
+                }
+
+
+                const botonChat =
+                    event.target.closest(
+                        ".btnChatSeguimientoPresupuestalAdq"
+                    );
+
+
+                if (
+                    botonChat
+                ) {
+
+                    const solicitudId =
+                        Number(
+                            botonChat.dataset.solicitudId
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <= 0
+                    ) {
+                        return;
+                    }
+
+
+                    const botonSolicitud =
+                        document.querySelector(
+                            `.btnVerSolicitudAdq[data-id="${solicitudId}"]`
+                        );
+
+
+                    if (
+                        !botonSolicitud
+                    ) {
+                        return;
+                    }
+
+
+                    botonSolicitud.click();
+
+
+                    setTimeout(
+                        function () {
+
+                            const tabSeguimiento =
+                                document.querySelector(
+                                    "#tabSeguimientoAdq"
+                                );
+
+
+                            tabSeguimiento?.click();
+
+                        },
+                        350
+                    );
+                }
+            }
+        );
 
         // =========================================================
         // TEXTO DEL NIVEL PRESUPUESTAL

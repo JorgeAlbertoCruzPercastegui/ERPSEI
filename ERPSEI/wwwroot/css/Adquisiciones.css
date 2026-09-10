@@ -3589,3 +3589,29 @@ body.module-main-theme .modal.show {
     border-color: rgba(13, 110, 253, .35);
     box-shadow: 0 0 0 3px rgba(13, 110, 253, .06);
 }
+
+#seccionAprobacionesPresupuestalesAdq .adq-panel-header {
+    padding-bottom: 1rem;
+}
+
+#seccionAprobacionesPresupuestalesAdq .adq-assigned-counter {
+    white-space: nowrap;
+}
+
+#modalConfirmacionDecisionPresupuestalAdq {
+    z-index: 4000010 !important;
+}
+
+#modalResultadoDecisionPresupuestalAdq {
+    z-index: 4000020 !important;
+}
+
+body:has(#modalConfirmacionDecisionPresupuestalAdq.show)
+.modal-backdrop:last-of-type {
+    z-index: 4000005 !important;
+}
+
+body:has(#modalResultadoDecisionPresupuestalAdq.show)
+.modal-backdrop:last-of-type {
+    z-index: 4000015 !important;
+}

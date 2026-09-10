@@ -373,6 +373,19 @@ namespace ERPSEI.Data
             set;
         }
 
+        public DbSet<AdqConfiguracionAprobacionPresupuestal>AdqConfiguracionAprobacionPresupuestal
+        {
+            get;
+            set;
+        }
+
+        public DbSet<AdqAprobacionPresupuestalObservador>
+            AdqAprobacionesPresupuestalesObservadores
+        {
+            get;
+            set;
+        }
+
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -1981,6 +1994,48 @@ namespace ERPSEI.Data
             .OnDelete(
                 DeleteBehavior.Restrict
             );
+
+            b
+                .Entity<AdqAprobacionPresupuestalObservador>()
+                .HasOne(
+                    x =>
+                        x.AprobacionPresupuestal
+                )
+                .WithMany(
+                    x =>
+                        x.Observadores
+                )
+                .HasForeignKey(
+                    x =>
+                        x.AprobacionPresupuestalId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+            b
+            .Entity<AdqConfiguracionAprobacionPresupuestal>()
+            .HasIndex(
+                x =>
+                    new
+                    {
+                        x.Orden,
+                        x.Activo,
+                        x.Eliminado
+                    }
+            );
+
+
+            b
+                .Entity<AdqAprobacionPresupuestalObservador>()
+                .HasIndex(
+                    x =>
+                        new
+                        {
+                            x.AprobacionPresupuestalId,
+                            x.UsuarioId
+                        }
+                );
 
             b
             .Entity<AdqAprobacionPresupuestalDetalle>()
