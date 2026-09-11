@@ -383,6 +383,83 @@ document.addEventListener(
                 "modalResultadoDecisionPresupuestalAdq"
             );
 
+        const modalFirmaDecisionPresupuestalElementAdq =
+            document.getElementById(
+                "modalFirmaDecisionPresupuestalAdq"
+            );
+
+
+        const folioFirmaDecisionPresupuestalAdq =
+            document.getElementById(
+                "folioFirmaDecisionPresupuestalAdq"
+            );
+
+
+        const etapaFirmaDecisionPresupuestalAdq =
+            document.getElementById(
+                "etapaFirmaDecisionPresupuestalAdq"
+            );
+
+
+        const decisionFirmaDecisionPresupuestalAdq =
+            document.getElementById(
+                "decisionFirmaDecisionPresupuestalAdq"
+            );
+
+
+        const cargandoFirmasDecisionPresupuestalAdq =
+            document.getElementById(
+                "cargandoFirmasDecisionPresupuestalAdq"
+            );
+
+
+        const sinFirmasDecisionPresupuestalAdq =
+            document.getElementById(
+                "sinFirmasDecisionPresupuestalAdq"
+            );
+
+
+        const firmasDecisionPresupuestalAdq =
+            document.getElementById(
+                "firmasDecisionPresupuestalAdq"
+            );
+
+
+        const firmaSeleccionadaDecisionPresupuestalAdq =
+            document.getElementById(
+                "firmaSeleccionadaDecisionPresupuestalAdq"
+            );
+
+
+        const pinDecisionPresupuestalAdq =
+            document.getElementById(
+                "pinDecisionPresupuestalAdq"
+            );
+
+
+        const btnVerPinDecisionPresupuestalAdq =
+            document.getElementById(
+                "btnVerPinDecisionPresupuestalAdq"
+            );
+
+
+        const btnFirmarDecisionPresupuestalAdq =
+            document.getElementById(
+                "btnFirmarDecisionPresupuestalAdq"
+            );
+
+
+        const textoBtnFirmarDecisionPresupuestalAdq =
+            document.getElementById(
+                "textoBtnFirmarDecisionPresupuestalAdq"
+            );
+
+
+        const mensajeErrorFirmaDecisionPresupuestalAdq =
+            document.getElementById(
+                "mensajeErrorFirmaDecisionPresupuestalAdq"
+            );
+
         const tituloConfirmacionDecisionPresupuestalAdq =
             document.getElementById(
                 "tituloConfirmacionDecisionPresupuestalAdq"
@@ -515,6 +592,476 @@ document.addEventListener(
                     modalConfirmacionDecisionPresupuestalElementAdq
                 )
                 .show();
+        }
+
+        function actualizarEstadoBotonFirmaDecisionAdq() {
+
+            if (
+                !btnFirmarDecisionPresupuestalAdq
+            ) {
+                return;
+            }
+
+
+            const firmaId =
+                Number(
+                    firmaSeleccionadaDecisionPresupuestalAdq
+                        ?.value
+                    ??
+                    0
+                );
+
+
+            const pin =
+                pinDecisionPresupuestalAdq
+                    ?.value
+                    ?.trim()
+                ??
+                "";
+
+
+            btnFirmarDecisionPresupuestalAdq.disabled =
+                firmaId <= 0
+                ||
+                pin.length < 4;
+        }
+
+
+        function seleccionarFirmaDecisionAdq(
+            firmaId
+        ) {
+
+            if (
+                !firmaSeleccionadaDecisionPresupuestalAdq
+            ) {
+                return;
+            }
+
+
+            firmaSeleccionadaDecisionPresupuestalAdq.value =
+                String(
+                    firmaId
+                );
+
+
+            firmasDecisionPresupuestalAdq
+                ?.querySelectorAll(
+                    ".adq-signature-approval-option"
+                )
+                .forEach(
+                    function (
+                        elemento
+                    ) {
+
+                        elemento.classList.toggle(
+                            "is-selected",
+                            Number(
+                                elemento.dataset.firmaId
+                            ) ===
+                            Number(
+                                firmaId
+                            )
+                        );
+                    }
+                );
+
+
+            actualizarEstadoBotonFirmaDecisionAdq();
+        }
+
+
+        function renderizarFirmasDecisionAdq(
+            firmas
+        ) {
+
+            if (
+                !firmasDecisionPresupuestalAdq
+            ) {
+                return;
+            }
+
+
+            firmasDecisionPresupuestalAdq.innerHTML =
+                "";
+
+
+            if (
+                !Array.isArray(
+                    firmas
+                )
+                ||
+                firmas.length ===
+                0
+            ) {
+
+                firmasDecisionPresupuestalAdq.classList.add(
+                    "d-none"
+                );
+
+                sinFirmasDecisionPresupuestalAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+                return;
+            }
+
+
+            sinFirmasDecisionPresupuestalAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            firmasDecisionPresupuestalAdq.classList.remove(
+                "d-none"
+            );
+
+
+            firmas.forEach(
+                function (
+                    firma
+                ) {
+
+                    const tarjeta =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    tarjeta.className =
+                        "adq-signature-approval-option";
+
+
+                    tarjeta.dataset.firmaId =
+                        String(
+                            firma.id
+                        );
+
+
+                    tarjeta.innerHTML = `
+                <div class="adq-signature-approval-image">
+                    <img src="${firma.rutaArchivo}"
+                         alt="Firma ${firma.nombreFirma}">
+                </div>
+
+                <div class="adq-signature-approval-name">
+                    ${firma.nombreFirma}
+                </div>
+
+                <div class="adq-signature-approval-meta">
+                    ${firma.tipoFirma}
+                    ${firma.esPredeterminada ? " · Predeterminada" : ""}
+                </div>
+            `;
+
+
+                    tarjeta.addEventListener(
+                        "click",
+                        function () {
+
+                            seleccionarFirmaDecisionAdq(
+                                firma.id
+                            );
+                        }
+                    );
+
+
+                    firmasDecisionPresupuestalAdq.appendChild(
+                        tarjeta
+                    );
+                }
+            );
+
+
+            const predeterminada =
+                firmas.find(
+                    function (
+                        firma
+                    ) {
+
+                        return firma.esPredeterminada;
+                    }
+                );
+
+
+            if (
+                predeterminada
+            ) {
+
+                seleccionarFirmaDecisionAdq(
+                    predeterminada.id
+                );
+            }
+            else if (
+                firmas.length >
+                0
+            ) {
+
+                seleccionarFirmaDecisionAdq(
+                    firmas[0].id
+                );
+            }
+        }
+
+
+        async function cargarFirmasDecisionAdq() {
+
+            cargandoFirmasDecisionPresupuestalAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            firmasDecisionPresupuestalAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            sinFirmasDecisionPresupuestalAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "?handler=MisFirmas",
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await response.json();
+
+
+                if (
+                    !response.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible cargar tus firmas."
+                    );
+                }
+
+
+                if (
+                    !resultado.tienePin
+                ) {
+
+                    throw new Error(
+                        "Debes configurar tu PIN desde Mis firmas antes de autorizar una aprobación."
+                    );
+                }
+
+
+                const firmas =
+                    Array.isArray(
+                        resultado.ultimasFirmas
+                    )
+                        &&
+                        resultado.ultimasFirmas.length >
+                        0
+
+                        ? resultado.ultimasFirmas
+
+                        : resultado.firmas;
+
+
+                renderizarFirmasDecisionAdq(
+                    firmas
+                );
+
+            }
+            catch (
+            error
+            ) {
+
+                if (
+                    mensajeErrorFirmaDecisionPresupuestalAdq
+                ) {
+
+                    mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                        error.message
+                        ??
+                        "No fue posible cargar tus firmas.";
+
+
+                    mensajeErrorFirmaDecisionPresupuestalAdq.classList.remove(
+                        "d-none"
+                    );
+                }
+            }
+            finally {
+
+                cargandoFirmasDecisionPresupuestalAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+            }
+        }
+
+
+        async function abrirFirmaDecisionPresupuestalAdq() {
+
+            const datos =
+                decisionPresupuestalPendienteAdq;
+
+
+            if (
+                !datos
+                ||
+                Number(
+                    datos.detalleId
+                ) <= 0
+            ) {
+                return;
+            }
+
+
+            if (
+                firmaSeleccionadaDecisionPresupuestalAdq
+            ) {
+
+                firmaSeleccionadaDecisionPresupuestalAdq.value =
+                    "";
+            }
+
+
+            if (
+                pinDecisionPresupuestalAdq
+            ) {
+
+                pinDecisionPresupuestalAdq.value =
+                    "";
+
+                pinDecisionPresupuestalAdq.type =
+                    "password";
+            }
+
+
+            if (
+                mensajeErrorFirmaDecisionPresupuestalAdq
+            ) {
+
+                mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                    "";
+
+                mensajeErrorFirmaDecisionPresupuestalAdq.classList.add(
+                    "d-none"
+                );
+            }
+
+
+            if (
+                folioFirmaDecisionPresupuestalAdq
+            ) {
+
+                folioFirmaDecisionPresupuestalAdq.textContent =
+                    datos.folio
+                    ??
+                    "—";
+            }
+
+
+            if (
+                etapaFirmaDecisionPresupuestalAdq
+            ) {
+
+                etapaFirmaDecisionPresupuestalAdq.textContent =
+                    datos.etapa
+                    ??
+                    "—";
+            }
+
+
+            const esAprobacion =
+                datos.decision ===
+                "APROBAR";
+
+
+            if (
+                decisionFirmaDecisionPresupuestalAdq
+            ) {
+
+                decisionFirmaDecisionPresupuestalAdq.textContent =
+                    esAprobacion
+                        ? "APROBAR"
+                        : "DECLINAR";
+
+
+                decisionFirmaDecisionPresupuestalAdq.className =
+                    esAprobacion
+                        ? "badge rounded-pill text-bg-success"
+                        : "badge rounded-pill text-bg-danger";
+            }
+
+
+            if (
+                textoBtnFirmarDecisionPresupuestalAdq
+            ) {
+
+                textoBtnFirmarDecisionPresupuestalAdq.textContent =
+                    esAprobacion
+                        ? "Firmar y aprobar"
+                        : "Firmar y declinar";
+            }
+
+
+            if (
+                btnFirmarDecisionPresupuestalAdq
+            ) {
+
+                btnFirmarDecisionPresupuestalAdq.className =
+                    esAprobacion
+                        ? "btn btn-success"
+                        : "btn btn-danger";
+
+                btnFirmarDecisionPresupuestalAdq.disabled =
+                    true;
+            }
+
+
+            bootstrap.Modal
+                .getInstance(
+                    modalConfirmacionDecisionPresupuestalElementAdq
+                )
+                ?.hide();
+
+
+            bootstrap.Modal
+                .getOrCreateInstance(
+                    modalFirmaDecisionPresupuestalElementAdq
+                )
+                .show();
+
+
+            await cargarFirmasDecisionAdq();
+
+
+            actualizarEstadoBotonFirmaDecisionAdq();
         }
 
         // =========================================================
@@ -1698,6 +2245,56 @@ document.addEventListener(
                 "click",
                 async function () {
 
+                    await abrirFirmaDecisionPresupuestalAdq();
+
+                }
+        );
+
+        pinDecisionPresupuestalAdq
+            ?.addEventListener(
+                "input",
+                actualizarEstadoBotonFirmaDecisionAdq
+        );
+
+        btnVerPinDecisionPresupuestalAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        !pinDecisionPresupuestalAdq
+                    ) {
+                        return;
+                    }
+
+
+                    const mostrando =
+                        pinDecisionPresupuestalAdq.type ===
+                        "text";
+
+
+                    pinDecisionPresupuestalAdq.type =
+                        mostrando
+                            ? "password"
+                            : "text";
+
+
+                    btnVerPinDecisionPresupuestalAdq.innerHTML =
+                        mostrando
+                            ? `<i class="bi bi-eye"></i>`
+                            : `<i class="bi bi-eye-slash"></i>`;
+                }
+        );
+
+        // =========================================================
+        // FIRMAR Y REGISTRAR DECISIÓN PRESUPUESTAL
+        // =========================================================
+
+        btnFirmarDecisionPresupuestalAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
                     const datos =
                         decisionPresupuestalPendienteAdq;
 
@@ -1709,25 +2306,155 @@ document.addEventListener(
                             datos.detalleId
                         ) <= 0
                     ) {
+
                         return;
                     }
 
 
+                    const firmaId =
+                        Number(
+                            firmaSeleccionadaDecisionPresupuestalAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    const pin =
+                        pinDecisionPresupuestalAdq
+                            ?.value
+                            ?.trim()
+                        ??
+                        "";
+
+
+                    const comentario =
+                        document.getElementById(
+                            "comentarioDecisionPresupuestalAdq"
+                        )
+                            ?.value
+                            ?.trim()
+                        ??
+                        "";
+
+
+                    // =====================================================
+                    // VALIDACIONES FRONTEND
+                    // =====================================================
+
+                    if (
+                        firmaId <= 0
+                    ) {
+
+                        if (
+                            mensajeErrorFirmaDecisionPresupuestalAdq
+                        ) {
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                                "Debes seleccionar una firma para continuar.";
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.classList.remove(
+                                "d-none"
+                            );
+                        }
+
+
+                        return;
+                    }
+
+
+                    if (
+                        pin.length < 4
+                    ) {
+
+                        if (
+                            mensajeErrorFirmaDecisionPresupuestalAdq
+                        ) {
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                                "Ingresa tu PIN de autorización.";
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.classList.remove(
+                                "d-none"
+                            );
+                        }
+
+
+                        pinDecisionPresupuestalAdq
+                            ?.focus();
+
+
+                        return;
+                    }
+
+
+                    if (
+                        datos.decision ===
+                        "DECLINAR"
+                        &&
+                        !comentario
+                    ) {
+
+                        if (
+                            mensajeErrorFirmaDecisionPresupuestalAdq
+                        ) {
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                                "Debes indicar el motivo de la declinación.";
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.classList.remove(
+                                "d-none"
+                            );
+                        }
+
+
+                        return;
+                    }
+
+
+                    // =====================================================
+                    // LIMPIAR MENSAJE ANTERIOR
+                    // =====================================================
+
+                    if (
+                        mensajeErrorFirmaDecisionPresupuestalAdq
+                    ) {
+
+                        mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                            "";
+
+                        mensajeErrorFirmaDecisionPresupuestalAdq.classList.add(
+                            "d-none"
+                        );
+                    }
+
+
+                    const textoOriginalBoton =
+                        btnFirmarDecisionPresupuestalAdq.innerHTML;
+
+
                     try {
 
-                        btnConfirmarDecisionPresupuestalAdq.disabled =
+                        // =================================================
+                        // BLOQUEAR BOTÓN
+                        // =================================================
+
+                        btnFirmarDecisionPresupuestalAdq.disabled =
                             true;
 
 
-                        const comentario =
-                            document.getElementById(
-                                "comentarioDecisionPresupuestalAdq"
-                            )
-                                ?.value
-                                ?.trim()
-                            ??
-                            "";
+                        btnFirmarDecisionPresupuestalAdq.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2"
+                          role="status"
+                          aria-hidden="true">
+                    </span>
+                    Procesando autorización...
+                `;
 
+
+                        // =================================================
+                        // PREPARAR FORM DATA
+                        // =================================================
 
                         const formData =
                             new FormData();
@@ -1740,16 +2467,36 @@ document.addEventListener(
                             )
                         );
 
+
                         formData.append(
                             "decision",
                             datos.decision
                         );
+
 
                         formData.append(
                             "comentario",
                             comentario
                         );
 
+
+                        formData.append(
+                            "firmaId",
+                            String(
+                                firmaId
+                            )
+                        );
+
+
+                        formData.append(
+                            "pin",
+                            pin
+                        );
+
+
+                        // =================================================
+                        // ANTIFORGERY TOKEN
+                        // =================================================
 
                         const token =
                             document.querySelector(
@@ -1759,6 +2506,10 @@ document.addEventListener(
                             ??
                             "";
 
+
+                        // =================================================
+                        // ENVIAR DECISIÓN
+                        // =================================================
 
                         const response =
                             await fetch(
@@ -1782,9 +2533,26 @@ document.addEventListener(
                             );
 
 
-                        const resultado =
-                            await response.json();
+                        let resultado =
+                            null;
 
+
+                        try {
+
+                            resultado =
+                                await response.json();
+
+                        }
+                        catch {
+
+                            resultado =
+                                null;
+                        }
+
+
+                        // =================================================
+                        // ERROR DEL BACKEND
+                        // =================================================
 
                         if (
                             !response.ok
@@ -1792,30 +2560,104 @@ document.addEventListener(
                             !resultado?.success
                         ) {
 
-                            throw new Error(
+                            const mensaje =
                                 resultado?.message
                                 ??
-                                "No fue posible registrar la decisión."
-                            );
+                                "No fue posible registrar la autorización.";
+
+
+                            if (
+                                mensajeErrorFirmaDecisionPresupuestalAdq
+                            ) {
+
+                                mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                                    mensaje;
+
+                                mensajeErrorFirmaDecisionPresupuestalAdq.classList.remove(
+                                    "d-none"
+                                );
+                            }
+
+
+                            /*
+                             * Nunca conservamos el PIN después de
+                             * un intento fallido.
+                             */
+                            if (
+                                pinDecisionPresupuestalAdq
+                            ) {
+
+                                pinDecisionPresupuestalAdq.value =
+                                    "";
+
+                                pinDecisionPresupuestalAdq.type =
+                                    "password";
+
+                                pinDecisionPresupuestalAdq.focus();
+                            }
+
+
+                            if (
+                                btnVerPinDecisionPresupuestalAdq
+                            ) {
+
+                                btnVerPinDecisionPresupuestalAdq.innerHTML =
+                                    `<i class="bi bi-eye"></i>`;
+                            }
+
+
+                            actualizarEstadoBotonFirmaDecisionAdq();
+
+
+                            return;
                         }
 
 
+                        // =================================================
+                        // AUTORIZACIÓN EXITOSA
+                        // =================================================
+
                         bootstrap.Modal
                             .getInstance(
-                                modalConfirmacionDecisionPresupuestalElementAdq
+                                modalFirmaDecisionPresupuestalElementAdq
                             )
                             ?.hide();
+
+
+                        // Limpiar PIN inmediatamente.
+
+                        if (
+                            pinDecisionPresupuestalAdq
+                        ) {
+
+                            pinDecisionPresupuestalAdq.value =
+                                "";
+
+                            pinDecisionPresupuestalAdq.type =
+                                "password";
+                        }
 
 
                         if (
                             tituloResultadoDecisionPresupuestalAdq
                         ) {
 
-                            tituloResultadoDecisionPresupuestalAdq.textContent =
+                            if (
                                 datos.decision ===
-                                    "APROBAR"
-                                    ? "Solicitud aprobada"
-                                    : "Solicitud declinada";
+                                "APROBAR"
+                            ) {
+
+                                tituloResultadoDecisionPresupuestalAdq.textContent =
+                                    resultado.finalizada
+                                        ? "Presupuesto aprobado"
+                                        : "Etapa aprobada";
+
+                            }
+                            else {
+
+                                tituloResultadoDecisionPresupuestalAdq.textContent =
+                                    "Solicitud declinada";
+                            }
                         }
 
 
@@ -1829,11 +2671,15 @@ document.addEventListener(
                                 (
                                     datos.decision ===
                                         "APROBAR"
-                                        ? "La aprobación se registró correctamente."
-                                        : "La declinación se registró correctamente."
+                                        ? "La autorización fue registrada correctamente."
+                                        : "La declinación fue registrada correctamente."
                                 );
                         }
 
+
+                        // =================================================
+                        // MOSTRAR RESULTADO
+                        // =================================================
 
                         bootstrap.Modal
                             .getOrCreateInstance(
@@ -1841,6 +2687,10 @@ document.addEventListener(
                             )
                             .show();
 
+
+                        // =================================================
+                        // TEMPORIZADOR
+                        // =================================================
 
                         if (
                             temporizadorResultadoPresupuestalAdq
@@ -1871,21 +2721,119 @@ document.addEventListener(
                     error
                     ) {
 
-                        mostrarAdvertenciaAdq(
-                            "No fue posible completar la acción",
-                            error.message
-                            ??
-                            "Ocurrió un error al registrar la decisión."
+                        console.error(
+                            error
                         );
+
+
+                        if (
+                            mensajeErrorFirmaDecisionPresupuestalAdq
+                        ) {
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                                error?.message
+                                ??
+                                "Ocurrió un error al registrar la autorización.";
+
+                            mensajeErrorFirmaDecisionPresupuestalAdq.classList.remove(
+                                "d-none"
+                            );
+                        }
+
+
+                        if (
+                            pinDecisionPresupuestalAdq
+                        ) {
+
+                            pinDecisionPresupuestalAdq.value =
+                                "";
+
+                            pinDecisionPresupuestalAdq.focus();
+                        }
 
                     }
                     finally {
 
-                        btnConfirmarDecisionPresupuestalAdq.disabled =
-                            false;
+                        btnFirmarDecisionPresupuestalAdq.innerHTML =
+                            textoOriginalBoton;
+
+
+                        actualizarEstadoBotonFirmaDecisionAdq();
+
                     }
+
                 }
         );
+
+        modalFirmaDecisionPresupuestalElementAdq
+            ?.addEventListener(
+                "hidden.bs.modal",
+                function () {
+
+                    if (
+                        pinDecisionPresupuestalAdq
+                    ) {
+
+                        pinDecisionPresupuestalAdq.value =
+                            "";
+
+                        pinDecisionPresupuestalAdq.type =
+                            "password";
+                    }
+
+
+                    if (
+                        btnVerPinDecisionPresupuestalAdq
+                    ) {
+
+                        btnVerPinDecisionPresupuestalAdq.innerHTML =
+                            `<i class="bi bi-eye"></i>`;
+                    }
+
+
+                    if (
+                        firmaSeleccionadaDecisionPresupuestalAdq
+                    ) {
+
+                        firmaSeleccionadaDecisionPresupuestalAdq.value =
+                            "";
+                    }
+
+
+                    firmasDecisionPresupuestalAdq
+                        ?.querySelectorAll(
+                            ".adq-signature-approval-option"
+                        )
+                        .forEach(
+                            function (
+                                elemento
+                            ) {
+
+                                elemento.classList.remove(
+                                    "is-selected"
+                                );
+
+                            }
+                        );
+
+
+                    if (
+                        mensajeErrorFirmaDecisionPresupuestalAdq
+                    ) {
+
+                        mensajeErrorFirmaDecisionPresupuestalAdq.textContent =
+                            "";
+
+                        mensajeErrorFirmaDecisionPresupuestalAdq.classList.add(
+                            "d-none"
+                        );
+                    }
+
+
+                    actualizarEstadoBotonFirmaDecisionAdq();
+
+                }
+            );
 
         modalResultadoDecisionPresupuestalElementAdq
             ?.addEventListener(
@@ -12546,6 +13494,11 @@ document.addEventListener(
                     '[name="Input.Titulo"]'
                 );
 
+            const tipoDocumento =
+                formulario.querySelector(
+                    '[name="Input.TipoDocumentoSolicitud"]:checked'
+                );
+
             const area =
                 formulario.querySelector(
                     '[name="Input.AreaId"]'
@@ -12564,6 +13517,7 @@ document.addEventListener(
 
             if (
                 !titulo?.value.trim() ||
+                !tipoDocumento?.value ||
                 !area?.value ||
                 area.value === "0" ||
                 !descripcion?.value.trim() ||
@@ -13620,6 +14574,26 @@ document.addEventListener(
                         '[name="Input.Titulo"]'
                     ).value =
                         solicitud.titulo;
+
+                    const tipoDocumentoSolicitudAdq =
+                        solicitud.tipoDocumentoSolicitud
+                        ??
+                        "Cotizaciones";
+
+
+                    document.querySelectorAll(
+                        '[name="Input.TipoDocumentoSolicitud"]'
+                    )
+                        .forEach(
+                            function (
+                                radio
+                            ) {
+
+                                radio.checked =
+                                    radio.value ===
+                                    tipoDocumentoSolicitudAdq;
+                            }
+                        );
 
 
                     document.querySelector(
@@ -15284,6 +16258,2543 @@ document.addEventListener(
                 }
             );
 
+        // =========================================================
+        // MIS FIRMAS - APROBACIÓN PRESUPUESTAL
+        // =========================================================
+
+        const btnMisFirmasAdq =
+            document.getElementById(
+                "btnMisFirmasAdq"
+            );
+
+
+        const modalMisFirmasElementAdq =
+            document.getElementById(
+                "modalMisFirmasAdq"
+            );
+
+
+        const modalPinFirmaElementAdq =
+            document.getElementById(
+                "modalPinFirmaAdq"
+            );
+
+
+        const cargandoMisFirmasAdq =
+            document.getElementById(
+                "cargandoMisFirmasAdq"
+            );
+
+
+        const contenidoMisFirmasAdq =
+            document.getElementById(
+                "contenidoMisFirmasAdq"
+            );
+
+
+        const badgeEstadoPinFirmaAdq =
+            document.getElementById(
+                "badgeEstadoPinFirmaAdq"
+            );
+
+
+        const textoEstadoPinFirmaAdq =
+            document.getElementById(
+                "textoEstadoPinFirmaAdq"
+            );
+
+
+        const btnConfigurarPinFirmaAdq =
+            document.getElementById(
+                "btnConfigurarPinFirmaAdq"
+            );
+
+
+        const ultimasFirmasAdq =
+            document.getElementById(
+                "ultimasFirmasAdq"
+            );
+
+
+        const listaFirmasUsuarioAdq =
+            document.getElementById(
+                "listaFirmasUsuarioAdq"
+            );
+
+
+        const btnNuevaFirmaAdq =
+            document.getElementById(
+                "btnNuevaFirmaAdq"
+            );
+
+
+        const btnCancelarNuevaFirmaAdq =
+            document.getElementById(
+                "btnCancelarNuevaFirmaAdq"
+            );
+
+
+        const seccionNuevaFirmaAdq =
+            document.getElementById(
+                "seccionNuevaFirmaAdq"
+            );
+
+
+        const nombreFirmaAdq =
+            document.getElementById(
+                "nombreFirmaAdq"
+            );
+
+
+        const panelFirmaDibujadaAdq =
+            document.getElementById(
+                "panelFirmaDibujadaAdq"
+            );
+
+
+        const panelFirmaArchivoAdq =
+            document.getElementById(
+                "panelFirmaArchivoAdq"
+            );
+
+
+        const panelFirmaTipograficaAdq =
+            document.getElementById(
+                "panelFirmaTipograficaAdq"
+            );
+
+
+        const canvasFirmaAdq =
+            document.getElementById(
+                "canvasFirmaAdq"
+            );
+
+
+        const btnLimpiarFirmaCanvasAdq =
+            document.getElementById(
+                "btnLimpiarFirmaCanvasAdq"
+            );
+
+
+        const archivoFirmaAdq =
+            document.getElementById(
+                "archivoFirmaAdq"
+            );
+
+
+        const previewArchivoFirmaAdq =
+            document.getElementById(
+                "previewArchivoFirmaAdq"
+            );
+
+
+        const imagenPreviewFirmaAdq =
+            document.getElementById(
+                "imagenPreviewFirmaAdq"
+            );
+
+
+        const propuestasFirmaTipograficaAdq =
+            document.getElementById(
+                "propuestasFirmaTipograficaAdq"
+            );
+
+
+        const firmaPredeterminadaAdq =
+            document.getElementById(
+                "firmaPredeterminadaAdq"
+            );
+
+
+        const btnGuardarFirmaUsuarioAdq =
+            document.getElementById(
+                "btnGuardarFirmaUsuarioAdq"
+            );
+
+
+        const pinFirmaAdq =
+            document.getElementById(
+                "pinFirmaAdq"
+            );
+
+
+        const confirmarPinFirmaAdq =
+            document.getElementById(
+                "confirmarPinFirmaAdq"
+            );
+
+
+        const btnGuardarPinFirmaAdq =
+            document.getElementById(
+                "btnGuardarPinFirmaAdq"
+            );
+
+
+        let modalMisFirmasAdq =
+            null;
+
+
+        let modalPinFirmaAdq =
+            null;
+
+
+        let tipoFirmaActualAdq =
+            "Dibujada";
+
+
+        let firmaArchivoBase64Adq =
+            "";
+
+
+        let firmaTipograficaBase64Adq =
+            "";
+
+
+        let nombreUsuarioFirmaAdq =
+            "";
+
+
+        let canvasFirmaContextoAdq =
+            null;
+
+
+        let dibujandoFirmaAdq =
+            false;
+
+
+        let firmaCanvasTieneContenidoAdq =
+            false;
+
+
+        // =========================================================
+        // TOKEN ANTIFORGERY
+        // =========================================================
+
+        function obtenerTokenFirmaAdq() {
+
+            return document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            )
+                ?.value
+                ??
+                "";
+        }
+
+
+        // =========================================================
+        // ESCAPAR HTML
+        // =========================================================
+
+        function escapeHtmlFirmaAdq(
+            valor
+        ) {
+
+            return String(
+                valor
+                ??
+                ""
+            )
+                .replaceAll(
+                    "&",
+                    "&amp;"
+                )
+                .replaceAll(
+                    "<",
+                    "&lt;"
+                )
+                .replaceAll(
+                    ">",
+                    "&gt;"
+                )
+                .replaceAll(
+                    '"',
+                    "&quot;"
+                )
+                .replaceAll(
+                    "'",
+                    "&#039;"
+                );
+        }
+
+
+        // =========================================================
+        // FORMATEAR FECHA
+        // =========================================================
+
+        function formatearFechaFirmaAdq(
+            valor
+        ) {
+
+            if (
+                !valor
+            ) {
+                return "Sin uso";
+            }
+
+
+            const fecha =
+                new Date(
+                    valor
+                );
+
+
+            if (
+                Number.isNaN(
+                    fecha.getTime()
+                )
+            ) {
+                return "Sin uso";
+            }
+
+
+            return fecha.toLocaleString(
+                "es-MX",
+                {
+                    dateStyle:
+                        "medium",
+
+                    timeStyle:
+                        "short"
+                }
+            );
+        }
+
+
+        // =========================================================
+        // CARGAR MIS FIRMAS
+        // =========================================================
+
+        async function cargarMisFirmasAdq() {
+
+            if (
+                !modalMisFirmasElementAdq
+            ) {
+                return;
+            }
+
+
+            cargandoMisFirmasAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            contenidoMisFirmasAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            try {
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=MisFirmas`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await respuesta.json();
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible cargar tus firmas."
+                    );
+                }
+
+
+                nombreUsuarioFirmaAdq =
+                    resultado.nombreUsuario
+                    ??
+                    "";
+
+
+                actualizarEstadoPinFirmaAdq(
+                    Boolean(
+                        resultado.tienePin
+                    )
+                );
+
+
+                renderizarFirmasUsuarioAdq(
+                    Array.isArray(
+                        resultado.firmas
+                    )
+                        ? resultado.firmas
+                        : []
+                );
+
+
+                renderizarUltimasFirmasAdq(
+                    Array.isArray(
+                        resultado.ultimasFirmas
+                    )
+                        ? resultado.ultimasFirmas
+                        : []
+                );
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                mostrarAdvertenciaAdq(
+                    "No fue posible cargar tus firmas",
+                    error.message
+                    ??
+                    "Ocurrió un error al consultar tus firmas."
+                );
+            }
+            finally {
+
+                cargandoMisFirmasAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+
+
+                contenidoMisFirmasAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+            }
+        }
+
+
+        function actualizarEstadoPinFirmaAdq(
+            tienePin
+        ) {
+
+            const btnAyudaCambioPinFirmaAdq =
+                document.getElementById(
+                    "btnAyudaCambioPinFirmaAdq"
+                );
+
+
+            if (
+                badgeEstadoPinFirmaAdq
+            ) {
+
+                badgeEstadoPinFirmaAdq.className =
+                    tienePin
+                        ? "badge text-bg-success"
+                        : "badge text-bg-secondary";
+
+
+                badgeEstadoPinFirmaAdq.textContent =
+                    tienePin
+                        ? "PIN protegido"
+                        : "Sin configurar";
+            }
+
+
+            if (
+                textoEstadoPinFirmaAdq
+            ) {
+
+                textoEstadoPinFirmaAdq.textContent =
+                    tienePin
+                        ? "Tu PIN está configurado y protegido. No puede modificarse directamente."
+                        : "Configura un PIN antes de utilizar tus firmas en una aprobación.";
+            }
+
+
+            if (
+                btnConfigurarPinFirmaAdq
+            ) {
+
+                btnConfigurarPinFirmaAdq.disabled =
+                    tienePin;
+
+
+                btnConfigurarPinFirmaAdq.className =
+                    tienePin
+                        ? "btn btn-outline-secondary"
+                        : "btn btn-outline-primary";
+
+
+                btnConfigurarPinFirmaAdq.innerHTML =
+                    tienePin
+                        ? `<i class="bi bi-lock-fill me-1"></i> PIN configurado`
+                        : `<i class="bi bi-key me-1"></i> Configurar PIN`;
+            }
+
+
+            btnAyudaCambioPinFirmaAdq
+                ?.classList
+                .toggle(
+                    "d-none",
+                    !tienePin
+                );
+        }
+
+        document.getElementById(
+            "btnAyudaCambioPinFirmaAdq"
+        )
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    mostrarAdvertenciaAdq(
+                        "PIN protegido",
+                        "Por seguridad, el PIN de firma no puede modificarse directamente. Si necesitas cambiarlo, solicita al administrador del sistema que restablezca tu PIN."
+                    );
+                }
+            );
+
+
+        // =========================================================
+        // RENDERIZAR FIRMAS
+        // =========================================================
+
+        function renderizarFirmasUsuarioAdq(
+            firmas
+        ) {
+
+            if (
+                !listaFirmasUsuarioAdq
+            ) {
+                return;
+            }
+
+
+            if (
+                firmas.length ===
+                0
+            ) {
+
+                listaFirmasUsuarioAdq.innerHTML =
+                    `
+                <div class="adq-signature-empty">
+
+                    <i class="bi bi-vector-pen"></i>
+
+                    <strong>
+                        No tienes firmas registradas
+                    </strong>
+
+                    <span>
+                        Crea tu primera firma para utilizarla
+                        durante las aprobaciones.
+                    </span>
+
+                </div>
+            `;
+
+
+                return;
+            }
+
+
+            listaFirmasUsuarioAdq.innerHTML =
+                firmas
+                    .map(
+                        firma =>
+                            crearTarjetaFirmaAdq(
+                                firma,
+                                true
+                            )
+                    )
+                    .join(
+                        ""
+                    );
+        }
+
+
+        // =========================================================
+        // RENDERIZAR ÚLTIMAS 3
+        // =========================================================
+
+        function renderizarUltimasFirmasAdq(
+            firmas
+        ) {
+
+            if (
+                !ultimasFirmasAdq
+            ) {
+                return;
+            }
+
+
+            if (
+                firmas.length ===
+                0
+            ) {
+
+                ultimasFirmasAdq.innerHTML =
+                    `
+                <div class="adq-signature-empty-small">
+
+                    <i class="bi bi-pen"></i>
+
+                    <span>
+                        Aún no tienes firmas utilizadas.
+                    </span>
+
+                </div>
+            `;
+
+
+                return;
+            }
+
+
+            ultimasFirmasAdq.innerHTML =
+                firmas
+                    .slice(
+                        0,
+                        3
+                    )
+                    .map(
+                        firma =>
+                            crearTarjetaFirmaAdq(
+                                firma,
+                                false
+                            )
+                    )
+                    .join(
+                        ""
+                    );
+        }
+
+
+        // =========================================================
+        // CREAR TARJETA DE FIRMA
+        // =========================================================
+
+        function crearTarjetaFirmaAdq(
+            firma,
+            mostrarAcciones
+        ) {
+
+            const predeterminada =
+                Boolean(
+                    firma.esPredeterminada
+                );
+
+
+            return `
+        <div class="adq-signature-card
+                    ${predeterminada ? "is-default" : ""}">
+
+            <div class="adq-signature-card-image">
+
+                <img src="${escapeHtmlFirmaAdq(
+                firma.rutaArchivo
+            )}"
+                     alt="Firma ${escapeHtmlFirmaAdq(
+                firma.nombreFirma
+            )}" />
+
+            </div>
+
+
+            <div class="d-flex
+                        justify-content-between
+                        align-items-start
+                        gap-2">
+
+                <div>
+
+                    <div class="adq-signature-card-name">
+                        ${escapeHtmlFirmaAdq(
+                firma.nombreFirma
+            )}
+                    </div>
+
+                    <div class="adq-signature-card-meta">
+
+                        ${escapeHtmlFirmaAdq(
+                firma.tipoFirma
+            )}
+
+                        ·
+
+                        ${Number(
+                firma.totalUsos
+                ??
+                0
+            )} usos
+
+                    </div>
+
+                </div>
+
+
+                ${predeterminada
+                    ?
+                    `
+                            <span class="badge text-bg-primary">
+                                Predeterminada
+                            </span>
+                        `
+                    :
+                    ""
+                }
+
+            </div>
+
+
+            <div class="adq-signature-card-meta">
+
+                Último uso:
+                ${escapeHtmlFirmaAdq(
+                    formatearFechaFirmaAdq(
+                        firma.fechaUltimoUso
+                    )
+                )}
+
+            </div>
+
+
+            ${mostrarAcciones
+                    ?
+                    `
+                        <div class="adq-signature-card-actions">
+
+                            ${!predeterminada
+                        ?
+                        `
+                                        <button type="button"
+                                                class="btn btn-sm
+                                                       btn-outline-primary
+                                                       btnPredeterminarFirmaAdq"
+                                                data-firma-id="${Number(
+                            firma.id
+                            ??
+                            0
+                        )}">
+
+                                            <i class="bi bi-star me-1"></i>
+
+                                            Predeterminada
+
+                                        </button>
+                                    `
+                        :
+                        ""
+                    }
+
+
+                            <button type="button"
+                                    class="btn btn-sm
+                                           btn-outline-danger
+                                           btnEliminarFirmaAdq"
+                                    data-firma-id="${Number(
+                        firma.id
+                        ??
+                        0
+                    )}">
+
+                                <i class="bi bi-trash me-1"></i>
+
+                                Eliminar
+
+                            </button>
+
+                        </div>
+                    `
+                    :
+                    ""
+                }
+
+        </div>
+    `;
+        }
+
+
+        // =========================================================
+        // ABRIR MODAL MIS FIRMAS
+        // =========================================================
+
+        btnMisFirmasAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    modalMisFirmasAdq =
+                        bootstrap.Modal
+                            .getOrCreateInstance(
+                                modalMisFirmasElementAdq
+                            );
+
+
+                    modalMisFirmasAdq.show();
+
+
+                    await cargarMisFirmasAdq();
+                }
+            );
+
+
+        // =========================================================
+        // CONFIGURAR PIN
+        // =========================================================
+
+        btnConfigurarPinFirmaAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        pinFirmaAdq
+                    ) {
+                        pinFirmaAdq.value =
+                            "";
+                    }
+
+
+                    if (
+                        confirmarPinFirmaAdq
+                    ) {
+                        confirmarPinFirmaAdq.value =
+                            "";
+                    }
+
+
+                    modalPinFirmaAdq =
+                        bootstrap.Modal
+                            .getOrCreateInstance(
+                                modalPinFirmaElementAdq
+                            );
+
+
+                    modalPinFirmaAdq.show();
+
+
+                    setTimeout(
+                        function () {
+
+                            pinFirmaAdq
+                                ?.focus();
+                        },
+                        250
+                    );
+                }
+            );
+
+
+        // =========================================================
+        // MOSTRAR / OCULTAR PIN
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const boton =
+                    event.target.closest(
+                        ".btnVerPinFirmaAdq"
+                    );
+
+
+                if (
+                    !boton
+                ) {
+                    return;
+                }
+
+
+                const targetId =
+                    boton.dataset.target
+                    ??
+                    "";
+
+
+                const input =
+                    document.getElementById(
+                        targetId
+                    );
+
+
+                if (
+                    !input
+                ) {
+                    return;
+                }
+
+
+                const mostrar =
+                    input.type ===
+                    "password";
+
+
+                input.type =
+                    mostrar
+                        ? "text"
+                        : "password";
+
+
+                boton.innerHTML =
+                    mostrar
+                        ? `<i class="bi bi-eye-slash"></i>`
+                        : `<i class="bi bi-eye"></i>`;
+            }
+        );
+
+
+        // =========================================================
+        // GUARDAR PIN
+        // =========================================================
+
+        btnGuardarPinFirmaAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const pin =
+                        pinFirmaAdq
+                            ?.value
+                            .trim()
+                        ??
+                        "";
+
+
+                    const confirmacion =
+                        confirmarPinFirmaAdq
+                            ?.value
+                            .trim()
+                        ??
+                        "";
+
+
+                    if (
+                        pin.length <
+                        4
+                        ||
+                        pin.length >
+                        20
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "PIN no válido",
+                            "El PIN debe contener entre 4 y 20 caracteres."
+                        );
+
+                        pinFirmaAdq
+                            ?.focus();
+
+                        return;
+                    }
+
+
+                    if (
+                        pin !==
+                        confirmacion
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Los PIN no coinciden",
+                            "Verifica la confirmación del PIN."
+                        );
+
+                        confirmarPinFirmaAdq
+                            ?.focus();
+
+                        return;
+                    }
+
+
+                    const htmlOriginal =
+                        btnGuardarPinFirmaAdq.innerHTML;
+
+
+                    btnGuardarPinFirmaAdq.disabled =
+                        true;
+
+
+                    btnGuardarPinFirmaAdq.innerHTML =
+                        `
+                    <span class="spinner-border
+                                 spinner-border-sm
+                                 me-2">
+                    </span>
+
+                    Guardando...
+                `;
+
+
+                    try {
+
+                        const token =
+                            obtenerTokenFirmaAdq();
+
+
+                        const respuesta =
+                            await fetch(
+                                `${window.location.pathname}?handler=ConfigurarPinFirma`,
+                                {
+                                    method:
+                                        "POST",
+
+                                    headers:
+                                    {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "RequestVerificationToken":
+                                            token,
+
+                                        "X-Requested-With":
+                                            "XMLHttpRequest"
+                                    },
+
+                                    body:
+                                        JSON.stringify(
+                                            {
+                                                pin,
+
+                                                confirmarPin:
+                                                    confirmacion
+                                            }
+                                        )
+                                }
+                            );
+
+
+                        const resultado =
+                            await respuesta.json();
+
+
+                        if (
+                            !respuesta.ok
+                            ||
+                            !resultado?.success
+                        ) {
+
+                            throw new Error(
+                                resultado?.message
+                                ??
+                                "No fue posible guardar el PIN."
+                            );
+                        }
+
+
+                        modalPinFirmaAdq
+                            ?.hide();
+
+
+                        actualizarEstadoPinFirmaAdq(
+                            true
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "PIN configurado",
+                            resultado.message
+                            ??
+                            "El PIN de firma fue configurado correctamente."
+                        );
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        console.error(
+                            error
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible guardar el PIN",
+                            error.message
+                            ??
+                            "Ocurrió un error al configurar el PIN."
+                        );
+                    }
+                    finally {
+
+                        btnGuardarPinFirmaAdq.disabled =
+                            false;
+
+
+                        btnGuardarPinFirmaAdq.innerHTML =
+                            htmlOriginal;
+                    }
+                }
+            );
+
+
+        // =========================================================
+        // NUEVA FIRMA
+        // =========================================================
+
+        btnNuevaFirmaAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    reiniciarCapturaFirmaAdq();
+
+
+                    seccionNuevaFirmaAdq
+                        ?.classList
+                        .remove(
+                            "d-none"
+                        );
+
+
+                    setTimeout(
+                        function () {
+
+                            inicializarCanvasFirmaAdq();
+
+
+                            seccionNuevaFirmaAdq
+                                ?.scrollIntoView(
+                                    {
+                                        behavior:
+                                            "smooth",
+
+                                        block:
+                                            "start"
+                                    }
+                                );
+                        },
+                        100
+                    );
+
+
+                    nombreFirmaAdq
+                        ?.focus();
+                }
+            );
+
+
+        // =========================================================
+        // CANCELAR NUEVA FIRMA
+        // =========================================================
+
+        btnCancelarNuevaFirmaAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    seccionNuevaFirmaAdq
+                        ?.classList
+                        .add(
+                            "d-none"
+                        );
+
+
+                    reiniciarCapturaFirmaAdq();
+                }
+            );
+
+
+        // =========================================================
+        // CAMBIAR TIPO DE FIRMA
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const botonTipo =
+                    event.target.closest(
+                        ".adq-signature-type-card"
+                    );
+
+
+                if (
+                    !botonTipo
+                ) {
+                    return;
+                }
+
+
+                tipoFirmaActualAdq =
+                    botonTipo.dataset.tipoFirma
+                    ??
+                    "Dibujada";
+
+
+                document.querySelectorAll(
+                    ".adq-signature-type-card"
+                )
+                    .forEach(
+                        boton => {
+
+                            boton.classList.toggle(
+                                "active",
+                                boton ===
+                                botonTipo
+                            );
+                        }
+                    );
+
+
+                panelFirmaDibujadaAdq
+                    ?.classList
+                    .toggle(
+                        "d-none",
+                        tipoFirmaActualAdq !==
+                        "Dibujada"
+                    );
+
+
+                panelFirmaArchivoAdq
+                    ?.classList
+                    .toggle(
+                        "d-none",
+                        tipoFirmaActualAdq !==
+                        "Archivo"
+                    );
+
+
+                panelFirmaTipograficaAdq
+                    ?.classList
+                    .toggle(
+                        "d-none",
+                        tipoFirmaActualAdq !==
+                        "Tipografica"
+                    );
+
+
+                if (
+                    tipoFirmaActualAdq ===
+                    "Dibujada"
+                ) {
+
+                    setTimeout(
+                        inicializarCanvasFirmaAdq,
+                        50
+                    );
+                }
+
+
+                if (
+                    tipoFirmaActualAdq ===
+                    "Tipografica"
+                ) {
+
+                    generarPropuestasTipograficasAdq();
+                }
+            }
+        );
+
+
+        // =========================================================
+        // INICIALIZAR CANVAS
+        // =========================================================
+
+        function inicializarCanvasFirmaAdq() {
+
+            if (
+                !canvasFirmaAdq
+            ) {
+                return;
+            }
+
+
+            const rect =
+                canvasFirmaAdq
+                    .getBoundingClientRect();
+
+
+            if (
+                rect.width <=
+                0
+            ) {
+                return;
+            }
+
+
+            const ratio =
+                window.devicePixelRatio
+                ||
+                1;
+
+
+            canvasFirmaAdq.width =
+                Math.floor(
+                    rect.width *
+                    ratio
+                );
+
+
+            canvasFirmaAdq.height =
+                Math.floor(
+                    220 *
+                    ratio
+                );
+
+
+            canvasFirmaAdq.style.height =
+                "220px";
+
+
+            canvasFirmaContextoAdq =
+                canvasFirmaAdq
+                    .getContext(
+                        "2d"
+                    );
+
+
+            canvasFirmaContextoAdq.setTransform(
+                ratio,
+                0,
+                0,
+                ratio,
+                0,
+                0
+            );
+
+
+            canvasFirmaContextoAdq.lineWidth =
+                2.2;
+
+
+            canvasFirmaContextoAdq.lineCap =
+                "round";
+
+
+            canvasFirmaContextoAdq.lineJoin =
+                "round";
+
+
+            canvasFirmaContextoAdq.strokeStyle =
+                "#111111";
+
+
+            firmaCanvasTieneContenidoAdq =
+                false;
+        }
+
+
+        // =========================================================
+        // POSICIÓN DEL CURSOR / TOUCH
+        // =========================================================
+
+        function obtenerPuntoCanvasFirmaAdq(
+            event
+        ) {
+
+            const rect =
+                canvasFirmaAdq
+                    .getBoundingClientRect();
+
+
+            return {
+                x:
+                    event.clientX -
+                    rect.left,
+
+                y:
+                    event.clientY -
+                    rect.top
+            };
+        }
+
+
+        // =========================================================
+        // DIBUJAR CANVAS
+        // =========================================================
+
+        canvasFirmaAdq
+            ?.addEventListener(
+                "pointerdown",
+                function (
+                    event
+                ) {
+
+                    if (
+                        !canvasFirmaContextoAdq
+                    ) {
+                        return;
+                    }
+
+
+                    dibujandoFirmaAdq =
+                        true;
+
+
+                    firmaCanvasTieneContenidoAdq =
+                        true;
+
+
+                    canvasFirmaAdq
+                        .setPointerCapture(
+                            event.pointerId
+                        );
+
+
+                    const punto =
+                        obtenerPuntoCanvasFirmaAdq(
+                            event
+                        );
+
+
+                    canvasFirmaContextoAdq
+                        .beginPath();
+
+
+                    canvasFirmaContextoAdq
+                        .moveTo(
+                            punto.x,
+                            punto.y
+                        );
+                }
+            );
+
+
+        canvasFirmaAdq
+            ?.addEventListener(
+                "pointermove",
+                function (
+                    event
+                ) {
+
+                    if (
+                        !dibujandoFirmaAdq
+                        ||
+                        !canvasFirmaContextoAdq
+                    ) {
+                        return;
+                    }
+
+
+                    const punto =
+                        obtenerPuntoCanvasFirmaAdq(
+                            event
+                        );
+
+
+                    canvasFirmaContextoAdq
+                        .lineTo(
+                            punto.x,
+                            punto.y
+                        );
+
+
+                    canvasFirmaContextoAdq
+                        .stroke();
+                }
+            );
+
+
+        function terminarTrazoFirmaAdq() {
+
+            if (
+                !dibujandoFirmaAdq
+            ) {
+                return;
+            }
+
+
+            dibujandoFirmaAdq =
+                false;
+
+
+            canvasFirmaContextoAdq
+                ?.closePath();
+        }
+
+
+        canvasFirmaAdq
+            ?.addEventListener(
+                "pointerup",
+                terminarTrazoFirmaAdq
+            );
+
+
+        canvasFirmaAdq
+            ?.addEventListener(
+                "pointercancel",
+                terminarTrazoFirmaAdq
+            );
+
+
+        canvasFirmaAdq
+            ?.addEventListener(
+                "pointerleave",
+                terminarTrazoFirmaAdq
+            );
+
+
+        // =========================================================
+        // LIMPIAR CANVAS
+        // =========================================================
+
+        btnLimpiarFirmaCanvasAdq
+            ?.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        !canvasFirmaAdq
+                        ||
+                        !canvasFirmaContextoAdq
+                    ) {
+                        return;
+                    }
+
+
+                    canvasFirmaContextoAdq
+                        .clearRect(
+                            0,
+                            0,
+                            canvasFirmaAdq.width,
+                            canvasFirmaAdq.height
+                        );
+
+
+                    firmaCanvasTieneContenidoAdq =
+                        false;
+                }
+            );
+
+
+        // =========================================================
+        // SUBIR PNG
+        // =========================================================
+
+        archivoFirmaAdq
+            ?.addEventListener(
+                "change",
+                function () {
+
+                    firmaArchivoBase64Adq =
+                        "";
+
+
+                    previewArchivoFirmaAdq
+                        ?.classList
+                        .add(
+                            "d-none"
+                        );
+
+
+                    if (
+                        imagenPreviewFirmaAdq
+                    ) {
+
+                        imagenPreviewFirmaAdq.src =
+                            "";
+                    }
+
+
+                    const archivo =
+                        archivoFirmaAdq.files?.[0];
+
+
+                    if (
+                        !archivo
+                    ) {
+                        return;
+                    }
+
+
+                    if (
+                        archivo.type !==
+                        "image/png"
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Formato no permitido",
+                            "La firma debe cargarse en formato PNG."
+                        );
+
+
+                        archivoFirmaAdq.value =
+                            "";
+
+                        return;
+                    }
+
+
+                    if (
+                        archivo.size >
+                        2 * 1024 * 1024
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Archivo demasiado grande",
+                            "La firma no puede superar los 2 MB."
+                        );
+
+
+                        archivoFirmaAdq.value =
+                            "";
+
+                        return;
+                    }
+
+
+                    const lector =
+                        new FileReader();
+
+
+                    lector.onload =
+                        function (
+                            event
+                        ) {
+
+                            firmaArchivoBase64Adq =
+                                event.target?.result
+                                ??
+                                "";
+
+
+                            if (
+                                imagenPreviewFirmaAdq
+                            ) {
+
+                                imagenPreviewFirmaAdq.src =
+                                    firmaArchivoBase64Adq;
+                            }
+
+
+                            previewArchivoFirmaAdq
+                                ?.classList
+                                .remove(
+                                    "d-none"
+                                );
+                        };
+
+
+                    lector.readAsDataURL(
+                        archivo
+                    );
+                }
+            );
+
+
+        // =========================================================
+        // PROPUESTAS TIPOGRÁFICAS
+        // =========================================================
+
+        function obtenerVariacionesNombreFirmaAdq() {
+
+            const nombreCompleto =
+                nombreUsuarioFirmaAdq
+                    .trim();
+
+
+            if (
+                !nombreCompleto
+            ) {
+
+                return [
+                    "Firma",
+                    "Mi firma",
+                    "Autorizado"
+                ];
+            }
+
+
+            const partes =
+                nombreCompleto
+                    .split(
+                        /\s+/
+                    )
+                    .filter(
+                        Boolean
+                    );
+
+
+            const primerNombre =
+                partes[0]
+                ??
+                nombreCompleto;
+
+
+            const apellido =
+                partes.length >
+                    1
+                    ? partes[
+                    partes.length -
+                    1
+                    ]
+                    : "";
+
+
+            const iniciales =
+                partes
+                    .map(
+                        parte =>
+                            parte.charAt(
+                                0
+                            )
+                                .toUpperCase()
+                    )
+                    .join(
+                        ""
+                    );
+
+
+            const propuestas =
+                [
+                    nombreCompleto,
+
+                    apellido
+                        ? `${primerNombre} ${apellido}`
+                        : primerNombre,
+
+                    apellido
+                        ? `${primerNombre.charAt(0)}. ${apellido}`
+                        : primerNombre,
+
+                    iniciales
+                ];
+
+
+            return [
+                ...new Set(
+                    propuestas
+                        .filter(
+                            Boolean
+                        )
+                )
+            ]
+                .slice(
+                    0,
+                    4
+                );
+        }
+
+
+        // =========================================================
+        // GENERAR PROPUESTAS TIPOGRÁFICAS
+        // =========================================================
+
+        function generarPropuestasTipograficasAdq() {
+
+            if (
+                !propuestasFirmaTipograficaAdq
+            ) {
+                return;
+            }
+
+
+            firmaTipograficaBase64Adq =
+                "";
+
+
+            const propuestas =
+                obtenerVariacionesNombreFirmaAdq();
+
+
+            propuestasFirmaTipograficaAdq.innerHTML =
+                propuestas
+                    .map(
+                        (
+                            texto,
+                            indice
+                        ) =>
+                            `
+                        <button type="button"
+                                class="adq-signature-typographic-option"
+                                data-texto="${escapeHtmlFirmaAdq(
+                                texto
+                            )}"
+                                data-estilo="${indice}">
+
+                            <span class="adq-signature-typographic-text">
+                                ${escapeHtmlFirmaAdq(
+                                texto
+                            )}
+                            </span>
+
+                        </button>
+                    `
+                    )
+                    .join(
+                        ""
+                    );
+        }
+
+
+        // =========================================================
+        // SELECCIONAR FIRMA TIPOGRÁFICA
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            function (
+                event
+            ) {
+
+                const opcion =
+                    event.target.closest(
+                        ".adq-signature-typographic-option"
+                    );
+
+
+                if (
+                    !opcion
+                ) {
+                    return;
+                }
+
+
+                document.querySelectorAll(
+                    ".adq-signature-typographic-option"
+                )
+                    .forEach(
+                        item => {
+
+                            item.classList.toggle(
+                                "active",
+                                item ===
+                                opcion
+                            );
+                        }
+                    );
+
+
+                firmaTipograficaBase64Adq =
+                    generarImagenFirmaTipograficaAdq(
+                        opcion.dataset.texto
+                        ??
+                        nombreUsuarioFirmaAdq,
+                        Number(
+                            opcion.dataset.estilo
+                            ??
+                            0
+                        )
+                    );
+            }
+        );
+
+
+        // =========================================================
+        // CREAR PNG DE FIRMA TIPOGRÁFICA
+        // =========================================================
+
+        function generarImagenFirmaTipograficaAdq(
+            texto,
+            estilo
+        ) {
+
+            const canvas =
+                document.createElement(
+                    "canvas"
+                );
+
+
+            canvas.width =
+                1000;
+
+
+            canvas.height =
+                300;
+
+
+            const contexto =
+                canvas.getContext(
+                    "2d"
+                );
+
+
+            /*
+             * Fondo transparente.
+             */
+
+            contexto.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+            const fuentes =
+                [
+                    "italic 76px cursive",
+                    "italic 72px Georgia",
+                    "italic 74px 'Times New Roman'",
+                    "italic 80px cursive"
+                ];
+
+
+            contexto.font =
+                fuentes[
+                estilo %
+                fuentes.length
+                ];
+
+
+            contexto.fillStyle =
+                "#111111";
+
+
+            contexto.textAlign =
+                "center";
+
+
+            contexto.textBaseline =
+                "middle";
+
+
+            contexto.fillText(
+                texto,
+                canvas.width /
+                2,
+                canvas.height /
+                2
+            );
+
+
+            return canvas.toDataURL(
+                "image/png"
+            );
+        }
+
+
+        // =========================================================
+        // OBTENER BASE64 DE LA FIRMA ACTUAL
+        // =========================================================
+
+        function obtenerFirmaBase64ActualAdq() {
+
+            if (
+                tipoFirmaActualAdq ===
+                "Dibujada"
+            ) {
+
+                if (
+                    !firmaCanvasTieneContenidoAdq
+                    ||
+                    !canvasFirmaAdq
+                ) {
+                    return "";
+                }
+
+
+                return canvasFirmaAdq.toDataURL(
+                    "image/png"
+                );
+            }
+
+
+            if (
+                tipoFirmaActualAdq ===
+                "Archivo"
+            ) {
+
+                return firmaArchivoBase64Adq;
+            }
+
+
+            if (
+                tipoFirmaActualAdq ===
+                "Tipografica"
+            ) {
+
+                return firmaTipograficaBase64Adq;
+            }
+
+
+            return "";
+        }
+
+
+        // =========================================================
+        // GUARDAR FIRMA
+        // =========================================================
+
+        btnGuardarFirmaUsuarioAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const nombre =
+                        nombreFirmaAdq
+                            ?.value
+                            .trim()
+                        ??
+                        "";
+
+
+                    if (
+                        !nombre
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Nombre requerido",
+                            "Debes indicar un nombre para identificar la firma."
+                        );
+
+
+                        nombreFirmaAdq
+                            ?.focus();
+
+                        return;
+                    }
+
+
+                    const firmaBase64 =
+                        obtenerFirmaBase64ActualAdq();
+
+
+                    if (
+                        !firmaBase64
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Firma requerida",
+                            tipoFirmaActualAdq ===
+                                "Dibujada"
+                                ? "Dibuja tu firma antes de guardarla."
+                                : tipoFirmaActualAdq ===
+                                    "Archivo"
+                                    ? "Selecciona un archivo PNG antes de guardar."
+                                    : "Selecciona una propuesta de firma tipográfica."
+                        );
+
+
+                        return;
+                    }
+
+
+                    const htmlOriginal =
+                        btnGuardarFirmaUsuarioAdq.innerHTML;
+
+
+                    btnGuardarFirmaUsuarioAdq.disabled =
+                        true;
+
+
+                    btnGuardarFirmaUsuarioAdq.innerHTML =
+                        `
+                    <span class="spinner-border
+                                 spinner-border-sm
+                                 me-2">
+                    </span>
+
+                    Guardando...
+                `;
+
+
+                    try {
+
+                        const token =
+                            obtenerTokenFirmaAdq();
+
+
+                        const respuesta =
+                            await fetch(
+                                `${window.location.pathname}?handler=GuardarFirmaUsuario`,
+                                {
+                                    method:
+                                        "POST",
+
+                                    headers:
+                                    {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "RequestVerificationToken":
+                                            token,
+
+                                        "X-Requested-With":
+                                            "XMLHttpRequest"
+                                    },
+
+                                    body:
+                                        JSON.stringify(
+                                            {
+                                                nombreFirma:
+                                                    nombre,
+
+                                                tipoFirma:
+                                                    tipoFirmaActualAdq,
+
+                                                firmaBase64,
+
+                                                esPredeterminada:
+                                                    Boolean(
+                                                        firmaPredeterminadaAdq
+                                                            ?.checked
+                                                    )
+                                            }
+                                        )
+                                }
+                            );
+
+
+                        const resultado =
+                            await respuesta.json();
+
+
+                        if (
+                            !respuesta.ok
+                            ||
+                            !resultado?.success
+                        ) {
+
+                            throw new Error(
+                                resultado?.message
+                                ??
+                                "No fue posible guardar la firma."
+                            );
+                        }
+
+
+                        seccionNuevaFirmaAdq
+                            ?.classList
+                            .add(
+                                "d-none"
+                            );
+
+
+                        reiniciarCapturaFirmaAdq();
+
+
+                        await cargarMisFirmasAdq();
+
+
+                        mostrarAdvertenciaAdq(
+                            "Firma guardada",
+                            resultado.message
+                            ??
+                            "La firma fue guardada correctamente."
+                        );
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        console.error(
+                            error
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible guardar la firma",
+                            error.message
+                            ??
+                            "Ocurrió un error al guardar la firma."
+                        );
+                    }
+                    finally {
+
+                        btnGuardarFirmaUsuarioAdq.disabled =
+                            false;
+
+
+                        btnGuardarFirmaUsuarioAdq.innerHTML =
+                            htmlOriginal;
+                    }
+                }
+            );
+
+
+        // =========================================================
+        // PREDETERMINAR / ELIMINAR
+        // =========================================================
+
+        document.addEventListener(
+            "click",
+            async function (
+                event
+            ) {
+
+                const botonPredeterminar =
+                    event.target.closest(
+                        ".btnPredeterminarFirmaAdq"
+                    );
+
+
+                if (
+                    botonPredeterminar
+                ) {
+
+                    const firmaId =
+                        Number(
+                            botonPredeterminar.dataset.firmaId
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        firmaId <=
+                        0
+                    ) {
+                        return;
+                    }
+
+
+                    await cambiarFirmaPredeterminadaAdq(
+                        firmaId
+                    );
+
+
+                    return;
+                }
+
+
+                const botonEliminar =
+                    event.target.closest(
+                        ".btnEliminarFirmaAdq"
+                    );
+
+
+                if (
+                    botonEliminar
+                ) {
+
+                    const firmaId =
+                        Number(
+                            botonEliminar.dataset.firmaId
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        firmaId <=
+                        0
+                    ) {
+                        return;
+                    }
+
+
+                    await eliminarFirmaUsuarioAdq(
+                        firmaId
+                    );
+                }
+            }
+        );
+
+
+        // =========================================================
+        // CAMBIAR PREDETERMINADA
+        // =========================================================
+
+        async function cambiarFirmaPredeterminadaAdq(
+            firmaId
+        ) {
+
+            try {
+
+                const token =
+                    obtenerTokenFirmaAdq();
+
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=PredeterminarFirma&firmaId=${encodeURIComponent(
+                            firmaId
+                        )}`,
+                        {
+                            method:
+                                "POST",
+
+                            headers:
+                            {
+                                "RequestVerificationToken":
+                                    token,
+
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await respuesta.json();
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible cambiar la firma predeterminada."
+                    );
+                }
+
+
+                await cargarMisFirmasAdq();
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                mostrarAdvertenciaAdq(
+                    "No fue posible actualizar la firma",
+                    error.message
+                );
+            }
+        }
+
+
+        // =========================================================
+        // ELIMINAR FIRMA
+        // =========================================================
+
+        async function eliminarFirmaUsuarioAdq(
+            firmaId
+        ) {
+
+            const confirmado =
+                await confirmarAccionAdq(
+                    {
+                        titulo:
+                            "Eliminar firma",
+
+                        mensaje:
+                            "La firma dejará de estar disponible para nuevas aprobaciones. Las aprobaciones históricas conservarán su evidencia.",
+
+                        textoConfirmar:
+                            "Eliminar",
+
+                        textoCancelar:
+                            "Cancelar",
+
+                        tipo:
+                            "danger"
+                    }
+                );
+
+
+            if (
+                !confirmado
+            ) {
+                return;
+            }
+
+
+            try {
+
+                const token =
+                    obtenerTokenFirmaAdq();
+
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=EliminarFirma&firmaId=${encodeURIComponent(
+                            firmaId
+                        )}`,
+                        {
+                            method:
+                                "POST",
+
+                            headers:
+                            {
+                                "RequestVerificationToken":
+                                    token,
+
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await respuesta.json();
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible eliminar la firma."
+                    );
+                }
+
+
+                await cargarMisFirmasAdq();
+
+
+                mostrarAdvertenciaAdq(
+                    "Firma eliminada",
+                    resultado.message
+                    ??
+                    "La firma fue eliminada correctamente."
+                );
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                mostrarAdvertenciaAdq(
+                    "No fue posible eliminar la firma",
+                    error.message
+                    ??
+                    "Ocurrió un error al eliminar la firma."
+                );
+            }
+        }
+
+
+        // =========================================================
+        // REINICIAR CAPTURA DE FIRMA
+        // =========================================================
+
+        function reiniciarCapturaFirmaAdq() {
+
+            tipoFirmaActualAdq =
+                "Dibujada";
+
+
+            firmaArchivoBase64Adq =
+                "";
+
+
+            firmaTipograficaBase64Adq =
+                "";
+
+
+            firmaCanvasTieneContenidoAdq =
+                false;
+
+
+            dibujandoFirmaAdq =
+                false;
+
+
+            if (
+                nombreFirmaAdq
+            ) {
+                nombreFirmaAdq.value =
+                    "";
+            }
+
+
+            if (
+                archivoFirmaAdq
+            ) {
+                archivoFirmaAdq.value =
+                    "";
+            }
+
+
+            if (
+                imagenPreviewFirmaAdq
+            ) {
+                imagenPreviewFirmaAdq.src =
+                    "";
+            }
+
+
+            previewArchivoFirmaAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            if (
+                firmaPredeterminadaAdq
+            ) {
+                firmaPredeterminadaAdq.checked =
+                    false;
+            }
+
+
+            document.querySelectorAll(
+                ".adq-signature-type-card"
+            )
+                .forEach(
+                    boton => {
+
+                        boton.classList.toggle(
+                            "active",
+                            boton.dataset.tipoFirma ===
+                            "Dibujada"
+                        );
+                    }
+                );
+
+
+            panelFirmaDibujadaAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            panelFirmaArchivoAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            panelFirmaTipograficaAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            propuestasFirmaTipograficaAdq.innerHTML =
+                `
+            <div class="text-muted small">
+                Las propuestas aparecerán aquí.
+            </div>
+        `;
+
+
+            if (
+                canvasFirmaAdq
+                &&
+                canvasFirmaContextoAdq
+            ) {
+
+                canvasFirmaContextoAdq.clearRect(
+                    0,
+                    0,
+                    canvasFirmaAdq.width,
+                    canvasFirmaAdq.height
+                );
+            }
+        }
 
         // =========================================================
         // INICIALIZACIÓN

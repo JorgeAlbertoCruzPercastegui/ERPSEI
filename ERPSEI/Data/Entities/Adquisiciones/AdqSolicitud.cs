@@ -1,5 +1,6 @@
 ﻿using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Usuarios;
+using System.ComponentModel.DataAnnotations;
 
 namespace ERPSEI.Data.Entities.Adquisiciones
 {
@@ -52,6 +53,18 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             get;
             set;
         }
+
+        [Required(
+            ErrorMessage =
+                "Debes seleccionar el tipo de solicitud."
+        )]
+
+        [StringLength(30)]
+        public string TipoDocumentoSolicitud
+        {
+            get;
+            set;
+        } = "Cotizaciones";
 
         public int AreaId
         {
@@ -130,6 +143,7 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             get;
             set;
         }
+
 
         public ICollection<AdqSolicitudDetalle>
             Detalles

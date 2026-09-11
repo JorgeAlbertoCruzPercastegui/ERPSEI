@@ -57,5 +57,12 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             get;
             set;
         } = new List<AdqAprobacionPresupuestalObservador>();
+
+        public ICollection<AdqAprobacionPresupuestalEvento>
+        Eventos
+        {
+            get;
+            set;
+        } = new List<AdqAprobacionPresupuestalEvento>();
     }
 }

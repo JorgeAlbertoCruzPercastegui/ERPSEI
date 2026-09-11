@@ -386,6 +386,37 @@ namespace ERPSEI.Data
             set;
         }
 
+        public DbSet<AdqFirmaUsuario>
+        AdqFirmasUsuario
+        {
+            get;
+            set;
+        }
+
+
+        public DbSet<AdqSeguridadFirmaUsuario>
+            AdqSeguridadFirmaUsuario
+        {
+            get;
+            set;
+        }
+
+
+        public DbSet<AdqFirmaAprobacionPresupuestal>
+            AdqFirmasAprobacionesPresupuestales
+        {
+            get;
+            set;
+        }
+
+
+        public DbSet<AdqAprobacionPresupuestalEvento>
+            AdqAprobacionesPresupuestalesEventos
+        {
+            get;
+            set;
+        }
+
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -2048,6 +2079,179 @@ namespace ERPSEI.Data
                     }
             )
             .IsUnique();
+
+            // =========================================================
+            // FIRMAS DE USUARIO
+            // =========================================================
+
+            b
+                .Entity<AdqFirmaUsuario>()
+                .HasIndex(
+                    x =>
+                        new
+                        {
+                            x.UsuarioId,
+                            x.Activa,
+                            x.Eliminado
+                        }
+                );
+
+
+            b
+                .Entity<AdqFirmaUsuario>()
+                .HasIndex(
+                    x =>
+                        new
+                        {
+                            x.UsuarioId,
+                            x.FechaUltimoUso
+                        }
+                );
+
+
+            // =========================================================
+            // SEGURIDAD DE FIRMA
+            // =========================================================
+
+            b
+                .Entity<AdqSeguridadFirmaUsuario>()
+                .HasIndex(
+                    x =>
+                        x.UsuarioId
+                )
+                .IsUnique();
+
+
+            // =========================================================
+            // SNAPSHOT DE FIRMA DE APROBACIÓN
+            // =========================================================
+
+            b
+                .Entity<AdqFirmaAprobacionPresupuestal>()
+                .HasOne(
+                    x =>
+                        x.AprobacionPresupuestalDetalle
+                )
+                .WithMany(
+                    x =>
+                        x.Firmas
+                )
+                .HasForeignKey(
+                    x =>
+                        x.AprobacionPresupuestalDetalleId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b
+                .Entity<AdqFirmaAprobacionPresupuestal>()
+                .HasOne(
+                    x =>
+                        x.FirmaUsuario
+                )
+                .WithMany(
+                    x =>
+                        x.FirmasAprobaciones
+                )
+                .HasForeignKey(
+                    x =>
+                        x.FirmaUsuarioId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b
+                .Entity<AdqFirmaAprobacionPresupuestal>()
+                .HasIndex(
+                    x =>
+                        new
+                        {
+                            x.AprobacionPresupuestalDetalleId,
+                            x.UsuarioFirmanteId
+                        }
+                );
+
+
+            b
+                .Entity<AdqFirmaAprobacionPresupuestal>()
+                .HasIndex(
+                    x =>
+                        new
+                        {
+                            x.UsuarioFirmanteId,
+                            x.FechaFirma
+                        }
+                );
+
+
+            // =========================================================
+            // EVENTOS / BITÁCORA DE APROBACIÓN PRESUPUESTAL
+            // =========================================================
+
+            b
+                .Entity<AdqAprobacionPresupuestalEvento>()
+                .HasOne(
+                    x =>
+                        x.AprobacionPresupuestal
+                )
+                .WithMany(
+                    x =>
+                        x.Eventos
+                )
+                .HasForeignKey(
+                    x =>
+                        x.AprobacionPresupuestalId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b
+                .Entity<AdqAprobacionPresupuestalEvento>()
+                .HasOne(
+                    x =>
+                        x.AprobacionPresupuestalDetalle
+                )
+                .WithMany(
+                    x =>
+                        x.Eventos
+                )
+                .HasForeignKey(
+                    x =>
+                        x.AprobacionPresupuestalDetalleId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b
+                .Entity<AdqAprobacionPresupuestalEvento>()
+                .HasIndex(
+                    x =>
+                        new
+                        {
+                            x.AprobacionPresupuestalId,
+                            x.FechaEvento
+                        }
+                );
+
+
+            b
+                .Entity<AdqAprobacionPresupuestalEvento>()
+                .HasIndex(
+                    x =>
+                        new
+                        {
+                            x.UsuarioId,
+                            x.FechaEvento
+                        }
+                );
 
             // =========================================================
             // ESTATUS

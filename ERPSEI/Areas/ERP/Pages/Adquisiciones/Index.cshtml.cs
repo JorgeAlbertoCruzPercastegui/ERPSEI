@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Cryptography;
 
 namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 {
@@ -881,6 +883,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         } = new();
 
+        public bool EsAprobadorPresupuestal
+        {
+            get;
+            private set;
+        }
+
         public class ConfiguracionAprobacionPresupuestalDto
         {
             public int Orden
@@ -1057,12 +1065,1454 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             } = string.Empty;
         }
 
+        public class FirmaUsuarioDto
+        {
+            public int Id { get; set; }
+
+            public string NombreFirma { get; set; } =
+                string.Empty;
+
+            public string TipoFirma { get; set; } =
+                string.Empty;
+
+            public string RutaArchivo { get; set; } =
+                string.Empty;
+
+            public bool EsPredeterminada { get; set; }
+
+            public int TotalUsos { get; set; }
+
+            public DateTime? FechaUltimoUso { get; set; }
+
+            public DateTime FechaCreacion { get; set; }
+        }
+
+
+        public class ConfigurarPinFirmaRequest
+        {
+            [Required]
+            [StringLength(
+                20,
+                MinimumLength = 4
+            )]
+            public string Pin
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            [Required]
+            public string ConfirmarPin
+            {
+                get;
+                set;
+            } = string.Empty;
+        }
+
+
+        public class GuardarFirmaUsuarioRequest
+        {
+            [Required]
+            [StringLength(150)]
+            public string NombreFirma
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            [Required]
+            [StringLength(30)]
+            public string TipoFirma
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            [Required]
+            public string FirmaBase64
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public bool EsPredeterminada
+            {
+                get;
+                set;
+            }
+        }
+
         public List<SeguimientoPresupuestalDto>
         SeguimientosPresupuestales
         {
             get;
             private set;
         } = new();
+
+        // =========================================================
+        // MIS FIRMAS
+        // GET ?handler=MisFirmas
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetMisFirmasAsync()
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            bool tienePin =
+                await _context.AdqSeguridadFirmaUsuario
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activo
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            List<FirmaUsuarioDto> firmas =
+                await _context.AdqFirmasUsuario
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                            &&
+                            !x.Eliminado
+                    )
+                    .OrderByDescending(
+                        x =>
+                            x.EsPredeterminada
+                    )
+                    .ThenByDescending(
+                        x =>
+                            x.FechaUltimoUso
+                    )
+                    .ThenByDescending(
+                        x =>
+                            x.FechaCreacion
+                    )
+                    .Select(
+                        x =>
+                            new FirmaUsuarioDto
+                            {
+                                Id =
+                                    x.Id,
+
+                                NombreFirma =
+                                    x.NombreFirma,
+
+                                TipoFirma =
+                                    x.TipoFirma,
+
+                                RutaArchivo =
+                                    $"/ERP/Adquisiciones/Index?handler=ImagenFirma&firmaId={x.Id}",
+
+                                EsPredeterminada =
+                                    x.EsPredeterminada,
+
+                                TotalUsos =
+                                    x.TotalUsos,
+
+                                FechaUltimoUso =
+                                    x.FechaUltimoUso,
+
+                                FechaCreacion =
+                                    x.FechaCreacion
+                            }
+                    )
+                    .ToListAsync();
+
+
+            List<FirmaUsuarioDto> ultimasFirmas =
+                firmas
+                    .Where(
+                        x =>
+                            x.FechaUltimoUso.HasValue
+                    )
+                    .OrderByDescending(
+                        x =>
+                            x.FechaUltimoUso
+                    )
+                    .Take(
+                        3
+                    )
+                    .ToList();
+
+
+            /*
+             * Si todavía nunca ha usado ninguna,
+             * mostramos hasta las primeras tres disponibles.
+             */
+            if (
+                ultimasFirmas.Count ==
+                0
+            )
+            {
+                ultimasFirmas =
+                    firmas
+                        .Take(
+                            3
+                        )
+                        .ToList();
+            }
+
+            Empleado? empleadoActual =
+            await ObtenerEmpleadoActualAsync(
+                usuarioActual
+            );
+
+
+            string nombreUsuario =
+                empleadoActual?.NombreCompleto
+                ??
+                usuarioActual.UserName
+                ??
+                usuarioActual.Email
+                ??
+                "Usuario";
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    tienePin,
+
+                    nombreUsuario,
+
+                    totalFirmas =
+                        firmas.Count,
+
+                    firmas,
+
+                    ultimasFirmas
+                }
+            );
+        }
+
+        // =========================================================
+        // CONFIGURAR PIN DE FIRMA
+        // EL USUARIO SOLO PUEDE CONFIGURARLO UNA VEZ.
+        // PARA CAMBIARLO, UN ADMINISTRADOR DEBE RESTABLECERLO.
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostConfigurarPinFirmaAsync(
+                [FromBody]
+        ConfigurarPinFirmaRequest request
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                request ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La información del PIN es obligatoria."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            string pin =
+                request.Pin?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string confirmarPin =
+                request.ConfirmarPin?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            if (
+                pin.Length <
+                4
+                ||
+                pin.Length >
+                20
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El PIN debe contener entre 4 y 20 caracteres."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                pin !=
+                confirmarPin
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El PIN y su confirmación no coinciden."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            AdqSeguridadFirmaUsuario? seguridad =
+                await _context
+                    .AdqSeguridadFirmaUsuario
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.UsuarioId ==
+                            usuarioActual.Id
+                    );
+
+
+            /*
+             * Si existe y está activo, significa que el usuario
+             * ya configuró su PIN.
+             *
+             * NO permitimos modificarlo desde Mis firmas.
+             */
+            if (
+                seguridad !=
+                null
+                &&
+                seguridad.Activo
+                &&
+                !seguridad.Eliminado
+                &&
+                !string.IsNullOrWhiteSpace(
+                    seguridad.PinHash
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        pinYaConfigurado = true,
+
+                        message =
+                            "Tu PIN de firma ya se encuentra configurado. " +
+                            "Por seguridad no puede modificarse directamente. " +
+                            "Si necesitas cambiarlo, solicita al administrador del sistema que lo restablezca."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            if (
+                seguridad ==
+                null
+            )
+            {
+                seguridad =
+                    new AdqSeguridadFirmaUsuario
+                    {
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        FechaConfiguracion =
+                            ahora,
+
+                        IntentosFallidos =
+                            0,
+
+                        BloqueadoHasta =
+                            null,
+
+                        Activo =
+                            true,
+
+                        Eliminado =
+                            false
+                    };
+
+
+                _context
+                    .AdqSeguridadFirmaUsuario
+                    .Add(
+                        seguridad
+                    );
+            }
+            else
+            {
+                /*
+                 * Registro previamente restablecido por administrador.
+                 * Se reutiliza por el índice único UsuarioId.
+                 */
+
+                seguridad.FechaConfiguracion =
+                    ahora;
+
+                seguridad.FechaModificacion =
+                    ahora;
+
+                seguridad.IntentosFallidos =
+                    0;
+
+                seguridad.BloqueadoHasta =
+                    null;
+
+                seguridad.Activo =
+                    true;
+
+                seguridad.Eliminado =
+                    false;
+            }
+
+
+            PasswordHasher<
+                AdqSeguridadFirmaUsuario
+            > hasher =
+                new();
+
+
+            seguridad.PinHash =
+                hasher.HashPassword(
+                    seguridad,
+                    pin
+                );
+
+
+            await _context.SaveChangesAsync();
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    message =
+                        "Tu PIN de firma fue configurado correctamente. " +
+                        "Por seguridad, después de este momento solo un administrador podrá restablecerlo."
+                }
+            );
+        }
+
+        // =========================================================
+        // RESTABLECER PIN DE FIRMA - ADMINISTRADOR
+        // POST ?handler=RestablecerPinFirmaUsuario
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostRestablecerPinFirmaUsuarioAsync(
+                string usuarioId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return Unauthorized();
+            }
+
+
+            bool puedeAdministrar =
+                await _context
+                    .AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.PuedeAdministrar
+                    );
+
+
+            if (
+                !puedeAdministrar
+            )
+            {
+                return Forbid();
+            }
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    usuarioId
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se identificó al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            AdqSeguridadFirmaUsuario? seguridad =
+                await _context
+                    .AdqSeguridadFirmaUsuario
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioId
+                    );
+
+
+            if (
+                seguridad ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El usuario todavía no tiene un PIN de firma configurado."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            seguridad.Activo =
+                false;
+
+            seguridad.Eliminado =
+                true;
+
+            seguridad.IntentosFallidos =
+                0;
+
+            seguridad.BloqueadoHasta =
+                null;
+
+            seguridad.FechaModificacion =
+                DateTime.Now;
+
+
+            await _context.SaveChangesAsync();
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    message =
+                        "El PIN fue restablecido. El usuario deberá configurar uno nuevo la próxima vez que ingrese a Mis firmas."
+                }
+            );
+        }
+
+
+        // =========================================================
+        // GUARDAR FIRMA DEL USUARIO
+        // POST ?handler=GuardarFirmaUsuario
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostGuardarFirmaUsuarioAsync(
+                [FromBody]
+        GuardarFirmaUsuarioRequest request
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                request ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La información de la firma es obligatoria."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            string nombreFirma =
+                request.NombreFirma?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string tipoFirma =
+                request.TipoFirma?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    nombreFirma
+                )
+                ||
+                nombreFirma.Length >
+                150
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Debes proporcionar un nombre válido para la firma."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            string[] tiposPermitidos =
+            {
+        "Dibujada",
+        "Archivo",
+        "Tipografica"
+    };
+
+
+            if (
+                !tiposPermitidos.Contains(
+                    tipoFirma,
+                    StringComparer.OrdinalIgnoreCase
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El tipo de firma seleccionado no es válido."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            /*
+             * Normalizamos la escritura para que en BD siempre
+             * tengamos exactamente estos valores.
+             */
+            tipoFirma =
+                tipoFirma.ToLowerInvariant()
+                switch
+                {
+                    "dibujada" =>
+                        "Dibujada",
+
+                    "archivo" =>
+                        "Archivo",
+
+                    "tipografica" =>
+                        "Tipografica",
+
+                    _ =>
+                        tipoFirma
+                };
+
+
+            byte[] imagenFirma;
+
+
+            try
+            {
+                imagenFirma =
+                    ConvertirFirmaBase64APng(
+                        request.FirmaBase64
+                    );
+            }
+            catch (
+                InvalidOperationException ex
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            ex.Message
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // Máximo 2 MB por firma.
+
+            const int tamanoMaximoFirma =
+                2 * 1024 * 1024;
+
+
+            if (
+                imagenFirma.Length >
+                tamanoMaximoFirma
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La firma no puede superar los 2 MB."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            string carpetaFirmas =
+                Path.Combine(
+                    _environment.ContentRootPath,
+                    "App_Data",
+                    "Adquisiciones",
+                    "Firmas"
+                );
+
+
+            Directory.CreateDirectory(
+                carpetaFirmas
+            );
+
+
+            string nombreArchivo =
+                $"{Guid.NewGuid():N}.png";
+
+
+            string rutaFisica =
+                Path.Combine(
+                    carpetaFirmas,
+                    nombreArchivo
+                );
+
+
+            /*
+             * La ruta almacenada NO es pública.
+             * El archivo solamente podrá obtenerse mediante
+             * el handler ImagenFirma.
+             */
+
+            string rutaRelativa =
+                Path.Combine(
+                    "App_Data",
+                    "Adquisiciones",
+                    "Firmas",
+                    nombreArchivo
+                )
+                .Replace(
+                    "\\",
+                    "/"
+                );
+
+
+            try
+            {
+                await System.IO.File.WriteAllBytesAsync(
+                    rutaFisica,
+                    imagenFirma
+                );
+
+
+                string hashArchivo =
+                    Convert.ToHexString(
+                        SHA256.HashData(
+                            imagenFirma
+                        )
+                    );
+
+
+                bool tieneFirmas =
+                    await _context.AdqFirmasUsuario
+                        .AnyAsync(
+                            x =>
+                                x.UsuarioId ==
+                                    usuarioActual.Id
+                                &&
+                                x.Activa
+                                &&
+                                !x.Eliminado
+                        );
+
+
+                /*
+                 * La primera firma siempre será predeterminada.
+                 */
+
+                bool hacerPredeterminada =
+                    request.EsPredeterminada
+                    ||
+                    !tieneFirmas;
+
+
+                if (
+                    hacerPredeterminada
+                )
+                {
+                    List<AdqFirmaUsuario>
+                        firmasPredeterminadas =
+                            await _context
+                                .AdqFirmasUsuario
+                                .Where(
+                                    x =>
+                                        x.UsuarioId ==
+                                            usuarioActual.Id
+                                        &&
+                                        x.EsPredeterminada
+                                )
+                                .ToListAsync();
+
+
+                    foreach (
+                        AdqFirmaUsuario firmaAnterior
+                        in firmasPredeterminadas
+                    )
+                    {
+                        firmaAnterior.EsPredeterminada =
+                            false;
+                    }
+                }
+
+
+                AdqFirmaUsuario firma =
+                    new()
+                    {
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        NombreFirma =
+                            nombreFirma,
+
+                        TipoFirma =
+                            tipoFirma,
+
+                        RutaArchivo =
+                            rutaRelativa,
+
+                        HashArchivo =
+                            hashArchivo,
+
+                        EsPredeterminada =
+                            hacerPredeterminada,
+
+                        TotalUsos =
+                            0,
+
+                        FechaUltimoUso =
+                            null,
+
+                        FechaCreacion =
+                            DateTime.Now,
+
+                        Activa =
+                            true,
+
+                        Eliminado =
+                            false
+                    };
+
+
+                _context.AdqFirmasUsuario.Add(
+                    firma
+                );
+
+
+                await _context.SaveChangesAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            "La firma fue guardada correctamente.",
+
+                        firma =
+                            new
+                            {
+                                firma.Id,
+
+                                firma.NombreFirma,
+
+                                firma.TipoFirma,
+
+                                firma.EsPredeterminada,
+
+                                firma.TotalUsos,
+
+                                firma.FechaUltimoUso,
+
+                                rutaArchivo =
+                                    $"/ERP/Adquisiciones/Index?handler=ImagenFirma&firmaId={firma.Id}"
+                            }
+                    }
+                );
+            }
+            catch (
+                Exception ex
+            )
+            {
+                /*
+                 * Si la BD falla después de haber creado el archivo,
+                 * eliminamos el archivo huérfano.
+                 */
+
+                if (
+                    System.IO.File.Exists(
+                        rutaFisica
+                    )
+                )
+                {
+                    System.IO.File.Delete(
+                        rutaFisica
+                    );
+                }
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al guardar una firma para el usuario {UsuarioId}.",
+                    usuarioActual.Id
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "Ocurrió un error al guardar la firma."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+
+        // =========================================================
+        // ESTABLECER FIRMA PREDETERMINADA
+        // POST ?handler=PredeterminarFirma&firmaId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostPredeterminarFirmaAsync(
+                int firmaId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            AdqFirmaUsuario? firma =
+                await _context.AdqFirmasUsuario
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                firmaId
+                            &&
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                firma ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se encontró la firma seleccionada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            List<AdqFirmaUsuario> firmasUsuario =
+                await _context.AdqFirmasUsuario
+                    .Where(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                            &&
+                            !x.Eliminado
+                    )
+                    .ToListAsync();
+
+
+            foreach (
+                AdqFirmaUsuario item
+                in firmasUsuario
+            )
+            {
+                item.EsPredeterminada =
+                    item.Id ==
+                    firma.Id;
+            }
+
+
+            firma.FechaModificacion =
+                DateTime.Now;
+
+
+            await _context.SaveChangesAsync();
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    message =
+                        "La firma predeterminada fue actualizada correctamente."
+                }
+            );
+        }
+
+
+        // =========================================================
+        // ELIMINAR FIRMA
+        // POST ?handler=EliminarFirma&firmaId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostEliminarFirmaAsync(
+                int firmaId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            AdqFirmaUsuario? firma =
+                await _context.AdqFirmasUsuario
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                firmaId
+                            &&
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                firma ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se encontró la firma seleccionada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            bool eraPredeterminada =
+                firma.EsPredeterminada;
+
+
+            firma.Activa =
+                false;
+
+            firma.Eliminado =
+                true;
+
+            firma.EsPredeterminada =
+                false;
+
+            firma.FechaModificacion =
+                DateTime.Now;
+
+
+            /*
+             * NO eliminamos físicamente el PNG.
+             *
+             * En el futuro una aprobación histórica puede estar
+             * vinculada con esa firma.
+             */
+
+
+            if (
+                eraPredeterminada
+            )
+            {
+                AdqFirmaUsuario? siguienteFirma =
+                    await _context.AdqFirmasUsuario
+                        .Where(
+                            x =>
+                                x.UsuarioId ==
+                                    usuarioActual.Id
+                                &&
+                                x.Id !=
+                                    firma.Id
+                                &&
+                                x.Activa
+                                &&
+                                !x.Eliminado
+                        )
+                        .OrderByDescending(
+                            x =>
+                                x.FechaUltimoUso
+                        )
+                        .ThenByDescending(
+                            x =>
+                                x.FechaCreacion
+                        )
+                        .FirstOrDefaultAsync();
+
+
+                if (
+                    siguienteFirma !=
+                    null
+                )
+                {
+                    siguienteFirma.EsPredeterminada =
+                        true;
+
+                    siguienteFirma.FechaModificacion =
+                        DateTime.Now;
+                }
+            }
+
+
+            await _context.SaveChangesAsync();
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    message =
+                        "La firma fue eliminada de tus firmas disponibles."
+                }
+            );
+        }
+
+
+        // =========================================================
+        // OBTENER IMAGEN DE FIRMA
+        // GET ?handler=ImagenFirma&firmaId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetImagenFirmaAsync(
+                int firmaId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return Unauthorized();
+            }
+
+
+            AdqFirmaUsuario? firma =
+                await _context.AdqFirmasUsuario
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                firmaId
+                            &&
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                firma ==
+                null
+            )
+            {
+                return NotFound();
+            }
+
+
+            string rutaFisica =
+                Path.Combine(
+                    _environment.ContentRootPath,
+                    firma.RutaArchivo.Replace(
+                        "/",
+                        Path.DirectorySeparatorChar.ToString()
+                    )
+                );
+
+
+            string carpetaPermitida =
+                Path.GetFullPath(
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        "App_Data",
+                        "Adquisiciones",
+                        "Firmas"
+                    )
+                );
+
+
+            string rutaCompleta =
+                Path.GetFullPath(
+                    rutaFisica
+                );
+
+
+            if (
+                !rutaCompleta.StartsWith(
+                    carpetaPermitida,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return Forbid();
+            }
+
+
+            if (
+                !System.IO.File.Exists(
+                    rutaCompleta
+                )
+            )
+            {
+                return NotFound();
+            }
+
+
+            byte[] archivo =
+                await System.IO.File.ReadAllBytesAsync(
+                    rutaCompleta
+                );
+
+
+            return File(
+                archivo,
+                "image/png"
+            );
+        }
 
 
         public int TotalSeguimientosPresupuestales =>
@@ -2718,11 +4168,28 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 250,
                 ErrorMessage =
                     "El título no puede superar los 250 caracteres.")]
+
             public string Titulo
             {
                 get;
                 set;
             } = string.Empty;
+
+
+            [Required(
+                ErrorMessage =
+                    "Debes seleccionar el tipo de solicitud."
+            )]
+            [StringLength(
+                30,
+                ErrorMessage =
+                    "El tipo de solicitud no puede superar los 30 caracteres."
+            )]
+            public string TipoDocumentoSolicitud
+            {
+                get;
+                set;
+            } = "Cotizaciones";
 
 
             [Range(
@@ -3227,6 +4694,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 nameof(Input)
             );
 
+            ValidarTipoDocumentoSolicitud();
 
             ValidarDetalles();
 
@@ -3314,6 +4782,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 Input,
                 nameof(Input)
             );
+
+            ValidarTipoDocumentoSolicitud();
 
 
             ValidarDetalles();
@@ -3454,6 +4924,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 nameof(Input)
             );
 
+            ValidarTipoDocumentoSolicitud();
+
 
             ValidarDetalles();
 
@@ -3524,6 +4996,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             {
                 solicitud.Titulo =
                     Input.Titulo;
+
+                solicitud.TipoDocumentoSolicitud =
+                    Input.TipoDocumentoSolicitud;
 
                 solicitud.AreaId =
                     Input.AreaId;
@@ -3747,6 +5222,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 nameof(Input)
             );
 
+            ValidarTipoDocumentoSolicitud();
+
 
             ValidarDetalles();
 
@@ -3853,6 +5330,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                 solicitud.Titulo =
                     Input.Titulo;
+
+                solicitud.TipoDocumentoSolicitud =
+                    Input.TipoDocumentoSolicitud;
 
                 solicitud.AreaId =
                     Input.AreaId;
@@ -8997,7 +10477,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
         // =========================================================
-        // DECISIÓN DE APROBACIÓN PRESUPUESTAL
+        // DECISIÓN DE APROBACIÓN PRESUPUESTAL CON FIRMA Y PIN
         // POST ?handler=DecisionPresupuestal
         // =========================================================
 
@@ -9005,13 +10485,19 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnPostDecisionPresupuestalAsync(
                 int detalleId,
                 string decision,
-                string? comentario)
+                string? comentario,
+                int firmaId,
+                string pin
+            )
         {
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
 
-            if (usuarioActual == null)
+            if (
+                usuarioActual ==
+                null
+            )
             {
                 return new JsonResult(
                     new
@@ -9028,6 +10514,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =====================================================
+            // NORMALIZAR ENTRADA
+            // =====================================================
+
             decision =
                 decision?
                     .Trim()
@@ -9041,6 +10531,17 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .Trim();
 
 
+            pin =
+                pin?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            // =====================================================
+            // VALIDACIONES BÁSICAS
+            // =====================================================
+
             if (
                 detalleId <= 0
             )
@@ -9051,6 +10552,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         success = false,
                         message =
                             "La aprobación seleccionada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                firmaId <= 0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Debes seleccionar una firma para autorizar esta decisión."
                     }
                 )
                 {
@@ -9082,6 +10602,27 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             if (
+                pin.Length < 4
+                ||
+                pin.Length > 20
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Debes ingresar un PIN de autorización válido."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
                 comentario?.Length >
                 3000
             )
@@ -9101,6 +10642,38 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            /*
+             * Para una declinación necesitamos conocer
+             * obligatoriamente el motivo.
+             */
+            if (
+                decision ==
+                    "DECLINAR"
+                &&
+                string.IsNullOrWhiteSpace(
+                    comentario
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Debes indicar el motivo de la declinación."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // OBTENER ETAPA
+            // =====================================================
+
             AdqAprobacionPresupuestalDetalle? detalleActual =
                 await _context
                     .AdqAprobacionesPresupuestalesDetalle
@@ -9114,7 +10687,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             if (
-                detalleActual == null
+                detalleActual ==
+                null
             )
             {
                 return new JsonResult(
@@ -9133,7 +10707,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // VALIDAR QUE SEA LA ETAPA ACTUAL
+            // VALIDAR ETAPA ACTUAL
             // =====================================================
 
             if (
@@ -9159,7 +10733,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // VALIDAR QUE EL USUARIO SEA EL APROBADOR ASIGNADO
+            // VALIDAR APROBADOR
             // =====================================================
 
             if (
@@ -9182,6 +10756,46 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =====================================================
+            // VALIDAR QUE NO EXISTA UNA FIRMA PREVIA
+            // =====================================================
+
+            bool yaFirmada =
+                await _context
+                    .AdqFirmasAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.AprobacionPresupuestalDetalleId ==
+                                detalleActual.Id
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                yaFirmada
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Esta etapa ya cuenta con una firma registrada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // FLUJO DE APROBACIÓN
+            // =====================================================
+
             AdqAprobacionPresupuestal? aprobacion =
                 await _context
                     .AdqAprobacionesPresupuestales
@@ -9195,7 +10809,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             if (
-                aprobacion == null
+                aprobacion ==
+                null
             )
             {
                 return new JsonResult(
@@ -9226,7 +10841,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             if (
-                solicitud == null
+                solicitud ==
+                null
             )
             {
                 return new JsonResult(
@@ -9244,12 +10860,539 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            DateTime ahora =
-            DateTime.Now;
+            // =====================================================
+            // VALIDAR FIRMA SELECCIONADA
+            // =====================================================
+
+            AdqFirmaUsuario? firmaUsuario =
+                await _context
+                    .AdqFirmasUsuario
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                firmaId
+                            &&
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activa
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                firmaUsuario ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La firma seleccionada no existe o ya no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
 
 
             // =====================================================
-            // OBSERVADORES ACTIVADOS EN ESTA DECISIÓN
+            // VALIDAR SEGURIDAD / PIN
+            // =====================================================
+
+            AdqSeguridadFirmaUsuario? seguridadFirma =
+                await _context
+                    .AdqSeguridadFirmaUsuario
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activo
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                seguridadFirma ==
+                null
+                ||
+                string.IsNullOrWhiteSpace(
+                    seguridadFirma.PinHash
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        requiereConfigurarPin = true,
+                        message =
+                            "No tienes un PIN de firma configurado. Configúralo desde Mis firmas antes de continuar."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            // =====================================================
+            // VALIDAR BLOQUEO
+            // =====================================================
+
+            if (
+                seguridadFirma.BloqueadoHasta.HasValue
+                &&
+                seguridadFirma.BloqueadoHasta.Value >
+                    ahora
+            )
+            {
+                TimeSpan tiempoRestante =
+                    seguridadFirma.BloqueadoHasta.Value -
+                    ahora;
+
+
+                int minutosRestantes =
+                    Math.Max(
+                        1,
+                        (int)Math.Ceiling(
+                            tiempoRestante.TotalMinutes
+                        )
+                    );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        bloqueado = true,
+                        bloqueadoHasta =
+                            seguridadFirma.BloqueadoHasta,
+
+                        message =
+                            $"La autorización mediante PIN se encuentra bloqueada temporalmente. Intenta nuevamente en aproximadamente {minutosRestantes} minuto(s)."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status429TooManyRequests
+                };
+            }
+
+
+            /*
+             * Si un bloqueo anterior ya venció,
+             * reiniciamos el contador.
+             */
+            if (
+                seguridadFirma.BloqueadoHasta.HasValue
+                &&
+                seguridadFirma.BloqueadoHasta.Value <=
+                    ahora
+            )
+            {
+                seguridadFirma.BloqueadoHasta =
+                    null;
+
+                seguridadFirma.IntentosFallidos =
+                    0;
+            }
+
+
+            PasswordHasher<
+                AdqSeguridadFirmaUsuario
+            > hasher =
+                new();
+
+
+            PasswordVerificationResult resultadoPin =
+                hasher.VerifyHashedPassword(
+                    seguridadFirma,
+                    seguridadFirma.PinHash,
+                    pin
+                );
+
+
+            // =====================================================
+            // PIN INCORRECTO
+            // =====================================================
+
+            if (
+                resultadoPin ==
+                PasswordVerificationResult.Failed
+            )
+            {
+                seguridadFirma.IntentosFallidos++;
+
+
+                int intentosRestantes =
+                    Math.Max(
+                        0,
+                        5 -
+                        seguridadFirma.IntentosFallidos
+                    );
+
+
+                if (
+                    seguridadFirma.IntentosFallidos >=
+                    5
+                )
+                {
+                    seguridadFirma.BloqueadoHasta =
+                        ahora.AddMinutes(
+                            15
+                        );
+
+
+                    await _context.SaveChangesAsync();
+
+
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            bloqueado = true,
+                            intentosRestantes = 0,
+                            bloqueadoHasta =
+                                seguridadFirma.BloqueadoHasta,
+
+                            message =
+                                "Se alcanzó el número máximo de intentos. La autorización mediante PIN quedó bloqueada durante 15 minutos."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status429TooManyRequests
+                    };
+                }
+
+
+                await _context.SaveChangesAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        pinIncorrecto = true,
+
+                        intentosRestantes,
+
+                        message =
+                            $"PIN incorrecto. Te quedan {intentosRestantes} intento(s) antes del bloqueo temporal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            // =====================================================
+            // PIN CORRECTO
+            // =====================================================
+
+            seguridadFirma.IntentosFallidos =
+                0;
+
+            seguridadFirma.BloqueadoHasta =
+                null;
+
+
+            /*
+             * Identity puede solicitar regenerar el hash
+             * cuando cambia internamente el algoritmo/configuración.
+             */
+            if (
+                resultadoPin ==
+                PasswordVerificationResult.SuccessRehashNeeded
+            )
+            {
+                seguridadFirma.PinHash =
+                    hasher.HashPassword(
+                        seguridadFirma,
+                        pin
+                    );
+            }
+
+
+            // =====================================================
+            // VALIDAR INTEGRIDAD DE LA FIRMA ORIGINAL
+            // =====================================================
+
+            string rutaFirmaOriginal =
+                Path.GetFullPath(
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        firmaUsuario.RutaArchivo.Replace(
+                            "/",
+                            Path.DirectorySeparatorChar.ToString()
+                        )
+                    )
+                );
+
+
+            string carpetaFirmasPermitida =
+                Path.GetFullPath(
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        "App_Data",
+                        "Adquisiciones",
+                        "Firmas"
+                    )
+                );
+
+
+            string prefijoCarpetaFirmas =
+                carpetaFirmasPermitida
+                    .TrimEnd(
+                        Path.DirectorySeparatorChar,
+                        Path.AltDirectorySeparatorChar
+                    )
+                +
+                Path.DirectorySeparatorChar;
+
+
+            if (
+                !rutaFirmaOriginal.StartsWith(
+                    prefijoCarpetaFirmas,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible validar la ubicación de la firma."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            if (
+                !System.IO.File.Exists(
+                    rutaFirmaOriginal
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El archivo de la firma seleccionada no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            byte[] bytesFirma =
+                await System.IO.File
+                    .ReadAllBytesAsync(
+                        rutaFirmaOriginal
+                    );
+
+
+            string hashFirmaActual =
+                Convert.ToHexString(
+                    SHA256.HashData(
+                        bytesFirma
+                    )
+                );
+
+
+            /*
+             * Si el archivo físico fue alterado desde
+             * que se registró la firma, no permitimos usarlo.
+             */
+            if (
+                !string.Equals(
+                    hashFirmaActual,
+                    firmaUsuario.HashArchivo,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                _logger.LogWarning(
+                    "La firma {FirmaId} del usuario {UsuarioId} no superó la validación de integridad.",
+                    firmaUsuario.Id,
+                    usuarioActual.Id
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La firma seleccionada no superó la validación de integridad. Contacta al administrador del sistema."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // DATOS DEL FIRMANTE
+            // =====================================================
+
+            Empleado? empleadoFirmante =
+                await ObtenerEmpleadoActualAsync(
+                    usuarioActual
+                );
+
+
+            string nombreFirmante =
+                empleadoFirmante?.NombreCompleto
+                ??
+                usuarioActual.UserName
+                ??
+                usuarioActual.Email
+                ??
+                "Usuario";
+
+
+            string? correoFirmante =
+                usuarioActual.Email;
+
+
+            string direccionIp =
+                ObtenerDireccionIp()
+                ??
+                string.Empty;
+
+
+            string userAgent =
+                Request.Headers[
+                    "User-Agent"
+                ]
+                    .ToString();
+
+
+            if (
+                userAgent.Length >
+                500
+            )
+            {
+                userAgent =
+                    userAgent.Substring(
+                        0,
+                        500
+                    );
+            }
+
+
+            // =====================================================
+            // HASH DEL CONTEXTO AUTORIZADO
+            // =====================================================
+
+            string contextoFirmado =
+                string.Join(
+                    "|",
+                    new[]
+                    {
+                "ERPSEI-ADQUISICIONES",
+                $"SolicitudId:{solicitud.Id}",
+                $"Folio:{solicitud.Folio}",
+                $"TipoSolicitud:{solicitud.TipoDocumentoSolicitud}",
+                $"AprobacionId:{aprobacion.Id}",
+                $"DetalleId:{detalleActual.Id}",
+                $"CotizacionId:{aprobacion.CotizacionId}",
+                $"Monto:{aprobacion.MontoSolicitado:0.00}",
+                $"OrdenEtapa:{detalleActual.Orden}",
+                $"Etapa:{detalleActual.NombreEtapa}",
+                $"Decision:{decision}",
+                $"Usuario:{usuarioActual.Id}",
+                $"Fecha:{ahora:O}"
+                    }
+                );
+
+
+            string hashContexto =
+                Convert.ToHexString(
+                    SHA256.HashData(
+                        System.Text.Encoding.UTF8.GetBytes(
+                            contextoFirmado
+                        )
+                    )
+                );
+
+
+            // =====================================================
+            // PREPARAR SNAPSHOT INMUTABLE
+            // =====================================================
+
+            string carpetaSnapshot =
+                Path.Combine(
+                    _environment.ContentRootPath,
+                    "App_Data",
+                    "Adquisiciones",
+                    "FirmasAprobaciones",
+                    aprobacion.Id.ToString(),
+                    detalleActual.Id.ToString()
+                );
+
+
+            Directory.CreateDirectory(
+                carpetaSnapshot
+            );
+
+
+            string nombreSnapshot =
+                $"{Guid.NewGuid():N}.png";
+
+
+            string rutaSnapshotFisica =
+                Path.Combine(
+                    carpetaSnapshot,
+                    nombreSnapshot
+                );
+
+
+            string rutaSnapshotRelativa =
+                Path.Combine(
+                    "App_Data",
+                    "Adquisiciones",
+                    "FirmasAprobaciones",
+                    aprobacion.Id.ToString(),
+                    detalleActual.Id.ToString(),
+                    nombreSnapshot
+                )
+                .Replace(
+                    "\\",
+                    "/"
+                );
+
+
+            // =====================================================
+            // OBSERVADORES ACTIVADOS
             // =====================================================
 
             List<string> usuariosObservadoresActivados =
@@ -9261,8 +11404,300 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .BeginTransactionAsync();
 
 
+            bool snapshotCreado =
+                false;
+
+
             try
             {
+                // =================================================
+                // VERIFICACIÓN FINAL CONTRA DOBLE ENVÍO
+                // =================================================
+
+                await _context.Entry(
+                    detalleActual
+                )
+                    .ReloadAsync();
+
+
+                if (
+                    !detalleActual.EsActual
+                    ||
+                    detalleActual.Estatus !=
+                        "Pendiente"
+                    ||
+                    detalleActual.UsuarioAprobadorId !=
+                        usuarioActual.Id
+                )
+                {
+                    await transaccion.RollbackAsync();
+
+
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                "La etapa cambió de estado antes de completar la autorización. Actualiza la pantalla e inténtalo nuevamente."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status409Conflict
+                    };
+                }
+
+
+                bool firmaRegistradaDuranteProceso =
+                    await _context
+                        .AdqFirmasAprobacionesPresupuestales
+                        .AnyAsync(
+                            x =>
+                                x.AprobacionPresupuestalDetalleId ==
+                                    detalleActual.Id
+                                &&
+                                !x.Eliminado
+                        );
+
+
+                if (
+                    firmaRegistradaDuranteProceso
+                )
+                {
+                    await transaccion.RollbackAsync();
+
+
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                "Esta etapa ya fue firmada previamente."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status409Conflict
+                    };
+                }
+
+
+                // =================================================
+                // CREAR ARCHIVO SNAPSHOT
+                // =================================================
+
+                await System.IO.File
+                    .WriteAllBytesAsync(
+                        rutaSnapshotFisica,
+                        bytesFirma
+                    );
+
+
+                snapshotCreado =
+                    true;
+
+
+                // =================================================
+                // REGISTRAR SNAPSHOT DE FIRMA
+                // =================================================
+
+                AdqFirmaAprobacionPresupuestal
+                    firmaAprobacion =
+                        new()
+                        {
+                            AprobacionPresupuestalDetalleId =
+                                detalleActual.Id,
+
+                            FirmaUsuarioId =
+                                firmaUsuario.Id,
+
+                            UsuarioFirmanteId =
+                                usuarioActual.Id,
+
+                            NombreFirmante =
+                                nombreFirmante,
+
+                            EmailFirmante =
+                                correoFirmante,
+
+                            OrdenEtapa =
+                                detalleActual.Orden,
+
+                            NombreEtapa =
+                                detalleActual.NombreEtapa,
+
+                            TipoFirma =
+                                firmaUsuario.TipoFirma,
+
+                            RutaFirmaSnapshot =
+                                rutaSnapshotRelativa,
+
+                            HashFirma =
+                                hashFirmaActual,
+
+                            HashContextoFirmado =
+                                hashContexto,
+
+                            Decision =
+                                decision,
+
+                            FechaFirma =
+                                ahora,
+
+                            DireccionIp =
+                                string.IsNullOrWhiteSpace(
+                                    direccionIp
+                                )
+                                    ? null
+                                    : direccionIp,
+
+                            UserAgent =
+                                string.IsNullOrWhiteSpace(
+                                    userAgent
+                                )
+                                    ? null
+                                    : userAgent,
+
+                            Eliminado =
+                                false
+                        };
+
+
+                _context
+                    .AdqFirmasAprobacionesPresupuestales
+                    .Add(
+                        firmaAprobacion
+                    );
+
+
+                // =================================================
+                // AUDITORÍA INMUTABLE
+                // =================================================
+
+                _context
+                    .AdqAprobacionesPresupuestalesEventos
+                    .Add(
+                        new AdqAprobacionPresupuestalEvento
+                        {
+                            AprobacionPresupuestalId =
+                                aprobacion.Id,
+
+                            AprobacionPresupuestalDetalleId =
+                                detalleActual.Id,
+
+                            TipoEvento =
+                                decision ==
+                                    "APROBAR"
+                                    ? "APROBACION_FIRMADA"
+                                    : "DECLINACION_FIRMADA",
+
+                            Descripcion =
+                                decision ==
+                                    "APROBAR"
+                                    ? $"La etapa {detalleActual.NombreEtapa} fue autorizada mediante firma y PIN."
+                                    : $"La etapa {detalleActual.NombreEtapa} fue declinada mediante firma y PIN.",
+
+                            UsuarioId =
+                                usuarioActual.Id,
+
+                            OrdenEtapa =
+                                detalleActual.Orden,
+
+                            NombreEtapa =
+                                detalleActual.NombreEtapa,
+
+                            EstatusAnterior =
+                                "Pendiente",
+
+                            EstatusNuevo =
+                                decision ==
+                                    "APROBAR"
+                                    ? "Aprobada"
+                                    : "Declinada",
+
+                            FechaEvento =
+                                ahora,
+
+                            DireccionIp =
+                                string.IsNullOrWhiteSpace(
+                                    direccionIp
+                                )
+                                    ? null
+                                    : direccionIp,
+
+                            Eliminado =
+                                false
+                        }
+                    );
+
+
+                // =================================================
+                // ACTUALIZAR USO DE FIRMA
+                // =================================================
+
+                firmaUsuario.TotalUsos++;
+
+
+                firmaUsuario.FechaUltimoUso =
+                    ahora;
+
+
+                firmaUsuario.FechaModificacion =
+                    ahora;
+
+
+                // =================================================
+                // ACTIVAR OBSERVADORES DE LA ETAPA
+                // =================================================
+
+                List<AdqAprobacionPresupuestalObservador>
+                    observadoresActivados =
+                        await _context
+                            .AdqAprobacionesPresupuestalesObservadores
+                            .Where(
+                                x =>
+                                    x.AprobacionPresupuestalId ==
+                                        aprobacion.Id
+                                    &&
+                                    !x.Eliminado
+                                    &&
+                                    !x.Activo
+                                    &&
+                                    x.OrdenActivacion ==
+                                        detalleActual.Orden
+                            )
+                            .ToListAsync();
+
+
+                foreach (
+                    AdqAprobacionPresupuestalObservador observador
+                    in observadoresActivados
+                )
+                {
+                    observador.Activo =
+                        true;
+
+                    observador.FechaActivacion =
+                        ahora;
+                }
+
+
+                usuariosObservadoresActivados =
+                    observadoresActivados
+                        .Select(
+                            x =>
+                                x.UsuarioId
+                        )
+                        .Where(
+                            x =>
+                                !string.IsNullOrWhiteSpace(
+                                    x
+                                )
+                        )
+                        .Distinct()
+                        .ToList();
+
+
                 // =================================================
                 // DECLINAR
                 // =================================================
@@ -9284,56 +11719,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     detalleActual.FechaDecision =
                         ahora;
 
-                    // =====================================================
-                    // ACTIVAR ASISTENTES / OBSERVADORES DE ESTA ETAPA
-                    // =====================================================
-
-                    List<AdqAprobacionPresupuestalObservador>
-                        observadoresActivados =
-                            await _context
-                                .AdqAprobacionesPresupuestalesObservadores
-                                .Where(
-                                    x =>
-                                        x.AprobacionPresupuestalId ==
-                                            aprobacion.Id
-                                        &&
-                                        !x.Eliminado
-                                        &&
-                                        !x.Activo
-                                        &&
-                                        x.OrdenActivacion ==
-                                            detalleActual.Orden
-                                )
-                                .ToListAsync();
-
-
-                    foreach (
-                        AdqAprobacionPresupuestalObservador observador
-                        in observadoresActivados
-                    )
-                    {
-                        observador.Activo =
-                            true;
-
-                        observador.FechaActivacion =
-                            ahora;
-                    }
-
-                    usuariosObservadoresActivados =
-                        observadoresActivados
-                            .Select(
-                                x =>
-                                    x.UsuarioId
-                            )
-                            .Where(
-                                x =>
-                                    !string.IsNullOrWhiteSpace(
-                                        x
-                                    )
-                            )
-                            .Distinct()
-                            .ToList();
-
 
                     aprobacion.Estatus =
                         "Declinada";
@@ -9348,9 +11733,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         comentario;
 
 
-                    // La solicitud deja el flujo aprobado.
-                    // Conservamos el estatus 12 por ahora hasta definir
-                    // si negocio quiere regresar a cotización o cancelar.
                     solicitud.FechaModificacion =
                         ahora;
 
@@ -9365,11 +11747,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 "PRESUPUESTO_DECLINADO",
 
                             Descripcion =
-                                string.IsNullOrWhiteSpace(
-                                    comentario
-                                )
-                                    ? $"La etapa {detalleActual.NombreEtapa} declinó la aprobación presupuestal."
-                                    : $"La etapa {detalleActual.NombreEtapa} declinó la aprobación presupuestal. Comentario: {comentario}",
+                                $"La etapa {detalleActual.NombreEtapa} declinó la aprobación presupuestal. Comentario: {comentario}",
 
                             UsuarioId =
                                 usuarioActual.Id,
@@ -9381,7 +11759,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 solicitud.EstatusId,
 
                             FechaEvento =
-                                ahora
+                                ahora,
+
+                            DireccionIp =
+                                string.IsNullOrWhiteSpace(
+                                    direccionIp
+                                )
+                                    ? null
+                                    : direccionIp
                         }
                     );
 
@@ -9398,10 +11783,15 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         new
                         {
                             success = true,
+
                             finalizada = true,
+
                             aprobada = false,
+
+                            firmada = true,
+
                             message =
-                                "La aprobación presupuestal fue declinada."
+                                "La aprobación presupuestal fue declinada y firmada correctamente."
                         }
                     );
                 }
@@ -9445,11 +11835,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                 // =================================================
-                // TODAVÍA EXISTE OTRA ETAPA
+                // EXISTE SIGUIENTE ETAPA
                 // =================================================
 
                 if (
-                    siguienteEtapa != null
+                    siguienteEtapa !=
+                    null
                 )
                 {
                     siguienteEtapa.Estatus =
@@ -9482,7 +11873,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 "ETAPA_PRESUPUESTAL_APROBADA",
 
                             Descripcion =
-                                $"La etapa {detalleActual.NombreEtapa} aprobó el presupuesto. El flujo continúa con {siguienteEtapa.NombreEtapa}.",
+                                $"La etapa {detalleActual.NombreEtapa} aprobó y firmó el presupuesto. El flujo continúa con {siguienteEtapa.NombreEtapa}.",
 
                             UsuarioId =
                                 usuarioActual.Id,
@@ -9494,7 +11885,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 solicitud.EstatusId,
 
                             FechaEvento =
-                                ahora
+                                ahora,
+
+                            DireccionIp =
+                                string.IsNullOrWhiteSpace(
+                                    direccionIp
+                                )
+                                    ? null
+                                    : direccionIp
                         }
                     );
 
@@ -9521,9 +11919,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         );
                     }
 
-                    // =====================================================
-                    // NOTIFICAR OBSERVADORES ACTIVADOS
-                    // =====================================================
 
                     if (
                         usuariosObservadoresActivados.Count >
@@ -9532,16 +11927,13 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     {
                         await CrearNotificacionAdquisicionesAsync(
                             usuariosObservadoresActivados,
-
                             "Seguimiento de aprobación presupuestal",
-
-                            $"La solicitud {solicitud.Folio} - {solicitud.Titulo} fue aprobada por {detalleActual.NombreEtapa}. Has sido incluido como observador del proceso presupuestal.",
-
+                            $"La solicitud {solicitud.Folio} - {solicitud.Titulo} fue aprobada y firmada por {detalleActual.NombreEtapa}. Has sido incluido como observador del proceso presupuestal.",
                             $"/ERP/Adquisiciones?openId={solicitud.Id}",
-
                             usuarioActual.Id
                         );
                     }
+
 
                     await transaccion
                         .CommitAsync();
@@ -9551,14 +11943,101 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         new
                         {
                             success = true,
+
                             finalizada = false,
+
                             aprobada = true,
+
+                            firmada = true,
+
                             siguienteEtapa =
                                 siguienteEtapa.NombreEtapa,
 
                             message =
-                                $"Etapa aprobada. El flujo continúa con {siguienteEtapa.NombreEtapa}."
+                                $"Etapa firmada y aprobada. El flujo continúa con {siguienteEtapa.NombreEtapa}."
                         }
+                    );
+                }
+
+
+                // =================================================
+                // ÚLTIMA ETAPA:
+                // VALIDAR APROBACIONES Y FIRMAS PREVIAS
+                // =================================================
+
+                List<int> idsEtapasPrevias =
+                    await _context
+                        .AdqAprobacionesPresupuestalesDetalle
+                        .AsNoTracking()
+                        .Where(
+                            x =>
+                                x.AprobacionPresupuestalId ==
+                                    aprobacion.Id
+                                &&
+                                !x.Eliminado
+                                &&
+                                x.Orden <
+                                    detalleActual.Orden
+                        )
+                        .Select(
+                            x =>
+                                x.Id
+                        )
+                        .ToListAsync();
+
+
+                int totalEtapasPrevias =
+                    idsEtapasPrevias.Count;
+
+
+                int totalEtapasPreviasAprobadas =
+                    await _context
+                        .AdqAprobacionesPresupuestalesDetalle
+                        .AsNoTracking()
+                        .CountAsync(
+                            x =>
+                                idsEtapasPrevias.Contains(
+                                    x.Id
+                                )
+                                &&
+                                x.Estatus ==
+                                    "Aprobada"
+                        );
+
+
+                int totalFirmasPrevias =
+                    await _context
+                        .AdqFirmasAprobacionesPresupuestales
+                        .AsNoTracking()
+                        .Where(
+                            x =>
+                                idsEtapasPrevias.Contains(
+                                    x.AprobacionPresupuestalDetalleId
+                                )
+                                &&
+                                !x.Eliminado
+                                &&
+                                x.Decision ==
+                                    "APROBAR"
+                        )
+                        .Select(
+                            x =>
+                                x.AprobacionPresupuestalDetalleId
+                        )
+                        .Distinct()
+                        .CountAsync();
+
+
+                if (
+                    totalEtapasPreviasAprobadas !=
+                        totalEtapasPrevias
+                    ||
+                    totalFirmasPrevias !=
+                        totalEtapasPrevias
+                )
+                {
+                    throw new InvalidOperationException(
+                        "No es posible concluir el flujo porque existen etapas anteriores sin aprobación o sin evidencia de firma."
                     );
                 }
 
@@ -9601,7 +12080,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             "PRESUPUESTO_APROBADO",
 
                         Descripcion =
-                            "El flujo de aprobación presupuestal fue aprobado en todas sus etapas.",
+                            "El flujo de aprobación presupuestal fue aprobado y firmado en todas sus etapas.",
 
                         UsuarioId =
                             usuarioActual.Id,
@@ -9613,7 +12092,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             13,
 
                         FechaEvento =
-                            ahora
+                            ahora,
+
+                        DireccionIp =
+                            string.IsNullOrWhiteSpace(
+                                direccionIp
+                            )
+                                ? null
+                                : direccionIp
                     }
                 );
 
@@ -9621,19 +12107,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 await _context
                     .SaveChangesAsync();
 
+
                 if (
-                        usuariosObservadoresActivados.Count >
-                        0
-                    )
+                    usuariosObservadoresActivados.Count >
+                    0
+                )
                 {
                     await CrearNotificacionAdquisicionesAsync(
                         usuariosObservadoresActivados,
                         "Seguimiento de aprobación presupuestal",
-                        $"La solicitud {solicitud.Folio} - {solicitud.Titulo} fue aprobada por {detalleActual.NombreEtapa}. El flujo presupuestal ha concluido.",
+                        $"La solicitud {solicitud.Folio} - {solicitud.Titulo} fue aprobada y firmada por {detalleActual.NombreEtapa}. El flujo presupuestal ha concluido.",
                         $"/ERP/Adquisiciones?openId={solicitud.Id}",
                         usuarioActual.Id
                     );
                 }
+
 
                 await transaccion
                     .CommitAsync();
@@ -9643,24 +12131,62 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = true,
+
                         finalizada = true,
+
                         aprobada = true,
+
+                        firmada = true,
+
                         estatusId = 13,
 
                         message =
-                            "El presupuesto fue aprobado correctamente en todas sus etapas."
+                            "El presupuesto fue aprobado y firmado correctamente en todas sus etapas."
                     }
                 );
             }
-            catch (Exception ex)
+            catch (
+                Exception ex
+            )
             {
                 await transaccion
                     .RollbackAsync();
 
 
+                /*
+                 * Si la transacción falla, eliminamos únicamente
+                 * el snapshot que acabamos de generar.
+                 */
+                if (
+                    snapshotCreado
+                    &&
+                    System.IO.File.Exists(
+                        rutaSnapshotFisica
+                    )
+                )
+                {
+                    try
+                    {
+                        System.IO.File.Delete(
+                            rutaSnapshotFisica
+                        );
+                    }
+                    catch (
+                        Exception exArchivo
+                    )
+                    {
+                        _logger.LogWarning(
+                            exArchivo,
+                            "No fue posible eliminar el snapshot de firma huérfano {RutaSnapshot}.",
+                            rutaSnapshotFisica
+                        );
+                    }
+                }
+
+
                 _logger.LogError(
                     ex,
-                    "Error al procesar la aprobación presupuestal {DetalleId}.",
+                    "Error al procesar la aprobación presupuestal firmada {DetalleId}.",
                     detalleId
                 );
 
@@ -9669,13 +12195,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
-                            "Ocurrió un error al procesar la aprobación presupuestal."
+                            ex is InvalidOperationException
+                                ? ex.Message
+                                : "Ocurrió un error al procesar la aprobación presupuestal."
                     }
                 )
                 {
                     StatusCode =
-                        StatusCodes.Status500InternalServerError
+                        ex is InvalidOperationException
+                            ? StatusCodes.Status409Conflict
+                            : StatusCodes.Status500InternalServerError
                 };
             }
         }
@@ -10079,6 +12610,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                         Titulo =
                             Input.Titulo,
+
+                        TipoDocumentoSolicitud =
+                            Input.TipoDocumentoSolicitud,
 
                         FechaSolicitud =
                             ahora,
@@ -11424,6 +13958,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 x.Titulo,
 
                                 x.Descripcion,
+
+                                x.TipoDocumentoSolicitud,
 
                                 x.Justificacion,
 
@@ -13525,6 +16061,23 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 usuarioActual
             );
 
+            // =========================================================
+            // VALIDAR SI EL USUARIO ES APROBADOR PRESUPUESTAL
+            // =========================================================
+
+            EsAprobadorPresupuestal =
+                await _context
+                    .AdqConfiguracionAprobacionPresupuestal
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioResponsableId ==
+                                usuarioActual.Id
+                            &&
+                            x.Activo
+                            &&
+                            !x.Eliminado
+                    );
 
             // =========================================================
             // APROBACIONES PRESUPUESTALES PENDIENTES
@@ -13989,6 +16542,54 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .Trim() ??
                 string.Empty;
 
+            Input.TipoDocumentoSolicitud =
+                Input.TipoDocumentoSolicitud?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+                        string[] tiposDocumentoPermitidos =
+                        {
+                "Factura",
+                "Contrato",
+                "Cotizaciones",
+                "Otros"
+            };
+
+
+            string? tipoDocumentoNormalizado =
+                tiposDocumentoPermitidos
+                    .FirstOrDefault(
+                        x =>
+                            string.Equals(
+                                x,
+                                Input.TipoDocumentoSolicitud,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                    );
+
+
+            if (
+                tipoDocumentoNormalizado ==
+                null
+            )
+            {
+                ModelState.AddModelError(
+                    "Input.TipoDocumentoSolicitud",
+                    "El tipo de solicitud seleccionado no es válido."
+                );
+            }
+            else
+            {
+                /*
+                 * Conservamos siempre la escritura oficial:
+                 * Factura / Contrato / Cotizaciones / Otros.
+                 */
+                Input.TipoDocumentoSolicitud =
+                    tipoDocumentoNormalizado;
+            }
+
 
             Input.Descripcion =
                 Input.Descripcion?
@@ -14026,6 +16627,51 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     item.Descripcion?
                         .Trim();
             }
+        }
+
+        // =========================================================
+        // VALIDAR TIPO DE SOLICITUD
+        // =========================================================
+
+        private void ValidarTipoDocumentoSolicitud()
+        {
+            string[] tiposPermitidos =
+            {
+        "Factura",
+        "Contrato",
+        "Cotizaciones",
+        "Otros"
+    };
+
+
+            string? valorNormalizado =
+                tiposPermitidos
+                    .FirstOrDefault(
+                        x =>
+                            string.Equals(
+                                x,
+                                Input.TipoDocumentoSolicitud,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                    );
+
+
+            if (
+                valorNormalizado ==
+                null
+            )
+            {
+                ModelState.AddModelError(
+                    "Input.TipoDocumentoSolicitud",
+                    "Debes seleccionar un tipo de solicitud válido."
+                );
+
+                return;
+            }
+
+
+            Input.TipoDocumentoSolicitud =
+                valorNormalizado;
         }
 
 
@@ -14119,6 +16765,134 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
         }
 
+
+        // =========================================================
+        // CONVERTIR FIRMA BASE64 A PNG
+        // =========================================================
+
+        private static byte[]
+            ConvertirFirmaBase64APng(
+                string? firmaBase64
+            )
+        {
+            if (
+                string.IsNullOrWhiteSpace(
+                    firmaBase64
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    "No se recibió la imagen de la firma."
+                );
+            }
+
+
+            string contenido =
+                firmaBase64.Trim();
+
+
+            const string prefijoPng =
+                "data:image/png;base64,";
+
+
+            if (
+                contenido.StartsWith(
+                    "data:",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                if (
+                    !contenido.StartsWith(
+                        prefijoPng,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        "La firma debe estar en formato PNG."
+                    );
+                }
+
+
+                contenido =
+                    contenido.Substring(
+                        prefijoPng.Length
+                    );
+            }
+
+
+            byte[] bytes;
+
+
+            try
+            {
+                bytes =
+                    Convert.FromBase64String(
+                        contenido
+                    );
+            }
+            catch (
+                FormatException
+            )
+            {
+                throw new InvalidOperationException(
+                    "La imagen de la firma no contiene información Base64 válida."
+                );
+            }
+
+
+            /*
+             * Firma estándar de un archivo PNG:
+             *
+             * 89 50 4E 47 0D 0A 1A 0A
+             */
+
+            byte[] encabezadoPng =
+            {
+        0x89,
+        0x50,
+        0x4E,
+        0x47,
+        0x0D,
+        0x0A,
+        0x1A,
+        0x0A
+    };
+
+
+            if (
+                bytes.Length <
+                encabezadoPng.Length
+            )
+            {
+                throw new InvalidOperationException(
+                    "El archivo de firma no es una imagen PNG válida."
+                );
+            }
+
+
+            for (
+                int indice = 0;
+                indice <
+                    encabezadoPng.Length;
+                indice++
+            )
+            {
+                if (
+                    bytes[indice] !=
+                    encabezadoPng[indice]
+                )
+                {
+                    throw new InvalidOperationException(
+                        "El archivo de firma no es una imagen PNG válida."
+                    );
+                }
+            }
+
+
+            return bytes;
+        }
 
         // =========================================================
         // IP

@@ -141,5 +141,20 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             get;
             set;
         }
+
+        public ICollection<AdqFirmaAprobacionPresupuestal>
+        Firmas
+        {
+            get;
+            set;
+        } = new List<AdqFirmaAprobacionPresupuestal>();
+
+
+        public ICollection<AdqAprobacionPresupuestalEvento>
+            Eventos
+        {
+            get;
+            set;
+        } = new List<AdqAprobacionPresupuestalEvento>();
     }
 }

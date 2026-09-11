@@ -3615,3 +3615,617 @@ body:has(#modalResultadoDecisionPresupuestalAdq.show)
 .modal-backdrop:last-of-type {
     z-index: 4000015 !important;
 }
+
+/* ============================================================
+   FIRMAS - APROBACIÓN PRESUPUESTAL
+   ============================================================ */
+
+.adq-signature-modal {
+    border: 0;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+
+.adq-signature-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 12px;
+    background: rgba(33, 22, 111, .10);
+    color: #21166f;
+    font-size: 1.2rem;
+}
+
+
+.adq-signature-section {
+    padding: 1.25rem;
+    border: 1px solid #e4e8ee;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+
+.adq-signature-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+
+    .adq-signature-section-header > div:first-child {
+        display: flex;
+        align-items: center;
+        gap: .8rem;
+    }
+
+
+.adq-signature-section-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 11px;
+    background: rgba(33, 22, 111, .08);
+    color: #21166f;
+}
+
+
+.adq-signature-security-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #f8f9fb;
+}
+
+
+.adq-signature-security-info {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    color: #495057;
+}
+
+
+    .adq-signature-security-info i {
+        color: #21166f;
+        font-size: 1.1rem;
+    }
+
+
+.adq-signature-grid,
+.adq-signature-recent-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+
+.adq-signature-card {
+    position: relative;
+    min-height: 180px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 14px;
+    background: #ffffff;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+
+    .adq-signature-card:hover {
+        border-color: rgba(33, 22, 111, .35);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, .06);
+        transform: translateY(-2px);
+    }
+
+
+    .adq-signature-card.is-default {
+        border-color: #21166f;
+    }
+
+
+.adq-signature-card-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+    margin-bottom: .8rem;
+    padding: .5rem;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #f8f9fa;
+}
+
+
+    .adq-signature-card-image img {
+        display: block;
+        max-width: 100%;
+        max-height: 78px;
+        object-fit: contain;
+    }
+
+
+.adq-signature-card-name {
+    font-weight: 700;
+}
+
+
+.adq-signature-card-meta {
+    margin-top: .2rem;
+    color: #6c757d;
+    font-size: .78rem;
+}
+
+
+.adq-signature-card-actions {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .8rem;
+}
+
+
+.adq-signature-empty {
+    display: flex;
+    grid-column: 1 / -1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 170px;
+    gap: .4rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+
+    .adq-signature-empty i {
+        margin-bottom: .25rem;
+        color: #adb5bd;
+        font-size: 2rem;
+    }
+
+
+.adq-signature-empty-small {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: center;
+    min-height: 90px;
+    gap: .6rem;
+    color: #6c757d;
+    border: 1px dashed #dee2e6;
+    border-radius: 12px;
+    background: #fafbfc;
+}
+
+
+/* ============================================================
+   TIPOS DE FIRMA
+   ============================================================ */
+
+.adq-signature-type-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+
+.adq-signature-type-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 135px;
+    gap: .45rem;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 14px;
+    background: #ffffff;
+    text-align: left;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+
+    .adq-signature-type-card i {
+        color: #21166f;
+        font-size: 1.35rem;
+    }
+
+
+    .adq-signature-type-card strong {
+        color: #212529;
+    }
+
+
+    .adq-signature-type-card span {
+        color: #6c757d;
+        font-size: .82rem;
+    }
+
+
+    .adq-signature-type-card:hover {
+        border-color: rgba(33, 22, 111, .4);
+    }
+
+
+    .adq-signature-type-card.active {
+        border-color: #21166f;
+        background: rgba(33, 22, 111, .04);
+        box-shadow: 0 0 0 1px rgba(33, 22, 111, .05);
+    }
+
+
+/* ============================================================
+   EDITOR DE FIRMA
+   ============================================================ */
+
+.adq-signature-editor {
+    padding: 1.1rem;
+    border: 1px solid #e4e8ee;
+    border-radius: 14px;
+    background: #fafbfc;
+}
+
+
+.adq-signature-canvas-container {
+    width: 100%;
+    overflow: hidden;
+    border: 1px dashed #adb5bd;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+
+.adq-signature-canvas {
+    display: block;
+    width: 100%;
+    height: 220px;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+
+.adq-signature-file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+    margin-top: 1rem;
+    padding: 1rem;
+    border: 1px dashed #ced4da;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+
+    .adq-signature-file-preview img {
+        max-width: 100%;
+        max-height: 140px;
+        object-fit: contain;
+    }
+
+
+/* ============================================================
+   FIRMA TIPOGRÁFICA
+   ============================================================ */
+
+.adq-signature-typographic-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+
+.adq-signature-typographic-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 105px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease;
+}
+
+
+    .adq-signature-typographic-option:hover {
+        border-color: rgba(33, 22, 111, .45);
+    }
+
+
+    .adq-signature-typographic-option.active {
+        border-color: #21166f;
+        background: rgba(33, 22, 111, .04);
+    }
+
+
+.adq-signature-typographic-text {
+    font-family: cursive;
+    font-size: 1.8rem;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 991.98px) {
+
+    .adq-signature-grid,
+    .adq-signature-recent-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+
+    .adq-signature-type-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+@media (max-width: 575.98px) {
+
+    .adq-signature-grid,
+    .adq-signature-recent-grid,
+    .adq-signature-typographic-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-signature-section-header,
+    .adq-signature-security-body {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+        .adq-signature-section-header > div:first-child {
+            align-items: flex-start;
+        }
+}
+
+/* ============================================================
+   TIPO DE SOLICITUD
+   ============================================================ */
+
+.adq-document-type-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+
+.adq-document-type-option {
+    position: relative;
+    margin: 0;
+    cursor: pointer;
+}
+
+
+    .adq-document-type-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+
+.adq-document-type-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 74px;
+    gap: .55rem;
+    padding: .9rem;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    background: #ffffff;
+    transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+}
+
+
+    .adq-document-type-check i {
+        color: #21166f;
+        font-size: 1.1rem;
+    }
+
+
+.adq-document-type-option:hover
+.adq-document-type-check {
+    border-color: rgba(33, 22, 111, .45);
+}
+
+
+.adq-document-type-option input:checked + .adq-document-type-check {
+    border-color: #21166f;
+    background: rgba(33, 22, 111, .06);
+    box-shadow: 0 0 0 1px rgba(33, 22, 111, .08);
+}
+
+
+    .adq-document-type-option input:checked + .adq-document-type-check::after {
+        content: "✓";
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        margin-left: .2rem;
+        border-radius: 50%;
+        background: #21166f;
+        color: #ffffff;
+        font-size: .72rem;
+        font-weight: 700;
+    }
+
+
+@media (max-width: 991.98px) {
+
+    .adq-document-type-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 575.98px) {
+
+    .adq-document-type-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   FIRMA DE DECISIÓN PRESUPUESTAL
+   ============================================================ */
+
+.adq-signature-approval-modal {
+    overflow: hidden;
+}
+
+
+.adq-signature-approval-summary {
+    padding: 1rem 1.1rem;
+    border: 1px solid #e8e8ee;
+    border-radius: 14px;
+    background: #f8f9fb;
+}
+
+
+.adq-signature-approval-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .9rem;
+    margin-top: 1rem;
+}
+
+
+.adq-signature-approval-option {
+    position: relative;
+    min-width: 0;
+    padding: .9rem;
+    border: 1px solid #dee2e6;
+    border-radius: 14px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background .2s ease;
+}
+
+
+    .adq-signature-approval-option:hover {
+        border-color: rgba(33, 22, 111, .4);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .06);
+        transform: translateY(-1px);
+    }
+
+
+    .adq-signature-approval-option.is-selected {
+        border-color: #21166f;
+        background: rgba(33, 22, 111, .04);
+        box-shadow: 0 0 0 2px rgba(33, 22, 111, .10);
+    }
+
+
+        .adq-signature-approval-option.is-selected::after {
+            content: "✓";
+            position: absolute;
+            top: .6rem;
+            right: .6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #21166f;
+            color: #ffffff;
+            font-size: .75rem;
+            font-weight: 700;
+        }
+
+
+.adq-signature-approval-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 105px;
+    padding: .75rem;
+    margin-bottom: .7rem;
+    border-radius: 10px;
+    background: #fafafa;
+    overflow: hidden;
+}
+
+
+    .adq-signature-approval-image img {
+        display: block;
+        width: 100%;
+        max-width: 190px;
+        height: 85px;
+        object-fit: contain;
+    }
+
+
+.adq-signature-approval-name {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.adq-signature-approval-meta {
+    margin-top: .2rem;
+    color: #6c757d;
+    font-size: .78rem;
+}
+
+
+.adq-signature-security-note {
+    display: flex;
+    gap: .8rem;
+    height: 100%;
+    padding: 1rem;
+    border: 1px solid #e4e4ea;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+
+    .adq-signature-security-note > i {
+        flex: 0 0 auto;
+        margin-top: .15rem;
+        color: #21166f;
+        font-size: 1.25rem;
+    }
+
+
+#decisionFirmaDecisionPresupuestalAdq {
+    font-size: .78rem;
+}
+
+
+@media (max-width: 991.98px) {
+
+    .adq-signature-approval-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 575.98px) {
+
+    .adq-signature-approval-grid {
+        grid-template-columns: 1fr;
+    }
+}

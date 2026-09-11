@@ -115,6 +115,19 @@
                 </button>
             }
 
+            @if (Model.EsAprobadorPresupuestal)
+            {
+                <button type="button"
+                        id="btnMisFirmasAdq"
+                        class="btn btn-outline-dark">
+
+                    <i class="bi bi-pen me-1"></i>
+
+                    Mis firmas
+
+                </button>
+            }
+
 
             <button type="button"
                     id="btnNuevaSolicitudAdq"
@@ -3574,6 +3587,108 @@
 
                             </div>
 
+                                <div class="col-12">
+
+                                    <label class="form-label">
+                                        Tipo de solicitud
+                                        <span class="text-danger">*</span>
+                                    </label>
+
+
+                                    <div class="adq-document-type-grid">
+
+                                        <label class="adq-document-type-option">
+
+                                            <input type="radio"
+                                                   asp-for="Input.TipoDocumentoSolicitud"
+                                                   value="Factura" />
+
+                                            <span class="adq-document-type-check">
+
+                                                <i class="bi bi-receipt"></i>
+
+                                                <strong>
+                                                    Factura
+                                                </strong>
+
+                                            </span>
+
+                                        </label>
+
+
+                                        <label class="adq-document-type-option">
+
+                                            <input type="radio"
+                                                   asp-for="Input.TipoDocumentoSolicitud"
+                                                   value="Contrato" />
+
+                                            <span class="adq-document-type-check">
+
+                                                <i class="bi bi-file-earmark-text"></i>
+
+                                                <strong>
+                                                    Contrato
+                                                </strong>
+
+                                            </span>
+
+                                        </label>
+
+
+                                        <label class="adq-document-type-option">
+
+                                            <input type="radio"
+                                                   asp-for="Input.TipoDocumentoSolicitud"
+                                                   value="Cotizaciones" />
+
+                                            <span class="adq-document-type-check">
+
+                                                <i class="bi bi-files"></i>
+
+                                                <strong>
+                                                    Cotizaciones
+                                                </strong>
+
+                                            </span>
+
+                                        </label>
+
+
+                                        <label class="adq-document-type-option">
+
+                                            <input type="radio"
+                                                   asp-for="Input.TipoDocumentoSolicitud"
+                                                   value="Otros" />
+
+                                            <span class="adq-document-type-check">
+
+                                                <i class="bi bi-three-dots"></i>
+
+                                                <strong>
+                                                    Otros
+                                                </strong>
+
+                                            </span>
+
+                                        </label>
+
+                                    </div>
+
+
+                                    <span asp-validation-for="Input.TipoDocumentoSolicitud"
+                                          class="text-danger">
+                                    </span>
+
+
+                                    <div class="form-text">
+
+                                        El tipo seleccionado aparecerá marcado
+                                        en la solicitud de pago final.
+
+                                    </div>
+
+                                </div>
+
 
                             <div class="col-12">
 
@@ -5781,6 +5896,1112 @@
                             data-bs-dismiss="modal">
 
                         Cerrar
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL - MIS FIRMAS -->
+    <!-- ========================================================= -->
+
+    <div class="modal fade"
+         id="modalMisFirmasAdq"
+         tabindex="-1"
+         aria-labelledby="modalMisFirmasAdqTitulo"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+            <div class="modal-content adq-signature-modal">
+
+                <!-- ================================================= -->
+                <!-- HEADER -->
+                <!-- ================================================= -->
+
+                <div class="modal-header">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="adq-signature-header-icon">
+                            <i class="bi bi-pen-fill"></i>
+                        </div>
+
+                        <div>
+
+                            <h5 class="modal-title mb-1"
+                                id="modalMisFirmasAdqTitulo">
+
+                                Mis firmas
+
+                            </h5>
+
+                            <div class="small text-muted">
+
+                                Administra las firmas que podrás utilizar
+                                durante tus aprobaciones presupuestales.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- BODY -->
+                <!-- ================================================= -->
+
+                <div class="modal-body">
+
+                    <!-- ============================================= -->
+                    <!-- CARGANDO -->
+                    <!-- ============================================= -->
+
+                    <div id="cargandoMisFirmasAdq"
+                         class="text-center py-5 d-none">
+
+                        <div class="spinner-border text-primary"
+                             role="status">
+                        </div>
+
+                        <div class="mt-3 text-muted">
+                            Cargando tus firmas...
+                        </div>
+
+                    </div>
+
+
+                    <!-- ============================================= -->
+                    <!-- CONTENIDO -->
+                    <!-- ============================================= -->
+
+                    <div id="contenidoMisFirmasAdq">
+
+                        <!-- ========================================= -->
+                        <!-- SEGURIDAD -->
+                        <!-- ========================================= -->
+
+                        <section class="adq-signature-section">
+
+                            <div class="adq-signature-section-header">
+
+                                <div>
+
+                                    <div class="adq-signature-section-icon">
+                                        <i class="bi bi-shield-lock"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <h6 class="mb-1">
+                                            Seguridad de firma
+                                        </h6>
+
+                                        <p class="mb-0 text-muted small">
+
+                                            El PIN confirma tu identidad antes
+                                            de registrar una aprobación.
+
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <span id="badgeEstadoPinFirmaAdq"
+                                      class="badge text-bg-secondary">
+
+                                    Sin configurar
+
+                                </span>
+
+                            </div>
+
+
+                            <div class="adq-signature-security-body">
+
+                                <div class="adq-signature-security-info">
+
+                                    <i class="bi bi-info-circle"></i>
+
+                                    <span id="textoEstadoPinFirmaAdq">
+
+                                        Configura un PIN antes de utilizar
+                                        tus firmas en una aprobación.
+
+                                    </span>
+
+                                </div>
+
+
+                                <button type="button"
+                                        id="btnConfigurarPinFirmaAdq"
+                                        class="btn btn-outline-primary">
+
+                                    <i class="bi bi-key me-1"></i>
+
+                                    Configurar PIN
+
+                                </button>
+
+                                <button type="button"
+                                        id="btnAyudaCambioPinFirmaAdq"
+                                        class="btn btn-link btn-sm text-decoration-none d-none">
+
+                                    <i class="bi bi-info-circle me-1"></i>
+
+                                    ¿Necesitas cambiar tu PIN?
+
+                                </button>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- ========================================= -->
+                        <!-- ÚLTIMAS FIRMAS -->
+                        <!-- ========================================= -->
+
+                        <section class="adq-signature-section mt-4">
+
+                            <div class="adq-signature-section-header">
+
+                                <div>
+
+                                    <div class="adq-signature-section-icon">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <h6 class="mb-1">
+                                            Firmas recientes
+                                        </h6>
+
+                                        <p class="mb-0 text-muted small">
+
+                                            Tus últimas 3 firmas utilizadas
+                                            aparecerán aquí para seleccionarlas rápidamente.
+
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div id="ultimasFirmasAdq"
+                                 class="adq-signature-recent-grid">
+
+                                <div class="adq-signature-empty-small">
+
+                                    <i class="bi bi-pen"></i>
+
+                                    <span>
+                                        Aún no tienes firmas utilizadas.
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- ========================================= -->
+                        <!-- MIS FIRMAS GUARDADAS -->
+                        <!-- ========================================= -->
+
+                        <section class="adq-signature-section mt-4">
+
+                            <div class="adq-signature-section-header">
+
+                                <div>
+
+                                    <div class="adq-signature-section-icon">
+                                        <i class="bi bi-person-badge"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <h6 class="mb-1">
+                                            Firmas guardadas
+                                        </h6>
+
+                                        <p class="mb-0 text-muted small">
+
+                                            Puedes tener varias firmas y seleccionar
+                                            una como predeterminada.
+
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <button type="button"
+                                        id="btnNuevaFirmaAdq"
+                                        class="btn btn-primary">
+
+                                    <i class="bi bi-plus-lg me-1"></i>
+
+                                    Nueva firma
+
+                                </button>
+
+                            </div>
+
+
+                            <div id="listaFirmasUsuarioAdq"
+                                 class="adq-signature-grid">
+
+                                <div class="adq-signature-empty">
+
+                                    <i class="bi bi-vector-pen"></i>
+
+                                    <strong>
+                                        No tienes firmas registradas
+                                    </strong>
+
+                                    <span>
+                                        Crea tu primera firma para utilizarla
+                                        durante las aprobaciones.
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </section>
+
+
+                        <!-- ========================================= -->
+                        <!-- CREAR NUEVA FIRMA -->
+                        <!-- ========================================= -->
+
+                        <section id="seccionNuevaFirmaAdq"
+                                 class="adq-signature-section mt-4 d-none">
+
+                            <div class="adq-signature-section-header">
+
+                                <div>
+
+                                    <div class="adq-signature-section-icon">
+                                        <i class="bi bi-vector-pen"></i>
+                                    </div>
+
+                                    <div>
+
+                                        <h6 class="mb-1">
+                                            Crear nueva firma
+                                        </h6>
+
+                                        <p class="mb-0 text-muted small">
+
+                                            Elige cómo deseas crear tu firma.
+
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+
+                                <button type="button"
+                                        id="btnCancelarNuevaFirmaAdq"
+                                        class="btn btn-sm btn-outline-secondary">
+
+                                    <i class="bi bi-x-lg me-1"></i>
+
+                                    Cancelar
+
+                                </button>
+
+                            </div>
+
+
+                            <div class="mt-4">
+
+                                <label for="nombreFirmaAdq"
+                                       class="form-label fw-semibold">
+
+                                    Nombre de la firma
+
+                                </label>
+
+                                <input type="text"
+                                       id="nombreFirmaAdq"
+                                       class="form-control"
+                                       maxlength="150"
+                                       autocomplete="off"
+                                       placeholder="Ej. Firma principal" />
+
+                                <div class="form-text">
+
+                                    Este nombre solamente sirve para que puedas
+                                    identificarla posteriormente.
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ===================================== -->
+                            <!-- TIPO DE FIRMA -->
+                            <!-- ===================================== -->
+
+                            <div class="adq-signature-type-grid mt-4">
+
+                                <button type="button"
+                                        class="adq-signature-type-card active"
+                                        data-tipo-firma="Dibujada">
+
+                                    <i class="bi bi-pencil"></i>
+
+                                    <strong>
+                                        Dibujar
+                                    </strong>
+
+                                    <span>
+                                        Crea tu firma con el cursor o pantalla táctil.
+                                    </span>
+
+                                </button>
+
+
+                                <button type="button"
+                                        class="adq-signature-type-card"
+                                        data-tipo-firma="Archivo">
+
+                                    <i class="bi bi-file-earmark-image"></i>
+
+                                    <strong>
+                                        Subir PNG
+                                    </strong>
+
+                                    <span>
+                                        Utiliza una imagen de tu firma.
+                                    </span>
+
+                                </button>
+
+
+                                <button type="button"
+                                        class="adq-signature-type-card"
+                                        data-tipo-firma="Tipografica">
+
+                                    <i class="bi bi-fonts"></i>
+
+                                    <strong>
+                                        Tipográfica
+                                    </strong>
+
+                                    <span>
+                                        Genera propuestas basadas en tu nombre.
+                                    </span>
+
+                                </button>
+
+                            </div>
+
+
+                            <!-- ===================================== -->
+                            <!-- FIRMA DIBUJADA -->
+                            <!-- ===================================== -->
+
+                            <div id="panelFirmaDibujadaAdq"
+                                 class="adq-signature-editor mt-4">
+
+                                <div class="d-flex justify-content-between
+                                    align-items-center gap-3 mb-3">
+
+                                    <div>
+
+                                        <strong>
+                                            Dibuja tu firma
+                                        </strong>
+
+                                        <div class="small text-muted">
+                                            Utiliza el mouse, trackpad o pantalla táctil.
+                                        </div>
+
+                                    </div>
+
+
+                                    <button type="button"
+                                            id="btnLimpiarFirmaCanvasAdq"
+                                            class="btn btn-sm btn-outline-secondary">
+
+                                        <i class="bi bi-eraser me-1"></i>
+
+                                        Limpiar
+
+                                    </button>
+
+                                </div>
+
+
+                                <div class="adq-signature-canvas-container">
+
+                                    <canvas id="canvasFirmaAdq"
+                                            class="adq-signature-canvas">
+                                    </canvas>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ===================================== -->
+                            <!-- FIRMA PNG -->
+                            <!-- ===================================== -->
+
+                            <div id="panelFirmaArchivoAdq"
+                                 class="adq-signature-editor mt-4 d-none">
+
+                                <strong>
+                                    Subir firma
+                                </strong>
+
+                                <div class="small text-muted mb-3">
+
+                                    Selecciona una imagen PNG.
+                                    Tamaño máximo: 2 MB.
+
+                                </div>
+
+
+                                <input type="file"
+                                       id="archivoFirmaAdq"
+                                       class="form-control"
+                                       accept="image/png" />
+
+
+                                <div id="previewArchivoFirmaAdq"
+                                     class="adq-signature-file-preview d-none">
+
+                                    <img id="imagenPreviewFirmaAdq"
+                                         alt="Vista previa de la firma" />
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ===================================== -->
+                            <!-- FIRMA TIPOGRÁFICA -->
+                            <!-- ===================================== -->
+
+                            <div id="panelFirmaTipograficaAdq"
+                                 class="adq-signature-editor mt-4 d-none">
+
+                                <div class="mb-3">
+
+                                    <strong>
+                                        Selecciona una propuesta
+                                    </strong>
+
+                                    <div class="small text-muted">
+
+                                        Generaremos diferentes alternativas
+                                        utilizando tu nombre.
+
+                                    </div>
+
+                                </div>
+
+
+                                <div id="propuestasFirmaTipograficaAdq"
+                                     class="adq-signature-typographic-grid">
+
+                                    <div class="text-muted small">
+
+                                        Las propuestas aparecerán aquí.
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- ===================================== -->
+                            <!-- PREDETERMINADA -->
+                            <!-- ===================================== -->
+
+                            <div class="form-check form-switch mt-4">
+
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="firmaPredeterminadaAdq" />
+
+                                <label class="form-check-label"
+                                       for="firmaPredeterminadaAdq">
+
+                                    Utilizar como firma predeterminada
+
+                                </label>
+
+                            </div>
+
+
+                            <!-- ===================================== -->
+                            <!-- GUARDAR -->
+                            <!-- ===================================== -->
+
+                            <div class="d-flex justify-content-end mt-4">
+
+                                <button type="button"
+                                        id="btnGuardarFirmaUsuarioAdq"
+                                        class="btn btn-success">
+
+                                    <i class="bi bi-check-circle me-1"></i>
+
+                                    Guardar firma
+
+                                </button>
+
+                            </div>
+
+                        </section>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- FOOTER -->
+                <!-- ================================================= -->
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cerrar
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================================================= -->
+    <!-- MODAL - CONFIGURAR PIN DE FIRMA -->
+    <!-- ========================================================= -->
+
+    <div class="modal fade"
+         id="modalPinFirmaAdq"
+         tabindex="-1"
+         aria-labelledby="modalPinFirmaAdqTitulo"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-md modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <h5 class="modal-title"
+                            id="modalPinFirmaAdqTitulo">
+
+                            <i class="bi bi-shield-lock me-2"></i>
+
+                            Configurar PIN de firma
+
+                        </h5>
+
+                        <div class="small text-muted mt-1">
+
+                            Este PIN será requerido para confirmar
+                            tus aprobaciones.
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="alert alert-light border">
+
+                        <i class="bi bi-shield-check me-2"></i>
+
+                        El PIN se almacena de forma protegida y
+                        no puede ser consultado posteriormente.
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label for="pinFirmaAdq"
+                               class="form-label fw-semibold">
+
+                            Nuevo PIN
+
+                        </label>
+
+                        <div class="input-group">
+
+                            <input type="password"
+                                   id="pinFirmaAdq"
+                                   class="form-control"
+                                   minlength="4"
+                                   maxlength="20"
+                                   autocomplete="new-password"
+                                   placeholder="Ingresa de 4 a 20 caracteres" />
+
+                            <button type="button"
+                                    class="btn btn-outline-secondary btnVerPinFirmaAdq"
+                                    data-target="pinFirmaAdq">
+
+                                <i class="bi bi-eye"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                        <label for="confirmarPinFirmaAdq"
+                               class="form-label fw-semibold">
+
+                            Confirmar PIN
+
+                        </label>
+
+                        <div class="input-group">
+
+                            <input type="password"
+                                   id="confirmarPinFirmaAdq"
+                                   class="form-control"
+                                   minlength="4"
+                                   maxlength="20"
+                                   autocomplete="new-password"
+                                   placeholder="Vuelve a ingresar el PIN" />
+
+                            <button type="button"
+                                    class="btn btn-outline-secondary btnVerPinFirmaAdq"
+                                    data-target="confirmarPinFirmaAdq">
+
+                                <i class="bi bi-eye"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
+
+
+                    <button type="button"
+                            id="btnGuardarPinFirmaAdq"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-key me-1"></i>
+
+                        Guardar PIN
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL FIRMA / PIN - DECISIÓN PRESUPUESTAL -->
+    <!-- ========================================================= -->
+
+    <div class="modal fade"
+         id="modalFirmaDecisionPresupuestalAdq"
+         tabindex="-1"
+         aria-hidden="true"
+         data-bs-backdrop="static"
+         data-bs-keyboard="false">
+
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+
+            <div class="modal-content adq-signature-approval-modal">
+
+                <!-- ===================================================== -->
+                <!-- HEADER -->
+                <!-- ===================================================== -->
+
+                <div class="modal-header">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="adq-signature-header-icon">
+
+                            <i class="bi bi-shield-check"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h5 class="modal-title mb-1"
+                                id="tituloFirmaDecisionPresupuestalAdq">
+
+                                Autorizar aprobación
+
+                            </h5>
+
+                            <div class="small text-muted">
+
+                                Confirma tu identidad y firma esta decisión.
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <!-- ===================================================== -->
+                <!-- BODY -->
+                <!-- ===================================================== -->
+
+                <div class="modal-body">
+
+                    <!-- DATOS DE LA DECISIÓN -->
+
+                    <div class="adq-signature-approval-summary mb-4">
+
+                        <div class="row g-3">
+
+                            <div class="col-md-4">
+
+                                <div class="small text-muted mb-1">
+                                    Folio
+                                </div>
+
+                                <div class="fw-semibold"
+                                     id="folioFirmaDecisionPresupuestalAdq">
+                                    —
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-5">
+
+                                <div class="small text-muted mb-1">
+                                    Etapa de aprobación
+                                </div>
+
+                                <div class="fw-semibold"
+                                     id="etapaFirmaDecisionPresupuestalAdq">
+                                    —
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-3">
+
+                                <div class="small text-muted mb-1">
+                                    Decisión
+                                </div>
+
+                                <span class="badge rounded-pill"
+                                      id="decisionFirmaDecisionPresupuestalAdq">
+
+                                    —
+
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- FIRMA -->
+                    <!-- ================================================= -->
+
+                    <div class="adq-signature-section mb-4">
+
+                        <div class="adq-signature-section-header">
+
+                            <div class="adq-signature-section-icon">
+
+                                <i class="bi bi-pen"></i>
+
+                            </div>
+
+                            <div>
+
+                                <div class="fw-semibold">
+                                    Firma de autorización
+                                </div>
+
+                                <div class="small text-muted">
+                                    Selecciona la firma que utilizarás para esta decisión.
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CARGANDO -->
+
+                        <div id="cargandoFirmasDecisionPresupuestalAdq"
+                             class="text-center py-4">
+
+                            <div class="spinner-border spinner-border-sm"
+                                 role="status">
+                            </div>
+
+                            <div class="small text-muted mt-2">
+                                Cargando tus firmas...
+                            </div>
+
+                        </div>
+
+
+                        <!-- SIN FIRMAS -->
+
+                        <div id="sinFirmasDecisionPresupuestalAdq"
+                             class="adq-signature-empty d-none">
+
+                            <i class="bi bi-pen"></i>
+
+                            <div class="fw-semibold mt-2">
+                                No tienes firmas disponibles
+                            </div>
+
+                            <div class="small text-muted mt-1">
+                                Debes registrar una firma desde
+                                <strong>Mis firmas</strong>
+                                antes de autorizar.
+                            </div>
+
+                        </div>
+
+
+                        <!-- LISTA DE FIRMAS -->
+
+                        <div id="firmasDecisionPresupuestalAdq"
+                             class="adq-signature-approval-grid d-none">
+                        </div>
+
+
+                        <input type="hidden"
+                               id="firmaSeleccionadaDecisionPresupuestalAdq"
+                               value="" />
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- PIN -->
+                    <!-- ================================================= -->
+
+                    <div class="adq-signature-section">
+
+                        <div class="adq-signature-section-header">
+
+                            <div class="adq-signature-section-icon">
+
+                                <i class="bi bi-key"></i>
+
+                            </div>
+
+                            <div>
+
+                                <div class="fw-semibold">
+                                    PIN de autorización
+                                </div>
+
+                                <div class="small text-muted">
+                                    Ingresa el PIN que configuraste en Mis firmas.
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-md-7">
+
+                                <label for="pinDecisionPresupuestalAdq"
+                                       class="form-label">
+
+                                    PIN
+
+                                </label>
+
+
+                                <div class="input-group">
+
+                                    <input type="password"
+                                           id="pinDecisionPresupuestalAdq"
+                                           class="form-control"
+                                           maxlength="20"
+                                           autocomplete="off"
+                                           placeholder="Ingresa tu PIN" />
+
+
+                                    <button type="button"
+                                            class="btn btn-outline-secondary"
+                                            id="btnVerPinDecisionPresupuestalAdq"
+                                            title="Mostrar u ocultar PIN">
+
+                                        <i class="bi bi-eye"></i>
+
+                                    </button>
+
+                                </div>
+
+
+                                <div class="form-text">
+
+                                    El PIN se utiliza únicamente para verificar
+                                    que eres tú quien autoriza esta decisión.
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-md-5">
+
+                                <div class="adq-signature-security-note">
+
+                                    <i class="bi bi-shield-lock"></i>
+
+                                    <div>
+
+                                        <div class="fw-semibold">
+                                            Firma protegida
+                                        </div>
+
+                                        <div class="small text-muted">
+
+                                            Esta autorización registrará usuario,
+                                            fecha, etapa, IP y evidencia de firma.
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- MENSAJE DE ERROR -->
+
+                    <div id="mensajeErrorFirmaDecisionPresupuestalAdq"
+                         class="alert alert-danger mt-4 mb-0 d-none"
+                         role="alert">
+                    </div>
+
+                </div>
+
+
+                <!-- ===================================================== -->
+                <!-- FOOTER -->
+                <!-- ===================================================== -->
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
+
+
+                    <button type="button"
+                            id="btnFirmarDecisionPresupuestalAdq"
+                            class="btn btn-primary"
+                            disabled>
+
+                        <i class="bi bi-pen-fill me-1"></i>
+
+                        <span id="textoBtnFirmarDecisionPresupuestalAdq">
+                            Firmar y autorizar
+                        </span>
 
                     </button>
 
