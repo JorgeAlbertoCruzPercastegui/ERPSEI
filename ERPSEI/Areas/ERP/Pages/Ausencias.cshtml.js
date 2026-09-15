@@ -52,20 +52,28 @@ function configurarEventos() {
         calcularDias("#inpIncapacidadFechaInicio", "#inpIncapacidadFechaFin", "#inpDiasIncapacidad", "#lblDiasIncapacidad");
     });
 
-    $("#inpPermisoFechaInicio, #inpPermisoFechaFin").on("change", function () {
-        calcularDias("#inpPermisoFechaInicio", "#inpPermisoFechaFin", "#inpPermisoDiasAporte", "#lblDiasPermiso");
-    });
+    $("#inpPermisoFechaInicio, #inpPermisoFechaFin, #inpPermisoHoraInicio, #inpPermisoHoraTermino")
+        .on("change input", function () {
+            actualizarResumenPermiso();
+        });
 
-    $("#inpSolicitudPermisoFechaInicio, #inpSolicitudPermisoFechaFin").on("change", function () {
-        calcularSoloLabel("#inpSolicitudPermisoFechaInicio", "#inpSolicitudPermisoFechaFin", "#lblDiasSolicitudPermiso");
-    });
+    $("#inpSolicitudPermisoFechaInicio, #inpSolicitudPermisoFechaFin, #inpSolicitudPermisoHoraInicio, #inpSolicitudPermisoHoraTermino")
+        .on("change input", function () {
+            actualizarResumenSolicitudPermiso();
+        });
 
     $("#selTipoAusenciaPermiso").on("change", function () {
+
         alternarCamposPermiso($(this).val(), false);
+
+        actualizarResumenPermiso();
     });
 
     $("#selTipoAusenciaSolicitud").on("change", function () {
+
         alternarCamposPermiso($(this).val(), true);
+
+        actualizarResumenSolicitudPermiso();
     });
 
     $("#editTipoAusenciaId").on("change", function () {
@@ -294,6 +302,363 @@ function calcularSoloLabel(selectorInicio, selectorFin, selectorLabel) {
     $(selectorLabel).text(diferencia);
 }
 
+function actualizarResumenPermiso() {
+
+    const tipoId =
+        $("#selTipoAusenciaPermiso").val();
+
+    const resumen =
+        $("#lblResumenPermiso");
+
+    if (!tipoId) {
+        resumen.text(
+            "Estás registrando 0 días de permiso"
+        );
+
+        return;
+    }
+
+    const tipo =
+        tiposAusenciaCache.find(
+            x => x.id == tipoId
+        );
+
+    if (!tipo) {
+        resumen.text(
+            "Estás registrando 0 días de permiso"
+        );
+
+        return;
+    }
+
+    // =====================================================
+    // PERMISOS MANEJADOS POR HORAS
+    // =====================================================
+
+    if (tipo.manejaHoras) {
+
+        const horaInicio =
+            $("#inpPermisoHoraInicio").val();
+
+        const horaTermino =
+            $("#inpPermisoHoraTermino").val();
+
+        if (!horaInicio || !horaTermino) {
+
+            resumen.text(
+                "Selecciona la hora de inicio y término"
+            );
+
+            return;
+        }
+
+        const inicio =
+            new Date(`2000-01-01T${horaInicio}:00`);
+
+        const termino =
+            new Date(`2000-01-01T${horaTermino}:00`);
+
+        const diferenciaMs =
+            termino.getTime() -
+            inicio.getTime();
+
+        if (diferenciaMs <= 0) {
+
+            resumen.text(
+                "La hora término debe ser mayor que la hora inicio"
+            );
+
+            return;
+        }
+
+        const minutosTotales =
+            Math.floor(
+                diferenciaMs /
+                (1000 * 60)
+            );
+
+        const horas =
+            Math.floor(
+                minutosTotales / 60
+            );
+
+        const minutos =
+            minutosTotales % 60;
+
+        let duracion = "";
+
+        if (horas > 0) {
+
+            duracion +=
+                `${horas} ${horas === 1 ? "hora" : "horas"}`;
+        }
+
+        if (minutos > 0) {
+
+            if (horas > 0) {
+                duracion += " ";
+            }
+
+            duracion +=
+                `${minutos} ${minutos === 1 ? "minuto" : "minutos"}`;
+        }
+
+        if (!duracion) {
+            duracion = "0 minutos";
+        }
+
+        const nombreTipo =
+            $("#selTipoAusenciaPermiso option:selected")
+                .text()
+                .trim();
+
+        if (
+            nombreTipo
+                .toLowerCase()
+                .includes("llegada tardía")
+        ) {
+            resumen.text(
+                `Estás registrando una llegada tardía de ${duracion}`
+            );
+        } else {
+            resumen.text(
+                `Estás registrando un permiso de ${duracion}`
+            );
+        }
+
+        return;
+    }
+
+    // =====================================================
+    // PERMISOS MANEJADOS POR DÍAS
+    // =====================================================
+
+    const fechaInicio =
+        $("#inpPermisoFechaInicio").val();
+
+    const fechaFin =
+        $("#inpPermisoFechaFin").val();
+
+    if (!fechaInicio || !fechaFin) {
+
+        resumen.text(
+            "Estás registrando 0 días de permiso"
+        );
+
+        return;
+    }
+
+    const inicio =
+        new Date(
+            fechaInicio + "T00:00:00"
+        );
+
+    const fin =
+        new Date(
+            fechaFin + "T00:00:00"
+        );
+
+    if (fin < inicio) {
+
+        resumen.text(
+            "Estás registrando 0 días de permiso"
+        );
+
+        return;
+    }
+
+    const dias =
+        Math.floor(
+            (fin - inicio) /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+    $("#inpPermisoDiasAporte")
+        .val(dias);
+
+    resumen.text(
+        `Estás registrando ${dias} ${dias === 1 ? "día" : "días"} de permiso`
+    );
+}
+
+function actualizarResumenSolicitudPermiso() {
+
+    const tipoId =
+        $("#selTipoAusenciaSolicitud").val();
+
+    const resumen =
+        $("#lblResumenSolicitudPermiso");
+
+    if (!tipoId) {
+        resumen.text(
+            "Estás solicitando 0 días de permiso"
+        );
+        return;
+    }
+
+    const tipo =
+        tiposAusenciaCache.find(
+            x => x.id == tipoId
+        );
+
+    if (!tipo) {
+        resumen.text(
+            "Estás solicitando 0 días de permiso"
+        );
+        return;
+    }
+
+    // =====================================================
+    // PERMISOS POR HORAS
+    // =====================================================
+
+    if (tipo.manejaHoras) {
+
+        const horaInicio =
+            $("#inpSolicitudPermisoHoraInicio").val();
+
+        const horaTermino =
+            $("#inpSolicitudPermisoHoraTermino").val();
+
+        if (!horaInicio || !horaTermino) {
+
+            resumen.text(
+                "Selecciona la hora de inicio y término"
+            );
+
+            return;
+        }
+
+        const inicio =
+            new Date(`2000-01-01T${horaInicio}:00`);
+
+        const termino =
+            new Date(`2000-01-01T${horaTermino}:00`);
+
+        const diferenciaMs =
+            termino.getTime() -
+            inicio.getTime();
+
+        if (diferenciaMs <= 0) {
+
+            resumen.text(
+                "La hora término debe ser mayor que la hora inicio"
+            );
+
+            return;
+        }
+
+        const minutosTotales =
+            Math.floor(
+                diferenciaMs /
+                (1000 * 60)
+            );
+
+        const horas =
+            Math.floor(
+                minutosTotales / 60
+            );
+
+        const minutos =
+            minutosTotales % 60;
+
+        let duracion = "";
+
+        if (horas > 0) {
+
+            duracion +=
+                `${horas} ${horas === 1 ? "hora" : "horas"}`;
+        }
+
+        if (minutos > 0) {
+
+            if (horas > 0) {
+                duracion += " ";
+            }
+
+            duracion +=
+                `${minutos} ${minutos === 1 ? "minuto" : "minutos"}`;
+        }
+
+        if (!duracion) {
+            duracion = "0 minutos";
+        }
+
+        const nombreTipo =
+            $("#selTipoAusenciaSolicitud option:selected")
+                .text()
+                .trim();
+
+        if (
+            nombreTipo
+                .toLowerCase()
+                .includes("llegada tardía")
+        ) {
+            resumen.text(
+                `Estás solicitando una llegada tardía de ${duracion}`
+            );
+        } else {
+            resumen.text(
+                `Estás solicitando un permiso de ${duracion}`
+            );
+        }
+
+        return;
+    }
+
+    // =====================================================
+    // PERMISOS POR DÍAS
+    // =====================================================
+
+    const fechaInicio =
+        $("#inpSolicitudPermisoFechaInicio").val();
+
+    const fechaFin =
+        $("#inpSolicitudPermisoFechaFin").val();
+
+    if (!fechaInicio || !fechaFin) {
+
+        resumen.text(
+            "Estás solicitando 0 días de permiso"
+        );
+
+        return;
+    }
+
+    const inicio =
+        new Date(
+            fechaInicio + "T00:00:00"
+        );
+
+    const fin =
+        new Date(
+            fechaFin + "T00:00:00"
+        );
+
+    if (
+        isNaN(inicio.getTime()) ||
+        isNaN(fin.getTime()) ||
+        fin < inicio
+    ) {
+
+        resumen.text(
+            "Estás solicitando 0 días de permiso"
+        );
+
+        return;
+    }
+
+    const dias =
+        Math.floor(
+            (fin - inicio) /
+            (1000 * 60 * 60 * 24)
+        ) + 1;
+
+    resumen.text(
+        `Estás solicitando ${dias} ${dias === 1 ? "día" : "días"} de permiso`
+    );
+}
+
 function cargarTiposAusencia() {
     $.get("/ERP/Ausencias?handler=TiposAusencia", function (resp) {
         tiposAusenciaCache = resp || [];
@@ -319,7 +684,8 @@ function alternarCamposPermiso(tipoAusenciaId, esSolicitud) {
             $(".campo-horas-permiso").show();
             $(".campo-dias-permiso").hide();
             $("#inpPermisoDiasAporte").val("");
-            $("#lblDiasPermiso").text("0");
+            $("#lblResumenPermiso")
+                .text("Selecciona la hora de inicio y término");
         } else {
             $(".campo-horas-permiso").hide();
             $("#inpPermisoHoraInicio").val("");
@@ -451,7 +817,7 @@ function guardarInasistencia() {
 
 function guardarPermiso() {
 
-    if (!validarComentario("#txtComentarioIncapacidad")) return;
+    if (!validarComentario("#txtComentarioPermiso")) return;
 
     const formData = new FormData();
 
@@ -482,7 +848,10 @@ function guardarPermiso() {
                 bootstrap.Modal.getInstance(document.getElementById("modalPermiso"))?.hide();
                 $("#formPermiso")[0].reset();
                 $("#inpDocumentosPermiso").val("");
-                $("#lblDiasPermiso").text("0");
+                $("#lblResumenPermiso")
+                    .text(
+                        "Estás registrando 0 días de permiso"
+                    );
                 $(".campo-horas-permiso").show();
                 $(".campo-dias-permiso").show();
                 refrescarTablas();
@@ -497,7 +866,7 @@ function guardarPermiso() {
 
 function solicitarPermiso() {
 
-    if (!validarComentario("#txtComentarioIncapacidad")) return;
+    if (!validarComentario("#txtComentarioSolicitudPermiso")) return;
 
     const formData = new FormData();
 
@@ -532,7 +901,10 @@ function solicitarPermiso() {
                     $("#inpDocumentosSolicitudPermiso").val("");
                 }
 
-                $("#lblDiasSolicitudPermiso").text("0");
+                $("#lblResumenSolicitudPermiso")
+                    .text(
+                        "Estás solicitando 0 días de permiso"
+                    );
                 $(".campo-horas-solicitud").show();
                 refrescarTablas();
             }
