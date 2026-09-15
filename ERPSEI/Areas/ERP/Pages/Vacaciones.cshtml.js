@@ -403,22 +403,37 @@ function abrirEditarVacacion(row) {
 }
 
 function calcularDiasEditarVacacion() {
-    const inicio = new Date($("#editFechaInicio").val());
-    const fin = new Date($("#editFechaFin").val());
 
-    if (isNaN(inicio) || isNaN(fin) || fin < inicio) {
+    const inicioInput = $("#editFechaInicio").val();
+    const finInput = $("#editFechaFin").val();
+
+    const inicio = crearFechaLocal(inicioInput);
+    const fin = crearFechaLocal(finInput);
+
+    if (
+        !inicio ||
+        !fin ||
+        isNaN(inicio.getTime()) ||
+        isNaN(fin.getTime()) ||
+        fin < inicio
+    ) {
+
         $("#editDiasSolicitadosTexto").text("0");
         return;
     }
 
     let totalDias = 0;
-    let fecha = new Date(inicio);
+
+    const fecha = new Date(inicio);
 
     while (fecha <= fin) {
-        const dia = fecha.getDay();
-        if (dia !== 0 && dia !== 6) {
+
+        const diaSemana = fecha.getDay();
+
+        if (diaSemana !== 0 && diaSemana !== 6) {
             totalDias++;
         }
+
         fecha.setDate(fecha.getDate() + 1);
     }
 
@@ -692,52 +707,100 @@ function initSolicitudVacacionesDialog(action, row) {
     }
 }*/
 
+function crearFechaLocal(valor) {
+    if (!valor) return null;
+
+    const partes = valor.split("-");
+
+    if (partes.length !== 3) return null;
+
+    const anio = parseInt(partes[0], 10);
+    const mes = parseInt(partes[1], 10) - 1;
+    const dia = parseInt(partes[2], 10);
+
+    return new Date(anio, mes, dia);
+}
+
 function calcularDiasSolicitados() {
-    const inicio = new Date(document.getElementById("inpFechaInicio").value);
-    const fin = new Date(document.getElementById("inpFechaFin").value);
+
+    const inicioInput = document.getElementById("inpFechaInicio").value;
+    const finInput = document.getElementById("inpFechaFin").value;
+
+    const inicio = crearFechaLocal(inicioInput);
+    const fin = crearFechaLocal(finInput);
+
     const output = document.getElementById("diasSolicitadosTexto");
     const tdSaldo = document.getElementById("tdSaldoTotal");
     const lblDisponibles = document.getElementById("lblDiasDisponibles");
 
-    if (!isNaN(inicio) && !isNaN(fin) && fin >= inicio) {
+    if (
+        inicio &&
+        fin &&
+        !isNaN(inicio.getTime()) &&
+        !isNaN(fin.getTime()) &&
+        fin >= inicio
+    ) {
+
         let totalDias = 0;
-        let fecha = new Date(inicio);
+
+        const fecha = new Date(inicio);
 
         while (fecha <= fin) {
-            const dia = fecha.getDay();
-            if (dia !== 0 && dia !== 6) {
+
+            const diaSemana = fecha.getDay();
+
+            // 0 = Domingo
+            // 6 = Sábado
+            if (diaSemana !== 0 && diaSemana !== 6) {
                 totalDias++;
             }
+
             fecha.setDate(fecha.getDate() + 1);
         }
 
-        const restante = Math.max(diasDisponiblesActuales - totalDias, 0);
+        const restante = Math.max(
+            diasDisponiblesActuales - totalDias,
+            0
+        );
 
-        if (totalDias > diasDisponiblesActuales && !$("#chkVacacionesAnticipadas").is(":checked")) {
-            output.innerHTML = `<span class="text-danger">${totalDias} días (excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)</span>`;
+        if (
+            totalDias > diasDisponiblesActuales &&
+            !$("#chkVacacionesAnticipadas").is(":checked")
+        ) {
+
+            output.innerHTML =
+                `<span class="text-danger">${totalDias} días ` +
+                `(excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)</span>`;
+
         } else {
+
             if ($("#chkVacacionesAnticipadas").is(":checked")) {
-                output.innerHTML = `<span class="text-warning fw-bold">${totalDias} días (vacaciones anticipadas)</span>`;
+
+                output.innerHTML =
+                    `<span class="text-warning fw-bold">` +
+                    `${totalDias} días (vacaciones anticipadas)` +
+                    `</span>`;
+
             } else {
+
                 output.innerText = `${totalDias}`;
             }
         }
 
-        /*if (totalDias > diasDisponiblesActuales) {
-            output.innerHTML = `<span class="text-danger">${totalDias} días (excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)</span>`;
-        } else {
-            output.innerText = `${totalDias}`;
-        }*/
-
-        // Actualizar "Tienes X días disponibles"
         lblDisponibles.innerText = restante.toFixed(1);
 
-        // Actualizar "Total Saldo"
-        tdSaldo.innerText = `${restante.toFixed(1)} días`;
+        tdSaldo.innerText =
+            `${restante.toFixed(1)} días`;
+
     } else {
+
         output.innerText = "0";
-        lblDisponibles.innerText = diasDisponiblesActuales.toFixed(1);
-        tdSaldo.innerText = `${diasDisponiblesActuales.toFixed(1)} días`;
+
+        lblDisponibles.innerText =
+            diasDisponiblesActuales.toFixed(1);
+
+        tdSaldo.innerText =
+            `${diasDisponiblesActuales.toFixed(1)} días`;
     }
 }
 
