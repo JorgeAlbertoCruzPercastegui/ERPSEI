@@ -753,27 +753,48 @@ namespace ERPSEI
                 );
 
             builder.Services
-                .ConfigureApplicationCookie(
-                    options =>
-                    {
-                        options.ExpireTimeSpan =
-                            TimeSpan.FromMinutes(
-                                10
-                            );
+    .ConfigureApplicationCookie(options =>
+    {
+        options.ExpireTimeSpan =
+            TimeSpan.FromMinutes(10);
 
-                        options.SlidingExpiration =
-                            true;
+        options.SlidingExpiration = true;
 
-                        options.LoginPath =
-                            "/Identity/Account/Login";
+        options.LoginPath =
+            "/Identity/Account/Login";
 
-                        options.LogoutPath =
-                            "/Identity/Account/Logout";
+        options.LogoutPath =
+            "/Identity/Account/Logout";
 
-                        options.AccessDeniedPath =
-                            "/Identity/Account/AccessDenied";
-                    }
-                );
+        options.AccessDeniedPath =
+            "/Identity/Account/AccessDenied";
+
+        options.Events.OnRedirectToLogin = context =>
+        {
+            bool esAjax =
+                context.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+            bool esperaJson =
+                context.Request.Headers.Accept.Any(x =>
+                    x != null &&
+                    x.Contains(
+                        "application/json",
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (esAjax || esperaJson)
+            {
+                context.Response.StatusCode =
+                    StatusCodes.Status401Unauthorized;
+
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(
+                context.RedirectUri);
+
+            return Task.CompletedTask;
+        };
+    });
         }
 
         public static void ConfigureAuthorization(

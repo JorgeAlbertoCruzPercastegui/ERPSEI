@@ -473,10 +473,26 @@ app.UseRouting();
 
 app.UseAuthentication();
 
-app.UseMiddleware<
-    IntranetActividadMiddleware>();
+app.UseMiddleware<IntranetActividadMiddleware>();
 
 app.UseAuthorization();
+
+app.MapGet(
+    "/session/keepalive",
+    () => Results.NoContent()
+)
+.RequireAuthorization();
+
+app.MapPost(
+    "/session/expire",
+    async (SignInManager<AppUser> signInManager) =>
+    {
+        await signInManager.SignOutAsync();
+
+        return Results.NoContent();
+    }
+)
+.RequireAuthorization();
 
 app.MapRazorPages();
 
