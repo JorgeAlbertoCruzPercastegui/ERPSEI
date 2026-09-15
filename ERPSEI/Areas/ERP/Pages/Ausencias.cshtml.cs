@@ -577,6 +577,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (user == null)
                     return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
 
+                var validacionComentario =
+                    ValidarComentario(EditarInput.Comentario);
+
+                if (validacionComentario != null)
+                    return validacionComentario;
+
                 var item = await _db.Ausencias.FirstOrDefaultAsync(x => x.Id == EditarInput.Id);
                 if (item == null)
                     return new JsonResult(new { tieneError = true, mensaje = "Registro no encontrado." });
@@ -621,9 +627,25 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 return new JsonResult(new { tieneError = false, mensaje = "Registro actualizado correctamente." });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -655,9 +677,25 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 return new JsonResult(new { tieneError = false, mensaje = "Registro eliminado correctamente." });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -699,9 +737,25 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "El jefe directo aprobó correctamente el registro."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -743,9 +797,25 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "El jefe directo rechazó correctamente el registro."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -790,9 +860,25 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Talento Humano aprobó correctamente el registro."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -837,9 +923,25 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Talento Humano rechazó correctamente el registro."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -850,6 +952,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null || user.EmpleadoId == null)
                     return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado del usuario actual." });
+
+                var validacionComentario =
+                    ValidarComentario(InasistenciaInput.Comentario);
+
+                if (validacionComentario != null)
+                    return validacionComentario;
 
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
@@ -894,24 +1002,62 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Inasistencia registrada correctamente y enviada a aprobación del jefe directo."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
         public async Task<JsonResult> OnPostGuardarIncapacidadAsync()
         {
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+
             try
             {
                 var user = await _userManager.GetUserAsync(User);
-                if (user == null || user.EmpleadoId == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado del usuario actual." });
 
-                var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
+                if (user == null || user.EmpleadoId == null)
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "No se encontró el empleado del usuario actual."
+                    });
+                }
+
+                var validacionComentario =
+                    ValidarComentario(IncapacidadInput.Comentario);
+
+                if (validacionComentario != null)
+                    return validacionComentario;
+
+                var jefeDirectoEmpleadoId =
+                    await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
-                    return new JsonResult(new { tieneError = true, mensaje = "El empleado no tiene jefe directo asignado." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "El empleado no tiene jefe directo asignado."
+                    });
+                }
 
                 var ausencia = new Ausencia
                 {
@@ -920,11 +1066,14 @@ namespace ERPSEI.Areas.ERP.Pages
 
                     Categoria = "Incapacidad",
                     TipoCaptura = "Dias",
+
                     TipoIncapacidadId = IncapacidadInput.TipoIncapacidadId,
                     NumeroFolio = IncapacidadInput.NumeroFolio,
+
                     FechaInicio = IncapacidadInput.FechaInicio,
                     FechaFin = IncapacidadInput.FechaFin,
                     Dias = IncapacidadInput.Dias,
+
                     FechaAplicacion = IncapacidadInput.FechaAplicacion,
                     Suplencia = IncapacidadInput.Suplencia,
                     Comentario = IncapacidadInput.Comentario,
@@ -937,6 +1086,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 };
 
                 _db.Ausencias.Add(ausencia);
+
                 await _db.SaveChangesAsync();
 
                 await GuardarDocumentosAusenciaAsync(
@@ -945,7 +1095,20 @@ namespace ERPSEI.Areas.ERP.Pages
                     user.Id
                 );
 
-                await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
+                // Hasta aquí, ausencia + documentos deben haberse guardado correctamente
+                await transaction.CommitAsync();
+
+                // El correo NO debe provocar rollback ni mostrar error al usuario
+                try
+                {
+                    await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
+                }
+                catch (Exception exCorreo)
+                {
+                    Console.WriteLine(
+                        $"No fue posible enviar el correo de la incapacidad {ausencia.Id}: {exCorreo}"
+                    );
+                }
 
                 return new JsonResult(new
                 {
@@ -953,9 +1116,31 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Incapacidad registrada correctamente y enviada a aprobación del jefe directo."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                await transaction.RollbackAsync();
+
+                Console.WriteLine(
+                    ex.InnerException?.Message ?? ex.Message
+                );
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                await transaction.RollbackAsync();
+
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -966,6 +1151,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 var user = await _userManager.GetUserAsync(User);
                 if (user == null || user.EmpleadoId == null)
                     return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado del usuario actual." });
+
+                var validacionComentario =
+                    ValidarComentario(PermisoInput.Comentario);
+
+                if (validacionComentario != null)
+                    return validacionComentario;
 
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
@@ -1028,9 +1219,25 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Permiso registrado correctamente y enviado a aprobación del jefe directo."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
         }
 
@@ -1042,6 +1249,13 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (user == null || user.EmpleadoId == null)
                     return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado del usuario actual." });
 
+                // VALIDAR COMENTARIO ANTES DE GUARDAR
+                var validacionComentario =
+                    ValidarComentario(SolicitudPermisoInput.Comentario);
+
+                if (validacionComentario != null)
+                    return validacionComentario;
+
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
@@ -1050,6 +1264,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 TimeSpan? horaInicio = null;
                 TimeSpan? horaTermino = null;
                 decimal? horas = null;
+                decimal? dias = null;
                 string tipoCaptura = "Dias";
 
                 if (!string.IsNullOrWhiteSpace(SolicitudPermisoInput.HoraInicio) &&
@@ -1057,8 +1272,22 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     horaInicio = TimeSpan.Parse(SolicitudPermisoInput.HoraInicio);
                     horaTermino = TimeSpan.Parse(SolicitudPermisoInput.HoraTermino);
-                    horas = Convert.ToDecimal((horaTermino.Value - horaInicio.Value).TotalHours);
+
+                    horas = Convert.ToDecimal(
+                        (horaTermino.Value - horaInicio.Value).TotalHours
+                    );
+
                     tipoCaptura = "Horas";
+                }
+                else if (SolicitudPermisoInput.FechaInicio.HasValue &&
+                         SolicitudPermisoInput.FechaFin.HasValue)
+                {
+                    dias = Convert.ToDecimal(
+                        (SolicitudPermisoInput.FechaFin.Value.Date -
+                         SolicitudPermisoInput.FechaInicio.Value.Date).TotalDays + 1
+                    );
+
+                    tipoCaptura = "Dias";
                 }
 
                 var ausencia = new Ausencia
@@ -1069,11 +1298,16 @@ namespace ERPSEI.Areas.ERP.Pages
                     Categoria = "SolicitudPermiso",
                     TipoCaptura = tipoCaptura,
                     TipoAusenciaId = SolicitudPermisoInput.TipoAusenciaId,
+
                     FechaInicio = SolicitudPermisoInput.FechaInicio,
                     FechaFin = SolicitudPermisoInput.FechaFin,
+
                     HoraInicio = horaInicio,
                     HoraTermino = horaTermino,
+
                     Horas = horas,
+                    Dias = tipoCaptura == "Dias" ? dias : null,
+
                     FechaAplicacion = SolicitudPermisoInput.FechaAplicacion,
                     Suplencia = false,
                     Comentario = SolicitudPermisoInput.Comentario,
@@ -1102,10 +1336,43 @@ namespace ERPSEI.Areas.ERP.Pages
                     mensaje = "Permiso solicitado correctamente y enviado a aprobación del jefe directo."
                 });
             }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la solicitud. Verifica la información capturada e inténtalo nuevamente."
+                });
+            }
             catch (Exception ex)
             {
-                return new JsonResult(new { tieneError = true, mensaje = ex.Message });
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                });
             }
+        }
+
+        private JsonResult? ValidarComentario(string? comentario)
+        {
+            if (string.IsNullOrEmpty(comentario))
+                return null;
+
+            if (comentario.Length > 1000)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "El comentario excede el límite de 1000 caracteres. Por favor, haz más corto tu comentario."
+                });
+            }
+
+            return null;
         }
 
         private async Task EnviarCorreoPermisoAJefeDirectoAsync(int ausenciaId, int empleadoId)

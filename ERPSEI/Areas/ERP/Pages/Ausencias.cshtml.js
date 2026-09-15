@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     cargarTiposAusencia();
     configurarEventos();
+    configurarContadoresComentarios();
 
     $(".campo-horas-permiso").show();
     $(".campo-dias-permiso").show();
@@ -351,6 +352,9 @@ function alternarCamposEdicion(tipoAusenciaId) {
 }
 
 function guardarIncapacidad() {
+
+    if (!validarComentario("#txtComentarioIncapacidad")) return;
+
     const formData = new FormData();
 
     formData.append("IncapacidadInput.FechaInicio", $("#inpIncapacidadFechaInicio").val());
@@ -391,6 +395,9 @@ function guardarIncapacidad() {
 }
 
 function guardarInasistencia() {
+
+    if (!validarComentario("#txtComentarioInasistencia")) return;
+
     const formData = new FormData();
 
     formData.append("InasistenciaInput.FechaInicio", $("#inpInasistenciaFechaInicio").val());
@@ -401,6 +408,7 @@ function guardarInasistencia() {
     formData.append("InasistenciaInput.Comentario", $("#txtComentarioInasistencia").val());
 
     const archivos = $("#inpDocumentosInasistencia")[0].files;
+
     for (let i = 0; i < archivos.length; i++) {
         formData.append("InasistenciaInput.Documentos", archivos[i]);
     }
@@ -408,27 +416,43 @@ function guardarInasistencia() {
     $.ajax({
         url: "/ERP/Ausencias?handler=GuardarInasistencia",
         type: "POST",
-        headers: { "RequestVerificationToken": getToken("formInasistencia") },
+        headers: {
+            "RequestVerificationToken": getToken("formInasistencia")
+        },
         data: formData,
         processData: false,
         contentType: false,
         success: function (resp) {
             if (!resp.tieneError) {
-                bootstrap.Modal.getInstance(document.getElementById("modalInasistencia"))?.hide();
+                bootstrap.Modal
+                    .getInstance(document.getElementById("modalInasistencia"))
+                    ?.hide();
+
                 $("#formInasistencia")[0].reset();
                 $("#inpDocumentosInasistencia").val("");
                 $("#lblDiasInasistencia").text("0");
+
+                // REINICIAMOS EL CONTADOR
+                $("#contadorComentarioInasistencia").text("0");
+
                 refrescarTablas();
             }
+
             mostrarResultado(resp.tieneError, resp.mensaje);
         },
         error: function (xhr) {
-            mostrarResultado(true, `Error ${xhr.status}: no fue posible guardar la inasistencia.`);
+            mostrarResultado(
+                true,
+                `Error ${xhr.status}: no fue posible guardar la inasistencia.`
+            );
         }
     });
 }
 
 function guardarPermiso() {
+
+    if (!validarComentario("#txtComentarioIncapacidad")) return;
+
     const formData = new FormData();
 
     formData.append("PermisoInput.TipoAusenciaId", $("#selTipoAusenciaPermiso").val());
@@ -472,6 +496,9 @@ function guardarPermiso() {
 }
 
 function solicitarPermiso() {
+
+    if (!validarComentario("#txtComentarioIncapacidad")) return;
+
     const formData = new FormData();
 
     formData.append("SolicitudPermisoInput.TipoAusenciaId", $("#selTipoAusenciaSolicitud").val());
@@ -598,6 +625,7 @@ function abrirEdicion(id) {
         $("#editNumeroFolio").val(resp.numeroFolio || "");
         $("#editSuplencia").prop("checked", resp.suplencia === true);
         $("#editComentario").val(resp.comentario || "");
+        $("#editComentario").trigger("input");
 
         alternarCamposEdicion(resp.tipoAusenciaId);
 
@@ -741,4 +769,102 @@ function rechazarTH(id) {
 
 function getMainToken() {
     return $('#formAntiForgeryAusencias input[name="__RequestVerificationToken"]').val();
+}
+
+function configurarContadoresComentarios() {
+
+    const LIMITE_COMENTARIO = 1000;
+
+    function longitudReal(texto) {
+        if (!texto) return 0;
+
+        // SQL / POST puede recibir los saltos como \r\n.
+        // Los contamos como 2 caracteres.
+        return texto
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n")
+            .replace(/\n/g, "\r\n")
+            .length;
+    }
+
+    function recortarAlLimite(texto, limite) {
+
+        let resultado = "";
+
+        for (let i = 0; i < texto.length; i++) {
+
+            const siguiente = resultado + texto[i];
+
+            if (longitudReal(siguiente) > limite) {
+                break;
+            }
+
+            resultado = siguiente;
+        }
+
+        return resultado;
+    }
+
+    $(document).on("input", ".comentario-ausencia", function () {
+
+        const $textarea = $(this);
+        const $contenedor = $textarea.closest(".comentario-ausencia-container");
+
+        const $contador = $contenedor.find(".contador-actual");
+        const $mensaje = $contenedor.find(".mensaje-limite-comentario");
+        const $contadorCompleto = $contenedor.find(".contador-comentario");
+
+        let texto = $textarea.val() || "";
+        let cantidad = longitudReal(texto);
+
+        if (cantidad > LIMITE_COMENTARIO) {
+
+            texto = recortarAlLimite(texto, LIMITE_COMENTARIO);
+
+            $textarea.val(texto);
+
+            cantidad = longitudReal(texto);
+
+            $mensaje
+                .removeClass("d-none")
+                .text(
+                    "Has excedido el límite de 1000 caracteres. Por favor, haz más corto tu comentario."
+                );
+
+        } else {
+
+            $mensaje.addClass("d-none");
+        }
+
+        $contador.text(cantidad);
+
+        if (cantidad >= 900) {
+
+            $contadorCompleto
+                .removeClass("text-muted")
+                .addClass("text-danger fw-bold");
+
+        } else {
+
+            $contadorCompleto
+                .removeClass("text-danger fw-bold")
+                .addClass("text-muted");
+        }
+    });
+}
+
+function validarComentario(selector) {
+    const comentario = $(selector).val() || "";
+
+    if (comentario.length > 1000) {
+        mostrarResultado(
+            true,
+            "El comentario excede el límite de 1000 caracteres. Por favor, haz más corto tu comentario."
+        );
+
+        $(selector).focus();
+        return false;
+    }
+
+    return true;
 }
