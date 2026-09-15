@@ -417,6 +417,13 @@ namespace ERPSEI.Data
             set;
         }
 
+        public DbSet<AdqSolicitudPago>
+            AdqSolicitudesPago
+        {   
+            get;
+            set;
+        }
+
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -963,8 +970,6 @@ namespace ERPSEI.Data
             BuildAdquisicionesCotizaciones(
                 modelBuilder
             );
-
-
         }
 
         private static void BuildAdquisicionesCotizaciones(ModelBuilder b)
@@ -1055,6 +1060,55 @@ namespace ERPSEI.Data
                 .OnDelete(
                     DeleteBehavior.Restrict
                 );
+
+            // =========================================================
+            // SOLICITUD DE PAGO
+            // =========================================================
+
+            b.Entity<AdqSolicitudPago>()
+                .HasOne(
+                    x => x.Solicitud
+                )
+                .WithMany()
+                .HasForeignKey(
+                    x => x.SolicitudId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b.Entity<AdqSolicitudPago>()
+                .HasOne(
+                    x => x.AprobacionPresupuestal
+                )
+                .WithMany()
+                .HasForeignKey(
+                    x => x.AprobacionPresupuestalId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b.Entity<AdqSolicitudPago>()
+                .HasOne(
+                    x => x.Cotizacion
+                )
+                .WithMany()
+                .HasForeignKey(
+                    x => x.CotizacionId
+                )
+                .OnDelete(
+                    DeleteBehavior.Restrict
+                );
+
+
+            b.Entity<AdqSolicitudPago>()
+                .HasIndex(
+                    x => x.SolicitudId
+                )
+                .IsUnique();
         }
 
 

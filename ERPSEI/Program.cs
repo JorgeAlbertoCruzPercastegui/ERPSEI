@@ -120,6 +120,13 @@ builder.Services.AddHostedService<
     CorreoDominioCaducidadService>();
 
 // =====================================================
+// QUESTPDF
+// =====================================================
+
+QuestPDF.Settings.License =
+    QuestPDF.Infrastructure.LicenseType.Community;
+
+// =====================================================
 // CONSTRUIR APLICACIÓN
 // =====================================================
 

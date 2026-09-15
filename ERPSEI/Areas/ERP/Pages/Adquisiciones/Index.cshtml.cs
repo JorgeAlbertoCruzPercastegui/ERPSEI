@@ -15,6 +15,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Data;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Cryptography;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 {
@@ -227,6 +230,13 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             set;
         }
 
+        [BindProperty]
+        public SolicitudPagoInput InputSolicitudPago
+        {
+            get;
+            set;
+        } = new();
+
         // =========================================================
         // USUARIO
         // =========================================================
@@ -354,6 +364,36 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 get;
                 set;
             } = new();
+        }
+
+        private class ResultadoPdfSolicitudPago
+        {
+            public string NombreArchivo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string RutaRelativa
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string RutaFisica
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string HashSha256
+            {
+                get;
+                set;
+            } = string.Empty;
         }
 
         public class AdqAprobacionHistorialDto
@@ -1065,6 +1105,148 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             } = string.Empty;
         }
 
+        public class HistorialEtapaPresupuestalDto
+        {
+            public int DetalleId
+            {
+                get;
+                set;
+            }
+
+
+            public int Orden
+            {
+                get;
+                set;
+            }
+
+
+            public string NombreEtapa
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Estatus
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public bool EsActual
+            {
+                get;
+                set;
+            }
+
+
+            public string? UsuarioAprobadorId
+            {
+                get;
+                set;
+            }
+
+
+            public string Aprobador
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string? Comentario
+            {
+                get;
+                set;
+            }
+
+
+            public DateTime? FechaDecision
+            {
+                get;
+                set;
+            }
+
+
+            public bool TieneFirma
+            {
+                get;
+                set;
+            }
+
+
+            public int? FirmaAprobacionId
+            {
+                get;
+                set;
+            }
+
+
+            public string? NombreFirmante
+            {
+                get;
+                set;
+            }
+
+
+            public string? EmailFirmante
+            {
+                get;
+                set;
+            }
+
+
+            public string? TipoFirma
+            {
+                get;
+                set;
+            }
+
+
+            public string? DecisionFirma
+            {
+                get;
+                set;
+            }
+
+
+            public DateTime? FechaFirma
+            {
+                get;
+                set;
+            }
+
+
+            public string? DireccionIp
+            {
+                get;
+                set;
+            }
+
+
+            public string? HashFirma
+            {
+                get;
+                set;
+            }
+
+
+            public string? HashContextoFirmado
+            {
+                get;
+                set;
+            }
+
+
+            public string? RutaFirma
+            {
+                get;
+                set;
+            }
+        }
+
         public class FirmaUsuarioDto
         {
             public int Id { get; set; }
@@ -1157,6 +1339,1122 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // MIS FIRMAS
         // GET ?handler=MisFirmas
         // =========================================================
+
+        // =========================================================
+        // GENERAR PDF FINAL DE SOLICITUD DE PAGO
+        // =========================================================
+
+        private async Task<ResultadoPdfSolicitudPago>
+            GenerarPdfSolicitudPagoAsync(
+                AdqSolicitudPago solicitudPago
+            )
+        {
+            // =====================================================
+            // SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudPago.SolicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                throw new InvalidOperationException(
+                    "No fue posible localizar la solicitud."
+                );
+            }
+
+
+            // =====================================================
+            // ETAPAS
+            // =====================================================
+
+            List<AdqAprobacionPresupuestalDetalle> etapas =
+                await _context
+                    .AdqAprobacionesPresupuestalesDetalle
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.AprobacionPresupuestalId ==
+                                solicitudPago.AprobacionPresupuestalId
+                            &&
+                            !x.Eliminado
+                    )
+                    .OrderBy(
+                        x =>
+                            x.Orden
+                    )
+                    .ToListAsync();
+
+
+            if (
+                etapas.Count !=
+                4
+                ||
+                etapas.Any(
+                    x =>
+                        x.Estatus !=
+                            "Aprobada"
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    "El flujo presupuestal no contiene las cuatro aprobaciones requeridas."
+                );
+            }
+
+
+            List<int> detalleIds =
+                etapas
+                    .Select(
+                        x =>
+                            x.Id
+                    )
+                    .ToList();
+
+
+            // =====================================================
+            // FIRMAS SNAPSHOT
+            // =====================================================
+
+            List<AdqFirmaAprobacionPresupuestal> firmas =
+                await _context
+                    .AdqFirmasAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            detalleIds.Contains(
+                                x.AprobacionPresupuestalDetalleId
+                            )
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.Decision ==
+                                "APROBAR"
+                    )
+                    .OrderBy(
+                        x =>
+                            x.OrdenEtapa
+                    )
+                    .ToListAsync();
+
+
+            if (
+                firmas.Count !=
+                4
+            )
+            {
+                throw new InvalidOperationException(
+                    "No se encontraron las cuatro firmas de aprobación."
+                );
+            }
+
+
+            // =====================================================
+            // CARGAR IMÁGENES DE FIRMA
+            // =====================================================
+
+            Dictionary<int, byte[]> imagenesFirma =
+                new();
+
+
+            string raizFirmas =
+                Path.GetFullPath(
+                    Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "App_Data",
+                        "Adquisiciones",
+                        "FirmasAprobaciones"
+                    )
+                );
+
+
+            foreach (
+                AdqFirmaAprobacionPresupuestal firma
+                in firmas
+            )
+            {
+                if (
+                    string.IsNullOrWhiteSpace(
+                        firma.RutaFirmaSnapshot
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"La firma del nivel {firma.OrdenEtapa} no tiene evidencia física."
+                    );
+                }
+
+
+                string rutaFirma =
+                    Path.IsPathRooted(
+                        firma.RutaFirmaSnapshot
+                    )
+                        ? firma.RutaFirmaSnapshot
+                        : Path.Combine(
+                            Directory.GetCurrentDirectory(),
+                            firma.RutaFirmaSnapshot
+                                .TrimStart(
+                                    Path.DirectorySeparatorChar,
+                                    Path.AltDirectorySeparatorChar
+                                )
+                        );
+
+
+                rutaFirma =
+                    Path.GetFullPath(
+                        rutaFirma
+                    );
+
+
+                if (
+                    !rutaFirma.StartsWith(
+                        raizFirmas,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        "Se detectó una ruta de firma inválida."
+                    );
+                }
+
+
+                if (
+                    !System.IO.File.Exists(
+                        rutaFirma
+                    )
+                )
+                {
+                    throw new FileNotFoundException(
+                        $"No se encontró físicamente la firma del nivel {firma.OrdenEtapa}."
+                    );
+                }
+
+
+                byte[] bytesFirma =
+                    await System.IO.File
+                        .ReadAllBytesAsync(
+                            rutaFirma
+                        );
+
+
+                string hashActual =
+                    Convert.ToHexString(
+                        SHA256.HashData(
+                            bytesFirma
+                        )
+                    );
+
+
+                if (
+                    !string.Equals(
+                        hashActual,
+                        firma.HashFirma,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"La evidencia de firma del nivel {firma.OrdenEtapa} no superó la validación de integridad."
+                    );
+                }
+
+
+                imagenesFirma[
+                    firma.OrdenEtapa
+                ] =
+                    bytesFirma;
+            }
+
+
+            // =====================================================
+            // ARCHIVO DE DESTINO
+            // =====================================================
+
+            string carpetaRelativa =
+                Path.Combine(
+                    "App_Data",
+                    "Adquisiciones",
+                    "SolicitudesPago",
+                    solicitud.Id.ToString()
+                );
+
+
+            string carpetaFisica =
+                Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    carpetaRelativa
+                );
+
+
+            Directory.CreateDirectory(
+                carpetaFisica
+            );
+
+
+            string folioSeguro =
+                string.Concat(
+                    solicitud.Folio
+                        .Select(
+                            c =>
+                                Path
+                                    .GetInvalidFileNameChars()
+                                    .Contains(c)
+                                    ? '_'
+                                    : c
+                        )
+                );
+
+
+            string nombreArchivo =
+                $"SolicitudPago_{folioSeguro}.pdf";
+
+
+            string rutaFisica =
+                Path.Combine(
+                    carpetaFisica,
+                    nombreArchivo
+                );
+
+
+            // =====================================================
+            // HELPERS DEL DOCUMENTO
+            // =====================================================
+
+            string Marca(
+                bool seleccionado
+            )
+            {
+                return seleccionado
+                    ? "X"
+                    : "";
+            }
+
+
+            string Dinero(
+                decimal valor
+            )
+            {
+                return valor.ToString(
+                    "N2"
+                );
+            }
+
+
+            string encabezadoFirma1 =
+                "Revisó";
+
+            string encabezadoFirma2 =
+                "Revisó";
+
+            string encabezadoFirma3 =
+                "Autorizó";
+
+            string encabezadoFirma4 =
+                "Vo. Bo.";
+
+
+            // =====================================================
+            // DOCUMENTO QUESTPDF
+            // =====================================================
+
+            byte[] pdf =
+                Document
+                    .Create(
+                        container =>
+                        {
+                            container.Page(
+                                page =>
+                                {
+                                    page.Size(
+                                        PageSizes.Letter.Landscape()
+                                    );
+
+                                    page.Margin(
+                                        22
+                                    );
+
+                                    page.DefaultTextStyle(
+                                        x =>
+                                            x.FontSize(
+                                                8
+                                            )
+                                    );
+
+
+                                    page.Content()
+                                        .Column(
+                                            column =>
+                                            {
+                                                column.Spacing(
+                                                    5
+                                                );
+
+
+                                                // =================================
+                                                // TÍTULO
+                                                // =================================
+
+                                                column.Item()
+                                                    .AlignCenter()
+                                                    .Text(
+                                                        "Solicitud de Pago"
+                                                    )
+                                                    .Bold()
+                                                    .FontSize(
+                                                        13
+                                                    );
+
+
+                                                // =================================
+                                                // ENCABEZADO
+                                                // =================================
+
+                                                column.Item()
+                                                    .Table(
+                                                        table =>
+                                                        {
+                                                            table.ColumnsDefinition(
+                                                                columns =>
+                                                                {
+                                                                    columns.RelativeColumn(
+                                                                        1
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        3
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        1
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        2
+                                                                    );
+                                                                }
+                                                            );
+
+
+                                                            table.Cell()
+                                                                .Text(
+                                                                    "Compañía:"
+                                                                )
+                                                                .Bold();
+
+                                                            table.Cell()
+                                                                .BorderBottom(
+                                                                    1
+                                                                )
+                                                                .PaddingHorizontal(
+                                                                    4
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago.Compania
+                                                                );
+
+
+                                                            table.Cell()
+                                                                .Text(
+                                                                    "Moneda:"
+                                                                )
+                                                                .Bold();
+
+                                                            table.Cell()
+                                                                .Row(
+                                                                    row =>
+                                                                    {
+                                                                        row.Spacing(
+                                                                            8
+                                                                        );
+
+                                                                        row.RelativeItem()
+                                                                            .Text(
+                                                                                $"Pesos [{Marca(solicitudPago.Moneda == "Pesos")}]"
+                                                                            );
+
+                                                                        row.RelativeItem()
+                                                                            .Text(
+                                                                                $"Dólares [{Marca(solicitudPago.Moneda == "Dolares")}]"
+                                                                            );
+                                                                    }
+                                                                );
+
+
+                                                            table.Cell()
+                                                                .Text(
+                                                                    "Área Solicitante:"
+                                                                )
+                                                                .Bold();
+
+                                                            table.Cell()
+                                                                .BorderBottom(
+                                                                    1
+                                                                )
+                                                                .PaddingHorizontal(
+                                                                    4
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago.AreaSolicitante
+                                                                );
+
+
+                                                            table.Cell()
+                                                                .Text(
+                                                                    "Forma de pago:"
+                                                                )
+                                                                .Bold();
+
+                                                            table.Cell()
+                                                                .Row(
+                                                                    row =>
+                                                                    {
+                                                                        row.Spacing(
+                                                                            7
+                                                                        );
+
+                                                                        row.AutoItem()
+                                                                            .Text(
+                                                                                $"Transferencia [{Marca(solicitudPago.FormaPago == "Transferencia")}]"
+                                                                            );
+
+                                                                        row.AutoItem()
+                                                                            .Text(
+                                                                                $"Efectivo [{Marca(solicitudPago.FormaPago == "Efectivo")}]"
+                                                                            );
+
+                                                                        row.AutoItem()
+                                                                            .Text(
+                                                                                $"Cheque [{Marca(solicitudPago.FormaPago == "Cheque")}]"
+                                                                            );
+                                                                    }
+                                                                );
+
+
+                                                            table.Cell()
+                                                                .ColumnSpan(
+                                                                    2
+                                                                )
+                                                                .Text(
+                                                                    ""
+                                                                );
+
+
+                                                            table.Cell()
+                                                                .Text(
+                                                                    "Fecha Solicitud:"
+                                                                )
+                                                                .Bold();
+
+                                                            table.Cell()
+                                                                .BorderBottom(
+                                                                    1
+                                                                )
+                                                                .PaddingHorizontal(
+                                                                    4
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago
+                                                                        .FechaSolicitud
+                                                                        .ToString(
+                                                                            "dd MMMM yyyy",
+                                                                            new System.Globalization.CultureInfo(
+                                                                                "es-MX"
+                                                                            )
+                                                                        )
+                                                                        .ToUpperInvariant()
+                                                                );
+                                                        }
+                                                    );
+
+
+                                                // =================================
+                                                // CONCEPTO
+                                                // =================================
+
+                                                column.Item()
+                                                    .PaddingTop(
+                                                        4
+                                                    )
+                                                    .Row(
+                                                        row =>
+                                                        {
+                                                            row.ConstantItem(
+                                                                90
+                                                            )
+                                                            .Text(
+                                                                "Concepto de pago:"
+                                                            )
+                                                            .Bold();
+
+                                                            row.RelativeItem()
+                                                                .BorderBottom(
+                                                                    1
+                                                                )
+                                                                .PaddingBottom(
+                                                                    2
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago.ConceptoPago
+                                                                );
+                                                        }
+                                                    );
+
+
+                                                // =================================
+                                                // PROVEEDOR
+                                                // =================================
+
+                                                column.Item()
+                                                    .PaddingTop(
+                                                        4
+                                                    )
+                                                    .Text(
+                                                        "Datos del Proveedor"
+                                                    )
+                                                    .Bold();
+
+
+                                                column.Item()
+                                                    .Table(
+                                                        table =>
+                                                        {
+                                                            table.ColumnsDefinition(
+                                                                columns =>
+                                                                {
+                                                                    columns.ConstantColumn(
+                                                                        30
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        1
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        2
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        1.2f
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        1.3f
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        2.1f
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        1
+                                                                    );
+                                                                }
+                                                            );
+
+
+                                                            string[] headers =
+                                                            {
+                                                        "",
+                                                        "Importe",
+                                                        "Nombre / Razón Social",
+                                                        "Banco",
+                                                        "Cuenta",
+                                                        "CLABE Interbancaria",
+                                                        "Comp. Adjunto"
+                                                            };
+
+
+                                                            foreach (
+                                                                string header
+                                                                in headers
+                                                            )
+                                                            {
+                                                                table.Cell()
+                                                                    .Border(
+                                                                        1
+                                                                    )
+                                                                    .Padding(
+                                                                        3
+                                                                    )
+                                                                    .AlignCenter()
+                                                                    .Text(
+                                                                        header
+                                                                    )
+                                                                    .Bold()
+                                                                    .FontSize(
+                                                                        7
+                                                                    );
+                                                            }
+
+
+                                                            table.Cell()
+                                                                .Border(
+                                                                    1
+                                                                )
+                                                                .Padding(
+                                                                    3
+                                                                )
+                                                                .AlignCenter()
+                                                                .Text(
+                                                                    "1"
+                                                                );
+
+                                                            table.Cell()
+                                                                .Border(
+                                                                    1
+                                                                )
+                                                                .Padding(
+                                                                    3
+                                                                )
+                                                                .Text(
+                                                                    $"${Dinero(solicitudPago.Total)}"
+                                                                );
+
+                                                            table.Cell()
+                                                                .Border(
+                                                                    1
+                                                                )
+                                                                .Padding(
+                                                                    3
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago.NombreProveedor
+                                                                );
+
+                                                            table.Cell()
+                                                                .Border(
+                                                                    1
+                                                                )
+                                                                .Padding(
+                                                                    3
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago.Banco
+                                                                    ??
+                                                                    string.Empty
+                                                                );
+
+                                                            table.Cell()
+                                                                .Border(
+                                                                    1
+                                                                )
+                                                                .Padding(
+                                                                    3
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago.Cuenta
+                                                                    ??
+                                                                    string.Empty
+                                                                );
+
+                                                            table.Cell()
+                                                                .Border(
+                                                                    1
+                                                                )
+                                                                .Padding(
+                                                                    3
+                                                                )
+                                                                .Text(
+                                                                    solicitudPago.ClabeInterbancaria
+                                                                    ??
+                                                                    string.Empty
+                                                                );
+
+                                                            table.Cell()
+                                                                .Border(
+                                                                    1
+                                                                )
+                                                                .Padding(
+                                                                    3
+                                                                )
+                                                                .AlignCenter()
+                                                                .Text(
+                                                                    solicitudPago.ComprobanteAdjunto
+                                                                        ? "SI"
+                                                                        : "NO"
+                                                                );
+
+
+                                                            for (
+                                                                int fila = 2;
+                                                                fila <= 5;
+                                                                fila++
+                                                            )
+                                                            {
+                                                                table.Cell()
+                                                                    .Border(
+                                                                        1
+                                                                    )
+                                                                    .Height(
+                                                                        16
+                                                                    )
+                                                                    .AlignCenter()
+                                                                    .Text(
+                                                                        fila.ToString()
+                                                                    );
+
+                                                                for (
+                                                                    int columna = 0;
+                                                                    columna < 6;
+                                                                    columna++
+                                                                )
+                                                                {
+                                                                    table.Cell()
+                                                                        .Border(
+                                                                            1
+                                                                        )
+                                                                        .Text(
+                                                                            ""
+                                                                        );
+                                                                }
+                                                            }
+                                                        }
+                                                    );
+
+
+                                                // =================================
+                                                // TOTALES
+                                                // =================================
+
+                                                column.Item()
+                                                    .PaddingTop(
+                                                        4
+                                                    )
+                                                    .Width(
+                                                        220
+                                                    )
+                                                    .Table(
+                                                        table =>
+                                                        {
+                                                            table.ColumnsDefinition(
+                                                                columns =>
+                                                                {
+                                                                    columns.RelativeColumn(
+                                                                        2
+                                                                    );
+
+                                                                    columns.RelativeColumn(
+                                                                        1
+                                                                    );
+                                                                }
+                                                            );
+
+
+                                                            void Fila(
+                                                                string titulo,
+                                                                decimal valor,
+                                                                bool negrita = false
+                                                            )
+                                                            {
+                                                                IContainer tituloCelda =
+                                                                    table.Cell()
+                                                                        .PaddingVertical(
+                                                                            1
+                                                                        );
+
+                                                                IContainer valorCelda =
+                                                                    table.Cell()
+                                                                        .PaddingVertical(
+                                                                            1
+                                                                        );
+
+
+                                                                if (
+                                                                    negrita
+                                                                )
+                                                                {
+                                                                    tituloCelda
+                                                                        .Text(
+                                                                            titulo
+                                                                        )
+                                                                        .Bold();
+
+                                                                    valorCelda
+                                                                        .BorderBottom(
+                                                                            1
+                                                                        )
+                                                                        .Text(
+                                                                            $"${Dinero(valor)}"
+                                                                        )
+                                                                        .Bold();
+                                                                }
+                                                                else
+                                                                {
+                                                                    tituloCelda
+                                                                        .Text(
+                                                                            titulo
+                                                                        );
+
+                                                                    valorCelda
+                                                                        .Text(
+                                                                            valor ==
+                                                                            0
+                                                                                ? ""
+                                                                                : $"${Dinero(valor)}"
+                                                                        );
+                                                                }
+                                                            }
+
+
+                                                            Fila(
+                                                                "Subtotal",
+                                                                solicitudPago.Subtotal,
+                                                                true
+                                                            );
+
+                                                            Fila(
+                                                                "I.V.A.",
+                                                                solicitudPago.Iva
+                                                            );
+
+                                                            Fila(
+                                                                "Retención I.V.A.",
+                                                                solicitudPago.RetencionIva
+                                                            );
+
+                                                            Fila(
+                                                                "Retención I.S.R.",
+                                                                solicitudPago.RetencionIsr
+                                                            );
+
+                                                            Fila(
+                                                                "Otros Impuestos",
+                                                                solicitudPago.OtrosImpuestos
+                                                            );
+
+                                                            Fila(
+                                                                "Otros Servicios",
+                                                                solicitudPago.OtrosServicios
+                                                            );
+
+                                                            Fila(
+                                                                "Total",
+                                                                solicitudPago.Total,
+                                                                true
+                                                            );
+                                                        }
+                                                    );
+
+
+                                                // =================================
+                                                // DOCUMENTOS ANEXOS
+                                                // =================================
+
+                                                column.Item()
+                                                    .PaddingTop(
+                                                        4
+                                                    )
+                                                    .BorderBottom(
+                                                        1
+                                                    )
+                                                    .PaddingBottom(
+                                                        3
+                                                    )
+                                                    .Text(
+                                                        "Documentos Anexos:"
+                                                    )
+                                                    .Bold();
+
+
+                                                column.Item()
+                                                    .Row(
+                                                        row =>
+                                                        {
+                                                            row.RelativeItem()
+                                                                .AlignCenter()
+                                                                .Text(
+                                                                    $"Factura: [{Marca(solicitudPago.TipoDocumentoSolicitud == "Factura")}]"
+                                                                );
+
+                                                            row.RelativeItem()
+                                                                .AlignCenter()
+                                                                .Text(
+                                                                    $"Contrato: [{Marca(solicitudPago.TipoDocumentoSolicitud == "Contrato")}]"
+                                                                );
+
+                                                            row.RelativeItem()
+                                                                .AlignCenter()
+                                                                .Text(
+                                                                    $"Cotizaciones: [{Marca(solicitudPago.TipoDocumentoSolicitud == "Cotizaciones")}]"
+                                                                );
+
+                                                            row.RelativeItem()
+                                                                .AlignCenter()
+                                                                .Text(
+                                                                    $"Otros: [{Marca(solicitudPago.TipoDocumentoSolicitud == "Otros")}]"
+                                                                );
+                                                        }
+                                                    );
+
+
+                                                // =================================
+                                                // FIRMAS
+                                                // =================================
+
+                                                column.Item()
+                                                    .PaddingTop(
+                                                        8
+                                                    )
+                                                    .Row(
+                                                        row =>
+                                                        {
+                                                            for (
+                                                                int orden = 1;
+                                                                orden <= 4;
+                                                                orden++
+                                                            )
+                                                            {
+                                                                int ordenActual =
+                                                                    orden;
+
+
+                                                                AdqFirmaAprobacionPresupuestal firma =
+                                                                    firmas.First(
+                                                                        x =>
+                                                                            x.OrdenEtapa ==
+                                                                            ordenActual
+                                                                    );
+
+
+                                                                string encabezado =
+                                                                    ordenActual switch
+                                                                    {
+                                                                        1 =>
+                                                                            encabezadoFirma1,
+
+                                                                        2 =>
+                                                                            encabezadoFirma2,
+
+                                                                        3 =>
+                                                                            encabezadoFirma3,
+
+                                                                        _ =>
+                                                                            encabezadoFirma4
+                                                                    };
+
+
+                                                                row.RelativeItem()
+                                                                    .PaddingHorizontal(
+                                                                        8
+                                                                    )
+                                                                    .Column(
+                                                                        firmaColumn =>
+                                                                        {
+                                                                            firmaColumn.Item()
+                                                                                .AlignCenter()
+                                                                                .Text(
+                                                                                    encabezado
+                                                                                )
+                                                                                .FontSize(
+                                                                                    7
+                                                                                );
+
+
+                                                                            firmaColumn.Item()
+                                                                                .Height(
+                                                                                    38
+                                                                                )
+                                                                                .AlignCenter()
+                                                                                .AlignMiddle()
+                                                                                .Image(
+                                                                                    imagenesFirma[
+                                                                                        ordenActual
+                                                                                    ]
+                                                                                )
+                                                                                .FitArea();
+
+
+                                                                            firmaColumn.Item()
+                                                                                .BorderBottom(
+                                                                                    1
+                                                                                )
+                                                                                .PaddingBottom(
+                                                                                    2
+                                                                                );
+
+
+                                                                            firmaColumn.Item()
+                                                                                .PaddingTop(
+                                                                                    2
+                                                                                )
+                                                                                .AlignCenter()
+                                                                                .Text(
+                                                                                    firma.NombreFirmante
+                                                                                )
+                                                                                .Bold()
+                                                                                .FontSize(
+                                                                                    7
+                                                                                );
+
+
+                                                                            firmaColumn.Item()
+                                                                                .AlignCenter()
+                                                                                .Text(
+                                                                                    firma.NombreEtapa
+                                                                                )
+                                                                                .FontSize(
+                                                                                    6
+                                                                                );
+                                                                        }
+                                                                    );
+                                                            }
+                                                        }
+                                                    );
+                                            }
+                                        );
+                                }
+                            );
+                        }
+                    )
+                    .GeneratePdf();
+
+
+            // =====================================================
+            // GUARDAR ARCHIVO
+            // =====================================================
+
+            await System.IO.File.WriteAllBytesAsync(
+                rutaFisica,
+                pdf
+            );
+
+
+            string hashPdf =
+                Convert.ToHexString(
+                    SHA256.HashData(
+                        pdf
+                    )
+                );
+
+
+            return new ResultadoPdfSolicitudPago
+            {
+                NombreArchivo =
+                    nombreArchivo,
+
+                RutaFisica =
+                    rutaFisica,
+
+                RutaRelativa =
+                    carpetaRelativa,
+
+                HashSha256 =
+                    hashPdf
+            };
+        }
 
         public async Task<IActionResult>
             OnGetMisFirmasAsync()
@@ -1319,6 +2617,270 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     firmas,
 
                     ultimasFirmas
+                }
+            );
+        }
+
+        // =========================================================
+        // DATOS PARA SOLICITUD DE PAGO
+        // GET ?handler=DatosSolicitudPago&solicitudId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetDatosSolicitudPagoAsync(
+                int solicitudId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return Unauthorized();
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                return NotFound();
+            }
+
+
+            if (
+                solicitud.EstatusId <
+                13
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud aún no ha completado la aprobación presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            AdqAprobacionPresupuestal? aprobacion =
+                await _context
+                    .AdqAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.SolicitudId ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.Estatus ==
+                                "Aprobada"
+                    )
+                    .OrderByDescending(
+                        x =>
+                            x.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (
+                aprobacion ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró una aprobación presupuestal finalizada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            AdqCotizacion? cotizacion =
+                await _context.AdqCotizaciones
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                aprobacion.CotizacionId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                cotizacion ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la cotización seleccionada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            string area =
+                await _context.Areas
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.Id ==
+                                solicitud.AreaId
+                    )
+                    .Select(
+                        x =>
+                            x.Nombre
+                    )
+                    .FirstOrDefaultAsync()
+                ??
+                string.Empty;
+
+
+            AdqSolicitudPago? solicitudPagoExistente =
+                await _context.AdqSolicitudesPago
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    solicitudId =
+                        solicitud.Id,
+
+                    folio =
+                        solicitud.Folio,
+
+                    area,
+
+                    proveedor =
+                        cotizacion.NombreProveedor,
+
+                    subtotal =
+                        cotizacion.Subtotal,
+
+                    iva =
+                        cotizacion.ImporteIva,
+
+                    total =
+                        cotizacion.Total,
+
+                    tipoDocumento =
+                        solicitud.TipoDocumentoSolicitud,
+
+                    compania =
+                        solicitudPagoExistente?.Compania
+                        ??
+                        string.Empty,
+
+                    moneda =
+                        solicitudPagoExistente?.Moneda
+                        ??
+                        "Pesos",
+
+                    formaPago =
+                        solicitudPagoExistente?.FormaPago
+                        ??
+                        "Transferencia",
+
+                    conceptoPago =
+                        solicitudPagoExistente?.ConceptoPago
+                        ??
+                        solicitud.Descripcion
+                        ??
+                        solicitud.Titulo,
+
+                    banco =
+                        solicitudPagoExistente?.Banco
+                        ??
+                        string.Empty,
+
+                    cuenta =
+                        solicitudPagoExistente?.Cuenta
+                        ??
+                        string.Empty,
+
+                    clabeInterbancaria =
+                        solicitudPagoExistente?.ClabeInterbancaria
+                        ??
+                        string.Empty,
+
+                    comprobanteAdjunto =
+                        solicitudPagoExistente?.ComprobanteAdjunto
+                        ??
+                        false,
+
+                    retencionIva =
+                        solicitudPagoExistente?.RetencionIva
+                        ??
+                        0m,
+
+                    retencionIsr =
+                        solicitudPagoExistente?.RetencionIsr
+                        ??
+                        0m,
+
+                    otrosImpuestos =
+                        solicitudPagoExistente?.OtrosImpuestos
+                        ??
+                        0m,
+
+                    otrosServicios =
+                        solicitudPagoExistente?.OtrosServicios
+                        ??
+                        0m,
+
+                    pdfGenerado =
+                        solicitudPagoExistente?.PdfGenerado
+                        ??
+                        false
                 }
             );
         }
@@ -1575,6 +3137,925 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         "Tu PIN de firma fue configurado correctamente. " +
                         "Por seguridad, después de este momento solo un administrador podrá restablecerlo."
                 }
+            );
+        }
+
+        // =========================================================
+        // GUARDAR DATOS DE SOLICITUD DE PAGO
+        // POST ?handler=GuardarSolicitudPago
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostGuardarSolicitudPagoAsync(
+                [FromBody]
+        SolicitudPagoInput input
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                input ==
+                null
+                ||
+                input.SolicitudId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se identificó la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                input.SolicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud ya no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // SOLO SOLICITANTE ORIGINAL
+            // =====================================================
+
+            if (
+                solicitud.UsuarioSolicitanteId !=
+                usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Solamente el solicitante original puede generar la solicitud de pago."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR ESTATUS
+            // =====================================================
+
+            if (
+                solicitud.EstatusId !=
+                13
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La aprobación presupuestal todavía no se encuentra completada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // VALIDACIONES
+            // =====================================================
+
+            string compania =
+                input.Compania?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string conceptoPago =
+                input.ConceptoPago?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string moneda =
+                input.Moneda?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string formaPago =
+                input.FormaPago?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    compania
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La compañía es obligatoria."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    conceptoPago
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El concepto de pago es obligatorio."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                moneda !=
+                    "Pesos"
+                &&
+                moneda !=
+                    "Dolares"
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La moneda seleccionada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                formaPago !=
+                    "Transferencia"
+                &&
+                formaPago !=
+                    "Efectivo"
+                &&
+                formaPago !=
+                    "Cheque"
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La forma de pago seleccionada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // APROBACIÓN PRESUPUESTAL
+            // =====================================================
+
+            AdqAprobacionPresupuestal? aprobacion =
+                await _context
+                    .AdqAprobacionesPresupuestales
+                    .Where(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.Estatus ==
+                                "Aprobada"
+                    )
+                    .OrderByDescending(
+                        x =>
+                            x.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (
+                aprobacion ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró una aprobación presupuestal finalizada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR 4 ETAPAS APROBADAS
+            // =====================================================
+
+            List<AdqAprobacionPresupuestalDetalle> etapas =
+                await _context
+                    .AdqAprobacionesPresupuestalesDetalle
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.AprobacionPresupuestalId ==
+                                aprobacion.Id
+                            &&
+                            !x.Eliminado
+                    )
+                    .OrderBy(
+                        x =>
+                            x.Orden
+                    )
+                    .ToListAsync();
+
+
+            if (
+                etapas.Count !=
+                4
+                ||
+                etapas.Any(
+                    x =>
+                        x.Estatus !=
+                            "Aprobada"
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "Las cuatro etapas presupuestales deben estar aprobadas."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR 4 FIRMAS
+            // =====================================================
+
+            List<int> detalleIds =
+                etapas
+                    .Select(
+                        x =>
+                            x.Id
+                    )
+                    .ToList();
+
+
+            int totalFirmas =
+                await _context
+                    .AdqFirmasAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .CountAsync(
+                        x =>
+                            detalleIds.Contains(
+                                x.AprobacionPresupuestalDetalleId
+                            )
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.Decision ==
+                                "APROBAR"
+                    );
+
+
+            if (
+                totalFirmas !=
+                4
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontraron las cuatro evidencias de firma."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // COTIZACIÓN
+            // =====================================================
+
+            AdqCotizacion? cotizacion =
+                await _context.AdqCotizaciones
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                aprobacion.CotizacionId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                cotizacion ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la cotización seleccionada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            string area =
+                await _context.Areas
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.Id ==
+                                solicitud.AreaId
+                    )
+                    .Select(
+                        x =>
+                            x.Nombre
+                    )
+                    .FirstOrDefaultAsync()
+                ??
+                string.Empty;
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            // =====================================================
+            // TOTAL FINAL
+            // =====================================================
+
+            decimal totalFinal =
+                cotizacion.Subtotal
+                +
+                cotizacion.ImporteIva
+                -
+                input.RetencionIva
+                -
+                input.RetencionIsr
+                +
+                input.OtrosImpuestos
+                +
+                input.OtrosServicios;
+
+
+            totalFinal =
+                decimal.Round(
+                    totalFinal,
+                    2,
+                    MidpointRounding.AwayFromZero
+                );
+
+
+            if (
+                totalFinal <
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El total resultante de la solicitud de pago no puede ser negativo."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // CREAR / ACTUALIZAR
+            // =====================================================
+
+            AdqSolicitudPago? solicitudPago =
+                await _context.AdqSolicitudesPago
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                    );
+
+
+            if (
+                solicitudPago ==
+                null
+            )
+            {
+                solicitudPago =
+                    new AdqSolicitudPago
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        AprobacionPresupuestalId =
+                            aprobacion.Id,
+
+                        CotizacionId =
+                            cotizacion.Id,
+
+                        FechaSolicitud =
+                            solicitud.FechaSolicitud,
+
+                        FechaGeneracion =
+                            ahora,
+
+                        UsuarioGeneracionId =
+                            usuarioActual.Id,
+
+                        PdfGenerado =
+                            false,
+
+                        Eliminado =
+                            false
+                    };
+
+
+                _context.AdqSolicitudesPago.Add(
+                    solicitudPago
+                );
+            }
+
+
+            solicitudPago.Compania =
+                compania;
+
+            solicitudPago.AreaSolicitante =
+                area;
+
+            solicitudPago.Moneda =
+                moneda;
+
+            solicitudPago.FormaPago =
+                formaPago;
+
+            solicitudPago.ConceptoPago =
+                conceptoPago;
+
+            solicitudPago.NombreProveedor =
+                cotizacion.NombreProveedor;
+
+            solicitudPago.Banco =
+                input.Banco?
+                    .Trim();
+
+            solicitudPago.Cuenta =
+                input.Cuenta?
+                    .Trim();
+
+            solicitudPago.ClabeInterbancaria =
+                input.ClabeInterbancaria?
+                    .Trim();
+
+            solicitudPago.ComprobanteAdjunto =
+                input.ComprobanteAdjunto;
+
+            solicitudPago.Subtotal =
+                cotizacion.Subtotal;
+
+            solicitudPago.Iva =
+                cotizacion.ImporteIva;
+
+            solicitudPago.RetencionIva =
+                input.RetencionIva;
+
+            solicitudPago.RetencionIsr =
+                input.RetencionIsr;
+
+            solicitudPago.OtrosImpuestos =
+                input.OtrosImpuestos;
+
+            solicitudPago.OtrosServicios =
+                input.OtrosServicios;
+
+            solicitudPago.Total =
+                totalFinal;
+
+            solicitudPago.TipoDocumentoSolicitud =
+                solicitud.TipoDocumentoSolicitud;
+
+            solicitudPago.FechaGeneracion =
+                ahora;
+
+            solicitudPago.UsuarioGeneracionId =
+                usuarioActual.Id;
+
+
+            await _context
+    .SaveChangesAsync();
+
+
+            try
+            {
+                ResultadoPdfSolicitudPago resultadoPdf =
+                    await GenerarPdfSolicitudPagoAsync(
+                        solicitudPago
+                    );
+
+
+                solicitudPago.NombreArchivo =
+                    resultadoPdf.NombreArchivo;
+
+
+                solicitudPago.RutaArchivo =
+                    Path.Combine(
+                        resultadoPdf.RutaRelativa,
+                        resultadoPdf.NombreArchivo
+                    );
+
+
+                solicitudPago.HashArchivo =
+                    resultadoPdf.HashSha256;
+
+
+                solicitudPago.PdfGenerado =
+                    true;
+
+
+                solicitudPago.FechaGeneracion =
+                    DateTime.Now;
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            "La Solicitud de Pago se generó correctamente.",
+
+                        solicitudPagoId =
+                            solicitudPago.Id,
+
+                        total =
+                            solicitudPago.Total,
+
+                        pdfGenerado =
+                            true,
+
+                        nombreArchivo =
+                            solicitudPago.NombreArchivo,
+
+                        descargarUrl =
+                            $"{Request.Path}?handler=DescargarSolicitudPago&solicitudId={solicitudPago.SolicitudId}"
+                    }
+                );
+            }
+            catch (
+                Exception ex
+            )
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al generar la Solicitud de Pago de la solicitud {SolicitudId}.",
+                    solicitudPago.SolicitudId
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "Los datos se guardaron, pero no fue posible generar el PDF. " +
+                            ex.Message
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        // =========================================================
+        // DESCARGAR SOLICITUD DE PAGO
+        // GET ?handler=DescargarSolicitudPago&solicitudId=12
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetDescargarSolicitudPagoAsync(
+                int solicitudId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return Unauthorized();
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                return NotFound();
+            }
+
+
+            bool puedeDescargar =
+                solicitud.UsuarioSolicitanteId ==
+                    usuarioActual.Id;
+
+
+            if (
+                !puedeDescargar
+            )
+            {
+                puedeDescargar =
+                    await _context
+                        .AdqPermisosUsuarios
+                        .AsNoTracking()
+                        .AnyAsync(
+                            x =>
+                                x.UsuarioId ==
+                                    usuarioActual.Id
+                                &&
+                                (
+                                    x.PuedeAdministrar
+                                    ||
+                                    x.PuedeGenerarSolicitudPago
+                                )
+                        );
+            }
+
+
+            if (
+                !puedeDescargar
+            )
+            {
+                return Forbid();
+            }
+
+
+            AdqSolicitudPago? solicitudPago =
+                await _context.AdqSolicitudesPago
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.PdfGenerado
+                    );
+
+
+            if (
+                solicitudPago ==
+                null
+                ||
+                string.IsNullOrWhiteSpace(
+                    solicitudPago.RutaArchivo
+                )
+                ||
+                string.IsNullOrWhiteSpace(
+                    solicitudPago.HashArchivo
+                )
+            )
+            {
+                return NotFound();
+            }
+
+
+            string rutaBase =
+                Path.GetFullPath(
+                    Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "App_Data",
+                        "Adquisiciones",
+                        "SolicitudesPago"
+                    )
+                );
+
+
+            string rutaFisica =
+                Path.GetFullPath(
+                    Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        solicitudPago.RutaArchivo
+                    )
+                );
+
+
+            if (
+                !rutaFisica.StartsWith(
+                    rutaBase,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return BadRequest();
+            }
+
+
+            if (
+                !System.IO.File.Exists(
+                    rutaFisica
+                )
+            )
+            {
+                return NotFound();
+            }
+
+
+            byte[] archivo =
+                await System.IO.File
+                    .ReadAllBytesAsync(
+                        rutaFisica
+                    );
+
+
+            string hashActual =
+                Convert.ToHexString(
+                    SHA256.HashData(
+                        archivo
+                    )
+                );
+
+
+            if (
+                !string.Equals(
+                    hashActual,
+                    solicitudPago.HashArchivo,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "El documento no superó la validación de integridad."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            Response.Headers.CacheControl =
+                "no-store, no-cache";
+
+            Response.Headers.Pragma =
+                "no-cache";
+
+
+            return File(
+                archivo,
+                "application/pdf",
+                solicitudPago.NombreArchivo
+                ??
+                $"SolicitudPago_{solicitud.Folio}.pdf"
             );
         }
 
@@ -2514,6 +4995,952 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             );
         }
 
+        // =========================================================
+        // HISTORIAL DE APROBACIÓN PRESUPUESTAL
+        // GET ?handler=HistorialAprobacionPresupuestal&solicitudId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetHistorialAprobacionPresupuestalAsync(
+                int solicitudId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                solicitudId <= 0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud indicada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se encontró la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR ACCESO
+            // MISMA LÓGICA DEL DETALLE DE SOLICITUD
+            // =====================================================
+
+            bool esPropietario =
+                solicitud.UsuarioSolicitanteId ==
+                usuarioActual.Id;
+
+
+            bool esAprobadorGerente =
+                await _context.AdqAprobaciones
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitudId
+                            &&
+                            x.UsuarioAprobadorId ==
+                                usuarioActual.Id
+                    );
+
+
+            bool esUsuarioAdquisiciones =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeVisualizar
+                                ||
+                                x.PuedeGestionarSolicitudes
+                                ||
+                                x.PuedeAprobar
+                                ||
+                                x.PuedeAsignar
+                                ||
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            bool esAgenteAsignado =
+                solicitud.UsuarioAsignadoId ==
+                usuarioActual.Id;
+
+
+            bool esObservador =
+            await (
+                from observador
+                    in _context
+                        .AdqAprobacionesPresupuestalesObservadores
+                        .AsNoTracking()
+
+                join aprobacionObs
+                    in _context
+                        .AdqAprobacionesPresupuestales
+                        .AsNoTracking()
+                    on observador.AprobacionPresupuestalId
+                    equals aprobacionObs.Id
+
+                where
+                    aprobacionObs.SolicitudId ==
+                        solicitudId
+                    &&
+                    observador.UsuarioId ==
+                        usuarioActual.Id
+                    &&
+                    observador.Activo
+                    &&
+                    !observador.Eliminado
+                    &&
+                    !aprobacionObs.Eliminado
+
+                select observador.Id
+            )
+            .AnyAsync();
+
+
+            bool esAprobadorPresupuestal =
+                await (
+                    from detalle
+                        in _context
+                            .AdqAprobacionesPresupuestalesDetalle
+                            .AsNoTracking()
+
+                    join aprobacionPres
+                        in _context
+                            .AdqAprobacionesPresupuestales
+                            .AsNoTracking()
+                        on detalle.AprobacionPresupuestalId
+                        equals aprobacionPres.Id
+
+                    where
+                        aprobacionPres.SolicitudId ==
+                            solicitudId
+                        &&
+                        detalle.UsuarioAprobadorId ==
+                            usuarioActual.Id
+                        &&
+                        !detalle.Eliminado
+                        &&
+                        !aprobacionPres.Eliminado
+
+                    select detalle.Id
+                )
+                .AnyAsync();
+
+
+            bool puedeConsultar =
+                esPropietario
+                ||
+                esAprobadorGerente
+                ||
+                esUsuarioAdquisiciones
+                ||
+                esAgenteAsignado
+                ||
+                esObservador
+                ||
+                esAprobadorPresupuestal;
+
+
+            if (
+                !puedeConsultar
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para consultar el historial presupuestal."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // OBTENER ÚLTIMO FLUJO PRESUPUESTAL
+            // =====================================================
+
+            AdqAprobacionPresupuestal? aprobacion =
+                await _context
+                    .AdqAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.SolicitudId ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    )
+                    .OrderByDescending(
+                        x =>
+                            x.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (
+                aprobacion ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+                        tieneFlujo = false,
+                        etapas =
+                            Array.Empty<object>()
+                    }
+                );
+            }
+
+
+            // =====================================================
+            // ETAPAS
+            // =====================================================
+
+            List<AdqAprobacionPresupuestalDetalle> detalles =
+                await _context
+                    .AdqAprobacionesPresupuestalesDetalle
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.AprobacionPresupuestalId ==
+                                aprobacion.Id
+                            &&
+                            !x.Eliminado
+                    )
+                    .OrderBy(
+                        x =>
+                            x.Orden
+                    )
+                    .ToListAsync();
+
+
+            List<int> idsDetalles =
+                detalles
+                    .Select(
+                        x =>
+                            x.Id
+                    )
+                    .ToList();
+
+
+            List<AdqFirmaAprobacionPresupuestal> firmas =
+                await _context
+                    .AdqFirmasAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            idsDetalles.Contains(
+                                x.AprobacionPresupuestalDetalleId
+                            )
+                            &&
+                            !x.Eliminado
+                    )
+                    .ToListAsync();
+
+
+            List<string> idsUsuarios =
+                detalles
+                    .Where(
+                        x =>
+                            !string.IsNullOrWhiteSpace(
+                                x.UsuarioAprobadorId
+                            )
+                    )
+                    .Select(
+                        x =>
+                            x.UsuarioAprobadorId!
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var nombresUsuarios =
+                await (
+                    from usuario
+                        in _context.Users
+                            .AsNoTracking()
+
+                    join empleado
+                        in _context.Empleados
+                            .AsNoTracking()
+
+                        on usuario.Id
+                        equals empleado.UserId
+                        into empleadoJoin
+
+                    from empleado
+                        in empleadoJoin.DefaultIfEmpty()
+
+                    where
+                        idsUsuarios.Contains(
+                            usuario.Id
+                        )
+
+                    select new
+                    {
+                        usuario.Id,
+
+                        Nombre =
+                            empleado != null
+                                ? empleado.NombreCompleto
+                                : (
+                                    usuario.Email
+                                    ??
+                                    usuario.UserName
+                                    ??
+                                    "Usuario"
+                                )
+                    }
+                )
+                .ToDictionaryAsync(
+                    x =>
+                        x.Id,
+
+                    x =>
+                        x.Nombre
+                );
+
+
+            List<HistorialEtapaPresupuestalDto> etapas =
+                detalles
+                    .Select(
+                        detalle =>
+                        {
+                            AdqFirmaAprobacionPresupuestal?
+                                firma =
+                                    firmas
+                                        .Where(
+                                            x =>
+                                                x.AprobacionPresupuestalDetalleId ==
+                                                    detalle.Id
+                                        )
+                                        .OrderByDescending(
+                                            x =>
+                                                x.FechaFirma
+                                        )
+                                        .FirstOrDefault();
+
+
+                            string aprobador =
+                                !string.IsNullOrWhiteSpace(
+                                    detalle.UsuarioAprobadorId
+                                )
+                                &&
+                                nombresUsuarios.TryGetValue(
+                                    detalle.UsuarioAprobadorId,
+                                    out string? nombre
+                                )
+                                    ? nombre
+                                    : "Sin responsable";
+
+
+                            return new HistorialEtapaPresupuestalDto
+                            {
+                                DetalleId =
+                                    detalle.Id,
+
+                                Orden =
+                                    detalle.Orden,
+
+                                NombreEtapa =
+                                    detalle.NombreEtapa,
+
+                                Estatus =
+                                    detalle.Estatus,
+
+                                EsActual =
+                                    detalle.EsActual,
+
+                                UsuarioAprobadorId =
+                                    detalle.UsuarioAprobadorId,
+
+                                Aprobador =
+                                    aprobador,
+
+                                Comentario =
+                                    detalle.Comentario,
+
+                                FechaDecision =
+                                    detalle.FechaDecision,
+
+                                TieneFirma =
+                                    firma != null,
+
+                                FirmaAprobacionId =
+                                    firma?.Id,
+
+                                NombreFirmante =
+                                    firma?.NombreFirmante,
+
+                                EmailFirmante =
+                                    firma?.EmailFirmante,
+
+                                TipoFirma =
+                                    firma?.TipoFirma,
+
+                                DecisionFirma =
+                                    firma?.Decision,
+
+                                FechaFirma =
+                                    firma?.FechaFirma,
+
+                                DireccionIp =
+                                    firma?.DireccionIp,
+
+                                HashFirma =
+                                    firma?.HashFirma,
+
+                                HashContextoFirmado =
+                                    firma?.HashContextoFirmado,
+
+                                RutaFirma =
+                                    firma != null
+                                        ? $"/ERP/Adquisiciones/Index?handler=ImagenFirmaAprobacion&firmaAprobacionId={firma.Id}"
+                                        : null
+                            };
+                        }
+                    )
+                    .ToList();
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    tieneFlujo = true,
+
+                    aprobacionId =
+                        aprobacion.Id,
+
+                    estatusFlujo =
+                        aprobacion.Estatus,
+
+                    monto =
+                        aprobacion.MontoSolicitado,
+
+                    etapas
+                }
+            );
+        }
+
+        // =========================================================
+        // IMAGEN HISTÓRICA DE FIRMA DE APROBACIÓN PRESUPUESTAL
+        // GET ?handler=ImagenFirmaAprobacion&firmaAprobacionId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetImagenFirmaAprobacionAsync(
+                int firmaAprobacionId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return Unauthorized();
+            }
+
+
+            if (
+                firmaAprobacionId <=
+                0
+            )
+            {
+                return NotFound();
+            }
+
+
+            // =====================================================
+            // OBTENER FIRMA HISTÓRICA
+            // =====================================================
+
+            AdqFirmaAprobacionPresupuestal? firma =
+                await _context
+                    .AdqFirmasAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                firmaAprobacionId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                firma ==
+                null
+            )
+            {
+                return NotFound();
+            }
+
+
+            // =====================================================
+            // LOCALIZAR LA SOLICITUD A LA QUE PERTENECE
+            // =====================================================
+
+            var datosFlujo =
+                await (
+                    from detalle
+                        in _context
+                            .AdqAprobacionesPresupuestalesDetalle
+                            .AsNoTracking()
+
+                    join flujo
+                        in _context
+                            .AdqAprobacionesPresupuestales
+                            .AsNoTracking()
+
+                        on detalle.AprobacionPresupuestalId
+                        equals flujo.Id
+
+                    where
+                        detalle.Id ==
+                            firma.AprobacionPresupuestalDetalleId
+                        &&
+                        !detalle.Eliminado
+                        &&
+                        !flujo.Eliminado
+
+                    select new
+                    {
+                        SolicitudId =
+                            flujo.SolicitudId,
+
+                        AprobacionPresupuestalId =
+                            flujo.Id,
+
+                        DetalleId =
+                            detalle.Id
+                    }
+                )
+                .FirstOrDefaultAsync();
+
+
+            if (
+                datosFlujo ==
+                null
+            )
+            {
+                return NotFound();
+            }
+
+
+            int solicitudId =
+                datosFlujo.SolicitudId;
+
+
+            // =====================================================
+            // 1. PROPIETARIO
+            // =====================================================
+
+            bool esPropietario =
+                await _context
+                    .AdqSolicitudes
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.UsuarioSolicitanteId ==
+                                usuarioActual.Id
+                    );
+
+
+            // =====================================================
+            // 2. APROBADOR / GERENTE
+            // =====================================================
+
+            bool esAprobador =
+                await _context
+                    .AdqAprobaciones
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitudId
+                            &&
+                            x.UsuarioAprobadorId ==
+                                usuarioActual.Id
+                    );
+
+
+            // =====================================================
+            // 3. PERSONAL DE ADQUISICIONES
+            // =====================================================
+
+            bool esUsuarioAdquisiciones =
+                await _context
+                    .AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeVisualizar
+                                ||
+                                x.PuedeGestionarSolicitudes
+                                ||
+                                x.PuedeAprobar
+                                ||
+                                x.PuedeAsignar
+                                ||
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            // =====================================================
+            // 4. AGENTE ASIGNADO
+            // =====================================================
+
+            bool esAgenteAsignado =
+                await _context
+                    .AdqSolicitudes
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.UsuarioAsignadoId ==
+                                usuarioActual.Id
+                    );
+
+
+            // =====================================================
+            // 5. OBSERVADOR PRESUPUESTAL
+            // =====================================================
+
+            bool esObservadorPresupuestal =
+                await (
+                    from observador
+                        in _context
+                            .AdqAprobacionesPresupuestalesObservadores
+                            .AsNoTracking()
+
+                    join flujoObservador
+                        in _context
+                            .AdqAprobacionesPresupuestales
+                            .AsNoTracking()
+
+                        on observador.AprobacionPresupuestalId
+                        equals flujoObservador.Id
+
+                    where
+                        flujoObservador.SolicitudId ==
+                            solicitudId
+                        &&
+                        observador.UsuarioId ==
+                            usuarioActual.Id
+                        &&
+                        observador.Activo
+                        &&
+                        !observador.Eliminado
+                        &&
+                        !flujoObservador.Eliminado
+
+                    select observador.Id
+                )
+                .AnyAsync();
+
+
+            // =====================================================
+            // 6. APROBADOR PRESUPUESTAL
+            // =====================================================
+
+            bool esAprobadorPresupuestal =
+                await (
+                    from detalle
+                        in _context
+                            .AdqAprobacionesPresupuestalesDetalle
+                            .AsNoTracking()
+
+                    join flujoAprobador
+                        in _context
+                            .AdqAprobacionesPresupuestales
+                            .AsNoTracking()
+
+                        on detalle.AprobacionPresupuestalId
+                        equals flujoAprobador.Id
+
+                    where
+                        flujoAprobador.SolicitudId ==
+                            solicitudId
+                        &&
+                        detalle.UsuarioAprobadorId ==
+                            usuarioActual.Id
+                        &&
+                        !detalle.Eliminado
+                        &&
+                        !flujoAprobador.Eliminado
+
+                    select detalle.Id
+                )
+                .AnyAsync();
+
+
+            // =====================================================
+            // AUTORIZACIÓN FINAL
+            // =====================================================
+
+            bool puedeConsultar =
+                esPropietario
+                ||
+                esAprobador
+                ||
+                esUsuarioAdquisiciones
+                ||
+                esAgenteAsignado
+                ||
+                esObservadorPresupuestal
+                ||
+                esAprobadorPresupuestal;
+
+
+            if (
+                !puedeConsultar
+            )
+            {
+                _logger.LogWarning(
+                    "Acceso denegado a firma histórica de aprobación. " +
+                    "FirmaAprobacionId: {FirmaAprobacionId}, " +
+                    "SolicitudId: {SolicitudId}, " +
+                    "UsuarioId: {UsuarioId}.",
+                    firmaAprobacionId,
+                    solicitudId,
+                    usuarioActual.Id
+                );
+
+
+                return Forbid();
+            }
+
+
+            // =====================================================
+            // VALIDAR RUTA FÍSICA
+            // =====================================================
+
+            string carpetaPermitida =
+                Path.GetFullPath(
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        "App_Data",
+                        "Adquisiciones",
+                        "FirmasAprobaciones"
+                    )
+                );
+
+
+            string rutaCompleta =
+                Path.GetFullPath(
+                    Path.Combine(
+                        _environment.ContentRootPath,
+                        firma.RutaFirmaSnapshot
+                            .Replace(
+                                "/",
+                                Path.DirectorySeparatorChar
+                                    .ToString()
+                            )
+                    )
+                );
+
+
+            string prefijoPermitido =
+                carpetaPermitida
+                    .TrimEnd(
+                        Path.DirectorySeparatorChar,
+                        Path.AltDirectorySeparatorChar
+                    )
+                +
+                Path.DirectorySeparatorChar;
+
+
+            if (
+                !rutaCompleta.StartsWith(
+                    prefijoPermitido,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                _logger.LogWarning(
+                    "Ruta inválida detectada para snapshot de firma {FirmaAprobacionId}.",
+                    firmaAprobacionId
+                );
+
+
+                return Forbid();
+            }
+
+
+            // =====================================================
+            // VALIDAR ARCHIVO
+            // =====================================================
+
+            if (
+                !System.IO.File.Exists(
+                    rutaCompleta
+                )
+            )
+            {
+                return NotFound();
+            }
+
+
+            byte[] archivo =
+                await System.IO.File
+                    .ReadAllBytesAsync(
+                        rutaCompleta
+                    );
+
+
+            // =====================================================
+            // VALIDAR HASH ANTES DE ENTREGAR LA EVIDENCIA
+            // =====================================================
+
+            string hashActual =
+                Convert.ToHexString(
+                    SHA256.HashData(
+                        archivo
+                    )
+                );
+
+
+            if (
+                !string.Equals(
+                    hashActual,
+                    firma.HashFirma,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                _logger.LogError(
+                    "El snapshot de firma {FirmaAprobacionId} no superó la validación SHA-256.",
+                    firmaAprobacionId
+                );
+
+
+                return new StatusCodeResult(
+                    StatusCodes.Status409Conflict
+                );
+            }
+
+
+            // =====================================================
+            // DEVOLVER PNG
+            // =====================================================
+
+            Response.Headers[
+                "Cache-Control"
+            ] =
+                "private, no-store, no-cache, must-revalidate";
+
+
+            Response.Headers[
+                "Pragma"
+            ] =
+                "no-cache";
+
+
+            return File(
+                archivo,
+                "image/png"
+            );
+        }
 
         public int TotalSeguimientosPresupuestales =>
             SeguimientosPresupuestales.Count;
@@ -4152,6 +7579,142 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                         ultimoMensajePropio.Value
                                 )
                         );
+            }
+        }
+
+        public class SolicitudPagoInput
+        {
+            public int SolicitudId
+            {
+                get;
+                set;
+            }
+
+
+            [Required(
+                ErrorMessage =
+                    "La compañía es obligatoria."
+            )]
+            [StringLength(250)]
+            public string Compania
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            [Required(
+                ErrorMessage =
+                    "Debes seleccionar la moneda."
+            )]
+            [StringLength(30)]
+            public string Moneda
+            {
+                get;
+                set;
+            } = "Pesos";
+
+
+            [Required(
+                ErrorMessage =
+                    "Debes seleccionar la forma de pago."
+            )]
+            [StringLength(30)]
+            public string FormaPago
+            {
+                get;
+                set;
+            } = "Transferencia";
+
+
+            [Required(
+                ErrorMessage =
+                    "El concepto de pago es obligatorio."
+            )]
+            [StringLength(5000)]
+            public string ConceptoPago
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            [StringLength(250)]
+            public string? Banco
+            {
+                get;
+                set;
+            }
+
+
+            [StringLength(100)]
+            public string? Cuenta
+            {
+                get;
+                set;
+            }
+
+
+            [StringLength(100)]
+            public string? ClabeInterbancaria
+            {
+                get;
+                set;
+            }
+
+
+            public bool ComprobanteAdjunto
+            {
+                get;
+                set;
+            }
+
+
+            [Range(
+                typeof(decimal),
+                "0",
+                "9999999999999999"
+            )]
+            public decimal RetencionIva
+            {
+                get;
+                set;
+            }
+
+
+            [Range(
+                typeof(decimal),
+                "0",
+                "9999999999999999"
+            )]
+            public decimal RetencionIsr
+            {
+                get;
+                set;
+            }
+
+
+            [Range(
+                typeof(decimal),
+                "0",
+                "9999999999999999"
+            )]
+            public decimal OtrosImpuestos
+            {
+                get;
+                set;
+            }
+
+
+            [Range(
+                typeof(decimal),
+                "0",
+                "9999999999999999"
+            )]
+            public decimal OtrosServicios
+            {
+                get;
+                set;
             }
         }
 

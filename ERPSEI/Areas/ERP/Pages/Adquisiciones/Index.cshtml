@@ -4917,6 +4917,16 @@
 
                 </button>
 
+                    <button type="button"
+                            id="btnGenerarSolicitudPagoAdq"
+                            class="btn btn-success d-none">
+
+                        <i class="bi bi-file-earmark-pdf me-1"></i>
+
+                        Generar Solicitud de Pago
+
+                    </button>
+
             </div>
 
         </div>
@@ -4924,6 +4934,681 @@
     </div>
 
 </div>
+
+    <!-- ========================================================== -->
+    <!-- MODAL GENERAR SOLICITUD DE PAGO -->
+    <!-- ========================================================== -->
+
+    <div class="modal fade"
+         id="modalSolicitudPagoAdq"
+         tabindex="-1"
+         aria-hidden="true"
+         data-bs-backdrop="static"
+         data-bs-keyboard="false">
+
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <div>
+
+                        <div class="d-flex align-items-center gap-2">
+
+                            <div class="adq-section-icon">
+
+                                <i class="bi bi-file-earmark-pdf"></i>
+
+                            </div>
+
+                            <div>
+
+                                <h5 class="modal-title mb-1">
+                                    Generar Solicitud de Pago
+                                </h5>
+
+                                <div class="small text-muted"
+                                     id="folioSolicitudPagoAdq">
+                                    -
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           id="solicitudPagoSolicitudIdAdq"
+                           value="0" />
+
+
+                    <!-- ===================================================== -->
+                    <!-- RESUMEN -->
+                    <!-- ===================================================== -->
+
+                    <div class="adq-payment-summary mb-4">
+
+                        <div>
+
+                            <span>
+                                Área solicitante
+                            </span>
+
+                            <strong id="areaSolicitudPagoAdq">
+                                -
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Proveedor
+                            </span>
+
+                            <strong id="proveedorSolicitudPagoAdq">
+                                -
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Subtotal
+                            </span>
+
+                            <strong id="subtotalSolicitudPagoAdq">
+                                $0.00
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                IVA
+                            </span>
+
+                            <strong id="ivaSolicitudPagoAdq">
+                                $0.00
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                Total cotización
+                            </span>
+
+                            <strong id="totalSolicitudPagoAdq">
+                                $0.00
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ===================================================== -->
+                    <!-- DATOS GENERALES -->
+                    <!-- ===================================================== -->
+
+                    <div class="adq-form-section mb-4">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-building"></i>
+
+                            Datos generales del pago
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-lg-6">
+
+                                <label for="companiaSolicitudPagoAdq"
+                                       class="form-label">
+
+                                    Compañía
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <input type="text"
+                                       id="companiaSolicitudPagoAdq"
+                                       class="form-control"
+                                       maxlength="250"
+                                       placeholder="Nombre de la compañía" />
+
+                            </div>
+
+
+                            <div class="col-lg-6">
+
+                                <label for="conceptoSolicitudPagoAdq"
+                                       class="form-label">
+
+                                    Concepto de pago
+                                    <span class="text-danger">*</span>
+
+                                </label>
+
+                                <textarea id="conceptoSolicitudPagoAdq"
+                                          class="form-control"
+                                          rows="3"
+                                          maxlength="5000"
+                                          placeholder="Describe el concepto del pago"></textarea>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ===================================================== -->
+                    <!-- MONEDA / FORMA DE PAGO -->
+                    <!-- ===================================================== -->
+
+                    <div class="adq-form-section mb-4">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-cash-coin"></i>
+
+                            Condiciones de pago
+
+                        </div>
+
+
+                        <div class="row g-4">
+
+                            <div class="col-lg-6">
+
+                                <label class="form-label fw-semibold">
+                                    Moneda
+                                </label>
+
+
+                                <div class="adq-payment-options">
+
+                                    <label class="adq-payment-option">
+
+                                        <input type="radio"
+                                               name="monedaSolicitudPagoAdq"
+                                               value="Pesos"
+                                               checked />
+
+                                        <span>
+                                            <i class="bi bi-currency-dollar"></i>
+                                            Pesos
+                                        </span>
+
+                                    </label>
+
+
+                                    <label class="adq-payment-option">
+
+                                        <input type="radio"
+                                               name="monedaSolicitudPagoAdq"
+                                               value="Dolares" />
+
+                                        <span>
+                                            <i class="bi bi-currency-exchange"></i>
+                                            Dólares
+                                        </span>
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="col-lg-6">
+
+                                <label class="form-label fw-semibold">
+                                    Forma de pago
+                                </label>
+
+
+                                <div class="adq-payment-options">
+
+                                    <label class="adq-payment-option">
+
+                                        <input type="radio"
+                                               name="formaPagoSolicitudPagoAdq"
+                                               value="Transferencia"
+                                               checked />
+
+                                        <span>
+                                            <i class="bi bi-bank"></i>
+                                            Transferencia
+                                        </span>
+
+                                    </label>
+
+
+                                    <label class="adq-payment-option">
+
+                                        <input type="radio"
+                                               name="formaPagoSolicitudPagoAdq"
+                                               value="Efectivo" />
+
+                                        <span>
+                                            <i class="bi bi-cash"></i>
+                                            Efectivo
+                                        </span>
+
+                                    </label>
+
+
+                                    <label class="adq-payment-option">
+
+                                        <input type="radio"
+                                               name="formaPagoSolicitudPagoAdq"
+                                               value="Cheque" />
+
+                                        <span>
+                                            <i class="bi bi-card-heading"></i>
+                                            Cheque
+                                        </span>
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ===================================================== -->
+                    <!-- DATOS BANCARIOS -->
+                    <!-- ===================================================== -->
+
+                    <div class="adq-form-section mb-4">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-bank"></i>
+
+                            Datos bancarios
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-lg-4">
+
+                                <label for="bancoSolicitudPagoAdq"
+                                       class="form-label">
+                                    Banco
+                                </label>
+
+                                <input type="text"
+                                       id="bancoSolicitudPagoAdq"
+                                       class="form-control"
+                                       maxlength="250" />
+
+                            </div>
+
+
+                            <div class="col-lg-4">
+
+                                <label for="cuentaSolicitudPagoAdq"
+                                       class="form-label">
+                                    Cuenta
+                                </label>
+
+                                <input type="text"
+                                       id="cuentaSolicitudPagoAdq"
+                                       class="form-control"
+                                       maxlength="100" />
+
+                            </div>
+
+
+                            <div class="col-lg-4">
+
+                                <label for="clabeSolicitudPagoAdq"
+                                       class="form-label">
+                                    CLABE interbancaria
+                                </label>
+
+                                <input type="text"
+                                       id="clabeSolicitudPagoAdq"
+                                       class="form-control"
+                                       maxlength="100" />
+
+                            </div>
+
+
+                            <div class="col-12">
+
+                                <div class="form-check">
+
+                                    <input type="checkbox"
+                                           id="comprobanteAdjuntoSolicitudPagoAdq"
+                                           class="form-check-input" />
+
+                                    <label class="form-check-label"
+                                           for="comprobanteAdjuntoSolicitudPagoAdq">
+
+                                        Se cuenta con comprobante / soporte bancario adjunto
+
+                                    </label>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ===================================================== -->
+                    <!-- IMPUESTOS -->
+                    <!-- ===================================================== -->
+
+                    <div class="adq-form-section mb-4">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-calculator"></i>
+
+                            Retenciones y ajustes
+
+                        </div>
+
+
+                        <div class="row g-3">
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label for="retencionIvaSolicitudPagoAdq"
+                                       class="form-label">
+
+                                    Retención IVA
+
+                                </label>
+
+                                <input type="number"
+                                       id="retencionIvaSolicitudPagoAdq"
+                                       class="form-control"
+                                       min="0"
+                                       step="0.01"
+                                       value="0" />
+
+                            </div>
+
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label for="retencionIsrSolicitudPagoAdq"
+                                       class="form-label">
+
+                                    Retención ISR
+
+                                </label>
+
+                                <input type="number"
+                                       id="retencionIsrSolicitudPagoAdq"
+                                       class="form-control"
+                                       min="0"
+                                       step="0.01"
+                                       value="0" />
+
+                            </div>
+
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label for="otrosImpuestosSolicitudPagoAdq"
+                                       class="form-label">
+
+                                    Otros impuestos
+
+                                </label>
+
+                                <input type="number"
+                                       id="otrosImpuestosSolicitudPagoAdq"
+                                       class="form-control"
+                                       min="0"
+                                       step="0.01"
+                                       value="0" />
+
+                            </div>
+
+
+                            <div class="col-lg-3 col-md-6">
+
+                                <label for="otrosServiciosSolicitudPagoAdq"
+                                       class="form-label">
+
+                                    Otros servicios
+
+                                </label>
+
+                                <input type="number"
+                                       id="otrosServiciosSolicitudPagoAdq"
+                                       class="form-control"
+                                       min="0"
+                                       step="0.01"
+                                       value="0" />
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ===================================================== -->
+                    <!-- TIPO DOCUMENTO -->
+                    <!-- ===================================================== -->
+
+                    <div class="adq-form-section">
+
+                        <div class="adq-form-section-title">
+
+                            <i class="bi bi-files"></i>
+
+                            Documento anexo seleccionado
+
+                        </div>
+
+
+                        <div id="tipoDocumentoSolicitudPagoAdq"
+                             class="adq-payment-document-selected">
+
+                            -
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="mensajeSolicitudPagoAdq"
+                         class="alert alert-danger d-none mt-4 mb-0">
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cancelar
+
+                    </button>
+
+
+                    <button type="button"
+                            id="btnConfirmarGenerarSolicitudPagoAdq"
+                            class="btn btn-success">
+
+                        <i class="bi bi-file-earmark-pdf me-1"></i>
+
+                        Generar PDF
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- MODAL RESULTADO SOLICITUD DE PAGO -->
+    <!-- ========================================================== -->
+
+    <div class="modal fade"
+         id="modalResultadoSolicitudPagoAdq"
+         tabindex="-1"
+         aria-hidden="true"
+         data-bs-backdrop="static"
+         data-bs-keyboard="false">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="adq-section-icon">
+
+                            <i class="bi bi-file-earmark-check"></i>
+
+                        </div>
+
+                        <div>
+
+                            <h5 class="modal-title mb-1">
+                                Solicitud de Pago generada
+                            </h5>
+
+                            <div class="small text-muted"
+                                 id="folioResultadoSolicitudPagoAdq">
+                                -
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="text-center py-3">
+
+                        <div class="adq-payment-result-icon mb-3">
+
+                            <i class="bi bi-check-lg"></i>
+
+                        </div>
+
+
+                        <h5 class="mb-2">
+                            Documento generado correctamente
+                        </h5>
+
+
+                        <p class="text-muted mb-0">
+                            La Solicitud de Pago fue generada y protegida
+                            mediante validación de integridad SHA-256.
+                        </p>
+
+                    </div>
+
+
+                    <div class="border rounded-3 p-3 mt-3">
+
+                        <div class="small text-muted mb-1">
+                            Archivo
+                        </div>
+
+                        <div class="fw-semibold text-break"
+                             id="nombreArchivoSolicitudPagoAdq">
+                            -
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cerrar
+
+                    </button>
+
+
+                    <a id="btnDescargarSolicitudPagoAdq"
+                           href="#"
+                           class="btn btn-success">
+
+                        <i class="bi bi-download me-1"></i>
+
+                        Descargar PDF
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 
 <!-- ========================================================== -->
@@ -5640,6 +6325,102 @@
                         <div class="border rounded-3 p-3 bg-light"
                              id="comentarioSolicitudPresupuestalAdq">
                             Sin comentarios.
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- HISTORIAL DE APROBACIÓN PRESUPUESTAL -->
+                    <!-- ========================================================= -->
+
+                    <div class="mb-4"
+                         id="seccionHistorialAprobacionPresupuestalAdq">
+
+                        <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+
+                            <div>
+
+                                <div class="fw-semibold d-flex align-items-center gap-2">
+
+                                    <i class="bi bi-diagram-3 text-primary"></i>
+
+                                    Progreso de aprobación presupuestal
+
+                                </div>
+
+                                <div class="small text-muted mt-1">
+
+                                    Consulta el avance, responsables y evidencia de firma
+                                    de cada nivel de autorización.
+
+                                </div>
+
+                            </div>
+
+
+                            <span class="badge rounded-pill text-bg-light border"
+                                  id="badgeEstatusFlujoPresupuestalAdq">
+
+                                Cargando...
+
+                            </span>
+
+                        </div>
+
+
+                        <!-- LOADING -->
+
+                        <div id="cargandoHistorialAprobacionPresupuestalAdq"
+                             class="adq-budget-history-loading">
+
+                            <div class="spinner-border spinner-border-sm"
+                                 role="status">
+                            </div>
+
+                            <span>
+                                Cargando historial...
+                            </span>
+
+                        </div>
+
+
+                        <!-- ERROR -->
+
+                        <div id="errorHistorialAprobacionPresupuestalAdq"
+                             class="alert alert-warning d-none mb-0">
+
+                            No fue posible cargar el historial de aprobación.
+
+                        </div>
+
+
+                        <!-- SIN FLUJO -->
+
+                        <div id="sinHistorialAprobacionPresupuestalAdq"
+                             class="adq-budget-history-empty d-none">
+
+                            <i class="bi bi-hourglass"></i>
+
+                            <div>
+
+                                <div class="fw-semibold">
+                                    Aún no existe un flujo presupuestal
+                                </div>
+
+                                <div class="small text-muted">
+                                    Las etapas aparecerán aquí cuando la solicitud sea enviada
+                                    a aprobación presupuestal.
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- TIMELINE -->
+
+                        <div id="historialAprobacionPresupuestalAdq"
+                             class="adq-budget-timeline d-none">
                         </div>
 
                     </div>

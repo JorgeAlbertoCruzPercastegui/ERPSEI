@@ -75,6 +75,11 @@ document.addEventListener(
                 "btnEnviarDesdeDetalleAdq"
             );
 
+        const btnGenerarSolicitudPagoDesdeDetalle =
+            document.getElementById(
+                "btnGenerarSolicitudPagoAdq"
+            );
+
         let solicitudDetalleActualAdq =
             null;
 
@@ -493,6 +498,137 @@ document.addEventListener(
         const mensajeResultadoDecisionPresupuestalAdq =
             document.getElementById(
                 "mensajeResultadoDecisionPresupuestalAdq"
+            );
+
+        const btnGenerarSolicitudPagoAdq =
+            document.getElementById(
+                "btnGenerarSolicitudPagoAdq"
+            );
+
+
+        const modalSolicitudPagoElementAdq =
+            document.getElementById(
+                "modalSolicitudPagoAdq"
+            );
+
+
+        const solicitudPagoSolicitudIdAdq =
+            document.getElementById(
+                "solicitudPagoSolicitudIdAdq"
+            );
+
+
+        const folioSolicitudPagoAdq =
+            document.getElementById(
+                "folioSolicitudPagoAdq"
+            );
+
+
+        const areaSolicitudPagoAdq =
+            document.getElementById(
+                "areaSolicitudPagoAdq"
+            );
+
+
+        const proveedorSolicitudPagoAdq =
+            document.getElementById(
+                "proveedorSolicitudPagoAdq"
+            );
+
+
+        const subtotalSolicitudPagoAdq =
+            document.getElementById(
+                "subtotalSolicitudPagoAdq"
+            );
+
+
+        const ivaSolicitudPagoAdq =
+            document.getElementById(
+                "ivaSolicitudPagoAdq"
+            );
+
+
+        const totalSolicitudPagoAdq =
+            document.getElementById(
+                "totalSolicitudPagoAdq"
+            );
+
+
+        const companiaSolicitudPagoAdq =
+            document.getElementById(
+                "companiaSolicitudPagoAdq"
+            );
+
+
+        const conceptoSolicitudPagoAdq =
+            document.getElementById(
+                "conceptoSolicitudPagoAdq"
+            );
+
+
+        const bancoSolicitudPagoAdq =
+            document.getElementById(
+                "bancoSolicitudPagoAdq"
+            );
+
+
+        const cuentaSolicitudPagoAdq =
+            document.getElementById(
+                "cuentaSolicitudPagoAdq"
+            );
+
+
+        const clabeSolicitudPagoAdq =
+            document.getElementById(
+                "clabeSolicitudPagoAdq"
+            );
+
+
+        const comprobanteAdjuntoSolicitudPagoAdq =
+            document.getElementById(
+                "comprobanteAdjuntoSolicitudPagoAdq"
+            );
+
+
+        const retencionIvaSolicitudPagoAdq =
+            document.getElementById(
+                "retencionIvaSolicitudPagoAdq"
+            );
+
+
+        const retencionIsrSolicitudPagoAdq =
+            document.getElementById(
+                "retencionIsrSolicitudPagoAdq"
+            );
+
+
+        const otrosImpuestosSolicitudPagoAdq =
+            document.getElementById(
+                "otrosImpuestosSolicitudPagoAdq"
+            );
+
+
+        const otrosServiciosSolicitudPagoAdq =
+            document.getElementById(
+                "otrosServiciosSolicitudPagoAdq"
+            );
+
+
+        const tipoDocumentoSolicitudPagoAdq =
+            document.getElementById(
+                "tipoDocumentoSolicitudPagoAdq"
+            );
+
+
+        const mensajeSolicitudPagoAdq =
+            document.getElementById(
+                "mensajeSolicitudPagoAdq"
+            );
+
+
+        const btnConfirmarGenerarSolicitudPagoAdq =
+            document.getElementById(
+                "btnConfirmarGenerarSolicitudPagoAdq"
             );
 
 
@@ -1205,6 +1341,41 @@ document.addEventListener(
                 "solicitudAprobacionPresupuestalIdAdq"
             );
 
+        const seccionHistorialAprobacionPresupuestalAdq =
+            document.getElementById(
+                "seccionHistorialAprobacionPresupuestalAdq"
+            );
+
+
+        const historialAprobacionPresupuestalAdq =
+            document.getElementById(
+                "historialAprobacionPresupuestalAdq"
+            );
+
+
+        const cargandoHistorialAprobacionPresupuestalAdq =
+            document.getElementById(
+                "cargandoHistorialAprobacionPresupuestalAdq"
+            );
+
+
+        const errorHistorialAprobacionPresupuestalAdq =
+            document.getElementById(
+                "errorHistorialAprobacionPresupuestalAdq"
+            );
+
+
+        const sinHistorialAprobacionPresupuestalAdq =
+            document.getElementById(
+                "sinHistorialAprobacionPresupuestalAdq"
+            );
+
+
+        const badgeEstatusFlujoPresupuestalAdq =
+            document.getElementById(
+                "badgeEstatusFlujoPresupuestalAdq"
+            );
+
 
         const folioAprobacionPresupuestalAdq =
             document.getElementById(
@@ -1286,6 +1457,729 @@ document.addEventListener(
 
         let modalAprobacionPresupuestalAdq =
             null;
+
+        const modalResultadoSolicitudPagoElementAdq =
+            document.getElementById(
+                "modalResultadoSolicitudPagoAdq"
+            );
+
+
+        const folioResultadoSolicitudPagoAdq =
+            document.getElementById(
+                "folioResultadoSolicitudPagoAdq"
+            );
+
+
+        const nombreArchivoSolicitudPagoAdq =
+            document.getElementById(
+                "nombreArchivoSolicitudPagoAdq"
+            );
+
+
+        const btnDescargarSolicitudPagoAdq =
+            document.getElementById(
+                "btnDescargarSolicitudPagoAdq"
+            );
+
+
+        function formatearFechaHistorialPresupuestalAdq(
+            valor
+        ) {
+
+            if (
+                !valor
+            ) {
+                return "";
+            }
+
+
+            const fecha =
+                new Date(
+                    valor
+                );
+
+
+            if (
+                Number.isNaN(
+                    fecha.getTime()
+                )
+            ) {
+                return "";
+            }
+
+
+            return fecha.toLocaleString(
+                "es-MX",
+                {
+                    dateStyle:
+                        "medium",
+
+                    timeStyle:
+                        "short"
+                }
+            );
+        }
+
+
+        function obtenerConfiguracionEstatusEtapaAdq(
+            etapa
+        ) {
+
+            const estatus =
+                (
+                    etapa?.estatus
+                    ??
+                    ""
+                )
+                    .toLowerCase();
+
+
+            if (
+                estatus ===
+                "aprobada"
+            ) {
+
+                return {
+                    clase:
+                        "is-approved",
+
+                    icono:
+                        "bi-check-lg",
+
+                    texto:
+                        "Aprobada y firmada"
+                };
+            }
+
+
+            if (
+                estatus ===
+                "declinada"
+            ) {
+
+                return {
+                    clase:
+                        "is-declined",
+
+                    icono:
+                        "bi-x-lg",
+
+                    texto:
+                        "Declinada"
+                };
+            }
+
+
+            if (
+                etapa?.esActual
+                ||
+                estatus ===
+                "pendiente"
+            ) {
+
+                return {
+                    clase:
+                        "is-current",
+
+                    icono:
+                        "bi-hourglass-split",
+
+                    texto:
+                        "Pendiente de autorización"
+                };
+            }
+
+
+            return {
+                clase:
+                    "is-waiting",
+
+                icono:
+                    "bi-clock",
+
+                texto:
+                    "En espera"
+            };
+        }
+
+
+        function abreviarHashPresupuestalAdq(
+            hash
+        ) {
+
+            const valor =
+                String(
+                    hash
+                    ??
+                    ""
+                );
+
+
+            if (
+                valor.length <=
+                18
+            ) {
+                return valor;
+            }
+
+
+            return `${valor.substring(
+                0,
+                10
+            )}…${valor.substring(
+                valor.length -
+                8
+            )}`;
+        }
+
+
+        function renderizarHistorialAprobacionPresupuestalAdq(
+            resultado
+        ) {
+
+            if (
+                !historialAprobacionPresupuestalAdq
+            ) {
+                return;
+            }
+
+
+            historialAprobacionPresupuestalAdq.innerHTML =
+                "";
+
+
+            if (
+                badgeEstatusFlujoPresupuestalAdq
+            ) {
+
+                const estatusFlujo =
+                    resultado?.estatusFlujo
+                    ??
+                    "Sin flujo";
+
+
+                badgeEstatusFlujoPresupuestalAdq.textContent =
+                    estatusFlujo;
+
+
+                badgeEstatusFlujoPresupuestalAdq.className =
+                    estatusFlujo
+                        .toLowerCase() ===
+                        "aprobada"
+
+                        ? "badge rounded-pill text-bg-success"
+
+                        : estatusFlujo
+                            .toLowerCase() ===
+                            "declinada"
+
+                            ? "badge rounded-pill text-bg-danger"
+
+                            : "badge rounded-pill text-bg-light border";
+            }
+
+
+            if (
+                !resultado?.tieneFlujo
+            ) {
+
+                sinHistorialAprobacionPresupuestalAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+
+                historialAprobacionPresupuestalAdq.classList.add(
+                    "d-none"
+                );
+
+
+                return;
+            }
+
+
+            const etapas =
+                Array.isArray(
+                    resultado.etapas
+                )
+                    ? resultado.etapas
+                    : [];
+
+
+            if (
+                etapas.length ===
+                0
+            ) {
+
+                sinHistorialAprobacionPresupuestalAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+
+                historialAprobacionPresupuestalAdq.classList.add(
+                    "d-none"
+                );
+
+
+                return;
+            }
+
+
+            sinHistorialAprobacionPresupuestalAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            historialAprobacionPresupuestalAdq.classList.remove(
+                "d-none"
+            );
+
+
+            etapas.forEach(
+                function (
+                    etapa,
+                    indice
+                ) {
+
+                    const configuracion =
+                        obtenerConfiguracionEstatusEtapaAdq(
+                            etapa
+                        );
+
+
+                    const fecha =
+                        formatearFechaHistorialPresupuestalAdq(
+                            etapa.fechaFirma
+                            ??
+                            etapa.fechaDecision
+                        );
+
+
+                    const tieneFirma =
+                        Boolean(
+                            etapa.tieneFirma
+                            &&
+                            etapa.rutaFirma
+                        );
+
+
+                    const esUltima =
+                        indice ===
+                        etapas.length -
+                        1;
+
+
+                    const elemento =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    elemento.className =
+                        `adq-budget-timeline-item ${configuracion.clase}`;
+
+
+                    elemento.innerHTML = `
+
+                <div class="adq-budget-timeline-rail">
+
+                    <div class="adq-budget-timeline-dot">
+
+                        <i class="bi ${configuracion.icono}"></i>
+
+                    </div>
+
+                    ${!esUltima
+                            ? `<div class="adq-budget-timeline-line"></div>`
+                            : ""
+                        }
+
+                </div>
+
+
+                <div class="adq-budget-timeline-content">
+
+                    <div class="adq-budget-timeline-header">
+
+                        <div>
+
+                            <div class="adq-budget-level">
+
+                                Nivel ${Number(
+                            etapa.orden
+                            ??
+                            indice +
+                            1
+                        )}
+
+                            </div>
+
+                            <div class="adq-budget-stage-name">
+
+                                ${escapeHtmlAdq(
+                            etapa.nombreEtapa
+                            ??
+                            "Etapa presupuestal"
+                        )}
+
+                            </div>
+
+                        </div>
+
+
+                        <span class="adq-budget-status">
+
+                            ${escapeHtmlAdq(
+                            configuracion.texto
+                        )}
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="adq-budget-approver">
+
+                        <i class="bi bi-person-circle"></i>
+
+                        <div>
+
+                            <span>
+                                Responsable
+                            </span>
+
+                            <strong>
+                                ${escapeHtmlAdq(
+                            etapa.aprobador
+                            ??
+                            "Sin responsable"
+                        )}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    ${fecha
+                            ? `
+                                <div class="adq-budget-date">
+
+                                    <i class="bi bi-calendar-check"></i>
+
+                                    ${escapeHtmlAdq(
+                                fecha
+                            )}
+
+                                </div>
+                            `
+                            : ""
+                        }
+
+
+                    ${etapa.comentario
+                            ? `
+                                <div class="adq-budget-comment">
+
+                                    <i class="bi bi-chat-left-text"></i>
+
+                                    <div>
+
+                                        <span>
+                                            Comentario
+                                        </span>
+
+                                        <p>
+                                            ${escapeHtmlAdq(
+                                etapa.comentario
+                            )}
+                                        </p>
+
+                                    </div>
+
+                                </div>
+                            `
+                            : ""
+                        }
+
+
+                    ${tieneFirma
+                            ? `
+                                <div class="adq-budget-signature">
+
+                                    <div class="adq-budget-signature-preview">
+
+                                        <img src="${escapeHtmlAdq(
+                                etapa.rutaFirma
+                            )}"
+                                             alt="Firma de ${escapeHtmlAdq(
+                                etapa.nombreFirmante
+                                ??
+                                etapa.aprobador
+                                ??
+                                "aprobador"
+                            )}"
+                                             loading="lazy" />
+
+                                    </div>
+
+
+                                    <div class="adq-budget-signature-info">
+
+                                        <div class="adq-budget-signature-title">
+
+                                            <i class="bi bi-patch-check-fill"></i>
+
+                                            Evidencia de firma
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <strong>
+                                                ${escapeHtmlAdq(
+                                etapa.nombreFirmante
+                                ??
+                                etapa.aprobador
+                                ??
+                                "Firmante"
+                            )}
+                                            </strong>
+
+                                        </div>
+
+
+                                        ${etapa.emailFirmante
+                                ? `
+                                                    <div class="small text-muted">
+
+                                                        ${escapeHtmlAdq(
+                                    etapa.emailFirmante
+                                )}
+
+                                                    </div>
+                                                `
+                                : ""
+                            }
+
+
+                                        <div class="adq-budget-signature-meta">
+
+                                            <span>
+                                                ${escapeHtmlAdq(
+                                etapa.tipoFirma
+                                ??
+                                "Firma"
+                            )}
+                                            </span>
+
+                                            <span>
+                                                ${escapeHtmlAdq(
+                                etapa.decisionFirma
+                                ??
+                                ""
+                            )}
+                                            </span>
+
+                                        </div>
+
+
+                                        ${etapa.direccionIp
+                                ? `
+                                                    <div class="adq-budget-evidence-line">
+
+                                                        <span>
+                                                            IP
+                                                        </span>
+
+                                                        <code>
+                                                            ${escapeHtmlAdq(
+                                    etapa.direccionIp
+                                )}
+                                                        </code>
+
+                                                    </div>
+                                                `
+                                : ""
+                            }
+
+
+                                        ${etapa.hashFirma
+                                ? `
+                                                    <div class="adq-budget-evidence-line">
+
+                                                        <span>
+                                                            SHA-256
+                                                        </span>
+
+                                                        <code title="${escapeHtmlAdq(
+                                    etapa.hashFirma
+                                )}">
+                                                            ${escapeHtmlAdq(
+                                    abreviarHashPresupuestalAdq(
+                                        etapa.hashFirma
+                                    )
+                                )}
+                                                        </code>
+
+                                                    </div>
+                                                `
+                                : ""
+                            }
+
+                                    </div>
+
+                                </div>
+                            `
+                            : `
+                                <div class="adq-budget-signature-pending">
+
+                                    <i class="bi bi-pen"></i>
+
+                                    <span>
+                                        Sin evidencia de firma todavía.
+                                    </span>
+
+                                </div>
+                            `
+                        }
+
+                </div>
+            `;
+
+
+                    historialAprobacionPresupuestalAdq.appendChild(
+                        elemento
+                    );
+                }
+            );
+        }
+
+
+        async function cargarHistorialAprobacionPresupuestalAdq(
+            solicitudId
+        ) {
+
+            if (
+                solicitudId <=
+                0
+            ) {
+                return;
+            }
+
+
+            cargandoHistorialAprobacionPresupuestalAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            historialAprobacionPresupuestalAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            errorHistorialAprobacionPresupuestalAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            sinHistorialAprobacionPresupuestalAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            try {
+
+                const respuesta =
+                    await fetch(
+                        `${window.location.pathname}?handler=HistorialAprobacionPresupuestal&solicitudId=${encodeURIComponent(
+                            solicitudId
+                        )}`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await respuesta.json();
+
+
+                if (
+                    !respuesta.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible consultar el historial presupuestal."
+                    );
+                }
+
+
+                renderizarHistorialAprobacionPresupuestalAdq(
+                    resultado
+                );
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    "Error al cargar historial presupuestal:",
+                    error
+                );
+
+
+                if (
+                    errorHistorialAprobacionPresupuestalAdq
+                ) {
+
+                    errorHistorialAprobacionPresupuestalAdq.textContent =
+                        error?.message
+                        ??
+                        "No fue posible cargar el historial de aprobación.";
+
+
+                    errorHistorialAprobacionPresupuestalAdq.classList.remove(
+                        "d-none"
+                    );
+                }
+
+            }
+            finally {
+
+                cargandoHistorialAprobacionPresupuestalAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+            }
+        }
 
         function abrirModalAprobacionPresupuestalAdq(
             boton
@@ -1448,6 +2342,10 @@ document.addEventListener(
                 comentarioDecisionPresupuestalAdq.value =
                     "";
             }
+
+            cargarHistorialAprobacionPresupuestalAdq(
+                solicitudId
+            );
 
 
             modalAprobacionPresupuestalAdq =
@@ -14182,14 +15080,30 @@ document.addEventListener(
                         );
 
 
+                    btnGenerarSolicitudPagoDesdeDetalle
+                        ?.classList.add(
+                            "d-none"
+                        );
+
+                    btnGenerarSolicitudPagoAdq
+                        ?.classList.add(
+                            "d-none"
+                        );
+
+
                     /*
                      * Borrador:
                      * editar + cancelar + enviar.
                      */
+                    /*
+ * Borrador:
+ * editar + cancelar + enviar.
+ */
                     if (
                         solicitud.estatusId ===
                         1
                     ) {
+
                         btnEditarDesdeDetalle
                             ?.classList.remove(
                                 "d-none"
@@ -14215,6 +15129,7 @@ document.addEventListener(
                         solicitud.estatusId ===
                         2
                     ) {
+
                         btnEditarDesdeDetalle
                             ?.classList.remove(
                                 "d-none"
@@ -14228,14 +15143,29 @@ document.addEventListener(
 
 
                     /*
-                     * Gerente ya aprobó y llegó a Adquisiciones:
-                     * ya no puede editar, solamente cancelar.
+                     * Gerente aprobó y llegó a Adquisiciones.
                      */
                     else if (
                         solicitud.estatusId ===
                         3
                     ) {
+
                         btnCancelarDesdeDetalle
+                            ?.classList.remove(
+                                "d-none"
+                            );
+                    }
+
+
+                    /*
+                     * Aprobación presupuestal completada.
+                     */
+                    else if (
+                        solicitud.estatusId ===
+                        13
+                    ) {
+
+                        btnGenerarSolicitudPagoDesdeDetalle
                             ?.classList.remove(
                                 "d-none"
                             );
@@ -14786,6 +15716,373 @@ document.addEventListener(
             }
         );
 
+
+        function obtenerValorRadioSolicitudPagoAdq(
+            nombre
+        ) {
+
+            return document
+                .querySelector(
+                    `[name="${nombre}"]:checked`
+                )
+                ?.value
+                ??
+                "";
+        }
+
+        btnConfirmarGenerarSolicitudPagoAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const solicitudId =
+                        Number(
+                            solicitudPagoSolicitudIdAdq
+                                ?.value
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <=
+                        0
+                    ) {
+                        return;
+                    }
+
+
+                    const compania =
+                        companiaSolicitudPagoAdq
+                            ?.value
+                            .trim()
+                        ??
+                        "";
+
+
+                    const conceptoPago =
+                        conceptoSolicitudPagoAdq
+                            ?.value
+                            .trim()
+                        ??
+                        "";
+
+
+                    if (
+                        !compania
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Datos incompletos",
+                            "Debes indicar la compañía."
+                        );
+
+                        companiaSolicitudPagoAdq
+                            ?.focus();
+
+                        return;
+                    }
+
+
+                    if (
+                        !conceptoPago
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Datos incompletos",
+                            "Debes indicar el concepto de pago."
+                        );
+
+                        conceptoSolicitudPagoAdq
+                            ?.focus();
+
+                        return;
+                    }
+
+
+                    const payload =
+                    {
+                        solicitudId,
+
+                        compania,
+
+                        moneda:
+                            obtenerValorRadioSolicitudPagoAdq(
+                                "monedaSolicitudPagoAdq"
+                            ),
+
+                        formaPago:
+                            obtenerValorRadioSolicitudPagoAdq(
+                                "formaPagoSolicitudPagoAdq"
+                            ),
+
+                        conceptoPago,
+
+                        banco:
+                            bancoSolicitudPagoAdq
+                                ?.value
+                                .trim()
+                            ??
+                            "",
+
+                        cuenta:
+                            cuentaSolicitudPagoAdq
+                                ?.value
+                                .trim()
+                            ??
+                            "",
+
+                        clabeInterbancaria:
+                            clabeSolicitudPagoAdq
+                                ?.value
+                                .trim()
+                            ??
+                            "",
+
+                        comprobanteAdjunto:
+                            Boolean(
+                                comprobanteAdjuntoSolicitudPagoAdq
+                                    ?.checked
+                            ),
+
+                        retencionIva:
+                            Number(
+                                retencionIvaSolicitudPagoAdq
+                                    ?.value
+                                ??
+                                0
+                            ),
+
+                        retencionIsr:
+                            Number(
+                                retencionIsrSolicitudPagoAdq
+                                    ?.value
+                                ??
+                                0
+                            ),
+
+                        otrosImpuestos:
+                            Number(
+                                otrosImpuestosSolicitudPagoAdq
+                                    ?.value
+                                ??
+                                0
+                            ),
+
+                        otrosServicios:
+                            Number(
+                                otrosServiciosSolicitudPagoAdq
+                                    ?.value
+                                ??
+                                0
+                            )
+                    };
+
+
+                    try {
+
+                        btnConfirmarGenerarSolicitudPagoAdq
+                            .disabled =
+                            true;
+
+
+                        btnConfirmarGenerarSolicitudPagoAdq
+                            .innerHTML = `
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        Preparando documento...
+                    `;
+
+
+                        const response =
+                            await fetch(
+                                `${window.location.pathname}?handler=GuardarSolicitudPago`,
+                                {
+                                    method:
+                                        "POST",
+
+                                    headers:
+                                    {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        "RequestVerificationToken":
+                                            document.querySelector(
+                                                'input[name="__RequestVerificationToken"]'
+                                            )?.value
+                                            ??
+                                            "",
+
+                                        "X-Requested-With":
+                                            "XMLHttpRequest"
+                                    },
+
+                                    body:
+                                        JSON.stringify(
+                                            payload
+                                        )
+                                }
+                            );
+
+
+                        const resultado =
+                            await response.json();
+
+
+                        if (
+                            !response.ok
+                            ||
+                            !resultado?.success
+                        ) {
+
+                            throw new Error(
+                                resultado?.message
+                                ??
+                                "No fue posible generar la Solicitud de Pago."
+                            );
+                        }
+
+
+                        if (
+                            !resultado.pdfGenerado
+                            ||
+                            !resultado.descargarUrl
+                        ) {
+
+                            throw new Error(
+                                "El servidor procesó la solicitud, pero no confirmó la generación del PDF."
+                            );
+                        }
+
+
+                        // =========================================================
+                        // PREPARAR MODAL DE RESULTADO
+                        // =========================================================
+
+                        if (
+                            folioResultadoSolicitudPagoAdq
+                        ) {
+
+                            folioResultadoSolicitudPagoAdq.textContent =
+                                folioSolicitudPagoAdq
+                                    ?.textContent
+                                    ?.trim()
+                                ??
+                                "";
+                        }
+
+
+                        if (
+                            nombreArchivoSolicitudPagoAdq
+                        ) {
+
+                            nombreArchivoSolicitudPagoAdq.textContent =
+                                resultado.nombreArchivo
+                                ??
+                                "Solicitud de Pago.pdf";
+                        }
+
+
+                        if (
+                            btnDescargarSolicitudPagoAdq
+                        ) {
+
+                            btnDescargarSolicitudPagoAdq.href =
+                                resultado.descargarUrl;
+                        }
+
+
+                        // =========================================================
+                        // VALIDAR MODAL DE RESULTADO
+                        // =========================================================
+
+                        if (
+                            !modalResultadoSolicitudPagoElementAdq
+                        ) {
+
+                            throw new Error(
+                                "No se encontró el modal de resultado de la Solicitud de Pago."
+                            );
+                        }
+
+
+                        // =========================================================
+                        // CERRAR CAPTURA Y MOSTRAR RESULTADO
+                        // =========================================================
+
+                        const modalCapturaSolicitudPago =
+                            bootstrap.Modal.getInstance(
+                                modalSolicitudPagoElementAdq
+                            );
+
+
+                        const mostrarResultadoSolicitudPago =
+                            function () {
+
+                                bootstrap.Modal
+                                    .getOrCreateInstance(
+                                        modalResultadoSolicitudPagoElementAdq
+                                    )
+                                    .show();
+                            };
+
+
+                        if (
+                            modalCapturaSolicitudPago
+                            &&
+                            modalSolicitudPagoElementAdq
+                        ) {
+
+                            modalSolicitudPagoElementAdq
+                                .addEventListener(
+                                    "hidden.bs.modal",
+                                    mostrarResultadoSolicitudPago,
+                                    {
+                                        once:
+                                            true
+                                    }
+                                );
+
+
+                            modalCapturaSolicitudPago.hide();
+                        }
+                        else {
+
+                            mostrarResultadoSolicitudPago();
+                        }
+
+                    }
+                    catch (
+                    error
+                    ) {
+
+                        console.error(
+                            error
+                        );
+
+
+                        mostrarAdvertenciaAdq(
+                            "No fue posible guardar",
+                            error?.message
+                            ??
+                            "Ocurrió un error al preparar la solicitud de pago."
+                        );
+
+                    }
+                    finally {
+
+                        btnConfirmarGenerarSolicitudPagoAdq
+                            .disabled =
+                            false;
+
+
+                        btnConfirmarGenerarSolicitudPagoAdq
+                            .innerHTML = `
+                        <i class="bi bi-file-earmark-pdf me-1"></i>
+                        Generar PDF
+                    `;
+                    }
+                }
+            );
 
         // =========================================================
         // FILTROS + PAGINACIÓN - MIS SOLICITUDES
@@ -16558,6 +17855,294 @@ document.addEventListener(
                 }
             );
         }
+
+        async function abrirSolicitudPagoAdq() {
+
+            if (
+                !solicitudDetalleActualAdq
+                ||
+                Number(
+                    solicitudDetalleActualAdq.id
+                ) <= 0
+            ) {
+                return;
+            }
+
+
+            const solicitudId =
+                Number(
+                    solicitudDetalleActualAdq.id
+                );
+
+
+            if (
+                mensajeSolicitudPagoAdq
+            ) {
+
+                mensajeSolicitudPagoAdq.textContent =
+                    "";
+
+                mensajeSolicitudPagoAdq.classList.add(
+                    "d-none"
+                );
+            }
+
+
+            try {
+
+                btnGenerarSolicitudPagoAdq.disabled =
+                    true;
+
+
+                const response =
+                    await fetch(
+                        `${window.location.pathname}?handler=DatosSolicitudPago&solicitudId=${encodeURIComponent(
+                            solicitudId
+                        )}`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await response.json();
+
+
+                if (
+                    !response.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible cargar la información de la solicitud de pago."
+                    );
+                }
+
+
+                solicitudPagoSolicitudIdAdq.value =
+                    String(
+                        resultado.solicitudId
+                    );
+
+
+                folioSolicitudPagoAdq.textContent =
+                    resultado.folio
+                    ??
+                    "-";
+
+
+                areaSolicitudPagoAdq.textContent =
+                    resultado.area
+                    ??
+                    "-";
+
+
+                proveedorSolicitudPagoAdq.textContent =
+                    resultado.proveedor
+                    ??
+                    "-";
+
+
+                subtotalSolicitudPagoAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.subtotal
+                            ??
+                            0
+                        )
+                    );
+
+
+                ivaSolicitudPagoAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.iva
+                            ??
+                            0
+                        )
+                    );
+
+
+                totalSolicitudPagoAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.total
+                            ??
+                            0
+                        )
+                    );
+
+
+                companiaSolicitudPagoAdq.value =
+                    resultado.compania
+                    ??
+                    "";
+
+
+                conceptoSolicitudPagoAdq.value =
+                    resultado.conceptoPago
+                    ??
+                    "";
+
+
+                bancoSolicitudPagoAdq.value =
+                    resultado.banco
+                    ??
+                    "";
+
+
+                cuentaSolicitudPagoAdq.value =
+                    resultado.cuenta
+                    ??
+                    "";
+
+
+                clabeSolicitudPagoAdq.value =
+                    resultado.clabeInterbancaria
+                    ??
+                    "";
+
+
+                comprobanteAdjuntoSolicitudPagoAdq.checked =
+                    Boolean(
+                        resultado.comprobanteAdjunto
+                    );
+
+
+                retencionIvaSolicitudPagoAdq.value =
+                    Number(
+                        resultado.retencionIva
+                        ??
+                        0
+                    );
+
+
+                retencionIsrSolicitudPagoAdq.value =
+                    Number(
+                        resultado.retencionIsr
+                        ??
+                        0
+                    );
+
+
+                otrosImpuestosSolicitudPagoAdq.value =
+                    Number(
+                        resultado.otrosImpuestos
+                        ??
+                        0
+                    );
+
+
+                otrosServiciosSolicitudPagoAdq.value =
+                    Number(
+                        resultado.otrosServicios
+                        ??
+                        0
+                    );
+
+
+                tipoDocumentoSolicitudPagoAdq.textContent =
+                    resultado.tipoDocumento
+                    ??
+                    "No definido";
+
+
+                document
+                    .querySelectorAll(
+                        '[name="monedaSolicitudPagoAdq"]'
+                    )
+                    .forEach(
+                        function (
+                            radio
+                        ) {
+
+                            radio.checked =
+                                radio.value ===
+                                (
+                                    resultado.moneda
+                                    ??
+                                    "Pesos"
+                                );
+                        }
+                    );
+
+
+                document
+                    .querySelectorAll(
+                        '[name="formaPagoSolicitudPagoAdq"]'
+                    )
+                    .forEach(
+                        function (
+                            radio
+                        ) {
+
+                            radio.checked =
+                                radio.value ===
+                                (
+                                    resultado.formaPago
+                                    ??
+                                    "Transferencia"
+                                );
+                        }
+                    );
+
+
+                bootstrap.Modal
+                    .getInstance(
+                        document.getElementById(
+                            "modalVerSolicitudAdq"
+                        )
+                    )
+                    ?.hide();
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        modalSolicitudPagoElementAdq
+                    )
+                    .show();
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    error
+                );
+
+
+                mostrarAdvertenciaAdq(
+                    "No fue posible abrir la solicitud de pago",
+                    error?.message
+                    ??
+                    "Ocurrió un error al consultar la información."
+                );
+
+            }
+            finally {
+
+                btnGenerarSolicitudPagoAdq.disabled =
+                    false;
+            }
+        }
+
+        btnGenerarSolicitudPagoDesdeDetalle
+            ?.addEventListener(
+                "click",
+                abrirSolicitudPagoAdq
+            );
 
 
         // =========================================================

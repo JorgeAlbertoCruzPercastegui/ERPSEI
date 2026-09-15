@@ -4229,3 +4229,528 @@ body:has(#modalResultadoDecisionPresupuestalAdq.show)
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================
+   HISTORIAL / TIMELINE DE APROBACIÓN PRESUPUESTAL
+   ============================================================ */
+
+.adq-budget-history-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    min-height: 100px;
+    padding: 1.25rem;
+    border: 1px dashed #dfe2e6;
+    border-radius: 14px;
+    color: #6c757d;
+    background: #fafbfc;
+}
+
+
+.adq-budget-history-empty {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem;
+    border: 1px dashed #d9dce1;
+    border-radius: 14px;
+    background: #fafbfc;
+}
+
+
+    .adq-budget-history-empty > i {
+        flex: 0 0 auto;
+        font-size: 1.5rem;
+        color: #8a8f98;
+    }
+
+
+.adq-budget-timeline {
+    position: relative;
+}
+
+
+.adq-budget-timeline-item {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: .85rem;
+    position: relative;
+}
+
+
+.adq-budget-timeline-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+
+.adq-budget-timeline-dot {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    border: 2px solid #d5d8dd;
+    border-radius: 50%;
+    background: #fff;
+    color: #848a93;
+    font-size: .85rem;
+}
+
+
+.adq-budget-timeline-line {
+    flex: 1 1 auto;
+    width: 2px;
+    min-height: 28px;
+    background: #e3e5e8;
+}
+
+
+.adq-budget-timeline-content {
+    min-width: 0;
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+}
+
+
+.adq-budget-timeline-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+
+.adq-budget-level {
+    margin-bottom: .12rem;
+    color: #7a8089;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+
+.adq-budget-stage-name {
+    font-size: .98rem;
+    font-weight: 700;
+}
+
+
+.adq-budget-status {
+    flex: 0 0 auto;
+    padding: .32rem .6rem;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #68707a;
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+.adq-budget-approver {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin-top: .8rem;
+}
+
+
+    .adq-budget-approver > i {
+        color: #777e87;
+        font-size: 1.05rem;
+    }
+
+
+    .adq-budget-approver div {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+
+    .adq-budget-approver span {
+        color: #8a9098;
+        font-size: .7rem;
+    }
+
+
+    .adq-budget-approver strong {
+        overflow: hidden;
+        font-size: .86rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+.adq-budget-date {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin-top: .65rem;
+    color: #707781;
+    font-size: .78rem;
+}
+
+
+.adq-budget-comment {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    margin-top: .8rem;
+    padding: .7rem .8rem;
+    border-radius: 10px;
+    background: #f8f9fa;
+}
+
+
+    .adq-budget-comment > i {
+        margin-top: .1rem;
+        color: #777e87;
+    }
+
+
+    .adq-budget-comment div {
+        min-width: 0;
+    }
+
+
+    .adq-budget-comment span {
+        display: block;
+        margin-bottom: .15rem;
+        color: #848a93;
+        font-size: .7rem;
+        font-weight: 600;
+    }
+
+
+    .adq-budget-comment p {
+        margin: 0;
+        font-size: .82rem;
+        white-space: pre-wrap;
+    }
+
+
+.adq-budget-signature {
+    display: grid;
+    grid-template-columns: minmax(150px, 210px) minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: .9rem;
+    padding-top: .9rem;
+    border-top: 1px solid #eef0f2;
+}
+
+
+.adq-budget-signature-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    padding: .6rem;
+    border: 1px solid #e3e5e8;
+    border-radius: 10px;
+    background: #fafafa;
+    overflow: hidden;
+}
+
+
+    .adq-budget-signature-preview img {
+        display: block;
+        width: 100%;
+        max-width: 190px;
+        height: 80px;
+        object-fit: contain;
+    }
+
+
+.adq-budget-signature-info {
+    min-width: 0;
+}
+
+
+.adq-budget-signature-title {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .35rem;
+    color: #198754;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+
+.adq-budget-signature-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: .45rem;
+}
+
+
+    .adq-budget-signature-meta span {
+        padding: .18rem .45rem;
+        border-radius: 999px;
+        background: #f1f3f5;
+        color: #5f6670;
+        font-size: .68rem;
+    }
+
+
+.adq-budget-evidence-line {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .35rem;
+    min-width: 0;
+    font-size: .72rem;
+}
+
+
+    .adq-budget-evidence-line > span {
+        flex: 0 0 auto;
+        color: #8a9098;
+    }
+
+
+    .adq-budget-evidence-line code {
+        overflow: hidden;
+        color: #555c66;
+        font-size: .69rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+.adq-budget-signature-pending {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .8rem;
+    padding-top: .8rem;
+    border-top: 1px solid #eef0f2;
+    color: #91969d;
+    font-size: .78rem;
+}
+
+
+/* APROBADA */
+
+.adq-budget-timeline-item.is-approved
+.adq-budget-timeline-dot {
+    border-color: #198754;
+    background: #198754;
+    color: #fff;
+}
+
+
+.adq-budget-timeline-item.is-approved
+.adq-budget-timeline-line {
+    background: rgba(25, 135, 84, .35);
+}
+
+
+.adq-budget-timeline-item.is-approved
+.adq-budget-status {
+    background: rgba(25, 135, 84, .10);
+    color: #157347;
+}
+
+
+/* ACTUAL */
+
+.adq-budget-timeline-item.is-current
+.adq-budget-timeline-dot {
+    border-color: #21166f;
+    background: #21166f;
+    color: #fff;
+}
+
+
+.adq-budget-timeline-item.is-current
+.adq-budget-timeline-content {
+    border-color: rgba(33, 22, 111, .28);
+    box-shadow: 0 0 0 2px rgba(33, 22, 111, .04);
+}
+
+
+.adq-budget-timeline-item.is-current
+.adq-budget-status {
+    background: rgba(33, 22, 111, .09);
+    color: #21166f;
+}
+
+
+/* DECLINADA */
+
+.adq-budget-timeline-item.is-declined
+.adq-budget-timeline-dot {
+    border-color: #dc3545;
+    background: #dc3545;
+    color: #fff;
+}
+
+
+.adq-budget-timeline-item.is-declined
+.adq-budget-status {
+    background: rgba(220, 53, 69, .10);
+    color: #b02a37;
+}
+
+
+/* RESPONSIVE */
+
+@media (max-width: 767.98px) {
+
+    .adq-budget-timeline-header {
+        flex-direction: column;
+    }
+
+
+    .adq-budget-status {
+        white-space: normal;
+    }
+
+
+    .adq-budget-signature {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   SOLICITUD DE PAGO
+   ============================================================ */
+
+.adq-payment-summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: .8rem;
+}
+
+
+    .adq-payment-summary > div {
+        min-width: 0;
+        padding: .9rem 1rem;
+        border: 1px solid #e4e6ea;
+        border-radius: 12px;
+        background: #fafbfc;
+    }
+
+
+    .adq-payment-summary span {
+        display: block;
+        margin-bottom: .2rem;
+        color: #858b94;
+        font-size: .72rem;
+    }
+
+
+    .adq-payment-summary strong {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+
+.adq-payment-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .7rem;
+}
+
+
+.adq-payment-option {
+    position: relative;
+    cursor: pointer;
+}
+
+
+    .adq-payment-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+
+    .adq-payment-option span {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        min-height: 42px;
+        padding: .65rem .85rem;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        background: #fff;
+        transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+    }
+
+
+    .adq-payment-option input:checked + span {
+        border-color: #21166f;
+        background: rgba(33, 22, 111, .05);
+        box-shadow: 0 0 0 2px rgba(33, 22, 111, .08);
+        color: #21166f;
+        font-weight: 600;
+    }
+
+
+.adq-payment-document-selected {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: .65rem .9rem;
+    border: 1px solid rgba(25, 135, 84, .25);
+    border-radius: 10px;
+    background: rgba(25, 135, 84, .06);
+    color: #157347;
+    font-weight: 700;
+}
+
+
+@media (max-width: 991.98px) {
+
+    .adq-payment-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 575.98px) {
+
+    .adq-payment-summary {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-payment-options {
+        flex-direction: column;
+    }
+}
+
+/* ============================================================
+   RESULTADO SOLICITUD DE PAGO
+   ============================================================ */
+
+.adq-payment-result-icon {
+    width: 72px;
+    height: 72px;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(25, 135, 84, .1);
+    color: #198754;
+    font-size: 2rem;
+}
