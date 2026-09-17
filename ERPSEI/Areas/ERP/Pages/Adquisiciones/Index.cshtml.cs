@@ -2880,7 +2880,17 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     pdfGenerado =
                         solicitudPagoExistente?.PdfGenerado
                         ??
-                        false
+                        false,
+
+                    nombreArchivo =
+                        solicitudPagoExistente?.NombreArchivo
+                        ??
+                        string.Empty,
+
+                    descargarUrl =
+                        solicitudPagoExistente?.PdfGenerado == true
+                            ? $"{Request.Path}?handler=DescargarSolicitudPago&solicitudId={solicitudId}"
+                            : string.Empty
                 }
             );
         }
@@ -17226,13 +17236,17 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         public async Task<IActionResult>
             OnGetDetalleSolicitudAsync(
-                int id)
+                int id
+            )
         {
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
 
-            if (usuarioActual == null)
+            if (
+                usuarioActual ==
+                null
+            )
             {
                 return new JsonResult(
                     new
@@ -17259,13 +17273,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .AsNoTracking()
                     .AnyAsync(
                         x =>
-                            x.Id == id
+                            x.Id ==
+                                id
                             &&
                             !x.Eliminado
                     );
 
 
-            if (!solicitudExiste)
+            if (
+                !solicitudExiste
+            )
             {
                 return new JsonResult(
                     new
@@ -17292,7 +17309,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .AsNoTracking()
                     .AnyAsync(
                         x =>
-                            x.Id == id
+                            x.Id ==
+                                id
                             &&
                             !x.Eliminado
                             &&
@@ -17367,13 +17385,15 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .AsNoTracking()
                     .AnyAsync(
                         x =>
-                            x.Id == id
+                            x.Id ==
+                                id
                             &&
                             !x.Eliminado
                             &&
                             x.UsuarioAsignadoId ==
                                 usuarioActual.Id
                     );
+
 
             // =====================================================
             // 5. OBSERVADOR PRESUPUESTAL ACTIVO
@@ -17410,6 +17430,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 )
                 .AnyAsync();
 
+
             // =====================================================
             // 6. APROBADOR PRESUPUESTAL
             // =====================================================
@@ -17443,6 +17464,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 )
                 .AnyAsync();
 
+
             // =====================================================
             // AUTORIZACIÓN FINAL
             // =====================================================
@@ -17461,7 +17483,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 esAprobadorPresupuestal;
 
 
-            if (!puedeConsultar)
+            if (
+                !puedeConsultar
+            )
             {
                 _logger.LogWarning(
                     "Acceso denegado al detalle de solicitud. " +
@@ -17470,14 +17494,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     "Aprobador: {EsAprobador}, " +
                     "Adquisiciones: {EsUsuarioAdquisiciones}, " +
                     "Asignado: {EsAgenteAsignado}, " +
-                    "ObservadorPresupuestal: {EsObservadorPresupuestal}",
+                    "ObservadorPresupuestal: {EsObservadorPresupuestal}, " +
+                    "AprobadorPresupuestal: {EsAprobadorPresupuestal}",
                     id,
                     usuarioActual.Id,
                     esPropietario,
                     esAprobador,
                     esUsuarioAdquisiciones,
                     esAgenteAsignado,
-                    esObservadorPresupuestal
+                    esObservadorPresupuestal,
+                    esAprobadorPresupuestal
                 );
 
 
@@ -17506,7 +17532,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .AsNoTracking()
                     .Where(
                         x =>
-                            x.Id == id
+                            x.Id ==
+                                id
                             &&
                             !x.Eliminado
                     )
@@ -17537,6 +17564,23 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                                 Estatus =
                                     x.Estatus.Nombre,
+
+
+                                // =========================================
+                                // SOLICITUD DE PAGO
+                                // =========================================
+
+                                PdfSolicitudPagoGenerado =
+                                    _context.AdqSolicitudesPago
+                                        .Any(
+                                            solicitudPago =>
+                                                solicitudPago.SolicitudId ==
+                                                    x.Id
+                                                &&
+                                                !solicitudPago.Eliminado
+                                                &&
+                                                solicitudPago.PdfGenerado
+                                        ),
 
 
                                 // =========================================
@@ -17644,7 +17688,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .FirstOrDefaultAsync();
 
 
-            if (solicitud == null)
+            if (
+                solicitud ==
+                null
+            )
             {
                 return new JsonResult(
                     new

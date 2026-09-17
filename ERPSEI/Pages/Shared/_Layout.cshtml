@@ -64,6 +64,18 @@
             StringComparison.OrdinalIgnoreCase
         ));
 
+    bool esUsuarioConciliaciones = rolesUsuario.Any(r =>
+        r.Equals(
+            ServicesConfiguration.RolUsuarioConciliaciones,
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool soloUsuarioConciliaciones =
+        esUsuarioConciliaciones &&
+        !esAdministrador &&
+        !esAdministradorTI &&
+        !esAdministradorEmpresas;
+
     bool esUsuarioBancos = rolesUsuario.Any(r =>
         r.Equals(
             ServicesConfiguration.RolUsuarioBancos,
@@ -490,8 +502,11 @@
     esAdministrador ||
     esAdministradorTI ||
     esAdministradorEmpresas ||
+    esUsuarioConciliaciones ||
     (permisos.ContainsKey("empresas") &&
-     permisos["empresas"]);
+     permisos["empresas"]) ||
+    (permisos.ContainsKey("conciliaciones") &&
+     permisos["conciliaciones"]);
 
     //bool mostrarRecursosHumanos = esAdminMenu;
 
@@ -532,10 +547,18 @@
 
     // Por si después quieres controlar empresas/activos con permisos
     bool mostrarEmpresasMenu =
-    esAdministrador ||
-    esAdministradorEmpresas ||
-    (permisos.ContainsKey("empresas") &&
-     permisos["empresas"]);
+        !soloUsuarioConciliaciones &&
+        (
+            esAdministrador ||
+            esAdministradorEmpresas ||
+            (permisos.ContainsKey("empresas") &&
+             permisos["empresas"])
+        );
+
+    bool mostrarConciliacionesMenu =
+       esAdministrador ||
+       (permisos.ContainsKey("conciliaciones") &&
+        permisos["conciliaciones"]);
 
     bool mostrarActivosFijosMenu =
         esAdministrador ||
@@ -922,6 +945,15 @@
                                                    asp-page="/CorreosDominios/CorreoDominio">
 
                                                 Correos y Dominios
+                                            </a>
+                                        }
+
+                                        @if (mostrarConciliacionesMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   asp-area="ERP"
+                                                   asp-page="/Conciliaciones">
+                                                Conciliaciones
                                             </a>
                                         }
 

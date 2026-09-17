@@ -15169,7 +15169,25 @@ document.addEventListener(
                             ?.classList.remove(
                                 "d-none"
                             );
-                    }
+
+
+                        if (
+                            solicitud.pdfSolicitudPagoGenerado
+                        ) {
+
+                            btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
+                            <i class="bi bi-download me-1"></i>
+                            Descargar Solicitud de Pago
+                        `;
+                                        }
+                                        else {
+
+                                            btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
+                            <i class="bi bi-file-earmark-pdf me-1"></i>
+                            Generar Solicitud de Pago
+                        `;
+                                        }
+                                    }
 
                     bootstrap.Modal
                         .getOrCreateInstance(
@@ -18056,6 +18074,51 @@ document.addEventListener(
                     resultado.tipoDocumento
                     ??
                     "No definido";
+
+                if (
+                    resultado.pdfGenerado
+                    &&
+                    resultado.descargarUrl
+                ) {
+
+                    if (
+                        nombreArchivoSolicitudPagoAdq
+                    ) {
+
+                        nombreArchivoSolicitudPagoAdq.textContent =
+                            resultado.nombreArchivo
+                            ??
+                            "Solicitud de Pago.pdf";
+                    }
+
+
+                    if (
+                        btnDescargarSolicitudPagoAdq
+                    ) {
+
+                        btnDescargarSolicitudPagoAdq.href =
+                            resultado.descargarUrl;
+                    }
+
+
+                    bootstrap.Modal
+                        .getInstance(
+                            document.getElementById(
+                                "modalVerSolicitudAdq"
+                            )
+                        )
+                        ?.hide();
+
+
+                    bootstrap.Modal
+                        .getOrCreateInstance(
+                            modalResultadoSolicitudPagoElementAdq
+                        )
+                        .show();
+
+
+                    return;
+                }
 
 
                 document

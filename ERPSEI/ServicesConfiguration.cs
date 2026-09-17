@@ -58,6 +58,8 @@ namespace ERPSEI
         public const string RolUsuarioOperacionesInternas =
             "Usuario Operaciones Internas";
 
+        public const string RolUsuarioConciliaciones = "Usuario Conciliaciones";
+
         public static readonly string[] RolesAdministradoresCompliance =
         {
             RolMaster,
