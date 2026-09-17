@@ -4380,7 +4380,6 @@
 
 </div>
 
-
 <!-- ========================================================== -->
 <!-- MODAL VER SOLICITUD -->
 <!-- ========================================================== -->
@@ -4659,23 +4658,102 @@
                         <!-- ====================================================== -->
                         <!-- DOCUMENTACIÓN -->
                         <!-- ====================================================== -->
+                            <!-- ====================================================== -->
+                            <!-- DOCUMENTACIÓN -->
+                            <!-- ====================================================== -->
 
-                        <div class="adq-detail-section">
+                            <div class="adq-detail-section">
 
-                            <div class="adq-detail-section-title">
+                                <div class="adq-detail-section-title">
 
-                                <i class="bi bi-paperclip"></i>
+                                    <i class="bi bi-paperclip"></i>
 
-                                Documentación
+                                    Documentación
+
+                                </div>
+
+
+                                <div id="verSolicitudDocumentos"
+                                     class="adq-files-list">
+                                </div>
 
                             </div>
 
 
-                            <div id="verSolicitudDocumentos"
-                                 class="adq-files-list">
-                            </div>
+                            <!-- ====================================================== -->
+                            <!-- HISTORIAL DE APROBACIÓN PRESUPUESTAL -->
+                            <!-- ====================================================== -->
 
-                        </div>
+                            <div class="adq-detail-section mt-4"
+                                 id="seccionHistorialPresupuestalDetalleAdq">
+
+                                <div class="d-flex align-items-center justify-content-between mb-3">
+
+                                    <div>
+
+                                        <div class="adq-detail-section-title mb-1">
+
+                                            <i class="bi bi-shield-check"></i>
+
+                                            Historial de aprobación presupuestal
+
+                                        </div>
+
+                                        <div class="text-muted small">
+
+                                            Trazabilidad de las autorizaciones y firmas registradas.
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <span id="badgeHistorialPresupuestalDetalleAdq"
+                                          class="badge rounded-pill text-bg-light border">
+
+                                        Sin flujo
+
+                                    </span>
+
+                                </div>
+
+
+                                <div id="cargandoHistorialPresupuestalDetalleAdq"
+                                     class="text-center py-4 d-none">
+
+                                    <div class="spinner-border spinner-border-sm text-primary"
+                                         role="status">
+                                    </div>
+
+                                    <span class="ms-2 text-muted">
+
+                                        Cargando historial...
+
+                                    </span>
+
+                                </div>
+
+
+                                <div id="errorHistorialPresupuestalDetalleAdq"
+                                     class="alert alert-danger d-none">
+                                </div>
+
+
+                                <div id="sinHistorialPresupuestalDetalleAdq"
+                                     class="alert alert-light border d-none mb-0">
+
+                                    <i class="bi bi-info-circle me-1"></i>
+
+                                    Esta solicitud todavía no cuenta con un flujo de aprobación presupuestal.
+
+                                </div>
+
+
+                                <div id="historialPresupuestalDetalleAdq"
+                                     class="adq-budget-timeline">
+                                </div>
+
+                            </div>
 
                     </div>
 

@@ -3667,6 +3667,41 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 solicitud.Id
                     );
 
+            // =====================================================
+            // DOCUMENTO OFICIAL YA GENERADO
+            // =====================================================
+
+            if (
+                solicitudPago != null
+                &&
+                !solicitudPago.Eliminado
+                &&
+                solicitudPago.PdfGenerado
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La Solicitud de Pago ya fue generada y se encuentra cerrada para edición.",
+
+                        pdfGenerado = true,
+
+                        nombreArchivo =
+                            solicitudPago.NombreArchivo,
+
+                        descargarUrl =
+                            $"{Request.Path}?handler=DescargarSolicitudPago&solicitudId={solicitud.Id}"
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
 
             if (
                 solicitudPago ==
@@ -3800,11 +3835,52 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                 solicitudPago.PdfGenerado =
-                    true;
+    true;
+
+
+                DateTime fechaGeneracionPdf =
+                    DateTime.Now;
 
 
                 solicitudPago.FechaGeneracion =
-                    DateTime.Now;
+                    fechaGeneracionPdf;
+
+
+                // =====================================================
+                // HISTORIAL - SOLICITUD DE PAGO GENERADA
+                // =====================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        TipoEvento =
+                            "SOLICITUD_PAGO_GENERADA",
+
+                        Descripcion =
+                            "La Solicitud de Pago fue generada correctamente.",
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        EstatusAnteriorId =
+                            solicitud.EstatusId,
+
+                        EstatusNuevoId =
+                            solicitud.EstatusId,
+
+                        FechaEvento =
+                            fechaGeneracionPdf,
+
+                        DireccionIp =
+                            HttpContext
+                                .Connection
+                                .RemoteIpAddress?
+                                .ToString()
+                    }
+                );
 
 
                 await _context
@@ -3821,6 +3897,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                         solicitudPagoId =
                             solicitudPago.Id,
+
+                        solicitudId =
+                            solicitud.Id,
+
+                        estatusId =
+                            solicitud.EstatusId,
 
                         total =
                             solicitudPago.Total,
@@ -4419,6 +4501,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     nombreArchivo
                 );
 
+            if (
+                System.IO.File.Exists(
+                    rutaFisica
+                )
+            )
+            {
+                throw new InvalidOperationException(
+                    "Ya existe un documento oficial de Solicitud de Pago para esta solicitud."
+                );
+            }
 
             /*
              * La ruta almacenada NO es pública.

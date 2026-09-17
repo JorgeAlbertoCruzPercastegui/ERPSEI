@@ -631,6 +631,36 @@ document.addEventListener(
                 "btnConfirmarGenerarSolicitudPagoAdq"
             );
 
+        const seccionHistorialPresupuestalDetalleAdq =
+            document.getElementById(
+                "seccionHistorialPresupuestalDetalleAdq"
+            );
+
+        const historialPresupuestalDetalleAdq =
+            document.getElementById(
+                "historialPresupuestalDetalleAdq"
+            );
+
+        const cargandoHistorialPresupuestalDetalleAdq =
+            document.getElementById(
+                "cargandoHistorialPresupuestalDetalleAdq"
+            );
+
+        const errorHistorialPresupuestalDetalleAdq =
+            document.getElementById(
+                "errorHistorialPresupuestalDetalleAdq"
+            );
+
+        const sinHistorialPresupuestalDetalleAdq =
+            document.getElementById(
+                "sinHistorialPresupuestalDetalleAdq"
+            );
+
+        const badgeHistorialPresupuestalDetalleAdq =
+            document.getElementById(
+                "badgeHistorialPresupuestalDetalleAdq"
+            );
+
 
         let decisionPresupuestalPendienteAdq =
             null;
@@ -2059,6 +2089,488 @@ document.addEventListener(
                     );
                 }
             );
+        }
+
+        function renderizarHistorialPresupuestalDetalleAdq(
+            resultado
+        ) {
+
+            if (
+                !historialPresupuestalDetalleAdq
+            ) {
+                return;
+            }
+
+
+            historialPresupuestalDetalleAdq.innerHTML =
+                "";
+
+
+            const estatusFlujo =
+                resultado?.estatusFlujo
+                ??
+                "Sin flujo";
+
+
+            if (
+                badgeHistorialPresupuestalDetalleAdq
+            ) {
+
+                badgeHistorialPresupuestalDetalleAdq.textContent =
+                    estatusFlujo;
+
+
+                badgeHistorialPresupuestalDetalleAdq.className =
+                    estatusFlujo
+                        .toLowerCase() ===
+                        "aprobada"
+
+                        ? "badge rounded-pill text-bg-success"
+
+                        : estatusFlujo
+                            .toLowerCase() ===
+                            "declinada"
+
+                            ? "badge rounded-pill text-bg-danger"
+
+                            : "badge rounded-pill text-bg-light border";
+            }
+
+
+            if (
+                !resultado?.tieneFlujo
+            ) {
+
+                sinHistorialPresupuestalDetalleAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+                return;
+            }
+
+
+            const etapas =
+                Array.isArray(
+                    resultado.etapas
+                )
+                    ? resultado.etapas
+                    : [];
+
+
+            if (
+                etapas.length ===
+                0
+            ) {
+
+                sinHistorialPresupuestalDetalleAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+                return;
+            }
+
+
+            sinHistorialPresupuestalDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            etapas.forEach(
+                function (
+                    etapa,
+                    indice
+                ) {
+
+                    const configuracion =
+                        obtenerConfiguracionEstatusEtapaAdq(
+                            etapa
+                        );
+
+
+                    const fecha =
+                        formatearFechaHistorialPresupuestalAdq(
+                            etapa.fechaFirma
+                            ??
+                            etapa.fechaDecision
+                        );
+
+
+                    const tieneFirma =
+                        Boolean(
+                            etapa.tieneFirma
+                            &&
+                            etapa.rutaFirma
+                        );
+
+
+                    const esUltima =
+                        indice ===
+                        etapas.length -
+                        1;
+
+
+                    const elemento =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    elemento.className =
+                        `adq-budget-timeline-item ${configuracion.clase}`;
+
+
+                    elemento.innerHTML = `
+
+                <div class="adq-budget-timeline-rail">
+
+                    <div class="adq-budget-timeline-dot">
+                        <i class="bi ${configuracion.icono}"></i>
+                    </div>
+
+                    ${!esUltima
+                            ? `<div class="adq-budget-timeline-line"></div>`
+                            : ""
+                        }
+
+                </div>
+
+
+                <div class="adq-budget-timeline-content">
+
+                    <div class="adq-budget-timeline-header">
+
+                        <div>
+
+                            <div class="adq-budget-level">
+                                Nivel ${Number(
+                            etapa.orden
+                            ??
+                            indice + 1
+                        )}
+                            </div>
+
+                            <div class="adq-budget-stage-name">
+                                ${escapeHtmlAdq(
+                            etapa.nombreEtapa
+                            ??
+                            "Etapa presupuestal"
+                        )}
+                            </div>
+
+                        </div>
+
+
+                        <span class="adq-budget-status">
+
+                            ${escapeHtmlAdq(
+                            configuracion.texto
+                        )}
+
+                        </span>
+
+                    </div>
+
+
+                    <div class="adq-budget-approver">
+
+                        <i class="bi bi-person-circle"></i>
+
+                        <div>
+
+                            <span>
+                                Responsable
+                            </span>
+
+                            <strong>
+                                ${escapeHtmlAdq(
+                            etapa.aprobador
+                            ??
+                            "Sin responsable"
+                        )}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    ${fecha
+                            ? `
+                            <div class="adq-budget-date">
+
+                                <i class="bi bi-calendar-check"></i>
+
+                                ${escapeHtmlAdq(
+                                fecha
+                            )}
+
+                            </div>
+                        `
+                            : ""
+                        }
+
+
+                    ${etapa.comentario
+                            ? `
+                            <div class="adq-budget-comment">
+
+                                <i class="bi bi-chat-left-text"></i>
+
+                                <div>
+
+                                    <span>
+                                        Comentario
+                                    </span>
+
+                                    <p>
+                                        ${escapeHtmlAdq(
+                                etapa.comentario
+                            )}
+                                    </p>
+
+                                </div>
+
+                            </div>
+                        `
+                            : ""
+                        }
+
+
+                    ${tieneFirma
+                            ? `
+                            <div class="adq-budget-signature">
+
+                                <div class="adq-budget-signature-preview">
+
+                                    <img
+                                        src="${escapeHtmlAdq(
+                                etapa.rutaFirma
+                            )}"
+                                        alt="Firma"
+                                        loading="lazy" />
+
+                                </div>
+
+
+                                <div class="adq-budget-signature-info">
+
+                                    <div class="adq-budget-signature-title">
+
+                                        <i class="bi bi-patch-check-fill"></i>
+
+                                        Evidencia de firma
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <strong>
+                                            ${escapeHtmlAdq(
+                                etapa.nombreFirmante
+                                ??
+                                etapa.aprobador
+                                ??
+                                "Firmante"
+                            )}
+                                        </strong>
+
+                                    </div>
+
+
+                                    ${etapa.emailFirmante
+                                ? `
+                                            <div class="small text-muted">
+
+                                                ${escapeHtmlAdq(
+                                    etapa.emailFirmante
+                                )}
+
+                                            </div>
+                                        `
+                                : ""
+                            }
+
+
+                                    ${etapa.hashFirma
+                                ? `
+                                            <div class="adq-budget-evidence-line">
+
+                                                <span>
+                                                    SHA-256
+                                                </span>
+
+                                                <code
+                                                    title="${escapeHtmlAdq(
+                                    etapa.hashFirma
+                                )}">
+
+                                                    ${escapeHtmlAdq(
+                                    abreviarHashPresupuestalAdq(
+                                        etapa.hashFirma
+                                    )
+                                )}
+
+                                                </code>
+
+                                            </div>
+                                        `
+                                : ""
+                            }
+
+                                </div>
+
+                            </div>
+                        `
+                            : `
+                            <div class="adq-budget-signature-pending">
+
+                                <i class="bi bi-pen"></i>
+
+                                <span>
+                                    Sin evidencia de firma todavía.
+                                </span>
+
+                            </div>
+                        `
+                        }
+
+                </div>
+            `;
+
+
+                    historialPresupuestalDetalleAdq.appendChild(
+                        elemento
+                    );
+                }
+            );
+        }
+
+        async function cargarHistorialPresupuestalDetalleAdq(
+            solicitudId
+        ) {
+
+            if (
+                solicitudId <=
+                0
+            ) {
+                return;
+            }
+
+
+            cargandoHistorialPresupuestalDetalleAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            errorHistorialPresupuestalDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            sinHistorialPresupuestalDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            if (
+                historialPresupuestalDetalleAdq
+            ) {
+
+                historialPresupuestalDetalleAdq.innerHTML =
+                    "";
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${window.location.pathname}?handler=HistorialAprobacionPresupuestal&solicitudId=${encodeURIComponent(
+                            solicitudId
+                        )}`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await response.json();
+
+
+                if (
+                    !response.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible consultar el historial presupuestal."
+                    );
+                }
+
+
+                renderizarHistorialPresupuestalDetalleAdq(
+                    resultado
+                );
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    "Error al cargar historial presupuestal del detalle:",
+                    error
+                );
+
+
+                if (
+                    errorHistorialPresupuestalDetalleAdq
+                ) {
+
+                    errorHistorialPresupuestalDetalleAdq.textContent =
+                        error?.message
+                        ??
+                        "No fue posible cargar el historial.";
+
+
+                    errorHistorialPresupuestalDetalleAdq.classList.remove(
+                        "d-none"
+                    );
+                }
+
+            }
+            finally {
+
+                cargandoHistorialPresupuestalDetalleAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+            }
         }
 
 
@@ -15158,8 +15670,8 @@ document.addEventListener(
 
 
                     /*
-                     * Aprobación presupuestal completada.
-                     */
+ * Aprobación presupuestal completada.
+ */
                     else if (
                         solicitud.estatusId ===
                         13
@@ -15176,18 +15688,36 @@ document.addEventListener(
                         ) {
 
                             btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
-                            <i class="bi bi-download me-1"></i>
-                            Descargar Solicitud de Pago
-                        `;
-                                        }
-                                        else {
-
-                                            btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
-                            <i class="bi bi-file-earmark-pdf me-1"></i>
-                            Generar Solicitud de Pago
-                        `;
-                                        }
+                        <i class="bi bi-download me-1"></i>
+                        Descargar Solicitud de Pago
+                    `;
                                     }
+                                    else {
+
+                                        btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
+                        <i class="bi bi-file-earmark-pdf me-1"></i>
+                        Generar Solicitud de Pago
+                    `;
+                        }
+                    }
+
+
+                    // =========================================================
+                    // CARGAR HISTORIAL PRESUPUESTAL EN EL DETALLE
+                    // =========================================================
+
+                    cargarHistorialPresupuestalDetalleAdq(
+                        Number(
+                            solicitud.id
+                            ??
+                            0
+                        )
+                    );
+
+
+                    // =========================================================
+                    // ABRIR MODAL DE DETALLE
+                    // =========================================================
 
                     bootstrap.Modal
                         .getOrCreateInstance(
