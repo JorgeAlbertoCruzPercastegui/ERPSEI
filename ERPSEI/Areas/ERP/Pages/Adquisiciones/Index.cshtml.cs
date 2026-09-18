@@ -14285,7 +14285,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 )
                 {
                     StatusCode =
-                        StatusCodes.Status401Unauthorized
+                        StatusCodes.Status422UnprocessableEntity
                 };
             }
 
@@ -14871,9 +14871,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             $"PIN incorrecto. Te quedan {intentosRestantes} intento(s) antes del bloqueo temporal."
                     }
                 )
-                {
-                    StatusCode =
-                        StatusCodes.Status401Unauthorized
+                                {
+                                    StatusCode =
+                        StatusCodes.Status422UnprocessableEntity
                 };
             }
 

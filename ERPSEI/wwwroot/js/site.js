@@ -8,8 +8,7 @@
 $(document).ajaxError(function (event, xhr) {
 
     if (
-        xhr.status === 401 ||
-        xhr.status === 403
+        xhr.status === 401
     ) {
         manejarSesionExpiradaGlobal();
     }
@@ -18,11 +17,9 @@ $(document).ajaxError(function (event, xhr) {
 $(document).ajaxComplete(function (event, xhr) {
 
     if (
-        xhr.status === 401 ||
-        xhr.status === 403
+        xhr.status === 401
     ) {
         manejarSesionExpiradaGlobal();
-        return;
     }
 
     const responseUrl =
@@ -48,10 +45,11 @@ window.fetch = async function (...args) {
         await fetchOriginal(...args);
 
     if (
-        response.status === 401 ||
-        response.status === 403
+        response.status ===
+        401
     ) {
         manejarSesionExpiradaGlobal();
+
         return response;
     }
 
