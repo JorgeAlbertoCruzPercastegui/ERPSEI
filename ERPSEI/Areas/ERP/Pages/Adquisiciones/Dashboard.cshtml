@@ -1,0 +1,584 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.Adquisiciones.DashboardModel
+
+@{
+    ViewData["Title"] =
+        "Centro de Control de Adquisiciones";
+}
+
+
+@section Styles
+{
+    <link rel="stylesheet"
+          href="~/css/Adquisiciones.css"
+          asp-append-version="true" />
+}
+
+
+<div class="adq-page">
+
+    <!-- ====================================================== -->
+    <!-- ENCABEZADO -->
+    <!-- ====================================================== -->
+
+    <section class="adq-header">
+
+        <div class="adq-header-main">
+
+            <div class="adq-header-icon">
+
+                <i class="bi bi-grid-1x2-fill"></i>
+
+            </div>
+
+
+            <div>
+
+                <span class="adq-panel-kicker">
+                    Generalidades de la interfaz
+                </span>
+
+                <h1 class="adq-title">
+                    Centro de Control de Adquisiciones
+                </h1>
+
+                <p class="adq-subtitle">
+                    Seguimiento ejecutivo, operativo y documental
+                    del proceso de adquisiciones.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="adq-header-actions">
+
+            <a asp-area="ERP"
+                   asp-page="/Adquisiciones/Index"
+                   class="btn btn-outline-secondary">
+
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Regresar a Adquisiciones
+
+            </a>
+
+        </div>
+
+    </section>
+
+
+    <!-- ====================================================== -->
+    <!-- CENTRO DE CONTROL -->
+    <!-- ====================================================== -->
+
+    <section class="adq-command-center">
+
+        <!-- ================================================== -->
+        <!-- HEADER DEL DASHBOARD -->
+        <!-- ================================================== -->
+
+        <div class="adq-command-header">
+
+            <div>
+
+                <span class="adq-panel-kicker">
+                    HU #5
+                </span>
+
+                <h2 class="mb-1">
+                    Panorama general
+                </h2>
+
+                <p class="mb-0">
+                    Panorama general de órdenes,
+                    avances y flujo operativo.
+                </p>
+
+            </div>
+
+
+            <div class="adq-command-progress">
+
+                <div class="adq-command-progress-value">
+                    @Model.DashboardPorcentajeFinalizadas.ToString("0.##")%
+                </div>
+
+                <div class="adq-command-progress-label">
+                    Órdenes finalizadas
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================== -->
+        <!-- KPIs GLOBALES -->
+        <!-- ================================================== -->
+
+        <div class="adq-command-kpi-grid">
+
+            <!-- TOTAL -->
+
+            <article class="adq-command-kpi">
+
+                <div>
+
+                    <span>
+                        Total de órdenes
+                    </span>
+
+                    <strong>
+                        @Model.DashboardTotalOrdenes
+                    </strong>
+
+                    <small>
+                        Registradas en el módulo
+                    </small>
+
+                </div>
+
+
+                <div class="adq-command-kpi-icon">
+
+                    <i class="bi bi-folder2-open"></i>
+
+                </div>
+
+            </article>
+
+
+            <!-- PENDIENTES -->
+
+            <article class="adq-command-kpi">
+
+                <div>
+
+                    <span>
+                        Pendientes
+                    </span>
+
+                    <strong>
+                        @Model.DashboardPendientes
+                    </strong>
+
+                    <small>
+                        Por revisión o aprobación
+                    </small>
+
+                </div>
+
+
+                <div class="adq-command-kpi-icon">
+
+                    <i class="bi bi-hourglass-split"></i>
+
+                </div>
+
+            </article>
+
+
+            <!-- EN CURSO -->
+
+            <article class="adq-command-kpi">
+
+                <div>
+
+                    <span>
+                        En curso
+                    </span>
+
+                    <strong>
+                        @Model.DashboardEnCurso
+                    </strong>
+
+                    <small>
+                        Procesos activos
+                    </small>
+
+                </div>
+
+
+                <div class="adq-command-kpi-icon">
+
+                    <i class="bi bi-arrow-repeat"></i>
+
+                </div>
+
+            </article>
+
+
+            <!-- COTIZACIÓN -->
+
+            <article class="adq-command-kpi">
+
+                <div>
+
+                    <span>
+                        En cotización
+                    </span>
+
+                    <strong>
+                        @Model.DashboardEnCotizacion
+                    </strong>
+
+                    <small>
+                        Gestión de proveedores
+                    </small>
+
+                </div>
+
+
+                <div class="adq-command-kpi-icon">
+
+                    <i class="bi bi-receipt"></i>
+
+                </div>
+
+            </article>
+
+
+            <!-- PRESUPUESTO -->
+
+            <article class="adq-command-kpi">
+
+                <div>
+
+                    <span>
+                        Presupuesto
+                    </span>
+
+                    <strong>
+                        @Model.DashboardEnAprobacionPresupuestal
+                    </strong>
+
+                    <small>
+                        En flujo presupuestal
+                    </small>
+
+                </div>
+
+
+                <div class="adq-command-kpi-icon">
+
+                    <i class="bi bi-shield-check"></i>
+
+                </div>
+
+            </article>
+
+
+            <!-- SOLICITUDES DE PAGO -->
+
+            <article class="adq-command-kpi">
+
+                <div>
+
+                    <span>
+                        Solicitudes de pago
+                    </span>
+
+                    <strong>
+                        @Model.DashboardSolicitudesPago
+                    </strong>
+
+                    <small>
+                        Documentos oficiales
+                    </small>
+
+                </div>
+
+
+                <div class="adq-command-kpi-icon">
+
+                    <i class="bi bi-file-earmark-pdf"></i>
+
+                </div>
+
+            </article>
+
+
+            <!-- FINALIZADAS -->
+
+            <article class="adq-command-kpi">
+
+                <div>
+
+                    <span>
+                        Finalizadas
+                    </span>
+
+                    <strong>
+                        @Model.DashboardFinalizadas
+                    </strong>
+
+                    <small>
+                        Procesos concluidos
+                    </small>
+
+                </div>
+
+
+                <div class="adq-command-kpi-icon">
+
+                    <i class="bi bi-check2-circle"></i>
+
+                </div>
+
+            </article>
+
+        </div>
+
+
+        <!-- ================================================== -->
+        <!-- ANALÍTICA -->
+        <!-- ================================================== -->
+
+        <div class="row g-4 mt-1">
+
+            <!-- ============================================== -->
+            <!-- DISTRIBUCIÓN POR ESTATUS -->
+            <!-- ============================================== -->
+
+            <div class="col-12 col-xl-8">
+
+                <div class="adq-command-panel">
+
+                    <div class="adq-command-panel-header">
+
+                        <div>
+
+                            <h5>
+                                Distribución por estatus
+                            </h5>
+
+                            <p>
+                                Participación de cada etapa
+                                dentro del total de órdenes.
+                            </p>
+
+                        </div>
+
+
+                        <i class="bi bi-bar-chart-line"></i>
+
+                    </div>
+
+
+                    <div class="adq-status-distribution">
+
+                        @if (
+                            Model
+                                .DashboardDistribucionEstatus
+                                .Count ==
+                            0
+                        )
+                        {
+                            <div class="adq-command-empty">
+
+                                <i class="bi bi-bar-chart"></i>
+
+                                <span>
+                                    Todavía no existe información suficiente.
+                                </span>
+
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (
+                                var estatus
+                                in Model.DashboardDistribucionEstatus
+                            )
+                            {
+                                <div class="adq-status-row">
+
+                                    <div class="adq-status-row-header">
+
+                                        <div>
+
+                                            <strong>
+                                                @estatus.Estatus
+                                            </strong>
+
+                                            <span>
+
+                                                @estatus.Total
+
+                                                @(estatus.Total == 1
+                                                    ? "orden"
+                                                    : "órdenes")
+
+                                            </span>
+
+                                        </div>
+
+
+                                        <strong class="adq-status-percentage">
+                                            @estatus.Porcentaje.ToString("0.##")%
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div class="adq-status-progress-bar"
+                                         style="width: @(estatus.Porcentaje.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%;">
+                                    </div>
+
+                                </div>
+                            }
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ============================================== -->
+            <!-- RESUMEN OPERATIVO -->
+            <!-- ============================================== -->
+
+            <div class="col-12 col-xl-4">
+
+                <div class="adq-command-panel h-100">
+
+                    <div class="adq-command-panel-header">
+
+                        <div>
+
+                            <h5>
+                                Resumen operativo
+                            </h5>
+
+                            <p>
+                                Clasificación general de órdenes.
+                            </p>
+
+                        </div>
+
+
+                        <i class="bi bi-activity"></i>
+
+                    </div>
+
+
+                    <div class="adq-operational-summary">
+
+                        <!-- FINALIZADAS -->
+
+                        <div class="adq-operational-item">
+
+                            <div class="adq-operational-icon">
+
+                                <i class="bi bi-check-circle"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Finalizadas
+                                </span>
+
+                                <strong>
+                                    @Model.DashboardFinalizadas
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- RECHAZADAS -->
+
+                        <div class="adq-operational-item">
+
+                            <div class="adq-operational-icon">
+
+                                <i class="bi bi-x-circle"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Rechazadas
+                                </span>
+
+                                <strong>
+                                    @Model.DashboardRechazadas
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CANCELADAS -->
+
+                        <div class="adq-operational-item">
+
+                            <div class="adq-operational-icon">
+
+                                <i class="bi bi-slash-circle"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Canceladas
+                                </span>
+
+                                <strong>
+                                    @Model.DashboardCanceladas
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- SOLICITUDES DE PAGO -->
+
+                        <div class="adq-operational-item">
+
+                            <div class="adq-operational-icon">
+
+                                <i class="bi bi-wallet2"></i>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    Solicitudes de pago
+                                </span>
+
+                                <strong>
+                                    @Model.DashboardSolicitudesPago
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</div>
