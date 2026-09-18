@@ -998,7 +998,9 @@
 
 
         .adq-header-actions
-        .btn {
+        .btn,
+        .adq-header-actions
+        .adq-btn-command-center {
             width: 100%;
         }
 
@@ -4753,4 +4755,366 @@ body:has(#modalResultadoDecisionPresupuestalAdq.show)
     background: rgba(25, 135, 84, .1);
     color: #198754;
     font-size: 2rem;
+}
+
+/* =========================================================
+   HU #5 - CENTRO DE CONTROL DE ADQUISICIONES
+   ========================================================= */
+
+.adq-command-center {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.05);
+}
+
+
+.adq-command-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+
+    .adq-command-header h2 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #172554;
+    }
+
+
+    .adq-command-header p {
+        color: #6b7280;
+    }
+
+
+.adq-command-progress {
+    min-width: 150px;
+    text-align: right;
+}
+
+
+.adq-command-progress-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #172554;
+}
+
+
+.adq-command-progress-label {
+    margin-top: .35rem;
+    font-size: .78rem;
+    color: #6b7280;
+}
+
+
+/* =========================================================
+   KPIs
+   ========================================================= */
+
+.adq-command-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: .85rem;
+}
+
+
+.adq-command-kpi {
+    min-height: 130px;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+
+    .adq-command-kpi:hover {
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, .06);
+    }
+
+
+    .adq-command-kpi span {
+        display: block;
+        margin-bottom: .35rem;
+        font-size: .74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .025em;
+        color: #64748b;
+    }
+
+
+    .adq-command-kpi strong {
+        display: block;
+        font-size: 1.55rem;
+        line-height: 1.1;
+        color: #172554;
+    }
+
+
+    .adq-command-kpi small {
+        display: block;
+        margin-top: .45rem;
+        line-height: 1.3;
+        color: #94a3b8;
+    }
+
+
+.adq-command-kpi-icon {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #3730a3;
+}
+
+
+/* =========================================================
+   PANELES
+   ========================================================= */
+
+.adq-command-panel {
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+
+.adq-command-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+
+    .adq-command-panel-header h5 {
+        margin-bottom: .2rem;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #172554;
+    }
+
+
+    .adq-command-panel-header p {
+        margin: 0;
+        font-size: .82rem;
+        color: #94a3b8;
+    }
+
+
+    .adq-command-panel-header > i {
+        font-size: 1.25rem;
+        color: #4f46e5;
+    }
+
+
+/* =========================================================
+   DISTRIBUCIÓN DE ESTATUS
+   ========================================================= */
+
+.adq-status-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+
+.adq-status-row-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .4rem;
+}
+
+
+    .adq-status-row-header > div {
+        min-width: 0;
+    }
+
+
+    .adq-status-row-header strong {
+        color: #334155;
+    }
+
+
+    .adq-status-row-header span {
+        margin-left: .5rem;
+        font-size: .75rem;
+        color: #94a3b8;
+    }
+
+
+.adq-status-percentage {
+    flex-shrink: 0;
+    font-size: .8rem;
+    color: #475569 !important;
+}
+
+
+.adq-status-progress {
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eef2f7;
+}
+
+
+.adq-status-progress-bar {
+    min-width: 2px;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient( 90deg, #312e81, #4f46e5 );
+}
+
+
+/* =========================================================
+   RESUMEN OPERATIVO
+   ========================================================= */
+
+.adq-operational-summary {
+    display: grid;
+    gap: .75rem;
+}
+
+
+.adq-operational-item {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    padding: .9rem;
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+
+.adq-operational-icon {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 38px;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #3730a3;
+}
+
+
+.adq-operational-item span {
+    display: block;
+    font-size: .75rem;
+    color: #64748b;
+}
+
+
+.adq-operational-item strong {
+    display: block;
+    margin-top: .1rem;
+    font-size: 1.05rem;
+    color: #172554;
+}
+
+
+.adq-command-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: #94a3b8;
+}
+
+
+    .adq-command-empty i {
+        display: block;
+        margin-bottom: .5rem;
+        font-size: 1.8rem;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1400px) {
+
+    .adq-command-kpi-grid {
+        grid-template-columns: repeat( 4, minmax(0, 1fr) );
+    }
+}
+
+
+@media (max-width: 992px) {
+
+    .adq-command-kpi-grid {
+        grid-template-columns: repeat( 2, minmax(0, 1fr) );
+    }
+}
+
+
+@media (max-width: 576px) {
+
+    .adq-command-center {
+        padding: 1rem;
+    }
+
+
+    .adq-command-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+
+    .adq-command-progress {
+        text-align: left;
+    }
+
+
+    .adq-command-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   ACCIONES DEL ENCABEZADO
+   ============================================================ */
+
+.adq-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+
+
+    .adq-header-actions .btn,
+    .adq-header-actions .adq-btn-command-center {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+
+.adq-btn-command-center {
+    font-weight: 600;
 }

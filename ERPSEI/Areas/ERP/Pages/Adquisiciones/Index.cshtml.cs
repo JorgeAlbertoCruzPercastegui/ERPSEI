@@ -717,6 +717,117 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
         // =========================================================
+        // DASHBOARD GENERAL DE ADQUISICIONES - HU #5
+        // =========================================================
+
+        public int DashboardTotalOrdenes
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardEnCurso
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardPendientes
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardRechazadas
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardCanceladas
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardFinalizadas
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardEnCotizacion
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardEnAprobacionPresupuestal
+        {
+            get;
+            private set;
+        }
+
+
+        public int DashboardSolicitudesPago
+        {
+            get;
+            private set;
+        }
+
+
+        public decimal DashboardPorcentajeFinalizadas
+        {
+            get;
+            private set;
+        }
+
+
+        public List<DashboardEstatusDto> DashboardDistribucionEstatus
+        {
+            get;
+            private set;
+        } = new();
+
+
+        public class DashboardEstatusDto
+        {
+            public int EstatusId
+            {
+                get;
+                set;
+            }
+
+
+            public string Estatus
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public int Total
+            {
+                get;
+                set;
+            }
+
+
+            public decimal Porcentaje
+            {
+                get;
+                set;
+            }
+        }
+
+        // =========================================================
         // INPUT - PERMISOS DE ADQUISICIONES
         // =========================================================
 
@@ -19810,6 +19921,20 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             );
 
 
+            // =========================================================
+            // DASHBOARD GENERAL HU #5
+            // =========================================================
+
+            if (
+                EsUsuarioAdquisiciones
+                ||
+                EsAgenteCompras
+            )
+            {
+                await CargarDashboardAdquisicionesAsync();
+            }
+
+
             CalcularKpis();
 
 
@@ -20184,6 +20309,169 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         }
                 )
                 .ToListAsync();
+        }
+
+        // =========================================================
+        // DASHBOARD GENERAL DE ADQUISICIONES - HU #5
+        // =========================================================
+
+        private async Task CargarDashboardAdquisicionesAsync()
+        {
+            List<AdqSolicitud> solicitudesDashboard =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .Include(
+                        x =>
+                            x.Estatus
+                    )
+                    .Where(
+                        x =>
+                            !x.Eliminado
+                    )
+                    .ToListAsync();
+
+
+            DashboardTotalOrdenes =
+                solicitudesDashboard.Count;
+
+
+            DashboardPendientes =
+                solicitudesDashboard.Count(
+                    x =>
+                        x.EstatusId == 2
+                        ||
+                        x.EstatusId == 3
+                        ||
+                        x.EstatusId == 4
+                );
+
+
+            DashboardEnCurso =
+                solicitudesDashboard.Count(
+                    x =>
+                        x.EstatusId >= 5
+                        &&
+                        x.EstatusId <= 16
+                        &&
+                        x.EstatusId != 6
+                        &&
+                        x.EstatusId != 7
+                );
+
+
+            DashboardRechazadas =
+                solicitudesDashboard.Count(
+                    x =>
+                        x.EstatusId == 6
+                );
+
+
+            DashboardCanceladas =
+                solicitudesDashboard.Count(
+                    x =>
+                        x.EstatusId == 7
+                );
+
+
+            DashboardFinalizadas =
+                solicitudesDashboard.Count(
+                    x =>
+                        x.EstatusId == 17
+                );
+
+
+            DashboardEnCotizacion =
+                solicitudesDashboard.Count(
+                    x =>
+                        x.EstatusId == 9
+                        ||
+                        x.EstatusId == 10
+                );
+
+
+            DashboardEnAprobacionPresupuestal =
+                solicitudesDashboard.Count(
+                    x =>
+                        x.EstatusId == 11
+                        ||
+                        x.EstatusId == 12
+                        ||
+                        x.EstatusId == 13
+                );
+
+
+            DashboardSolicitudesPago =
+                await _context.AdqSolicitudesPago
+                    .AsNoTracking()
+                    .CountAsync(
+                        x =>
+                            !x.Eliminado
+                            &&
+                            x.PdfGenerado
+                    );
+
+
+            DashboardPorcentajeFinalizadas =
+                DashboardTotalOrdenes >
+                0
+                    ? decimal.Round(
+                        (
+                            DashboardFinalizadas * 100m
+                        )
+                        /
+                        DashboardTotalOrdenes,
+                        2
+                    )
+                    : 0m;
+
+
+            DashboardDistribucionEstatus =
+                solicitudesDashboard
+                    .Where(
+                        x =>
+                            x.Estatus != null
+                    )
+                    .GroupBy(
+                        x =>
+                            new
+                            {
+                                x.EstatusId,
+                                Estatus =
+                                    x.Estatus!.Nombre
+                            }
+                    )
+                    .Select(
+                        grupo =>
+                            new DashboardEstatusDto
+                            {
+                                EstatusId =
+                                    grupo.Key.EstatusId,
+
+                                Estatus =
+                                    grupo.Key.Estatus,
+
+                                Total =
+                                    grupo.Count(),
+
+                                Porcentaje =
+                                    DashboardTotalOrdenes >
+                                    0
+                                        ? decimal.Round(
+                                            (
+                                                grupo.Count() * 100m
+                                            )
+                                            /
+                                            DashboardTotalOrdenes,
+                                            2
+                                        )
+                                        : 0m
+                            }
+                    )
+                    .OrderBy(
+                        x =>
+                            x.EstatusId
+                    )
+                    .ToList();
         }
 
 
