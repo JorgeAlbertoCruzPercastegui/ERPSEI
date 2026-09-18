@@ -39,6 +39,7 @@ using ERPSEI.Data.Managers.Intranet;
 using Azure.Identity;
 using Microsoft.Graph;
 using ERPSEI.Services.Compliance;
+using ERPSEI.Services.Adquisiciones;
 
 namespace ERPSEI
 {
@@ -200,7 +201,7 @@ namespace ERPSEI
         }
 
         public static void ConfigureDependencyInjection(
-            WebApplicationBuilder builder)
+    WebApplicationBuilder builder)
         {
             ConfigureDIUtils(
                 builder
@@ -265,6 +266,11 @@ namespace ERPSEI
             ConfigureDICompliance(
                 builder
             );
+
+            builder.Services.AddScoped<
+                IAdquisicionesEmailService,
+                AdquisicionesEmailService
+            >();
         }
 
         /*private static void ConfigureDICompliance(
