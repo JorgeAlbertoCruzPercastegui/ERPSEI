@@ -577,6 +577,116 @@
         </section>
 
         <!-- ====================================================== -->
+        <!-- CLASIFICACIÓN POR ÁREA SOLICITANTE -->
+        <!-- ====================================================== -->
+
+        <section class="adq-dashboard-areas">
+
+            <div class="adq-dashboard-section-header">
+
+                <div>
+
+                    <span class="adq-panel-kicker">
+                        Clasificación
+                    </span>
+
+                    <h3>
+                        Áreas solicitantes
+                    </h3>
+
+                    <p>
+                        Consulta las órdenes agrupadas de acuerdo
+                        con el área que originó la solicitud.
+                    </p>
+
+                </div>
+
+
+                <div class="adq-dashboard-section-icon">
+
+                    <i class="bi bi-building"></i>
+
+                </div>
+
+            </div>
+
+
+            <div class="adq-area-grid">
+
+                <!-- TODAS -->
+
+                <button type="button"
+                        class="adq-area-card active"
+                        data-area-id="0">
+
+                    <div class="adq-area-icon">
+
+                        <i class="bi bi-grid"></i>
+
+                    </div>
+
+
+                    <div class="adq-area-content">
+
+                        <span>
+                            Todas las áreas
+                        </span>
+
+                        <strong>
+                            @Model.DashboardTotalOrdenes
+                        </strong>
+
+                        <small>
+                            solicitudes
+                        </small>
+
+                    </div>
+
+                </button>
+
+
+                @foreach (
+                    var area
+                    in Model.DashboardAreas
+                )
+                {
+                    <button type="button"
+                            class="adq-area-card"
+                            data-area-id="@area.AreaId">
+
+                        <div class="adq-area-icon">
+
+                            <i class="bi bi-building"></i>
+
+                        </div>
+
+
+                        <div class="adq-area-content">
+
+                            <span>
+                                @area.Area
+                            </span>
+
+                            <strong>
+                                @area.Total
+                            </strong>
+
+                            <small>
+                                @(area.Total == 1
+                                    ? "solicitud"
+                                    : "solicitudes")
+                            </small>
+
+                        </div>
+
+                    </button>
+                }
+
+            </div>
+
+        </section>
+
+        <!-- ====================================================== -->
         <!-- EXPLORADOR DE ÓRDENES -->
         <!-- ====================================================== -->
 
@@ -721,6 +831,7 @@
 
                             <tr class="adq-dashboard-order-row"
                                 data-id="@orden.Id"
+                                data-area-id="@orden.AreaId"
                                 data-folio="@orden.Folio.ToLowerInvariant()"
                                 data-titulo="@orden.Titulo.ToLowerInvariant()"
                                 data-area="@orden.Area.ToLowerInvariant()"
@@ -805,6 +916,48 @@
                     </tbody>
 
                 </table>
+
+            </div>
+
+            <!-- ====================================================== -->
+            <!-- PAGINACIÓN -->
+            <!-- ====================================================== -->
+
+            <div id="paginacionOrdenesDashboardAdq"
+                 class="adq-pagination-container">
+
+                <div class="adq-pagination-info">
+
+                    Mostrando
+
+                    <strong id="dashboardPaginaInicio">
+                        0
+                    </strong>
+
+                    -
+
+                    <strong id="dashboardPaginaFin">
+                        0
+                    </strong>
+
+                    de
+
+                    <strong id="dashboardPaginaTotal">
+                        0
+                    </strong>
+
+                    órdenes
+
+                </div>
+
+
+                <nav aria-label="Paginación de órdenes">
+
+                    <ul id="dashboardPaginacionLista"
+                        class="pagination pagination-sm mb-0">
+                    </ul>
+
+                </nav>
 
             </div>
 

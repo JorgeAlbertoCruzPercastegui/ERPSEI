@@ -2,9 +2,23 @@
     "DOMContentLoaded",
     function () {
 
+        // =========================================================
+        // ELEMENTOS
+        // =========================================================
+
         const botonesCarpeta =
-            document.querySelectorAll(
-                ".adq-folder-card"
+            Array.from(
+                document.querySelectorAll(
+                    ".adq-folder-card"
+                )
+            );
+
+
+        const botonesArea =
+            Array.from(
+                document.querySelectorAll(
+                    ".adq-area-card"
+                )
             );
 
 
@@ -28,7 +42,7 @@
             );
 
 
-        const total =
+        const totalOrdenes =
             document.getElementById(
                 "totalOrdenesDashboardAdq"
             );
@@ -58,9 +72,59 @@
             );
 
 
+        const paginacion =
+            document.getElementById(
+                "paginacionOrdenesDashboardAdq"
+            );
+
+
+        const paginacionLista =
+            document.getElementById(
+                "dashboardPaginacionLista"
+            );
+
+
+        const paginaInicio =
+            document.getElementById(
+                "dashboardPaginaInicio"
+            );
+
+
+        const paginaFin =
+            document.getElementById(
+                "dashboardPaginaFin"
+            );
+
+
+        const paginaTotal =
+            document.getElementById(
+                "dashboardPaginaTotal"
+            );
+
+
+        // =========================================================
+        // ESTADO
+        // =========================================================
+
         let carpetaActual =
             "solicitudes";
 
+
+        let areaActual =
+            0;
+
+
+        let paginaActual =
+            1;
+
+
+        const registrosPorPagina =
+            10;
+
+
+        // =========================================================
+        // CONFIGURACIÓN DE CARPETAS
+        // =========================================================
 
         const configuracionCarpetas =
         {
@@ -88,7 +152,7 @@
                     "Solicitudes rechazadas",
 
                 descripcion:
-                    "Órdenes que fueron rechazadas durante su proceso de autorización."
+                    "Órdenes que fueron rechazadas durante el proceso de autorización."
             },
 
             canceladas:
@@ -106,14 +170,17 @@
                     "Solicitudes de pago",
 
                 descripcion:
-                    "Órdenes que ya cuentan con una Solicitud de Pago oficial generada."
+                    "Órdenes que cuentan con una Solicitud de Pago oficial generada."
             }
         };
 
 
+        // =========================================================
+        // VALIDAR CARPETA
+        // =========================================================
+
         function perteneceACarpeta(
-            fila,
-            carpeta
+            fila
         ) {
 
             const estatusId =
@@ -125,7 +192,7 @@
 
 
             switch (
-            carpeta
+            carpetaActual
             ) {
 
                 case "proceso":
@@ -160,7 +227,6 @@
                     );
 
 
-                case "solicitudes":
                 default:
 
                     return true;
@@ -168,7 +234,38 @@
         }
 
 
-        function aplicarFiltros() {
+        // =========================================================
+        // VALIDAR ÁREA
+        // =========================================================
+
+        function perteneceAArea(
+            fila
+        ) {
+
+            if (
+                areaActual ===
+                0
+            ) {
+                return true;
+            }
+
+
+            return (
+                Number(
+                    fila.dataset.areaId
+                    ??
+                    0
+                ) ===
+                areaActual
+            );
+        }
+
+
+        // =========================================================
+        // OBTENER FILAS FILTRADAS
+        // =========================================================
+
+        function obtenerFilasFiltradas() {
 
             const termino =
                 (
@@ -180,20 +277,27 @@
                     .toLowerCase();
 
 
-            let visibles =
-                0;
-
-
-            filas.forEach(
+            return filas.filter(
                 function (
                     fila
                 ) {
 
-                    const pertenece =
-                        perteneceACarpeta(
-                            fila,
-                            carpetaActual
-                        );
+                    if (
+                        !perteneceACarpeta(
+                            fila
+                        )
+                    ) {
+                        return false;
+                    }
+
+
+                    if (
+                        !perteneceAArea(
+                            fila
+                        )
+                    ) {
+                        return false;
+                    }
 
 
                     const texto =
@@ -209,146 +313,347 @@
                             .toLowerCase();
 
 
-                    const coincideBusqueda =
+                    return (
                         !termino
                         ||
                         texto.includes(
                             termino
-                        );
-
-
-                    const mostrar =
-                        pertenece
-                        &&
-                        coincideBusqueda;
-
-
-                    fila.classList.toggle(
-                        "d-none",
-                        !mostrar
+                        )
                     );
-
-
-                    if (
-                        mostrar
-                    ) {
-                        visibles++;
-                    }
                 }
             );
-
-
-            if (
-                total
-            ) {
-                total.textContent =
-                    String(
-                        visibles
-                    );
-            }
-
-
-            if (
-                tabla
-            ) {
-                tabla.classList.toggle(
-                    "d-none",
-                    visibles === 0
-                );
-            }
-
-
-            if (
-                vacio
-            ) {
-                vacio.classList.toggle(
-                    "d-none",
-                    visibles > 0
-                );
-            }
         }
 
 
-        function seleccionarCarpeta(
-            boton
+        // =========================================================
+        // PAGINADOR
+        // =========================================================
+
+        function crearBotonPagina(
+            texto,
+            pagina,
+            activo,
+            deshabilitado
         ) {
 
-            carpetaActual =
-                boton.dataset.folder
-                ??
-                "solicitudes";
+            const li =
+                document.createElement(
+                    "li"
+                );
 
 
-            botonesCarpeta.forEach(
+            li.className =
+                "page-item";
+
+
+            if (
+                activo
+            ) {
+                li.classList.add(
+                    "active"
+                );
+            }
+
+
+            if (
+                deshabilitado
+            ) {
+                li.classList.add(
+                    "disabled"
+                );
+            }
+
+
+            const boton =
+                document.createElement(
+                    "button"
+                );
+
+
+            boton.type =
+                "button";
+
+
+            boton.className =
+                "page-link";
+
+
+            boton.textContent =
+                texto;
+
+
+            boton.disabled =
+                deshabilitado;
+
+
+            boton.addEventListener(
+                "click",
+                function () {
+
+                    if (
+                        deshabilitado
+                    ) {
+                        return;
+                    }
+
+
+                    paginaActual =
+                        pagina;
+
+
+                    renderizar();
+                }
+            );
+
+
+            li.appendChild(
+                boton
+            );
+
+
+            return li;
+        }
+
+
+        function renderizarPaginador(
+            totalRegistros
+        ) {
+
+            if (
+                !paginacionLista
+            ) {
+                return;
+            }
+
+
+            paginacionLista.innerHTML =
+                "";
+
+
+            const totalPaginas =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        totalRegistros
+                        /
+                        registrosPorPagina
+                    )
+                );
+
+
+            if (
+                paginaActual >
+                totalPaginas
+            ) {
+                paginaActual =
+                    totalPaginas;
+            }
+
+
+            paginacionLista.appendChild(
+                crearBotonPagina(
+                    "Anterior",
+                    Math.max(
+                        1,
+                        paginaActual - 1
+                    ),
+                    false,
+                    paginaActual === 1
+                )
+            );
+
+
+            for (
+                let pagina = 1;
+                pagina <= totalPaginas;
+                pagina++
+            ) {
+
+                paginacionLista.appendChild(
+                    crearBotonPagina(
+                        String(
+                            pagina
+                        ),
+                        pagina,
+                        pagina === paginaActual,
+                        false
+                    )
+                );
+            }
+
+
+            paginacionLista.appendChild(
+                crearBotonPagina(
+                    "Siguiente",
+                    Math.min(
+                        totalPaginas,
+                        paginaActual + 1
+                    ),
+                    false,
+                    paginaActual === totalPaginas
+                )
+            );
+
+
+            paginacion
+                ?.classList
+                .toggle(
+                    "d-none",
+                    totalRegistros === 0
+                );
+        }
+
+
+        // =========================================================
+        // RENDERIZAR
+        // =========================================================
+
+        function renderizar() {
+
+            const filtradas =
+                obtenerFilasFiltradas();
+
+
+            const total =
+                filtradas.length;
+
+
+            const totalPaginas =
+                Math.max(
+                    1,
+                    Math.ceil(
+                        total
+                        /
+                        registrosPorPagina
+                    )
+                );
+
+
+            if (
+                paginaActual >
+                totalPaginas
+            ) {
+                paginaActual =
+                    totalPaginas;
+            }
+
+
+            const indiceInicial =
+                (
+                    paginaActual - 1
+                )
+                *
+                registrosPorPagina;
+
+
+            const indiceFinal =
+                Math.min(
+                    indiceInicial
+                    +
+                    registrosPorPagina,
+                    total
+                );
+
+
+            filas.forEach(
                 function (
-                    item
+                    fila
                 ) {
 
-                    item.classList.remove(
-                        "active"
+                    fila.classList.add(
+                        "d-none"
                     );
                 }
             );
 
 
-            boton.classList.add(
-                "active"
-            );
-
-
-            const configuracion =
-                configuracionCarpetas[
-                carpetaActual
-                ];
-
-
-            if (
-                configuracion
-            ) {
-
-                if (
-                    titulo
-                ) {
-                    titulo.textContent =
-                        configuracion.titulo;
-                }
-
-
-                if (
-                    descripcion
-                ) {
-                    descripcion.textContent =
-                        configuracion.descripcion;
-                }
-            }
-
-
-            if (
-                buscar
-            ) {
-                buscar.value =
-                    "";
-            }
-
-
-            aplicarFiltros();
-
-
-            document
-                .getElementById(
-                    "seccionOrdenesDashboardAdq"
+            filtradas
+                .slice(
+                    indiceInicial,
+                    indiceFinal
                 )
-                ?.scrollIntoView(
-                    {
-                        behavior:
-                            "smooth",
+                .forEach(
+                    function (
+                        fila
+                    ) {
 
-                        block:
-                            "start"
+                        fila.classList.remove(
+                            "d-none"
+                        );
                     }
                 );
+
+
+            if (
+                totalOrdenes
+            ) {
+                totalOrdenes.textContent =
+                    String(
+                        total
+                    );
+            }
+
+
+            if (
+                paginaInicio
+            ) {
+
+                paginaInicio.textContent =
+                    total === 0
+                        ? "0"
+                        : String(
+                            indiceInicial + 1
+                        );
+            }
+
+
+            if (
+                paginaFin
+            ) {
+
+                paginaFin.textContent =
+                    String(
+                        indiceFinal
+                    );
+            }
+
+
+            if (
+                paginaTotal
+            ) {
+
+                paginaTotal.textContent =
+                    String(
+                        total
+                    );
+            }
+
+
+            tabla
+                ?.classList
+                .toggle(
+                    "d-none",
+                    total === 0
+                );
+
+
+            vacio
+                ?.classList
+                .toggle(
+                    "d-none",
+                    total > 0
+                );
+
+
+            renderizarPaginador(
+                total
+            );
         }
 
+
+        // =========================================================
+        // SELECCIONAR CARPETA
+        // =========================================================
 
         botonesCarpeta.forEach(
             function (
@@ -359,19 +664,130 @@
                     "click",
                     function () {
 
-                        seleccionarCarpeta(
-                            boton
+                        carpetaActual =
+                            boton.dataset.folder
+                            ??
+                            "solicitudes";
+
+
+                        paginaActual =
+                            1;
+
+
+                        botonesCarpeta.forEach(
+                            function (
+                                item
+                            ) {
+
+                                item.classList.remove(
+                                    "active"
+                                );
+                            }
                         );
+
+
+                        boton.classList.add(
+                            "active"
+                        );
+
+
+                        const configuracion =
+                            configuracionCarpetas[
+                            carpetaActual
+                            ];
+
+
+                        if (
+                            configuracion
+                        ) {
+
+                            if (
+                                titulo
+                            ) {
+                                titulo.textContent =
+                                    configuracion.titulo;
+                            }
+
+
+                            if (
+                                descripcion
+                            ) {
+                                descripcion.textContent =
+                                    configuracion.descripcion;
+                            }
+                        }
+
+
+                        renderizar();
                     }
                 );
             }
         );
 
 
+        // =========================================================
+        // SELECCIONAR ÁREA
+        // =========================================================
+
+        botonesArea.forEach(
+            function (
+                boton
+            ) {
+
+                boton.addEventListener(
+                    "click",
+                    function () {
+
+                        areaActual =
+                            Number(
+                                boton.dataset.areaId
+                                ??
+                                0
+                            );
+
+
+                        paginaActual =
+                            1;
+
+
+                        botonesArea.forEach(
+                            function (
+                                item
+                            ) {
+
+                                item.classList.remove(
+                                    "active"
+                                );
+                            }
+                        );
+
+
+                        boton.classList.add(
+                            "active"
+                        );
+
+
+                        renderizar();
+                    }
+                );
+            }
+        );
+
+
+        // =========================================================
+        // BUSCADOR
+        // =========================================================
+
         buscar
             ?.addEventListener(
                 "input",
-                aplicarFiltros
+                function () {
+
+                    paginaActual =
+                        1;
+
+                    renderizar();
+                }
             );
 
 
@@ -391,26 +807,39 @@
                     }
 
 
-                    aplicarFiltros();
+                    paginaActual =
+                        1;
+
+
+                    renderizar();
                 }
             );
 
 
-        const carpetaInicial =
-            document.querySelector(
+        // =========================================================
+        // INICIO
+        // =========================================================
+
+        document
+            .querySelector(
                 '.adq-folder-card[data-folder="solicitudes"]'
-            );
-
-
-        if (
-            carpetaInicial
-        ) {
-            carpetaInicial.classList.add(
+            )
+            ?.classList
+            .add(
                 "active"
             );
-        }
 
 
-        aplicarFiltros();
+        document
+            .querySelector(
+                '.adq-area-card[data-area-id="0"]'
+            )
+            ?.classList
+            .add(
+                "active"
+            );
+
+
+        renderizar();
     }
 );

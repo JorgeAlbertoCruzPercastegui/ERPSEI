@@ -181,6 +181,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 set;
             } = string.Empty;
 
+            public int AreaId
+            {
+                get;
+                set;
+            }
+
 
             public string Area
             {
@@ -216,6 +222,36 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 set;
             }
         }
+
+        public class DashboardAreaDto
+        {
+            public int AreaId
+            {
+                get;
+                set;
+            }
+
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public int Total
+            {
+                get;
+                set;
+            }
+        }
+
+
+        public List<DashboardAreaDto> DashboardAreas
+        {
+            get;
+            private set;
+        } = new();
 
 
         public List<DashboardOrdenDto> DashboardOrdenes
@@ -522,6 +558,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 Titulo =
                                     x.Titulo,
 
+                                AreaId =
+                                    x.AreaId,
+
                                 Area =
                                     x.Area?.Nombre
                                     ??
@@ -543,6 +582,40 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                         x.Id
                                     )
                             }
+                    )
+                    .ToList();
+
+            DashboardAreas =
+                solicitudesDashboard
+                    .GroupBy(
+                        x =>
+                            new
+                            {
+                                x.AreaId,
+
+                                Area =
+                                    x.Area?.Nombre
+                                    ??
+                                    "Sin área"
+                            }
+                    )
+                    .Select(
+                        grupo =>
+                            new DashboardAreaDto
+                            {
+                                AreaId =
+                                    grupo.Key.AreaId,
+
+                                Area =
+                                    grupo.Key.Area,
+
+                                Total =
+                                    grupo.Count()
+                            }
+                    )
+                    .OrderBy(
+                        x =>
+                            x.Area
                     )
                     .ToList();
         }
