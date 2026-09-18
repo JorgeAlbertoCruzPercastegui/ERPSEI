@@ -5118,3 +5118,263 @@ body:has(#modalResultadoDecisionPresupuestalAdq.show)
 .adq-btn-command-center {
     font-weight: 600;
 }
+
+/* ============================================================
+   HU #5 - CARPETAS OPERATIVAS
+   ============================================================ */
+
+.adq-dashboard-folders {
+    margin-top: 1.5rem;
+    padding: 1.35rem;
+    border: 1px solid #e4e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+
+.adq-dashboard-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+
+    .adq-dashboard-section-header h3 {
+        margin: .15rem 0 .25rem;
+        color: #212529;
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+
+
+    .adq-dashboard-section-header p {
+        margin: 0;
+        color: #6c757d;
+        font-size: .88rem;
+    }
+
+
+.adq-dashboard-section-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 11px;
+    background: rgba(33, 22, 111, .08);
+    color: #21166f;
+    font-size: 1.15rem;
+}
+
+
+.adq-folder-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+
+.adq-folder-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .85rem;
+    width: 100%;
+    min-height: 105px;
+    padding: 1rem;
+    border: 1px solid #e2e6ed;
+    border-radius: 14px;
+    background: #fafbfc;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+
+    .adq-folder-card:hover {
+        border-color: #c8c2ed;
+        background: #ffffff;
+        box-shadow: 0 8px 22px rgba(33, 22, 111, .08);
+        transform: translateY(-2px);
+    }
+
+
+    .adq-folder-card:focus-visible {
+        outline: 3px solid rgba(33, 22, 111, .16);
+        outline-offset: 2px;
+    }
+
+
+.adq-folder-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 11px;
+    background: rgba(33, 22, 111, .08);
+    color: #21166f;
+    font-size: 1.15rem;
+}
+
+
+.adq-folder-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+
+.adq-folder-label {
+    margin-bottom: .25rem;
+    color: #495057;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+
+.adq-folder-content strong {
+    color: #21166f;
+    font-size: 1.35rem;
+    line-height: 1.1;
+}
+
+
+.adq-folder-content small {
+    margin-top: .3rem;
+    color: #8a9099;
+    font-size: .72rem;
+}
+
+
+.adq-folder-arrow {
+    color: #adb5bd;
+    font-size: .9rem;
+    transition: transform .18s ease, color .18s ease;
+}
+
+
+.adq-folder-card:hover
+.adq-folder-arrow {
+    color: #21166f;
+    transform: translateX(3px);
+}
+
+
+@media (max-width: 1400px) {
+
+    .adq-folder-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 992px) {
+
+    .adq-folder-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+@media (max-width: 576px) {
+
+    .adq-folder-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .adq-dashboard-folders {
+        padding: 1rem;
+    }
+}
+
+/* ============================================================
+   HU #5 - EXPLORADOR DE ÓRDENES
+   ============================================================ */
+
+.adq-dashboard-orders {
+    margin-top: 1.5rem;
+    padding: 1.35rem;
+    border: 1px solid #e4e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+
+.adq-dashboard-orders-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+
+    .adq-dashboard-orders-toolbar
+    .input-group {
+        max-width: 620px;
+    }
+
+
+.adq-dashboard-orders-counter {
+    display: flex;
+    align-items: baseline;
+    gap: .35rem;
+    white-space: nowrap;
+    color: #6c757d;
+    font-size: .82rem;
+}
+
+
+    .adq-dashboard-orders-counter
+    span:first-child {
+        color: #21166f;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+
+/* ============================================================
+   CARPETA ACTIVA
+   ============================================================ */
+
+.adq-folder-card.active {
+    border-color: #21166f;
+    background: rgba(33, 22, 111, .04);
+    box-shadow: 0 7px 20px rgba(33, 22, 111, .09);
+}
+
+
+    .adq-folder-card.active
+    .adq-folder-icon {
+        background: #21166f;
+        color: #ffffff;
+    }
+
+
+    .adq-folder-card.active
+    .adq-folder-arrow {
+        color: #21166f;
+    }
+
+
+@media (max-width: 768px) {
+
+    .adq-dashboard-orders-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+        .adq-dashboard-orders-toolbar
+        .input-group {
+            max-width: none;
+            width: 100%;
+        }
+}

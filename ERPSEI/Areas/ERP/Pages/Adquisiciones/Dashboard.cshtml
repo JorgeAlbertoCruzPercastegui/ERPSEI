@@ -331,6 +331,506 @@
 
         </div>
 
+        <!-- ================================================== -->
+        <!-- CARPETAS OPERATIVAS HU #5 -->
+        <!-- ================================================== -->
+
+        <section class="adq-dashboard-folders">
+
+            <div class="adq-dashboard-section-header">
+
+                <div>
+
+                    <span class="adq-panel-kicker">
+                        Organización documental
+                    </span>
+
+                    <h3>
+                        Carpetas operativas
+                    </h3>
+
+                    <p>
+                        Consulta las órdenes clasificadas de acuerdo
+                        con su estado dentro del proceso de adquisición.
+                    </p>
+
+                </div>
+
+
+                <div class="adq-dashboard-section-icon">
+
+                    <i class="bi bi-folder2-open"></i>
+
+                </div>
+
+            </div>
+
+
+            <div class="adq-folder-grid">
+
+                <!-- ============================================== -->
+                <!-- TODAS LAS SOLICITUDES -->
+                <!-- ============================================== -->
+
+                <button type="button"
+                        class="adq-folder-card"
+                        data-folder="solicitudes">
+
+                    <div class="adq-folder-icon">
+
+                        <i class="bi bi-folder-fill"></i>
+
+                    </div>
+
+
+                    <div class="adq-folder-content">
+
+                        <span class="adq-folder-label">
+                            Solicitudes realizadas
+                        </span>
+
+                        <strong>
+                            @Model.DashboardTotalOrdenes
+                        </strong>
+
+                        <small>
+                            Órdenes registradas
+                        </small>
+
+                    </div>
+
+
+                    <div class="adq-folder-arrow">
+
+                        <i class="bi bi-chevron-right"></i>
+
+                    </div>
+
+                </button>
+
+
+                <!-- ============================================== -->
+                <!-- EN PROCESO -->
+                <!-- ============================================== -->
+
+                <button type="button"
+                        class="adq-folder-card"
+                        data-folder="proceso">
+
+                    <div class="adq-folder-icon">
+
+                        <i class="bi bi-arrow-repeat"></i>
+
+                    </div>
+
+
+                    <div class="adq-folder-content">
+
+                        <span class="adq-folder-label">
+                            Aceptadas / En proceso
+                        </span>
+
+                        <strong>
+                            @Model.DashboardEnCurso
+                        </strong>
+
+                        <small>
+                            Procesos activos
+                        </small>
+
+                    </div>
+
+
+                    <div class="adq-folder-arrow">
+
+                        <i class="bi bi-chevron-right"></i>
+
+                    </div>
+
+                </button>
+
+
+                <!-- ============================================== -->
+                <!-- RECHAZADAS -->
+                <!-- ============================================== -->
+
+                <button type="button"
+                        class="adq-folder-card"
+                        data-folder="rechazadas">
+
+                    <div class="adq-folder-icon">
+
+                        <i class="bi bi-x-circle"></i>
+
+                    </div>
+
+
+                    <div class="adq-folder-content">
+
+                        <span class="adq-folder-label">
+                            Rechazadas
+                        </span>
+
+                        <strong>
+                            @Model.DashboardRechazadas
+                        </strong>
+
+                        <small>
+                            Solicitudes no autorizadas
+                        </small>
+
+                    </div>
+
+
+                    <div class="adq-folder-arrow">
+
+                        <i class="bi bi-chevron-right"></i>
+
+                    </div>
+
+                </button>
+
+
+                <!-- ============================================== -->
+                <!-- CANCELADAS -->
+                <!-- ============================================== -->
+
+                <button type="button"
+                        class="adq-folder-card"
+                        data-folder="canceladas">
+
+                    <div class="adq-folder-icon">
+
+                        <i class="bi bi-slash-circle"></i>
+
+                    </div>
+
+
+                    <div class="adq-folder-content">
+
+                        <span class="adq-folder-label">
+                            Canceladas
+                        </span>
+
+                        <strong>
+                            @Model.DashboardCanceladas
+                        </strong>
+
+                        <small>
+                            Procesos cancelados
+                        </small>
+
+                    </div>
+
+
+                    <div class="adq-folder-arrow">
+
+                        <i class="bi bi-chevron-right"></i>
+
+                    </div>
+
+                </button>
+
+
+                <!-- ============================================== -->
+                <!-- SOLICITUDES DE PAGO -->
+                <!-- ============================================== -->
+
+                <button type="button"
+                        class="adq-folder-card"
+                        data-folder="pagos">
+
+                    <div class="adq-folder-icon">
+
+                        <i class="bi bi-file-earmark-pdf"></i>
+
+                    </div>
+
+
+                    <div class="adq-folder-content">
+
+                        <span class="adq-folder-label">
+                            Solicitudes de pago
+                        </span>
+
+                        <strong>
+                            @Model.DashboardSolicitudesPago
+                        </strong>
+
+                        <small>
+                            Documentos oficiales
+                        </small>
+
+                    </div>
+
+
+                    <div class="adq-folder-arrow">
+
+                        <i class="bi bi-chevron-right"></i>
+
+                    </div>
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- ====================================================== -->
+        <!-- EXPLORADOR DE ÓRDENES -->
+        <!-- ====================================================== -->
+
+        <section class="adq-dashboard-orders"
+                 id="seccionOrdenesDashboardAdq">
+
+            <div class="adq-dashboard-section-header">
+
+                <div>
+
+                    <span class="adq-panel-kicker">
+                        Expedientes
+                    </span>
+
+                    <h3 id="tituloCarpetaDashboardAdq">
+                        Solicitudes realizadas
+                    </h3>
+
+                    <p id="descripcionCarpetaDashboardAdq">
+                        Consulta todas las órdenes registradas
+                        dentro del módulo de Adquisiciones.
+                    </p>
+
+                </div>
+
+
+                <div class="adq-dashboard-section-icon">
+
+                    <i class="bi bi-table"></i>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================== -->
+            <!-- FILTROS -->
+            <!-- ================================================== -->
+
+            <div class="adq-dashboard-orders-toolbar">
+
+                <div class="input-group">
+
+                    <span class="input-group-text">
+
+                        <i class="bi bi-search"></i>
+
+                    </span>
+
+
+                    <input type="text"
+                           id="buscarOrdenDashboardAdq"
+                           class="form-control"
+                           placeholder="Buscar por folio, solicitud, área o estatus..."
+                           autocomplete="off" />
+
+
+                    <button type="button"
+                            id="limpiarBusquedaDashboardAdq"
+                            class="btn btn-outline-secondary">
+
+                        <i class="bi bi-x-lg"></i>
+
+                    </button>
+
+                </div>
+
+
+                <div class="adq-dashboard-orders-counter">
+
+                    <span id="totalOrdenesDashboardAdq">
+                        @Model.DashboardOrdenes.Count
+                    </span>
+
+                    <span>
+                        órdenes
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================== -->
+            <!-- TABLA -->
+            <!-- ================================================== -->
+
+            <div class="table-responsive">
+
+                <table class="table align-middle adq-table mb-0"
+                       id="tablaOrdenesDashboardAdq">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Folio
+                            </th>
+
+                            <th>
+                                Solicitud
+                            </th>
+
+                            <th>
+                                Área
+                            </th>
+
+                            <th>
+                                Fecha
+                            </th>
+
+                            <th>
+                                Estatus
+                            </th>
+
+                            <th class="text-center">
+                                Solicitud de pago
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (
+                            var orden
+                            in Model.DashboardOrdenes
+                        )
+                        {
+                            bool enProceso =
+                                orden.EstatusId >= 5
+                                &&
+                                orden.EstatusId <= 16
+                                &&
+                                orden.EstatusId != 6
+                                &&
+                                orden.EstatusId != 7;
+
+
+                            <tr class="adq-dashboard-order-row"
+                                data-id="@orden.Id"
+                                data-folio="@orden.Folio.ToLowerInvariant()"
+                                data-titulo="@orden.Titulo.ToLowerInvariant()"
+                                data-area="@orden.Area.ToLowerInvariant()"
+                                data-estatus="@orden.Estatus.ToLowerInvariant()"
+                                data-estatus-id="@orden.EstatusId"
+                                data-proceso="@(enProceso ? "true" : "false")"
+                                data-pago="@(orden.TieneSolicitudPago ? "true" : "false")">
+
+                                <td>
+
+                                    <strong class="adq-folio">
+                                        @orden.Folio
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        @orden.Titulo
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+                                    @orden.Area
+                                </td>
+
+
+                                <td>
+
+                                    @orden.FechaSolicitud.ToString(
+                                        "dd/MM/yyyy"
+                                    )
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="adq-status-badge">
+
+                                        @orden.Estatus
+
+                                    </span>
+
+                                </td>
+
+
+                                <td class="text-center">
+
+                                    @if (
+                                        orden.TieneSolicitudPago
+                                    )
+                                    {
+                                        <span class="badge bg-success">
+
+                                            <i class="bi bi-check-circle me-1"></i>
+
+                                            Generada
+
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">
+
+                                            <i class="bi bi-dash-circle me-1"></i>
+
+                                            No generada
+
+                                        </span>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- ================================================== -->
+            <!-- VACÍO -->
+            <!-- ================================================== -->
+
+            <div id="sinOrdenesDashboardAdq"
+                 class="adq-command-empty d-none">
+
+                <i class="bi bi-folder-x"></i>
+
+                <strong>
+                    No se encontraron órdenes
+                </strong>
+
+                <span>
+                    No existen registros que coincidan
+                    con la carpeta o búsqueda seleccionada.
+                </span>
+
+            </div>
+
+        </section>
+
 
         <!-- ================================================== -->
         <!-- ANALÍTICA -->
@@ -582,3 +1082,10 @@
     </section>
 
 </div>
+
+@section Scripts
+{
+    <script src="~/js/DashboardAdquisiciones.js"
+            asp-append-version="true">
+    </script>
+}

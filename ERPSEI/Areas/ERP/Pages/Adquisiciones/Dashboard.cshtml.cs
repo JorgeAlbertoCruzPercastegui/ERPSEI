@@ -159,6 +159,71 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
         }
 
+        public class DashboardOrdenDto
+        {
+            public int Id
+            {
+                get;
+                set;
+            }
+
+
+            public string Folio
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Titulo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public int EstatusId
+            {
+                get;
+                set;
+            }
+
+
+            public string Estatus
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public DateTime FechaSolicitud
+            {
+                get;
+                set;
+            }
+
+
+            public bool TieneSolicitudPago
+            {
+                get;
+                set;
+            }
+        }
+
+
+        public List<DashboardOrdenDto> DashboardOrdenes
+        {
+            get;
+            private set;
+        } = new();
+
 
         // =========================================================
         // GET
@@ -268,13 +333,29 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 await _context.AdqSolicitudes
                     .AsNoTracking()
                     .Include(
-                        x =>
-                            x.Estatus
+                        x => x.Estatus
+                    ).Include(
+                        x => x.Area
                     )
+                    .Where(
+                        x => !x.Eliminado
+                    )
+                    .ToListAsync();
+
+            List<int> solicitudesConPago =
+                await _context.AdqSolicitudesPago
+                    .AsNoTracking()
                     .Where(
                         x =>
                             !x.Eliminado
+                            &&
+                            x.PdfGenerado
                     )
+                    .Select(
+                        x =>
+                            x.SolicitudId
+                    )
+                    .Distinct()
                     .ToListAsync();
 
 
@@ -419,6 +500,49 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .OrderBy(
                         x =>
                             x.EstatusId
+                    )
+                    .ToList();
+
+            DashboardOrdenes =
+                solicitudesDashboard
+                    .OrderByDescending(
+                        x =>
+                            x.FechaSolicitud
+                    )
+                    .Select(
+                        x =>
+                            new DashboardOrdenDto
+                            {
+                                Id =
+                                    x.Id,
+
+                                Folio =
+                                    x.Folio,
+
+                                Titulo =
+                                    x.Titulo,
+
+                                Area =
+                                    x.Area?.Nombre
+                                    ??
+                                    "Sin área",
+
+                                EstatusId =
+                                    x.EstatusId,
+
+                                Estatus =
+                                    x.Estatus?.Nombre
+                                    ??
+                                    "Sin estatus",
+
+                                FechaSolicitud =
+                                    x.FechaSolicitud,
+
+                                TieneSolicitudPago =
+                                    solicitudesConPago.Contains(
+                                        x.Id
+                                    )
+                            }
                     )
                     .ToList();
         }
