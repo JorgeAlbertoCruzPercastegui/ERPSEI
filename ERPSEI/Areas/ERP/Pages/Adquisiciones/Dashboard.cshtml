@@ -984,6 +984,364 @@
 
         </section>
 
+        <!-- ====================================================== -->
+        <!-- DIRECTORIO DE PROVEEDORES -->
+        <!-- ====================================================== -->
+
+        <section class="adq-dashboard-suppliers"
+                 id="seccionProveedoresDashboardAdq">
+
+            <div class="adq-dashboard-section-header">
+
+                <div>
+
+                    <span class="adq-panel-kicker">
+                        Directorio
+                    </span>
+
+                    <h3>
+                        Proveedores
+                    </h3>
+
+                    <p>
+                        Consulta los proveedores registrados a través
+                        de las cotizaciones del módulo de Adquisiciones.
+                    </p>
+
+                </div>
+
+
+                <div class="adq-dashboard-section-icon">
+
+                    <i class="bi bi-truck"></i>
+
+                </div>
+
+            </div>
+
+
+            <div class="adq-dashboard-orders-toolbar">
+
+                <div class="input-group">
+
+                    <span class="input-group-text">
+
+                        <i class="bi bi-search"></i>
+
+                    </span>
+
+
+                    <input type="text"
+                           id="buscarProveedorDashboardAdq"
+                           class="form-control"
+                           placeholder="Buscar proveedor, RFC, contacto o correo..."
+                           autocomplete="off" />
+
+
+                    <button type="button"
+                            id="limpiarBusquedaProveedorDashboardAdq"
+                            class="btn btn-outline-secondary">
+
+                        <i class="bi bi-x-lg"></i>
+
+                    </button>
+
+                </div>
+
+
+                <div class="adq-dashboard-orders-counter">
+
+                    <span id="totalProveedoresDashboardAdq">
+                        @Model.DashboardProveedores.Count
+                    </span>
+
+                    <span>
+                        proveedores
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="adq-dashboard-table-wrapper">
+
+                <div class="table-responsive">
+
+                    <table class="table align-middle adq-table mb-0"
+                           id="tablaProveedoresDashboardAdq">
+
+                        <thead>
+
+                            <tr>
+
+                                <th class="adq-col-proveedor">
+                                    Proveedor
+                                </th>
+
+                                <th class="adq-col-rfc">
+                                    RFC
+                                </th>
+
+                                <th class="adq-col-contacto">
+                                    Contacto
+                                </th>
+
+                                <th class="adq-col-correo">
+                                    Correo
+                                </th>
+
+                                <th class="adq-col-telefono">
+                                    Teléfono
+                                </th>
+
+                                <th class="text-center adq-col-cotizaciones">
+                                    Cotizaciones
+                                </th>
+
+                                <th class="text-end adq-col-monto">
+                                    Monto cotizado
+                                </th>
+
+                                <th class="adq-col-fecha">
+                                    Última cotización
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            @foreach (
+                                var proveedor
+                                in Model.DashboardProveedores
+                            )
+                            {
+                                <tr class="adq-dashboard-supplier-row"
+                                    data-nombre="@proveedor.NombreProveedor.ToLowerInvariant()"
+                                    data-rfc="@(proveedor.RfcProveedor?.ToLowerInvariant() ?? string.Empty)"
+                                    data-contacto="@(proveedor.ContactoProveedor?.ToLowerInvariant() ?? string.Empty)"
+                                    data-email="@(proveedor.EmailProveedor?.ToLowerInvariant() ?? string.Empty)"
+                                    data-telefono="@(proveedor.TelefonoProveedor?.ToLowerInvariant() ?? string.Empty)">
+
+                                    <td class="adq-col-proveedor">
+
+                                        <strong class="adq-supplier-name">
+                                            @proveedor.NombreProveedor
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td class="adq-col-rfc">
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                proveedor.RfcProveedor
+                                            )
+                                        )
+                                        {
+                                            <span class="adq-cell-ellipsis"
+                                                  title="@proveedor.RfcProveedor">
+
+                                                @proveedor.RfcProveedor
+
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                -
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <td class="adq-col-contacto">
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                proveedor.ContactoProveedor
+                                            )
+                                        )
+                                        {
+                                            <span class="adq-cell-ellipsis"
+                                                  title="@proveedor.ContactoProveedor">
+
+                                                @proveedor.ContactoProveedor
+
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                -
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <td class="adq-col-correo">
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                proveedor.EmailProveedor
+                                            )
+                                        )
+                                        {
+                                            <a href="mailto:@proveedor.EmailProveedor"
+                                                   class="adq-email-link"
+                                                   title="@proveedor.EmailProveedor">
+
+                                                @proveedor.EmailProveedor
+
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                -
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <td class="adq-col-telefono">
+
+                                        @if (
+                                            !string.IsNullOrWhiteSpace(
+                                                proveedor.TelefonoProveedor
+                                            )
+                                        )
+                                        {
+                                            <span class="text-nowrap">
+                                                @proveedor.TelefonoProveedor
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                -
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <td class="text-center adq-col-cotizaciones">
+
+                                        <span class="badge bg-light text-dark border">
+
+                                            @proveedor.TotalCotizaciones
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <td class="text-end adq-col-monto">
+
+                                        <strong class="text-nowrap">
+
+                                            @proveedor.MontoCotizado.ToString(
+                                                "C2"
+                                            )
+
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td class="adq-col-fecha">
+
+                                        <span class="text-nowrap">
+
+                                            @proveedor.UltimaCotizacion.ToString(
+                                                "dd/MM/yyyy"
+                                            )
+
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- ====================================================== -->
+            <!-- PAGINACIÓN PROVEEDORES -->
+            <!-- ====================================================== -->
+
+            <div id="paginacionProveedoresDashboardAdq"
+                 class="adq-pagination-container">
+
+                <div class="adq-pagination-info">
+
+                    Mostrando
+
+                    <strong id="proveedoresPaginaInicio">
+                        0
+                    </strong>
+
+                    -
+
+                    <strong id="proveedoresPaginaFin">
+                        0
+                    </strong>
+
+                    de
+
+                    <strong id="proveedoresPaginaTotal">
+                        0
+                    </strong>
+
+                    proveedores
+
+                </div>
+
+
+                <nav aria-label="Paginación de proveedores">
+
+                    <ul id="proveedoresPaginacionLista"
+                        class="pagination pagination-sm mb-0">
+                    </ul>
+
+                </nav>
+
+            </div>
+
+
+            <div id="sinProveedoresDashboardAdq"
+                 class="adq-command-empty d-none">
+
+                <i class="bi bi-truck"></i>
+
+                <strong>
+                    No se encontraron proveedores
+                </strong>
+
+                <span>
+                    No existen proveedores que coincidan
+                    con la búsqueda realizada.
+                </span>
+
+            </div>
+
+        </section>
+
 
         <!-- ================================================== -->
         <!-- ANALÍTICA -->

@@ -5501,3 +5501,231 @@ body:has(#modalResultadoDecisionPresupuestalAdq.show)
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================================
+   HU #5 - DIRECTORIO DE PROVEEDORES
+   ============================================================ */
+
+.adq-dashboard-suppliers {
+    margin-top: 1.5rem;
+    padding: 1.35rem;
+    border: 1px solid #e4e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+
+    .adq-dashboard-suppliers
+    table th {
+        white-space: nowrap;
+    }
+
+
+    .adq-dashboard-suppliers
+    table td {
+        vertical-align: middle;
+    }
+
+
+    .adq-dashboard-suppliers
+    a {
+        text-decoration: none;
+    }
+
+
+        .adq-dashboard-suppliers
+        a:hover {
+            text-decoration: underline;
+        }
+
+/* ============================================================
+   HU #5 - DIRECTORIO PROVEEDORES RESPONSIVE
+   ============================================================ */
+
+.adq-dashboard-suppliers {
+    overflow: hidden;
+}
+
+
+.adq-dashboard-table-wrapper {
+    width: 100%;
+    overflow: hidden;
+}
+
+
+.adq-dashboard-suppliers
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+
+.adq-dashboard-suppliers
+table {
+    width: 100%;
+    min-width: 1040px;
+    table-layout: fixed;
+}
+
+
+.adq-dashboard-suppliers
+th,
+.adq-dashboard-suppliers
+td {
+    padding: .95rem .85rem;
+}
+
+
+.adq-col-proveedor {
+    width: 10%;
+}
+
+
+.adq-col-rfc {
+    width: 12%;
+}
+
+
+.adq-col-contacto {
+    width: 11%;
+}
+
+
+.adq-col-correo {
+    width: 23%;
+}
+
+
+.adq-col-telefono {
+    width: 10%;
+}
+
+
+.adq-col-cotizaciones {
+    width: 9%;
+}
+
+
+.adq-col-monto {
+    width: 13%;
+}
+
+
+.adq-col-fecha {
+    width: 12%;
+}
+
+
+.adq-supplier-name {
+    display: block;
+    line-height: 1.35;
+}
+
+
+.adq-cell-ellipsis {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.adq-email-link {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* ============================================================
+   PAGINACIÓN DE PROVEEDORES
+   ============================================================ */
+
+#adq-dashboard-suppliers,
+.adq-dashboard-suppliers {
+    max-width: 100%;
+}
+
+
+#paginacionProveedoresDashboardAdq {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e4e8f0;
+}
+
+
+/* ============================================================
+   TABLET
+   ============================================================ */
+
+@media (max-width: 992px) {
+
+    .adq-dashboard-suppliers {
+        padding: 1rem;
+    }
+
+
+        .adq-dashboard-suppliers
+        table {
+            min-width: 950px;
+        }
+
+
+    .adq-dashboard-section-header {
+        gap: .75rem;
+    }
+}
+
+
+/* ============================================================
+   MÓVIL
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    .adq-dashboard-suppliers
+    .adq-dashboard-orders-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+
+        .adq-dashboard-suppliers
+        .adq-dashboard-orders-toolbar
+        .input-group {
+            max-width: none;
+            width: 100%;
+        }
+
+
+    .adq-dashboard-suppliers
+    .adq-dashboard-orders-counter {
+        justify-content: flex-start;
+    }
+
+
+    #paginacionProveedoresDashboardAdq {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: .75rem;
+    }
+}
+
+
+@media (max-width: 576px) {
+
+    .adq-dashboard-suppliers {
+        padding: .85rem;
+        border-radius: 12px;
+    }
+
+
+        .adq-dashboard-suppliers
+        table {
+            min-width: 900px;
+        }
+}

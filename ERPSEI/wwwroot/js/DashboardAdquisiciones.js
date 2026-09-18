@@ -841,5 +841,505 @@
 
 
         renderizar();
+    
+
+    // =========================================================
+// DIRECTORIO DE PROVEEDORES
+// =========================================================
+
+const filasProveedores =
+    Array.from(
+        document.querySelectorAll(
+            ".adq-dashboard-supplier-row"
+        )
+    );
+
+
+const buscarProveedor =
+    document.getElementById(
+        "buscarProveedorDashboardAdq"
+    );
+
+
+const limpiarProveedor =
+    document.getElementById(
+        "limpiarBusquedaProveedorDashboardAdq"
+    );
+
+
+const tablaProveedores =
+    document.getElementById(
+        "tablaProveedoresDashboardAdq"
+    );
+
+
+const totalProveedores =
+    document.getElementById(
+        "totalProveedoresDashboardAdq"
+    );
+
+
+const sinProveedores =
+    document.getElementById(
+        "sinProveedoresDashboardAdq"
+    );
+
+
+const paginacionProveedores =
+    document.getElementById(
+        "paginacionProveedoresDashboardAdq"
+    );
+
+
+const listaPaginacionProveedores =
+    document.getElementById(
+        "proveedoresPaginacionLista"
+    );
+
+
+const proveedoresInicio =
+    document.getElementById(
+        "proveedoresPaginaInicio"
+    );
+
+
+const proveedoresFin =
+    document.getElementById(
+        "proveedoresPaginaFin"
+    );
+
+
+const proveedoresTotal =
+    document.getElementById(
+        "proveedoresPaginaTotal"
+    );
+
+
+let paginaProveedorActual =
+    1;
+
+
+const proveedoresPorPagina =
+    10;
+
+
+// =========================================================
+// FILTRAR PROVEEDORES
+// =========================================================
+
+function obtenerProveedoresFiltrados() {
+
+    const termino =
+        (
+            buscarProveedor?.value
+            ??
+            ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (
+        !termino
+    ) {
+        return filasProveedores;
+    }
+
+
+    return filasProveedores.filter(
+        function (
+            fila
+        ) {
+
+            const texto =
+                [
+                    fila.dataset.nombre,
+                    fila.dataset.rfc,
+                    fila.dataset.contacto,
+                    fila.dataset.email,
+                    fila.dataset.telefono
+                ]
+                    .join(
+                        " "
+                    )
+                    .toLowerCase();
+
+
+            return texto.includes(
+                termino
+            );
+        }
+    );
+}
+
+
+// =========================================================
+// CREAR BOTÓN PAGINACIÓN PROVEEDOR
+// =========================================================
+
+function crearBotonPaginaProveedor(
+    texto,
+    pagina,
+    activo,
+    deshabilitado
+) {
+
+    const li =
+        document.createElement(
+            "li"
+        );
+
+
+    li.className =
+        "page-item";
+
+
+    if (
+        activo
+    ) {
+        li.classList.add(
+            "active"
+        );
+    }
+
+
+    if (
+        deshabilitado
+    ) {
+        li.classList.add(
+            "disabled"
+        );
+    }
+
+
+    const boton =
+        document.createElement(
+            "button"
+        );
+
+
+    boton.type =
+        "button";
+
+
+    boton.className =
+        "page-link";
+
+
+    boton.textContent =
+        texto;
+
+
+    boton.disabled =
+        deshabilitado;
+
+
+    boton.addEventListener(
+        "click",
+        function () {
+
+            if (
+                deshabilitado
+            ) {
+                return;
+            }
+
+
+            paginaProveedorActual =
+                pagina;
+
+
+            renderizarProveedores();
+        }
+    );
+
+
+    li.appendChild(
+        boton
+    );
+
+
+    return li;
+}
+
+
+// =========================================================
+// PAGINADOR PROVEEDORES
+// =========================================================
+
+function renderizarPaginadorProveedores(
+    totalRegistros
+) {
+
+    if (
+        !listaPaginacionProveedores
+    ) {
+        return;
+    }
+
+
+    listaPaginacionProveedores.innerHTML =
+        "";
+
+
+    const totalPaginas =
+        Math.max(
+            1,
+            Math.ceil(
+                totalRegistros
+                /
+                proveedoresPorPagina
+            )
+        );
+
+
+    if (
+        paginaProveedorActual >
+        totalPaginas
+    ) {
+        paginaProveedorActual =
+            totalPaginas;
+    }
+
+
+    listaPaginacionProveedores.appendChild(
+        crearBotonPaginaProveedor(
+            "Anterior",
+            Math.max(
+                1,
+                paginaProveedorActual - 1
+            ),
+            false,
+            paginaProveedorActual === 1
+        )
+    );
+
+
+    for (
+        let pagina = 1;
+        pagina <= totalPaginas;
+        pagina++
+    ) {
+
+        listaPaginacionProveedores.appendChild(
+            crearBotonPaginaProveedor(
+                String(
+                    pagina
+                ),
+                pagina,
+                pagina === paginaProveedorActual,
+                false
+            )
+        );
+    }
+
+
+    listaPaginacionProveedores.appendChild(
+        crearBotonPaginaProveedor(
+            "Siguiente",
+            Math.min(
+                totalPaginas,
+                paginaProveedorActual + 1
+            ),
+            false,
+            paginaProveedorActual === totalPaginas
+        )
+    );
+
+
+    paginacionProveedores
+        ?.classList
+        .toggle(
+            "d-none",
+            totalRegistros === 0
+        );
+}
+
+
+// =========================================================
+// RENDERIZAR PROVEEDORES
+// =========================================================
+
+function renderizarProveedores() {
+
+    const filtrados =
+        obtenerProveedoresFiltrados();
+
+
+    const total =
+        filtrados.length;
+
+
+    const totalPaginas =
+        Math.max(
+            1,
+            Math.ceil(
+                total
+                /
+                proveedoresPorPagina
+            )
+        );
+
+
+    if (
+        paginaProveedorActual >
+        totalPaginas
+    ) {
+        paginaProveedorActual =
+            totalPaginas;
+    }
+
+
+    const indiceInicial =
+        (
+            paginaProveedorActual - 1
+        )
+        *
+        proveedoresPorPagina;
+
+
+    const indiceFinal =
+        Math.min(
+            indiceInicial
+            +
+            proveedoresPorPagina,
+            total
+        );
+
+
+    filasProveedores.forEach(
+        function (
+            fila
+        ) {
+
+            fila.classList.add(
+                "d-none"
+            );
+        }
+    );
+
+
+    filtrados
+        .slice(
+            indiceInicial,
+            indiceFinal
+        )
+        .forEach(
+            function (
+                fila
+            ) {
+
+                fila.classList.remove(
+                    "d-none"
+                );
+            }
+        );
+
+
+    if (
+        totalProveedores
+    ) {
+        totalProveedores.textContent =
+            String(
+                total
+            );
+    }
+
+
+    if (
+        proveedoresInicio
+    ) {
+        proveedoresInicio.textContent =
+            total === 0
+                ? "0"
+                : String(
+                    indiceInicial + 1
+                );
+    }
+
+
+    if (
+        proveedoresFin
+    ) {
+        proveedoresFin.textContent =
+            String(
+                indiceFinal
+            );
+    }
+
+
+    if (
+        proveedoresTotal
+    ) {
+        proveedoresTotal.textContent =
+            String(
+                total
+            );
+    }
+
+
+    tablaProveedores
+        ?.classList
+        .toggle(
+            "d-none",
+            total === 0
+        );
+
+
+    sinProveedores
+        ?.classList
+        .toggle(
+            "d-none",
+            total > 0
+        );
+
+
+    renderizarPaginadorProveedores(
+        total
+    );
+}
+
+
+// =========================================================
+// EVENTOS PROVEEDORES
+// =========================================================
+
+buscarProveedor
+    ?.addEventListener(
+        "input",
+        function () {
+
+            paginaProveedorActual =
+                1;
+
+            renderizarProveedores();
+        }
+    );
+
+
+limpiarProveedor
+    ?.addEventListener(
+        "click",
+        function () {
+
+            if (
+                buscarProveedor
+            ) {
+                buscarProveedor.value =
+                    "";
+
+                buscarProveedor.focus();
+            }
+
+            paginaProveedorActual =
+                1;
+
+            renderizarProveedores();
+        }
+    );
+
+
+        renderizarProveedores();
+
     }
 );

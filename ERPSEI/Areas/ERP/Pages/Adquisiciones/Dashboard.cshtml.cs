@@ -1,12 +1,11 @@
 ﻿using ERPSEI.Data;
 using ERPSEI.Data.Entities.Adquisiciones;
-using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Data.Entities.Usuarios;
+using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-
 
 namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 {
@@ -122,6 +121,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
 
+        // =========================================================
+        // DISTRIBUCIÓN POR ESTATUS
+        // =========================================================
+
         public List<DashboardEstatusDto> DashboardDistribucionEstatus
         {
             get;
@@ -159,6 +162,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
         }
 
+
+        // =========================================================
+        // ÓRDENES
+        // =========================================================
+
         public class DashboardOrdenDto
         {
             public int Id
@@ -180,6 +188,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 get;
                 set;
             } = string.Empty;
+
 
             public int AreaId
             {
@@ -223,6 +232,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
         }
 
+
+        public List<DashboardOrdenDto> DashboardOrdenes
+        {
+            get;
+            private set;
+        } = new();
+
+
+        // =========================================================
+        // ÁREAS SOLICITANTES
+        // =========================================================
+
         public class DashboardAreaDto
         {
             public int AreaId
@@ -254,7 +275,77 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         } = new();
 
 
-        public List<DashboardOrdenDto> DashboardOrdenes
+        // =========================================================
+        // PROVEEDORES
+        // =========================================================
+
+        public class DashboardProveedorDto
+        {
+            public int? ProveedorId
+            {
+                get;
+                set;
+            }
+
+
+            public string NombreProveedor
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string? RfcProveedor
+            {
+                get;
+                set;
+            }
+
+
+            public string? ContactoProveedor
+            {
+                get;
+                set;
+            }
+
+
+            public string? EmailProveedor
+            {
+                get;
+                set;
+            }
+
+
+            public string? TelefonoProveedor
+            {
+                get;
+                set;
+            }
+
+
+            public int TotalCotizaciones
+            {
+                get;
+                set;
+            }
+
+
+            public decimal MontoCotizado
+            {
+                get;
+                set;
+            }
+
+
+            public DateTime UltimaCotizacion
+            {
+                get;
+                set;
+            }
+        }
+
+
+        public List<DashboardProveedorDto> DashboardProveedores
         {
             get;
             private set;
@@ -265,8 +356,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // GET
         // =========================================================
 
-        public async Task<IActionResult>
-            OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
             AppUser? usuarioActual =
                 await _userManager.GetUserAsync(
@@ -365,18 +455,31 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         private async Task CargarDashboardAsync()
         {
+            // =====================================================
+            // SOLICITUDES
+            // =====================================================
+
             List<AdqSolicitud> solicitudesDashboard =
                 await _context.AdqSolicitudes
                     .AsNoTracking()
                     .Include(
-                        x => x.Estatus
-                    ).Include(
-                        x => x.Area
+                        x =>
+                            x.Estatus
+                    )
+                    .Include(
+                        x =>
+                            x.Area
                     )
                     .Where(
-                        x => !x.Eliminado
+                        x =>
+                            !x.Eliminado
                     )
                     .ToListAsync();
+
+
+            // =====================================================
+            // SOLICITUDES QUE YA TIENEN PDF DE PAGO
+            // =====================================================
 
             List<int> solicitudesConPago =
                 await _context.AdqSolicitudesPago
@@ -394,6 +497,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .Distinct()
                     .ToListAsync();
 
+
+            // =====================================================
+            // KPIs
+            // =====================================================
 
             DashboardTotalOrdenes =
                 solicitudesDashboard.Count;
@@ -480,7 +587,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 0
                     ? decimal.Round(
                         (
-                            DashboardFinalizadas * 100m
+                            DashboardFinalizadas
+                            *
+                            100m
                         )
                         /
                         DashboardTotalOrdenes,
@@ -488,6 +597,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     )
                     : 0m;
 
+
+            // =====================================================
+            // DISTRIBUCIÓN POR ESTATUS
+            // =====================================================
 
             DashboardDistribucionEstatus =
                 solicitudesDashboard
@@ -524,7 +637,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                     0
                                         ? decimal.Round(
                                             (
-                                                grupo.Count() * 100m
+                                                grupo.Count()
+                                                *
+                                                100m
                                             )
                                             /
                                             DashboardTotalOrdenes,
@@ -538,6 +653,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             x.EstatusId
                     )
                     .ToList();
+
+
+            // =====================================================
+            // ÓRDENES PARA EL EXPLORADOR
+            // =====================================================
 
             DashboardOrdenes =
                 solicitudesDashboard
@@ -585,6 +705,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     )
                     .ToList();
 
+
+            // =====================================================
+            // CLASIFICACIÓN POR ÁREA
+            // =====================================================
+
             DashboardAreas =
                 solicitudesDashboard
                     .GroupBy(
@@ -616,6 +741,107 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .OrderBy(
                         x =>
                             x.Area
+                    )
+                    .ToList();
+
+
+            // =====================================================
+            // DIRECTORIO DE PROVEEDORES
+            // =====================================================
+
+            List<AdqCotizacion> cotizacionesProveedores =
+                await _context.AdqCotizaciones
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            !x.Eliminado
+                            &&
+                            !string.IsNullOrWhiteSpace(
+                                x.NombreProveedor
+                            )
+                    )
+                    .ToListAsync();
+
+
+            DashboardProveedores =
+                cotizacionesProveedores
+                    .GroupBy(
+                        x =>
+                            new
+                            {
+                                x.ProveedorId,
+
+                                NombreProveedor =
+                                    x.NombreProveedor
+                                        .Trim(),
+
+                                RfcProveedor =
+                                    string.IsNullOrWhiteSpace(
+                                        x.RfcProveedor
+                                    )
+                                        ? null
+                                        : x.RfcProveedor.Trim(),
+
+                                EmailProveedor =
+                                    string.IsNullOrWhiteSpace(
+                                        x.EmailProveedor
+                                    )
+                                        ? null
+                                        : x.EmailProveedor.Trim()
+                            }
+                    )
+                    .Select(
+                        grupo =>
+                        {
+                            AdqCotizacion ultima =
+                                grupo
+                                    .OrderByDescending(
+                                        x =>
+                                            x.FechaCreacion
+                                    )
+                                    .First();
+
+
+                            return new DashboardProveedorDto
+                            {
+                                ProveedorId =
+                                    grupo.Key.ProveedorId,
+
+                                NombreProveedor =
+                                    grupo.Key.NombreProveedor,
+
+                                RfcProveedor =
+                                    grupo.Key.RfcProveedor,
+
+                                ContactoProveedor =
+                                    ultima.ContactoProveedor,
+
+                                EmailProveedor =
+                                    ultima.EmailProveedor,
+
+                                TelefonoProveedor =
+                                    ultima.TelefonoProveedor,
+
+                                TotalCotizaciones =
+                                    grupo.Count(),
+
+                                MontoCotizado =
+                                    grupo.Sum(
+                                        x =>
+                                            x.Total
+                                    ),
+
+                                UltimaCotizacion =
+                                    grupo.Max(
+                                        x =>
+                                            x.FechaCreacion
+                                    )
+                            };
+                        }
+                    )
+                    .OrderBy(
+                        x =>
+                            x.NombreProveedor
                     )
                     .ToList();
         }
