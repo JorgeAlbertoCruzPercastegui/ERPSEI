@@ -18,6 +18,7 @@ using System.Security.Cryptography;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using ERPSEI.Services.Adquisiciones;
 
 namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 {
@@ -28,13 +29,15 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         private readonly AppUserManager _userManager;
         private readonly ILogger<IndexModel> _logger;
         private readonly IWebHostEnvironment _environment;
+        private readonly IAdquisicionesEmailService _adquisicionesEmailService;
 
 
         public IndexModel(
-            ApplicationDbContext context,
-            AppUserManager userManager,
-            ILogger<IndexModel> logger,
-            IWebHostEnvironment environment)
+        ApplicationDbContext context,
+        AppUserManager userManager,
+        ILogger<IndexModel> logger,
+        IWebHostEnvironment environment,
+        IAdquisicionesEmailService adquisicionesEmailService)
         {
             _context =
                 context;
@@ -47,6 +50,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             _environment =
                 environment;
+
+            _adquisicionesEmailService =
+                adquisicionesEmailService;
         }
 
         public class CotizacionResumenDto
@@ -15603,7 +15609,41 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                     await transaccion
-                        .CommitAsync();
+    .CommitAsync();
+
+
+                    // =========================================================
+                    // CORREO AL SOLICITANTE - AVANCE PRESUPUESTAL
+                    // =========================================================
+
+                    try
+                    {
+                        await _adquisicionesEmailService
+                            .NotificarEtapaAprobadaAsync(
+                                solicitud.Id,
+                                nombreFirmante,
+                                detalleActual.Orden,
+                                detalleActual.NombreEtapa,
+                                siguienteEtapa.NombreEtapa
+                            );
+                    }
+                    catch (
+                        Exception exCorreo
+                    )
+                    {
+                        /*
+                         * La aprobación ya fue confirmada.
+                         *
+                         * Un error de Microsoft Graph no debe revertir
+                         * ni reportar como fallida una autorización válida.
+                         */
+                        _logger.LogError(
+                            exCorreo,
+                            "La etapa presupuestal {OrdenEtapa} de la solicitud {SolicitudId} fue aprobada, pero no fue posible enviar el correo al solicitante.",
+                            detalleActual.Orden,
+                            solicitud.Id
+                        );
+                    }
 
 
                     return new JsonResult(
@@ -15790,8 +15830,38 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 }
 
 
-                await transaccion
-                    .CommitAsync();
+                await transaccion.CommitAsync();
+
+
+                // =========================================================
+                // CORREO FINAL AL SOLICITANTE
+                // =========================================================
+
+                try
+                {
+                    await _adquisicionesEmailService
+                        .NotificarFlujoCompletadoAsync(
+                            solicitud.Id,
+                            nombreFirmante
+                        );
+                }
+                catch (
+                    Exception exCorreo
+                )
+                {
+                    /*
+                     * El flujo presupuestal ya fue concluido
+                     * correctamente en base de datos.
+                     *
+                     * El correo es una notificación posterior
+                     * y no debe revertir la autorización.
+                     */
+                    _logger.LogError(
+                        exCorreo,
+                        "La aprobación presupuestal de la solicitud {SolicitudId} fue completada, pero no fue posible enviar el correo final al solicitante.",
+                        solicitud.Id
+                    );
+                }
 
 
                 return new JsonResult(
