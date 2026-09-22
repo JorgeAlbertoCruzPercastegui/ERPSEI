@@ -83,7 +83,10 @@ function configurarEventos() {
 
 function initTableDias() {
     tableDias.bootstrapTable('destroy').bootstrapTable({
-        height: 220,
+        height: 520,
+        pagination: true,
+        pageSize: 10,
+        pageList: [10, 25, 50, 100, "All"],
         locale: cultureName,
         columns: [
             { field: "tipo", title: "Tipo", align: "left" },
@@ -98,7 +101,10 @@ function initTableDias() {
 
 function initTableHoras() {
     tableHoras.bootstrapTable('destroy').bootstrapTable({
-        height: 260,
+        height: 520,
+        pagination: true,
+        pageSize: 10,
+        pageList: [10, 25, 50, 100, "All"],
         locale: cultureName,
         columns: [
             { field: "tipo", title: "Tipo", align: "left" },
@@ -114,7 +120,10 @@ function initTableHoras() {
 
 function initTableAutorizar() {
     tableAutorizar.bootstrapTable('destroy').bootstrapTable({
-        height: 260,
+        height: 520,
+        pagination: true,
+        pageSize: 10,
+        pageList: [10, 25, 50, 100, "All"],
         locale: cultureName,
         columns: [
             { field: "empleado", title: "Empleado", align: "left" },
@@ -128,6 +137,7 @@ function initTableAutorizar() {
                     if (row.captura === "Horas") {
                         return `${row.horaInicio || ""} ${row.horaTermino ? " - " + row.horaTermino : ""}`;
                     }
+
                     return `${row.fechaInicio || ""} ${row.fechaFin ? " al " + row.fechaFin : ""}`;
                 }
             },
@@ -139,6 +149,7 @@ function initTableAutorizar() {
                     if (row.captura === "Horas") {
                         return row.horas || "";
                     }
+
                     return row.dias || "";
                 }
             },
