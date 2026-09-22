@@ -51,6 +51,12 @@ document.addEventListener("DOMContentLoaded", function (event) {
     // Evento para vacaciones anticipadas
     $("#chkVacacionesAnticipadas").on("change", function () {
         toggleVacacionesAnticipadasAviso();
+        calcularDiasSolicitados();
+    });
+
+    $("#chkVacacionesSiguientePeriodo").on("change", function () {
+        toggleVacacionesSiguientePeriodoAviso();
+        calcularDiasSolicitados();
     });
 
     // Abrir detalle desde correo
@@ -177,10 +183,17 @@ function onAgregarClick() {
 }
 function initTable() {
     table.bootstrapTable('destroy').bootstrapTable({
-        height: 550,
         locale: cultureName,
+
+        pagination: true,
+        pageSize: 10,
+        pageList: [10, 20, 30, 50, 100],
+        paginationLoop: false,
+        paginationParts: ['pageInfo', 'pageList'],
+
         exportDataType: 'all',
         exportTypes: ['excel'],
+
         columns: [
             {
                 title: "Id",
@@ -261,8 +274,14 @@ function initTable() {
 
 function initTableSolicitudesAutorizar() {
     tableSolicitudesAutorizar.bootstrapTable('destroy').bootstrapTable({
-        height: 350,
         locale: cultureName,
+
+        pagination: true,
+        pageSize: 10,
+        pageList: [10, 20, 30, 50, 100],
+        paginationLoop: false,
+        paginationParts: ['pageInfo', 'pageList'],
+
         columns: [
             {
                 title: "Id",
@@ -609,6 +628,9 @@ function initSolicitudVacacionesDialog(action, row) {
     $("#chkVacacionesAnticipadas").prop("checked", false);
     $("#rowAvisoVacacionesAnticipadas").addClass("d-none");
 
+    $("#chkVacacionesSiguientePeriodo").prop("checked", false);
+    $("#rowAvisoVacacionesSiguientePeriodo").addClass("d-none");
+
     // ✅ Obtener resumen actualizado (acumuladas, tomadas, saldo, disponibles)
     diasDisponiblesActuales = 0;
     cargarResumenVacaciones(); // esto también actualiza lblDiasDisponibles
@@ -763,28 +785,59 @@ function calcularDiasSolicitados() {
             0
         );
 
+        const esAnticipada =
+            $("#chkVacacionesAnticipadas").length > 0 &&
+            $("#chkVacacionesAnticipadas").is(":checked");
+
+        const esSiguientePeriodo =
+            $("#chkVacacionesSiguientePeriodo").length > 0 &&
+            $("#chkVacacionesSiguientePeriodo").is(":checked");
+
         if (
             totalDias > diasDisponiblesActuales &&
-            !$("#chkVacacionesAnticipadas").is(":checked")
+            !esAnticipada &&
+            !esSiguientePeriodo
         ) {
 
             output.innerHTML =
-                `<span class="text-danger">${totalDias} días ` +
-                `(excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)</span>`;
+                `<span class="text-danger">` +
+                `${totalDias} días ` +
+                `(excede saldo disponible de ${diasDisponiblesActuales.toFixed(1)} días)` +
+                `</span>`;
 
-        } else {
+        } else if (esAnticipada) {
 
-            if ($("#chkVacacionesAnticipadas").is(":checked")) {
+            output.innerHTML =
+                `<span class="text-warning fw-bold">` +
+                `${totalDias} días (vacaciones anticipadas)` +
+                `</span>`;
+
+        } else if (esSiguientePeriodo) {
+
+            const diasFuturos = Math.max(
+                totalDias - diasDisponiblesActuales,
+                0
+            );
+
+            if (diasFuturos > 0) {
 
                 output.innerHTML =
                     `<span class="text-warning fw-bold">` +
-                    `${totalDias} días (vacaciones anticipadas)` +
+                    `${totalDias} días ` +
+                    `(${diasFuturos.toFixed(1)} día(s) a cuenta del siguiente periodo)` +
                     `</span>`;
 
             } else {
 
-                output.innerText = `${totalDias}`;
+                output.innerHTML =
+                    `<span class="text-success fw-bold">` +
+                    `${totalDias} días - tu saldo actual es suficiente` +
+                    `</span>`;
             }
+
+        } else {
+
+            output.innerText = `${totalDias}`;
         }
 
         lblDisponibles.innerText = restante.toFixed(1);
@@ -811,6 +864,19 @@ function toggleVacacionesAnticipadasAviso() {
         $("#rowAvisoVacacionesAnticipadas").removeClass("d-none");
     } else {
         $("#rowAvisoVacacionesAnticipadas").addClass("d-none");
+    }
+}
+
+function toggleVacacionesSiguientePeriodoAviso() {
+
+    const checked =
+        $("#chkVacacionesSiguientePeriodo").length > 0 &&
+        $("#chkVacacionesSiguientePeriodo").is(":checked");
+
+    if (checked) {
+        $("#rowAvisoVacacionesSiguientePeriodo").removeClass("d-none");
+    } else {
+        $("#rowAvisoVacacionesSiguientePeriodo").addClass("d-none");
     }
 }
 
@@ -927,7 +993,14 @@ function onGuardarClick() {
             FechaFin: fechaFin,
             ComentarioEmpleado: comentario,
             EmpleadoId: parseInt(empleadoId),
-            EsVacacionAnticipada: $("#chkVacacionesAnticipadas").is(":checked")
+
+            EsVacacionAnticipada:
+                $("#chkVacacionesAnticipadas").length > 0 &&
+                $("#chkVacacionesAnticipadas").is(":checked"),
+
+            EsVacacionSiguientePeriodo:
+                $("#chkVacacionesSiguientePeriodo").length > 0 &&
+                $("#chkVacacionesSiguientePeriodo").is(":checked")
         }
     };
 
@@ -960,6 +1033,9 @@ function onGuardarClick() {
             
             $("#chkVacacionesAnticipadas").prop("checked", false);
             $("#rowAvisoVacacionesAnticipadas").addClass("d-none");
+
+            $("#chkVacacionesSiguientePeriodo").prop("checked", false);
+            $("#rowAvisoVacacionesSiguientePeriodo").addClass("d-none");
 
             // Refrescar tabla principal
             document.querySelector("[name='refresh']").click();

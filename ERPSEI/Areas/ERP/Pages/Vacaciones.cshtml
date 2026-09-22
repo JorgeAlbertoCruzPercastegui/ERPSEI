@@ -164,8 +164,9 @@
        data-minimum-count-columns="2"
        data-show-pagination-switch="true"
        data-pagination="true"
+       data-page-size="10"
        data-id-field="id"
-       data-page-list="[10, 25, 50, 100, all]"
+       data-page-list="[10, 20, 30, 50, 100]"
        data-show-footer="false"
        data-side-pagination="client"
        data-response-handler="responseHandler"
@@ -191,7 +192,8 @@
                    data-unique-id="id"
                    data-search="true"
                    data-pagination="true"
-                   data-page-list="[10,25,50,100,'all']"
+                   data-page-size="10"
+                   data-page-list="[10,20,30,50,100]"
                    data-side-pagination="client"
                    data-url="/ERP/Vacaciones?handler=SolicitudesAutorizar">
                 <thead>
@@ -570,28 +572,92 @@
                         </div>
 
                         <!-- Vacaciones anticipadas -->
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="chkVacacionesAnticipadas" />
-                                    <label class="form-check-label fw-semibold" for="chkVacacionesAnticipadas">
-                                        Solicitar vacaciones anticipadas
-                                    </label>
-                                </div>
-                                <small class="text-muted d-block mt-1">
-                                    Disponible solo para colaboradores que aún no cumplen un año. Máximo 12 días.
-                                </small>
-                            </div>
-                        </div>
+                        @if (!Model.CumplioPrimerAnio)
+                        {
+                            <!-- VACACIONES ANTICIPADAS: MENOS DE 1 AÑO -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="chkVacacionesAnticipadas" />
 
-                        <div class="row mb-3 d-none" id="rowAvisoVacacionesAnticipadas">
-                            <div class="col-12">
-                                <div class="alert alert-warning mb-0">
-                                    <i class="bi bi-exclamation-triangle-fill"></i>
-                                    Las vacaciones anticipadas se descontarán automáticamente cuando el colaborador cumpla un año.
+                                        <label class="form-check-label fw-semibold"
+                                               for="chkVacacionesAnticipadas">
+                                            Solicitar vacaciones anticipadas
+                                        </label>
+                                    </div>
+
+                                    <small class="text-muted d-block mt-1">
+                                        Disponible únicamente para colaboradores que aún no cumplen un año.
+                                        Máximo 12 días.
+                                    </small>
                                 </div>
                             </div>
-                        </div>
+
+                            <div class="row mb-3 d-none"
+                                 id="rowAvisoVacacionesAnticipadas">
+
+                                <div class="col-12">
+                                    <div class="alert alert-warning mb-0">
+
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                        Las vacaciones anticipadas se descontarán automáticamente
+                                        cuando el colaborador cumpla un año.
+
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- VACACIONES A CUENTA DEL SIGUIENTE PERIODO -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+
+                                    <div class="form-check">
+
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               id="chkVacacionesSiguientePeriodo" />
+
+                                        <label class="form-check-label fw-semibold"
+                                               for="chkVacacionesSiguientePeriodo">
+
+                                            Solicitar vacaciones a cuenta del siguiente periodo
+
+                                        </label>
+
+                                    </div>
+
+                                    <small class="text-muted d-block mt-1">
+                                        Permite solicitar días adicionales cuando el saldo actual no sea suficiente.
+                                        Únicamente los días excedentes se descontarán del siguiente periodo de vacaciones.
+                                    </small>
+
+                                </div>
+                            </div>
+
+                            <div class="row mb-3 d-none"
+                                 id="rowAvisoVacacionesSiguientePeriodo">
+
+                                <div class="col-12">
+
+                                    <div class="alert alert-warning mb-0">
+
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                        Los días que excedan tu saldo disponible quedarán pendientes
+                                        y se descontarán automáticamente cuando se genere tu siguiente
+                                        periodo de vacaciones.
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        }
 
                         <!-- Fechas -->
                         <div class="row">

@@ -41,8 +41,19 @@ namespace ERPSEI.Data.Entities.Vacaciones
         public DateTime? FechaRevisionTH { get; set; }
         public bool EsVacacionAnticipada { get; set; }
         public decimal DiasAnticipadosPendientesDescuento { get; set; }
+
         public DateTime? FechaAplicacionDescuentoAnticipado { get; set; }
         public bool DescuentoAnticipadoAplicado { get; set; }
+
+        public bool EsVacacionSiguientePeriodo { get; set; }
+
+        public decimal DiasPendientesSiguientePeriodo { get; set; }
+
+        public DateTime? FechaProgramadaDescuentoSiguientePeriodo { get; set; }
+
+        public DateTime? FechaAplicacionDescuentoSiguientePeriodo { get; set; }
+
+        public bool DescuentoSiguientePeriodoAplicado { get; set; }
         public ICollection<HistorialVacaciones> Historiales { get; set; }
     }
 }

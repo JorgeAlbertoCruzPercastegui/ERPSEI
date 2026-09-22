@@ -70,6 +70,7 @@ namespace ERPSEI.Areas.ERP.Pages
         public bool PuedeAprobarJefeDirecto { get; set; }
         public bool PuedeAprobarTH { get; set; }
         public bool PuedeExportarDetalleVacaciones { get; set; }
+        public bool CumplioPrimerAnio { get; set; }
 
 
         [BindProperty]
@@ -178,7 +179,10 @@ namespace ERPSEI.Areas.ERP.Pages
             public string? ComentarioEmpleado { get; set; }
 
             public int EmpleadoId { get; set; }
+
             public bool EsVacacionAnticipada { get; set; }
+
+            public bool EsVacacionSiguientePeriodo { get; set; }
         }
 
         public List<VacacionesAcumuladasModel> ListaVacacionesAcumuladas { get; set; } = new();
@@ -406,9 +410,9 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         private async Task<List<PeriodoVacacionSaldoModel>> ObtenerPeriodosVacacionesConSaldoAsync(
-    int empleadoId,
-    DateTime fechaIngreso,
-    DateTime fechaHoy)
+        int empleadoId,
+        DateTime fechaIngreso,
+        DateTime fechaHoy)
         {
             int aniosCumplidos = fechaHoy.Year - fechaIngreso.Year;
 
@@ -435,33 +439,117 @@ namespace ERPSEI.Areas.ERP.Pages
                 });
             }
 
-            decimal diasTomados = await db.SolicitudesVacaciones
-                .Where(s =>
-                    s.EmpleadoId == empleadoId &&
-                    (
-                        (
-                            !s.EsVacacionAnticipada &&
-                            (
-                                s.Estado == EstadoSolicitud.Aprobado ||
-                                (s.EstadoJefeDirecto == "Aprobado" && s.EstadoTH == "Aprobado")
-                            )
-                        )
-                        ||
-                        (
-                            s.EsVacacionAnticipada &&
-                            s.DescuentoAnticipadoAplicado
-                        )
-                    ))
-                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+            var solicitudesAprobadas = await db.SolicitudesVacaciones
+    .Where(s =>
+        s.EmpleadoId == empleadoId &&
+        (
+            s.Estado == EstadoSolicitud.Aprobado ||
+            (
+                s.EstadoJefeDirecto == "Aprobado" &&
+                s.EstadoTH == "Aprobado"
+            )
+        ))
+    .ToListAsync();
+
+            decimal diasTomados = 0m;
+
+            var descuentosSiguientePeriodo =
+                new List<(DateTime FechaGeneracion, decimal Dias)>();
+
+            foreach (var solicitud in solicitudesAprobadas)
+            {
+                // =========================================
+                // VACACIONES ANTICIPADAS
+                // =========================================
+                if (solicitud.EsVacacionAnticipada)
+                {
+                    if (solicitud.DescuentoAnticipadoAplicado)
+                    {
+                        diasTomados += solicitud.DiasSolicitados;
+                    }
+
+                    continue;
+                }
+
+                // =========================================
+                // VACACIONES A CUENTA DEL SIGUIENTE PERIODO
+                // =========================================
+                if (solicitud.EsVacacionSiguientePeriodo)
+                {
+                    // Parte que se cubrió con saldo del periodo actual
+                    decimal diasSaldoActual = Math.Max(
+                        solicitud.DiasSolicitados -
+                        solicitud.DiasPendientesSiguientePeriodo,
+                        0m
+                    );
+
+                    diasTomados += diasSaldoActual;
+
+                    // La parte comprometida se aplicará DIRECTAMENTE
+                    // al periodo que corresponde
+                    if (
+                        solicitud.DescuentoSiguientePeriodoAplicado &&
+                        solicitud.FechaProgramadaDescuentoSiguientePeriodo.HasValue &&
+                        solicitud.DiasPendientesSiguientePeriodo > 0
+                    )
+                    {
+                        descuentosSiguientePeriodo.Add((
+                            solicitud.FechaProgramadaDescuentoSiguientePeriodo.Value.Date,
+                            solicitud.DiasPendientesSiguientePeriodo
+                        ));
+                    }
+
+                    continue;
+                }
+
+                // =========================================
+                // VACACIONES NORMALES
+                // =========================================
+                diasTomados += solicitud.DiasSolicitados;
+            }
+
+
+            // =====================================================
+            // APLICAR PRIMERO LAS DEUDAS AL PERIODO CORRESPONDIENTE
+            // =====================================================
+
+            foreach (var descuento in descuentosSiguientePeriodo)
+            {
+                var periodoDestino = periodos.FirstOrDefault(p =>
+                    p.FechaGeneracion.Date ==
+                    descuento.FechaGeneracion.Date
+                );
+
+                if (periodoDestino == null)
+                    continue;
+
+                decimal diasAConsumir = Math.Min(
+                    periodoDestino.DiasDisponibles,
+                    descuento.Dias
+                );
+
+                periodoDestino.DiasTomados += diasAConsumir;
+                periodoDestino.DiasDisponibles -= diasAConsumir;
+            }
+
+
+            // =====================================================
+            // DESPUÉS CONSUMIR VACACIONES NORMALES
+            // DESDE LOS PERIODOS MÁS ANTIGUOS
+            // =====================================================
 
             foreach (var periodo in periodos.OrderBy(p => p.FechaGeneracion))
             {
                 if (diasTomados <= 0)
                     break;
 
-                decimal diasAConsumir = Math.Min(periodo.DiasDisponibles, diasTomados);
+                decimal diasAConsumir =
+                    Math.Min(
+                        periodo.DiasDisponibles,
+                        diasTomados
+                    );
 
-                periodo.DiasTomados = diasAConsumir;
+                periodo.DiasTomados += diasAConsumir;
                 periodo.DiasDisponibles -= diasAConsumir;
                 diasTomados -= diasAConsumir;
             }
@@ -536,14 +624,15 @@ namespace ERPSEI.Areas.ERP.Pages
                 decimal diasDelPeriodo = ObtenerDiasVacacionesPorAntiguedad(anio);
 
                 var diasTomados = await db.SolicitudesVacaciones
-                    .Where(s =>
-                        s.EmpleadoId == empleadoId &&
-                        s.EstadoJefeDirecto == "Aprobado" &&
-                        s.EstadoTH == "Aprobado" &&
-                        !s.EsVacacionAnticipada &&
-                        s.FechaInicio >= fechaGeneracion &&
-                        s.FechaInicio <= fechaVencimiento)
-                    .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+                .Where(s =>
+                    s.EmpleadoId == empleadoId &&
+                    s.EstadoJefeDirecto == "Aprobado" &&
+                    s.EstadoTH == "Aprobado" &&
+                    !s.EsVacacionAnticipada &&
+                    !s.EsVacacionSiguientePeriodo &&
+                    s.FechaInicio >= fechaGeneracion &&
+                    s.FechaInicio <= fechaVencimiento)
+                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
 
                 decimal diasVencidos = Math.Max(diasDelPeriodo - diasTomados, 0m);
 
@@ -873,6 +962,13 @@ namespace ERPSEI.Areas.ERP.Pages
         public async Task OnGetAsync()
         {
             await ConfigurarPermisosVacacionesAsync();
+
+            var userEmail = User.Identity?.Name;
+            var usuario = await userManager.FindByNameWithEmpleadoAsync(userEmail);
+
+            CumplioPrimerAnio =
+                usuario?.Empleado != null &&
+                DateTime.Today >= usuario.Empleado.FechaIngreso.Date.AddYears(1);
         }
 
         public async Task<JsonResult> OnGetMisVacacionesListAsync()
@@ -942,7 +1038,7 @@ namespace ERPSEI.Areas.ERP.Pages
             "Acumuladas",
             "Tomadas",
             "Vencidas",
-            "Tomadas en el Futuro",
+            "Días Comprometidos de Periodos Futuros",
             "Total Saldo",
             "Vacaciones Legales Proporcionales",
             "Estado",
@@ -1013,30 +1109,121 @@ namespace ERPSEI.Areas.ERP.Pages
                             (decimal)(fechaHoy - fechaIngreso).TotalDays, 1);
                     }
 
-                    tomadas = await db.SolicitudesVacaciones
-                        .Where(x =>
-                            x.EmpleadoId == s.Empleado.Id &&
-                            (
-                                (!x.EsVacacionAnticipada &&
-                                 x.EstadoJefeDirecto == "Aprobado" &&
-                                 x.EstadoTH == "Aprobado")
-                                ||
-                                (x.EsVacacionAnticipada &&
-                                 x.DescuentoAnticipadoAplicado)
-                            ))
-                        .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+                    // =====================================================
+                    // VACACIONES TOMADAS NORMALES
+                    // =====================================================
+                    decimal tomadasNormales =
+                        await db.SolicitudesVacaciones
+                            .Where(x =>
+                                x.EmpleadoId == s.Empleado.Id &&
+                                !x.EsVacacionAnticipada &&
+                                !x.EsVacacionSiguientePeriodo &&
+                                x.EstadoJefeDirecto == "Aprobado" &&
+                                x.EstadoTH == "Aprobado")
+                            .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
 
-                    tomadasFuturo = await db.SolicitudesVacaciones
-                        .Where(x =>
-                            x.EmpleadoId == s.Empleado.Id &&
-                            x.EsVacacionAnticipada &&
-                            x.Estado != EstadoSolicitud.Rechazado &&
-                            !x.DescuentoAnticipadoAplicado)
-                        .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+                    // =====================================================
+                    // VACACIONES ANTICIPADAS YA APLICADAS
+                    // =====================================================
+                    decimal tomadasAnticipadasAplicadas =
+                        await db.SolicitudesVacaciones
+                            .Where(x =>
+                                x.EmpleadoId == s.Empleado.Id &&
+                                x.EsVacacionAnticipada &&
+                                x.DescuentoAnticipadoAplicado)
+                            .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+
+
+                    // =====================================================
+                    // VACACIONES A CUENTA DEL SIGUIENTE PERIODO
+                    // PARTE CUBIERTA CON SALDO ACTUAL
+                    // =====================================================
+                    decimal tomadasSiguientePeriodoActual =
+                        await db.SolicitudesVacaciones
+                            .Where(x =>
+                                x.EmpleadoId == s.Empleado.Id &&
+                                x.EsVacacionSiguientePeriodo &&
+                                x.EstadoJefeDirecto == "Aprobado" &&
+                                x.EstadoTH == "Aprobado")
+                            .SumAsync(x =>
+                                (decimal?)(
+                                    x.DiasSolicitados -
+                                    x.DiasPendientesSiguientePeriodo
+                                )
+                            ) ?? 0m;
+
+
+                    // =====================================================
+                    // VACACIONES DEL SIGUIENTE PERIODO YA APLICADAS
+                    // =====================================================
+                    decimal tomadasSiguientePeriodoAplicadas =
+                        await db.SolicitudesVacaciones
+                            .Where(x =>
+                                x.EmpleadoId == s.Empleado.Id &&
+                                x.EsVacacionSiguientePeriodo &&
+                                x.DescuentoSiguientePeriodoAplicado)
+                            .SumAsync(x =>
+                                (decimal?)x.DiasPendientesSiguientePeriodo
+                            ) ?? 0m;
+
+
+                    // =====================================================
+                    // TOTAL TOMADAS
+                    // =====================================================
+                    tomadas =
+                        tomadasNormales +
+                        tomadasAnticipadasAplicadas +
+                        tomadasSiguientePeriodoActual +
+                        tomadasSiguientePeriodoAplicadas;
+
+
+                    // =====================================================
+                    // VACACIONES ANTICIPADAS PENDIENTES
+                    // =====================================================
+                    decimal anticipadasFuturas =
+                        await db.SolicitudesVacaciones
+                            .Where(x =>
+                                x.EmpleadoId == s.Empleado.Id &&
+                                x.EsVacacionAnticipada &&
+                                x.Estado != EstadoSolicitud.Rechazado &&
+                                !x.DescuentoAnticipadoAplicado)
+                            .SumAsync(x =>
+                                (decimal?)x.DiasSolicitados
+                            ) ?? 0m;
+
+
+                    // =====================================================
+                    // VACACIONES COMPROMETIDAS DEL SIGUIENTE PERIODO
+                    // =====================================================
+                    decimal siguientePeriodoFuturas =
+                        await db.SolicitudesVacaciones
+                            .Where(x =>
+                                x.EmpleadoId == s.Empleado.Id &&
+                                x.EsVacacionSiguientePeriodo &&
+                                x.Estado != EstadoSolicitud.Rechazado &&
+                                !x.DescuentoSiguientePeriodoAplicado)
+                            .SumAsync(x =>
+                                (decimal?)x.DiasPendientesSiguientePeriodo
+                            ) ?? 0m;
+
+
+                    // =====================================================
+                    // TOTAL TOMADAS EN EL FUTURO
+                    // =====================================================
+                    tomadasFuturo =
+                        anticipadasFuturas +
+                        siguientePeriodoFuturas;
 
                     vencidas = await ObtenerDiasVencidosAsync(s.Empleado.Id);
 
-                    totalSaldo = Math.Max(acumuladas - tomadas - vencidas, 0m);
+                    totalSaldo = Math.Max(
+                        acumuladas -
+                        tomadas -
+                        vencidas -
+                        anticipadasFuturas,
+                        0m
+                    );
                 }
 
                 ws.Cells[row, 1].Value = s.Id;
@@ -1123,6 +1310,110 @@ namespace ERPSEI.Areas.ERP.Pages
                     .Range(0, (InputEditarSolicitud.FechaFin - InputEditarSolicitud.FechaInicio).Days + 1)
                     .Select(offset => InputEditarSolicitud.FechaInicio.AddDays(offset))
                     .Count(date => date.DayOfWeek != DayOfWeek.Saturday && date.DayOfWeek != DayOfWeek.Sunday);
+
+                decimal diasDisponiblesActuales =
+                    await OnGetObtenerDiasDisponiblesInternoAsync(
+                        usuario.Empleado.Id
+                    );
+
+                // Recuperamos la parte que esta misma solicitud
+                // ya había reservado del saldo actual
+                decimal diasReservadosSolicitudActual = 0m;
+
+                if (solicitud.EsVacacionSiguientePeriodo)
+                {
+                    diasReservadosSolicitudActual =
+                        Math.Max(
+                            solicitud.DiasSolicitados -
+                            solicitud.DiasPendientesSiguientePeriodo,
+                            0m
+                        );
+                }
+                else if (!solicitud.EsVacacionAnticipada)
+                {
+                    diasReservadosSolicitudActual =
+                        solicitud.DiasSolicitados;
+                }
+
+                // Saldo real disponible para recalcular la edición,
+                // incluyendo lo que esta misma solicitud ya tenía reservado.
+                decimal diasDisponibles =
+                    diasDisponiblesActuales +
+                    diasReservadosSolicitudActual;
+
+                if (solicitud.EsVacacionSiguientePeriodo)
+                {
+                    if (diasSolicitados <= diasDisponibles)
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                $"Con las nuevas fechas tu saldo actual de {diasDisponibles:0.##} día(s) " +
+                                $"ya es suficiente. La solicitud ya no requiere utilizar días del siguiente periodo."
+                        });
+                    }
+
+                    decimal nuevosDiasPendientes =
+                        Math.Max(
+                            diasSolicitados - diasDisponibles,
+                            0m
+                        );
+
+                    var fechaHoy = DateTime.Today;
+                    var fechaIngreso = usuario.Empleado.FechaIngreso.Date;
+
+                    int aniosCumplidos =
+                        fechaHoy.Year - fechaIngreso.Year;
+
+                    if (fechaHoy < fechaIngreso.AddYears(aniosCumplidos))
+                        aniosCumplidos--;
+
+                    decimal diasProximoPeriodo =
+                        ObtenerDiasVacacionesPorAntiguedad(
+                            aniosCumplidos + 1
+                        );
+
+                    decimal otrosDiasPendientes =
+                        await db.SolicitudesVacaciones
+                            .Where(s =>
+                                s.EmpleadoId == usuario.Empleado.Id &&
+                                s.Id != solicitud.Id &&
+                                s.EsVacacionSiguientePeriodo &&
+                                s.Estado != EstadoSolicitud.Rechazado &&
+                                !s.DescuentoSiguientePeriodoAplicado)
+                            .SumAsync(
+                                s => (decimal?)s.DiasPendientesSiguientePeriodo
+                            ) ?? 0m;
+
+                    if (
+                        otrosDiasPendientes +
+                        nuevosDiasPendientes >
+                        diasProximoPeriodo
+                    )
+                    {
+                        decimal disponiblesProximoPeriodo =
+                            Math.Max(
+                                diasProximoPeriodo -
+                                otrosDiasPendientes,
+                                0m
+                            );
+
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                $"La edición excede los días disponibles del siguiente periodo. " +
+                                $"Únicamente quedan {disponiblesProximoPeriodo:0.##} día(s) disponibles."
+                        });
+                    }
+
+                    solicitud.DiasPendientesSiguientePeriodo =
+                        nuevosDiasPendientes;
+
+                    solicitud.FechaProgramadaDescuentoSiguientePeriodo =
+                        fechaIngreso.AddYears(aniosCumplidos + 1);
+                }
 
                 solicitud.FechaInicio = InputEditarSolicitud.FechaInicio;
                 solicitud.FechaFin = InputEditarSolicitud.FechaFin;
@@ -1687,32 +1978,98 @@ namespace ERPSEI.Areas.ERP.Pages
             if (empleado == null)
                 return 0m;
 
+            // Aplicar descuentos pendientes antes
+            // de obtener el saldo real
+            await AplicarDescuentoVacacionesAnticipadasAsync(
+                empleado.Id
+            );
+
+            await AplicarDescuentoVacacionesSiguientePeriodoAsync(
+                empleado.Id
+            );
+
             if (empleado.SaldoVacacionesImportado.HasValue)
             {
-                decimal saldoImportado = empleado.SaldoVacacionesImportado.Value;
+                decimal saldoImportado =
+                    empleado.SaldoVacacionesImportado.Value;
 
-                decimal tomadas = await db.SolicitudesVacaciones
+
+                var solicitudes = await db.SolicitudesVacaciones
                     .Where(x =>
                         x.EmpleadoId == empleado.Id &&
+                        x.Estado != EstadoSolicitud.Rechazado)
+                    .ToListAsync();
+
+
+                decimal tomadas = 0m;
+                decimal anticipadasPendientes = 0m;
+
+
+                foreach (var solicitud in solicitudes)
+                {
+                    if (solicitud.EsVacacionAnticipada)
+                    {
+                        if (solicitud.DescuentoAnticipadoAplicado)
+                        {
+                            tomadas += solicitud.DiasSolicitados;
+                        }
+                        else
+                        {
+                            anticipadasPendientes += solicitud.DiasSolicitados;
+                        }
+
+                        continue;
+                    }
+
+
+                    // =========================================
+                    // VACACIONES SIGUIENTE PERIODO
+                    // =========================================
+                    if (solicitud.EsVacacionSiguientePeriodo)
+                    {
+                        decimal diasSaldoActual =
+                            Math.Max(
+                                solicitud.DiasSolicitados -
+                                solicitud.DiasPendientesSiguientePeriodo,
+                                0m
+                            );
+
+                        // La parte cubierta por saldo actual queda reservada
+                        // desde que existe la solicitud y mientras no esté rechazada.
+                        tomadas += diasSaldoActual;
+
+                        // La parte futura sólo se descuenta cuando
+                        // ya se generó el siguiente periodo.
+                        if (solicitud.DescuentoSiguientePeriodoAplicado)
+                        {
+                            tomadas +=
+                                solicitud.DiasPendientesSiguientePeriodo;
+                        }
+
+                        continue;
+                    }
+
+
+                    // =========================================
+                    // VACACIONES NORMALES
+                    // =========================================
+                    if (
+                        solicitud.Estado == EstadoSolicitud.Aprobado ||
                         (
-                            (!x.EsVacacionAnticipada &&
-                             x.EstadoJefeDirecto == "Aprobado" &&
-                             x.EstadoTH == "Aprobado")
-                            ||
-                            (x.EsVacacionAnticipada &&
-                             x.DescuentoAnticipadoAplicado)
-                        ))
-                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+                            solicitud.EstadoJefeDirecto == "Aprobado" &&
+                            solicitud.EstadoTH == "Aprobado"
+                        )
+                    )
+                    {
+                        tomadas += solicitud.DiasSolicitados;
+                    }
+                }
 
-                decimal futuras = await db.SolicitudesVacaciones
-                    .Where(x =>
-                        x.EmpleadoId == empleado.Id &&
-                        x.EsVacacionAnticipada &&
-                        x.Estado != EstadoSolicitud.Rechazado &&
-                        !x.DescuentoAnticipadoAplicado)
-                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
 
-                return saldoImportado - tomadas - futuras;
+                return Math.Max(
+                    saldoImportado - tomadas - anticipadasPendientes,
+                    0m
+                );
             }
 
             var fechaHoy = DateTime.Today;
@@ -1759,12 +2116,59 @@ namespace ERPSEI.Areas.ERP.Pages
                 ? diasLegales
                 : diasLegales + diasProporcionales;
 
-            var diasTomados = await db.SolicitudesVacaciones
-                .Where(s =>
-                    s.EmpleadoId == empleadoId &&
-                    s.Estado != EstadoSolicitud.Rechazado &&
-                    !s.EsVacacionAnticipada)
-                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+            var solicitudesSaldo = await db.SolicitudesVacaciones
+    .Where(s =>
+        s.EmpleadoId == empleadoId &&
+        s.Estado != EstadoSolicitud.Rechazado)
+    .ToListAsync();
+
+            decimal diasTomados = 0m;
+
+            foreach (var solicitud in solicitudesSaldo)
+            {
+                // =========================================
+                // VACACIONES ANTICIPADAS
+                // =========================================
+                if (solicitud.EsVacacionAnticipada)
+                {
+                    if (solicitud.DescuentoAnticipadoAplicado)
+                    {
+                        diasTomados += solicitud.DiasSolicitados;
+                    }
+
+                    continue;
+                }
+
+                // =========================================
+                // VACACIONES A CUENTA DEL SIGUIENTE PERIODO
+                // =========================================
+                if (solicitud.EsVacacionSiguientePeriodo)
+                {
+                    decimal diasSaldoActual = Math.Max(
+                        solicitud.DiasSolicitados -
+                        solicitud.DiasPendientesSiguientePeriodo,
+                        0m
+                    );
+
+                    // Reservamos únicamente lo cubierto por el saldo actual
+                    diasTomados += diasSaldoActual;
+
+                    // La parte futura sólo se suma cuando realmente
+                    // llegó el siguiente periodo y se aplicó
+                    if (solicitud.DescuentoSiguientePeriodoAplicado)
+                    {
+                        diasTomados +=
+                            solicitud.DiasPendientesSiguientePeriodo;
+                    }
+
+                    continue;
+                }
+
+                // =========================================
+                // VACACIONES NORMALES
+                // =========================================
+                diasTomados += solicitud.DiasSolicitados;
+            }
 
             decimal diasVencidos = await ObtenerDiasVencidosAsync(empleadoId);
 
@@ -1819,6 +2223,80 @@ namespace ERPSEI.Areas.ERP.Pages
             await db.SaveChangesAsync();
         }
 
+        private async Task AplicarDescuentoVacacionesSiguientePeriodoAsync(int empleadoId)
+        {
+            var fechaHoy = DateTime.Today;
+
+            var solicitudesPendientes =
+                await db.SolicitudesVacaciones
+                    .Where(s =>
+                        s.EmpleadoId == empleadoId &&
+                        s.EsVacacionSiguientePeriodo &&
+                        s.Estado == EstadoSolicitud.Aprobado &&
+                        !s.DescuentoSiguientePeriodoAplicado &&
+                        s.DiasPendientesSiguientePeriodo > 0 &&
+                        s.FechaProgramadaDescuentoSiguientePeriodo.HasValue &&
+                        s.FechaProgramadaDescuentoSiguientePeriodo.Value.Date <= fechaHoy)
+                    .ToListAsync();
+
+
+            if (!solicitudesPendientes.Any())
+                return;
+
+
+            foreach (var solicitud in solicitudesPendientes)
+            {
+                var historial = await db.HistorialesVacaciones
+    .FirstOrDefaultAsync(h =>
+        h.SolicitudVacacionesId == solicitud.Id
+    );
+
+                string detalleAplicacion =
+                    $"Aplicación automática de {solicitud.DiasPendientesSiguientePeriodo:0.##} " +
+                    $"día(s) a cuenta del siguiente periodo realizada el {fechaHoy:dd/MM/yyyy}.";
+
+
+                if (historial != null)
+                {
+                    historial.Observaciones =
+                        string.IsNullOrWhiteSpace(historial.Observaciones)
+                            ? detalleAplicacion
+                            : $"{historial.Observaciones} | {detalleAplicacion}";
+
+                    db.HistorialesVacaciones.Update(historial);
+                }
+                else
+                {
+                    // Respaldo por si existiera alguna solicitud antigua
+                    // sin registro histórico
+                    db.HistorialesVacaciones.Add(
+                        new HistorialVacaciones
+                        {
+                            EmpleadoId = solicitud.EmpleadoId,
+                            FechaInicio = solicitud.FechaInicio,
+                            FechaFin = solicitud.FechaFin,
+                            DiasTomados = solicitud.DiasSolicitados,
+
+                            Observaciones =
+                                $"Solicitud #{solicitud.Id}. {detalleAplicacion}",
+
+                            SolicitudVacacionesId = solicitud.Id,
+                            AutorizadorId = solicitud.AutorizadorId
+                        }
+                    );
+                }
+
+
+                solicitud.DescuentoSiguientePeriodoAplicado = true;
+
+                solicitud.FechaAplicacionDescuentoSiguientePeriodo =
+                    fechaHoy;
+            }
+
+
+            await db.SaveChangesAsync();
+        }
+
         public async Task<JsonResult> OnPostGuardarSolicitud()
         {
             ServerResponse resp = new(false, localizer["SolicitudVacacionesSavedUnsuccessfully"]);
@@ -1865,42 +2343,192 @@ namespace ERPSEI.Areas.ERP.Pages
                     return new JsonResult(resp);
                 }
 
-                bool cumpleAnio = fechaHoy >= empleado.FechaIngreso.Date.AddYears(1);
+                bool cumpleAnio =
+    fechaHoy >= empleado.FechaIngreso.Date.AddYears(1);
+
+                decimal diasDisponibles =
+                    await OnGetObtenerDiasDisponiblesInternoAsync(empleado.Id);
+
+                decimal diasPendientesSiguientePeriodo = 0m;
+                DateTime? fechaProgramadaSiguientePeriodo = null;
+
+
+                // =====================================================
+                // VALIDACION DE MODALIDADES
+                // =====================================================
+
+                if (
+                    InputSolicitud.EsVacacionAnticipada &&
+                    InputSolicitud.EsVacacionSiguientePeriodo
+                )
+                {
+                    resp.TieneError = true;
+                    resp.Mensaje =
+                        "No puedes solicitar vacaciones anticipadas y vacaciones a cuenta del siguiente periodo al mismo tiempo.";
+
+                    return new JsonResult(resp);
+                }
+
+
+                // =====================================================
+                // VACACIONES ANTICIPADAS
+                // SOLO MENOS DE 1 AÑO
+                // =====================================================
 
                 if (InputSolicitud.EsVacacionAnticipada)
                 {
                     if (cumpleAnio)
                     {
                         resp.TieneError = true;
-                        resp.Mensaje = "Las vacaciones anticipadas solo aplican para colaboradores que aún no cumplen un año.";
+
+                        resp.Mensaje =
+                            "Las vacaciones anticipadas solo aplican para colaboradores que aún no cumplen un año.";
+
                         return new JsonResult(resp);
                     }
+
 
                     if (diasSolicitados > 12)
                     {
                         resp.TieneError = true;
-                        resp.Mensaje = "No puedes solicitar más de 12 días de vacaciones anticipadas.";
+
+                        resp.Mensaje =
+                            "No puedes solicitar más de 12 días de vacaciones anticipadas.";
+
                         return new JsonResult(resp);
                     }
 
-                    var diasAnticipadosPendientes = await ObtenerDiasAnticipadosPendientesAsync(empleado.Id);
+
+                    var diasAnticipadosPendientes =
+                        await ObtenerDiasAnticipadosPendientesAsync(empleado.Id);
+
 
                     if ((diasAnticipadosPendientes + diasSolicitados) > 12)
                     {
                         resp.TieneError = true;
-                        resp.Mensaje = $"Ya tienes {diasAnticipadosPendientes:0.##} día(s) de vacaciones anticipadas pendientes. El máximo acumulado es 12.";
+
+                        resp.Mensaje =
+                            $"Ya tienes {diasAnticipadosPendientes:0.##} día(s) " +
+                            $"de vacaciones anticipadas pendientes. " +
+                            $"El máximo acumulado es 12.";
+
                         return new JsonResult(resp);
                     }
                 }
+
+
+                // =====================================================
+                // VACACIONES A CUENTA DEL SIGUIENTE PERIODO
+                // SOLO 1 AÑO O MAS
+                // =====================================================
+
+                else if (InputSolicitud.EsVacacionSiguientePeriodo)
+                {
+                    if (!cumpleAnio)
+                    {
+                        resp.TieneError = true;
+
+                        resp.Mensaje =
+                            "Las vacaciones a cuenta del siguiente periodo únicamente aplican para colaboradores que ya cumplieron un año.";
+
+                        return new JsonResult(resp);
+                    }
+
+
+                    if (diasSolicitados <= diasDisponibles)
+                    {
+                        resp.TieneError = true;
+
+                        resp.Mensaje =
+                            $"Tu saldo actual de {diasDisponibles:0.##} día(s) es suficiente. " +
+                            $"No es necesario utilizar vacaciones a cuenta del siguiente periodo.";
+
+                        return new JsonResult(resp);
+                    }
+
+
+                    // Solamente se manda al siguiente periodo el excedente
+                    diasPendientesSiguientePeriodo =
+                        Math.Max(diasSolicitados - diasDisponibles, 0m);
+
+
+                    // Calcular antigüedad actual
+                    int aniosCumplidos =
+                        fechaHoy.Year - empleado.FechaIngreso.Date.Year;
+
+                    if (
+                        fechaHoy <
+                        empleado.FechaIngreso.Date.AddYears(aniosCumplidos)
+                    )
+                    {
+                        aniosCumplidos--;
+                    }
+
+
+                    // Fecha en la cual se generará el siguiente periodo
+                    fechaProgramadaSiguientePeriodo =
+                        empleado.FechaIngreso.Date.AddYears(aniosCumplidos + 1);
+
+
+                    // Días que corresponderán en el siguiente periodo
+                    decimal diasProximoPeriodo =
+                        ObtenerDiasVacacionesPorAntiguedad(aniosCumplidos + 1);
+
+
+                    // Deuda futura ya existente
+                    decimal diasPendientesExistentes =
+                        await db.SolicitudesVacaciones
+                            .Where(s =>
+                                s.EmpleadoId == empleado.Id &&
+                                s.EsVacacionSiguientePeriodo &&
+                                s.Estado != EstadoSolicitud.Rechazado &&
+                                !s.DescuentoSiguientePeriodoAplicado)
+                            .SumAsync(
+                                s => (decimal?)s.DiasPendientesSiguientePeriodo
+                            ) ?? 0m;
+
+
+                    if (
+                        diasPendientesExistentes +
+                        diasPendientesSiguientePeriodo >
+                        diasProximoPeriodo
+                    )
+                    {
+                        decimal disponiblesProximoPeriodo =
+                            Math.Max(
+                                diasProximoPeriodo -
+                                diasPendientesExistentes,
+                                0m
+                            );
+
+
+                        resp.TieneError = true;
+
+                        resp.Mensaje =
+                            $"No puedes comprometer más días del siguiente periodo. " +
+                            $"Tienes {diasPendientesExistentes:0.##} día(s) ya comprometidos " +
+                            $"y únicamente quedan {disponiblesProximoPeriodo:0.##} día(s) disponibles.";
+
+                        return new JsonResult(resp);
+                    }
+                }
+
+
+                // =====================================================
+                // VACACIONES NORMALES
+                // =====================================================
+
                 else
                 {
-                    // Aquí se valida el flujo normal de vacaciones
-                    decimal diasDisponibles = await OnGetObtenerDiasDisponiblesInternoAsync(empleado.Id);
-
                     if (diasSolicitados > diasDisponibles)
                     {
                         resp.TieneError = true;
-                        resp.Mensaje = $"No cuentas con saldo suficiente. Saldo disponible: {diasDisponibles:0.##} día(s).";
+
+                        resp.Mensaje =
+                            $"No cuentas con saldo suficiente. " +
+                            $"Saldo disponible: {diasDisponibles:0.##} día(s). " +
+                            $"Puedes utilizar la opción de vacaciones a cuenta del siguiente periodo.";
+
                         return new JsonResult(resp);
                     }
                 }
@@ -1921,29 +2549,70 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     EmpleadoId = empleado.Id,
                     Empleado = empleado,
+
                     FechaSolicitud = fechaActual,
+
                     FechaInicio = InputSolicitud.FechaInicio,
                     FechaFin = InputSolicitud.FechaFin,
-                    DiasSolicitados = diasSolicitados,
-                    //ComentarioEmpleado = InputSolicitud.ComentarioEmpleado,
-                    ComentarioEmpleado =
-                    string.IsNullOrWhiteSpace(InputSolicitud.ComentarioEmpleado)
-                        ? $"[Asignación automática] {resultadoAutorizador.observacion}"
-                        : $"{InputSolicitud.ComentarioEmpleado}",
 
-                    /*JefeDirectoEmpleadoId = empleado.JefeId,
-                    AutorizadorId = empleado.JefeId,*/
-                    JefeDirectoEmpleadoId = resultadoAutorizador.autorizadorId,
-                    AutorizadorId = resultadoAutorizador.autorizadorId,
+                    DiasSolicitados = diasSolicitados,
+
+                    ComentarioEmpleado =
+                    string.IsNullOrWhiteSpace(
+                        InputSolicitud.ComentarioEmpleado
+                    )
+                    ? $"[Asignación automática] {resultadoAutorizador.observacion}"
+                    : InputSolicitud.ComentarioEmpleado,
+
+                    JefeDirectoEmpleadoId =
+                     resultadoAutorizador.autorizadorId,
+
+                    AutorizadorId =
+                    resultadoAutorizador.autorizadorId,
+
                     Estado = EstadoSolicitud.Pendiente,
 
                     EstadoJefeDirecto = "Pendiente",
                     EstadoTH = "Pendiente",
 
-                    EsVacacionAnticipada = InputSolicitud.EsVacacionAnticipada,
-                    DiasAnticipadosPendientesDescuento = InputSolicitud.EsVacacionAnticipada ? diasSolicitados : 0m,
+
+                    // =========================================
+                    // VACACIONES ANTICIPADAS
+                    // =========================================
+
+                    EsVacacionAnticipada =
+                    InputSolicitud.EsVacacionAnticipada,
+
+                    DiasAnticipadosPendientesDescuento =
+                    InputSolicitud.EsVacacionAnticipada
+                        ? diasSolicitados
+                        : 0m,
+
                     FechaAplicacionDescuentoAnticipado = null,
-                    DescuentoAnticipadoAplicado = false
+
+                    DescuentoAnticipadoAplicado = false,
+
+
+                    // =========================================
+                    // VACACIONES SIGUIENTE PERIODO
+                    // =========================================
+
+                    EsVacacionSiguientePeriodo =
+                    InputSolicitud.EsVacacionSiguientePeriodo,
+
+                    DiasPendientesSiguientePeriodo =
+                    InputSolicitud.EsVacacionSiguientePeriodo
+                        ? diasPendientesSiguientePeriodo
+                        : 0m,
+
+                    FechaProgramadaDescuentoSiguientePeriodo =
+                    InputSolicitud.EsVacacionSiguientePeriodo
+                        ? fechaProgramadaSiguientePeriodo
+                        : null,
+
+                    FechaAplicacionDescuentoSiguientePeriodo = null,
+
+                    DescuentoSiguientePeriodoAplicado = false
                 };
 
                 await solicitudVacacionesManager.CreateAsync(solicitud);
@@ -2161,47 +2830,123 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var empleado = usuario.Empleado;
 
+            // Aplicar descuentos automáticos pendientes
+            await AplicarDescuentoVacacionesAnticipadasAsync(
+                empleado.Id
+            );
+
+            await AplicarDescuentoVacacionesSiguientePeriodoAsync(
+                empleado.Id
+            );
+
             if (empleado.SaldoVacacionesImportado.HasValue)
             {
-                decimal saldoImportado = empleado.SaldoVacacionesImportado.Value;
+                decimal saldoImportado =
+                    empleado.SaldoVacacionesImportado.Value;
 
-                decimal tomadas = await db.SolicitudesVacaciones
+                var solicitudes = await db.SolicitudesVacaciones
                     .Where(x =>
                         x.EmpleadoId == empleado.Id &&
+                        x.Estado != EstadoSolicitud.Rechazado)
+                    .ToListAsync();
+
+                decimal tomadas = 0m;
+                decimal futuras = 0m;
+                decimal anticipadasPendientes = 0m;
+
+
+                foreach (var solicitud in solicitudes)
+                {
+                    if (solicitud.EsVacacionAnticipada)
+                    {
+                        if (solicitud.DescuentoAnticipadoAplicado)
+                        {
+                            tomadas += solicitud.DiasSolicitados;
+                        }
+                        else
+                        {
+                            futuras += solicitud.DiasSolicitados;
+                            anticipadasPendientes += solicitud.DiasSolicitados;
+                        }
+
+                        continue;
+                    }
+
+
+                    // =========================================
+                    // VACACIONES SIGUIENTE PERIODO
+                    // =========================================
+                    if (solicitud.EsVacacionSiguientePeriodo)
+                    {
+                        decimal diasSaldoActual =
+                        Math.Max(
+                            solicitud.DiasSolicitados -
+                            solicitud.DiasPendientesSiguientePeriodo,
+                            0m
+                        );
+
+                        // La parte cubierta con saldo actual queda reservada
+                        // mientras la solicitud exista y no esté rechazada.
+                        tomadas += diasSaldoActual;
+
+                        // La parte futura se muestra como comprometida
+                        // mientras todavía no haya sido aplicada.
+                        if (solicitud.DescuentoSiguientePeriodoAplicado)
+                        {
+                            tomadas +=
+                                solicitud.DiasPendientesSiguientePeriodo;
+                        }
+                        else
+                        {
+                            futuras +=
+                                solicitud.DiasPendientesSiguientePeriodo;
+                        }
+
+                        continue;
+                    }
+
+
+                    // =========================================
+                    // VACACIONES NORMALES
+                    // =========================================
+                    if (
+                        solicitud.Estado == EstadoSolicitud.Aprobado ||
                         (
-                            (!x.EsVacacionAnticipada &&
-                             x.EstadoJefeDirecto == "Aprobado" &&
-                             x.EstadoTH == "Aprobado")
-                            ||
-                            (x.EsVacacionAnticipada &&
-                             x.DescuentoAnticipadoAplicado)
-                        ))
-                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+                            solicitud.EstadoJefeDirecto == "Aprobado" &&
+                            solicitud.EstadoTH == "Aprobado"
+                        )
+                    )
+                    {
+                        tomadas += solicitud.DiasSolicitados;
+                    }
+                }
 
-                decimal futuras = await db.SolicitudesVacaciones
-                    .Where(x =>
-                        x.EmpleadoId == empleado.Id &&
-                        x.EsVacacionAnticipada &&
-                        x.Estado != EstadoSolicitud.Rechazado &&
-                        !x.DescuentoAnticipadoAplicado)
-                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
 
-                //decimal saldo = saldoImportado - tomadas - futuras;
-                decimal saldoImportadoFinal = saldoImportado - tomadas - futuras;
+                decimal saldoImportadoFinal =
+                    Math.Max(
+                        saldoImportado - tomadas - anticipadasPendientes,
+                        0m
+                    );
+
 
                 return new JsonResult(new
                 {
                     acumuladas = saldoImportado,
                     tomadas = tomadas,
                     vencidas = 0m,
+
+                    // Aquí aparecerán tanto anticipadas pendientes
+                    // como días comprometidos del siguiente periodo
                     futuras = futuras,
+
                     saldo = saldoImportadoFinal,
-                    fecha = DateTime.Now.ToString("dd-MM-yyyy"),
+
+                    fecha =
+                        DateTime.Now.ToString("dd-MM-yyyy"),
+
                     tipoAsignacion = "Importado"
                 });
             }
-
-            await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
 
             var fechaHoy = DateTime.Today;
             var fechaIngreso = empleado.FechaIngreso.Date;
@@ -2249,13 +2994,31 @@ namespace ERPSEI.Areas.ERP.Pages
                 ? diasLegales
                 : diasLegales + diasProporcionales;
 
-            decimal diasFuturasVisuales = await db.SolicitudesVacaciones
-                .Where(s =>
-                    s.EmpleadoId == empleado.Id &&
-                    s.EsVacacionAnticipada &&
-                    s.Estado != EstadoSolicitud.Rechazado &&
-                    !s.DescuentoAnticipadoAplicado)
-                .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+            decimal diasAnticipadasVisuales =
+    await db.SolicitudesVacaciones
+        .Where(s =>
+            s.EmpleadoId == empleado.Id &&
+            s.EsVacacionAnticipada &&
+            s.Estado != EstadoSolicitud.Rechazado &&
+            !s.DescuentoAnticipadoAplicado)
+        .SumAsync(s => (decimal?)s.DiasSolicitados) ?? 0m;
+
+
+            decimal diasSiguientePeriodoVisuales =
+                await db.SolicitudesVacaciones
+                    .Where(s =>
+                        s.EmpleadoId == empleado.Id &&
+                        s.EsVacacionSiguientePeriodo &&
+                        s.Estado != EstadoSolicitud.Rechazado &&
+                        !s.DescuentoSiguientePeriodoAplicado)
+                    .SumAsync(
+                        s => (decimal?)s.DiasPendientesSiguientePeriodo
+                    ) ?? 0m;
+
+
+            decimal diasFuturasVisuales =
+                diasAnticipadasVisuales +
+                diasSiguientePeriodoVisuales;
 
             decimal diasFuturasDescontables = await db.SolicitudesVacaciones
                 .Where(s =>
@@ -2360,35 +3123,96 @@ namespace ERPSEI.Areas.ERP.Pages
 
             var empleado = usuario.Empleado;
 
+            // Aplicar descuentos automáticos pendientes
+            await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
+            await AplicarDescuentoVacacionesSiguientePeriodoAsync(empleado.Id);
+
             if (empleado.SaldoVacacionesImportado.HasValue)
             {
-                decimal saldoImportado = empleado.SaldoVacacionesImportado.Value;
+                decimal saldoImportado =
+                    empleado.SaldoVacacionesImportado.Value;
 
-                decimal tomadas = await db.SolicitudesVacaciones
+                var solicitudes = await db.SolicitudesVacaciones
                     .Where(x =>
                         x.EmpleadoId == empleado.Id &&
+                        x.Estado != EstadoSolicitud.Rechazado)
+                    .ToListAsync();
+
+                decimal tomadas = 0m;
+                decimal futuras = 0m;
+                decimal anticipadasPendientes = 0m;
+
+                foreach (var solicitud in solicitudes)
+                {
+                    if (solicitud.EsVacacionAnticipada)
+                    {
+                        if (solicitud.DescuentoAnticipadoAplicado)
+                        {
+                            tomadas += solicitud.DiasSolicitados;
+                        }
+                        else
+                        {
+                            futuras += solicitud.DiasSolicitados;
+                            anticipadasPendientes += solicitud.DiasSolicitados;
+                        }
+
+                        continue;
+                    }
+
+
+                    // =========================================
+                    // VACACIONES A CUENTA DEL SIGUIENTE PERIODO
+                    // =========================================
+                    if (solicitud.EsVacacionSiguientePeriodo)
+                    {
+                        // Parte cubierta por el saldo actual
+                        decimal diasSaldoActual = Math.Max(
+                            solicitud.DiasSolicitados -
+                            solicitud.DiasPendientesSiguientePeriodo,
+                            0m
+                        );
+
+                        // La parte cubierta por saldo actual se reserva
+                        // mientras la solicitud no esté rechazada.
+                        tomadas += diasSaldoActual;
+
+                        if (solicitud.DescuentoSiguientePeriodoAplicado)
+                        {
+                            tomadas += solicitud.DiasPendientesSiguientePeriodo;
+                        }
+                        else
+                        {
+                            futuras += solicitud.DiasPendientesSiguientePeriodo;
+                        }
+
+                        continue;
+                    }
+
+
+                    // =========================================
+                    // VACACIONES NORMALES
+                    // =========================================
+                    if (
+                        solicitud.Estado == EstadoSolicitud.Aprobado ||
                         (
-                            (!x.EsVacacionAnticipada &&
-                             x.EstadoJefeDirecto == "Aprobado" &&
-                             x.EstadoTH == "Aprobado")
-                            ||
-                            (x.EsVacacionAnticipada &&
-                             x.DescuentoAnticipadoAplicado)
-                        ))
-                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
+                            solicitud.EstadoJefeDirecto == "Aprobado" &&
+                            solicitud.EstadoTH == "Aprobado"
+                        )
+                    )
+                    {
+                        tomadas += solicitud.DiasSolicitados;
+                    }
+                }
 
-                decimal futuras = await db.SolicitudesVacaciones
-                    .Where(x =>
-                        x.EmpleadoId == empleado.Id &&
-                        x.EsVacacionAnticipada &&
-                        x.Estado != EstadoSolicitud.Rechazado &&
-                        !x.DescuentoAnticipadoAplicado)
-                    .SumAsync(x => (decimal?)x.DiasSolicitados) ?? 0m;
 
-                return new JsonResult(saldoImportado - tomadas - futuras);
+                decimal saldoFinal =
+                    Math.Max(
+                        saldoImportado - tomadas - anticipadasPendientes,
+                        0m
+                    );
+
+                return new JsonResult(saldoFinal);
             }
-
-            await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
 
             var fechaHoy = DateTime.Today;
             var fechaIngreso = empleado.FechaIngreso.Date;
@@ -2615,6 +3439,10 @@ namespace ERPSEI.Areas.ERP.Pages
 
             await AplicarDescuentoVacacionesAnticipadasAsync(empleado.Id);
 
+            await AplicarDescuentoVacacionesSiguientePeriodoAsync(
+                empleado.Id
+            );
+
             var solicitudes = await db.SolicitudesVacaciones
                 .Where(s => s.EmpleadoId == empleado.Id)
                 .OrderByDescending(s => s.FechaInicio)
@@ -2625,9 +3453,20 @@ namespace ERPSEI.Areas.ERP.Pages
                 inicio = s.FechaInicio.ToString("dd/MM/yyyy"),
                 fin = s.FechaFin.ToString("dd/MM/yyyy"),
                 dias = s.DiasSolicitados,
-                tipo = s.EsVacacionAnticipada
-                    ? (s.DescuentoAnticipadoAplicado ? "Anticipadas (descontadas)" : "Anticipadas")
-                    : "Legales",
+                tipo =
+    s.EsVacacionAnticipada
+        ? (
+            s.DescuentoAnticipadoAplicado
+                ? "Anticipadas (descontadas)"
+                : "Anticipadas"
+          )
+        : s.EsVacacionSiguientePeriodo
+            ? (
+                s.DescuentoSiguientePeriodoAplicado
+                    ? "A cuenta del siguiente periodo (descontadas)"
+                    : "A cuenta del siguiente periodo"
+              )
+            : "Legales",
                 estado = ObtenerEstadoVisualVacaciones(s)
             }).ToList();
 
@@ -3271,7 +4110,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     .Where(x =>
                         x.EmpleadoId == empleado.Id &&
                         (
-                            (!x.EsVacacionAnticipada &&
+                            (x.EsVacacionAnticipada &&
                              x.EstadoJefeDirecto == "Aprobado" &&
                              x.EstadoTH == "Aprobado")
                             ||
