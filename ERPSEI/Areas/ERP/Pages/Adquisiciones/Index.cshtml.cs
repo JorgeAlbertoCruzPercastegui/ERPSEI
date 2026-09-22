@@ -2630,12 +2630,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
         // =========================================================
-        // DATOS PARA SOLICITUD DE PAGO
-        // GET ?handler=DatosSolicitudPago&solicitudId=1
+        // DATOS DE PAGO PARA CONSULTA EN APROBACIÓN PRESUPUESTAL
+        // GET ?handler=DatosPagoAprobacion&solicitudId=1
         // =========================================================
 
         public async Task<IActionResult>
-            OnGetDatosSolicitudPagoAsync(
+            OnGetDatosPagoAprobacionAsync(
                 int solicitudId
             )
         {
@@ -2649,6 +2649,26 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             )
             {
                 return Unauthorized();
+            }
+
+
+            if (
+                solicitudId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No se identificó la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
             }
 
 
@@ -2669,13 +2689,77 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 null
             )
             {
-                return NotFound();
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "La solicitud no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
             }
 
 
+            // =====================================================
+            // VALIDAR ACCESO
+            // =====================================================
+
+            bool esPropietario =
+                solicitud.UsuarioSolicitanteId ==
+                usuarioActual.Id;
+
+
+            bool esAgenteAsignado =
+                solicitud.UsuarioAsignadoId ==
+                usuarioActual.Id;
+
+
+            bool esAprobadorPresupuestal =
+                await _context
+                    .AdqAprobacionesPresupuestalesDetalle
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.AprobacionPresupuestal.SolicitudId ==
+                                solicitudId
+                            &&
+                            x.UsuarioAprobadorId ==
+                                usuarioActual.Id
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            bool esUsuarioAdquisiciones =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeGenerarSolicitudPago
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
             if (
-                solicitud.EstatusId <
-                13
+                !esPropietario
+                &&
+                !esAgenteAsignado
+                &&
+                !esAprobadorPresupuestal
+                &&
+                !esUsuarioAdquisiciones
             )
             {
                 return new JsonResult(
@@ -2683,39 +2767,30 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     {
                         success = false,
                         message =
-                            "La solicitud aún no ha completado la aprobación presupuestal."
+                            "No tienes permisos para consultar la información de pago."
                     }
                 )
                 {
                     StatusCode =
-                        StatusCodes.Status409Conflict
+                        StatusCodes.Status403Forbidden
                 };
             }
 
 
-            AdqAprobacionPresupuestal? aprobacion =
-                await _context
-                    .AdqAprobacionesPresupuestales
+            AdqSolicitudPago? pago =
+                await _context.AdqSolicitudesPago
                     .AsNoTracking()
-                    .Where(
+                    .FirstOrDefaultAsync(
                         x =>
                             x.SolicitudId ==
                                 solicitudId
                             &&
                             !x.Eliminado
-                            &&
-                            x.Estatus ==
-                                "Aprobada"
-                    )
-                    .OrderByDescending(
-                        x =>
-                            x.Id
-                    )
-                    .FirstOrDefaultAsync();
+                    );
 
 
             if (
-                aprobacion ==
+                pago ==
                 null
             )
             {
@@ -2724,7 +2799,261 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     {
                         success = false,
                         message =
-                            "No se encontró una aprobación presupuestal finalizada."
+                            "Todavía no existe información de Solicitud de Pago."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            return new JsonResult(
+                new
+                {
+                    success = true,
+
+                    compania =
+                        pago.Compania,
+
+                    area =
+                        pago.AreaSolicitante,
+
+                    moneda =
+                        pago.Moneda,
+
+                    formaPago =
+                        pago.FormaPago,
+
+                    conceptoPago =
+                        pago.ConceptoPago,
+
+                    proveedor =
+                        pago.NombreProveedor,
+
+                    banco =
+                        pago.Banco
+                        ??
+                        string.Empty,
+
+                    cuenta =
+                        pago.Cuenta
+                        ??
+                        string.Empty,
+
+                    clabeInterbancaria =
+                        pago.ClabeInterbancaria
+                        ??
+                        string.Empty,
+
+                    comprobanteAdjunto =
+                        pago.ComprobanteAdjunto,
+
+                    subtotal =
+                        pago.Subtotal,
+
+                    iva =
+                        pago.Iva,
+
+                    retencionIva =
+                        pago.RetencionIva,
+
+                    retencionIsr =
+                        pago.RetencionIsr,
+
+                    otrosImpuestos =
+                        pago.OtrosImpuestos,
+
+                    otrosServicios =
+                        pago.OtrosServicios,
+
+                    total =
+                        pago.Total,
+
+                    pdfGenerado =
+                        pago.PdfGenerado
+                }
+            );
+        }
+
+        // =========================================================
+        // DATOS PARA SOLICITUD DE PAGO
+        // GET ?handler=DatosSolicitudPago&solicitudId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetDatosSolicitudPagoAsync(
+                int solicitudId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                solicitudId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se identificó la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La solicitud ya no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // PERMISOS
+            // =====================================================
+
+            bool esSolicitante =
+                solicitud.UsuarioSolicitanteId ==
+                usuarioActual.Id;
+
+
+            bool esAgenteAsignado =
+                !string.IsNullOrWhiteSpace(
+                    solicitud.UsuarioAsignadoId
+                )
+                &&
+                solicitud.UsuarioAsignadoId ==
+                usuarioActual.Id;
+
+
+            bool esUsuarioAdquisiciones =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeGenerarSolicitudPago
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            if (
+                !esSolicitante
+                &&
+                !esAgenteAsignado
+                &&
+                !esUsuarioAdquisiciones
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No tienes permisos para consultar la información de pago de esta solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR ETAPA MÍNIMA
+            // =====================================================
+            /*
+             * Desde EN_COTIZACION (9) ya permitimos preparar
+             * la información de la Solicitud de Pago.
+             *
+             * Después seguirá disponible durante todo el
+             * flujo presupuestal y posteriormente para
+             * generar/descargar el PDF.
+             */
+
+            if (
+                solicitud.EstatusId <
+                9
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La solicitud todavía no se encuentra en la etapa de cotización."
                     }
                 )
                 {
@@ -2734,16 +3063,91 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            AdqCotizacion? cotizacion =
-                await _context.AdqCotizaciones
+            // =====================================================
+            // SOLICITUD DE PAGO EXISTENTE
+            // =====================================================
+
+            AdqSolicitudPago? solicitudPagoExistente =
+                await _context.AdqSolicitudesPago
                     .AsNoTracking()
                     .FirstOrDefaultAsync(
                         x =>
-                            x.Id ==
-                                aprobacion.CotizacionId
+                            x.SolicitudId ==
+                                solicitudId
                             &&
                             !x.Eliminado
                     );
+
+
+            // =====================================================
+            // COTIZACIÓN SELECCIONADA
+            // =====================================================
+            /*
+             * Antes de la aprobación presupuestal todavía no
+             * existe AdqAprobacionPresupuestal.
+             *
+             * Por eso obtenemos directamente la cotización
+             * marcada como principal.
+             *
+             * Si ya existe una Solicitud de Pago, usamos su
+             * CotizacionId como primera referencia.
+             */
+
+            AdqCotizacion? cotizacion =
+                null;
+
+
+            if (
+                solicitudPagoExistente !=
+                null
+                &&
+                solicitudPagoExistente.CotizacionId >
+                0
+            )
+            {
+                cotizacion =
+                    await _context.AdqCotizaciones
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                    solicitudPagoExistente.CotizacionId
+                                &&
+                                x.SolicitudId ==
+                                    solicitud.Id
+                                &&
+                                !x.Eliminado
+                        );
+            }
+
+
+            if (
+                cotizacion ==
+                null
+            )
+            {
+                cotizacion =
+                    await _context.AdqCotizaciones
+                        .AsNoTracking()
+                        .Where(
+                            x =>
+                                x.SolicitudId ==
+                                    solicitud.Id
+                                &&
+                                !x.Eliminado
+                                &&
+                                x.EsPrincipal
+                        )
+                        .OrderByDescending(
+                            x =>
+                                x.FechaModificacion
+                        )
+                        .ThenByDescending(
+                            x =>
+                                x.Id
+                        )
+                        .FirstOrDefaultAsync();
+            }
 
 
             if (
@@ -2755,16 +3159,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     new
                     {
                         success = false,
+
                         message =
-                            "No se encontró la cotización seleccionada."
+                            "Debes seleccionar una cotización antes de preparar la Solicitud de Pago."
                     }
                 )
                 {
                     StatusCode =
-                        StatusCodes.Status404NotFound
+                        StatusCodes.Status409Conflict
                 };
             }
 
+
+            // =====================================================
+            // ÁREA SOLICITANTE
+            // =====================================================
 
             string area =
                 await _context.Areas
@@ -2783,60 +3192,72 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 string.Empty;
 
 
-            AdqSolicitudPago? solicitudPagoExistente =
-                await _context.AdqSolicitudesPago
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.SolicitudId ==
-                                solicitudId
-                            &&
-                            !x.Eliminado
-                    );
-
+            // =====================================================
+            // RESPUESTA
+            // =====================================================
 
             return new JsonResult(
                 new
                 {
                     success = true,
 
+
                     solicitudId =
                         solicitud.Id,
+
 
                     folio =
                         solicitud.Folio,
 
+
+                    estatusId =
+                        solicitud.EstatusId,
+
+
                     area,
+
 
                     proveedor =
                         cotizacion.NombreProveedor,
 
+
+                    cotizacionId =
+                        cotizacion.Id,
+
+
                     subtotal =
                         cotizacion.Subtotal,
+
 
                     iva =
                         cotizacion.ImporteIva,
 
+
                     total =
                         cotizacion.Total,
 
+
                     tipoDocumento =
                         solicitud.TipoDocumentoSolicitud,
+
 
                     compania =
                         solicitudPagoExistente?.Compania
                         ??
                         string.Empty,
 
+
                     moneda =
                         solicitudPagoExistente?.Moneda
                         ??
                         "Pesos",
 
+
                     formaPago =
                         solicitudPagoExistente?.FormaPago
                         ??
                         "Transferencia",
+
 
                     conceptoPago =
                         solicitudPagoExistente?.ConceptoPago
@@ -2845,58 +3266,81 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         ??
                         solicitud.Titulo,
 
+
                     banco =
                         solicitudPagoExistente?.Banco
                         ??
                         string.Empty,
+
 
                     cuenta =
                         solicitudPagoExistente?.Cuenta
                         ??
                         string.Empty,
 
+
                     clabeInterbancaria =
                         solicitudPagoExistente?.ClabeInterbancaria
                         ??
                         string.Empty,
+
 
                     comprobanteAdjunto =
                         solicitudPagoExistente?.ComprobanteAdjunto
                         ??
                         false,
 
+
                     retencionIva =
                         solicitudPagoExistente?.RetencionIva
                         ??
                         0m,
+
 
                     retencionIsr =
                         solicitudPagoExistente?.RetencionIsr
                         ??
                         0m,
 
+
                     otrosImpuestos =
                         solicitudPagoExistente?.OtrosImpuestos
                         ??
                         0m,
+
 
                     otrosServicios =
                         solicitudPagoExistente?.OtrosServicios
                         ??
                         0m,
 
+
+                    totalSolicitudPago =
+                        solicitudPagoExistente?.Total
+                        ??
+                        cotizacion.Total,
+
+
+                    datosPagoCapturados =
+                        solicitudPagoExistente !=
+                        null,
+
+
                     pdfGenerado =
                         solicitudPagoExistente?.PdfGenerado
                         ??
                         false,
+
 
                     nombreArchivo =
                         solicitudPagoExistente?.NombreArchivo
                         ??
                         string.Empty,
 
+
                     descargarUrl =
-                        solicitudPagoExistente?.PdfGenerado == true
+                        solicitudPagoExistente?.PdfGenerado ==
+                        true
                             ? $"{Request.Path}?handler=DescargarSolicitudPago&solicitudId={solicitudId}"
                             : string.Empty
                 }
@@ -3156,6 +3600,817 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         "Por seguridad, después de este momento solo un administrador podrá restablecerlo."
                 }
             );
+        }
+
+        // =========================================================
+        // GUARDAR SOLICITUD DE PAGO Y FINALIZAR COTIZACIÓN
+        // POST ?handler=FinalizarCotizacionSolicitudPago
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostFinalizarCotizacionSolicitudPagoAsync(
+                [FromBody]
+        SolicitudPagoInput input
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                input ==
+                null
+                ||
+                input.SolicitudId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se identificó la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                input.SolicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La solicitud ya no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // PERMISO DE COTIZACIÓN
+            // =====================================================
+
+            bool puedeCotizar =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .AnyAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                            &&
+                            (
+                                x.PuedeCotizar
+                                ||
+                                x.PuedeAdministrar
+                            )
+                    );
+
+
+            if (
+                !puedeCotizar
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No tienes permisos para finalizar la cotización."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // AGENTE ASIGNADO
+            // =====================================================
+
+            if (
+                solicitud.UsuarioAsignadoId !=
+                usuarioActual.Id
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "Solamente el agente asignado puede finalizar la cotización."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // ESTATUS
+            // =====================================================
+
+            if (
+                solicitud.EstatusId !=
+                9
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La solicitud ya no se encuentra en proceso de cotización."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            // =====================================================
+            // DATOS DE PAGO
+            // =====================================================
+
+            string compania =
+                input.Compania?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string conceptoPago =
+                input.ConceptoPago?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string moneda =
+                input.Moneda?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            string formaPago =
+                input.FormaPago?
+                    .Trim()
+                ??
+                string.Empty;
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    compania
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La compañía es obligatoria."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                string.IsNullOrWhiteSpace(
+                    conceptoPago
+                )
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "El concepto de pago es obligatorio."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                moneda !=
+                    "Pesos"
+                &&
+                moneda !=
+                    "Dolares"
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La moneda seleccionada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            if (
+                formaPago !=
+                    "Transferencia"
+                &&
+                formaPago !=
+                    "Efectivo"
+                &&
+                formaPago !=
+                    "Cheque"
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La forma de pago seleccionada no es válida."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // COTIZACIONES
+            // =====================================================
+
+            List<AdqCotizacion> cotizaciones =
+                await _context.AdqCotizaciones
+                    .Where(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                    )
+                    .ToListAsync();
+
+
+            if (
+                cotizaciones.Count ==
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No existen cotizaciones registradas."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            List<AdqCotizacion> seleccionadas =
+                cotizaciones
+                    .Where(
+                        x =>
+                            x.EsPrincipal
+                    )
+                    .ToList();
+
+
+            if (
+                seleccionadas.Count ==
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "Debes seleccionar una cotización antes de finalizar."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            if (
+                seleccionadas.Count >
+                1
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "Existe más de una cotización seleccionada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+
+            AdqCotizacion cotizacionSeleccionada =
+                seleccionadas[0];
+
+
+            // =====================================================
+            // ÁREA
+            // =====================================================
+
+            string area =
+                await _context.Areas
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.Id ==
+                                solicitud.AreaId
+                    )
+                    .Select(
+                        x =>
+                            x.Nombre
+                    )
+                    .FirstOrDefaultAsync()
+                ??
+                string.Empty;
+
+
+            // =====================================================
+            // TOTAL DE SOLICITUD DE PAGO
+            // =====================================================
+
+            decimal totalFinal =
+                cotizacionSeleccionada.Subtotal
+                +
+                cotizacionSeleccionada.ImporteIva
+                -
+                input.RetencionIva
+                -
+                input.RetencionIsr
+                +
+                input.OtrosImpuestos
+                +
+                input.OtrosServicios;
+
+
+            totalFinal =
+                decimal.Round(
+                    totalFinal,
+                    2,
+                    MidpointRounding.AwayFromZero
+                );
+
+
+            if (
+                totalFinal <
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "El total resultante de la Solicitud de Pago no puede ser negativo."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            DateTime ahora =
+                DateTime.Now;
+
+
+            int estatusAnterior =
+                solicitud.EstatusId;
+
+
+            await using var transaccion =
+                await _context.Database
+                    .BeginTransactionAsync();
+
+
+            try
+            {
+                // =================================================
+                // CREAR / ACTUALIZAR SOLICITUD DE PAGO
+                // =================================================
+
+                AdqSolicitudPago? solicitudPago =
+                    await _context.AdqSolicitudesPago
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.SolicitudId ==
+                                    solicitud.Id
+                                &&
+                                !x.Eliminado
+                        );
+
+
+                if (
+                    solicitudPago !=
+                    null
+                    &&
+                    solicitudPago.PdfGenerado
+                )
+                {
+                    await transaccion.RollbackAsync();
+
+
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+
+                            message =
+                                "La Solicitud de Pago ya cuenta con un PDF oficial generado."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status409Conflict
+                    };
+                }
+
+
+                if (
+                    solicitudPago ==
+                    null
+                )
+                {
+                    solicitudPago =
+                        new AdqSolicitudPago
+                        {
+                            SolicitudId =
+                                solicitud.Id,
+
+                            AprobacionPresupuestalId =
+                                null,
+
+                            CotizacionId =
+                                cotizacionSeleccionada.Id,
+
+                            FechaSolicitud =
+                                solicitud.FechaSolicitud,
+
+                            FechaGeneracion =
+                                ahora,
+
+                            UsuarioGeneracionId =
+                                usuarioActual.Id,
+
+                            PdfGenerado =
+                                false,
+
+                            Eliminado =
+                                false
+                        };
+
+
+                    _context.AdqSolicitudesPago.Add(
+                        solicitudPago
+                    );
+                }
+
+
+                solicitudPago.AprobacionPresupuestalId =
+                    null;
+
+
+                solicitudPago.CotizacionId =
+                    cotizacionSeleccionada.Id;
+
+
+                solicitudPago.Compania =
+                    compania;
+
+
+                solicitudPago.AreaSolicitante =
+                    area;
+
+
+                solicitudPago.Moneda =
+                    moneda;
+
+
+                solicitudPago.FormaPago =
+                    formaPago;
+
+
+                solicitudPago.ConceptoPago =
+                    conceptoPago;
+
+
+                solicitudPago.NombreProveedor =
+                    cotizacionSeleccionada.NombreProveedor;
+
+
+                solicitudPago.Banco =
+                    input.Banco?
+                        .Trim();
+
+
+                solicitudPago.Cuenta =
+                    input.Cuenta?
+                        .Trim();
+
+
+                solicitudPago.ClabeInterbancaria =
+                    input.ClabeInterbancaria?
+                        .Trim();
+
+
+                solicitudPago.ComprobanteAdjunto =
+                    input.ComprobanteAdjunto;
+
+
+                solicitudPago.Subtotal =
+                    cotizacionSeleccionada.Subtotal;
+
+
+                solicitudPago.Iva =
+                    cotizacionSeleccionada.ImporteIva;
+
+
+                solicitudPago.RetencionIva =
+                    input.RetencionIva;
+
+
+                solicitudPago.RetencionIsr =
+                    input.RetencionIsr;
+
+
+                solicitudPago.OtrosImpuestos =
+                    input.OtrosImpuestos;
+
+
+                solicitudPago.OtrosServicios =
+                    input.OtrosServicios;
+
+
+                solicitudPago.Total =
+                    totalFinal;
+
+
+                solicitudPago.TipoDocumentoSolicitud =
+                    solicitud.TipoDocumentoSolicitud;
+
+
+                solicitudPago.FechaGeneracion =
+                    ahora;
+
+
+                solicitudPago.UsuarioGeneracionId =
+                    usuarioActual.Id;
+
+
+                solicitudPago.PdfGenerado =
+                    false;
+
+
+                // =================================================
+                // FINALIZAR COTIZACIÓN SELECCIONADA
+                // =================================================
+
+                foreach (
+                    AdqCotizacion cotizacion
+                    in cotizaciones
+                )
+                {
+                    if (
+                        cotizacion.Id ==
+                        cotizacionSeleccionada.Id
+                    )
+                    {
+                        cotizacion.Finalizada =
+                            true;
+
+                        cotizacion.FechaFinalizacion =
+                            ahora;
+
+                        cotizacion.FechaModificacion =
+                            ahora;
+                    }
+                    else
+                    {
+                        cotizacion.Finalizada =
+                            false;
+
+                        cotizacion.FechaFinalizacion =
+                            null;
+                    }
+                }
+
+
+                // =================================================
+                // ESTATUS 9 → 10
+                // =================================================
+
+                solicitud.EstatusId =
+                    10;
+
+
+                solicitud.FechaModificacion =
+                    ahora;
+
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        TipoEvento =
+                            "COTIZACION_FINALIZADA",
+
+                        Descripcion =
+                            $"La etapa de cotización fue finalizada y se registró la información de la Solicitud de Pago. Proveedor seleccionado: {cotizacionSeleccionada.NombreProveedor}. Total de cotización: {cotizacionSeleccionada.Total:C2}. Total de Solicitud de Pago: {totalFinal:C2}.",
+
+                        EstatusAnteriorId =
+                            estatusAnterior,
+
+                        EstatusNuevoId =
+                            10,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            ObtenerDireccionIp()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                await transaccion
+                    .CommitAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        message =
+                            "La Solicitud de Pago fue registrada y la etapa de cotización se finalizó correctamente.",
+
+                        solicitudId =
+                            solicitud.Id,
+
+                        solicitudPagoId =
+                            solicitudPago.Id,
+
+                        cotizacionId =
+                            cotizacionSeleccionada.Id,
+
+                        estatusId =
+                            solicitud.EstatusId,
+
+                        proveedor =
+                            cotizacionSeleccionada.NombreProveedor,
+
+                        total =
+                            totalFinal
+                    }
+                );
+            }
+            catch (
+                Exception ex
+            )
+            {
+                await transaccion
+                    .RollbackAsync();
+
+
+                _logger.LogError(
+                    ex,
+                    "Error al guardar la Solicitud de Pago y finalizar la cotización de la solicitud {SolicitudId}.",
+                    solicitud.Id
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No fue posible guardar la Solicitud de Pago y finalizar la cotización."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
         }
 
         // =========================================================
@@ -14063,35 +15318,49 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
+                // =========================================================
+                // GUARDAR FLUJO COMPLETO
+                // =========================================================
+
                 await _context
                     .SaveChangesAsync();
-
-                // =====================================================
-                // NOTIFICAR SOLO AL APROBADOR ACTUAL - NIVEL 1
-                // =====================================================
-
-                await CrearNotificacionAdquisicionesAsync(
-                    new List<string>
-                    {
-                    usuarioNivel1
-                    },
-                    "Aprobación presupuestal pendiente",
-                    $"La solicitud {solicitud.Folio} - {solicitud.Titulo} requiere tu aprobación presupuestal por {cotizacion.Total:C2}. Proveedor seleccionado: {cotizacion.NombreProveedor}.",
-                    $"/ERP/Adquisiciones?openId={solicitud.Id}",
-                    usuarioActual.Id
-                );
-
-                // =================================================
-                // NOTIFICAR A RESPONSABLES DE PRESUPUESTO
-                // =================================================
 
 
                 await transaccion
                     .CommitAsync();
 
 
-                return new JsonResult(
-                    new
+                // =========================================================
+                // CORREO AL APROBADOR DEL NIVEL 1
+                // =========================================================
+
+                try
+                {
+                    await _adquisicionesEmailService
+                        .NotificarAprobacionPendienteAsync(
+                            solicitud.Id,
+                            usuarioNivel1,
+                            1,
+                            configuracionNivel1.NombreEtapa
+                        );
+                }
+                catch (
+                    Exception exCorreo
+                )
+                {
+                    /*
+                     * El flujo presupuestal ya fue creado correctamente.
+                     * Un error de correo no debe revertir el proceso.
+                     */
+                    _logger.LogError(
+                        exCorreo,
+                        "El flujo presupuestal de la solicitud {SolicitudId} fue iniciado, pero no fue posible enviar el correo al aprobador del nivel 1.",
+                        solicitud.Id
+                    );
+                }
+
+
+                return new JsonResult(new
                     {
                         success = true,
 
@@ -15631,18 +16900,46 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         Exception exCorreo
                     )
                     {
-                        /*
-                         * La aprobación ya fue confirmada.
-                         *
-                         * Un error de Microsoft Graph no debe revertir
-                         * ni reportar como fallida una autorización válida.
-                         */
                         _logger.LogError(
                             exCorreo,
-                            "La etapa presupuestal {OrdenEtapa} de la solicitud {SolicitudId} fue aprobada, pero no fue posible enviar el correo al solicitante.",
+                            "La etapa presupuestal {OrdenEtapa} de la solicitud {SolicitudId} fue aprobada, pero no fue posible enviar el correo de avance al solicitante.",
                             detalleActual.Orden,
                             solicitud.Id
                         );
+                    }
+
+
+                    // =========================================================
+                    // CORREO AL SIGUIENTE APROBADOR
+                    // =========================================================
+
+                    if (
+                        !string.IsNullOrWhiteSpace(
+                            siguienteEtapa.UsuarioAprobadorId
+                        )
+                    )
+                    {
+                        try
+                        {
+                            await _adquisicionesEmailService
+                                .NotificarAprobacionPendienteAsync(
+                                    solicitud.Id,
+                                    siguienteEtapa.UsuarioAprobadorId,
+                                    siguienteEtapa.Orden,
+                                    siguienteEtapa.NombreEtapa
+                                );
+                        }
+                        catch (
+                            Exception exCorreo
+                        )
+                        {
+                            _logger.LogError(
+                                exCorreo,
+                                "La solicitud {SolicitudId} avanzó correctamente a la etapa {OrdenEtapa}, pero no fue posible enviar el correo al siguiente aprobador.",
+                                solicitud.Id,
+                                siguienteEtapa.Orden
+                            );
+                        }
                     }
 
 

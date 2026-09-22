@@ -625,10 +625,220 @@ document.addEventListener(
                 "mensajeSolicitudPagoAdq"
             );
 
+        // =========================================================
+        // DATOS DE PAGO - APROBACIÓN PRESUPUESTAL
+        // =========================================================
 
         const btnConfirmarGenerarSolicitudPagoAdq =
             document.getElementById(
                 "btnConfirmarGenerarSolicitudPagoAdq"
+            );
+
+        // =========================================================
+        // DATOS DE PAGO - DETALLE DEL CREADOR
+        // =========================================================
+
+        const seccionDatosPagoDetalleAdq =
+            document.getElementById(
+                "seccionDatosPagoDetalleAdq"
+            );
+
+
+        const cargandoDatosPagoDetalleAdq =
+            document.getElementById(
+                "cargandoDatosPagoDetalleAdq"
+            );
+
+
+        const errorDatosPagoDetalleAdq =
+            document.getElementById(
+                "errorDatosPagoDetalleAdq"
+            );
+
+
+        const sinDatosPagoDetalleAdq =
+            document.getElementById(
+                "sinDatosPagoDetalleAdq"
+            );
+
+
+        const contenidoDatosPagoDetalleAdq =
+            document.getElementById(
+                "contenidoDatosPagoDetalleAdq"
+            );
+
+
+        const companiaDatosPagoDetalleAdq =
+            document.getElementById(
+                "companiaDatosPagoDetalleAdq"
+            );
+
+
+        const areaDatosPagoDetalleAdq =
+            document.getElementById(
+                "areaDatosPagoDetalleAdq"
+            );
+
+
+        const proveedorDatosPagoDetalleAdq =
+            document.getElementById(
+                "proveedorDatosPagoDetalleAdq"
+            );
+
+
+        const conceptoDatosPagoDetalleAdq =
+            document.getElementById(
+                "conceptoDatosPagoDetalleAdq"
+            );
+
+
+        const monedaDatosPagoDetalleAdq =
+            document.getElementById(
+                "monedaDatosPagoDetalleAdq"
+            );
+
+
+        const formaPagoDatosPagoDetalleAdq =
+            document.getElementById(
+                "formaPagoDatosPagoDetalleAdq"
+            );
+
+
+        const comprobanteDatosPagoDetalleAdq =
+            document.getElementById(
+                "comprobanteDatosPagoDetalleAdq"
+            );
+
+
+        const bancoDatosPagoDetalleAdq =
+            document.getElementById(
+                "bancoDatosPagoDetalleAdq"
+            );
+
+
+        const cuentaDatosPagoDetalleAdq =
+            document.getElementById(
+                "cuentaDatosPagoDetalleAdq"
+            );
+
+
+        const clabeDatosPagoDetalleAdq =
+            document.getElementById(
+                "clabeDatosPagoDetalleAdq"
+            );
+
+
+        const subtotalDatosPagoDetalleAdq =
+            document.getElementById(
+                "subtotalDatosPagoDetalleAdq"
+            );
+
+
+        const ivaDatosPagoDetalleAdq =
+            document.getElementById(
+                "ivaDatosPagoDetalleAdq"
+            );
+
+
+        const retencionIvaDatosPagoDetalleAdq =
+            document.getElementById(
+                "retencionIvaDatosPagoDetalleAdq"
+            );
+
+
+        const retencionIsrDatosPagoDetalleAdq =
+            document.getElementById(
+                "retencionIsrDatosPagoDetalleAdq"
+            );
+
+
+        const otrosImpuestosDatosPagoDetalleAdq =
+            document.getElementById(
+                "otrosImpuestosDatosPagoDetalleAdq"
+            );
+
+
+        const otrosServiciosDatosPagoDetalleAdq =
+            document.getElementById(
+                "otrosServiciosDatosPagoDetalleAdq"
+            );
+
+
+        const totalDatosPagoDetalleAdq =
+            document.getElementById(
+                "totalDatosPagoDetalleAdq"
+            );
+
+
+        const pagoCompaniaDetalleAdq =
+            document.getElementById(
+                "pagoCompaniaDetalleAdq"
+            );
+
+
+        const pagoMonedaDetalleAdq =
+            document.getElementById(
+                "pagoMonedaDetalleAdq"
+            );
+
+
+        const pagoFormaPagoDetalleAdq =
+            document.getElementById(
+                "pagoFormaPagoDetalleAdq"
+            );
+
+
+        const pagoConceptoDetalleAdq =
+            document.getElementById(
+                "pagoConceptoDetalleAdq"
+            );
+
+
+        const pagoBancoDetalleAdq =
+            document.getElementById(
+                "pagoBancoDetalleAdq"
+            );
+
+
+        const pagoCuentaDetalleAdq =
+            document.getElementById(
+                "pagoCuentaDetalleAdq"
+            );
+
+
+        const pagoClabeDetalleAdq =
+            document.getElementById(
+                "pagoClabeDetalleAdq"
+            );
+
+
+        const pagoSubtotalDetalleAdq =
+            document.getElementById(
+                "pagoSubtotalDetalleAdq"
+            );
+
+
+        const pagoIvaDetalleAdq =
+            document.getElementById(
+                "pagoIvaDetalleAdq"
+            );
+
+
+        const pagoRetencionesDetalleAdq =
+            document.getElementById(
+                "pagoRetencionesDetalleAdq"
+            );
+
+
+        const pagoTotalDetalleAdq =
+            document.getElementById(
+                "pagoTotalDetalleAdq"
+            );
+
+
+        const pagoComprobanteDetalleAdq =
+            document.getElementById(
+                "pagoComprobanteDetalleAdq"
             );
 
         const seccionHistorialPresupuestalDetalleAdq =
@@ -1452,6 +1662,129 @@ document.addEventListener(
         const comentarioSolicitudPresupuestalAdq =
             document.getElementById(
                 "comentarioSolicitudPresupuestalAdq"
+            );
+
+        // =========================================================
+        // DATOS DE SOLICITUD DE PAGO - APROBACIÓN
+        // =========================================================
+
+        const cargandoDatosPagoAprobacionAdq =
+            document.getElementById(
+                "cargandoDatosPagoAprobacionAdq"
+            );
+
+
+        const errorDatosPagoAprobacionAdq =
+            document.getElementById(
+                "errorDatosPagoAprobacionAdq"
+            );
+
+
+        const contenidoDatosPagoAprobacionAdq =
+            document.getElementById(
+                "contenidoDatosPagoAprobacionAdq"
+            );
+
+
+        const companiaDatosPagoAprobacionAdq =
+            document.getElementById(
+                "companiaDatosPagoAprobacionAdq"
+            );
+
+
+        const areaDatosPagoAprobacionAdq =
+            document.getElementById(
+                "areaDatosPagoAprobacionAdq"
+            );
+
+
+        const proveedorDatosPagoAprobacionAdq =
+            document.getElementById(
+                "proveedorDatosPagoAprobacionAdq"
+            );
+
+
+        const conceptoDatosPagoAprobacionAdq =
+            document.getElementById(
+                "conceptoDatosPagoAprobacionAdq"
+            );
+
+
+        const monedaDatosPagoAprobacionAdq =
+            document.getElementById(
+                "monedaDatosPagoAprobacionAdq"
+            );
+
+
+        const formaPagoDatosPagoAprobacionAdq =
+            document.getElementById(
+                "formaPagoDatosPagoAprobacionAdq"
+            );
+
+
+        const comprobanteDatosPagoAprobacionAdq =
+            document.getElementById(
+                "comprobanteDatosPagoAprobacionAdq"
+            );
+
+
+        const bancoDatosPagoAprobacionAdq =
+            document.getElementById(
+                "bancoDatosPagoAprobacionAdq"
+            );
+
+
+        const cuentaDatosPagoAprobacionAdq =
+            document.getElementById(
+                "cuentaDatosPagoAprobacionAdq"
+            );
+
+
+        const clabeDatosPagoAprobacionAdq =
+            document.getElementById(
+                "clabeDatosPagoAprobacionAdq"
+            );
+
+
+        const subtotalDatosPagoAprobacionAdq =
+            document.getElementById(
+                "subtotalDatosPagoAprobacionAdq"
+            );
+
+
+        const ivaDatosPagoAprobacionAdq =
+            document.getElementById(
+                "ivaDatosPagoAprobacionAdq"
+            );
+
+
+        const retencionIvaDatosPagoAprobacionAdq =
+            document.getElementById(
+                "retencionIvaDatosPagoAprobacionAdq"
+            );
+
+
+        const retencionIsrDatosPagoAprobacionAdq =
+            document.getElementById(
+                "retencionIsrDatosPagoAprobacionAdq"
+            );
+
+
+        const otrosImpuestosDatosPagoAprobacionAdq =
+            document.getElementById(
+                "otrosImpuestosDatosPagoAprobacionAdq"
+            );
+
+
+        const otrosServiciosDatosPagoAprobacionAdq =
+            document.getElementById(
+                "otrosServiciosDatosPagoAprobacionAdq"
+            );
+
+
+        const totalDatosPagoAprobacionAdq =
+            document.getElementById(
+                "totalDatosPagoAprobacionAdq"
             );
 
 
@@ -2452,6 +2785,220 @@ document.addEventListener(
             );
         }
 
+        async function cargarDatosPagoDetalleAdq(
+            solicitudId
+        ) {
+
+            if (
+                Number(
+                    solicitudId
+                ) <=
+                0
+            ) {
+                return;
+            }
+
+
+            cargandoDatosPagoDetalleAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            errorDatosPagoDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            contenidoDatosPagoDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${window.location.pathname}?handler=DatosPagoAprobacion&solicitudId=${encodeURIComponent(
+                            solicitudId
+                        )}`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await response.json();
+
+
+                if (
+                    !response.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible cargar la información de pago."
+                    );
+                }
+
+
+                pagoCompaniaDetalleAdq.textContent =
+                    resultado.compania
+                    ||
+                    "-";
+
+
+                pagoMonedaDetalleAdq.textContent =
+                    resultado.moneda
+                    ||
+                    "-";
+
+
+                pagoFormaPagoDetalleAdq.textContent =
+                    resultado.formaPago
+                    ||
+                    "-";
+
+
+                pagoConceptoDetalleAdq.textContent =
+                    resultado.conceptoPago
+                    ||
+                    "-";
+
+
+                pagoBancoDetalleAdq.textContent =
+                    resultado.banco
+                    ||
+                    "No capturado";
+
+
+                pagoCuentaDetalleAdq.textContent =
+                    resultado.cuenta
+                    ||
+                    "No capturada";
+
+
+                pagoClabeDetalleAdq.textContent =
+                    resultado.clabeInterbancaria
+                    ||
+                    "No capturada";
+
+
+                pagoSubtotalDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.subtotal
+                            ??
+                            0
+                        )
+                    );
+
+
+                pagoIvaDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.iva
+                            ??
+                            0
+                        )
+                    );
+
+
+                const totalRetenciones =
+                    Number(
+                        resultado.retencionIva
+                        ??
+                        0
+                    )
+                    +
+                    Number(
+                        resultado.retencionIsr
+                        ??
+                        0
+                    );
+
+
+                pagoRetencionesDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        totalRetenciones
+                    );
+
+
+                pagoTotalDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.total
+                            ??
+                            0
+                        )
+                    );
+
+
+                pagoComprobanteDetalleAdq.textContent =
+                    resultado.comprobanteAdjunto
+                        ? "Sí"
+                        : "No";
+
+
+                contenidoDatosPagoDetalleAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    "Error al cargar datos de pago del detalle:",
+                    error
+                );
+
+
+                if (
+                    errorDatosPagoDetalleAdq
+                ) {
+
+                    errorDatosPagoDetalleAdq.textContent =
+                        error?.message
+                        ??
+                        "No fue posible cargar la información de pago.";
+
+
+                    errorDatosPagoDetalleAdq.classList.remove(
+                        "d-none"
+                    );
+                }
+
+            }
+            finally {
+
+                cargandoDatosPagoDetalleAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+            }
+        }
+
         async function cargarHistorialPresupuestalDetalleAdq(
             solicitudId
         ) {
@@ -2693,6 +3240,594 @@ document.addEventListener(
             }
         }
 
+        async function cargarDatosPagoDetalleAdq(
+            solicitudId
+        ) {
+
+            if (
+                Number(
+                    solicitudId
+                ) <=
+                0
+            ) {
+                return;
+            }
+
+
+            cargandoDatosPagoDetalleAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            errorDatosPagoDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            sinDatosPagoDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            contenidoDatosPagoDetalleAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${window.location.pathname}?handler=DatosPagoAprobacion&solicitudId=${encodeURIComponent(
+                            solicitudId
+                        )}`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await response.json();
+
+
+                if (
+                    response.status ===
+                    404
+                ) {
+
+                    sinDatosPagoDetalleAdq
+                        ?.classList
+                        .remove(
+                            "d-none"
+                        );
+
+
+                    return;
+                }
+
+
+                if (
+                    !response.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible cargar la información de pago."
+                    );
+                }
+
+
+                companiaDatosPagoDetalleAdq.textContent =
+                    resultado.compania
+                    ||
+                    "-";
+
+
+                areaDatosPagoDetalleAdq.textContent =
+                    resultado.area
+                    ||
+                    "-";
+
+
+                proveedorDatosPagoDetalleAdq.textContent =
+                    resultado.proveedor
+                    ||
+                    "-";
+
+
+                conceptoDatosPagoDetalleAdq.textContent =
+                    resultado.conceptoPago
+                    ||
+                    "-";
+
+
+                monedaDatosPagoDetalleAdq.textContent =
+                    resultado.moneda
+                    ||
+                    "-";
+
+
+                formaPagoDatosPagoDetalleAdq.textContent =
+                    resultado.formaPago
+                    ||
+                    "-";
+
+
+                comprobanteDatosPagoDetalleAdq.textContent =
+                    resultado.comprobanteAdjunto
+                        ? "Sí"
+                        : "No";
+
+
+                bancoDatosPagoDetalleAdq.textContent =
+                    resultado.banco
+                    ||
+                    "-";
+
+
+                cuentaDatosPagoDetalleAdq.textContent =
+                    resultado.cuenta
+                    ||
+                    "-";
+
+
+                clabeDatosPagoDetalleAdq.textContent =
+                    resultado.clabeInterbancaria
+                    ||
+                    "-";
+
+
+                subtotalDatosPagoDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.subtotal
+                            ??
+                            0
+                        )
+                    );
+
+
+                ivaDatosPagoDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.iva
+                            ??
+                            0
+                        )
+                    );
+
+
+                retencionIvaDatosPagoDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.retencionIva
+                            ??
+                            0
+                        )
+                    );
+
+
+                retencionIsrDatosPagoDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.retencionIsr
+                            ??
+                            0
+                        )
+                    );
+
+
+                otrosImpuestosDatosPagoDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.otrosImpuestos
+                            ??
+                            0
+                        )
+                    );
+
+
+                otrosServiciosDatosPagoDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.otrosServicios
+                            ??
+                            0
+                        )
+                    );
+
+
+                totalDatosPagoDetalleAdq.textContent =
+                    formatearMonedaAdq(
+                        Number(
+                            resultado.total
+                            ??
+                            0
+                        )
+                    );
+
+
+                contenidoDatosPagoDetalleAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    "Error al cargar información de pago del detalle:",
+                    error
+                );
+
+
+                if (
+                    errorDatosPagoDetalleAdq
+                ) {
+
+                    errorDatosPagoDetalleAdq.textContent =
+                        error?.message
+                        ??
+                        "No fue posible consultar la información de pago.";
+
+
+                    errorDatosPagoDetalleAdq
+                        .classList
+                        .remove(
+                            "d-none"
+                        );
+                }
+
+            }
+            finally {
+
+                cargandoDatosPagoDetalleAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+            }
+        }
+
+        async function cargarDatosPagoAprobacionAdq(
+            solicitudId
+        ) {
+
+            if (
+                Number(
+                    solicitudId
+                ) <=
+                0
+            ) {
+                return;
+            }
+
+
+            cargandoDatosPagoAprobacionAdq
+                ?.classList
+                .remove(
+                    "d-none"
+                );
+
+
+            errorDatosPagoAprobacionAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            contenidoDatosPagoAprobacionAdq
+                ?.classList
+                .add(
+                    "d-none"
+                );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${window.location.pathname}?handler=DatosPagoAprobacion&solicitudId=${encodeURIComponent(
+                            solicitudId
+                        )}`,
+                        {
+                            method:
+                                "GET",
+
+                            headers:
+                            {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await response.json();
+
+
+                if (
+                    !response.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible consultar la información de pago."
+                    );
+                }
+
+
+                const colocarTexto =
+                    function (
+                        elemento,
+                        valor
+                    ) {
+
+                        if (
+                            !elemento
+                        ) {
+                            return;
+                        }
+
+
+                        const texto =
+                            String(
+                                valor
+                                ??
+                                ""
+                            )
+                                .trim();
+
+
+                        elemento.textContent =
+                            texto
+                                ? texto
+                                : "No especificado";
+                    };
+
+
+                colocarTexto(
+                    companiaDatosPagoAprobacionAdq,
+                    resultado.compania
+                );
+
+
+                colocarTexto(
+                    areaDatosPagoAprobacionAdq,
+                    resultado.area
+                );
+
+
+                colocarTexto(
+                    proveedorDatosPagoAprobacionAdq,
+                    resultado.proveedor
+                );
+
+
+                colocarTexto(
+                    conceptoDatosPagoAprobacionAdq,
+                    resultado.conceptoPago
+                );
+
+
+                colocarTexto(
+                    monedaDatosPagoAprobacionAdq,
+                    resultado.moneda
+                );
+
+
+                colocarTexto(
+                    formaPagoDatosPagoAprobacionAdq,
+                    resultado.formaPago
+                );
+
+
+                colocarTexto(
+                    bancoDatosPagoAprobacionAdq,
+                    resultado.banco
+                );
+
+
+                colocarTexto(
+                    cuentaDatosPagoAprobacionAdq,
+                    resultado.cuenta
+                );
+
+
+                colocarTexto(
+                    clabeDatosPagoAprobacionAdq,
+                    resultado.clabeInterbancaria
+                );
+
+
+                if (
+                    comprobanteDatosPagoAprobacionAdq
+                ) {
+
+                    comprobanteDatosPagoAprobacionAdq.textContent =
+                        resultado.comprobanteAdjunto
+                            ? "Sí"
+                            : "No";
+                }
+
+
+                if (
+                    subtotalDatosPagoAprobacionAdq
+                ) {
+
+                    subtotalDatosPagoAprobacionAdq.textContent =
+                        formatearMonedaAdq(
+                            Number(
+                                resultado.subtotal
+                                ??
+                                0
+                            )
+                        );
+                }
+
+
+                if (
+                    ivaDatosPagoAprobacionAdq
+                ) {
+
+                    ivaDatosPagoAprobacionAdq.textContent =
+                        formatearMonedaAdq(
+                            Number(
+                                resultado.iva
+                                ??
+                                0
+                            )
+                        );
+                }
+
+
+                if (
+                    retencionIvaDatosPagoAprobacionAdq
+                ) {
+
+                    retencionIvaDatosPagoAprobacionAdq.textContent =
+                        formatearMonedaAdq(
+                            Number(
+                                resultado.retencionIva
+                                ??
+                                0
+                            )
+                        );
+                }
+
+
+                if (
+                    retencionIsrDatosPagoAprobacionAdq
+                ) {
+
+                    retencionIsrDatosPagoAprobacionAdq.textContent =
+                        formatearMonedaAdq(
+                            Number(
+                                resultado.retencionIsr
+                                ??
+                                0
+                            )
+                        );
+                }
+
+
+                if (
+                    otrosImpuestosDatosPagoAprobacionAdq
+                ) {
+
+                    otrosImpuestosDatosPagoAprobacionAdq.textContent =
+                        formatearMonedaAdq(
+                            Number(
+                                resultado.otrosImpuestos
+                                ??
+                                0
+                            )
+                        );
+                }
+
+
+                if (
+                    otrosServiciosDatosPagoAprobacionAdq
+                ) {
+
+                    otrosServiciosDatosPagoAprobacionAdq.textContent =
+                        formatearMonedaAdq(
+                            Number(
+                                resultado.otrosServicios
+                                ??
+                                0
+                            )
+                        );
+                }
+
+
+                if (
+                    totalDatosPagoAprobacionAdq
+                ) {
+
+                    totalDatosPagoAprobacionAdq.textContent =
+                        formatearMonedaAdq(
+                            Number(
+                                resultado.total
+                                ??
+                                0
+                            )
+                        );
+                }
+
+
+                contenidoDatosPagoAprobacionAdq
+                    ?.classList
+                    .remove(
+                        "d-none"
+                    );
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    "Error al cargar datos de pago:",
+                    error
+                );
+
+
+                if (
+                    errorDatosPagoAprobacionAdq
+                ) {
+
+                    errorDatosPagoAprobacionAdq.textContent =
+                        error?.message
+                        ??
+                        "No fue posible consultar la información de pago.";
+
+
+                    errorDatosPagoAprobacionAdq
+                        .classList
+                        .remove(
+                            "d-none"
+                        );
+                }
+
+            }
+            finally {
+
+                cargandoDatosPagoAprobacionAdq
+                    ?.classList
+                    .add(
+                        "d-none"
+                    );
+            }
+        }
+
         function abrirModalAprobacionPresupuestalAdq(
             boton
         ) {
@@ -2854,6 +3989,10 @@ document.addEventListener(
                 comentarioDecisionPresupuestalAdq.value =
                     "";
             }
+
+            cargarDatosPagoAprobacionAdq(
+                solicitudId
+            );
 
             cargarHistorialAprobacionPresupuestalAdq(
                 solicitudId
@@ -8943,8 +10082,12 @@ document.addEventListener(
                 !todosIguales;
 
 
-            const existeSeleccionada =
-                cotizaciones.some(
+            // =====================================================
+            // COTIZACIONES SELECCIONADAS
+            // =====================================================
+
+            const cotizacionesSeleccionadas =
+                cotizaciones.filter(
                     function (
                         cotizacion
                     ) {
@@ -8957,20 +10100,67 @@ document.addEventListener(
                 );
 
 
+            const totalSeleccionadas =
+                cotizacionesSeleccionadas.length;
+
+
             // =====================================================
-            // BOTÓN FINALIZAR
+            // BOTÓN SOLICITUD DE PAGO
             // =====================================================
 
             if (
                 btnFinalizarCotizacionAdq
             ) {
 
+                /*
+                 * El botón siempre permanece visible.
+                 *
+                 * Solamente se habilita cuando existe
+                 * exactamente una cotización seleccionada.
+                 */
+
                 btnFinalizarCotizacionAdq
                     .classList
-                    .toggle(
-                        "d-none",
-                        !existeSeleccionada
+                    .remove(
+                        "d-none"
                     );
+
+
+                btnFinalizarCotizacionAdq.disabled =
+                    totalSeleccionadas !==
+                    1;
+
+
+                if (
+                    totalSeleccionadas ===
+                    1
+                ) {
+
+                    btnFinalizarCotizacionAdq
+                        .classList
+                        .remove(
+                            "disabled"
+                        );
+
+
+                    btnFinalizarCotizacionAdq.title =
+                        "Preparar Solicitud de Pago";
+                }
+                else {
+
+                    btnFinalizarCotizacionAdq
+                        .classList
+                        .add(
+                            "disabled"
+                        );
+
+
+                    btnFinalizarCotizacionAdq.title =
+                        totalSeleccionadas ===
+                            0
+                            ? "Selecciona una cotización para continuar."
+                            : "Solo puedes seleccionar una cotización.";
+                }
             }
 
 
@@ -11084,6 +12274,10 @@ document.addEventListener(
         // FINALIZAR ETAPA DE COTIZACIÓN - EVENTO
         // =========================================================
 
+        // =========================================================
+        // ABRIR SOLICITUD DE PAGO DESDE COTIZACIÓN
+        // =========================================================
+
         btnFinalizarCotizacionAdq
             ?.addEventListener(
                 "click",
@@ -11111,49 +12305,82 @@ document.addEventListener(
                     }
 
 
-                    const confirmado =
-                        await confirmarAccionAdq(
-                            {
-                                titulo:
-                                    "Finalizar cotización",
+                    try {
 
-                                mensaje:
-                                    `
-                <p class="mb-3">
-                    La cotización seleccionada será utilizada para continuar con el proceso de adquisición.
-                </p>
+                        btnFinalizarCotizacionAdq.disabled =
+                            true;
 
-                <div class="alert alert-warning mb-0">
 
-                    <div class="d-flex gap-2">
+                        btnFinalizarCotizacionAdq.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Preparando...
+                `;
 
-                        <i class="bi bi-exclamation-triangle-fill"></i>
 
-                        <div>
-                            Después de finalizar esta etapa ya no podrás cambiar el proveedor desde la fase de cotización.
-                        </div>
+                        await abrirSolicitudPagoAdq(
+                            solicitudId
+                        );
 
-                    </div>
+                    }
+                    catch (
+                    error
+                    ) {
 
-                </div>
-                `,
-
-                                textoConfirmar:
-                                    "Finalizar cotización",
-
-                                textoCancelar:
-                                    "Regresar",
-
-                                tipo:
-                                    "success",
-
-                                icono:
-                                    "bi-check2-circle"
-                            }
+                        console.error(
+                            "Error al abrir Solicitud de Pago:",
+                            error
                         );
 
 
-                    if (!confirmado) {
+                        mostrarAdvertenciaAdq(
+                            "No fue posible abrir",
+                            error?.message
+                            ??
+                            "No fue posible preparar la Solicitud de Pago."
+                        );
+
+                    }
+                    finally {
+
+                        btnFinalizarCotizacionAdq.disabled =
+                            false;
+
+
+                        btnFinalizarCotizacionAdq.innerHTML = `
+                    <i class="bi bi-receipt me-1"></i>
+                    Solicitud de Pago
+                `;
+                    }
+                }
+            );
+
+        // =========================================================
+        // SOLICITUD DE PAGO PREVIA A FINALIZAR COTIZACIÓN
+        // =========================================================
+
+        btnFinalizarCotizacionAdq
+            ?.addEventListener(
+                "click",
+                async function () {
+
+                    const solicitudId =
+                        Number(
+                            solicitudCotizacionActualAdq?.id
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <=
+                        0
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Solicitud no identificada",
+                            "No fue posible identificar la solicitud."
+                        );
+
                         return;
                     }
 
@@ -11166,15 +12393,13 @@ document.addEventListener(
 
                         btnFinalizarCotizacionAdq.innerHTML = `
                     <span class="spinner-border spinner-border-sm me-1"></span>
-                    Finalizando...
+                    Preparando...
                 `;
 
 
-                        await finalizarCotizacionAdq(
+                        await abrirSolicitudPagoAdq(
                             solicitudId
                         );
-
-                        window.location.reload();
 
                     }
                     catch (
@@ -11182,26 +12407,28 @@ document.addEventListener(
                     ) {
 
                         console.error(
-                            "Error al finalizar cotización:",
+                            "Error al abrir Solicitud de Pago:",
                             error
                         );
 
 
                         mostrarAdvertenciaAdq(
-                            "No fue posible finalizar",
-                            error.message
+                            "No fue posible abrir",
+                            error?.message
                             ??
-                            "Ocurrió un error."
+                            "No fue posible preparar la Solicitud de Pago."
                         );
 
+                    }
+                    finally {
 
                         btnFinalizarCotizacionAdq.disabled =
                             false;
 
 
                         btnFinalizarCotizacionAdq.innerHTML = `
-                    <i class="bi bi-check2-circle me-1"></i>
-                    Finalizar cotización
+                    <i class="bi bi-receipt me-1"></i>
+                    Solicitud de Pago
                 `;
                     }
                 }
@@ -15571,6 +16798,40 @@ document.addEventListener(
                     }
 
                     // =========================================================
+                    // INFORMACIÓN DE SOLICITUD DE PAGO
+                    // =========================================================
+
+                    if (
+                        Number(
+                            solicitud.estatusId
+                            ??
+                            0
+                        ) >=
+                        10
+                    ) {
+
+                        seccionDatosPagoDetalleAdq
+                            ?.classList
+                            .remove(
+                                "d-none"
+                            );
+
+
+                        await cargarDatosPagoDetalleAdq(
+                            solicitud.id
+                        );
+
+                    }
+                    else {
+
+                        seccionDatosPagoDetalleAdq
+                            ?.classList
+                            .add(
+                                "d-none"
+                            );
+                    }
+
+                    // =========================================================
                     // ACCIONES DISPONIBLES DESDE EL DETALLE
                     // =========================================================
 
@@ -15700,6 +16961,18 @@ document.addEventListener(
                     `;
                         }
                     }
+
+                    // =========================================================
+                    // CARGAR DATOS DE SOLICITUD DE PAGO
+                    // =========================================================
+
+                    cargarDatosPagoDetalleAdq(
+                        Number(
+                            solicitud.id
+                            ??
+                            0
+                        )
+                    );
 
 
                     // =========================================================
@@ -16296,6 +17569,12 @@ document.addEventListener(
                         solicitudId <=
                         0
                     ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Solicitud no identificada",
+                            "No fue posible identificar la solicitud."
+                        );
+
                         return;
                     }
 
@@ -16325,8 +17604,10 @@ document.addEventListener(
                             "Debes indicar la compañía."
                         );
 
+
                         companiaSolicitudPagoAdq
                             ?.focus();
+
 
                         return;
                     }
@@ -16341,8 +17622,10 @@ document.addEventListener(
                             "Debes indicar el concepto de pago."
                         );
 
+
                         conceptoSolicitudPagoAdq
                             ?.focus();
+
 
                         return;
                     }
@@ -16427,6 +17710,63 @@ document.addEventListener(
                     };
 
 
+                    // =====================================================
+                    // CONFIRMACIÓN
+                    // =====================================================
+
+                    const confirmado =
+                        await confirmarAccionAdq(
+                            {
+                                titulo:
+                                    "Finalizar cotización",
+
+                                mensaje:
+                                    `
+                            <p class="mb-3">
+                                La información de la Solicitud de Pago será registrada
+                                y la cotización seleccionada quedará finalizada.
+                            </p>
+
+                            <div class="alert alert-warning mb-0">
+
+                                <div class="d-flex gap-2">
+
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+
+                                    <div>
+                                        Después de finalizar esta etapa ya no podrás
+                                        cambiar el proveedor desde la fase de cotización.
+                                        Esta información será la que revisarán los
+                                        aprobadores presupuestales.
+                                    </div>
+
+                                </div>
+
+                            </div>
+                            `,
+
+                                textoConfirmar:
+                                    "Finalizar cotización",
+
+                                textoCancelar:
+                                    "Regresar",
+
+                                tipo:
+                                    "success",
+
+                                icono:
+                                    "bi-check2-circle"
+                            }
+                        );
+
+
+                    if (
+                        !confirmado
+                    ) {
+                        return;
+                    }
+
+
                     try {
 
                         btnConfirmarGenerarSolicitudPagoAdq
@@ -16437,13 +17777,13 @@ document.addEventListener(
                         btnConfirmarGenerarSolicitudPagoAdq
                             .innerHTML = `
                         <span class="spinner-border spinner-border-sm me-2"></span>
-                        Preparando documento...
+                        Finalizando...
                     `;
 
 
                         const response =
                             await fetch(
-                                `${window.location.pathname}?handler=GuardarSolicitudPago`,
+                                `${window.location.pathname}?handler=FinalizarCotizacionSolicitudPago`,
                                 {
                                     method:
                                         "POST",
@@ -16485,118 +17825,34 @@ document.addEventListener(
                             throw new Error(
                                 resultado?.message
                                 ??
-                                "No fue posible generar la Solicitud de Pago."
+                                "No fue posible finalizar la cotización."
                             );
                         }
 
 
-                        if (
-                            !resultado.pdfGenerado
-                            ||
-                            !resultado.descargarUrl
-                        ) {
-
-                            throw new Error(
-                                "El servidor procesó la solicitud, pero no confirmó la generación del PDF."
-                            );
-                        }
-
-
-                        // =========================================================
-                        // PREPARAR MODAL DE RESULTADO
-                        // =========================================================
-
-                        if (
-                            folioResultadoSolicitudPagoAdq
-                        ) {
-
-                            folioResultadoSolicitudPagoAdq.textContent =
-                                folioSolicitudPagoAdq
-                                    ?.textContent
-                                    ?.trim()
-                                ??
-                                "";
-                        }
-
-
-                        if (
-                            nombreArchivoSolicitudPagoAdq
-                        ) {
-
-                            nombreArchivoSolicitudPagoAdq.textContent =
-                                resultado.nombreArchivo
-                                ??
-                                "Solicitud de Pago.pdf";
-                        }
-
-
-                        if (
-                            btnDescargarSolicitudPagoAdq
-                        ) {
-
-                            btnDescargarSolicitudPagoAdq.href =
-                                resultado.descargarUrl;
-                        }
-
-
-                        // =========================================================
-                        // VALIDAR MODAL DE RESULTADO
-                        // =========================================================
-
-                        if (
-                            !modalResultadoSolicitudPagoElementAdq
-                        ) {
-
-                            throw new Error(
-                                "No se encontró el modal de resultado de la Solicitud de Pago."
-                            );
-                        }
-
-
-                        // =========================================================
-                        // CERRAR CAPTURA Y MOSTRAR RESULTADO
-                        // =========================================================
-
-                        const modalCapturaSolicitudPago =
-                            bootstrap.Modal.getInstance(
+                        bootstrap.Modal
+                            .getInstance(
                                 modalSolicitudPagoElementAdq
-                            );
+                            )
+                            ?.hide();
 
 
-                        const mostrarResultadoSolicitudPago =
+                        mostrarAdvertenciaAdq(
+                            "Cotización finalizada",
+                            resultado.message
+                            ??
+                            "La Solicitud de Pago fue registrada correctamente."
+                        );
+
+
+                        setTimeout(
                             function () {
 
-                                bootstrap.Modal
-                                    .getOrCreateInstance(
-                                        modalResultadoSolicitudPagoElementAdq
-                                    )
-                                    .show();
-                            };
+                                window.location.reload();
 
-
-                        if (
-                            modalCapturaSolicitudPago
-                            &&
-                            modalSolicitudPagoElementAdq
-                        ) {
-
-                            modalSolicitudPagoElementAdq
-                                .addEventListener(
-                                    "hidden.bs.modal",
-                                    mostrarResultadoSolicitudPago,
-                                    {
-                                        once:
-                                            true
-                                    }
-                                );
-
-
-                            modalCapturaSolicitudPago.hide();
-                        }
-                        else {
-
-                            mostrarResultadoSolicitudPago();
-                        }
+                            },
+                            900
+                        );
 
                     }
                     catch (
@@ -16609,10 +17865,10 @@ document.addEventListener(
 
 
                         mostrarAdvertenciaAdq(
-                            "No fue posible guardar",
+                            "No fue posible finalizar",
                             error?.message
                             ??
-                            "Ocurrió un error al preparar la solicitud de pago."
+                            "Ocurrió un error al guardar la Solicitud de Pago."
                         );
 
                     }
@@ -16625,8 +17881,8 @@ document.addEventListener(
 
                         btnConfirmarGenerarSolicitudPagoAdq
                             .innerHTML = `
-                        <i class="bi bi-file-earmark-pdf me-1"></i>
-                        Generar PDF
+                        <i class="bi bi-check2-circle me-1"></i>
+                        Finalizar cotización
                     `;
                     }
                 }
@@ -18404,23 +19660,32 @@ document.addEventListener(
             );
         }
 
-        async function abrirSolicitudPagoAdq() {
-
-            if (
-                !solicitudDetalleActualAdq
-                ||
-                Number(
-                    solicitudDetalleActualAdq.id
-                ) <= 0
-            ) {
-                return;
-            }
-
+        async function abrirSolicitudPagoAdq(
+            solicitudIdForzado = 0
+        ) {
 
             const solicitudId =
                 Number(
-                    solicitudDetalleActualAdq.id
+                    solicitudIdForzado
+                    ||
+                    solicitudDetalleActualAdq?.id
+                    ||
+                    0
                 );
+
+
+            if (
+                solicitudId <=
+                0
+            ) {
+
+                mostrarAdvertenciaAdq(
+                    "Solicitud no identificada",
+                    "No fue posible identificar la solicitud."
+                );
+
+                return;
+            }
 
 
             if (
@@ -21025,12 +22290,52 @@ document.addEventListener(
                 0
             );
 
+        const aprobacionAbrirIdAdq =
+            Number(
+                parametrosUrlAdq.get(
+                    "openAprobacionId"
+                )
+                ??
+                0
+            );
+
+
+        // =========================================================
+        // ABRIR DIRECTAMENTE APROBACIÓN PRESUPUESTAL
+        // =========================================================
+
+        if (
+            aprobacionAbrirIdAdq >
+            0
+        ) {
+
+            const botonAprobacionAdq =
+                document.querySelector(
+                    `.btnVerAprobacionPresupuestalAdq[data-solicitud-id="${aprobacionAbrirIdAdq}"]`
+                );
+
+
+            if (
+                botonAprobacionAdq
+            ) {
+
+                setTimeout(
+                    function () {
+
+                        botonAprobacionAdq.click();
+
+                    },
+                    250
+                );
+            }
+        }
+
 
         // =========================================================
         // ABRIR DIRECTAMENTE GESTIÓN DE COTIZACIONES
         // =========================================================
 
-        if (
+        else if (
             cotizacionAbrirIdAdq >
             0
         ) {

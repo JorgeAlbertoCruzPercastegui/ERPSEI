@@ -4,6 +4,14 @@ namespace ERPSEI.Services.Adquisiciones
 {
     public interface IAdquisicionesEmailService
     {
+        Task NotificarAprobacionPendienteAsync(
+            int solicitudId,
+            string usuarioAprobadorId,
+            int ordenEtapa,
+            string nombreEtapa
+        );
+
+
         Task NotificarEtapaAprobadaAsync(
             int solicitudId,
             string nombreAprobador,
@@ -11,6 +19,7 @@ namespace ERPSEI.Services.Adquisiciones
             string nombreEtapa,
             string? siguienteEtapa
         );
+
 
         Task NotificarFlujoCompletadoAsync(
             int solicitudId,

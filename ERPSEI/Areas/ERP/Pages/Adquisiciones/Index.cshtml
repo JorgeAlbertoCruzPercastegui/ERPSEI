@@ -2687,9 +2687,9 @@
                                         class="btn btn-sm btn-success d-none"
                                         id="btnFinalizarCotizacionAdq">
 
-                                    <i class="bi bi-check2-circle me-1"></i>
+                                    <i class="bi bi-receipt me-1"></i>
 
-                                    Finalizar cotización
+                                    Solicitud de Pago
 
                                 </button>
 
@@ -4697,6 +4697,414 @@
 
 
                             <!-- ====================================================== -->
+                            <!-- INFORMACIÓN DE SOLICITUD DE PAGO - CREADOR -->
+                            <!-- ====================================================== -->
+
+                            <div class="adq-detail-section mt-4"
+                                 id="seccionDatosPagoDetalleAdq">
+
+                                <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+
+                                    <div>
+
+                                        <div class="adq-detail-section-title mb-1">
+
+                                            <i class="bi bi-receipt text-success"></i>
+
+                                            Información de Solicitud de Pago
+
+                                        </div>
+
+                                        <div class="text-muted small">
+
+                                            Información registrada al finalizar la cotización.
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <span class="badge rounded-pill text-bg-light border">
+
+                                        <i class="bi bi-eye me-1"></i>
+
+                                        Solo lectura
+
+                                    </span>
+
+                                </div>
+
+
+                                <!-- CARGANDO -->
+
+                                <div id="cargandoDatosPagoDetalleAdq"
+                                     class="border rounded-3 p-4 text-center d-none">
+
+                                    <div class="spinner-border spinner-border-sm text-primary me-2"
+                                         role="status">
+                                    </div>
+
+                                    <span class="text-muted">
+                                        Cargando información de pago...
+                                    </span>
+
+                                </div>
+
+
+                                <!-- ERROR -->
+
+                                <div id="errorDatosPagoDetalleAdq"
+                                     class="alert alert-warning d-none mb-3">
+
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+
+                                    No fue posible consultar la información de pago.
+
+                                </div>
+
+
+                                <!-- SIN INFORMACIÓN -->
+
+                                <div id="sinDatosPagoDetalleAdq"
+                                     class="alert alert-light border d-none">
+
+                                    <i class="bi bi-info-circle me-1"></i>
+
+                                    Esta solicitud todavía no cuenta con información de pago registrada.
+
+                                </div>
+
+
+                                <!-- CONTENIDO -->
+
+                                <div id="contenidoDatosPagoDetalleAdq"
+                                     class="d-none">
+
+
+                                    <!-- DATOS GENERALES -->
+
+                                    <div class="border rounded-3 p-3 mb-3">
+
+                                        <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                            <i class="bi bi-building me-1"></i>
+
+                                            Datos generales
+
+                                        </div>
+
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Compañía
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="companiaDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Área solicitante
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="areaDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Proveedor
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="proveedorDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-12">
+
+                                                <div class="small text-muted mb-1">
+                                                    Concepto de pago
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="conceptoDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- CONDICIONES DE PAGO -->
+
+                                    <div class="border rounded-3 p-3 mb-3">
+
+                                        <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                            <i class="bi bi-cash-coin me-1"></i>
+
+                                            Condiciones de pago
+
+                                        </div>
+
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Moneda
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="monedaDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Forma de pago
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="formaPagoDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Comprobante / soporte
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="comprobanteDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- DATOS BANCARIOS -->
+
+                                    <div class="border rounded-3 p-3 mb-3">
+
+                                        <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                            <i class="bi bi-bank me-1"></i>
+
+                                            Datos bancarios
+
+                                        </div>
+
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Banco
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="bancoDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    Cuenta
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="cuentaDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-4">
+
+                                                <div class="small text-muted mb-1">
+                                                    CLABE interbancaria
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="clabeDatosPagoDetalleAdq">
+                                                    -
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <!-- DESGLOSE FINANCIERO -->
+
+                                    <div class="border rounded-3 p-3">
+
+                                        <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                            <i class="bi bi-calculator me-1"></i>
+
+                                            Desglose financiero
+
+                                        </div>
+
+
+                                        <div class="row g-3">
+
+                                            <div class="col-md-3">
+
+                                                <div class="small text-muted mb-1">
+                                                    Subtotal
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="subtotalDatosPagoDetalleAdq">
+                                                    $0.00
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-3">
+
+                                                <div class="small text-muted mb-1">
+                                                    IVA
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="ivaDatosPagoDetalleAdq">
+                                                    $0.00
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-3">
+
+                                                <div class="small text-muted mb-1">
+                                                    Retención IVA
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="retencionIvaDatosPagoDetalleAdq">
+                                                    $0.00
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-3">
+
+                                                <div class="small text-muted mb-1">
+                                                    Retención ISR
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="retencionIsrDatosPagoDetalleAdq">
+                                                    $0.00
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-3">
+
+                                                <div class="small text-muted mb-1">
+                                                    Otros impuestos
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="otrosImpuestosDatosPagoDetalleAdq">
+                                                    $0.00
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-3">
+
+                                                <div class="small text-muted mb-1">
+                                                    Otros servicios
+                                                </div>
+
+                                                <div class="fw-semibold"
+                                                     id="otrosServiciosDatosPagoDetalleAdq">
+                                                    $0.00
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="col-md-6">
+
+                                                <div class="border rounded-3 p-3 bg-light">
+
+                                                    <div class="small text-muted mb-1">
+                                                        Total de Solicitud de Pago
+                                                    </div>
+
+                                                    <div class="fw-bold fs-4 text-success"
+                                                         id="totalDatosPagoDetalleAdq">
+
+                                                        $0.00
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <!-- ====================================================== -->
                             <!-- HISTORIAL DE APROBACIÓN PRESUPUESTAL -->
                             <!-- ====================================================== -->
 
@@ -5059,7 +5467,7 @@
                             <div>
 
                                 <h5 class="modal-title mb-1">
-                                    Generar Solicitud de Pago
+                                    Solicitud de Pago
                                 </h5>
 
                                 <div class="small text-muted"
@@ -5571,9 +5979,9 @@
                             id="btnConfirmarGenerarSolicitudPagoAdq"
                             class="btn btn-success">
 
-                        <i class="bi bi-file-earmark-pdf me-1"></i>
+                        <i class="bi bi-check2-circle me-1"></i>
 
-                        Generar PDF
+                        Finalizar cotización
 
                     </button>
 
@@ -6419,6 +6827,402 @@
                         <div class="border rounded-3 p-3 bg-light"
                              id="comentarioSolicitudPresupuestalAdq">
                             Sin comentarios.
+                        </div>
+
+                    </div>
+
+                    <!-- ========================================================= -->
+                    <!-- INFORMACIÓN DE SOLICITUD DE PAGO -->
+                    <!-- ========================================================= -->
+
+                    <div class="mb-4"
+                         id="seccionDatosPagoAprobacionAdq">
+
+                        <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+
+                            <div>
+
+                                <div class="fw-semibold d-flex align-items-center gap-2">
+
+                                    <i class="bi bi-receipt text-success"></i>
+
+                                    Información de Solicitud de Pago
+
+                                </div>
+
+                                <div class="small text-muted mt-1">
+
+                                    Información registrada al finalizar la cotización
+                                    y considerada para esta autorización presupuestal.
+
+                                </div>
+
+                            </div>
+
+
+                            <span class="badge rounded-pill text-bg-light border">
+
+                                <i class="bi bi-eye me-1"></i>
+
+                                Solo lectura
+
+                            </span>
+
+                        </div>
+
+
+                        <!-- LOADING -->
+
+                        <div id="cargandoDatosPagoAprobacionAdq"
+                             class="border rounded-3 p-4 text-center">
+
+                            <div class="spinner-border spinner-border-sm text-primary me-2"
+                                 role="status">
+                            </div>
+
+                            <span class="text-muted">
+                                Cargando información de pago...
+                            </span>
+
+                        </div>
+
+
+                        <!-- ERROR -->
+
+                        <div id="errorDatosPagoAprobacionAdq"
+                             class="alert alert-warning d-none mb-0">
+
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+
+                            No fue posible consultar la información de pago.
+
+                        </div>
+
+
+                        <!-- CONTENIDO -->
+
+                        <div id="contenidoDatosPagoAprobacionAdq"
+                             class="d-none">
+
+                            <!-- DATOS GENERALES -->
+
+                            <div class="border rounded-3 p-3 mb-3">
+
+                                <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                    <i class="bi bi-building me-1"></i>
+
+                                    Datos generales
+
+                                </div>
+
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Compañía
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="companiaDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Área solicitante
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="areaDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Proveedor
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="proveedorDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-12">
+
+                                        <div class="small text-muted mb-1">
+                                            Concepto de pago
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="conceptoDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- CONDICIONES -->
+
+                            <div class="border rounded-3 p-3 mb-3">
+
+                                <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                    <i class="bi bi-cash-coin me-1"></i>
+
+                                    Condiciones de pago
+
+                                </div>
+
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Moneda
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="monedaDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Forma de pago
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="formaPagoDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Comprobante / soporte
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="comprobanteDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- DATOS BANCARIOS -->
+
+                            <div class="border rounded-3 p-3 mb-3">
+
+                                <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                    <i class="bi bi-bank me-1"></i>
+
+                                    Datos bancarios
+
+                                </div>
+
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Banco
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="bancoDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            Cuenta
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="cuentaDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-4">
+
+                                        <div class="small text-muted mb-1">
+                                            CLABE interbancaria
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="clabeDatosPagoAprobacionAdq">
+                                            -
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- IMPORTES -->
+
+                            <div class="border rounded-3 p-3">
+
+                                <div class="small text-uppercase fw-semibold text-muted mb-3">
+
+                                    <i class="bi bi-calculator me-1"></i>
+
+                                    Desglose financiero
+
+                                </div>
+
+
+                                <div class="row g-3">
+
+                                    <div class="col-md-3">
+
+                                        <div class="small text-muted mb-1">
+                                            Subtotal
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="subtotalDatosPagoAprobacionAdq">
+                                            $0.00
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-3">
+
+                                        <div class="small text-muted mb-1">
+                                            IVA
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="ivaDatosPagoAprobacionAdq">
+                                            $0.00
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-3">
+
+                                        <div class="small text-muted mb-1">
+                                            Retención IVA
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="retencionIvaDatosPagoAprobacionAdq">
+                                            $0.00
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-3">
+
+                                        <div class="small text-muted mb-1">
+                                            Retención ISR
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="retencionIsrDatosPagoAprobacionAdq">
+                                            $0.00
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-3">
+
+                                        <div class="small text-muted mb-1">
+                                            Otros impuestos
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="otrosImpuestosDatosPagoAprobacionAdq">
+                                            $0.00
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-3">
+
+                                        <div class="small text-muted mb-1">
+                                            Otros servicios
+                                        </div>
+
+                                        <div class="fw-semibold"
+                                             id="otrosServiciosDatosPagoAprobacionAdq">
+                                            $0.00
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="col-md-6">
+
+                                        <div class="border rounded-3 p-3 bg-light">
+
+                                            <div class="small text-muted mb-1">
+                                                Total de Solicitud de Pago
+                                            </div>
+
+                                            <div class="fw-bold fs-4 text-success"
+                                                 id="totalDatosPagoAprobacionAdq">
+
+                                                $0.00
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
                         </div>
 
                     </div>

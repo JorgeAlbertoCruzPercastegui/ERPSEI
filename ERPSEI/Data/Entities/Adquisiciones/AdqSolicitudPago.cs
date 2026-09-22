@@ -20,13 +20,11 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             set;
         }
 
-
-        public int AprobacionPresupuestalId
+        public int? AprobacionPresupuestalId
         {
             get;
             set;
         }
-
 
         public int CotizacionId
         {
