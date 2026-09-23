@@ -111,5 +111,43 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             get;
             set;
         }
+
+        // =========================================================
+        // PERMISOS GENERALES RBAC / ABAC
+        // =========================================================
+
+        public bool PuedeCrear
+        {
+            get;
+            set;
+        }
+
+
+        public bool PuedeEditar
+        {
+            get;
+            set;
+        }
+
+
+        public bool PuedeEliminar
+        {
+            get;
+            set;
+        }
+
+
+        public bool PuedeDescargar
+        {
+            get;
+            set;
+        }
+
+
+        public bool PuedeTodo
+        {
+            get;
+            set;
+        }
     }
 }

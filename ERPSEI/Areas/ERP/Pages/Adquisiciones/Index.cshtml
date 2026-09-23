@@ -152,7 +152,13 @@
                         id="btnNuevaSolicitudAdq"
                         class="btn btn-primary"
                         data-bs-toggle="modal"
-                        data-bs-target="#modalNuevaSolicitud">
+                        data-bs-target="#modalNuevaSolicitud"
+                        disabled="@(!Model.AbacPuedeCrear)"
+                        title="@(
+                                Model.AbacPuedeCrear
+                                    ? "Crear nueva solicitud"
+                                    : "No tienes permiso para crear registros."
+                                        )">
 
                     <i class="bi bi-plus-lg me-1"></i>
 
@@ -359,8 +365,8 @@
 
                         <p class="mb-0 small text-muted">
 
-                            Administra los permisos operativos y los niveles
-                            de aprobación presupuestal.
+                            Administra las capacidades operativas de cada usuario
+                            dentro del módulo de Adquisiciones.
 
                         </p>
 
@@ -466,47 +472,23 @@
                                     </th>
 
                                     <th class="text-center">
-                                        Crear solicitud
+                                        Crear
                                     </th>
 
                                     <th class="text-center">
-                                        Gestionar
+                                        Editar
                                     </th>
 
                                     <th class="text-center">
-                                        Aprobar
+                                        Eliminar
                                     </th>
 
                                     <th class="text-center">
-                                        Asignar
+                                        Descargar
                                     </th>
 
                                     <th class="text-center">
-                                        Cotizar
-                                    </th>
-
-                                    <th class="text-center">
-                                        Proveedores
-                                    </th>
-
-                                    <th class="text-center">
-                                        Pago
-                                    </th>
-
-                                    <th class="text-center">
-                                        Reportes
-                                    </th>
-
-                                    <th class="text-center">
-                                        Presupuesto
-                                    </th>
-
-                                    <th>
-                                        Nivel presupuestal
-                                    </th>
-
-                                    <th class="text-center">
-                                        Administrar
+                                        Todos
                                     </th>
 
                                 </tr>
@@ -829,7 +811,8 @@
                            id="adqFiltroBusqueda"
                            class="form-control"
                            placeholder="Folio, título o área..."
-                           autocomplete="off" />
+                           autocomplete="off"
+                           disabled="@(!Model.AbacPuedeVisualizar)" />
 
                 </div>
 
@@ -842,7 +825,8 @@
                     </label>
 
                     <select id="adqFiltroEstatus"
-                            class="form-select">
+                            class="form-select"
+                            disabled="@(!Model.AbacPuedeVisualizar)">
 
                         <option value="">
                             Todos
@@ -871,7 +855,8 @@
 
                     <button type="button"
                             id="btnLimpiarFiltrosAdq"
-                            class="btn btn-outline-secondary">
+                            class="btn btn-outline-secondary"
+                            disabled="@(!Model.AbacPuedeVisualizar)">
 
                         <i class="bi bi-eraser me-1"></i>
 
@@ -994,7 +979,12 @@
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
                                                 data-id="@solicitud.Id"
-                                                title="Ver solicitud">
+                                                disabled="@(!Model.AbacPuedeVisualizar)"
+                                                title="@(
+                                                    Model.AbacPuedeVisualizar
+                                                        ? "Ver solicitud"
+                                                        : "No tienes permiso para visualizar registros."
+                                                        )">
 
                                             <i class="bi bi-eye"></i>
 
@@ -1009,7 +999,12 @@
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-secondary btnEditarSolicitudAdq"
                                                     data-id="@solicitud.Id"
-                                                    title="Editar solicitud">
+                                                    disabled="@(!Model.AbacPuedeEditar)"
+                                                    title="@(
+                                                        Model.AbacPuedeEditar
+                                                            ? "Editar solicitud"
+                                                            : "No tienes permiso para editar registros."
+                                                            )">
 
                                                 <i class="bi bi-pencil"></i>
 
@@ -1020,7 +1015,12 @@
                                                     class="btn btn-sm btn-outline-danger btnCancelarSolicitudUsuarioAdq"
                                                     data-id="@solicitud.Id"
                                                     data-folio="@solicitud.Folio"
-                                                    title="Cancelar solicitud">
+                                                    disabled="@(!Model.AbacPuedeEliminar)"
+                                                    title="@(
+                                                        Model.AbacPuedeEliminar
+                                                            ? "Cancelar solicitud"
+                                                            : "No tienes permiso para eliminar o cancelar registros."
+                                                            )">
 
                                                 <i class="bi bi-x-lg"></i>
 
@@ -1746,7 +1746,12 @@
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
                                                     data-id="@solicitud.Id"
-                                                    title="Ver solicitud">
+                                                    disabled="@(!Model.AbacPuedeVisualizar)"
+                                                    title="@(
+                                                        Model.AbacPuedeVisualizar
+                                                            ? "Ver solicitud"
+                                                            : "No tienes permiso para visualizar registros."
+                                                            )">
 
                                                 <i class="bi bi-eye"></i>
 
@@ -2506,8 +2511,8 @@
                                     <div class="d-flex justify-content-end gap-1">
 
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-primary btnVerSeguimientoPresupuestalAdq"
-                                                data-solicitud-id="@seguimiento.SolicitudId"
+                                                class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                                data-id="@seguimiento.SolicitudId"
                                                 title="Ver solicitud">
 
                                             <i class="bi bi-eye"></i>
@@ -2689,7 +2694,12 @@
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
                                                     data-id="@orden.Id"
-                                                    title="Ver solicitud">
+                                                    disabled="@(!Model.AbacPuedeVisualizar)"
+                                                    title="@(
+                                                        Model.AbacPuedeVisualizar
+                                                            ? "Ver solicitud"
+                                                            : "No tienes permiso para visualizar registros."
+                                                            )">
 
                                                 <i class="bi bi-eye"></i>
 
@@ -2726,7 +2736,12 @@
                                                 <button type="button"
                                                         class="btn btn-sm btnGenerarCotizacionAdq adq-btn-cotizar"
                                                         data-id="@orden.Id"
-                                                        title="Gestionar cotización">
+                                                        disabled="@(!Model.AbacPuedeCrear)"
+                                                        title="@(
+                                                            Model.AbacPuedeCrear
+                                                                ? "Gestionar cotización"
+                                                                : "No tienes permiso para crear cotizaciones."
+                                                                )">
 
                                                     <i class="bi bi-file-earmark-text"></i>
 
@@ -2743,7 +2758,12 @@
                                                         class="btn btn-sm btn-outline-primary btnReabrirCotizacionAdq"
                                                         data-id="@orden.Id"
                                                         data-folio="@orden.Folio"
-                                                        title="Modificar cotizaciones">
+                                                        disabled="@(!Model.AbacPuedeEditar)"
+                                                        title="@(
+                                                            Model.AbacPuedeEditar
+                                                                ? "Modificar cotizaciones"
+                                                                : "No tienes permiso para editar cotizaciones."
+                                                                )">
 
                                                     <i class="bi bi-pencil-square"></i>
 
@@ -8958,6 +8978,28 @@
         </div>
 
     </div>
+
+    <script>
+        window.adqAbac = {
+            puedeVisualizar:
+                @Model.AbacPuedeVisualizar.ToString().ToLower(),
+
+            puedeCrear:
+                @Model.AbacPuedeCrear.ToString().ToLower(),
+
+            puedeEditar:
+                @Model.AbacPuedeEditar.ToString().ToLower(),
+
+            puedeEliminar:
+                @Model.AbacPuedeEliminar.ToString().ToLower(),
+
+            puedeDescargar:
+                @Model.AbacPuedeDescargar.ToString().ToLower(),
+
+            puedeTodo:
+                @Model.AbacPuedeTodo.ToString().ToLower()
+        };
+    </script>
 
 
 @section Scripts

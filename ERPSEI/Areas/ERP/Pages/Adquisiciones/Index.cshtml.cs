@@ -609,6 +609,51 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         }
 
+        // =========================================================
+        // CAPACIDADES ABAC GENERALES
+        // =========================================================
+
+        public bool AbacPuedeVisualizar
+        {
+            get;
+            private set;
+        }
+
+
+        public bool AbacPuedeCrear
+        {
+            get;
+            private set;
+        }
+
+
+        public bool AbacPuedeEditar
+        {
+            get;
+            private set;
+        }
+
+
+        public bool AbacPuedeEliminar
+        {
+            get;
+            private set;
+        }
+
+
+        public bool AbacPuedeDescargar
+        {
+            get;
+            private set;
+        }
+
+
+        public bool AbacPuedeTodo
+        {
+            get;
+            private set;
+        }
+
 
         public bool PuedeConfigurarAprobadores
         {
@@ -824,7 +869,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             } = new();
         }
 
-
         public class PermisoAdquisicionesInput
         {
             public string UsuarioId
@@ -834,6 +878,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             } = string.Empty;
 
 
+            // =========================================================
+            // PERMISOS GENERALES RBAC / ABAC
+            // =========================================================
+
             public bool PuedeVisualizar
             {
                 get;
@@ -841,77 +889,35 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            public bool PuedeCrearSolicitud
+            public bool PuedeCrear
             {
                 get;
                 set;
             }
 
 
-            public bool PuedeGestionarSolicitudes
+            public bool PuedeEditar
             {
                 get;
                 set;
             }
 
 
-            public bool PuedeAprobar
+            public bool PuedeEliminar
             {
                 get;
                 set;
             }
 
 
-            public bool PuedeAsignar
+            public bool PuedeDescargar
             {
                 get;
                 set;
             }
 
 
-            public bool PuedeCotizar
-            {
-                get;
-                set;
-            }
-
-
-            public bool PuedeGestionarProveedores
-            {
-                get;
-                set;
-            }
-
-
-            public bool PuedeGenerarSolicitudPago
-            {
-                get;
-                set;
-            }
-
-
-            public bool PuedeVerReportes
-            {
-                get;
-                set;
-            }
-
-
-            public bool PuedeAprobarPresupuesto
-            {
-                get;
-                set;
-            }
-
-
-            public int? NivelPresupuestal
-            {
-                get;
-                set;
-            }
-
-
-            public bool PuedeAdministrar
+            public bool PuedeTodo
             {
                 get;
                 set;
@@ -2936,33 +2942,50 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     );
 
 
+            bool tienePermisoVisualizar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Visualizar"
+                );
+
+
             bool esUsuarioAdquisiciones =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeGenerarSolicitudPago
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+                (
+                    User.IsInRole(
+                        "Administrador"
+                    )
+                    ||
+                    User.IsInRole(
+                        "Administrador Adquisiciones"
+                    )
+                    ||
+                    User.IsInRole(
+                        "Usuario Adquisiciones"
+                    )
+                )
+                &&
+                tienePermisoVisualizar;
 
 
-            if (
-                !esPropietario
-                &&
-                !esAgenteAsignado
-                &&
-                !esAprobadorPresupuestal
-                &&
-                !esUsuarioAdquisiciones
-            )
+            bool puedeConsultar =
+                esAprobadorPresupuestal
+                ||
+                esUsuarioAdquisiciones
+                ||
+                (
+                    esPropietario
+                    &&
+                    tienePermisoVisualizar
+                )
+                ||
+                (
+                    esAgenteAsignado
+                    &&
+                    tienePermisoVisualizar
+                );
+
+
+            if (!puedeConsultar)
             {
                 return new JsonResult(
                     new
@@ -2977,7 +3000,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         StatusCodes.Status403Forbidden
                 };
             }
-
 
             AdqSolicitudPago? pago =
                 await _context.AdqSolicitudesPago
@@ -3190,22 +3212,54 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 usuarioActual.Id;
 
 
+            bool tienePermisoVisualizar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Visualizar"
+                );
+
+
             bool esUsuarioAdquisiciones =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeGenerarSolicitudPago
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+                (
+                    User.IsInRole(
+                        "Administrador"
+                    )
+                    ||
+                    User.IsInRole(
+                        "Administrador Adquisiciones"
+                    )
+                    ||
+                    User.IsInRole(
+                        "Usuario Adquisiciones"
+                    )
+                )
+                &&
+                tienePermisoVisualizar;
+
+
+            if (
+                (
+                    esSolicitante
+                    ||
+                    esAgenteAsignado
+                )
+                &&
+                !tienePermisoVisualizar
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permiso para visualizar la información de pago."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
 
 
             if (
@@ -3215,6 +3269,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 &&
                 !esUsuarioAdquisiciones
             )
+
             {
                 return new JsonResult(
                     new
@@ -3899,36 +3954,23 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
-
             // =====================================================
-            // PERMISO DE COTIZACIÓN
+            // PERMISO ABAC - FINALIZAR COTIZACIÓN / SOLICITUD DE PAGO
             // =====================================================
 
-            bool puedeCotizar =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+            bool puedeFinalizarCotizacion =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
 
 
-            if (
-                !puedeCotizar
-            )
+            if (!puedeFinalizarCotizacion)
             {
                 return new JsonResult(
                     new
                     {
                         success = false,
-
                         message =
                             "No tienes permisos para finalizar la cotización."
                     }
@@ -4646,6 +4688,44 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 {
                     StatusCode =
                         StatusCodes.Status401Unauthorized
+                };
+            }
+
+            // =====================================================
+            // PERMISO ABAC - SOLICITUD DE PAGO
+            // =====================================================
+
+            bool puedeCrearSolicitudPago =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Crear"
+                );
+
+
+            bool puedeEditarSolicitudPago =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
+
+
+            if (
+                !puedeCrearSolicitudPago
+                &&
+                !puedeEditarSolicitudPago
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para registrar o modificar la Solicitud de Pago."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
                 };
             }
 
@@ -5431,6 +5511,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             )
             {
                 return Unauthorized();
+            }
+
+            bool tienePermisoDescargar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Descargar"
+                );
+
+
+            if (!tienePermisoDescargar)
+            {
+                return Forbid();
             }
 
 
@@ -9952,6 +10044,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return Challenge();
             }
 
+            bool puedeCrear =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Crear"
+                );
+
+
+            if (!puedeCrear)
+            {
+                return Forbid();
+            }
+
             await CargarPermisosAdquisicionesAsync(
                 usuarioActual
             );
@@ -10049,6 +10153,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             if (usuarioActual == null)
             {
                 return Challenge();
+            }
+
+            bool puedeCrear =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Crear"
+                );
+
+
+            if (!puedeCrear)
+            {
+                return Forbid();
             }
 
             await CargarPermisosAdquisicionesAsync(
@@ -10191,6 +10307,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             if (usuarioActual == null)
             {
                 return Challenge();
+            }
+
+            bool puedeEditar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
+
+
+            if (!puedeEditar)
+            {
+                return Forbid();
             }
 
 
@@ -11512,8 +11640,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // ASIGNAR AGENTE DE COMPRAS
         // =========================================================
 
-        public async Task<IActionResult>
-            OnPostAsignarAgenteAsync()
+        public async Task<IActionResult> OnPostAsignarAgenteAsync()
         {
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
@@ -11549,26 +11676,37 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            AppUser? usuarioAsignado =
+                await _userManager.FindByIdAsync(
+                    UsuarioAsignadoAdqId
+                );
+
+
+            if (
+                usuarioAsignado ==
+                null
+                ||
+                usuarioAsignado.IsBanned
+            )
+            {
+                TempData["MensajeError"] =
+                    "El usuario seleccionado no se encuentra disponible.";
+
+                return RedirectToPage();
+            }
+
+
             bool agenteValido =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                UsuarioAsignadoAdqId
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+                await _userManager.IsInRoleAsync(
+                    usuarioAsignado,
+                    "Usuario Adquisiciones"
+                );
 
 
             if (!agenteValido)
             {
                 TempData["MensajeError"] =
-                    "El usuario seleccionado no está configurado como agente de compras.";
+                    "El usuario seleccionado no cuenta con el rol Usuario Adquisiciones.";
 
                 return RedirectToPage();
             }
@@ -11760,27 +11898,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // VALIDAR QUE SEA AGENTE DE COMPRAS
             // =====================================================
 
-            bool esAgenteCompras =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+            // =====================================================
+            // PERMISO ABAC - CREAR COTIZACIÓN
+            // =====================================================
+
+            bool puedeCrearCotizacion =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Crear"
+                );
 
 
-            if (!esAgenteCompras)
+            if (!puedeCrearCotizacion)
             {
                 return Forbid();
             }
-
 
             // =====================================================
             // NORMALIZAR DATOS
@@ -12546,26 +12678,17 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // VALIDAR PERMISO
+            // PERMISO ABAC - EDITAR COTIZACIÓN
             // =====================================================
 
-            bool esAgenteCompras =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+            bool puedeEditarCotizacion =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
 
 
-            if (!esAgenteCompras)
+            if (!puedeEditarCotizacion)
             {
                 return Forbid();
             }
@@ -13304,31 +13427,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // =====================================================
 
             bool puedeEliminarCotizaciones =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Eliminar"
+                );
 
 
-            if (
-                !puedeEliminarCotizaciones
-            )
+            if (!puedeEliminarCotizaciones)
             {
                 return new JsonResult(
                     new
                     {
-                        success =
-                            false,
-
+                        success = false,
                         message =
                             "No tienes permisos para eliminar cotizaciones."
                     }
@@ -13800,28 +13910,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
-
             // =====================================================
-            // VALIDAR PERMISO DE COTIZACIÓN
+            // PERMISO ABAC - SELECCIONAR COTIZACIÓN
             // =====================================================
 
-            bool esAgenteCompras =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+            bool puedeSeleccionarCotizacion =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
 
 
-            if (!esAgenteCompras)
+            if (!puedeSeleccionarCotizacion)
             {
                 return new JsonResult(
                     new
@@ -14212,28 +14312,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
-
             // =====================================================
-            // PERMISO
+            // PERMISO ABAC - FINALIZAR COTIZACIÓN
             // =====================================================
 
-            bool esAgenteCompras =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+            bool puedeFinalizarCotizacion =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
 
 
-            if (!esAgenteCompras)
+            if (!puedeFinalizarCotizacion)
             {
                 return new JsonResult(
                     new
@@ -14617,28 +14707,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
-
             // =====================================================
-            // VALIDAR PERMISO
+            // PERMISO ABAC - REABRIR / MODIFICAR COTIZACIÓN
             // =====================================================
 
-            bool esAgenteCompras =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+            bool puedeReabrirCotizacion =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
 
 
-            if (!esAgenteCompras)
+            if (!puedeReabrirCotizacion)
             {
                 return new JsonResult(
                     new
@@ -15021,28 +15101,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
-
             // =====================================================
-            // VALIDAR QUE SEA AGENTE DE COMPRAS
+            // PERMISO ABAC - SOLICITAR PRESUPUESTO
             // =====================================================
 
-            bool esAgenteCompras =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+            bool puedeSolicitarPresupuesto =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
 
 
-            if (!esAgenteCompras)
+            if (!puedeSolicitarPresupuesto)
             {
                 return new JsonResult(
                     new
@@ -17766,6 +17836,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return Challenge();
             }
 
+            bool puedeEliminar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Eliminar"
+                );
+
+
+            if (!puedeEliminar)
+            {
+                return Forbid();
+            }
+
 
             string motivo =
                 MotivoCancelacionUsuario?
@@ -19175,28 +19257,43 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // 3. PERSONAL DE ADQUISICIONES
             // =====================================================
 
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
+
+            bool esAdministradorAdquisiciones =
+                User.IsInRole(
+                    "Administrador Adquisiciones"
+                );
+
+
+            bool esUsuarioOperativoAdquisiciones =
+                User.IsInRole(
+                    "Usuario Adquisiciones"
+                );
+
+
+            bool tieneAccesoRolAdquisiciones =
+                esAdministradorSistema
+                ||
+                esAdministradorAdquisiciones
+                ||
+                esUsuarioOperativoAdquisiciones;
+
+
+            bool tienePermisoVisualizar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Visualizar"
+                );
+
+
             bool esUsuarioAdquisiciones =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            (
-                                x.PuedeVisualizar
-                                ||
-                                x.PuedeGestionarSolicitudes
-                                ||
-                                x.PuedeAprobar
-                                ||
-                                x.PuedeAsignar
-                                ||
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
-                            )
-                    );
+                tieneAccesoRolAdquisiciones
+                &&
+                tienePermisoVisualizar;
 
 
             // =====================================================
@@ -19297,13 +19394,21 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // =====================================================
 
             bool puedeConsultar =
-                esPropietario
+                (
+                    esPropietario
+                    &&
+                    tienePermisoVisualizar
+                )
                 ||
                 esAprobador
                 ||
                 esUsuarioAdquisiciones
                 ||
-                esAgenteAsignado
+                (
+                    esAgenteAsignado
+                    &&
+                    tienePermisoVisualizar
+                )
                 ||
                 esObservadorPresupuestal
                 ||
@@ -20567,22 +20672,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // SOLO ADMINISTRADORES DE ADQUISICIONES
+            // SOLO EL ROL ADMINISTRADOR PUEDE GESTIONAR PERMISOS
             // =====================================================
 
-            bool puedeAdministrar =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            x.PuedeAdministrar
-                    );
-
-
-            if (!puedeAdministrar)
+            if (!User.IsInRole("Administrador"))
             {
                 return new JsonResult(
                     new
@@ -20663,7 +20756,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 resultado.Add(
                     new
                     {
-                        id = usuario.Id,
+                        id =
+                            usuario.Id,
 
                         nombre,
 
@@ -20679,56 +20773,28 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             ??
                             false,
 
-                        puedeCrearSolicitud =
-                            permiso?.PuedeCrearSolicitud
+                        puedeCrear =
+                            permiso?.PuedeCrear
                             ??
                             false,
 
-                        puedeGestionarSolicitudes =
-                            permiso?.PuedeGestionarSolicitudes
+                        puedeEditar =
+                            permiso?.PuedeEditar
                             ??
                             false,
 
-                        puedeAprobar =
-                            permiso?.PuedeAprobar
+                        puedeEliminar =
+                            permiso?.PuedeEliminar
                             ??
                             false,
 
-                        puedeAsignar =
-                            permiso?.PuedeAsignar
+                        puedeDescargar =
+                            permiso?.PuedeDescargar
                             ??
                             false,
 
-                        puedeCotizar =
-                            permiso?.PuedeCotizar
-                            ??
-                            false,
-
-                        puedeGestionarProveedores =
-                            permiso?.PuedeGestionarProveedores
-                            ??
-                            false,
-
-                        puedeGenerarSolicitudPago =
-                            permiso?.PuedeGenerarSolicitudPago
-                            ??
-                            false,
-
-                        puedeVerReportes =
-                            permiso?.PuedeVerReportes
-                            ??
-                            false,
-
-                        puedeAprobarPresupuesto =
-                            permiso?.PuedeAprobarPresupuesto
-                            ??
-                            false,
-
-                        nivelPresupuestal =
-                            permiso?.NivelPresupuestal,
-
-                        puedeAdministrar =
-                            permiso?.PuedeAdministrar
+                        puedeTodo =
+                            permiso?.PuedeTodo
                             ??
                             false
                     }
@@ -20748,15 +20814,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             );
         }
 
-        // =========================================================
-        // GUARDAR PERMISOS DE ADQUISICIONES
-        // POST ?handler=GuardarPermisosUsuariosAdquisiciones
-        // =========================================================
-
         public async Task<IActionResult>
             OnPostGuardarPermisosUsuariosAdquisicionesAsync(
                 [FromBody]
-        GuardarPermisosAdquisicionesRequest request)
+        GuardarPermisosAdquisicionesRequest request
+            )
         {
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
@@ -20780,22 +20842,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // VALIDAR PERMISO DE ADMINISTRACIÓN
+            // SOLO EL ROL ADMINISTRADOR PUEDE GESTIONAR PERMISOS
             // =====================================================
 
-            bool puedeAdministrar =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
-                            x.PuedeAdministrar
-                    );
-
-
-            if (!puedeAdministrar)
+            if (!User.IsInRole("Administrador"))
             {
                 return new JsonResult(
                     new
@@ -20853,7 +20903,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     )
                     .GroupBy(
                         x =>
-                            x.UsuarioId
+                            x.UsuarioId.Trim()
                     )
                     .Any(
                         x =>
@@ -20880,7 +20930,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // VALIDAR NIVELES PRESUPUESTALES
+            // VALIDAR IDs
             // =====================================================
 
             foreach (
@@ -20900,35 +20950,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             success = false,
                             message =
                                 "Se recibió un usuario inválido."
-                        }
-                    )
-                    {
-                        StatusCode =
-                            StatusCodes.Status400BadRequest
-                    };
-                }
-
-
-                if (
-                    item.PuedeAprobarPresupuesto
-                    &&
-                    (
-                        !item.NivelPresupuestal.HasValue
-                        ||
-                        item.NivelPresupuestal.Value <
-                            1
-                        ||
-                        item.NivelPresupuestal.Value >
-                            4
-                    )
-                )
-                {
-                    return new JsonResult(
-                        new
-                        {
-                            success = false,
-                            message =
-                                "Los usuarios que aprueban presupuesto deben tener un nivel presupuestal entre 1 y 4."
                         }
                     )
                     {
@@ -21064,58 +21085,99 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     }
 
 
-                    // =============================================
-                    // PERMISOS GENERALES
-                    // =============================================
+                    // =================================================
+                    // TODOS
+                    // =================================================
 
-                    permiso.PuedeVisualizar =
+                    bool puedeVisualizar =
+                        item.PuedeTodo
+                        ||
                         item.PuedeVisualizar;
 
-                    permiso.PuedeCrearSolicitud =
-                        item.PuedeCrearSolicitud;
+                    bool puedeCrear =
+                        item.PuedeTodo
+                        ||
+                        item.PuedeCrear;
 
-                    permiso.PuedeGestionarSolicitudes =
-                        item.PuedeGestionarSolicitudes;
+                    bool puedeEditar =
+                        item.PuedeTodo
+                        ||
+                        item.PuedeEditar;
 
-                    permiso.PuedeAprobar =
-                        item.PuedeAprobar;
+                    bool puedeEliminar =
+                        item.PuedeTodo
+                        ||
+                        item.PuedeEliminar;
 
-                    permiso.PuedeAsignar =
-                        item.PuedeAsignar;
-
-                    permiso.PuedeCotizar =
-                        item.PuedeCotizar;
-
-                    permiso.PuedeGestionarProveedores =
-                        item.PuedeGestionarProveedores;
-
-                    permiso.PuedeGenerarSolicitudPago =
-                        item.PuedeGenerarSolicitudPago;
-
-                    permiso.PuedeVerReportes =
-                        item.PuedeVerReportes;
-
-                    permiso.PuedeAdministrar =
-                        item.PuedeAdministrar;
+                    bool puedeDescargar =
+                        item.PuedeTodo
+                        ||
+                        item.PuedeDescargar;
 
 
-                    // =============================================
-                    // APROBACIÓN PRESUPUESTAL
-                    // =============================================
+                    // =================================================
+                    // NUEVOS PERMISOS GENERALES RBAC / ABAC
+                    // =================================================
 
-                    permiso.PuedeAprobarPresupuesto =
-                        item.PuedeAprobarPresupuesto;
+                    permiso.PuedeVisualizar =
+                        puedeVisualizar;
+
+                    permiso.PuedeCrear =
+                        puedeCrear;
+
+                    permiso.PuedeEditar =
+                        puedeEditar;
+
+                    permiso.PuedeEliminar =
+                        puedeEliminar;
+
+                    permiso.PuedeDescargar =
+                        puedeDescargar;
 
 
-                    permiso.NivelPresupuestal =
-                        item.PuedeAprobarPresupuesto
-                            ? item.NivelPresupuestal
-                            : null;
+                    /*
+                     * PuedeTodo se considera activo únicamente
+                     * cuando todas las capacidades están concedidas.
+                     *
+                     * Así mantenemos el dato consistente incluso si
+                     * el frontend manda combinaciones diferentes.
+                     */
+                    permiso.PuedeTodo =
+                        puedeVisualizar
+                        &&
+                        puedeCrear
+                        &&
+                        puedeEditar
+                        &&
+                        puedeEliminar
+                        &&
+                        puedeDescargar;
 
 
-                    // =============================================
-                    // AUDITORÍA DE MODIFICACIÓN
-                    // =============================================
+                    // =================================================
+                    // IMPORTANTE:
+                    // NO MODIFICAMOS LOS PERMISOS LEGACY TODAVÍA.
+                    // =================================================
+                    //
+                    // PuedeCrearSolicitud
+                    // PuedeGestionarSolicitudes
+                    // PuedeAprobar
+                    // PuedeAsignar
+                    // PuedeCotizar
+                    // PuedeGestionarProveedores
+                    // PuedeGenerarSolicitudPago
+                    // PuedeVerReportes
+                    // PuedeAprobarPresupuesto
+                    // NivelPresupuestal
+                    // PuedeAdministrar
+                    //
+                    // Estos seguirán funcionando mientras hacemos
+                    // la transición handler por handler.
+
+
+                    // =================================================
+                    // AUDITORÍA
+                    // =================================================
 
                     permiso.FechaModificacion =
                         ahora;
@@ -21178,6 +21240,76 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
         }
 
+        // =========================================================
+        // VALIDAR PERMISO ABAC
+        // =========================================================
+
+        private async Task<bool> TienePermisoAbacAsync(
+            AppUser usuarioActual,
+            string permiso
+        )
+        {
+            // Administrador general:
+            // bypass total.
+            if (
+                User.IsInRole(
+                    "Administrador"
+                )
+            )
+            {
+                return true;
+            }
+
+
+            AdqPermisoUsuario? configuracion =
+                await _context.AdqPermisosUsuarios
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.UsuarioId ==
+                                usuarioActual.Id
+                    );
+
+
+            if (
+                configuracion ==
+                null
+            )
+            {
+                return false;
+            }
+
+
+            if (
+                configuracion.PuedeTodo
+            )
+            {
+                return true;
+            }
+
+
+            return permiso switch
+            {
+                "Visualizar" =>
+                    configuracion.PuedeVisualizar,
+
+                "Crear" =>
+                    configuracion.PuedeCrear,
+
+                "Editar" =>
+                    configuracion.PuedeEditar,
+
+                "Eliminar" =>
+                    configuracion.PuedeEliminar,
+
+                "Descargar" =>
+                    configuracion.PuedeDescargar,
+
+                _ =>
+                    false
+            };
+        }
+
         private async Task CargarPermisosAdquisicionesAsync(
             AppUser usuarioActual)
         {
@@ -21221,6 +21353,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             {
                                 x.PuedeVisualizar,
 
+                                // NUEVOS ABAC
+                                x.PuedeCrear,
+                                x.PuedeEditar,
+                                x.PuedeEliminar,
+                                x.PuedeDescargar,
+                                x.PuedeTodo,
+
+                                // LEGACY - NO ELIMINAR TODAVÍA
                                 x.PuedeCrearSolicitud,
 
                                 x.PuedeGestionarSolicitudes,
@@ -21243,8 +21383,110 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                                 x.PuedeAdministrar
                             }
-                    )
+                     )
                     .FirstOrDefaultAsync();
+
+
+            // =========================================================
+            // CAPACIDADES ABAC
+            // =========================================================
+            //
+            // Administrador general:
+            // acceso operativo total.
+            //
+            // Los demás perfiles:
+            // dependen de ADQ_PermisosUsuarios.
+            // =========================================================
+
+            if (EsAdministradorSistema)
+            {
+                AbacPuedeVisualizar =
+                    true;
+
+                AbacPuedeCrear =
+                    true;
+
+                AbacPuedeEditar =
+                    true;
+
+                AbacPuedeEliminar =
+                    true;
+
+                AbacPuedeDescargar =
+                    true;
+
+                AbacPuedeTodo =
+                    true;
+            }
+            else
+            {
+                bool puedeTodo =
+                    permiso?.PuedeTodo
+                    ??
+                    false;
+
+
+                AbacPuedeVisualizar =
+                    puedeTodo
+                    ||
+                    (
+                        permiso?.PuedeVisualizar
+                        ??
+                        false
+                    );
+
+
+                AbacPuedeCrear =
+                    puedeTodo
+                    ||
+                    (
+                        permiso?.PuedeCrear
+                        ??
+                        false
+                    );
+
+
+                AbacPuedeEditar =
+                    puedeTodo
+                    ||
+                    (
+                        permiso?.PuedeEditar
+                        ??
+                        false
+                    );
+
+
+                AbacPuedeEliminar =
+                    puedeTodo
+                    ||
+                    (
+                        permiso?.PuedeEliminar
+                        ??
+                        false
+                    );
+
+
+                AbacPuedeDescargar =
+                    puedeTodo
+                    ||
+                    (
+                        permiso?.PuedeDescargar
+                        ??
+                        false
+                    );
+
+
+                AbacPuedeTodo =
+                    AbacPuedeVisualizar
+                    &&
+                    AbacPuedeCrear
+                    &&
+                    AbacPuedeEditar
+                    &&
+                    AbacPuedeEliminar
+                    &&
+                    AbacPuedeDescargar;
+            }
 
 
             // =========================================================
@@ -21493,22 +21735,24 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         private async Task CargarAgentesComprasAsync()
         {
+            IList<AppUser> usuariosRol =
+                await _userManager.GetUsersInRoleAsync(
+                    "Usuario Adquisiciones"
+                );
+
 
             List<string> idsAgentes =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
+                usuariosRol
                     .Where(
                         x =>
-                            x.PuedeCotizar
-                            ||
-                            x.PuedeAdministrar
+                            !x.IsBanned
                     )
                     .Select(
                         x =>
-                            x.UsuarioId
+                            x.Id
                     )
                     .Distinct()
-                    .ToListAsync();
+                    .ToList();
 
 
             AgentesCompras =

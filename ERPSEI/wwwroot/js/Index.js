@@ -5,6 +5,41 @@ document.addEventListener(
     function () {
 
         // =========================================================
+        // PERMISOS ABAC
+        // =========================================================
+
+        const permisosAbacAdq =
+            window.adqAbac
+            ??
+            {
+                puedeVisualizar: false,
+                puedeCrear: false,
+                puedeEditar: false,
+                puedeEliminar: false,
+                puedeDescargar: false,
+                puedeTodo: false
+            };
+
+
+        function tienePermisoAbacAdq(
+            permiso
+        ) {
+
+            if (
+                permisosAbacAdq.puedeTodo
+            ) {
+                return true;
+            }
+
+
+            return Boolean(
+                permisosAbacAdq[
+                permiso
+                ]
+            );
+        }
+
+        // =========================================================
         // DECISIÓN DEL GERENTE
         // =========================================================
 
@@ -6366,93 +6401,6 @@ document.addEventListener(
             }
         );
 
-        // =========================================================
-        // TEXTO DEL NIVEL PRESUPUESTAL
-        // =========================================================
-
-        function obtenerNombreNivelPresupuestalAdq(
-            nivel
-        ) {
-
-            switch (
-            Number(
-                nivel
-            )
-            ) {
-
-                case 1:
-                    return "Gerencia de Adquisiciones";
-
-                case 2:
-                    return "Planeación Financiera";
-
-                case 3:
-                    return "Dirección de Operaciones Internas";
-
-                case 4:
-                    return "Dirección General / Socios";
-
-                default:
-                    return "";
-            }
-        }
-
-
-        // =========================================================
-        // CREAR SELECT DE NIVEL
-        // =========================================================
-
-        function crearSelectNivelPresupuestalAdq(
-            usuario
-        ) {
-
-            const nivel =
-                Number(
-                    usuario.nivelPresupuestal
-                    ??
-                    0
-                );
-
-
-            const deshabilitado =
-                !usuario.puedeAprobarPresupuesto;
-
-
-            return `
-        <select class="form-select form-select-sm adq-permiso-nivel"
-                data-usuario-id="${escapeAttributeAdq(
-                usuario.id
-            )}"
-                ${deshabilitado ? "disabled" : ""}>
-
-            <option value="">
-                Seleccionar...
-            </option>
-
-            <option value="1"
-                ${nivel === 1 ? "selected" : ""}>
-                1 - Gerencia de Adquisiciones
-            </option>
-
-            <option value="2"
-                ${nivel === 2 ? "selected" : ""}>
-                2 - Planeación Financiera
-            </option>
-
-            <option value="3"
-                ${nivel === 3 ? "selected" : ""}>
-                3 - Dirección de Operaciones Internas
-            </option>
-
-            <option value="4"
-                ${nivel === 4 ? "selected" : ""}>
-                4 - Dirección General / Socios
-            </option>
-
-        </select>
-    `;
-        }
-
 
         // =========================================================
         // CHECKBOX DE PERMISO
@@ -6570,6 +6518,24 @@ document.addEventListener(
                             .toLowerCase();
 
 
+                    const todosActivos =
+                        Boolean(
+                            usuario.puedeTodo
+                            ||
+                            (
+                                usuario.puedeVisualizar
+                                &&
+                                usuario.puedeCrear
+                                &&
+                                usuario.puedeEditar
+                                &&
+                                usuario.puedeEliminar
+                                &&
+                                usuario.puedeDescargar
+                            )
+                        );
+
+
                     fila.innerHTML = `
 
                 <td>
@@ -6594,107 +6560,68 @@ document.addEventListener(
 
 
                 <td class="text-center">
+
                     ${crearCheckboxPermisoAdq(
                         usuario.id,
                         "puedeVisualizar",
                         usuario.puedeVisualizar
                     )}
-                </td>
 
-                <td class="text-center">
-                    ${crearCheckboxPermisoAdq(
-                        usuario.id,
-                        "puedeCrearSolicitud",
-                        usuario.puedeCrearSolicitud
-                    )}
                 </td>
 
 
                 <td class="text-center">
+
                     ${crearCheckboxPermisoAdq(
                         usuario.id,
-                        "puedeGestionarSolicitudes",
-                        usuario.puedeGestionarSolicitudes
+                        "puedeCrear",
+                        usuario.puedeCrear
                     )}
+
                 </td>
 
 
                 <td class="text-center">
+
                     ${crearCheckboxPermisoAdq(
                         usuario.id,
-                        "puedeAprobar",
-                        usuario.puedeAprobar
+                        "puedeEditar",
+                        usuario.puedeEditar
                     )}
+
                 </td>
 
 
                 <td class="text-center">
+
                     ${crearCheckboxPermisoAdq(
                         usuario.id,
-                        "puedeAsignar",
-                        usuario.puedeAsignar
+                        "puedeEliminar",
+                        usuario.puedeEliminar
                     )}
+
                 </td>
 
 
                 <td class="text-center">
+
                     ${crearCheckboxPermisoAdq(
                         usuario.id,
-                        "puedeCotizar",
-                        usuario.puedeCotizar
+                        "puedeDescargar",
+                        usuario.puedeDescargar
                     )}
+
                 </td>
 
 
                 <td class="text-center">
+
                     ${crearCheckboxPermisoAdq(
                         usuario.id,
-                        "puedeGestionarProveedores",
-                        usuario.puedeGestionarProveedores
+                        "puedeTodo",
+                        todosActivos
                     )}
-                </td>
 
-
-                <td class="text-center">
-                    ${crearCheckboxPermisoAdq(
-                        usuario.id,
-                        "puedeGenerarSolicitudPago",
-                        usuario.puedeGenerarSolicitudPago
-                    )}
-                </td>
-
-
-                <td class="text-center">
-                    ${crearCheckboxPermisoAdq(
-                        usuario.id,
-                        "puedeVerReportes",
-                        usuario.puedeVerReportes
-                    )}
-                </td>
-
-
-                <td class="text-center">
-                    ${crearCheckboxPermisoAdq(
-                        usuario.id,
-                        "puedeAprobarPresupuesto",
-                        usuario.puedeAprobarPresupuesto
-                    )}
-                </td>
-
-
-                <td>
-                    ${crearSelectNivelPresupuestalAdq(
-                        usuario
-                    )}
-                </td>
-
-
-                <td class="text-center">
-                    ${crearCheckboxPermisoAdq(
-                        usuario.id,
-                        "puedeAdministrar",
-                        usuario.puedeAdministrar
-                    )}
                 </td>
             `;
 
@@ -6735,6 +6662,88 @@ document.addEventListener(
             }
         }
 
+        // =========================================================
+        // PERMISOS OPERATIVOS DE UNA FILA
+        // =========================================================
+
+        function obtenerCheckboxesOperativosAdq(
+            fila
+        ) {
+
+            return [
+                fila.querySelector(
+                    '.adq-permiso-checkbox[data-permiso="puedeVisualizar"]'
+                ),
+
+                fila.querySelector(
+                    '.adq-permiso-checkbox[data-permiso="puedeCrear"]'
+                ),
+
+                fila.querySelector(
+                    '.adq-permiso-checkbox[data-permiso="puedeEditar"]'
+                ),
+
+                fila.querySelector(
+                    '.adq-permiso-checkbox[data-permiso="puedeEliminar"]'
+                ),
+
+                fila.querySelector(
+                    '.adq-permiso-checkbox[data-permiso="puedeDescargar"]'
+                )
+            ]
+                .filter(
+                    elemento =>
+                        elemento instanceof HTMLInputElement
+                );
+        }
+
+
+        // =========================================================
+        // SINCRONIZAR CHECKBOX TODOS
+        // =========================================================
+
+        function sincronizarPermisoTodosAdq(
+            fila
+        ) {
+
+            if (!fila) {
+                return;
+            }
+
+
+            const checkboxTodos =
+                fila.querySelector(
+                    '.adq-permiso-checkbox[data-permiso="puedeTodo"]'
+                );
+
+
+            if (
+                !(checkboxTodos instanceof HTMLInputElement)
+            ) {
+                return;
+            }
+
+
+            const permisosOperativos =
+                obtenerCheckboxesOperativosAdq(
+                    fila
+                );
+
+
+            checkboxTodos.checked =
+                permisosOperativos.length ===
+                5
+                &&
+                permisosOperativos.every(
+                    checkbox =>
+                        checkbox.checked
+                );
+        }
+
+
+        // =========================================================
+        // CAMBIO EN CHECKBOX
+        // =========================================================
 
         // =========================================================
         // CAMBIO EN CHECKBOX
@@ -6752,7 +6761,11 @@ document.addEventListener(
 
 
                     if (
-                        !(elemento instanceof HTMLElement)
+                        !(elemento instanceof HTMLInputElement)
+                        ||
+                        !elemento.classList.contains(
+                            "adq-permiso-checkbox"
+                        )
                     ) {
                         return;
                     }
@@ -6762,80 +6775,73 @@ document.addEventListener(
                         elemento.dataset.usuarioId;
 
 
+                    const permiso =
+                        elemento.dataset.permiso;
+
+
                     if (
                         !usuarioId
+                        ||
+                        !permiso
                     ) {
                         return;
                     }
 
 
+                    const fila =
+                        elemento.closest(
+                            "tr"
+                        );
+
+
+                    if (!fila) {
+                        return;
+                    }
+
+
+                    // =====================================================
+                    // CHECKBOX TODOS
+                    // =====================================================
+
                     if (
-                        elemento.classList.contains(
-                            "adq-permiso-checkbox"
-                        )
+                        permiso ===
+                        "puedeTodo"
                     ) {
 
-                        const permiso =
-                            elemento.dataset.permiso;
+                        const permisosOperativos =
+                            obtenerCheckboxesOperativosAdq(
+                                fila
+                            );
 
 
-                        if (
-                            permiso ===
-                            "puedeAprobarPresupuesto"
-                        ) {
-
-                            const fila =
-                                elemento.closest(
-                                    "tr"
-                                );
-
-
-                            const selectNivel =
-                                fila?.querySelector(
-                                    ".adq-permiso-nivel"
-                                );
-
-
-                            if (
-                                selectNivel
+                        permisosOperativos.forEach(
+                            function (
+                                checkbox
                             ) {
 
-                                selectNivel.disabled =
-                                    !elemento.checked;
-
-
-                                if (
-                                    !elemento.checked
-                                ) {
-
-                                    selectNivel.value =
-                                        "";
-                                }
+                                checkbox.checked =
+                                    elemento.checked;
                             }
-                        }
-
-
-                        marcarPermisoUsuarioModificadoAdq(
-                            usuarioId
-                        );
-
-
-                        return;
-                    }
-
-
-                    if (
-                        elemento.classList.contains(
-                            "adq-permiso-nivel"
-                        )
-                    ) {
-
-                        marcarPermisoUsuarioModificadoAdq(
-                            usuarioId
                         );
                     }
+
+                    // =====================================================
+                    // CHECKBOX INDIVIDUAL
+                    // =====================================================
+
+                    else {
+
+                        sincronizarPermisoTodosAdq(
+                            fila
+                        );
+                    }
+
+
+                    marcarPermisoUsuarioModificadoAdq(
+                        usuarioId
+                    );
                 }
-        );
+            );
 
         // =========================================================
         // CARGAR PERMISOS DESDE BACKEND
@@ -7130,29 +7136,55 @@ document.addEventListener(
                     }
 
 
-                    const puedeAprobarPresupuesto =
+                    const puedeVisualizar =
                         obtenerCheckboxPermisoAdq(
                             fila,
-                            "puedeAprobarPresupuesto"
+                            "puedeVisualizar"
                         );
 
 
-                    const selectNivel =
-                        fila.querySelector(
-                            ".adq-permiso-nivel"
+                    const puedeCrear =
+                        obtenerCheckboxPermisoAdq(
+                            fila,
+                            "puedeCrear"
                         );
 
 
-                    const nivelPresupuestal =
-                        puedeAprobarPresupuesto
-                            &&
-                            selectNivel
-                            &&
-                            selectNivel.value
-                            ? Number(
-                                selectNivel.value
-                            )
-                            : null;
+                    const puedeEditar =
+                        obtenerCheckboxPermisoAdq(
+                            fila,
+                            "puedeEditar"
+                        );
+
+
+                    const puedeEliminar =
+                        obtenerCheckboxPermisoAdq(
+                            fila,
+                            "puedeEliminar"
+                        );
+
+
+                    const puedeDescargar =
+                        obtenerCheckboxPermisoAdq(
+                            fila,
+                            "puedeDescargar"
+                        );
+
+
+                    /*
+                     * PuedeTodo se calcula también aquí.
+                     * No confiamos únicamente en el checkbox maestro.
+                     */
+                    const puedeTodo =
+                        puedeVisualizar
+                        &&
+                        puedeCrear
+                        &&
+                        puedeEditar
+                        &&
+                        puedeEliminar
+                        &&
+                        puedeDescargar;
 
 
                     resultado.push(
@@ -7161,70 +7193,22 @@ document.addEventListener(
                                 usuarioId,
 
                             puedeVisualizar:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeVisualizar"
-                                ),
+                                puedeVisualizar,
 
-                            puedeCrearSolicitud:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeCrearSolicitud"
-                                ),
+                            puedeCrear:
+                                puedeCrear,
 
-                            puedeGestionarSolicitudes:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeGestionarSolicitudes"
-                                ),
+                            puedeEditar:
+                                puedeEditar,
 
-                            puedeAprobar:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeAprobar"
-                                ),
+                            puedeEliminar:
+                                puedeEliminar,
 
-                            puedeAsignar:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeAsignar"
-                                ),
+                            puedeDescargar:
+                                puedeDescargar,
 
-                            puedeCotizar:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeCotizar"
-                                ),
-
-                            puedeGestionarProveedores:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeGestionarProveedores"
-                                ),
-
-                            puedeGenerarSolicitudPago:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeGenerarSolicitudPago"
-                                ),
-
-                            puedeVerReportes:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeVerReportes"
-                                ),
-
-                            puedeAprobarPresupuesto:
-                                puedeAprobarPresupuesto,
-
-                            nivelPresupuestal:
-                                nivelPresupuestal,
-
-                            puedeAdministrar:
-                                obtenerCheckboxPermisoAdq(
-                                    fila,
-                                    "puedeAdministrar"
-                                )
+                            puedeTodo:
+                                puedeTodo
                         }
                     );
                 }
@@ -7232,47 +7216,6 @@ document.addEventListener(
 
 
             return resultado;
-        }
-
-        // =========================================================
-        // VALIDAR PERMISOS PRESUPUESTALES
-        // =========================================================
-
-        function validarPermisosPresupuestalesAdq(
-            permisos
-        ) {
-
-            for (
-                const permiso
-                of permisos
-            ) {
-
-                if (
-                    permiso.puedeAprobarPresupuesto
-                    &&
-                    (
-                        !permiso.nivelPresupuestal
-                        ||
-                        permiso.nivelPresupuestal <
-                        1
-                        ||
-                        permiso.nivelPresupuestal >
-                        4
-                    )
-                ) {
-
-                    mostrarAdvertenciaAdq(
-                        "Nivel presupuestal requerido",
-                        "Todo usuario con permiso para aprobar presupuesto debe tener asignado un nivel presupuestal."
-                    );
-
-
-                    return false;
-                }
-            }
-
-
-            return true;
         }
 
         // =========================================================
@@ -7303,15 +7246,6 @@ document.addEventListener(
                 );
 
 
-                return;
-            }
-
-
-            if (
-                !validarPermisosPresupuestalesAdq(
-                    permisos
-                )
-            ) {
                 return;
             }
 
@@ -16760,6 +16694,36 @@ document.addEventListener(
                                     enlace.rel =
                                         "noopener noreferrer";
 
+                                    if (
+                                        !tienePermisoAbacAdq(
+                                            "puedeDescargar"
+                                        )
+                                    ) {
+
+                                        enlace.classList.add(
+                                            "disabled"
+                                        );
+
+
+                                        enlace.removeAttribute(
+                                            "href"
+                                        );
+
+
+                                        enlace.setAttribute(
+                                            "aria-disabled",
+                                            "true"
+                                        );
+
+
+                                        enlace.style.cursor =
+                                            "not-allowed";
+
+
+                                        enlace.title =
+                                            "No tienes permiso para descargar archivos.";
+                                    }
+
 
                                     enlace.innerHTML = `
                                         <div class="adq-file-item-main">
@@ -16952,6 +16916,17 @@ document.addEventListener(
                         <i class="bi bi-download me-1"></i>
                         Descargar Solicitud de Pago
                     `;
+
+                            btnGenerarSolicitudPagoDesdeDetalle.disabled =
+                                !tienePermisoAbacAdq(
+                                    "puedeDescargar"
+                                );
+
+
+                            btnGenerarSolicitudPagoDesdeDetalle.title =
+                                btnGenerarSolicitudPagoDesdeDetalle.disabled
+                                    ? "No tienes permiso para descargar archivos."
+                                    : "Descargar Solicitud de Pago";
                                     }
                                     else {
 
@@ -16961,6 +16936,61 @@ document.addEventListener(
                     `;
                         }
                     }
+
+                    // =========================================================
+                    // APLICAR ABAC A ACCIONES DEL DETALLE
+                    // =========================================================
+
+                    if (
+                        btnEditarDesdeDetalle
+                    ) {
+
+                        btnEditarDesdeDetalle.disabled =
+                            !tienePermisoAbacAdq(
+                                "puedeEditar"
+                            );
+
+
+                        btnEditarDesdeDetalle.title =
+                            btnEditarDesdeDetalle.disabled
+                                ? "No tienes permiso para editar registros."
+                                : "Editar solicitud";
+                    }
+
+
+                    if (
+                        btnCancelarDesdeDetalle
+                    ) {
+
+                        btnCancelarDesdeDetalle.disabled =
+                            !tienePermisoAbacAdq(
+                                "puedeEliminar"
+                            );
+
+
+                        btnCancelarDesdeDetalle.title =
+                            btnCancelarDesdeDetalle.disabled
+                                ? "No tienes permiso para eliminar o cancelar registros."
+                                : "Cancelar solicitud";
+                    }
+
+
+                    if (
+                        btnEnviarDesdeDetalle
+                    ) {
+
+                        btnEnviarDesdeDetalle.disabled =
+                            !tienePermisoAbacAdq(
+                                "puedeCrear"
+                            );
+
+
+                        btnEnviarDesdeDetalle.title =
+                            btnEnviarDesdeDetalle.disabled
+                                ? "No tienes permiso para crear o enviar registros."
+                                : "Enviar solicitud";
+                    }
+
 
                     // =========================================================
                     // CARGAR DATOS DE SOLICITUD DE PAGO
