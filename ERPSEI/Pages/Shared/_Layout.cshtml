@@ -52,6 +52,47 @@
     bool esAdministradorEmpresas = rolesUsuario.Any(r =>
         r.Equals("Administrador Empresas", StringComparison.OrdinalIgnoreCase));
 
+    bool esAdministradorAdquisiciones = rolesUsuario.Any(r =>
+        r.Equals(
+            "Administrador Adquisiciones",
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool esUsuarioAdquisiciones = rolesUsuario.Any(r =>
+        r.Equals(
+            "Usuario Adquisiciones",
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool esAprobadorPresupuestal = rolesUsuario.Any(r =>
+        r.Equals(
+            "Aprobador Presupuestal",
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool esUsuarioConciliaciones = rolesUsuario.Any(r =>
+        r.Equals(
+            ServicesConfiguration.RolUsuarioConciliaciones,
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+    bool esPerfilExclusivoAdquisiciones =
+        (
+            esAdministradorAdquisiciones
+            ||
+            esUsuarioAdquisiciones
+            ||
+            esAprobadorPresupuestal
+        )
+        &&
+        !esAdministrador
+        &&
+        !esAdministradorTI
+        &&
+        !esAdministradorEmpresas
+        &&
+        !esUsuarioConciliaciones;
+
     bool esUsuario = rolesUsuario.Any(r =>
     r.Equals(
         ServicesConfiguration.RolUsuario,
@@ -61,12 +102,6 @@
     bool esAdministradorBancos = rolesUsuario.Any(r =>
         r.Equals(
             ServicesConfiguration.RolAdministradorBancos,
-            StringComparison.OrdinalIgnoreCase
-        ));
-
-    bool esUsuarioConciliaciones = rolesUsuario.Any(r =>
-        r.Equals(
-            ServicesConfiguration.RolUsuarioConciliaciones,
             StringComparison.OrdinalIgnoreCase
         ));
 
@@ -503,6 +538,9 @@
     esAdministradorTI ||
     esAdministradorEmpresas ||
     esUsuarioConciliaciones ||
+    esAdministradorAdquisiciones ||
+    esUsuarioAdquisiciones ||
+    esAprobadorPresupuestal ||
     (permisos.ContainsKey("empresas") &&
      permisos["empresas"]) ||
     (permisos.ContainsKey("conciliaciones") &&
@@ -547,18 +585,42 @@
 
     // Por si después quieres controlar empresas/activos con permisos
     bool mostrarEmpresasMenu =
-        !soloUsuarioConciliaciones &&
+    !esPerfilExclusivoAdquisiciones
+    &&
+    !soloUsuarioConciliaciones
+    &&
+    (
+        esAdministrador
+        ||
+        esAdministradorEmpresas
+        ||
         (
-            esAdministrador ||
-            esAdministradorEmpresas ||
-            (permisos.ContainsKey("empresas") &&
-             permisos["empresas"])
-        );
+            permisos.ContainsKey("empresas")
+            &&
+            permisos["empresas"]
+        )
+    );
 
     bool mostrarConciliacionesMenu =
-       esAdministrador ||
-       (permisos.ContainsKey("conciliaciones") &&
-        permisos["conciliaciones"]);
+    !esPerfilExclusivoAdquisiciones
+    &&
+    (
+        esAdministrador
+        ||
+        esUsuarioConciliaciones
+        ||
+        (
+            permisos.ContainsKey("conciliaciones")
+            &&
+            permisos["conciliaciones"]
+        )
+    );
+
+    bool mostrarAdquisicionesMenu =
+        esAdministrador ||
+        esAdministradorAdquisiciones ||
+        esUsuarioAdquisiciones ||
+        esAprobadorPresupuestal;
 
     bool mostrarActivosFijosMenu =
         esAdministrador ||
@@ -905,6 +967,16 @@
                                                    asp-page="/Empresas">
 
                                                 Empresas
+                                            </a>
+                                        }
+
+                                        @if (mostrarAdquisicionesMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   asp-area="ERP"
+                                                   asp-page="/Adquisiciones/Index">
+
+                                                Adquisiciones
                                             </a>
                                         }
 

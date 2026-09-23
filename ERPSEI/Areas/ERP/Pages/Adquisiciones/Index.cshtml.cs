@@ -557,6 +557,26 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         }
 
+        public bool EsAdministradorSistema
+        {
+            get;
+            private set;
+        }
+
+
+        public bool EsAdministradorAdquisiciones
+        {
+            get;
+            private set;
+        }
+
+
+        public bool EsUsuarioOperativoAdquisiciones
+        {
+            get;
+            private set;
+        }
+
 
         public bool PuedeAprobarAdquisiciones
         {
@@ -566,6 +586,73 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
         public bool PuedeAsignarAdquisiciones
+        {
+            get;
+            private set;
+        }
+
+
+        // =========================================================
+        // CAPACIDADES DE INTERFAZ
+        // =========================================================
+
+        public bool PuedeVerCentroControl
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeVerPermisosAdquisiciones
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeConfigurarAprobadores
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeVerMisFirmas
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeCrearNuevaSolicitud
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeVerBandejaAdquisiciones
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeVerOrdenesAsignadas
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeVerAprobacionesPresupuestales
+        {
+            get;
+            private set;
+        }
+
+
+        public bool PuedeVerHistoricoPresupuestosAprobados
         {
             get;
             private set;
@@ -924,12 +1011,127 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
         }
 
+        // =========================================================
+        // HISTÓRICO DE PRESUPUESTOS APROBADOS
+        // =========================================================
+
+        public class PresupuestoAprobadoHistoricoDto
+        {
+            public int DetalleId
+            {
+                get;
+                set;
+            }
+
+
+            public int SolicitudId
+            {
+                get;
+                set;
+            }
+
+
+            public int AprobacionPresupuestalId
+            {
+                get;
+                set;
+            }
+
+
+            public string Folio
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Titulo
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Solicitante
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Area
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public string Proveedor
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public decimal Monto
+            {
+                get;
+                set;
+            }
+
+
+            public int Nivel
+            {
+                get;
+                set;
+            }
+
+
+            public string NombreEtapa
+            {
+                get;
+                set;
+            } = string.Empty;
+
+
+            public DateTime FechaSolicitud
+            {
+                get;
+                set;
+            }
+
+
+            public DateTime? FechaAprobacion
+            {
+                get;
+                set;
+            }
+
+
+            public string EstatusFlujo
+            {
+                get;
+                set;
+            } = string.Empty;
+        }
+
         public List<AprobacionPresupuestalPendienteDto>
             AprobacionesPresupuestalesPendientes
         {
             get;
             private set;
         } = new();
+
+        public List<PresupuestoAprobadoHistoricoDto>
+            PresupuestosAprobadosHistorico
+        {
+            get;
+            private set;
+        } = new();
+
+
+        public int TotalPresupuestosAprobadosHistorico =>
+            PresupuestosAprobadosHistorico.Count;
 
         public bool EsAprobadorPresupuestal
         {
@@ -7326,28 +7528,29 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     }
 
 
-                    var permiso =
-                    await _context
-                        .AdqPermisosUsuarios
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(
-                            x =>
-                                x.UsuarioId ==
-                                usuarioActual.Id
-                        );
+            await CargarPermisosAdquisicionesAsync(
+            usuarioActual
+            );
 
 
-                    if (
-                        permiso == null
-                        ||
-                        !permiso.PuedeAdministrar
-                    )
+            if (!PuedeConfigurarAprobadores)
+            {
+                return new JsonResult(
+                    new
                     {
-                        return Forbid();
+                        success = false,
+                        message =
+                            "No tienes permisos para configurar aprobadores."
                     }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
 
 
-                    var usuarios =
+            var usuarios =
             await _userManager
                 .Users
                 .AsNoTracking()
@@ -7555,23 +7758,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            var permiso =
-                await _context
-                    .AdqPermisosUsuarios
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.UsuarioId ==
-                            usuarioActual.Id
-                    );
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
 
 
-            if (
-                permiso == null
-                ||
-                !permiso.PuedeAdministrar
-            )
+            if (!PuedeConfigurarAprobadores)
             {
-                return Forbid();
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+                        message =
+                            "No tienes permisos para guardar la configuración de aprobadores."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
             }
 
 
@@ -8301,6 +8506,147 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                             ComentarioSolicitud =
                                 aprobacion.ComentarioSolicitud
+                        }
+                )
+                .ToListAsync();
+        }
+
+        // =========================================================
+        // CARGAR HISTÓRICO DE PRESUPUESTOS APROBADOS
+        // =========================================================
+
+        private async Task
+            CargarPresupuestosAprobadosHistoricoAsync(
+                AppUser usuarioActual)
+        {
+            if (!PuedeVerHistoricoPresupuestosAprobados)
+            {
+                PresupuestosAprobadosHistorico =
+                    new List<PresupuestoAprobadoHistoricoDto>();
+
+                return;
+            }
+
+
+            PresupuestosAprobadosHistorico =
+                await (
+                    from detalle
+                        in _context
+                            .AdqAprobacionesPresupuestalesDetalle
+                            .AsNoTracking()
+
+                    join aprobacion
+                        in _context
+                            .AdqAprobacionesPresupuestales
+                            .AsNoTracking()
+                        on detalle.AprobacionPresupuestalId
+                        equals aprobacion.Id
+
+                    join solicitud
+                        in _context
+                            .AdqSolicitudes
+                            .AsNoTracking()
+                        on aprobacion.SolicitudId
+                        equals solicitud.Id
+
+                    join cotizacion
+                        in _context
+                            .AdqCotizaciones
+                            .AsNoTracking()
+                        on aprobacion.CotizacionId
+                        equals cotizacion.Id
+
+                    join area
+                        in _context
+                            .Areas
+                            .AsNoTracking()
+                        on solicitud.AreaId
+                        equals area.Id
+                        into areaJoin
+
+                    from area
+                        in areaJoin.DefaultIfEmpty()
+
+                    join empleado
+                        in _context
+                            .Empleados
+                            .AsNoTracking()
+                        on solicitud.EmpleadoSolicitanteId
+                        equals empleado.Id
+                        into empleadoJoin
+
+                    from empleado
+                        in empleadoJoin.DefaultIfEmpty()
+
+                    where
+                        detalle.UsuarioAprobadorId ==
+                            usuarioActual.Id
+                        &&
+                        detalle.Estatus ==
+                            "Aprobada"
+                        &&
+                        detalle.FechaDecision !=
+                            null
+                        &&
+                        !detalle.Eliminado
+                        &&
+                        !aprobacion.Eliminado
+                        &&
+                        !solicitud.Eliminado
+                        &&
+                        !cotizacion.Eliminado
+
+                    orderby
+                        detalle.FechaDecision descending
+
+                    select
+                        new PresupuestoAprobadoHistoricoDto
+                        {
+                            DetalleId =
+                                detalle.Id,
+
+                            SolicitudId =
+                                solicitud.Id,
+
+                            AprobacionPresupuestalId =
+                                aprobacion.Id,
+
+                            Folio =
+                                solicitud.Folio,
+
+                            Titulo =
+                                solicitud.Titulo,
+
+                            Solicitante =
+                                empleado != null
+                                    ? empleado.NombreCompleto
+                                    : "No disponible",
+
+                            Area =
+                                area != null
+                                    ? area.Nombre
+                                    : "No disponible",
+
+                            Proveedor =
+                                cotizacion.NombreProveedor,
+
+                            Monto =
+                                aprobacion.MontoSolicitado,
+
+                            Nivel =
+                                detalle.Orden,
+
+                            NombreEtapa =
+                                detalle.NombreEtapa,
+
+                            FechaSolicitud =
+                                aprobacion.FechaSolicitud,
+
+                            FechaAprobacion =
+                                detalle.FechaDecision,
+
+                            EstatusFlujo =
+                                aprobacion.Estatus
                         }
                 )
                 .ToListAsync();
@@ -9606,6 +9952,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return Challenge();
             }
 
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+
+            if (!PuedeCrearNuevaSolicitud)
+            {
+                return Forbid();
+            }
+
 
             // =========================================================
             // VALIDACIÓN EXCLUSIVA DEL FORMULARIO DE SOLICITUD
@@ -9693,6 +10049,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             if (usuarioActual == null)
             {
                 return Challenge();
+            }
+
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+
+            if (!PuedeCrearNuevaSolicitud)
+            {
+                return Forbid();
             }
 
 
@@ -20815,19 +21181,47 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         private async Task CargarPermisosAdquisicionesAsync(
             AppUser usuarioActual)
         {
+            // =========================================================
+            // ROLES DE IDENTITY
+            // =========================================================
+
+            EsAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
+
+            EsAdministradorAdquisiciones =
+                User.IsInRole(
+                    "Administrador Adquisiciones"
+                );
+
+
+            EsUsuarioOperativoAdquisiciones =
+                User.IsInRole(
+                    "Usuario Adquisiciones"
+                );
+
+
+            // =========================================================
+            // PERMISOS OPERATIVOS CONFIGURADOS
+            // =========================================================
+
             var permiso =
                 await _context.AdqPermisosUsuarios
                     .AsNoTracking()
                     .Where(
                         x =>
                             x.UsuarioId ==
-                            usuarioActual.Id
+                                usuarioActual.Id
                     )
                     .Select(
                         x =>
                             new
                             {
                                 x.PuedeVisualizar,
+
+                                x.PuedeCrearSolicitud,
 
                                 x.PuedeGestionarSolicitudes,
 
@@ -20837,53 +21231,165 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                                 x.PuedeCotizar,
 
+                                x.PuedeGestionarProveedores,
+
+                                x.PuedeGenerarSolicitudPago,
+
+                                x.PuedeVerReportes,
+
+                                x.PuedeAprobarPresupuesto,
+
+                                x.NivelPresupuestal,
+
                                 x.PuedeAdministrar
                             }
                     )
                     .FirstOrDefaultAsync();
 
 
-            if (permiso == null)
-            {
-                EsUsuarioAdquisiciones =
-                    false;
-
-                PuedeAprobarAdquisiciones =
-                    false;
-
-                PuedeAsignarAdquisiciones =
-                    false;
-
-                return;
-            }
-
+            // =========================================================
+            // ACCESO GENERAL AL MÓDULO
+            // =========================================================
 
             EsUsuarioAdquisiciones =
-                permiso.PuedeVisualizar
+                EsAdministradorSistema
                 ||
-                permiso.PuedeGestionarSolicitudes
+                EsAdministradorAdquisiciones
                 ||
-                permiso.PuedeAprobar
+                EsUsuarioOperativoAdquisiciones
                 ||
-                permiso.PuedeAsignar
-                ||
-                permiso.PuedeCotizar
-                ||
-                permiso.PuedeAdministrar;
+                (
+                    permiso != null
+                    &&
+                    (
+                        permiso.PuedeVisualizar
+                        ||
+                        permiso.PuedeCrearSolicitud
+                        ||
+                        permiso.PuedeGestionarSolicitudes
+                        ||
+                        permiso.PuedeAprobar
+                        ||
+                        permiso.PuedeAsignar
+                        ||
+                        permiso.PuedeCotizar
+                        ||
+                        permiso.PuedeGestionarProveedores
+                        ||
+                        permiso.PuedeGenerarSolicitudPago
+                        ||
+                        permiso.PuedeVerReportes
+                        ||
+                        permiso.PuedeAdministrar
+                    )
+                );
 
+
+            // =========================================================
+            // APROBAR
+            // =========================================================
 
             PuedeAprobarAdquisiciones =
-                permiso.PuedeAprobar
+                EsAdministradorSistema
                 ||
-                permiso.PuedeGestionarSolicitudes
+                EsAdministradorAdquisiciones
                 ||
-                permiso.PuedeAdministrar;
+                (
+                    permiso != null
+                    &&
+                    (
+                        permiso.PuedeAprobar
+                        ||
+                        permiso.PuedeGestionarSolicitudes
+                        ||
+                        permiso.PuedeAdministrar
+                    )
+                );
 
+
+            // =========================================================
+            // ASIGNAR
+            // =========================================================
 
             PuedeAsignarAdquisiciones =
-                permiso.PuedeAsignar
+                EsAdministradorSistema
                 ||
-                permiso.PuedeAdministrar;
+                EsAdministradorAdquisiciones
+                ||
+                (
+                    permiso != null
+                    &&
+                    (
+                        permiso.PuedeAsignar
+                        ||
+                        permiso.PuedeAdministrar
+                    )
+                );
+
+
+            // =========================================================
+            // CAPACIDADES VISUALES
+            // =========================================================
+
+            PuedeVerCentroControl =
+                EsAdministradorSistema
+                ||
+                EsAdministradorAdquisiciones;
+
+
+            PuedeVerPermisosAdquisiciones =
+                EsAdministradorSistema;
+
+
+            PuedeConfigurarAprobadores =
+                EsAdministradorSistema
+                ||
+                EsAdministradorAdquisiciones;
+
+
+            PuedeCrearNuevaSolicitud =
+                EsAdministradorSistema
+                ||
+                EsAdministradorAdquisiciones
+                ||
+                EsUsuarioOperativoAdquisiciones
+                ||
+                (
+                    permiso != null
+                    &&
+                    permiso.PuedeCrearSolicitud
+                );
+
+
+            PuedeVerBandejaAdquisiciones =
+                EsAdministradorSistema
+                ||
+                EsAdministradorAdquisiciones;
+
+
+            PuedeVerOrdenesAsignadas =
+                EsAdministradorSistema
+                ||
+                EsAdministradorAdquisiciones
+                ||
+                EsUsuarioOperativoAdquisiciones;
+
+
+            // =========================================================
+            // LAS SIGUIENTES SE COMPLETAN DESPUÉS DE SABER
+            // SI EL USUARIO ES APROBADOR PRESUPUESTAL
+            // =========================================================
+
+            PuedeVerMisFirmas =
+                EsAdministradorSistema;
+
+
+            PuedeVerAprobacionesPresupuestales =
+                EsAdministradorSistema;
+
+
+            PuedeVerHistoricoPresupuestosAprobados =
+                EsAdministradorSistema;
         }
 
         // =========================================================
@@ -20896,7 +21402,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 new List<SolicitudAdquisicionesDto>();
 
 
-            if (!EsUsuarioAdquisiciones)
+            if (!PuedeVerBandejaAdquisiciones)
             {
                 return;
             }
@@ -21151,10 +21657,36 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     );
 
             // =========================================================
+            // CAPACIDADES DEL APROBADOR PRESUPUESTAL
+            // =========================================================
+
+            PuedeVerMisFirmas =
+                EsAdministradorSistema
+                ||
+                EsAprobadorPresupuestal;
+
+
+            PuedeVerAprobacionesPresupuestales = EsAdministradorSistema || EsAprobadorPresupuestal;
+
+
+            PuedeVerHistoricoPresupuestosAprobados =
+                EsAdministradorSistema
+                ||
+                EsAprobadorPresupuestal;
+
+            // =========================================================
             // APROBACIONES PRESUPUESTALES PENDIENTES
             // =========================================================
 
             await CargarAprobacionesPresupuestalesPendientesAsync(
+                usuarioActual
+            );
+
+            // =========================================================
+            // HISTÓRICO DE PRESUPUESTOS APROBADOS
+            // =========================================================
+
+            await CargarPresupuestosAprobadosHistoricoAsync(
                 usuarioActual
             );
 
@@ -21214,7 +21746,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             )
                     );
 
-            if (!EsAgenteCompras)
+            if (!PuedeVerOrdenesAsignadas)
             {
                 OrdenesAsignadas =
                     new List<OrdenAsignadaDto>();

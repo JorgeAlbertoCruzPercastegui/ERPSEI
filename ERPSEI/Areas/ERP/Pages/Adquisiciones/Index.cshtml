@@ -92,11 +92,7 @@
 
         <div class="adq-header-actions">
 
-            @if (
-                Model.EsUsuarioAdquisiciones
-                ||
-                Model.EsAgenteCompras
-            )
+            @if (Model.PuedeVerCentroControl)
             {
                 <a asp-area="ERP"
                        asp-page="/Adquisiciones/Dashboard"
@@ -109,7 +105,7 @@
                 </a>
             }
 
-            @if (Model.EsUsuarioAdquisiciones)
+            @if (Model.PuedeVerPermisosAdquisiciones)
             {
                 <button type="button"
                         id="btnPermisosAdquisicionesAdq"
@@ -120,7 +116,11 @@
                     Permisos
 
                 </button>
+            }
 
+
+            @if (Model.PuedeConfigurarAprobadores)
+            {
                 <button type="button"
                         class="btn btn-outline-primary"
                         id="btnConfigurarAprobadoresAdq">
@@ -132,7 +132,7 @@
                 </button>
             }
 
-            @if (Model.EsAprobadorPresupuestal)
+            @if (Model.PuedeVerMisFirmas)
             {
                 <button type="button"
                         id="btnMisFirmasAdq"
@@ -146,17 +146,20 @@
             }
 
 
-            <button type="button"
-                    id="btnNuevaSolicitudAdq"
-                    class="btn btn-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalNuevaSolicitud">
+            @if (Model.PuedeCrearNuevaSolicitud)
+            {
+                <button type="button"
+                        id="btnNuevaSolicitudAdq"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalNuevaSolicitud">
 
-                <i class="bi bi-plus-lg me-1"></i>
+                    <i class="bi bi-plus-lg me-1"></i>
 
-                Nueva solicitud
+                    Nueva solicitud
 
-            </button>
+                </button>
+            }
 
         </div>
 
@@ -1629,7 +1632,7 @@
     <!-- ====================================================== -->
     <!-- BANDEJA DE ADQUISICIONES -->
     <!-- ====================================================== -->
-    @if (Model.EsUsuarioAdquisiciones)
+    @if (Model.PuedeVerBandejaAdquisiciones)
     {
         <section class="adq-panel mt-4">
 
@@ -1818,8 +1821,7 @@
     <!-- ========================================================= -->
     <!-- APROBACIONES PRESUPUESTALES PENDIENTES -->
     <!-- ========================================================= -->
-    @if (Model.TotalAprobacionesPresupuestalesPendientes > 0)
-    {
+    @if (Model.PuedeVerAprobacionesPresupuestales && Model.TotalAprobacionesPresupuestalesPendientes > 0){
         <section class="adq-panel mt-4"
                  id="seccionAprobacionesPresupuestalesAdq">
 
@@ -2070,6 +2072,271 @@
     }
 
     <!-- ========================================================= -->
+    <!-- PRESUPUESTOS APROBADOS - HISTÓRICO -->
+    <!-- ========================================================= -->
+    @if (
+        Model.PuedeVerHistoricoPresupuestosAprobados
+        &&
+        Model.PresupuestosAprobadosHistorico != null
+        &&
+        Model.PresupuestosAprobadosHistorico.Count > 0
+    )
+    {
+        <section class="adq-panel mt-4"
+                 id="seccionPresupuestosAprobadosHistoricoAdq">
+
+            <div class="adq-panel-header">
+
+                <div>
+
+                    <span class="adq-panel-kicker">
+                        Histórico
+                    </span>
+
+                    <h2>
+                        Presupuestos aprobados
+                    </h2>
+
+                    <p>
+                        Consulta las solicitudes presupuestales que
+                        has aprobado dentro del flujo de autorización.
+                    </p>
+
+                </div>
+
+
+                <span class="badge bg-success fs-6">
+
+                    @Model.TotalPresupuestosAprobadosHistorico
+                    registro@(Model.TotalPresupuestosAprobadosHistorico == 1 ? "" : "s")
+
+                </span>
+
+            </div>
+
+
+            <!-- ===================================================== -->
+            <!-- TABLA -->
+            <!-- ===================================================== -->
+
+            <div class="table-responsive">
+
+                <table class="table align-middle adq-table mb-0"
+                       id="tablaPresupuestosAprobadosHistoricoAdq">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Folio
+                            </th>
+
+                            <th>
+                                Solicitud
+                            </th>
+
+                            <th>
+                                Solicitante
+                            </th>
+
+                            <th>
+                                Área
+                            </th>
+
+                            <th>
+                                Proveedor
+                            </th>
+
+                            <th>
+                                Monto
+                            </th>
+
+                            <th>
+                                Nivel
+                            </th>
+
+                            <th>
+                                Fecha aprobación
+                            </th>
+
+                            <th>
+                                Estatus
+                            </th>
+
+                            <th class="text-center">
+                                Acción
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @foreach (
+                            var presupuesto
+                            in Model.PresupuestosAprobadosHistorico
+                        )
+                        {
+                            <tr class="adq-presupuesto-aprobado-historico-row">
+
+                                <td>
+
+                                    <strong class="adq-folio">
+                                        @presupuesto.Folio
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    <strong>
+                                        @presupuesto.Titulo
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+                                    @presupuesto.Solicitante
+                                </td>
+
+
+                                <td>
+                                    @presupuesto.Area
+                                </td>
+
+
+                                <td>
+                                    @presupuesto.Proveedor
+                                </td>
+
+
+                                <td>
+
+                                    <strong>
+                                        @presupuesto.Monto.ToString("C2")
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="badge bg-secondary">
+
+                                        Nivel @presupuesto.Nivel
+
+                                    </span>
+
+                                    <div class="small text-muted mt-1">
+
+                                        @presupuesto.NombreEtapa
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    @(
+                                        presupuesto.FechaAprobacion
+                                            ?.ToString(
+                                                "dd/MM/yyyy HH:mm"
+                                            )
+                                        ??
+                                        "-"
+                                    )
+
+                                </td>
+
+
+                                <td>
+
+                                    <span class="badge bg-success">
+
+                                        <i class="bi bi-check-circle me-1"></i>
+
+                                        Aprobado
+
+                                    </span>
+
+                                </td>
+
+
+                                <td class="text-center">
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                            data-id="@presupuesto.SolicitudId"
+                                            title="Ver solicitud">
+
+                                        <i class="bi bi-eye"></i>
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- ===================================================== -->
+            <!-- PAGINACIÓN -->
+            <!-- ===================================================== -->
+
+            <div id="paginacionPresupuestosAprobadosHistoricoAdq"
+                 class="adq-pagination-container">
+
+                <div class="adq-pagination-info">
+
+                    Mostrando
+
+                    <strong id="adqPresupuestoHistoricoPaginaInicio">
+                        0
+                    </strong>
+
+                    -
+
+                    <strong id="adqPresupuestoHistoricoPaginaFin">
+                        0
+                    </strong>
+
+                    de
+
+                    <strong id="adqPresupuestoHistoricoPaginaTotal">
+                        0
+                    </strong>
+
+                    registros
+
+                </div>
+
+
+                <nav aria-label="Paginación de presupuestos aprobados">
+
+                    <ul id="adqPresupuestoHistoricoPaginacionLista"
+                        class="pagination pagination-sm mb-0">
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </section>
+    }
+
+    <!-- ========================================================= -->
     <!-- SEGUIMIENTO PRESUPUESTAL - OBSERVADORES / ASISTENTES -->
     <!-- ========================================================= -->
     @if (Model.TotalSeguimientosPresupuestales > 0)
@@ -2273,7 +2540,7 @@
         </section>
     }
 
-    @if (Model.EsAgenteCompras)
+    @if (Model.PuedeVerOrdenesAsignadas)
     {
         <section class="adq-panel mt-4">
 
@@ -8700,6 +8967,343 @@
     <script src="~/js/Index.js"
             asp-append-version="true">
     </script>
+
+        <script>
+            document.addEventListener(
+                "DOMContentLoaded",
+                function () {
+
+                    // =====================================================
+                    // PRESUPUESTOS APROBADOS - HISTÓRICO
+                    // PAGINACIÓN DE 10 EN 10
+                    // =====================================================
+
+                    const filas =
+                        Array.from(
+                            document.querySelectorAll(
+                                ".adq-presupuesto-aprobado-historico-row"
+                            )
+                        );
+
+
+                    const paginacion =
+                        document.getElementById(
+                            "adqPresupuestoHistoricoPaginacionLista"
+                        );
+
+
+                    const paginaInicio =
+                        document.getElementById(
+                            "adqPresupuestoHistoricoPaginaInicio"
+                        );
+
+
+                    const paginaFin =
+                        document.getElementById(
+                            "adqPresupuestoHistoricoPaginaFin"
+                        );
+
+
+                    const paginaTotal =
+                        document.getElementById(
+                            "adqPresupuestoHistoricoPaginaTotal"
+                        );
+
+
+                    const contenedorPaginacion =
+                        document.getElementById(
+                            "paginacionPresupuestosAprobadosHistoricoAdq"
+                        );
+
+
+                    if (
+                        filas.length === 0
+                        ||
+                        !paginacion
+                        ||
+                        !paginaInicio
+                        ||
+                        !paginaFin
+                        ||
+                        !paginaTotal
+                    ) {
+                        return;
+                    }
+
+
+                    const registrosPorPagina =
+                        10;
+
+
+                    let paginaActual =
+                        1;
+
+
+                    const totalRegistros =
+                        filas.length;
+
+
+                    const totalPaginas =
+                        Math.ceil(
+                            totalRegistros /
+                            registrosPorPagina
+                        );
+
+
+                    function mostrarPagina(
+                        pagina
+                    ) {
+                        paginaActual =
+                            pagina;
+
+
+                        const inicio =
+                            (
+                                paginaActual -
+                                1
+                            )
+                            *
+                            registrosPorPagina;
+
+
+                        const fin =
+                            Math.min(
+                                inicio +
+                                registrosPorPagina,
+                                totalRegistros
+                            );
+
+
+                        filas.forEach(
+                            (
+                                fila,
+                                indice
+                            ) => {
+
+                                fila.style.display =
+                                    indice >= inicio
+                                    &&
+                                    indice < fin
+                                        ? ""
+                                        : "none";
+                            }
+                        );
+
+
+                        paginaInicio.textContent =
+                            totalRegistros === 0
+                                ? "0"
+                                : (
+                                    inicio +
+                                    1
+                                ).toString();
+
+
+                        paginaFin.textContent =
+                            fin.toString();
+
+
+                        paginaTotal.textContent =
+                            totalRegistros.toString();
+
+
+                        renderizarPaginacion();
+                    }
+
+
+                    function renderizarPaginacion() {
+
+                        paginacion.innerHTML =
+                            "";
+
+
+                        // =============================================
+                        // ANTERIOR
+                        // =============================================
+
+                        const anterior =
+                            document.createElement(
+                                "li"
+                            );
+
+
+                        anterior.className =
+                            "page-item"
+                            +
+                            (
+                                paginaActual === 1
+                                    ? " disabled"
+                                    : ""
+                            );
+
+
+                        anterior.innerHTML =
+                            `
+                                <button type="button"
+                                        class="page-link">
+                                    Anterior
+                                </button>
+                            `;
+
+
+                        anterior
+                            .querySelector(
+                                "button"
+                            )
+                            .addEventListener(
+                                "click",
+                                function () {
+
+                                    if (
+                                        paginaActual >
+                                        1
+                                    ) {
+                                        mostrarPagina(
+                                            paginaActual -
+                                            1
+                                        );
+                                    }
+                                }
+                            );
+
+
+                        paginacion.appendChild(
+                            anterior
+                        );
+
+
+                        // =============================================
+                        // NÚMEROS DE PÁGINA
+                        // =============================================
+
+                        for (
+                            let pagina = 1;
+                            pagina <= totalPaginas;
+                            pagina++
+                        ) {
+                            const item =
+                                document.createElement(
+                                    "li"
+                                );
+
+
+                            item.className =
+                                "page-item"
+                                +
+                                (
+                                    pagina ===
+                                    paginaActual
+                                        ? " active"
+                                        : ""
+                                );
+
+
+                            item.innerHTML =
+                                `
+                                    <button type="button"
+                                            class="page-link">
+                                        ${pagina}
+                                    </button>
+                                `;
+
+
+                            item
+                                .querySelector(
+                                    "button"
+                                )
+                                .addEventListener(
+                                    "click",
+                                    function () {
+
+                                        mostrarPagina(
+                                            pagina
+                                        );
+                                    }
+                                );
+
+
+                            paginacion.appendChild(
+                                item
+                            );
+                        }
+
+
+                        // =============================================
+                        // SIGUIENTE
+                        // =============================================
+
+                        const siguiente =
+                            document.createElement(
+                                "li"
+                            );
+
+
+                        siguiente.className =
+                            "page-item"
+                            +
+                            (
+                                paginaActual ===
+                                totalPaginas
+                                    ? " disabled"
+                                    : ""
+                            );
+
+
+                        siguiente.innerHTML =
+                            `
+                                <button type="button"
+                                        class="page-link">
+                                    Siguiente
+                                </button>
+                            `;
+
+
+                        siguiente
+                            .querySelector(
+                                "button"
+                            )
+                            .addEventListener(
+                                "click",
+                                function () {
+
+                                    if (
+                                        paginaActual <
+                                        totalPaginas
+                                    ) {
+                                        mostrarPagina(
+                                            paginaActual +
+                                            1
+                                        );
+                                    }
+                                }
+                            );
+
+
+                        paginacion.appendChild(
+                            siguiente
+                        );
+
+
+                        if (
+                            contenedorPaginacion
+                        ) {
+                            contenedorPaginacion
+                                .classList
+                                .toggle(
+                                    "d-none",
+                                    totalRegistros <=
+                                    registrosPorPagina
+                                );
+                        }
+                    }
+
+
+                    mostrarPagina(
+                        1
+                    );
+                }
+            );
+        </script>
 
     @if (!ViewData.ModelState.IsValid)
     {

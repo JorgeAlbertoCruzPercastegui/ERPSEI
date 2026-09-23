@@ -394,7 +394,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             return Page();
         }
 
-
         // =========================================================
         // PERMISOS
         // =========================================================
@@ -403,6 +402,26 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             AppUser usuarioActual
         )
         {
+            // =====================================================
+            // ROLES DE IDENTITY
+            // =====================================================
+
+            bool esAdministrador =
+                User.IsInRole(
+                    "Administrador"
+                );
+
+
+            bool esAdministradorAdquisiciones =
+                User.IsInRole(
+                    "Administrador Adquisiciones"
+                );
+
+
+            // =====================================================
+            // PERMISOS CONFIGURADOS DE ADQUISICIONES
+            // =====================================================
+
             AdqPermisoUsuario? permiso =
                 await _context.AdqPermisosUsuarios
                     .AsNoTracking()
@@ -413,39 +432,52 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     );
 
 
-            if (
-                permiso ==
-                null
-            )
-            {
-                EsUsuarioAdquisiciones =
-                    false;
-
-                EsAgenteCompras =
-                    false;
-
-                return;
-            }
-
+            // =====================================================
+            // USUARIO DE ADQUISICIONES
+            // =====================================================
 
             EsUsuarioAdquisiciones =
-                permiso.PuedeVisualizar
+                esAdministrador
                 ||
-                permiso.PuedeGestionarSolicitudes
+                esAdministradorAdquisiciones
                 ||
-                permiso.PuedeAprobar
-                ||
-                permiso.PuedeAsignar
-                ||
-                permiso.PuedeCotizar
-                ||
-                permiso.PuedeAdministrar;
+                (
+                    permiso != null
+                    &&
+                    (
+                        permiso.PuedeVisualizar
+                        ||
+                        permiso.PuedeGestionarSolicitudes
+                        ||
+                        permiso.PuedeAprobar
+                        ||
+                        permiso.PuedeAsignar
+                        ||
+                        permiso.PuedeCotizar
+                        ||
+                        permiso.PuedeAdministrar
+                    )
+                );
 
+
+            // =====================================================
+            // AGENTE DE COMPRAS
+            // =====================================================
 
             EsAgenteCompras =
-                permiso.PuedeCotizar
+                esAdministrador
                 ||
-                permiso.PuedeAdministrar;
+                esAdministradorAdquisiciones
+                ||
+                (
+                    permiso != null
+                    &&
+                    (
+                        permiso.PuedeCotizar
+                        ||
+                        permiso.PuedeAdministrar
+                    )
+                );
         }
 
 
