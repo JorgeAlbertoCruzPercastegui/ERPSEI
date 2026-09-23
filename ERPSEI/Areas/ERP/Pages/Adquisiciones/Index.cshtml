@@ -148,23 +148,35 @@
 
             @if (Model.PuedeCrearNuevaSolicitud)
             {
-                <button type="button"
-                        id="btnNuevaSolicitudAdq"
-                        class="btn btn-primary"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modalNuevaSolicitud"
-                        disabled="@(!Model.AbacPuedeCrear)"
-                        title="@(
-                                Model.AbacPuedeCrear
-                                    ? "Crear nueva solicitud"
-                                    : "No tienes permiso para crear registros."
-                                        )">
+                <span class="d-inline-block"
+                      tabindex="0"
+                      data-bs-toggle="tooltip"
+                      data-bs-placement="top"
+                      title="@(
+                              Model.AbacPuedeCrear
+                                  ? ""
+                                  : "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
+                                    )">
 
-                    <i class="bi bi-plus-lg me-1"></i>
+                    <button type="button"
+                            id="btnNuevaSolicitudAdq"
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalNuevaSolicitud"
+                            disabled="@(!Model.AbacPuedeCrear)"
+                            style="@(
+                                        !Model.AbacPuedeCrear
+                                            ? "pointer-events: none;"
+                                            : ""
+                                                    )">
 
-                    Nueva solicitud
+                        <i class="bi bi-plus-lg me-1"></i>
 
-                </button>
+                        Nueva solicitud
+
+                    </button>
+
+                </span>
             }
 
         </div>
@@ -976,19 +988,32 @@
 
                                     <div class="d-inline-flex gap-1">
 
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
-                                                data-id="@solicitud.Id"
-                                                disabled="@(!Model.AbacPuedeVisualizar)"
-                                                title="@(
-                                                    Model.AbacPuedeVisualizar
-                                                        ? "Ver solicitud"
-                                                        : "No tienes permiso para visualizar registros."
-                                                        )">
+                                        <span class="d-inline-block"
+                                              tabindex="0"
+                                              data-bs-toggle="@(!Model.AbacPuedeVisualizar ? "tooltip" : null)"
+                                              data-bs-placement="top"
+                                              title="@(
+                                                  !Model.AbacPuedeVisualizar
+                                                      ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
+                                                      : null
+                                                    )">
 
-                                            <i class="bi bi-eye"></i>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                                    data-id="@solicitud.Id"
+                                                    disabled="@(!Model.AbacPuedeVisualizar)"
+                                                    style="@(
+                                                            !Model.AbacPuedeVisualizar
+                                                                ? "pointer-events: none;"
+                                                                : null
+                                                                    )"
+                                                    title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
-                                        </button>
+                                                <i class="bi bi-eye"></i>
+
+                                            </button>
+
+                                        </span>
 
 
                                         @if (
@@ -996,35 +1021,61 @@
                                             solicitud.EstatusId == 2
                                         )
                                         {
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-secondary btnEditarSolicitudAdq"
-                                                    data-id="@solicitud.Id"
-                                                    disabled="@(!Model.AbacPuedeEditar)"
-                                                    title="@(
-                                                        Model.AbacPuedeEditar
-                                                            ? "Editar solicitud"
-                                                            : "No tienes permiso para editar registros."
-                                                            )">
+                                            <span class="d-inline-block"
+                                                  tabindex="0"
+                                                  data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
+                                                  data-bs-placement="top"
+                                                  title="@(
+                                                      !Model.AbacPuedeEditar
+                                                          ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                          : null
+                                                        )">
 
-                                                <i class="bi bi-pencil"></i>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary btnEditarSolicitudAdq"
+                                                        data-id="@solicitud.Id"
+                                                        disabled="@(!Model.AbacPuedeEditar)"
+                                                        style="@(
+                                                                !Model.AbacPuedeEditar
+                                                                    ? "pointer-events: none;"
+                                                                    : null
+                                                                        )"
+                                                        title="@(Model.AbacPuedeEditar ? "Editar solicitud" : null)">
 
-                                            </button>
+                                                    <i class="bi bi-pencil"></i>
+
+                                                </button>
+
+                                            </span>
 
 
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-danger btnCancelarSolicitudUsuarioAdq"
-                                                    data-id="@solicitud.Id"
-                                                    data-folio="@solicitud.Folio"
-                                                    disabled="@(!Model.AbacPuedeEliminar)"
-                                                    title="@(
-                                                        Model.AbacPuedeEliminar
-                                                            ? "Cancelar solicitud"
-                                                            : "No tienes permiso para eliminar o cancelar registros."
-                                                            )">
+                                            <span class="d-inline-block"
+                                                  tabindex="0"
+                                                  data-bs-toggle="@(!Model.AbacPuedeEliminar ? "tooltip" : null)"
+                                                  data-bs-placement="top"
+                                                  title="@(
+                                                      !Model.AbacPuedeEliminar
+                                                          ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
+                                                          : null
+                                                        )">
 
-                                                <i class="bi bi-x-lg"></i>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-danger btnCancelarSolicitudUsuarioAdq"
+                                                        data-id="@solicitud.Id"
+                                                        data-folio="@solicitud.Folio"
+                                                        disabled="@(!Model.AbacPuedeEliminar)"
+                                                        style="@(
+                                                                !Model.AbacPuedeEliminar
+                                                                    ? "pointer-events: none;"
+                                                                    : null
+                                                                        )"
+                                                        title="@(Model.AbacPuedeEliminar ? "Cancelar solicitud" : null)">
 
-                                            </button>
+                                                    <i class="bi bi-x-lg"></i>
+
+                                                </button>
+
+                                            </span>
                                         }
 
                                     </div>
@@ -1743,19 +1794,32 @@
 
                                         <div class="d-inline-flex gap-1">
 
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
-                                                    data-id="@solicitud.Id"
-                                                    disabled="@(!Model.AbacPuedeVisualizar)"
-                                                    title="@(
-                                                        Model.AbacPuedeVisualizar
-                                                            ? "Ver solicitud"
-                                                            : "No tienes permiso para visualizar registros."
-                                                            )">
+                                            <span class="d-inline-block"
+                                                  tabindex="0"
+                                                  data-bs-toggle="@(!Model.AbacPuedeVisualizar ? "tooltip" : null)"
+                                                  data-bs-placement="top"
+                                                  title="@(
+                                                      !Model.AbacPuedeVisualizar
+                                                          ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
+                                                          : null
+                                                        )">
 
-                                                <i class="bi bi-eye"></i>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                                        data-id="@solicitud.Id"
+                                                        disabled="@(!Model.AbacPuedeVisualizar)"
+                                                        style="@(
+                                                                !Model.AbacPuedeVisualizar
+                                                                    ? "pointer-events: none;"
+                                                                    : null
+                                                                        )"
+                                                        title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
-                                            </button>
+                                                    <i class="bi bi-eye"></i>
+
+                                                </button>
+
+                                            </span>
 
 
                                             @if (
@@ -1764,28 +1828,64 @@
                                                 Model.PuedeAprobarAdquisiciones
                                             )
                                             {
-                                                <button type="button"
-                                                        class="btn btn-sm btn-success btnAccionAdquisiciones"
-                                                        data-id="@solicitud.Id"
-                                                        data-folio="@solicitud.Folio"
-                                                        data-accion="aprobar"
-                                                        title="Aprobar solicitud">
+                                                <span class="d-inline-block"
+                                                      tabindex="0"
+                                                      data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
+                                                      data-bs-placement="top"
+                                                      title="@(
+                                                          !Model.AbacPuedeEditar
+                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                              : null
+                                                            )">
 
-                                                    <i class="bi bi-check-lg"></i>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-success btnAccionAdquisiciones"
+                                                            data-id="@solicitud.Id"
+                                                            data-folio="@solicitud.Folio"
+                                                            data-accion="aprobar"
+                                                            disabled="@(!Model.AbacPuedeEditar)"
+                                                            style="@(
+                                                                    !Model.AbacPuedeEditar
+                                                                        ? "pointer-events: none;"
+                                                                        : null
+                                                                            )"
+                                                            title="@(Model.AbacPuedeEditar ? "Aprobar solicitud" : null)">
 
-                                                </button>
+                                                        <i class="bi bi-check-lg"></i>
+
+                                                    </button>
+
+                                                </span>
 
 
-                                                <button type="button"
-                                                        class="btn btn-sm btn-outline-danger btnAccionAdquisiciones"
-                                                        data-id="@solicitud.Id"
-                                                        data-folio="@solicitud.Folio"
-                                                        data-accion="cancelar"
-                                                        title="Cancelar solicitud">
+                                                <span class="d-inline-block"
+                                                      tabindex="0"
+                                                      data-bs-toggle="@(!Model.AbacPuedeEliminar ? "tooltip" : null)"
+                                                      data-bs-placement="top"
+                                                      title="@(
+                                                          !Model.AbacPuedeEliminar
+                                                              ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
+                                                              : null
+                                                            )">
 
-                                                    <i class="bi bi-x-lg"></i>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-danger btnAccionAdquisiciones"
+                                                            data-id="@solicitud.Id"
+                                                            data-folio="@solicitud.Folio"
+                                                            data-accion="cancelar"
+                                                            disabled="@(!Model.AbacPuedeEliminar)"
+                                                            style="@(
+                                                                    !Model.AbacPuedeEliminar
+                                                                        ? "pointer-events: none;"
+                                                                        : null
+                                                                            )"
+                                                            title="@(Model.AbacPuedeEliminar ? "Cancelar solicitud" : null)">
 
-                                                </button>
+                                                        <i class="bi bi-x-lg"></i>
+
+                                                    </button>
+
+                                                </span>
                                             }
 
 
@@ -1795,15 +1895,33 @@
                                                 Model.PuedeAsignarAdquisiciones
                                             )
                                             {
-                                                <button type="button"
-                                                        class="btn btn-sm btn-outline-primary btnAsignarAdquisiciones"
-                                                        data-id="@solicitud.Id"
-                                                        data-folio="@solicitud.Folio"
-                                                        title="Asignar agente">
+                                                <span class="d-inline-block"
+                                                      tabindex="0"
+                                                      data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
+                                                      data-bs-placement="top"
+                                                      title="@(
+                                                          !Model.AbacPuedeEditar
+                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                              : null
+                                                            )">
 
-                                                    <i class="bi bi-person-plus"></i>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-primary btnAsignarAdquisiciones"
+                                                            data-id="@solicitud.Id"
+                                                            data-folio="@solicitud.Folio"
+                                                            disabled="@(!Model.AbacPuedeEditar)"
+                                                            style="@(
+                                                                    !Model.AbacPuedeEditar
+                                                                        ? "pointer-events: none;"
+                                                                        : null
+                                                                            )"
+                                                            title="@(Model.AbacPuedeEditar ? "Asignar agente" : null)">
 
-                                                </button>
+                                                        <i class="bi bi-person-plus"></i>
+
+                                                    </button>
+
+                                                </span>
                                             }
 
                                         </div>
@@ -2691,19 +2809,32 @@
 
                                         <div class="adq-assigned-actions">
 
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
-                                                    data-id="@orden.Id"
-                                                    disabled="@(!Model.AbacPuedeVisualizar)"
-                                                    title="@(
-                                                        Model.AbacPuedeVisualizar
-                                                            ? "Ver solicitud"
-                                                            : "No tienes permiso para visualizar registros."
-                                                            )">
+                                            <span class="d-inline-block"
+                                                  tabindex="0"
+                                                  data-bs-toggle="@(!Model.AbacPuedeVisualizar ? "tooltip" : null)"
+                                                  data-bs-placement="top"
+                                                  title="@(
+                                                      !Model.AbacPuedeVisualizar
+                                                          ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
+                                                          : null
+                                                        )">
 
-                                                <i class="bi bi-eye"></i>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
+                                                        data-id="@orden.Id"
+                                                        disabled="@(!Model.AbacPuedeVisualizar)"
+                                                        style="@(
+                                                                !Model.AbacPuedeVisualizar
+                                                                    ? "pointer-events: none;"
+                                                                    : null
+                                                                        )"
+                                                        title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
-                                            </button>
+                                                    <i class="bi bi-eye"></i>
+
+                                                </button>
+
+                                            </span>
 
 
                                             <button type="button"
@@ -2733,52 +2864,95 @@
                                                 orden.EstatusId == 9
                                             )
                                             {
-                                                <button type="button"
-                                                        class="btn btn-sm btnGenerarCotizacionAdq adq-btn-cotizar"
-                                                        data-id="@orden.Id"
-                                                        disabled="@(!Model.AbacPuedeCrear)"
-                                                        title="@(
-                                                            Model.AbacPuedeCrear
-                                                                ? "Gestionar cotización"
-                                                                : "No tienes permiso para crear cotizaciones."
-                                                                )">
+                                                <span class="d-inline-block"
+                                                      tabindex="0"
+                                                      data-bs-toggle="@(!Model.AbacPuedeCrear ? "tooltip" : null)"
+                                                      data-bs-placement="top"
+                                                      title="@(
+                                                          !Model.AbacPuedeCrear
+                                                              ? "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
+                                                              : null
+                                                            )">
 
-                                                    <i class="bi bi-file-earmark-text"></i>
+                                                    <button type="button"
+                                                            class="btn btn-sm btnGenerarCotizacionAdq adq-btn-cotizar"
+                                                            data-id="@orden.Id"
+                                                            disabled="@(!Model.AbacPuedeCrear)"
+                                                            style="@(
+                                                                    !Model.AbacPuedeCrear
+                                                                        ? "pointer-events: none;"
+                                                                        : null
+                                                                            )"
+                                                            title="@(Model.AbacPuedeCrear ? "Gestionar cotización" : null)">
 
-                                                    <span>
-                                                        Cotizar
-                                                    </span>
+                                                        <i class="bi bi-file-earmark-text"></i>
 
-                                                </button>
+                                                        <span>
+                                                            Cotizar
+                                                        </span>
+
+                                                    </button>
+
+                                                </span>
                                             }
 
                                             @if (orden.EstatusId == 10)
                                             {
-                                                <button type="button"
-                                                        class="btn btn-sm btn-outline-primary btnReabrirCotizacionAdq"
-                                                        data-id="@orden.Id"
-                                                        data-folio="@orden.Folio"
-                                                        disabled="@(!Model.AbacPuedeEditar)"
-                                                        title="@(
-                                                            Model.AbacPuedeEditar
-                                                                ? "Modificar cotizaciones"
-                                                                : "No tienes permiso para editar cotizaciones."
-                                                                )">
+                                                <span class="d-inline-block"
+                                                      tabindex="0"
+                                                      data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
+                                                      data-bs-placement="top"
+                                                      title="@(
+                                                          !Model.AbacPuedeEditar
+                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                              : null
+                                                            )">
 
-                                                    <i class="bi bi-pencil-square"></i>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-outline-primary btnReabrirCotizacionAdq"
+                                                            data-id="@orden.Id"
+                                                            data-folio="@orden.Folio"
+                                                            disabled="@(!Model.AbacPuedeEditar)"
+                                                            style="@(
+                                                                    !Model.AbacPuedeEditar
+                                                                        ? "pointer-events: none;"
+                                                                        : null
+                                                                            )"
+                                                            title="@(Model.AbacPuedeEditar ? "Modificar cotizaciones" : null)">
 
-                                                </button>
+                                                        <i class="bi bi-pencil-square"></i>
+
+                                                    </button>
+
+                                                </span>
 
 
-                                                <button type="button"
-                                                        class="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center btnSolicitarPresupuestoAdq"
-                                                        data-id="@orden.Id"
-                                                        title="Solicitar aprobación presupuestal"
-                                                        style="width: 38px; height: 38px; padding: 0;">
+                                                <span class="d-inline-block"
+                                                      tabindex="0"
+                                                      data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
+                                                      data-bs-placement="top"
+                                                      title="@(
+                                                          !Model.AbacPuedeEditar
+                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                              : null
+                                                            )">
 
-                                                    <i class="bi bi-cash-stack"></i>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center btnSolicitarPresupuestoAdq"
+                                                            data-id="@orden.Id"
+                                                            disabled="@(!Model.AbacPuedeEditar)"
+                                                            style="@(
+                                                                    !Model.AbacPuedeEditar
+                                                                        ? "width: 38px; height: 38px; padding: 0; pointer-events: none;"
+                                                                        : "width: 38px; height: 38px; padding: 0;"
+                                                                            )"
+                                                            title="@(Model.AbacPuedeEditar ? "Solicitar aprobación presupuestal" : null)">
 
-                                                </button>
+                                                        <i class="bi bi-cash-stack"></i>
+
+                                                    </button>
+
+                                                </span>
                                             }
 
                                         </div>

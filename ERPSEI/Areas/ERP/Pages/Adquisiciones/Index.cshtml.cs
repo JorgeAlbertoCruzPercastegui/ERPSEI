@@ -11402,6 +11402,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 usuarioActual
             );
 
+            bool puedeEditar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
+
+
+            if (!puedeEditar)
+            {
+                return Forbid();
+            }
+
 
             if (!PuedeAprobarAdquisiciones)
             {
@@ -11522,6 +11534,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             await CargarPermisosAdquisicionesAsync(
                 usuarioActual
             );
+
+            bool puedeEliminar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Eliminar"
+                );
+
+
+            if (!puedeEliminar)
+            {
+                return Forbid();
+            }
 
 
             if (!PuedeAprobarAdquisiciones)
@@ -11655,6 +11679,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             await CargarPermisosAdquisicionesAsync(
                 usuarioActual
             );
+
+            bool puedeEditar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
+
+
+            if (!puedeEditar)
+            {
+                return Forbid();
+            }
 
 
             if (!PuedeAsignarAdquisiciones)

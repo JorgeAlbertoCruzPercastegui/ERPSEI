@@ -20,6 +20,28 @@ document.addEventListener(
                 puedeTodo: false
             };
 
+        // =========================================================
+        // MENSAJES DE PERMISOS ABAC
+        // =========================================================
+
+        const mensajesPermisosAbacAdq = {
+
+            puedeVisualizar:
+                "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente.",
+
+            puedeCrear:
+                "Opción bloqueada. No cuentas con el permiso de Crear correspondiente.",
+
+            puedeEditar:
+                "Opción bloqueada. No cuentas con el permiso de Editar correspondiente.",
+
+            puedeEliminar:
+                "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente.",
+
+            puedeDescargar:
+                "Opción bloqueada. No cuentas con el permiso de Descargar correspondiente."
+        };
+
 
         function tienePermisoAbacAdq(
             permiso
@@ -36,6 +58,142 @@ document.addEventListener(
                 permisosAbacAdq[
                 permiso
                 ]
+            );
+        }
+
+        // =========================================================
+        // APLICAR BLOQUEO VISUAL POR PERMISO
+        // =========================================================
+
+        function aplicarBloqueoPermisoAdq(
+            boton,
+            permiso,
+            mensajePersonalizado = null
+        ) {
+
+            if (
+                !(boton instanceof HTMLElement)
+            ) {
+                return;
+            }
+
+
+            const tienePermiso =
+                tienePermisoAbacAdq(
+                    permiso
+                );
+
+
+            /*
+             * IMPORTANTE:
+             * Si tiene permiso, NO habilitamos el botón.
+             *
+             * El botón podría estar deshabilitado por una regla
+             * de negocio independiente:
+             *
+             * - estado de la solicitud,
+             * - ninguna cotización seleccionada,
+             * - múltiples selecciones,
+             * - flujo presupuestal,
+             * etc.
+             */
+            if (tienePermiso) {
+                return;
+            }
+
+
+            boton.disabled =
+                true;
+
+
+            const mensaje =
+                mensajePersonalizado
+                ??
+                mensajesPermisosAbacAdq[
+                permiso
+                ]
+                ??
+                "Opción bloqueada. No cuentas con el permiso correspondiente.";
+
+
+            let contenedor =
+                boton.closest(
+                    ".adq-permiso-tooltip"
+                );
+
+
+            if (!contenedor) {
+
+                contenedor =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                contenedor.className =
+                    "adq-permiso-tooltip d-inline-block";
+
+
+                boton.parentNode?.insertBefore(
+                    contenedor,
+                    boton
+                );
+
+
+                contenedor.appendChild(
+                    boton
+                );
+            }
+
+
+            contenedor.setAttribute(
+                "tabindex",
+                "0"
+            );
+
+
+            contenedor.setAttribute(
+                "data-bs-toggle",
+                "tooltip"
+            );
+
+
+            contenedor.setAttribute(
+                "data-bs-placement",
+                "top"
+            );
+
+
+            contenedor.setAttribute(
+                "title",
+                mensaje
+            );
+
+
+            boton.style.pointerEvents =
+                "none";
+
+
+            bootstrap.Tooltip
+                .getOrCreateInstance(
+                    contenedor
+                );
+        }
+
+        // =========================================================
+        // PERMISO PARA GESTIONAR SOLICITUD DE PAGO
+        // =========================================================
+
+        function puedeGestionarSolicitudPagoAdq() {
+
+            return (
+                tienePermisoAbacAdq(
+                    "puedeCrear"
+                )
+                ||
+                tienePermisoAbacAdq(
+                    "puedeEditar"
+                )
             );
         }
 
@@ -9196,6 +9354,20 @@ document.addEventListener(
                     return;
                 }
 
+                if (
+                    !tienePermisoAbacAdq(
+                        "puedeEditar"
+                    )
+                ) {
+
+                    mostrarAdvertenciaAdq(
+                        "Acción no permitida",
+                        "No cuentas con el permiso de Editar correspondiente."
+                    );
+
+                    return;
+                }
+
 
                 const solicitudId =
                     Number(
@@ -10095,6 +10267,12 @@ document.addEventListener(
                             ? "Selecciona una cotización para continuar."
                             : "Solo puedes seleccionar una cotización.";
                 }
+
+                aplicarBloqueoPermisoAdq(
+                    btnFinalizarCotizacionAdq,
+                    "puedeEditar",
+                    "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                );
             }
 
 
@@ -10377,14 +10555,17 @@ document.addEventListener(
                     `
                             : `
                         <button type="button"
-                                class="btn btn-sm btn-outline-success btnSeleccionarCotizacionAdq"
-                                data-cotizacion-id="${cotizacionId}"
-                                data-proveedor="${escapeAttributeAdq(
+                            class="btn btn-sm btn-outline-success btnSeleccionarCotizacionAdq"
+                            data-cotizacion-id="${cotizacionId}"
+                            data-proveedor="${escapeAttributeAdq(
                                 cotizacion.nombreProveedor
                                 ??
                                 "Proveedor"
                             )}"
-                                data-total="${total}">
+                            data-total="${total}"
+                            ${!tienePermisoAbacAdq("puedeEditar")
+                                                    ? "disabled"
+                                                    : ""}>
 
                             <i class="bi bi-check2-circle me-1"></i>
 
@@ -10652,6 +10833,25 @@ document.addEventListener(
             // =====================================================
 
             actualizarAccionesCotizacionesAdq();
+
+
+            listaCotizacionesRegistradasAdq
+                ?.querySelectorAll(
+                    ".btnSeleccionarCotizacionAdq"
+                )
+                .forEach(
+                    function (
+                        boton
+                    ) {
+
+                        aplicarBloqueoPermisoAdq(
+                            boton,
+                            "puedeEditar",
+                            "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                        );
+                    }
+                );
+
         }
 
         // =========================================================
@@ -10722,6 +10922,13 @@ document.addEventListener(
                 btnEditarCotizacionSeleccionadaAdq.disabled =
                     total ===
                     0;
+
+
+                aplicarBloqueoPermisoAdq(
+                    btnEditarCotizacionSeleccionadaAdq,
+                    "puedeEditar",
+                    "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                );
             }
 
 
@@ -10732,6 +10939,13 @@ document.addEventListener(
                 btnEliminarCotizacionesSeleccionadasAdq.disabled =
                     total ===
                     0;
+
+
+                aplicarBloqueoPermisoAdq(
+                    btnEliminarCotizacionesSeleccionadasAdq,
+                    "puedeEliminar",
+                    "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
+                );
             }
         }
 
@@ -10783,6 +10997,20 @@ document.addEventListener(
             ?.addEventListener(
                 "click",
                 async function () {
+
+                    if (
+                        !tienePermisoAbacAdq(
+                            "puedeEditar"
+                        )
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Acción no permitida",
+                            "No cuentas con el permiso de Editar correspondiente."
+                        );
+
+                        return;
+                    }
 
                     const seleccionadas =
                         obtenerCotizacionesMarcadasAdq();
@@ -11357,6 +11585,20 @@ document.addEventListener(
             ?.addEventListener(
                 "click",
                 async function () {
+
+                    if (
+                        !tienePermisoAbacAdq(
+                            "puedeEliminar"
+                        )
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Acción no permitida",
+                            "No cuentas con el permiso de Eliminar correspondiente."
+                        );
+
+                        return;
+                    }
 
                     const seleccionadas =
                         obtenerCotizacionesMarcadasAdq();
@@ -12045,6 +12287,20 @@ document.addEventListener(
                     return;
                 }
 
+                if (
+                    !tienePermisoAbacAdq(
+                        "puedeEditar"
+                    )
+                ) {
+
+                    mostrarAdvertenciaAdq(
+                        "Acción no permitida",
+                        "No cuentas con el permiso de Editar correspondiente."
+                    );
+
+                    return;
+                }
+
 
                 const cotizacionId =
                     Number(
@@ -12205,10 +12461,6 @@ document.addEventListener(
         );
 
         // =========================================================
-        // FINALIZAR ETAPA DE COTIZACIÓN - EVENTO
-        // =========================================================
-
-        // =========================================================
         // ABRIR SOLICITUD DE PAGO DESDE COTIZACIÓN
         // =========================================================
 
@@ -12217,85 +12469,19 @@ document.addEventListener(
                 "click",
                 async function () {
 
-                    const solicitudId =
-                        Number(
-                            solicitudCotizacionActualAdq?.id
-                            ??
-                            0
-                        );
-
-
                     if (
-                        solicitudId <=
-                        0
+                        !tienePermisoAbacAdq(
+                            "puedeEditar"
+                        )
                     ) {
 
                         mostrarAdvertenciaAdq(
-                            "Solicitud no identificada",
-                            "No fue posible identificar la solicitud."
+                            "Acción no permitida",
+                            "No cuentas con el permiso de Editar correspondiente."
                         );
 
                         return;
                     }
-
-
-                    try {
-
-                        btnFinalizarCotizacionAdq.disabled =
-                            true;
-
-
-                        btnFinalizarCotizacionAdq.innerHTML = `
-                    <span class="spinner-border spinner-border-sm me-1"></span>
-                    Preparando...
-                `;
-
-
-                        await abrirSolicitudPagoAdq(
-                            solicitudId
-                        );
-
-                    }
-                    catch (
-                    error
-                    ) {
-
-                        console.error(
-                            "Error al abrir Solicitud de Pago:",
-                            error
-                        );
-
-
-                        mostrarAdvertenciaAdq(
-                            "No fue posible abrir",
-                            error?.message
-                            ??
-                            "No fue posible preparar la Solicitud de Pago."
-                        );
-
-                    }
-                    finally {
-
-                        btnFinalizarCotizacionAdq.disabled =
-                            false;
-
-
-                        btnFinalizarCotizacionAdq.innerHTML = `
-                    <i class="bi bi-receipt me-1"></i>
-                    Solicitud de Pago
-                `;
-                    }
-                }
-            );
-
-        // =========================================================
-        // SOLICITUD DE PAGO PREVIA A FINALIZAR COTIZACIÓN
-        // =========================================================
-
-        btnFinalizarCotizacionAdq
-            ?.addEventListener(
-                "click",
-                async function () {
 
                     const solicitudId =
                         Number(
@@ -12356,162 +12542,23 @@ document.addEventListener(
                     }
                     finally {
 
-                        btnFinalizarCotizacionAdq.disabled =
-                            false;
-
-
                         btnFinalizarCotizacionAdq.innerHTML = `
-                    <i class="bi bi-receipt me-1"></i>
-                    Solicitud de Pago
-                `;
+                            <i class="bi bi-receipt me-1"></i>
+                            Solicitud de Pago
+                        `;
+
+
+                        actualizarAccionesCotizacionesAdq();
+
+
+                        aplicarBloqueoPermisoAdq(
+                            btnFinalizarCotizacionAdq,
+                            "puedeEditar",
+                            "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                        );
                     }
                 }
             );
-
-        // =========================================================
-        // REABRIR / MODIFICAR COTIZACIONES
-        // =========================================================
-
-        document.addEventListener(
-            "click",
-            async function (
-                event
-            ) {
-
-                const boton =
-                    event.target.closest(
-                        ".btnReabrirCotizacionAdq"
-                    );
-
-
-                if (!boton) {
-                    return;
-                }
-
-
-                const solicitudId =
-                    Number(
-                        boton.dataset.id
-                        ??
-                        0
-                    );
-
-
-                const folio =
-                    boton.dataset.folio
-                    ??
-                    "la solicitud";
-
-
-                if (
-                    solicitudId <=
-                    0
-                ) {
-                    return;
-                }
-
-
-                const confirmado =
-                    await confirmarAccionAdq(
-                        {
-                            titulo:
-                                "Modificar cotizaciones",
-
-                            mensaje:
-                                `
-                        <p class="mb-3">
-                            Vas a reabrir la etapa de cotización de
-                            <strong>${escapeHtmlAdq(
-                                    folio
-                                )}</strong>.
-                        </p>
-
-                        <div class="alert alert-warning mb-0">
-
-                            <div class="d-flex gap-2">
-
-                                <i class="bi bi-exclamation-triangle-fill"></i>
-
-                                <div>
-                                    La cotización seleccionada dejará de estar finalizada y podrás agregar nuevas propuestas o cambiar la selección antes de solicitar presupuesto.
-                                </div>
-
-                            </div>
-
-                        </div>
-                        `,
-
-                            textoConfirmar:
-                                "Modificar cotizaciones",
-
-                            textoCancelar:
-                                "Cancelar",
-
-                            tipo:
-                                "warning",
-
-                            icono:
-                                "bi-pencil-square"
-                        }
-                    );
-
-
-                if (!confirmado) {
-                    return;
-                }
-
-
-                try {
-
-                    boton.disabled =
-                        true;
-
-
-                    boton.innerHTML = `
-                <span class="spinner-border spinner-border-sm me-1"></span>
-                Abriendo...
-            `;
-
-
-                    await reabrirCotizacionAdq(
-                        solicitudId
-                    );
-
-
-                    window.location.reload();
-
-                }
-                catch (
-                error
-                ) {
-
-                    console.error(
-                        "Error al reabrir cotización:",
-                        error
-                    );
-
-
-                    mostrarAdvertenciaAdq(
-                        "No fue posible modificar las cotizaciones",
-                        error.message
-                        ??
-                        "Ocurrió un error."
-                    );
-
-
-                    boton.disabled =
-                        false;
-
-
-                    boton.innerHTML = `
-                <i class="bi bi-pencil-square"></i>
-                <span>
-                    Modificar cotizaciones
-                </span>
-            `;
-                }
-            }
-        );
 
         // =========================================================
         // PREPARAR NUEVA COTIZACIÓN / PROVEEDOR ALTERNATIVO
@@ -13098,6 +13145,20 @@ document.addEventListener(
 
 
                 if (!boton) {
+                    return;
+                }
+
+                if (
+                    !tienePermisoAbacAdq(
+                        "puedeCrear"
+                    )
+                ) {
+
+                    mostrarAdvertenciaAdq(
+                        "Acción no permitida",
+                        "No cuentas con el permiso de Crear correspondiente."
+                    );
+
                     return;
                 }
 
@@ -16917,10 +16978,10 @@ document.addEventListener(
                         Descargar Solicitud de Pago
                     `;
 
-                            btnGenerarSolicitudPagoDesdeDetalle.disabled =
-                                !tienePermisoAbacAdq(
-                                    "puedeDescargar"
-                                );
+                            aplicarBloqueoPermisoAdq(
+                                btnGenerarSolicitudPagoDesdeDetalle,
+                                "puedeDescargar"
+                            );
 
 
                             btnGenerarSolicitudPagoDesdeDetalle.title =
@@ -16928,12 +16989,87 @@ document.addEventListener(
                                     ? "No tienes permiso para descargar archivos."
                                     : "Descargar Solicitud de Pago";
                                     }
-                                    else {
+                        else {
 
-                                        btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
-                        <i class="bi bi-file-earmark-pdf me-1"></i>
-                        Generar Solicitud de Pago
-                    `;
+                            btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
+        <i class="bi bi-file-earmark-pdf me-1"></i>
+        Generar Solicitud de Pago
+    `;
+
+
+                            if (
+                                !puedeGestionarSolicitudPagoAdq()
+                            ) {
+
+                                btnGenerarSolicitudPagoDesdeDetalle.disabled =
+                                    true;
+
+
+                                let contenedor =
+                                    btnGenerarSolicitudPagoDesdeDetalle.closest(
+                                        ".adq-permiso-tooltip"
+                                    );
+
+
+                                if (!contenedor) {
+
+                                    contenedor =
+                                        document.createElement(
+                                            "span"
+                                        );
+
+
+                                    contenedor.className =
+                                        "adq-permiso-tooltip d-inline-block";
+
+
+                                    btnGenerarSolicitudPagoDesdeDetalle
+                                        .parentNode
+                                        ?.insertBefore(
+                                            contenedor,
+                                            btnGenerarSolicitudPagoDesdeDetalle
+                                        );
+
+
+                                    contenedor.appendChild(
+                                        btnGenerarSolicitudPagoDesdeDetalle
+                                    );
+                                }
+
+
+                                contenedor.setAttribute(
+                                    "tabindex",
+                                    "0"
+                                );
+
+
+                                contenedor.setAttribute(
+                                    "data-bs-toggle",
+                                    "tooltip"
+                                );
+
+
+                                contenedor.setAttribute(
+                                    "data-bs-placement",
+                                    "top"
+                                );
+
+
+                                contenedor.setAttribute(
+                                    "title",
+                                    "Opción bloqueada. Necesitas el permiso de Crear o Editar."
+                                );
+
+
+                                btnGenerarSolicitudPagoDesdeDetalle.style.pointerEvents =
+                                    "none";
+
+
+                                bootstrap.Tooltip
+                                    .getOrCreateInstance(
+                                        contenedor
+                                    );
+                            }
                         }
                     }
 
@@ -16945,16 +17081,11 @@ document.addEventListener(
                         btnEditarDesdeDetalle
                     ) {
 
-                        btnEditarDesdeDetalle.disabled =
-                            !tienePermisoAbacAdq(
-                                "puedeEditar"
-                            );
-
-
-                        btnEditarDesdeDetalle.title =
-                            btnEditarDesdeDetalle.disabled
-                                ? "No tienes permiso para editar registros."
-                                : "Editar solicitud";
+                        aplicarBloqueoPermisoAdq(
+                            btnEditarDesdeDetalle,
+                            "puedeEditar",
+                            "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                        );
                     }
 
 
@@ -16962,16 +17093,11 @@ document.addEventListener(
                         btnCancelarDesdeDetalle
                     ) {
 
-                        btnCancelarDesdeDetalle.disabled =
-                            !tienePermisoAbacAdq(
-                                "puedeEliminar"
-                            );
-
-
-                        btnCancelarDesdeDetalle.title =
-                            btnCancelarDesdeDetalle.disabled
-                                ? "No tienes permiso para eliminar o cancelar registros."
-                                : "Cancelar solicitud";
+                        aplicarBloqueoPermisoAdq(
+                            btnCancelarDesdeDetalle,
+                            "puedeEliminar",
+                            "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
+                        );
                     }
 
 
@@ -16979,16 +17105,11 @@ document.addEventListener(
                         btnEnviarDesdeDetalle
                     ) {
 
-                        btnEnviarDesdeDetalle.disabled =
-                            !tienePermisoAbacAdq(
-                                "puedeCrear"
-                            );
-
-
-                        btnEnviarDesdeDetalle.title =
-                            btnEnviarDesdeDetalle.disabled
-                                ? "No tienes permiso para crear o enviar registros."
-                                : "Enviar solicitud";
+                        aplicarBloqueoPermisoAdq(
+                            btnEnviarDesdeDetalle,
+                            "puedeCrear",
+                            "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
+                        );
                     }
 
 
@@ -19921,8 +20042,66 @@ document.addEventListener(
                         btnDescargarSolicitudPagoAdq
                     ) {
 
-                        btnDescargarSolicitudPagoAdq.href =
-                            resultado.descargarUrl;
+                        if (
+                            tienePermisoAbacAdq(
+                                "puedeDescargar"
+                            )
+                        ) {
+
+                            btnDescargarSolicitudPagoAdq.href =
+                                resultado.descargarUrl;
+
+
+                            btnDescargarSolicitudPagoAdq.classList.remove(
+                                "disabled"
+                            );
+
+
+                            btnDescargarSolicitudPagoAdq.removeAttribute(
+                                "aria-disabled"
+                            );
+                        }
+                        else {
+
+                            btnDescargarSolicitudPagoAdq.removeAttribute(
+                                "href"
+                            );
+
+
+                            btnDescargarSolicitudPagoAdq.classList.add(
+                                "disabled"
+                            );
+
+
+                            btnDescargarSolicitudPagoAdq.setAttribute(
+                                "aria-disabled",
+                                "true"
+                            );
+
+
+                            btnDescargarSolicitudPagoAdq.setAttribute(
+                                "data-bs-toggle",
+                                "tooltip"
+                            );
+
+
+                            btnDescargarSolicitudPagoAdq.setAttribute(
+                                "data-bs-placement",
+                                "top"
+                            );
+
+
+                            btnDescargarSolicitudPagoAdq.setAttribute(
+                                "title",
+                                "Opción bloqueada. No cuentas con el permiso de Descargar correspondiente."
+                            );
+
+
+                            bootstrap.Tooltip
+                                .getOrCreateInstance(
+                                    btnDescargarSolicitudPagoAdq
+                                );
+                        }
                     }
 
 
@@ -22421,6 +22600,26 @@ document.addEventListener(
                 );
             }
         }
+
+        // =========================================================
+        // INICIALIZAR TOOLTIPS
+        // =========================================================
+
+        document
+            .querySelectorAll(
+                '[data-bs-toggle="tooltip"]'
+            )
+            .forEach(
+                function (
+                    elemento
+                ) {
+
+                    bootstrap.Tooltip
+                        .getOrCreateInstance(
+                            elemento
+                        );
+                }
+            );
 
     }
 );
