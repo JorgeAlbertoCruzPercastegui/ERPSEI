@@ -538,6 +538,9 @@ document.addEventListener(
         let cotizacionEditandoActualAdq =
             null;
 
+        let modoCapturaProveedorAdq =
+            false;
+
         const archivosCotizacionAdq =
             document.getElementById(
                 "ArchivosCotizacionAdq"
@@ -1070,6 +1073,185 @@ document.addEventListener(
 
         let temporizadorResultadoPresupuestalAdq =
             null;
+
+
+        // =========================================================
+        // RESTAURAR COTIZACIÓN AL CERRAR SOLICITUD DE PAGO
+        // =========================================================
+
+        modalSolicitudPagoElementAdq
+            ?.addEventListener(
+                "hidden.bs.modal",
+                function () {
+
+                    // =====================================================
+                    // RECALCULAR BOTONES DE COTIZACIONES
+                    // =====================================================
+
+                    renderizarCotizacionesRegistradasAdq(
+                        cotizacionesRegistradasActualesAdq
+                    );
+
+
+                    // =====================================================
+                    // RESTAURAR EL MODAL DE COTIZACIÓN
+                    // =====================================================
+
+                    const modalCotizacion =
+                        bootstrap.Modal.getInstance(
+                            modalCotizacionElement
+                        );
+
+
+                    if (
+                        modalCotizacionElement
+                        &&
+                        modalCotizacionElement.classList.contains(
+                            "show"
+                        )
+                    ) {
+
+                        /*
+                         * Bootstrap elimina modal-open al cerrar el modal
+                         * superior. Como el de cotización sigue abierto,
+                         * restauramos el estado correctamente.
+                         */
+                        document.body.classList.add(
+                            "modal-open"
+                        );
+                    }
+                }
+            );
+
+        function actualizarModoCapturaCotizacionAdq() {
+
+            const cotizacionEditarId =
+                Number(
+                    cotizacionEditarIdAdq
+                        ?.value
+                    ??
+                    0
+                );
+
+
+            const totalCotizaciones =
+                Array.isArray(
+                    cotizacionesRegistradasActualesAdq
+                )
+                    ? cotizacionesRegistradasActualesAdq.length
+                    : 0;
+
+
+            const estaEditando =
+                cotizacionEditarId >
+                0;
+
+
+            const esPrimeraCotizacion =
+                totalCotizaciones ===
+                0;
+
+
+            const debeCapturarProveedor =
+                estaEditando
+                ||
+                esPrimeraCotizacion
+                ||
+                modoCapturaProveedorAdq;
+
+
+            // =====================================================
+            // PROVEEDOR
+            // =====================================================
+
+            const proveedor =
+                document.getElementById(
+                    "cotizacionNombreProveedorAdq"
+                );
+
+
+            if (
+                proveedor
+            ) {
+
+                proveedor.required =
+                    debeCapturarProveedor;
+            }
+
+
+            // =====================================================
+            // PRECIOS
+            // =====================================================
+
+            document
+                .querySelectorAll(
+                    ".cotizacion-precio-unitario-adq"
+                )
+                .forEach(
+                    function (
+                        input
+                    ) {
+
+                        input.required =
+                            debeCapturarProveedor;
+                    }
+                );
+
+
+            // =====================================================
+            // EVIDENCIAS
+            // =====================================================
+
+            document
+                .querySelectorAll(
+                    ".cotizacion-evidencia-adq"
+                )
+                .forEach(
+                    function (
+                        input
+                    ) {
+
+                        /*
+                         * Al editar NO obligamos a volver a subir
+                         * una evidencia que ya existe.
+                         */
+                        input.required =
+                            !estaEditando
+                            &&
+                            debeCapturarProveedor;
+                    }
+                );
+
+
+            // =====================================================
+            // TEXTO DEL BOTÓN
+            // =====================================================
+
+            if (
+                textoGuardarCotizacionAdq
+            ) {
+
+                if (
+                    estaEditando
+                ) {
+
+                    textoGuardarCotizacionAdq.textContent =
+                        "Guardar cambios";
+                }
+                else if (
+                    debeCapturarProveedor
+                ) {
+
+                    textoGuardarCotizacionAdq.textContent =
+                        "Guardar cotización";
+                }
+                else {
+
+                    textoGuardarCotizacionAdq.textContent =
+                        "Listo";
+                }
+            }
+        }
 
         function abrirConfirmacionDecisionPresupuestalAdq(
             datos
@@ -1665,7 +1847,11 @@ document.addEventListener(
             null;
 
 
-        let usuariosConfiguracionAprobadoresAdq =
+        let usuariosResponsablesConfiguracionAdq =
+            [];
+
+
+        let usuariosAsistentesConfiguracionAdq =
             [];
 
 
@@ -1679,7 +1865,9 @@ document.addEventListener(
         formCotizacionAdq
             ?.addEventListener(
                 "submit",
-                function () {
+                function (
+                    event
+                ) {
 
                     const cotizacionEditarId =
                         Number(
@@ -1690,6 +1878,18 @@ document.addEventListener(
                         );
 
 
+                    const totalCotizacionesRegistradas =
+                        Array.isArray(
+                            cotizacionesRegistradasActualesAdq
+                        )
+                            ? cotizacionesRegistradasActualesAdq.length
+                            : 0;
+
+
+                    // =====================================================
+                    // 1. MODO EDICIÓN
+                    // =====================================================
+
                     if (
                         cotizacionEditarId >
                         0
@@ -1697,12 +1897,66 @@ document.addEventListener(
 
                         formCotizacionAdq.action =
                             `${window.location.pathname}?handler=EditarCotizacion`;
+
+                        return;
                     }
-                    else {
+
+
+                    // =====================================================
+                    // 2. PRIMERA COTIZACIÓN
+                    // =====================================================
+                    //
+                    // Si todavía no existe ningún proveedor registrado,
+                    // permitimos guardar normalmente.
+                    // =====================================================
+
+                    if (
+                        totalCotizacionesRegistradas ===
+                        0
+                    ) {
 
                         formCotizacionAdq.action =
                             `${window.location.pathname}?handler=GuardarCotizacion`;
+
+                        return;
                     }
+
+
+                    // =====================================================
+                    // 3. NUEVO PROVEEDOR ALTERNATIVO
+                    // =====================================================
+                    //
+                    // Solamente guardamos otra cotización cuando el usuario
+                    // presionó explícitamente "Agregar proveedor alternativo".
+                    // =====================================================
+
+                    if (
+                        modoCapturaProveedorAdq
+                    ) {
+
+                        formCotizacionAdq.action =
+                            `${window.location.pathname}?handler=GuardarCotizacion`;
+
+                        return;
+                    }
+
+
+                    // =====================================================
+                    // 4. YA EXISTEN COTIZACIONES Y NO HAY NUEVA CAPTURA
+                    // =====================================================
+                    //
+                    // No enviamos el formulario para evitar crear
+                    // un proveedor vacío/adicional.
+                    // =====================================================
+
+                    event.preventDefault();
+
+
+                    bootstrap.Modal
+                        .getInstance(
+                            modalCotizacionElement
+                        )
+                        ?.hide();
                 }
             );
 
@@ -5722,21 +5976,25 @@ document.addEventListener(
                 );
         }
 
-        function crearOpcionesUsuariosAprobadoresAdq(
+        // =========================================================
+        // OPCIONES DE RESPONSABLES
+        // =========================================================
+
+        function crearOpcionesResponsablesAdq(
             usuarioSeleccionadoId
         ) {
 
             let html =
                 `
-            <option value="">
-                Selecciona un usuario...
-            </option>
-        `;
+        <option value="">
+            Selecciona un aprobador...
+        </option>
+    `;
 
 
             for (
                 const usuario
-                of usuariosConfiguracionAprobadoresAdq
+                of usuariosResponsablesConfiguracionAdq
             ) {
 
                 const seleccionado =
@@ -5765,14 +6023,76 @@ document.addEventListener(
 
                 html +=
                     `
-                <option
-                    value="${escapeHtmlAdq(usuario.id)}"
-                    ${seleccionado ? "selected" : ""}>
+            <option
+                value="${escapeHtmlAdq(usuario.id)}"
+                ${seleccionado ? "selected" : ""}>
 
-                    ${escapeHtmlAdq(texto)}
+                ${escapeHtmlAdq(texto)}
 
-                </option>
-            `;
+            </option>
+        `;
+            }
+
+
+            return html;
+        }
+
+
+        // =========================================================
+        // OPCIONES DE ASISTENTES
+        // =========================================================
+
+        function crearOpcionesAsistentesAdq(
+            usuarioSeleccionadoId
+        ) {
+
+            let html =
+                `
+        <option value="">
+            Selecciona un asistente...
+        </option>
+    `;
+
+
+            for (
+                const usuario
+                of usuariosAsistentesConfiguracionAdq
+            ) {
+
+                const seleccionado =
+                    String(
+                        usuario.id
+                    ) ===
+                    String(
+                        usuarioSeleccionadoId
+                        ??
+                        ""
+                    );
+
+
+                const texto =
+                    usuario.nombre
+                    +
+                    (
+                        usuario.email
+                            &&
+                            usuario.email !==
+                            usuario.nombre
+                            ? ` (${usuario.email})`
+                            : ""
+                    );
+
+
+                html +=
+                    `
+            <option
+                value="${escapeHtmlAdq(usuario.id)}"
+                ${seleccionado ? "selected" : ""}>
+
+                ${escapeHtmlAdq(texto)}
+
+            </option>
+        `;
             }
 
 
@@ -5890,9 +6210,9 @@ document.addEventListener(
                         class="form-select form-select-sm adq-config-responsable"
                         data-orden="${etapa.orden}">
 
-                        ${crearOpcionesUsuariosAprobadoresAdq(
-                        etapa.usuarioResponsableId
-                    )}
+                        ${crearOpcionesResponsablesAdq(
+                            etapa.usuarioResponsableId
+                        )}
 
                     </select>
 
@@ -5905,9 +6225,9 @@ document.addEventListener(
                         class="form-select form-select-sm adq-config-asistente"
                         data-orden="${etapa.orden}">
 
-                        ${crearOpcionesUsuariosAprobadoresAdq(
-                        etapa.usuarioAsistenteId
-                    )}
+                        ${crearOpcionesAsistentesAdq(
+                            etapa.usuarioAsistenteId
+                        )}
 
                     </select>
 
@@ -6017,8 +6337,14 @@ document.addEventListener(
                 }
 
 
-                usuariosConfiguracionAprobadoresAdq =
-                    resultado.usuarios
+                usuariosResponsablesConfiguracionAdq =
+                    resultado.usuariosAprobadores
+                    ??
+                    [];
+
+
+                usuariosAsistentesConfiguracionAdq =
+                    resultado.usuariosAsistentes
                     ??
                     [];
 
@@ -11201,6 +11527,8 @@ document.addEventListener(
                     cotizacionEditandoActualAdq =
                         cotizacion;
 
+                    modoCapturaProveedorAdq =
+                        false;
 
                     archivosCotizacionEliminadosAdq =
                         new Set();
@@ -11372,6 +11700,8 @@ document.addEventListener(
                         ??
                         []
                     );
+
+                    actualizarModoCapturaCotizacionAdq();
 
 
                     // =====================================================
@@ -12115,6 +12445,9 @@ document.addEventListener(
                     cotizacionEditandoActualAdq =
                         null;
 
+                    modoCapturaProveedorAdq =
+                        false;
+
                     archivosCotizacionEliminadosAdq =
                         new Set();
 
@@ -12197,6 +12530,8 @@ document.addEventListener(
                         ??
                         []
                     );
+
+                    actualizarModoCapturaCotizacionAdq();
 
 
                     calcularCotizacionAdq();
@@ -12572,6 +12907,9 @@ document.addEventListener(
                 return;
             }
 
+            modoCapturaProveedorAdq =
+                true;
+
             // =====================================================
             // SALIR COMPLETAMENTE DEL MODO EDICIÓN
             // =====================================================
@@ -12734,6 +13072,7 @@ document.addEventListener(
                 solicitudCotizacionActualAdq.detalles
             );
 
+            actualizarModoCapturaCotizacionAdq();
 
             archivosCotizacionSeleccionadosAdq =
                 [];
@@ -13227,6 +13566,9 @@ document.addEventListener(
                     cotizacionEditandoActualAdq =
                         null;
 
+                    modoCapturaProveedorAdq =
+                        false;
+
 
                     archivosCotizacionEliminadosAdq =
                         new Set();
@@ -13295,6 +13637,9 @@ document.addEventListener(
                     renderizarCotizacionesRegistradasAdq(
                         cotizaciones
                     );
+
+
+                    actualizarModoCapturaCotizacionAdq();
 
 
                     calcularCotizacionAdq();

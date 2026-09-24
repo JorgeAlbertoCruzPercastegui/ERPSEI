@@ -64,9 +64,9 @@
             StringComparison.OrdinalIgnoreCase
         ));
 
-    bool esAprobadorPresupuestal = rolesUsuario.Any(r =>
+    bool esAprobadorAdquisiciones = rolesUsuario.Any(r =>
         r.Equals(
-            "Aprobador Presupuestal",
+            "Aprobador Adquisiciones",
             StringComparison.OrdinalIgnoreCase
         ));
 
@@ -82,7 +82,7 @@
             ||
             esUsuarioAdquisiciones
             ||
-            esAprobadorPresupuestal
+            esAprobadorAdquisiciones
         )
         &&
         !esAdministrador
@@ -540,7 +540,7 @@
     esUsuarioConciliaciones ||
     esAdministradorAdquisiciones ||
     esUsuarioAdquisiciones ||
-    esAprobadorPresupuestal ||
+    esAprobadorAdquisiciones ||
     (permisos.ContainsKey("empresas") &&
      permisos["empresas"]) ||
     (permisos.ContainsKey("conciliaciones") &&
@@ -620,7 +620,7 @@
         esAdministrador ||
         esAdministradorAdquisiciones ||
         esUsuarioAdquisiciones ||
-        esAprobadorPresupuestal;
+        esAprobadorAdquisiciones;
 
     bool mostrarActivosFijosMenu =
         esAdministrador ||

@@ -722,6 +722,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             private set;
         }
 
+        public bool EsAprobadorAdquisiciones
+        {
+            get;
+            private set;
+        }
+
 
         public List<SelectListItem> AgentesCompras
         {
@@ -7641,46 +7647,138 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
+            IList<AppUser> usuariosAprobadoresRol =
+                await _userManager.GetUsersInRoleAsync(
+                    "Aprobador Adquisiciones"
+                );
 
-            var usuarios =
-            await _userManager
-                .Users
-                .AsNoTracking()
-                .Where(
-                    x =>
-                        !x.IsBanned
-                )
-                .Select(
-                    x =>
-                        new
-                        {
-                            id =
-                                x.Id,
 
-                            nombre =
-                                x.UserName
-                                ??
-                                x.Email
-                                ??
-                                "Usuario",
+            List<string> idsAprobadoresAdquisiciones =
+                usuariosAprobadoresRol
+                    .Where(
+                        x =>
+                            !x.IsBanned
+                    )
+                    .Select(
+                        x =>
+                            x.Id
+                    )
+                    .Distinct()
+                    .ToList();
 
-                            email =
-                                x.Email
-                                ??
-                                x.UserName
-                                ??
-                                string.Empty
-                        }
-                )
-                .OrderBy(
-                    x =>
-                        x.nombre
-                )
-                .ThenBy(
-                    x =>
-                        x.email
-                )
-                .ToListAsync();
+
+            // =====================================================
+            // USUARIOS APROBADORES
+            // =====================================================
+
+            IList<AppUser> usuariosRolAprobador =
+                await _userManager.GetUsersInRoleAsync(
+                    "Aprobador Adquisiciones"
+                );
+
+
+            List<string> idsAprobadores =
+                usuariosRolAprobador
+                    .Where(
+                        x =>
+                            !x.IsBanned
+                    )
+                    .Select(
+                        x =>
+                            x.Id
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            var usuariosAprobadores =
+                await _userManager
+                    .Users
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            !x.IsBanned
+                            &&
+                            idsAprobadores.Contains(
+                                x.Id
+                            )
+                    )
+                    .Select(
+                        x =>
+                            new
+                            {
+                                id =
+                                    x.Id,
+
+                                nombre =
+                                    x.UserName
+                                    ??
+                                    x.Email
+                                    ??
+                                    "Usuario",
+
+                                email =
+                                    x.Email
+                                    ??
+                                    x.UserName
+                                    ??
+                                    string.Empty
+                            }
+                    )
+                    .OrderBy(
+                        x =>
+                            x.nombre
+                    )
+                    .ThenBy(
+                        x =>
+                            x.email
+                    )
+                    .ToListAsync();
+
+
+            // =====================================================
+            // USUARIOS ASISTENTES
+            // =====================================================
+
+            var usuariosAsistentes =
+                await _userManager
+                    .Users
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            !x.IsBanned
+                    )
+                    .Select(
+                        x =>
+                            new
+                            {
+                                id =
+                                    x.Id,
+
+                                nombre =
+                                    x.UserName
+                                    ??
+                                    x.Email
+                                    ??
+                                    "Usuario",
+
+                                email =
+                                    x.Email
+                                    ??
+                                    x.UserName
+                                    ??
+                                    string.Empty
+                            }
+                    )
+                    .OrderBy(
+                        x =>
+                            x.nombre
+                    )
+                    .ThenBy(
+                        x =>
+                            x.email
+                    )
+                    .ToListAsync();
 
 
             var configuracion =
@@ -7748,7 +7846,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                             var responsable =
-                                usuarios
+                                usuariosAprobadores
                                     .FirstOrDefault(
                                         x =>
                                             x.id ==
@@ -7757,7 +7855,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                             var asistente =
-                                usuarios
+                                usuariosAsistentes
                                     .FirstOrDefault(
                                         x =>
                                             x.id ==
@@ -7823,7 +7921,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     success =
                         true,
 
-                    usuarios,
+                    usuariosAprobadores,
+
+                    usuariosAsistentes,
 
                     etapas =
                         resultado
@@ -14804,20 +14904,38 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // SOLAMENTE AGENTE ASIGNADO
+            // VALIDAR PARTICIPACIÓN EN LA SOLICITUD
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
-                usuarioActual.Id
-            )
+            bool esAgenteAsignado =
+                solicitud.UsuarioAsignadoId ==
+                    usuarioActual.Id;
+
+
+            bool esCreadorAdministradorAdquisiciones =
+                solicitud.UsuarioSolicitanteId ==
+                    usuarioActual.Id
+                &&
+                await _userManager.IsInRoleAsync(
+                    usuarioActual,
+                    "Administrador Adquisiciones"
+                );
+
+
+            bool puedeModificarCotizacion =
+                esAgenteAsignado
+                ||
+                esCreadorAdministradorAdquisiciones;
+
+
+            if (!puedeModificarCotizacion)
             {
                 return new JsonResult(
                     new
                     {
                         success = false,
                         message =
-                            "Solamente el agente asignado puede modificar las cotizaciones."
+                            "No cuentas con acceso para modificar las cotizaciones de esta solicitud."
                     }
                 )
                 {
@@ -15198,20 +15316,38 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
-            // SOLAMENTE EL AGENTE ASIGNADO
+            // VALIDAR PARTICIPACIÓN EN LA SOLICITUD
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
+            bool esAgenteAsignado =
+                solicitud.UsuarioAsignadoId ==
+                    usuarioActual.Id;
+
+
+            bool esCreadorAdministradorAdquisiciones =
+                solicitud.UsuarioSolicitanteId ==
                     usuarioActual.Id
-            )
+                &&
+                await _userManager.IsInRoleAsync(
+                    usuarioActual,
+                    "Administrador Adquisiciones"
+                );
+
+
+            bool puedeSolicitarPresupuestoSolicitud =
+                esAgenteAsignado
+                ||
+                esCreadorAdministradorAdquisiciones;
+
+
+            if (!puedeSolicitarPresupuestoSolicitud)
             {
                 return new JsonResult(
                     new
                     {
                         success = false,
                         message =
-                            "Solamente el agente asignado puede solicitar la aprobación presupuestal."
+                            "No cuentas con acceso para solicitar la aprobación presupuestal de esta solicitud."
                     }
                 )
                 {
@@ -19310,6 +19446,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     "Usuario Adquisiciones"
                 );
 
+            EsAprobadorAdquisiciones =
+                User.IsInRole(
+                    "Aprobador Adquisiciones"
+                );
+
 
             bool tieneAccesoRolAdquisiciones =
                 esAdministradorSistema
@@ -21370,6 +21511,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     "Usuario Adquisiciones"
                 );
 
+            EsAprobadorAdquisiciones =
+                await _userManager.IsInRoleAsync(
+                    usuarioActual,
+                    "Aprobador Adquisiciones"
+                );
+
 
             // =========================================================
             // PERMISOS OPERATIVOS CONFIGURADOS
@@ -21536,31 +21683,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 ||
                 EsUsuarioOperativoAdquisiciones
                 ||
-                (
-                    permiso != null
-                    &&
-                    (
-                        permiso.PuedeVisualizar
-                        ||
-                        permiso.PuedeCrearSolicitud
-                        ||
-                        permiso.PuedeGestionarSolicitudes
-                        ||
-                        permiso.PuedeAprobar
-                        ||
-                        permiso.PuedeAsignar
-                        ||
-                        permiso.PuedeCotizar
-                        ||
-                        permiso.PuedeGestionarProveedores
-                        ||
-                        permiso.PuedeGenerarSolicitudPago
-                        ||
-                        permiso.PuedeVerReportes
-                        ||
-                        permiso.PuedeAdministrar
-                    )
-                );
+                EsAprobadorAdquisiciones;
 
 
             // =========================================================
@@ -21570,19 +21693,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             PuedeAprobarAdquisiciones =
                 EsAdministradorSistema
                 ||
-                EsAdministradorAdquisiciones
-                ||
-                (
-                    permiso != null
-                    &&
-                    (
-                        permiso.PuedeAprobar
-                        ||
-                        permiso.PuedeGestionarSolicitudes
-                        ||
-                        permiso.PuedeAdministrar
-                    )
-                );
+                EsAdministradorAdquisiciones;
 
 
             // =========================================================
@@ -21592,18 +21703,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             PuedeAsignarAdquisiciones =
                 EsAdministradorSistema
                 ||
-                EsAdministradorAdquisiciones
-                ||
-                (
-                    permiso != null
-                    &&
-                    (
-                        permiso.PuedeAsignar
-                        ||
-                        permiso.PuedeAdministrar
-                    )
-                );
-
+                EsAdministradorAdquisiciones;
 
             // =========================================================
             // CAPACIDADES VISUALES
@@ -21922,7 +22022,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // VALIDAR SI EL USUARIO ES APROBADOR PRESUPUESTAL
             // =========================================================
 
-            EsAprobadorPresupuestal =
+            bool estaConfiguradoComoAprobador =
                 await _context
                     .AdqConfiguracionAprobacionPresupuestal
                     .AsNoTracking()
@@ -21936,6 +22036,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             !x.Eliminado
                     );
 
+
+            EsAprobadorPresupuestal =
+                estaConfiguradoComoAprobador;
+
             // =========================================================
             // CAPACIDADES DEL APROBADOR PRESUPUESTAL
             // =========================================================
@@ -21943,16 +22047,19 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             PuedeVerMisFirmas =
                 EsAdministradorSistema
                 ||
-                EsAprobadorPresupuestal;
+                EsAprobadorAdquisiciones;
 
 
-            PuedeVerAprobacionesPresupuestales = EsAdministradorSistema || EsAprobadorPresupuestal;
+            PuedeVerAprobacionesPresupuestales =
+                EsAdministradorSistema
+                ||
+                EsAprobadorAdquisiciones;
 
 
             PuedeVerHistoricoPresupuestosAprobados =
                 EsAdministradorSistema
                 ||
-                EsAprobadorPresupuestal;
+                EsAprobadorAdquisiciones;
 
             // =========================================================
             // APROBACIONES PRESUPUESTALES PENDIENTES
@@ -22034,6 +22141,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return;
             }
 
+            bool puedeVerComoCreador =
+                EsAdministradorSistema
+                ||
+                EsAdministradorAdquisiciones;
+
             OrdenesAsignadas =
                 await (
                     from solicitud
@@ -22067,12 +22179,27 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         in areaJoin.DefaultIfEmpty()
 
                     where
-                        solicitud.UsuarioAsignadoId ==
-                            usuarioActual.Id
-                        &&
                         !solicitud.Eliminado
                         &&
-                        solicitud.EstatusId >= 8
+                        (
+                            (
+                                solicitud.UsuarioAsignadoId ==
+                                    usuarioActual.Id
+                                &&
+                                solicitud.EstatusId >=
+                                    8
+                            )
+                            ||
+                            (
+                                puedeVerComoCreador
+                                &&
+                                solicitud.UsuarioSolicitanteId ==
+                                    usuarioActual.Id
+                                &&
+                                solicitud.EstatusId ==
+                                    10
+                            )
+                        )
 
                     orderby
                         solicitud.FechaModificacion descending,
@@ -22108,9 +22235,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                     x =>
                                         x.SolicitudId ==
                                             solicitud.Id
-                                        &&
-                                        x.UsuarioAsignadoId ==
-                                            usuarioActual.Id
                                         &&
                                         x.Activa
                                 )
