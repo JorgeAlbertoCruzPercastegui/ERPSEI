@@ -56,7 +56,7 @@ namespace ERPSEI.Data.Entities.Adquisiciones
 
         [Required(
             ErrorMessage =
-                "Debes seleccionar el tipo de solicitud."
+                "Debes seleccionar el tipo de documento"
         )]
 
         [StringLength(30)]

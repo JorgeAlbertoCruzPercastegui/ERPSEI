@@ -9644,7 +9644,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             [Required(
                 ErrorMessage =
-                    "Debes seleccionar el tipo de solicitud."
+                    "Debes seleccionar el tipo de documento."
             )]
             [StringLength(
                 30,
