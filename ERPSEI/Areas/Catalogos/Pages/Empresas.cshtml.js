@@ -290,6 +290,20 @@ function initTable() {
                 sortable: true
             },
             {
+                title: "Estatus",
+                field: "estatus",
+                align: "center",
+                valign: "middle",
+                sortable: true,
+                formatter: function (value, row) {
+                    if (row.deshabilitado == 0) {
+                        return '<span class="badge bg-success">Activa</span>';
+                    }
+
+                    return '<span class="badge bg-secondary">Inactiva</span>';
+                }
+            },
+            {
                 title: colAccionesHeader,
                 field: "operate",
                 align: "center",
@@ -362,17 +376,29 @@ function onBuscarClick() {
     let selNivel = document.getElementById("selFiltroNivel");
     let inpActividadEconomica = document.getElementById("inpFiltroActividadEconomica");
     let inpRFC = document.getElementById("inpFiltroRFC");
+    let selEstatus = document.getElementById("selFiltroEstatus");
 
     let oParams = {
         origenId: selOrigen.value == 0 ? null : parseInt(selOrigen.value),
         nivelId: selNivel.value == 0 ? null : parseInt(selNivel.value),
-        actividadEconomicaId: (inpActividadEconomica.getAttribute('idselected') || "0") == "0" ? null : parseInt(inpActividadEconomica.getAttribute("idselected")),
-        rfc: inpRFC.value.trim().length <= 0 ? null : inpRFC.value
+        actividadEconomicaId: (inpActividadEconomica.getAttribute('idselected') || "0") == "0"
+            ? null
+            : parseInt(inpActividadEconomica.getAttribute("idselected")),
+        rfc: inpRFC.value.trim().length <= 0 ? null : inpRFC.value,
+        deshabilitado: selEstatus.value === ""
+            ? null
+            : parseInt(selEstatus.value)
     };
 
     //Resetea el valor de los filtros.
-    document.querySelectorAll("#filtros .form-control").forEach(function (e) { e.value = ""; });
-    document.querySelectorAll("#filtros .form-select").forEach(function (e) { e.value = 0; });
+    document.querySelectorAll("#filtros .form-control").forEach(function (e) {
+        e.value = "";
+    });
+
+    selOrigen.value = 0;
+    selNivel.value = 0;
+    selEstatus.value = "";
+
     inpActividadEconomica.setAttribute("idselected", 0);
 
     doAjax(

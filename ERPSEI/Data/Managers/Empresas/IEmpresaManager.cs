@@ -12,6 +12,14 @@ namespace ERPSEI.Data.Managers.Empresas
             string? rfc = null
         );
 
+        public Task<List<Empresa>> GetAllByEstatusAsync(
+            int? origen = null,
+            int? nivel = null,
+            int? actividadEconomica = null,
+            string? rfc = null,
+            int? deshabilitado = null
+        );
+
         public Task DisableByIdAsync(int id );
 
         public Task<Empresa?> GetByIdWithAdicionalesAsync(int id);

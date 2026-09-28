@@ -125,6 +125,29 @@ namespace ERPSEI.Data.Managers.Empresas
                 .ToListAsync();
         }
 
+        public async Task<List<Empresa>> GetAllByEstatusAsync(
+            int? origenId = null,
+            int? nivelId = null,
+            int? actividadEconomicaId = null,
+            string? rfc = null,
+            int? deshabilitado = null
+        )
+        {
+            return await db.Empresas
+                .Where(e => deshabilitado.HasValue ? e.Deshabilitado == deshabilitado.Value : true)
+                .Where(e => origenId != null ? e.OrigenId == origenId : true)
+                .Where(e => nivelId != null ? e.NivelId == nivelId : true)
+                .Where(e => rfc != null ? e.RFC == rfc : true)
+                .Include(e => e.Origen)
+                .Include(e => e.Nivel)
+                .Include(e => e.Perfil)
+                .Include(e => e.ActividadesEconomicasEmpresa)
+                .Where(e => actividadEconomicaId != null
+                    ? e.ActividadesEconomicasEmpresa.Any(a => a.ActividadEconomicaId == actividadEconomicaId)
+                    : true)
+                .ToListAsync();
+        }
+
         public async Task<List<Empresa>> GetAllAsync()
         {
 			return await GetAllAsync(null, null, null);
@@ -133,11 +156,11 @@ namespace ERPSEI.Data.Managers.Empresas
         public async Task<Empresa?> GetByIdWithAdicionalesAsync(int id)
         {
             return await db.Empresas
-                .Where(e => e.Deshabilitado == 0)
                 .Where(e => e.Id == id)
                 .Include(e => e.BancosEmpresa)
                 .Include(e => e.ActividadesEconomicasEmpresa)
-                .ThenInclude(a => a.ActividadEconomica).FirstOrDefaultAsync();
+                .ThenInclude(a => a.ActividadEconomica)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<Empresa?> GetByIdAsync(int id)

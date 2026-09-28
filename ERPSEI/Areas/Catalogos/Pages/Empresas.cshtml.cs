@@ -68,6 +68,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			[Display(Name = "RFCField")]
 			public string? RFC {  get; set; }
+
+            public int? Deshabilitado { get; set; }
         }
 
 		[BindProperty]
@@ -250,13 +252,14 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
 			if (filtro != null)
 			{
-				empresas = await _empresaManager.GetAllAsync(
-					filtro.OrigenId,
-					filtro.NivelId,
-					filtro.ActividadEconomicaId,
-					filtro.RFC
-				);
-			}
+                empresas = await _empresaManager.GetAllByEstatusAsync(
+                    filtro.OrigenId,
+                    filtro.NivelId,
+                    filtro.ActividadEconomicaId,
+                    filtro.RFC,
+                    filtro.Deshabilitado
+                );
+            }
 			else
 			{
 				empresas = await _empresaManager.GetAllAsync();
@@ -279,7 +282,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 				{
 					id = e.Id,
 					razonSocial = e.RazonSocial,
-					perfilId = e.PerfilId,
+                    deshabilitado = e.Deshabilitado,
+                    estatus = e.Deshabilitado == 0 ? "Activa" : "Inactiva",
+                    perfilId = e.PerfilId,
 					perfil = nombrePerfil,
 					origenId = e.OrigenId,
 					origen = nombreOrigen,
