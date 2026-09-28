@@ -197,7 +197,6 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                     .OrderByDescending(x =>
                         x.FechaHora
                     )
-                    .Take(100)
                     .Select(x =>
                         new ActividadGeneralDto
                         {
@@ -256,7 +255,6 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                     .OrderByDescending(x =>
                         x.FechaEvento
                     )
-                    .Take(100)
                     .Select(x =>
                         new ActividadGeneralDto
                         {
@@ -315,7 +313,6 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                     .OrderByDescending(x =>
                         x.FechaEvento
                     )
-                    .Take(100)
                     .Select(x =>
                         new ActividadGeneralDto
                         {
@@ -378,7 +375,6 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                     .OrderByDescending(x =>
                         x.FechaHora
                     )
-                    .Take(100)
                     .ToList();
 
             // =====================================================

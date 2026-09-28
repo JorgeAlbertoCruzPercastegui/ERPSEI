@@ -430,27 +430,65 @@ body.module-main-theme.metrica-page {
         background: #ffffff;
     }
 
-/* PAGINACION */
+/* =====================================================
+   PAGINACION
+   ===================================================== */
 
 .metrica-page .metrica-pagination {
     border-top: 1px solid rgba(33,22,111,.10);
     background: #ffffff;
     padding: 14px 18px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
+
+
+/* RESUMEN */
+
+.metrica-page .metrica-pagination-summary {
+    color: #21166f;
+    font-size: .88rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+
+/* CONTENEDOR DE LOS CONTROLES */
+
+.metrica-page .metrica-pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+
+/* CONTENEDOR DE NÚMEROS */
+
+.metrica-page .metrica-page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
+/* BOTONES ANTERIOR / SIGUIENTE */
 
 .metrica-page .metrica-page-btn {
     background: #ffffff;
     color: #21166f;
     border: 1px solid rgba(33,22,111,.25);
-    border-radius: 12px;
-    padding: .55rem .9rem;
-    font-size: .86rem;
+    border-radius: 10px;
+    min-height: 38px;
+    padding: .5rem .85rem;
+    font-size: .84rem;
     font-weight: 800;
     transition: all .18s ease;
+    white-space: nowrap;
 }
 
     .metrica-page .metrica-page-btn:hover:not(:disabled) {
@@ -460,18 +498,91 @@ body.module-main-theme.metrica-page {
     }
 
     .metrica-page .metrica-page-btn:disabled {
-        opacity: .45;
+        opacity: .4;
         cursor: not-allowed;
     }
 
-.metrica-page .metrica-page-info {
+
+/* BOTONES NUMÉRICOS */
+
+.metrica-page .metrica-page-number {
+    min-width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 9px;
+    background: #ffffff;
     color: #21166f;
-    font-size: .88rem;
+    border: 1px solid rgba(33,22,111,.20);
+    border-radius: 8px;
+    font-size: .82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all .18s ease;
+}
+
+    .metrica-page .metrica-page-number:hover {
+        background: rgba(33,22,111,.08);
+        border-color: #21166f;
+    }
+
+
+    /* PÁGINA ACTIVA */
+
+    .metrica-page .metrica-page-number.active {
+        background: #21166f;
+        color: #ffffff;
+        border-color: #21166f;
+        box-shadow: 0 4px 10px rgba(33,22,111,.16);
+    }
+
+
+/* ... */
+
+.metrica-page .metrica-page-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 36px;
+    color: #6b7280;
+    font-size: .9rem;
     font-weight: 800;
 }
 
+
+/* FILAS OCULTAS */
+
 .metrica-page .metrica-row.d-none {
     display: none !important;
+}
+
+
+/* =====================================================
+   PAGINACION RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 767.98px) {
+
+    .metrica-page .metrica-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .metrica-page .metrica-pagination-summary {
+        text-align: center;
+    }
+
+    .metrica-page .metrica-pagination-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .metrica-page .metrica-page-numbers {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 }
 
 /* =====================================================

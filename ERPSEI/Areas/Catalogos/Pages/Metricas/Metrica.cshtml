@@ -149,22 +149,30 @@
 
             <div class="metrica-pagination">
 
-                <button type="button"
-                        id="btnMetricasPrev"
-                        class="metrica-page-btn">
-                    Anterior
-                </button>
+                <div class="metrica-pagination-summary"
+                     id="lblMetricasResumen">
+                    Mostrando 0 a 0 de 0 registros
+                </div>
 
-                <span id="lblMetricasPagina"
-                      class="metrica-page-info">
-                    Página 1
-                </span>
+                <div class="metrica-pagination-controls">
 
-                <button type="button"
-                        id="btnMetricasNext"
-                        class="metrica-page-btn">
-                    Siguiente
-                </button>
+                    <button type="button"
+                            id="btnMetricasPrev"
+                            class="metrica-page-btn">
+                        Anterior
+                    </button>
+
+                    <div id="metricasPageNumbers"
+                         class="metrica-page-numbers">
+                    </div>
+
+                    <button type="button"
+                            id="btnMetricasNext"
+                            class="metrica-page-btn">
+                        Siguiente
+                    </button>
+
+                </div>
 
             </div>
 
@@ -179,5 +187,5 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="~/../Areas/Catalogos/Pages/Metricas/Metrica.js" asp-append-version="true"></script>
+    <script src="~/../Areas/Catalogos/Pages/Metricas/Metrica.cshtml.js" asp-append-version="true"></script>
 }
