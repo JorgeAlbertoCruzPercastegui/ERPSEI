@@ -3764,7 +3764,11 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                             x.Id,
 
                         nombre =
-                            x.Nombre,
+                            x.Nombre == "Acta Constitutiva"
+                                ? "Organigrama"
+                                : x.Nombre == "Organigrama"
+                                    ? "Acta Constitutiva"
+                                    : x.Nombre,
 
                         categoria =
                             x.Categoria,
@@ -4319,7 +4323,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
         // CARGAR DOCUMENTO
         // POST ?handler=CargarDocumento
         // =====================================================
-        [RequestSizeLimit(110L * 1024L * 1024L)]
+        [RequestSizeLimit(45L * 1024L * 1024L)]
         public async Task<IActionResult> OnPostCargarDocumentoAsync(
         [FromForm] CargarDocumentoRequest request)
         {
@@ -4335,7 +4339,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
              * al formulario multipart y sus encabezados.
              */
             const long tamanoMaximo =
-                100L * 1024L * 1024L;
+                40L * 1024L * 1024L;
 
             string? rutaFisica = null;
 
@@ -4401,7 +4405,7 @@ namespace ERPSEI.Areas.ExpedientesBancarios.Pages.Empresas
                         {
                             ["Archivo"] = new[]
                             {
-                        "El archivo no puede superar los 100 MB."
+                        "El archivo no puede superar los 40 MB."
                     }
                         }
                     });

@@ -10,8 +10,8 @@ var dialogMode = null;
 const NUEVO = 0;
 const EDITAR = 1;
 const VER = 2;
-const maxFileSizeInBytes = 5242880; //5mb = (5 * 1024) * 1024
-const oneMegabyteSizeInBytes = 1048576; // 1mb = (1 * 1024) * 1024
+const maxFileSizeInBytes = 40 * 1024 * 1024; // 40 MB
+const oneMegabyteSizeInBytes = 1024 * 1024; // 1 MB
 const maxBanks = 15; // Máximo 15 registros de bancos.
 const postOptions = { headers: { "RequestVerificationToken": $('input[name="__RequestVerificationToken"]').val() } }
 
