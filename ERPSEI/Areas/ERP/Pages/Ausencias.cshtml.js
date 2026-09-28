@@ -120,7 +120,6 @@ function initTableHoras() {
 
 function initTableAutorizar() {
     tableAutorizar.bootstrapTable('destroy').bootstrapTable({
-        height: 520,
         pagination: true,
         pageSize: 10,
         pageList: [10, 25, 50, 100, "All"],
@@ -153,8 +152,19 @@ function initTableAutorizar() {
                     return row.dias || "";
                 }
             },
-            { field: "estado", title: "Estado", align: "center", formatter: estadoFormatter },
-            { field: "acciones", title: "Acciones", align: "center", formatter: accionesFormatter, events: accionesEvents }
+            {
+                field: "estado",
+                title: "Estado",
+                align: "center",
+                formatter: estadoFormatter
+            },
+            {
+                field: "acciones",
+                title: "Acciones",
+                align: "center",
+                formatter: accionesFormatter,
+                events: accionesEvents
+            }
         ]
     });
 }
