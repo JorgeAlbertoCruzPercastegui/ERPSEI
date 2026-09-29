@@ -1,0 +1,224 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.ActivoFijoConsultaModel
+
+@{
+    ViewData["Title"] = "Consulta de Activo Fijo";
+    ViewData["BodyClass"] = "activo-consulta-page";
+}
+
+@section Styles {
+    <style>
+        .activo-consulta-wrapper {
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+
+        .activo-consulta-card {
+            background: #fff;
+            border: 1px solid rgba(33, 22, 111, .12);
+            border-radius: 22px;
+            box-shadow: 0 14px 32px rgba(33, 22, 111, .10);
+            overflow: hidden;
+        }
+
+        .activo-consulta-header {
+            background: #21166f;
+            color: #fff;
+            padding: 22px;
+        }
+
+            .activo-consulta-header h2 {
+                margin: 0;
+                font-size: 1.6rem;
+                font-weight: 800;
+            }
+
+            .activo-consulta-header p {
+                margin: 4px 0 0;
+                opacity: .85;
+            }
+
+        .activo-consulta-body {
+            padding: 25px;
+        }
+
+        .activo-consulta-imagen {
+            width: 100%;
+            max-height: 340px;
+            object-fit: contain;
+            border-radius: 16px;
+            border: 1px solid rgba(33, 22, 111, .10);
+            background: #f8f9ff;
+        }
+
+        .activo-sin-imagen {
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            background: #f8f9ff;
+            border: 1px dashed rgba(33, 22, 111, .25);
+            border-radius: 16px;
+            color: #6b7280;
+        }
+
+            .activo-sin-imagen i {
+                font-size: 3rem;
+                margin-bottom: 10px;
+            }
+
+        .activo-folio {
+            color: #21166f;
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .activo-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .activo-info {
+            padding: 14px;
+            border-radius: 14px;
+            background: #f8f9ff;
+            border: 1px solid rgba(33, 22, 111, .08);
+        }
+
+            .activo-info span {
+                display: block;
+                color: #6b7280;
+                font-size: .8rem;
+                font-weight: 700;
+                margin-bottom: 3px;
+            }
+
+            .activo-info strong {
+                color: #21166f;
+                font-size: .95rem;
+            }
+
+        .activo-info-full {
+            grid-column: 1 / -1;
+        }
+
+        @@media (max-width: 767px) {
+            .activo-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .activo-info-full {
+                grid-column: auto;
+            }
+        }
+    </style>
+}
+
+<div class="activo-consulta-wrapper">
+
+    @if (Model.Activo == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            El activo solicitado no existe o se encuentra deshabilitado.
+        </div>
+    }
+    else
+    {
+        <div class="activo-consulta-card">
+
+            <div class="activo-consulta-header">
+                <h2>Activo Fijo</h2>
+                <p>Información registrada en la Intranet</p>
+            </div>
+
+            <div class="activo-consulta-body">
+
+                <div class="row g-4">
+
+                    <div class="col-md-5">
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Activo.ImagenActivo))
+                        {
+                            <img src="@Model.Activo.ImagenActivo"
+                                 class="activo-consulta-imagen"
+                                 alt="Imagen del activo" />
+                        }
+                        else
+                        {
+                            <div class="activo-sin-imagen">
+                                <i class="bi bi-image"></i>
+                                <span>Sin imagen registrada</span>
+                            </div>
+                        }
+
+                    </div>
+
+                    <div class="col-md-7">
+
+                        <div class="activo-folio">
+                            @Model.Activo.Folio
+                        </div>
+
+                        <div class="activo-info-grid">
+
+                            <div class="activo-info">
+                                <span>Oficina</span>
+                                <strong>@(Model.Activo.Oficina?.Nombre ?? "-")</strong>
+                            </div>
+
+                            <div class="activo-info">
+                                <span>Categoría</span>
+                                <strong>@(Model.Activo.Categoria?.Descripcion ?? "-")</strong>
+                            </div>
+
+                            <div class="activo-info">
+                                <span>Tipo</span>
+                                <strong>@(Model.Activo.Tipo?.Descripcion ?? "-")</strong>
+                            </div>
+
+                            <div class="activo-info">
+                                <span>Marca</span>
+                                <strong>@(Model.Activo.Marca ?? "-")</strong>
+                            </div>
+
+                            <div class="activo-info">
+                                <span>Número de serie</span>
+                                <strong>@(Model.Activo.NumeroSerie ?? "-")</strong>
+                            </div>
+
+                            <div class="activo-info">
+                                <span>Responsable</span>
+                                <strong>@(Model.Activo.Empleado?.NombreCompleto ?? "-")</strong>
+                            </div>
+
+                            <div class="activo-info activo-info-full">
+                                <span>Descripción</span>
+                                <strong>@(Model.Activo.Descripcion ?? "-")</strong>
+                            </div>
+
+                            <div class="activo-info activo-info-full">
+                                <span>Observaciones</span>
+                                <strong>
+                                    @(string.IsNullOrWhiteSpace(Model.Activo.Comentarios)
+                                        ? "-"
+                                        : Model.Activo.Comentarios)
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+</div>

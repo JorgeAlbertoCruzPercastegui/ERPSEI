@@ -20,7 +20,7 @@ using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Email;
 using ERPSEI.Pages.Shared;
 using ERPSEI.Requests;
-using ERPSEI.Requests;
+using QRCoder;
 using ERPSEI.Resources;
 using ERPSEI.Utils;
 using ExcelDataReader;
@@ -183,6 +183,12 @@ namespace ERPSEI.Areas.ERP.Pages
 
             public IFormFile? Archivo { get; set; }
 
+            [Display(Name = "Imagen del Activo")]
+            [StringLength(500)]
+            public string? ImagenActivo { get; set; }
+
+            public IFormFile? Imagen { get; set; }
+
             public int? Deshabilitado { get; set; } = 0;
         }
 
@@ -230,6 +236,51 @@ namespace ERPSEI.Areas.ERP.Pages
             ActivosFijosList = new ActivoFijo();
         }
 
+        public async Task<IActionResult> OnGetQrActivoAsync(int id)
+        {
+            var activo = await db.ActivosFijos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.Id == id &&
+                    !x.Deshabilitado
+                );
+
+            if (activo == null)
+            {
+                return NotFound();
+            }
+
+            string urlConsulta = Url.Page(
+                "/ActivoFijoConsulta",
+                pageHandler: null,
+                values: new
+                {
+                    area = "ERP",
+                    folio = activo.Folio
+                },
+                protocol: Request.Scheme
+            ) ?? string.Empty;
+
+            using QRCodeGenerator qrGenerator =
+                new QRCodeGenerator();
+
+            using QRCodeData qrData =
+                qrGenerator.CreateQrCode(
+                    urlConsulta,
+                    QRCodeGenerator.ECCLevel.Q
+                );
+
+            using PngByteQRCode qrCode =
+                new PngByteQRCode(qrData);
+
+            byte[] qrBytes =
+                qrCode.GetGraphic(20);
+
+            return File(
+                qrBytes,
+                "image/png"
+            );
+        }
 
         //Método para listar en json todos los activos fijos
 
@@ -270,6 +321,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     cantidades = a.Cantidades,
                     comentarios = a.Comentarios ?? "-",
                     archivoAdjunto = a.ArchivoAdjunto ?? "",
+                    imagenActivo = a.ImagenActivo ?? "",
                     deshabilitado = a.Deshabilitado.ToString()
                 });
             }
@@ -346,10 +398,13 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(resp);
         }
 
-        public async Task<JsonResult> OnPostSaveActivoFijo(ActivoFijoTableModel input, IFormFile? archivo)
+        public async Task<JsonResult> OnPostSaveActivoFijo(
+    ActivoFijoTableModel input,
+    IFormFile? archivo,
+    IFormFile? imagen)
         {
-            //ServerResponse resp = new(true, "No se pudo guardar el registro.");
-            ServerResponse resp = new(true, localizer["ActualizadoAFUnsuccessfully"]);
+            ServerResponse resp =
+                new(true, localizer["ActualizadoAFUnsuccessfully"]);
 
             try
             {
@@ -357,32 +412,34 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (input == null)
                 {
-                    resp.Mensaje = "No se recibieron datos para guardar.";
+                    resp.Mensaje =
+                        "No se recibieron datos para guardar.";
+
                     return new JsonResult(resp);
                 }
 
-                if (string.IsNullOrWhiteSpace(input.Folio) || string.IsNullOrWhiteSpace(input.Descripcion))
+                if (string.IsNullOrWhiteSpace(input.Folio) ||
+                    string.IsNullOrWhiteSpace(input.Descripcion))
                 {
-                    resp.Mensaje = "El folio y la descripción son obligatorios.";
+                    resp.Mensaje =
+                        "El folio y la descripción son obligatorios.";
+
                     return new JsonResult(resp);
                 }
 
                 ActivoFijo activo;
 
-                var empleado = await db.Empleados
-                    .FirstOrDefaultAsync(e => e.NombreCompleto == input.Responsable);
-
-                /*if (empleado == null)
-                {
-                    resp.Mensaje = $"No se encontró el responsable asignado: {input.Responsable}";
-                    return new JsonResult(resp);
-                }*/
-
-                bool esNuevo = input.Id == null || input.Id == 0;
+                bool esNuevo =
+                    input.Id == null ||
+                    input.Id == 0;
 
                 if (esNuevo)
                 {
-                    int nextId = (await db.ActivosFijos.OrderByDescending(a => a.Id).Select(a => a.Id).FirstOrDefaultAsync()) + 1;
+                    int nextId =
+                        (await db.ActivosFijos
+                            .OrderByDescending(a => a.Id)
+                            .Select(a => a.Id)
+                            .FirstOrDefaultAsync()) + 1;
 
                     activo = new ActivoFijo
                     {
@@ -393,139 +450,383 @@ namespace ERPSEI.Areas.ERP.Pages
                 }
                 else
                 {
-                    activo = await db.ActivosFijos.FirstOrDefaultAsync(a => a.Id == input.Id);
+                    activo =
+                        await db.ActivosFijos
+                            .FirstOrDefaultAsync(
+                                a => a.Id == input.Id
+                            );
+
                     if (activo == null)
                     {
-                        resp.Mensaje = "El activo no fue encontrado.";
+                        resp.Mensaje =
+                            "El activo no fue encontrado.";
+
                         return new JsonResult(resp);
                     }
                 }
 
-                // Asignación de valores
-                activo.Folio = input.Folio ?? "";
-                activo.Descripcion = input.Descripcion ?? "";
-                activo.Marca = input.Marca ?? "";
-                activo.NumeroSerie = input.NumeroSerie ?? "";
-                activo.Ubicacion = input.Ubicacion ?? "";
-                activo.FechaCompra = input.FechaCompra;
-                activo.Precio = input.Precio ?? 0;
-                activo.LinkFacturaCompra = input.LinkFacturaCompra ?? "";
-                activo.Comentarios = input.Comentarios ?? "";
-                activo.FechaRenovacion = input.FechaRenovacion;
-                activo.Cantidades = input.Cantidades ?? 0;
+                // =====================================================
+                // DATOS GENERALES
+                // =====================================================
 
-                // Claves foráneas
+                activo.Folio =
+                    input.Folio ?? "";
+
+                activo.Descripcion =
+                    input.Descripcion ?? "";
+
+                activo.Marca =
+                    input.Marca ?? "";
+
+                activo.NumeroSerie =
+                    input.NumeroSerie ?? "";
+
+                activo.Ubicacion =
+                    input.Ubicacion ?? "";
+
+                activo.FechaCompra =
+                    input.FechaCompra;
+
+                activo.Precio =
+                    input.Precio ?? 0;
+
+                activo.LinkFacturaCompra =
+                    input.LinkFacturaCompra ?? "";
+
+                activo.Comentarios =
+                    input.Comentarios ?? "";
+
+                activo.FechaRenovacion =
+                    input.FechaRenovacion;
+
+                activo.Cantidades =
+                    input.Cantidades ?? 0;
+
+
+                // =====================================================
+                // CLAVES FORÁNEAS
+                // =====================================================
+
                 int ofiId = 0;
-                int.TryParse(input.Oficina, out ofiId);
 
-                if (ofiId <= 0 || !await db.Oficinas.AnyAsync(o => o.Id == ofiId))
+                int.TryParse(
+                    input.Oficina,
+                    out ofiId
+                );
+
+                if (ofiId <= 0 ||
+                    !await db.Oficinas
+                        .AnyAsync(o =>
+                            o.Id == ofiId))
                 {
-                    resp.Mensaje = "La oficina seleccionada no existe en el catálogo.";
+                    resp.Mensaje =
+                        "La oficina seleccionada no existe en el catálogo.";
+
+                    await db.Database
+                        .RollbackTransactionAsync();
+
                     return new JsonResult(resp);
                 }
 
-                activo.OficinaId = ofiId;
-                //activo.EmpleadoId = input.EmpleadoId ?? 0;
-                activo.EmpleadoId = input.EmpleadoId ?? 0;
-                activo.TipoId = int.TryParse(input.Tipo, out int tipoId) ? tipoId : 0;
-                activo.CategoriaId = int.TryParse(input.Categoria, out int catId) ? catId : 0;
+                activo.OficinaId =
+                    ofiId;
 
-                 auditoriaContext.Activar(
-                "Activos Fijos",
-                esNuevo ? "Alta" : "Edición"
+                activo.EmpleadoId =
+                    input.EmpleadoId ?? 0;
+
+                activo.TipoId =
+                    int.TryParse(
+                        input.Tipo,
+                        out int tipoId)
+                            ? tipoId
+                            : 0;
+
+                activo.CategoriaId =
+                    int.TryParse(
+                        input.Categoria,
+                        out int catId)
+                            ? catId
+                            : 0;
+
+
+                auditoriaContext.Activar(
+                    "Activos Fijos",
+                    esNuevo
+                        ? "Alta"
+                        : "Edición"
                 );
 
-                string? rutaArchivoAnterior = activo.ArchivoAdjunto;
-                string? rutaFisicaNueva = null;
 
-                if (archivo != null && archivo.Length > 0)
+                // =====================================================
+                // FACTURA DEL ACTIVO
+                // =====================================================
+
+                string? rutaArchivoAnterior =
+                    activo.ArchivoAdjunto;
+
+                string? rutaFisicaFacturaNueva =
+                    null;
+
+                if (archivo != null &&
+                    archivo.Length > 0)
                 {
-                    const long tamanioMaximo = 10 * 1024 * 1024;
+                    const long tamanioMaximoFactura =
+                        10 * 1024 * 1024;
 
-                    if (archivo.Length > tamanioMaximo)
+                    if (archivo.Length >
+                        tamanioMaximoFactura)
                     {
                         resp.Mensaje =
                             "La factura no puede superar los 10 MB.";
 
-                        await db.Database.RollbackTransactionAsync();
+                        await db.Database
+                            .RollbackTransactionAsync();
+
                         return new JsonResult(resp);
                     }
 
-                    var extensionesPermitidas = new[]
+                    string[] extensionesFacturaPermitidas =
                     {
-                        ".pdf",
-                        ".jpg",
-                        ".jpeg",
-                        ".png"
-                    };
+                ".pdf",
+                ".jpg",
+                ".jpeg",
+                ".png"
+            };
 
-                    var extension = Path
-                        .GetExtension(archivo.FileName)
-                        .ToLowerInvariant();
+                    string extension =
+                        Path.GetExtension(
+                                archivo.FileName)
+                            .ToLowerInvariant();
 
-                    if (!extensionesPermitidas.Contains(extension))
+                    if (!extensionesFacturaPermitidas
+                            .Contains(extension))
                     {
                         resp.Mensaje =
-                            "Solo se permiten archivos PDF, JPG, JPEG o PNG.";
+                            "Solo se permiten archivos PDF, JPG, JPEG o PNG para la factura.";
 
-                        await db.Database.RollbackTransactionAsync();
+                        await db.Database
+                            .RollbackTransactionAsync();
+
                         return new JsonResult(resp);
                     }
 
-                    var carpeta = Path.Combine(
-                        environment.WebRootPath,
-                        "uploads",
-                        "activos-fijos"
+                    string carpeta =
+                        Path.Combine(
+                            environment.WebRootPath,
+                            "uploads",
+                            "activos-fijos"
+                        );
+
+                    Directory.CreateDirectory(
+                        carpeta
                     );
 
-                    Directory.CreateDirectory(carpeta);
-
-                    var nombreArchivo =
+                    string nombreArchivo =
                         $"activo_{activo.Id}_{Guid.NewGuid():N}{extension}";
 
-                    rutaFisicaNueva =
-                        Path.Combine(carpeta, nombreArchivo);
+                    rutaFisicaFacturaNueva =
+                        Path.Combine(
+                            carpeta,
+                            nombreArchivo
+                        );
 
-                    await using (var stream = new FileStream(
-                        rutaFisicaNueva,
-                        FileMode.Create,
-                        FileAccess.Write,
-                        FileShare.None))
+                    await using (
+                        var stream =
+                            new FileStream(
+                                rutaFisicaFacturaNueva,
+                                FileMode.Create,
+                                FileAccess.Write,
+                                FileShare.None
+                            )
+                    )
                     {
-                        await archivo.CopyToAsync(stream);
+                        await archivo
+                            .CopyToAsync(stream);
                     }
 
                     activo.ArchivoAdjunto =
                         $"/uploads/activos-fijos/{nombreArchivo}";
                 }
 
+
+                // =====================================================
+                // IMAGEN DEL ACTIVO
+                // =====================================================
+
+                string? rutaImagenAnterior =
+                    activo.ImagenActivo;
+
+                string? rutaFisicaImagenNueva =
+                    null;
+
+                if (imagen != null &&
+                    imagen.Length > 0)
+                {
+                    const long tamanioMaximoImagen =
+                        10 * 1024 * 1024;
+
+                    if (imagen.Length >
+                        tamanioMaximoImagen)
+                    {
+                        resp.Mensaje =
+                            "La imagen del activo no puede superar los 10 MB.";
+
+                        await db.Database
+                            .RollbackTransactionAsync();
+
+                        return new JsonResult(resp);
+                    }
+
+                    string[] extensionesImagenPermitidas =
+                    {
+                ".jpg",
+                ".jpeg",
+                ".png"
+            };
+
+                    string extensionImagen =
+                        Path.GetExtension(
+                                imagen.FileName)
+                            .ToLowerInvariant();
+
+                    if (!extensionesImagenPermitidas
+                            .Contains(extensionImagen))
+                    {
+                        resp.Mensaje =
+                            "La imagen del activo debe estar en formato JPG, JPEG o PNG.";
+
+                        await db.Database
+                            .RollbackTransactionAsync();
+
+                        return new JsonResult(resp);
+                    }
+
+                    string carpetaImagenes =
+                        Path.Combine(
+                            environment.WebRootPath,
+                            "uploads",
+                            "activos-fijos",
+                            "imagenes"
+                        );
+
+                    Directory.CreateDirectory(
+                        carpetaImagenes
+                    );
+
+                    string nombreImagen =
+                        $"imagen_activo_{activo.Id}_{Guid.NewGuid():N}{extensionImagen}";
+
+                    rutaFisicaImagenNueva =
+                        Path.Combine(
+                            carpetaImagenes,
+                            nombreImagen
+                        );
+
+                    await using (
+                        var stream =
+                            new FileStream(
+                                rutaFisicaImagenNueva,
+                                FileMode.Create,
+                                FileAccess.Write,
+                                FileShare.None
+                            )
+                    )
+                    {
+                        await imagen
+                            .CopyToAsync(stream);
+                    }
+
+                    activo.ImagenActivo =
+                        $"/uploads/activos-fijos/imagenes/{nombreImagen}";
+                }
+
+
+                // =====================================================
+                // GUARDAR
+                // =====================================================
+
                 await db.SaveChangesAsync();
 
                 auditoriaContext.Desactivar();
 
-                await db.Database.CommitTransactionAsync();
+                await db.Database
+                    .CommitTransactionAsync();
 
-                if (!string.IsNullOrWhiteSpace(rutaArchivoAnterior) &&
-                    rutaArchivoAnterior != activo.ArchivoAdjunto)
+
+                // =====================================================
+                // ELIMINAR FACTURA ANTERIOR
+                // =====================================================
+
+                if (!string.IsNullOrWhiteSpace(
+                        rutaArchivoAnterior) &&
+                    rutaArchivoAnterior !=
+                        activo.ArchivoAdjunto)
                 {
-                    var rutaAnteriorRelativa =
-                        rutaArchivoAnterior.TrimStart('/')
-                            .Replace("/", Path.DirectorySeparatorChar.ToString());
+                    string rutaAnteriorRelativa =
+                        rutaArchivoAnterior
+                            .TrimStart('/')
+                            .Replace(
+                                "/",
+                                Path.DirectorySeparatorChar
+                                    .ToString()
+                            );
 
-                    var rutaAnteriorFisica =
+                    string rutaAnteriorFisica =
                         Path.Combine(
                             environment.WebRootPath,
                             rutaAnteriorRelativa
                         );
 
-                    if (System.IO.File.Exists(rutaAnteriorFisica))
+                    if (System.IO.File.Exists(
+                        rutaAnteriorFisica))
                     {
-                        System.IO.File.Delete(rutaAnteriorFisica);
+                        System.IO.File.Delete(
+                            rutaAnteriorFisica
+                        );
                     }
                 }
 
+
+                // =====================================================
+                // ELIMINAR IMAGEN ANTERIOR
+                // =====================================================
+
+                if (!string.IsNullOrWhiteSpace(
+                        rutaImagenAnterior) &&
+                    rutaImagenAnterior !=
+                        activo.ImagenActivo)
+                {
+                    string rutaImagenAnteriorRelativa =
+                        rutaImagenAnterior
+                            .TrimStart('/')
+                            .Replace(
+                                "/",
+                                Path.DirectorySeparatorChar
+                                    .ToString()
+                            );
+
+                    string rutaImagenAnteriorFisica =
+                        Path.Combine(
+                            environment.WebRootPath,
+                            rutaImagenAnteriorRelativa
+                        );
+
+                    if (System.IO.File.Exists(
+                        rutaImagenAnteriorFisica))
+                    {
+                        System.IO.File.Delete(
+                            rutaImagenAnteriorFisica
+                        );
+                    }
+                }
+
+
                 resp.TieneError = false;
-                resp.Mensaje = esNuevo ? "Activo creado correctamente." : "Activo actualizado correctamente.";
+
+                resp.Mensaje =
+                    esNuevo
+                        ? "Activo creado correctamente."
+                        : "Activo actualizado correctamente.";
             }
             catch (Exception ex)
             {
@@ -533,7 +834,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 try
                 {
-                    await db.Database.RollbackTransactionAsync();
+                    await db.Database
+                        .RollbackTransactionAsync();
                 }
                 catch (Exception rollbackEx)
                 {
@@ -545,7 +847,7 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 logger.LogError(
                     ex,
-                    "Error al guardar la factura del activo fijo. " +
+                    "Error al guardar el activo fijo. " +
                     "Mensaje: {Mensaje}. Excepción interna: {InnerException}",
                     ex.Message,
                     ex.InnerException?.Message
@@ -553,7 +855,8 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 resp.TieneError = true;
 
-                resp.Mensaje = ex.InnerException?.Message
+                resp.Mensaje =
+                    ex.InnerException?.Message
                     ?? ex.Message
                     ?? "Ocurrió un error al guardar el activo fijo.";
             }

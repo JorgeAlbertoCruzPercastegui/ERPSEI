@@ -62,6 +62,17 @@ function operateFormatter(value, row, index) {
     //Icono Editar
     icons.push(`<li><a class="dropdown-item edit" href="#" title="${btnEditarTitle}"><i class="bi bi-pencil-fill"></i> ${btnEditarTitle}</a></li>`);
 
+    icons.push(`
+    <li>
+        <a class="dropdown-item qr-activo"
+           href="#"
+           title="Generar etiqueta QR">
+            <i class="bi bi-qr-code"></i>
+            Etiqueta QR
+        </a>
+    </li>
+`);
+
     return `<div class="dropdown">
               <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-three-dots-vertical success"></i>
@@ -79,6 +90,9 @@ window.operateEvents = {
         //    field: 'id',
         //    values: [row.id]
         //})
+    },
+    'click .qr-activo': function (e, value, row, index) {
+        mostrarEtiquetaQr(row);
     }
 }
 function additionalButtons() {
@@ -95,6 +109,42 @@ function additionalButtons() {
         }
     }
 }
+
+function mostrarEtiquetaQr(row) {
+
+    if (!row || !row.id) {
+        return;
+    }
+
+    const qr =
+        document.getElementById("etiquetaQrImagen");
+
+    const folio =
+        document.getElementById("etiquetaFolio");
+
+    const descripcion =
+        document.getElementById("etiquetaDescripcion");
+
+    qr.src =
+        `/ERP/ActivosFijos?handler=QrActivo&id=${row.id}`;
+
+    folio.textContent =
+        row.folio || "";
+
+    descripcion.textContent =
+        row.descripcion || "";
+
+    const modalElement =
+        document.getElementById("dlgEtiquetaQr");
+
+    const modal =
+        bootstrap.Modal.getOrCreateInstance(
+            modalElement
+        );
+
+    modal.show();
+}
+
 function onAgregarClick() {
     initActivoFijoDialog(NUEVO, { id: "Nuevo", nombre: "" });
 }
@@ -240,6 +290,142 @@ function mostrarVistaPreviaFactura(input) {
         URL.createObjectURL(archivo);
 
     cargarVistaPreviaFactura(rutaTemporal);
+}
+
+function limpiarVistaPreviaImagenActivo() {
+
+    const previewVacio =
+        document.getElementById(
+            "imagenActivoPreviewVacio"
+        );
+
+    const previewImagen =
+        document.getElementById(
+            "imagenActivoPreview"
+        );
+
+    if (previewVacio) {
+        previewVacio.style.display =
+            "flex";
+    }
+
+    if (previewImagen) {
+        previewImagen.style.display =
+            "none";
+
+        previewImagen.removeAttribute(
+            "src"
+        );
+    }
+}
+
+
+function cargarVistaPreviaImagenActivo(rutaImagen) {
+
+    const previewVacio =
+        document.getElementById(
+            "imagenActivoPreviewVacio"
+        );
+
+    const previewImagen =
+        document.getElementById(
+            "imagenActivoPreview"
+        );
+
+    limpiarVistaPreviaImagenActivo();
+
+    if (!rutaImagen) {
+        return;
+    }
+
+    if (previewVacio) {
+        previewVacio.style.display =
+            "none";
+    }
+
+    if (previewImagen) {
+        previewImagen.src =
+            rutaImagen;
+
+        previewImagen.style.display =
+            "block";
+    }
+}
+
+
+function mostrarVistaPreviaImagenActivo(input) {
+
+    const nombreArchivo =
+        document.getElementById(
+            "imagenActivoNombreArchivo"
+        );
+
+    if (!input.files ||
+        input.files.length === 0) {
+
+        nombreArchivo.textContent =
+            "Ninguna imagen seleccionada";
+
+        limpiarVistaPreviaImagenActivo();
+
+        return;
+    }
+
+    const imagen =
+        input.files[0];
+
+    const extensionesPermitidas =
+        [
+            "image/jpeg",
+            "image/png"
+        ];
+
+    if (!extensionesPermitidas.includes(
+        imagen.type)) {
+        input.value = "";
+
+        nombreArchivo.textContent =
+            "Ninguna imagen seleccionada";
+
+        limpiarVistaPreviaImagenActivo();
+
+        showError(
+            "Formato no permitido",
+            "Solo se permiten imágenes JPG, JPEG o PNG."
+        );
+
+        return;
+    }
+
+    const tamanioMaximo =
+        10 * 1024 * 1024;
+
+    if (imagen.size >
+        tamanioMaximo) {
+        input.value = "";
+
+        nombreArchivo.textContent =
+            "Ninguna imagen seleccionada";
+
+        limpiarVistaPreviaImagenActivo();
+
+        showError(
+            "Imagen demasiado grande",
+            "La imagen del activo no puede superar los 10 MB."
+        );
+
+        return;
+    }
+
+    nombreArchivo.textContent =
+        imagen.name;
+
+    const rutaTemporal =
+        URL.createObjectURL(imagen);
+
+    cargarVistaPreviaImagenActivo(
+        rutaTemporal
+    );
 }
 
 function facturaActivoFormatter(value, row, index) {
@@ -509,6 +695,10 @@ function initActivoFijoDialog(action, row) {
     //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
     let comentariosField = document.getElementById("inpActivoFijoComentarios");
     let archivoField = document.getElementById("inpActivoFijoArchivo");
+    let imagenField =
+        document.getElementById(
+            "inpActivoFijoImagen"
+        );
     let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
     let cantidadesField = document.getElementById("inpActivoFijoCantidad");
     let oficinaField = document.getElementById("inpActivoFijoOficina");
@@ -543,6 +733,7 @@ function initActivoFijoDialog(action, row) {
             //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
             archivoField.removeAttribute("disabled");
+            imagenField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
             cantidadesField.removeAttribute("disabled");
             oficinaField.removeAttribute("disabled");
@@ -567,6 +758,7 @@ function initActivoFijoDialog(action, row) {
             //ubicacionField.removeAttribute("disabled");
             comentariosField.removeAttribute("disabled");
             archivoField.removeAttribute("disabled");
+            imagenField.removeAttribute("disabled");
             fechaRenovacionField.removeAttribute("disabled");
             cantidadesField.removeAttribute("disabled");
             oficinaField.removeAttribute("disabled");
@@ -590,6 +782,10 @@ function initActivoFijoDialog(action, row) {
             //ubicacionField.setAttribute("disabled", true);
             comentariosField.setAttribute("disabled", true);
             archivoField.setAttribute("disabled", true);
+            imagenField.setAttribute(
+                "disabled",
+                true
+            );
             fechaRenovacionField.setAttribute("disabled", true);
             cantidadesField.setAttribute("disabled", true);
 
@@ -677,6 +873,59 @@ function initActivoFijoDialog(action, row) {
             "Ningún archivo seleccionado";
 
         limpiarVistaPreviaFactura();
+    }
+
+    let imagenActualContainer =
+        document.getElementById(
+            "imagenActivoActualContainer"
+        );
+
+    let imagenActualLink =
+        document.getElementById(
+            "imagenActivoActualLink"
+        );
+
+    let imagenNombreArchivo =
+        document.getElementById(
+            "imagenActivoNombreArchivo"
+        );
+
+    if (imagenField) {
+        imagenField.value = "";
+    }
+
+    if (
+        row.imagenActivo &&
+        row.imagenActivo.trim() !== ""
+    ) {
+
+        imagenActualContainer.style.display =
+            "flex";
+
+        imagenActualLink.href =
+            row.imagenActivo;
+
+        imagenNombreArchivo.textContent =
+            row.imagenActivo
+                .split("/")
+                .pop();
+
+        cargarVistaPreviaImagenActivo(
+            row.imagenActivo
+        );
+
+    } else {
+
+        imagenActualContainer.style.display =
+            "none";
+
+        imagenActualLink.href =
+            "#";
+
+        imagenNombreArchivo.textContent =
+            "Ninguna imagen seleccionada";
+
+        limpiarVistaPreviaImagenActivo();
     }
 
     cantidadesField.value = row.cantidades ?? "";
@@ -776,6 +1025,10 @@ function onGuardarClick() {
     let empleadoIdField = document.getElementById("inpEmpleadoId");
     let oficinaField = document.getElementById("inpActivoFijoOficina");
     let archivoField = document.getElementById("inpActivoFijoArchivo");
+    let imagenField =
+        document.getElementById(
+            "inpActivoFijoImagen"
+        );
 
     let dlgTitle = document.getElementById("dlgActivoFijoTitle");
     let summaryContainer = document.getElementById("saveValidationSummary");
@@ -803,6 +1056,16 @@ function onGuardarClick() {
 
     if (archivoField && archivoField.files.length > 0) {
         formData.append("archivo", archivoField.files[0]);
+    }
+
+    if (
+        imagenField &&
+        imagenField.files.length > 0
+    ) {
+        formData.append(
+            "imagen",
+            imagenField.files[0]
+        );
     }
 
     $.ajax({
@@ -985,4 +1248,193 @@ function onExcelSelectorChanged(input) {
             showAlert(invalidFormatTitle, invalidFormatMsg);
         }
     }
+}
+
+function imprimirEtiquetaActivo() {
+
+    const etiqueta =
+        document.getElementById("etiquetaActivo");
+
+    if (!etiqueta) {
+        showError(
+            "Imprimir etiqueta",
+            "No se encontró la etiqueta del activo."
+        );
+
+        return;
+    }
+
+    const qrImagen =
+        document.getElementById("etiquetaQrImagen");
+
+    if (!qrImagen ||
+        !qrImagen.src) {
+
+        showError(
+            "Imprimir etiqueta",
+            "El código QR aún no está disponible."
+        );
+
+        return;
+    }
+
+    const contenidoEtiqueta =
+        etiqueta.outerHTML;
+
+    const ventanaImpresion =
+        window.open(
+            "",
+            "_blank",
+            "width=700,height=700"
+        );
+
+    if (!ventanaImpresion) {
+
+        showError(
+            "Imprimir etiqueta",
+            "El navegador bloqueó la ventana de impresión."
+        );
+
+        return;
+    }
+
+    ventanaImpresion.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+
+            <meta charset="UTF-8">
+
+            <title>
+                Etiqueta Activo Fijo
+            </title>
+
+            <style>
+
+                @page {
+                    size: 60mm 80mm;
+                    margin: 0;
+                }
+
+                html,
+                body {
+                    margin: 0;
+                    padding: 0;
+
+                    width: 60mm;
+                    height: 80mm;
+
+                    font-family:
+                        Arial,
+                        Helvetica,
+                        sans-serif;
+
+                    background: #ffffff;
+                }
+
+                body {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .etiqueta-activo {
+                    width: 54mm;
+
+                    box-sizing: border-box;
+
+                    padding: 4mm;
+
+                    background: #ffffff;
+
+                    border: 0.6mm solid #21166f;
+
+                    border-radius: 3mm;
+
+                    text-align: center;
+                }
+
+                .etiqueta-titulo {
+                    color: #21166f;
+
+                    font-size: 10pt;
+                    font-weight: 900;
+
+                    margin-bottom: 1mm;
+                }
+
+                .etiqueta-subtitulo {
+                    color: #555555;
+
+                    font-size: 7pt;
+                    font-weight: 700;
+
+                    margin-bottom: 3mm;
+                }
+
+                .etiqueta-qr {
+                    display: block;
+
+                    width: 32mm;
+                    height: 32mm;
+
+                    object-fit: contain;
+
+                    margin:
+                        0 auto
+                        3mm auto;
+                }
+
+                .etiqueta-folio {
+                    color: #21166f;
+
+                    font-size: 16pt;
+                    font-weight: 900;
+
+                    margin-bottom: 2mm;
+                }
+
+                .etiqueta-descripcion {
+                    color: #111111;
+
+                    font-size: 8pt;
+                    font-weight: 600;
+
+                    line-height: 1.3;
+
+                    word-break: break-word;
+                }
+
+            </style>
+
+        </head>
+
+        <body>
+
+            ${contenidoEtiqueta}
+
+        </body>
+
+        </html>
+    `);
+
+    ventanaImpresion.document.close();
+
+    ventanaImpresion.focus();
+
+    // Esperar a que el QR termine de cargar
+    ventanaImpresion.onload =
+        function () {
+
+            setTimeout(
+                function () {
+
+                    ventanaImpresion.print();
+
+                    ventanaImpresion.close();
+
+                },
+                300
+            );
+        };
 }

@@ -744,3 +744,46 @@ body.module-main-theme.activosfijos-page .topbar-links {
     font-size: 13px;
     font-weight: 600;
 }
+
+.activosfijos-page .etiqueta-activo {
+    width: 320px;
+    margin: 0 auto;
+    padding: 18px;
+    background: #ffffff;
+    border: 2px solid #21166f;
+    border-radius: 14px;
+    text-align: center;
+}
+
+.activosfijos-page .etiqueta-titulo {
+    color: #21166f;
+    font-size: .9rem;
+    font-weight: 900;
+}
+
+.activosfijos-page .etiqueta-subtitulo {
+    color: #6b7280;
+    font-size: .72rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.activosfijos-page .etiqueta-qr {
+    width: 180px;
+    height: 180px;
+    object-fit: contain;
+    margin: 0 auto 10px;
+}
+
+.activosfijos-page .etiqueta-folio {
+    color: #21166f;
+    font-size: 1.35rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+}
+
+.activosfijos-page .etiqueta-descripcion {
+    color: #374151;
+    font-size: .82rem;
+    font-weight: 600;
+}

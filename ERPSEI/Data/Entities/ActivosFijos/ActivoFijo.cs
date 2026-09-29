@@ -10,7 +10,6 @@ namespace ERPSEI.Data.Entities.ActivosFijos
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
         public int Id { get; set; }
 
-        // Estas claves foráneas siguen el patrón PropiedadId + Propiedad de navegación
         public int EmpleadoId { get; set; }
         public Empleado? Empleado { get; set; }
 
@@ -30,11 +29,12 @@ namespace ERPSEI.Data.Entities.ActivosFijos
         public string Ubicacion { get; set; } = string.Empty;
 
         public DateTime? FechaCompra { get; set; }
-        
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal Precio { get; set; }
 
         public string Comentarios { get; set; } = string.Empty;
+
         public DateTime? FechaRenovacion { get; set; }
 
         public string LinkFacturaCompra { get; set; } = string.Empty;
@@ -44,7 +44,12 @@ namespace ERPSEI.Data.Entities.ActivosFijos
         [StringLength(300)]
         public string? ArchivoAdjunto { get; set; }
 
+        // Imagen física del activo
+        [StringLength(500)]
+        public string? ImagenActivo { get; set; }
+
         public bool Deshabilitado { get; set; } = false;
+
         public ICollection<ArchivoActivoFijo>? Archivos { get; set; }
     }
 }

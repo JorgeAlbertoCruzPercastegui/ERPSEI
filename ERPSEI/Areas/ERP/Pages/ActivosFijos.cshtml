@@ -494,6 +494,97 @@
                             </div>
                         </div>
 
+                        <!-- =====================================================
+     IMAGEN DEL ACTIVO
+     ===================================================== -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="factura-activo-card mb-3">
+
+                                    <div class="factura-activo-header">
+                                        <div>
+                                            <i class="bi bi-camera me-2"></i>
+                                            <span>Imagen del Activo</span>
+                                        </div>
+
+                                        <span class="factura-formatos">
+                                            JPG / JPEG / PNG
+                                        </span>
+                                    </div>
+
+                                    <div id="imagenActivoPreviewContainer"
+                                         class="factura-preview-container">
+
+                                        <div id="imagenActivoPreviewVacio"
+                                             class="factura-preview-vacio">
+
+                                            <i class="bi bi-image"></i>
+
+                                            <span>
+                                                Selecciona una imagen del activo
+                                            </span>
+
+                                        </div>
+
+                                        <img id="imagenActivoPreview"
+                                             class="factura-preview-imagen"
+                                             alt="Vista previa del activo"
+                                             style="display:none;" />
+
+                                    </div>
+
+                                    <div class="factura-selector">
+
+                                        <label for="inpActivoFijoImagen"
+                                               class="btn btn-primary factura-btn-seleccionar">
+
+                                            <i class="bi bi-camera me-1"></i>
+                                            Seleccionar imagen
+
+                                        </label>
+
+                                        <input id="inpActivoFijoImagen"
+                                               name="imagen"
+                                               type="file"
+                                               class="d-none"
+                                               accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                                               onchange="mostrarVistaPreviaImagenActivo(this)" />
+
+                                        <div id="imagenActivoNombreArchivo"
+                                             class="factura-nombre-archivo">
+
+                                            Ninguna imagen seleccionada
+
+                                        </div>
+
+                                    </div>
+
+                                    <div id="imagenActivoActualContainer"
+                                         class="factura-archivo-actual"
+                                         style="display:none;">
+
+                                        <span>
+                                            <i class="bi bi-check-circle-fill me-1"></i>
+                                            Imagen almacenada
+                                        </span>
+
+                                        <a id="imagenActivoActualLink"
+                                               href="#"
+                                               target="_blank"
+                                               rel="noopener noreferrer"
+                                               class="btn btn-sm btn-outline-primary">
+
+                                            <i class="bi bi-box-arrow-up-right me-1"></i>
+                                            Abrir
+                                        </a>
+
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -557,6 +648,78 @@
             </div>
         </div>
     </div>
+</div>
+
+<div id="dlgEtiquetaQr"
+     class="modal fade"
+     tabindex="-1"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Etiqueta del Activo
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="etiquetaActivo"
+                     class="etiqueta-activo">
+
+                    <div class="etiqueta-titulo">
+                        SEI CONSULTING GROUP
+                    </div>
+
+                    <div class="etiqueta-subtitulo">
+                        ACTIVO FIJO
+                    </div>
+
+                    <img id="etiquetaQrImagen"
+                         class="etiqueta-qr"
+                         alt="Código QR" />
+
+                    <div id="etiquetaFolio"
+                         class="etiqueta-folio">
+                    </div>
+
+                    <div id="etiquetaDescripcion"
+                         class="etiqueta-descripcion">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        onclick="imprimirEtiquetaActivo()">
+                    <i class="bi bi-printer"></i>
+                    Imprimir etiqueta
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 
