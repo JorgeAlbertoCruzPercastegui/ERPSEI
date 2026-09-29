@@ -92,20 +92,45 @@
 								</div>
 							</div>
 							<div class="col-12">
-								<div class="form-floating mb-3">
-									<select id="selEmpleadoRol" asp-for="InputUsuario.RolId" class="form-select formSelect" placeholder="@Localizer["RolPlaceholder"]">
+								<div class="mb-3">
 
-									@{
-											foreach (AppRole rol in roles)
+									<label class="form-label fw-bold">
+										Roles
+									</label>
+
+									<div id="rolesUsuarioContainer"
+										 class="roles-usuario-container">
+
+										@foreach (AppRole rol in roles)
 										{
-											if (rol.Name == ERPSEI.ServicesConfiguration.RolMaster || rol.Name == ERPSEI.ServicesConfiguration.RolCandidato) { continue; }
+											if (rol.Name == ERPSEI.ServicesConfiguration.RolMaster ||
+												rol.Name == ERPSEI.ServicesConfiguration.RolCandidato)
+											{
+												continue;
+											}
 
-												<option value='@rol.Id'>@rol.Name</option>
+											<div class="form-check roles-usuario-item">
+
+												<input class="form-check-input rol-usuario-check"
+													   type="checkbox"
+													   name="rolUsuario"
+													   value="@rol.Id"
+													   id="rol_@rol.Id" />
+
+												<label class="form-check-label"
+													   for="rol_@rol.Id">
+													@rol.Name
+												</label>
+
+											</div>
 										}
-									}
-									</select>
-									<label for="selEmpleadoRol" asp-for="InputUsuario.RolId" class="form-label"></label>
-									<span asp-validation-for="InputUsuario.RolId" class="text-danger"></span>
+
+									</div>
+
+									<div id="rolesUsuarioValidation"
+										 class="text-danger small mt-2">
+									</div>
+
 								</div>
 							</div>
 						</div>

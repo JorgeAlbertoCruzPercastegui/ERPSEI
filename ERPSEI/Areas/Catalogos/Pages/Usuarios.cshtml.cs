@@ -34,11 +34,10 @@ namespace ERPSEI.Areas.Catalogos.Pages
 		{
 			public string Id { get; set; } = string.Empty;
 
-			[Required(ErrorMessage = "Required")]
-			[Display(Name = "RolField")]
-			public string RolId { get; set; } = string.Empty;
+            [Display(Name = "RolField")]
+            public List<string> RolIds { get; set; } = new();
 
-			[Display(Name = "UserNameField")]
+            [Display(Name = "UserNameField")]
 			public string NombreUsuario { get; set; } = string.Empty;
 
 			[Display(Name = "EmployeeNameField")]
@@ -78,46 +77,91 @@ namespace ERPSEI.Areas.Catalogos.Pages
         }
 
         private async Task<string> GetLista()
-		{
-			string jsonResponse;
-			List<string> jsonResultados = [];
+        {
+            var resultados = new List<object>();
 
-			foreach (AppUser u in _usuarioManager.Users.Where(u => !u.IsBanned))
-			{
-				if(await _usuarioManager.IsInRoleAsync(u, ServicesConfiguration.RolMaster)) { continue; }
-
-                IList<string> rolesUsuario = await _usuarioManager.GetRolesAsync(u);
-
-                List<string> idRoles = [];
-                List<string> nombreRoles = [];
-                foreach (string r in rolesUsuario)
+            foreach (AppUser u in _usuarioManager.Users.Where(u => !u.IsBanned))
+            {
+                if (await _usuarioManager.IsInRoleAsync(
+                    u,
+                    ServicesConfiguration.RolMaster))
                 {
-                    AppRole? foundRole = await _roleManager.GetByNameAsync(r);
-					idRoles.Add(foundRole?.Id ?? "0");
-                    nombreRoles.Add(foundRole?.Name ?? string.Empty);
+                    continue;
                 }
 
-				if (nombreRoles.Count <= 0) { nombreRoles.Add(_strLocalizer["EmptyRoleName"]); }
+                IList<string> rolesUsuario =
+                    await _usuarioManager.GetRolesAsync(u);
 
-				Empleado? emp = await _empleadoManager.GetByIdAsync(u.EmpleadoId??0);
-				string nombreEmpleado = emp != null ? emp.NombreCompleto : _strLocalizer["EmptyEmployeeName"];
-				jsonResultados.Add(
-					"{" +
-						$"\"id\": \"{u.Id}\"," +
-						$"\"rolId\": \"{string.Join(", ", idRoles)}\"," +
-						$"\"rol\": \"{string.Join(", ", nombreRoles)}\"," +
-						$"\"nombreUsuario\": \"{u.UserName}\"," +
-						$"\"nombreEmpleado\": \"{nombreEmpleado}\"" +
-					"}"
-				);
-			}
+                List<string> idRoles = new();
+                List<string> nombreRoles = new();
 
-			jsonResponse = $"[{string.Join(",", jsonResultados)}]";
+                foreach (string nombreRol in rolesUsuario)
+                {
+                    AppRole? foundRole =
+                        await _roleManager.GetByNameAsync(nombreRol);
 
-			return jsonResponse;
-		}
+                    if (foundRole == null)
+                    {
+                        continue;
+                    }
 
-		public async Task<JsonResult> OnPostFiltrar()
+                    // No exponemos estos roles en este módulo
+                    if (foundRole.Name == ServicesConfiguration.RolMaster ||
+                        foundRole.Name == ServicesConfiguration.RolCandidato)
+                    {
+                        continue;
+                    }
+
+                    idRoles.Add(foundRole.Id);
+
+                    nombreRoles.Add(
+                        foundRole.Name ??
+                        string.Empty
+                    );
+                }
+
+                if (nombreRoles.Count == 0)
+                {
+                    nombreRoles.Add(
+                        _strLocalizer["EmptyRoleName"]
+                    );
+                }
+
+                Empleado? emp =
+                    await _empleadoManager.GetByIdAsync(
+                        u.EmpleadoId ?? 0
+                    );
+
+                string nombreEmpleado =
+                    emp != null
+                        ? emp.NombreCompleto
+                        : _strLocalizer["EmptyEmployeeName"];
+
+                resultados.Add(new
+                {
+                    id = u.Id,
+
+                    rolIds = idRoles,
+
+                    rol = string.Join(
+                        ", ",
+                        nombreRoles
+                    ),
+
+                    nombreUsuario =
+                        u.UserName ?? string.Empty,
+
+                    nombreEmpleado =
+                        nombreEmpleado
+                });
+            }
+
+            return JsonConvert.SerializeObject(
+                resultados
+            );
+        }
+
+        public async Task<JsonResult> OnPostFiltrar()
 		{
 			ServerResponse resp = new(true, _strLocalizer["FiltroUnsuccessfully"]);
 			try
@@ -178,6 +222,14 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 return new JsonResult(resp);
             }
 
+            if (InputUsuario.RolIds == null || InputUsuario.RolIds.Count == 0)
+            {
+                resp.Mensaje =
+                    "Debe seleccionar al menos un rol.";
+
+                return new JsonResult(resp);
+            }
+
             try
             {
                 await _db.Database.BeginTransactionAsync();
@@ -222,54 +274,276 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 await _usuarioManager.AddToRoleAsync(usuario, nuevoRol.Name ?? ServicesConfiguration.RolUsuario);
             }
 		}*/
+
         private async Task UpdateUser(UsuarioModel e)
         {
-            AppUser? usuario = await _usuarioManager.FindByIdAsync(e.Id);
-            AppRole? nuevoRol = await _roleManager.FindByIdAsync(e.RolId);
+            AppUser? usuario =
+                await _usuarioManager
+                    .FindByIdAsync(e.Id);
 
-            if (usuario == null || nuevoRol == null)
-                return;
-
-            IList<string> rolesActuales = await _usuarioManager.GetRolesAsync(usuario);
-
-            string rolAnterior = rolesActuales.Any()
-                ? string.Join(", ", rolesActuales)
-                : "Sin rol";
-
-            string rolNuevo = nuevoRol.Name ?? ServicesConfiguration.RolUsuario;
-
-            foreach (string nombreRol in rolesActuales)
+            if (usuario == null)
             {
-                await _usuarioManager.RemoveFromRoleAsync(usuario, nombreRol);
+                throw new Exception(
+                    "El usuario no fue encontrado."
+                );
             }
 
-            await _usuarioManager.AddToRoleAsync(usuario, rolNuevo);
 
-            if (!rolAnterior.Equals(rolNuevo, StringComparison.OrdinalIgnoreCase))
+            // =====================================================
+            // VALIDAR ROLES SELECCIONADOS
+            // =====================================================
+
+            if (e.RolIds == null ||
+                e.RolIds.Count == 0)
             {
-                _db.IntranetAuditorias.Add(new IntranetAuditoria
+                throw new Exception(
+                    "Debe seleccionar al menos un rol."
+                );
+            }
+
+
+            // Evitar IDs repetidos
+            List<string> idsSeleccionados =
+                e.RolIds
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(x))
+                    .Distinct()
+                    .ToList();
+
+
+            List<string> rolesNuevos =
+                new();
+
+
+            foreach (string rolId in idsSeleccionados)
+            {
+                AppRole? rol =
+                    await _roleManager
+                        .FindByIdAsync(rolId);
+
+                if (rol == null ||
+                    string.IsNullOrWhiteSpace(
+                        rol.Name))
                 {
-                    UsuarioEjecutorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
-                    UsuarioEjecutor = User.Identity?.Name,
+                    continue;
+                }
 
-                    Modulo = "Usuarios",
-                    Accion = "Edición",
-                    Entidad = "Usuario",
-                    RegistroId = usuario.Id,
-                    RegistroNombre = usuario.UserName ?? "Sin usuario",
 
-                    CampoModificado = "Rol",
-                    ValorAnterior = rolAnterior,
-                    ValorNuevo = rolNuevo,
+                // Estos roles no deben poder asignarse
+                // desde este módulo.
+                if (rol.Name ==
+                        ServicesConfiguration.RolMaster ||
+                    rol.Name ==
+                        ServicesConfiguration.RolCandidato)
+                {
+                    continue;
+                }
 
-                    FechaHora = DateTime.Now,
 
-                    Ip = HttpContext.Connection.RemoteIpAddress?.ToString() == "::1"
-                        ? "127.0.0.1"
-                        : HttpContext.Connection.RemoteIpAddress?.ToString(),
+                rolesNuevos.Add(
+                    rol.Name
+                );
+            }
 
-                    UserAgent = Request.Headers["User-Agent"].ToString()
-                });
+
+            if (rolesNuevos.Count == 0)
+            {
+                throw new Exception(
+                    "No se recibió ningún rol válido."
+                );
+            }
+
+
+            // =====================================================
+            // ROLES ACTUALES
+            // =====================================================
+
+            IList<string> rolesActuales =
+                await _usuarioManager
+                    .GetRolesAsync(usuario);
+
+
+            // No modificamos roles protegidos
+            List<string> rolesActualesEditables =
+                rolesActuales
+                    .Where(x =>
+                        !x.Equals(
+                            ServicesConfiguration.RolMaster,
+                            StringComparison.OrdinalIgnoreCase
+                        ) &&
+                        !x.Equals(
+                            ServicesConfiguration.RolCandidato,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                    .ToList();
+
+
+            // =====================================================
+            // CALCULAR DIFERENCIAS
+            // =====================================================
+
+            List<string> rolesAgregar =
+                rolesNuevos
+                    .Except(
+                        rolesActualesEditables,
+                        StringComparer.OrdinalIgnoreCase
+                    )
+                    .ToList();
+
+
+            List<string> rolesEliminar =
+                rolesActualesEditables
+                    .Except(
+                        rolesNuevos,
+                        StringComparer.OrdinalIgnoreCase
+                    )
+                    .ToList();
+
+
+            // =====================================================
+            // ELIMINAR ÚNICAMENTE LOS QUE YA NO ESTÁN MARCADOS
+            // =====================================================
+
+            if (rolesEliminar.Count > 0)
+            {
+                IdentityResult resultadoEliminar =
+                    await _usuarioManager
+                        .RemoveFromRolesAsync(
+                            usuario,
+                            rolesEliminar
+                        );
+
+                if (!resultadoEliminar.Succeeded)
+                {
+                    throw new Exception(
+                        string.Join(
+                            ". ",
+                            resultadoEliminar.Errors
+                                .Select(x =>
+                                    x.Description)
+                        )
+                    );
+                }
+            }
+
+
+            // =====================================================
+            // AGREGAR ÚNICAMENTE LOS NUEVOS
+            // =====================================================
+
+            if (rolesAgregar.Count > 0)
+            {
+                IdentityResult resultadoAgregar =
+                    await _usuarioManager
+                        .AddToRolesAsync(
+                            usuario,
+                            rolesAgregar
+                        );
+
+                if (!resultadoAgregar.Succeeded)
+                {
+                    throw new Exception(
+                        string.Join(
+                            ". ",
+                            resultadoAgregar.Errors
+                                .Select(x =>
+                                    x.Description)
+                        )
+                    );
+                }
+            }
+
+
+            // =====================================================
+            // AUDITORÍA
+            // =====================================================
+
+            string rolAnterior =
+                rolesActualesEditables.Any()
+                    ? string.Join(
+                        ", ",
+                        rolesActualesEditables
+                            .OrderBy(x => x)
+                    )
+                    : "Sin rol";
+
+
+            string rolNuevo =
+                rolesNuevos.Any()
+                    ? string.Join(
+                        ", ",
+                        rolesNuevos
+                            .OrderBy(x => x)
+                    )
+                    : "Sin rol";
+
+
+            bool rolesCambiaron =
+                rolesAgregar.Count > 0 ||
+                rolesEliminar.Count > 0;
+
+
+            if (rolesCambiaron)
+            {
+                _db.IntranetAuditorias.Add(
+                    new IntranetAuditoria
+                    {
+                        UsuarioEjecutorId =
+                            User.FindFirst(
+                                System.Security.Claims
+                                    .ClaimTypes
+                                    .NameIdentifier
+                            )?.Value,
+
+                        UsuarioEjecutor =
+                            User.Identity?.Name,
+
+                        Modulo =
+                            "Usuarios",
+
+                        Accion =
+                            "Edición",
+
+                        Entidad =
+                            "Usuario",
+
+                        RegistroId =
+                            usuario.Id,
+
+                        RegistroNombre =
+                            usuario.UserName ??
+                            "Sin usuario",
+
+                        CampoModificado =
+                            "Roles",
+
+                        ValorAnterior =
+                            rolAnterior,
+
+                        ValorNuevo =
+                            rolNuevo,
+
+                        FechaHora =
+                            DateTime.Now,
+
+                        Ip =
+                            HttpContext
+                                .Connection
+                                .RemoteIpAddress?
+                                .ToString() == "::1"
+                                    ? "127.0.0.1"
+                                    : HttpContext
+                                        .Connection
+                                        .RemoteIpAddress?
+                                        .ToString(),
+
+                        UserAgent =
+                            Request.Headers[
+                                "User-Agent"
+                            ].ToString()
+                    }
+                );
 
                 await _db.SaveChangesAsync();
             }

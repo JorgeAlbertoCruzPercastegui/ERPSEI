@@ -680,3 +680,33 @@ body.module-main-theme.catalogo-page .notification-panel {
 body.module-main-theme.catalogo-page .topbar-links {
     z-index: 1 !important;
 }
+
+.roles-usuario-container {
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+.roles-usuario-item {
+    padding: 8px 8px 8px 32px;
+    margin-bottom: 2px;
+    border-radius: 8px;
+    transition: background .15s ease;
+}
+
+    .roles-usuario-item:hover {
+        background: #f5f6fb;
+    }
+
+    .roles-usuario-item .form-check-input {
+        cursor: pointer;
+    }
+
+    .roles-usuario-item .form-check-label {
+        width: 100%;
+        cursor: pointer;
+        font-weight: 500;
+    }

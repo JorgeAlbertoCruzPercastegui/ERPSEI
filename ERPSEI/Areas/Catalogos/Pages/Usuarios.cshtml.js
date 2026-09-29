@@ -152,36 +152,141 @@ function onBuscarClick() {
 
 ////////////////////////////////
 //Funcionalidad Diálogo
-////////////////////////////////
-//Función para inicializar el cuadro de diálogo de los detalles del registro
 function initDetallesDialog(action, row) {
-    let inpUsuarioId = document.getElementById("inpUsuarioId");
-    let inpNombreUsuario = document.getElementById("inpUsuarioNombre");
-    let inpNombreEmpleado = document.getElementById("inpEmpleadoNombre");
-    let selRolEmpleado = document.getElementById("selEmpleadoRol");
-    let dlgTitle = document.getElementById("dlgDetalleTitle");
-    let summaryContainer = document.getElementById("saveValidationSummary");
+
+    let inpUsuarioId =
+        document.getElementById("inpUsuarioId");
+
+    let inpNombreUsuario =
+        document.getElementById("inpUsuarioNombre");
+
+    let inpNombreEmpleado =
+        document.getElementById("inpEmpleadoNombre");
+
+    let dlgTitle =
+        document.getElementById("dlgDetalleTitle");
+
+    let summaryContainer =
+        document.getElementById("saveValidationSummary");
+
+    let rolesValidation =
+        document.getElementById("rolesUsuarioValidation");
+
+    let rolesChecks =
+        document.querySelectorAll(".rol-usuario-check");
+
+
     summaryContainer.innerHTML = "";
 
+    if (rolesValidation) {
+        rolesValidation.innerHTML = "";
+    }
+
+
+    // =====================================================
+    // LIMPIAR ROLES
+    // =====================================================
+
+    rolesChecks.forEach(function (check) {
+
+        check.checked = false;
+    });
+
+
+    // =====================================================
+    // MODO
+    // =====================================================
+
     switch (action) {
+
         case EDITAR:
-            dlgTitle.innerHTML = dlgEditarTitle;        
 
-            selRolEmpleado.removeAttribute("disabled");
+            dlgTitle.innerHTML =
+                dlgEditarTitle;
+
+            rolesChecks.forEach(
+                function (check) {
+
+                    check.disabled = false;
+                }
+            );
+
+            document
+                .getElementById(
+                    "dlgDetallesBtnGuardar"
+                )
+                .removeAttribute(
+                    "disabled"
+                );
+
             break;
-        default:
-            dlgTitle.innerHTML = dlgVerTitle;
 
-            selRolEmpleado.setAttribute("disabled", true);
+
+        default:
+
+            dlgTitle.innerHTML =
+                dlgVerTitle;
+
+            rolesChecks.forEach(
+                function (check) {
+
+                    check.disabled = true;
+                }
+            );
+
+            document
+                .getElementById(
+                    "dlgDetallesBtnGuardar"
+                )
+                .setAttribute(
+                    "disabled",
+                    true
+                );
+
             break;
     }
 
-    inpUsuarioId.value = row.id;
-    inpNombreUsuario.value = row.nombreUsuario;
-    inpNombreEmpleado.value = row.nombreEmpleado;
-    selRolEmpleado.value = row.rolId;
 
-    dlgDetalleModal.toggle();
+    // =====================================================
+    // DATOS DEL USUARIO
+    // =====================================================
+
+    inpUsuarioId.value =
+        row.id;
+
+    inpNombreUsuario.value =
+        row.nombreUsuario;
+
+    inpNombreEmpleado.value =
+        row.nombreEmpleado;
+
+
+    // =====================================================
+    // MARCAR ROLES ACTUALES
+    // =====================================================
+
+    let rolesUsuario =
+        Array.isArray(row.rolIds)
+            ? row.rolIds
+            : [];
+
+
+    rolesChecks.forEach(
+        function (check) {
+
+            check.checked =
+                rolesUsuario.includes(
+                    check.value
+                );
+        }
+    );
+
+
+    // =====================================================
+    // MOSTRAR MODAL
+    // =====================================================
+
+    dlgDetalleModal.show();
 }
 
 //Función para el cierre del cuadro de diálogo
@@ -198,53 +303,142 @@ function onCerrarClick() {
     //Removes danger text from fields
     $(".text-danger").children().remove()
 }
+
 //Función para el guardado de información
 function onGuardarClick() {
-    //Ejecuta la validación
-    $("#theForm").validate();
-    //Determina los errores
-    let valid = $("#theForm").valid();
-    //Si la forma no es válida, entonces finaliza.
-    if (!valid) { return; }
 
-    let idField = document.getElementById("inpUsuarioId");
-    let selRolEmpleadoField = document.getElementById("selEmpleadoRol");
-    let dlgTitle = document.getElementById("dlgDetalleTitle");
-    let summaryContainer = document.getElementById("saveValidationSummary");
+    let idField =
+        document.getElementById(
+            "inpUsuarioId"
+        );
+
+    let dlgTitle =
+        document.getElementById(
+            "dlgDetalleTitle"
+        );
+
+    let summaryContainer =
+        document.getElementById(
+            "saveValidationSummary"
+        );
+
+    let rolesValidation =
+        document.getElementById(
+            "rolesUsuarioValidation"
+        );
+
 
     summaryContainer.innerHTML = "";
 
+    if (rolesValidation) {
+        rolesValidation.innerHTML = "";
+    }
+
+
+    // =====================================================
+    // OBTENER ROLES SELECCIONADOS
+    // =====================================================
+
+    let rolesSeleccionados =
+        Array.from(
+            document.querySelectorAll(
+                ".rol-usuario-check:checked"
+            )
+        )
+            .map(function (check) {
+
+                return check.value;
+            });
+
+
+    // =====================================================
+    // VALIDAR
+    // =====================================================
+
+    if (rolesSeleccionados.length === 0) {
+
+        if (rolesValidation) {
+
+            rolesValidation.innerHTML =
+                "Debe seleccionar al menos un rol.";
+        }
+
+        return;
+    }
+
+
+    // =====================================================
+    // PARÁMETROS
+    // =====================================================
+
     let oParams = {
         id: idField.value,
-        rolId: selRolEmpleadoField.value
+        rolIds: rolesSeleccionados
     };
+
+
+    // =====================================================
+    // GUARDAR
+    // =====================================================
 
     doAjax(
         "/Catalogos/Usuarios/Save",
         oParams,
+
         function (resp) {
+
             if (resp.tieneError) {
-                if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
+
+                if (
+                    Array.isArray(
+                        resp.errores
+                    ) &&
+                    resp.errores.length >= 1
+                ) {
+
                     let summary = ``;
-                    resp.errores.forEach(function (error) {
-                        summary += `<li>${error}</li>`;
-                    });
-                    summaryContainer.innerHTML += `<ul>${summary}</ul>`;
+
+                    resp.errores.forEach(
+                        function (error) {
+
+                            summary +=
+                                `<li>${error}</li>`;
+                        }
+                    );
+
+                    summaryContainer.innerHTML =
+                        `<ul>${summary}</ul>`;
                 }
-                showError(dlgTitle.innerHTML, resp.mensaje);
+
+                showError(
+                    dlgTitle.innerHTML,
+                    resp.mensaje
+                );
+
                 return;
             }
 
+
             onCerrarClick();
 
-            dlgDetalleModal.toggle();
+            dlgDetalleModal.hide();
 
             onBuscarClick();
 
-            showSuccess(dlgTitle.innerHTML, resp.mensaje);
-        }, function (error) {
-            showError("Error", error);
+            showSuccess(
+                dlgTitle.innerHTML,
+                resp.mensaje
+            );
         },
+
+        function (error) {
+
+            showError(
+                "Error",
+                error
+            );
+        },
+
         postOptions
     );
 }
