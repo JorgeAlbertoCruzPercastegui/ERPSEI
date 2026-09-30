@@ -649,7 +649,7 @@
             .Where(x => x.UserId == userIdActual)
             .Include(x => x.Notificacion)
             .OrderByDescending(x => x.Notificacion.FechaPublicacion)
-            .Take(8)
+            .Take(50)
             .Select(x => new
             {
                 Id = x.NotificacionIntranetId,
@@ -761,21 +761,84 @@
 
                                         @if (notificacionesUsuario.Any())
                                         {
-                                            foreach (var n in notificacionesUsuario)
-                                            {
-                                                <a class="quick-notification-item @(n.Leida ? "" : "is-unread")"
-                                                       href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
-                                                    <div class="quick-notification-icon">
-                                                        <i class="@n.Icono"></i>
-                                                    </div>
+                                            <div id="quickNotificationList">
 
-                                                    <div>
-                                                        <strong>@n.Titulo</strong>
-                                                        <span>@n.Descripcion</span>
-                                                        <small>@n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")</small>
-                                                    </div>
-                                                </a>
-                                            }
+                                                @{
+                                                    int indiceNotificacion = 0;
+                                                }
+
+                                                @foreach (var n in notificacionesUsuario)
+                                                {
+                                                    <a class="quick-notification-item @(n.Leida ? "" : "is-unread")"
+                                                           data-notification-index="@indiceNotificacion"
+                                                           href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
+
+                                                        <div class="quick-notification-icon">
+                                                            <i class="@n.Icono"></i>
+                                                        </div>
+
+                                                        <div class="quick-notification-content">
+                                                            <strong>
+                                                                @n.Titulo
+                                                            </strong>
+
+                                                            <span>
+                                                                @n.Descripcion
+                                                            </span>
+
+                                                            <small>
+                                                                @n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")
+                                                            </small>
+                                                        </div>
+
+                                                    </a>
+
+                                                    indiceNotificacion++;
+                                                }
+
+                                            </div>
+
+
+                                            <div class="quick-notification-pagination"
+                                                 id="quickNotificationPagination">
+
+                                                <button type="button"
+                                                        class="quick-notification-page-btn"
+                                                        id="btnNotificationPrev"
+                                                        aria-label="Notificaciones anteriores">
+
+                                                    <i class="bi bi-chevron-left"></i>
+
+                                                </button>
+
+
+                                                <div class="quick-notification-page-info">
+
+                                                    <span id="notificationCurrentPage">
+                                                        1
+                                                    </span>
+
+                                                    <span class="quick-notification-page-separator">
+                                                        /
+                                                    </span>
+
+                                                    <span id="notificationTotalPages">
+                                                        1
+                                                    </span>
+
+                                                </div>
+
+
+                                                <button type="button"
+                                                        class="quick-notification-page-btn"
+                                                        id="btnNotificationNext"
+                                                        aria-label="Notificaciones siguientes">
+
+                                                    <i class="bi bi-chevron-right"></i>
+
+                                                </button>
+
+                                            </div>
                                         }
                                         else
                                         {
@@ -1390,6 +1453,201 @@
             this.event.preventDefault();
         }
     </script>
+
+    <script>
+        document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+        // =====================================================
+        // PAGINADOR DE NOTIFICACIONES
+        // =====================================================
+
+        const elementos =
+        Array.from(
+        document.querySelectorAll(
+        ".quick-notification-item[data-notification-index]"
+        )
+        );
+
+
+        if (elementos.length === 0) {
+        return;
+        }
+
+
+        const POR_PAGINA = 3;
+
+        let paginaActual = 1;
+
+
+        const totalPaginas =
+        Math.ceil(
+        elementos.length /
+        POR_PAGINA
+        );
+
+
+        const btnAnterior =
+        document.getElementById(
+        "btnNotificationPrev"
+        );
+
+
+        const btnSiguiente =
+        document.getElementById(
+        "btnNotificationNext"
+        );
+
+
+        const lblPaginaActual =
+        document.getElementById(
+        "notificationCurrentPage"
+        );
+
+
+        const lblTotalPaginas =
+        document.getElementById(
+        "notificationTotalPages"
+        );
+
+
+        const paginador =
+        document.getElementById(
+        "quickNotificationPagination"
+        );
+
+
+        if (lblTotalPaginas) {
+
+        lblTotalPaginas.textContent =
+        totalPaginas;
+        }
+
+
+        function mostrarPagina(
+        numeroPagina
+        ) {
+
+        if (
+        numeroPagina < 1 ||
+        numeroPagina > totalPaginas
+        ) {
+        return;
+        }
+
+
+        paginaActual =
+        numeroPagina;
+
+
+        const inicio =
+        (
+        paginaActual - 1
+        ) *
+        POR_PAGINA;
+
+
+        const fin =
+        inicio +
+        POR_PAGINA;
+
+
+        elementos.forEach(
+        function (
+        elemento,
+        indice
+        ) {
+
+        elemento.style.display =
+        indice >= inicio &&
+        indice < fin
+        ? ""
+        : "none";
+        }
+        );
+
+
+        if (lblPaginaActual) {
+
+        lblPaginaActual.textContent =
+        paginaActual;
+        }
+
+
+        if (btnAnterior) {
+
+        btnAnterior.disabled =
+        paginaActual === 1;
+        }
+
+
+        if (btnSiguiente) {
+
+        btnSiguiente.disabled =
+        paginaActual ===
+        totalPaginas;
+        }
+        }
+
+
+        // =====================================================
+        // ANTERIOR
+        // =====================================================
+
+        btnAnterior?.addEventListener(
+        "click",
+        function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        mostrarPagina(
+        paginaActual - 1
+        );
+        }
+        );
+
+
+        // =====================================================
+        // SIGUIENTE
+        // =====================================================
+
+        btnSiguiente?.addEventListener(
+        "click",
+        function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        mostrarPagina(
+        paginaActual + 1
+        );
+        }
+        );
+
+
+        // Evitar que Bootstrap cierre el dropdown
+        // cuando se utiliza el paginador.
+
+        paginador?.addEventListener(
+        "click",
+        function (event) {
+
+        event.stopPropagation();
+        }
+        );
+
+
+        // =====================================================
+        // INICIALIZAR
+        // =====================================================
+
+        mostrarPagina(1);
+        }
+        );
+    </script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
         const btn = document.querySelector(".quick-nav-toggle");

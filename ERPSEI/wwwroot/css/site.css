@@ -509,3 +509,70 @@ body.logout-page main .btn-primary {
         font-size: 11px;
         color: #7a808c;
     }
+
+/* =========================================================
+   NOTIFICACIONES - PAGINACIÓN
+   ========================================================= */
+
+.quick-notification-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-top: 1px solid #ececf3;
+    background: #ffffff;
+    border-radius: 0 0 18px 18px;
+}
+
+
+.quick-notification-page-btn {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d8d6ea;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #24166f;
+    font-size: 14px;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+
+    .quick-notification-page-btn:hover:not(:disabled) {
+        background: #24166f;
+        color: #ffffff;
+        border-color: #24166f;
+        transform: translateY(-1px);
+    }
+
+
+    .quick-notification-page-btn:disabled {
+        opacity: .35;
+        cursor: default;
+        background: #f5f5f8;
+    }
+
+
+.quick-notification-page-info {
+    min-width: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #24166f;
+}
+
+
+.quick-notification-page-separator {
+    color: #a3a3b2;
+    font-weight: 400;
+}
+
+#quickNotificationList {
+    overflow: hidden;
+}
