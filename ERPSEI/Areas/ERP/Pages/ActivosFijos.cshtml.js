@@ -680,200 +680,657 @@ function initTable() {
 
 //Funcionalidad Diálogo
 function initActivoFijoDialog(action, row) {
-    let idField = document.getElementById("inpActivoFijoId");
-    let folioField = document.getElementById("inpActivoFijoFolio");
-    let descripcionField = document.getElementById("inpActivoFijoDescripcion");
-    let responsableField = document.getElementById("inpActivoFijoResponsable");
-    let empleadoIdField = document.getElementById("inpEmpleadoId");
-    let categoriaField = document.getElementById("inpActivoFijoCategoria");
-    let tipoField = document.getElementById("inpActivoFijoTipo");
-    let fechacompraField = document.getElementById("inpActivoFijoFechaCompra");
-    let precioField = document.getElementById("inpActivoFijoPrecio");
 
-    let marcaField = document.getElementById("inpActivoFijoMarca");
-    let numeroSerieField = document.getElementById("inpActivoFijoNumeroSerie");
-    //let ubicacionField = document.getElementById("inpActivoFijoUbicacion");
-    let comentariosField = document.getElementById("inpActivoFijoComentarios");
-    let archivoField = document.getElementById("inpActivoFijoArchivo");
+    let idField =
+        document.getElementById(
+            "inpActivoFijoId"
+        );
+
+    let folioField =
+        document.getElementById(
+            "inpActivoFijoFolio"
+        );
+
+    let descripcionField =
+        document.getElementById(
+            "inpActivoFijoDescripcion"
+        );
+
+    let responsableField =
+        document.getElementById(
+            "inpActivoFijoResponsable"
+        );
+
+    let empleadoIdField =
+        document.getElementById(
+            "inpEmpleadoId"
+        );
+
+    let categoriaField =
+        document.getElementById(
+            "inpActivoFijoCategoria"
+        );
+
+    let tipoField =
+        document.getElementById(
+            "inpActivoFijoTipo"
+        );
+
+    let fechacompraField =
+        document.getElementById(
+            "inpActivoFijoFechaCompra"
+        );
+
+    let precioField =
+        document.getElementById(
+            "inpActivoFijoPrecio"
+        );
+
+    let marcaField =
+        document.getElementById(
+            "inpActivoFijoMarca"
+        );
+
+    let numeroSerieField =
+        document.getElementById(
+            "inpActivoFijoNumeroSerie"
+        );
+
+    let comentariosField =
+        document.getElementById(
+            "inpActivoFijoComentarios"
+        );
+
+    let archivoField =
+        document.getElementById(
+            "inpActivoFijoArchivo"
+        );
+
     let imagenField =
         document.getElementById(
             "inpActivoFijoImagen"
         );
-    let fechaRenovacionField = document.getElementById("inpActivoFijoFechaRenovacion");
-    let cantidadesField = document.getElementById("inpActivoFijoCantidad");
-    let oficinaField = document.getElementById("inpActivoFijoOficina");
 
-    let btnGuardar = document.getElementById("dlgActivoFijoBtnGuardar");
-    let dlgTitle = document.getElementById("dlgActivoFijoTitle");
-    let summaryContainer = document.getElementById("saveValidationSummary");
+    let fechaRenovacionField =
+        document.getElementById(
+            "inpActivoFijoFechaRenovacion"
+        );
+
+    let cantidadesField =
+        document.getElementById(
+            "inpActivoFijoCantidad"
+        );
+
+    let oficinaField =
+        document.getElementById(
+            "inpActivoFijoOficina"
+        );
+
+    let btnGuardar =
+        document.getElementById(
+            "dlgActivoFijoBtnGuardar"
+        );
+
+    let dlgTitle =
+        document.getElementById(
+            "dlgActivoFijoTitle"
+        );
+
+    let summaryContainer =
+        document.getElementById(
+            "saveValidationSummary"
+        );
+
+
     summaryContainer.innerHTML = "";
 
-    // Verificar si existe el select Oficina
+
+    // =====================================================
+    // BORRADOR AUTOMÁTICO
+    // =====================================================
+
+    const formActivo =
+        document.getElementById(
+            "theForm"
+        );
+
+
+    const conservarBorrador =
+        action === NUEVO &&
+        formActivo &&
+        formActivo.dataset.draftRestored ===
+        "true";
+
+
+    // =====================================================
+    // VALIDAR OFICINA
+    // =====================================================
+
     if (!oficinaField) {
-        console.warn("inpActivoFijoOficina NO se encontró en el HTML.");
+
+        console.warn(
+            "inpActivoFijoOficina NO se encontró en el HTML."
+        );
     }
 
-    idField.setAttribute("disabled", true);
+
+    idField.setAttribute(
+        "disabled",
+        true
+    );
+
+
+    // =====================================================
+    // CONFIGURAR MODAL
+    // =====================================================
 
     switch (action) {
+
         case NUEVO:
-            dlgTitle.innerHTML = dlgNuevoTitle;
 
-            idField.setAttribute("disabled", true);
-            folioField.setAttribute("disabled", true);
-            descripcionField.removeAttribute("disabled");
-            responsableField.removeAttribute("disabled");
-            categoriaField.removeAttribute("disabled");
-            tipoField.removeAttribute("disabled");
-            fechacompraField.removeAttribute("disabled");
-            precioField.removeAttribute("disabled");
+            dlgTitle.innerHTML =
+                dlgNuevoTitle;
 
-            marcaField.removeAttribute("disabled");
-            numeroSerieField.removeAttribute("disabled");
-            //ubicacionField.removeAttribute("disabled");
-            comentariosField.removeAttribute("disabled");
-            archivoField.removeAttribute("disabled");
-            imagenField.removeAttribute("disabled");
-            fechaRenovacionField.removeAttribute("disabled");
-            cantidadesField.removeAttribute("disabled");
-            oficinaField.removeAttribute("disabled");
+            idField.setAttribute(
+                "disabled",
+                true
+            );
 
+            folioField.setAttribute(
+                "disabled",
+                true
+            );
 
-            btnGuardar.removeAttribute("disabled");
+            descripcionField.removeAttribute(
+                "disabled"
+            );
+
+            responsableField.removeAttribute(
+                "disabled"
+            );
+
+            categoriaField.removeAttribute(
+                "disabled"
+            );
+
+            tipoField.removeAttribute(
+                "disabled"
+            );
+
+            fechacompraField.removeAttribute(
+                "disabled"
+            );
+
+            precioField.removeAttribute(
+                "disabled"
+            );
+
+            marcaField.removeAttribute(
+                "disabled"
+            );
+
+            numeroSerieField.removeAttribute(
+                "disabled"
+            );
+
+            comentariosField.removeAttribute(
+                "disabled"
+            );
+
+            archivoField.removeAttribute(
+                "disabled"
+            );
+
+            imagenField.removeAttribute(
+                "disabled"
+            );
+
+            fechaRenovacionField.removeAttribute(
+                "disabled"
+            );
+
+            cantidadesField.removeAttribute(
+                "disabled"
+            );
+
+            oficinaField.removeAttribute(
+                "disabled"
+            );
+
+            btnGuardar.removeAttribute(
+                "disabled"
+            );
+
             break;
+
+
         case EDITAR:
-            dlgTitle.innerHTML = dlgEditarTitle;
 
-            idField.setAttribute("disabled", true);
-            folioField.setAttribute("disabled", true);
-            descripcionField.removeAttribute("disabled");
-            responsableField.removeAttribute("disabled");
-            categoriaField.removeAttribute("disabled");
-            tipoField.removeAttribute("disabled");
-            fechacompraField.removeAttribute("disabled");
-            precioField.removeAttribute("disabled");
+            dlgTitle.innerHTML =
+                dlgEditarTitle;
 
-            marcaField.removeAttribute("disabled");
-            numeroSerieField.removeAttribute("disabled");
-            //ubicacionField.removeAttribute("disabled");
-            comentariosField.removeAttribute("disabled");
-            archivoField.removeAttribute("disabled");
-            imagenField.removeAttribute("disabled");
-            fechaRenovacionField.removeAttribute("disabled");
-            cantidadesField.removeAttribute("disabled");
-            oficinaField.removeAttribute("disabled");
+            idField.setAttribute(
+                "disabled",
+                true
+            );
 
-            btnGuardar.removeAttribute("disabled");
+            folioField.setAttribute(
+                "disabled",
+                true
+            );
+
+            descripcionField.removeAttribute(
+                "disabled"
+            );
+
+            responsableField.removeAttribute(
+                "disabled"
+            );
+
+            categoriaField.removeAttribute(
+                "disabled"
+            );
+
+            tipoField.removeAttribute(
+                "disabled"
+            );
+
+            fechacompraField.removeAttribute(
+                "disabled"
+            );
+
+            precioField.removeAttribute(
+                "disabled"
+            );
+
+            marcaField.removeAttribute(
+                "disabled"
+            );
+
+            numeroSerieField.removeAttribute(
+                "disabled"
+            );
+
+            comentariosField.removeAttribute(
+                "disabled"
+            );
+
+            archivoField.removeAttribute(
+                "disabled"
+            );
+
+            imagenField.removeAttribute(
+                "disabled"
+            );
+
+            fechaRenovacionField.removeAttribute(
+                "disabled"
+            );
+
+            cantidadesField.removeAttribute(
+                "disabled"
+            );
+
+            oficinaField.removeAttribute(
+                "disabled"
+            );
+
+            btnGuardar.removeAttribute(
+                "disabled"
+            );
+
             break;
+
+
         default:
-            dlgTitle.innerHTML = dlgVerTitle;
 
-            idField.setAttribute("disabled", true);
-            folioField.setAttribute("disabled", true);
-            descripcionField.setAttribute("disabled", true);
-            responsableField.setAttribute("disabled", true);
-            categoriaField.setAttribute("disabled", true);
-            tipoField.setAttribute("disabled", true);
-            fechacompraField.setAttribute("disabled", true);
-            precioField.setAttribute("disabled", true);
+            dlgTitle.innerHTML =
+                dlgVerTitle;
 
-            marcaField.setAttribute("disabled", true);
-            numeroSerieField.setAttribute("disabled", true);
-            //ubicacionField.setAttribute("disabled", true);
-            comentariosField.setAttribute("disabled", true);
-            archivoField.setAttribute("disabled", true);
+            idField.setAttribute(
+                "disabled",
+                true
+            );
+
+            folioField.setAttribute(
+                "disabled",
+                true
+            );
+
+            descripcionField.setAttribute(
+                "disabled",
+                true
+            );
+
+            responsableField.setAttribute(
+                "disabled",
+                true
+            );
+
+            categoriaField.setAttribute(
+                "disabled",
+                true
+            );
+
+            tipoField.setAttribute(
+                "disabled",
+                true
+            );
+
+            fechacompraField.setAttribute(
+                "disabled",
+                true
+            );
+
+            precioField.setAttribute(
+                "disabled",
+                true
+            );
+
+            marcaField.setAttribute(
+                "disabled",
+                true
+            );
+
+            numeroSerieField.setAttribute(
+                "disabled",
+                true
+            );
+
+            comentariosField.setAttribute(
+                "disabled",
+                true
+            );
+
+            archivoField.setAttribute(
+                "disabled",
+                true
+            );
+
             imagenField.setAttribute(
                 "disabled",
                 true
             );
-            fechaRenovacionField.setAttribute("disabled", true);
-            cantidadesField.setAttribute("disabled", true);
 
-            oficinaField.setAttribute("disabled", true);
+            fechaRenovacionField.setAttribute(
+                "disabled",
+                true
+            );
 
-            btnGuardar.setAttribute("disabled", true);
+            cantidadesField.setAttribute(
+                "disabled",
+                true
+            );
+
+            oficinaField.setAttribute(
+                "disabled",
+                true
+            );
+
+            btnGuardar.setAttribute(
+                "disabled",
+                true
+            );
+
             break;
     }
 
-    // Asignación de valores
-    idField.value = row.id ?? "";
-    folioField.value = row.folio ?? "";
-    descripcionField.value = row.descripcion ?? "";
 
-    if (row.responsableId) {
-        responsableField.value = row.responsableId.toString(); // porque value es string
-        empleadoIdField.value = row.responsableId;
-    } else {
-        responsableField.value = "";
-        empleadoIdField.value = "0";
-    }
+    // =====================================================
+    // CARGAR DATOS
+    // =====================================================
+    //
+    // Si se recuperó un borrador de un ACTIVO NUEVO,
+    // no sobrescribimos sus valores.
+    // =====================================================
+
+    if (!conservarBorrador) {
+
+        idField.value =
+            row.id ?? "";
+
+        folioField.value =
+            row.folio ?? "";
+
+        descripcionField.value =
+            row.descripcion ?? "";
 
 
-    categoriaField.value = row.categoriaId ?? row.categoria ?? "";
-    tipoField.value = row.tipoId ?? row.tipo ?? "";
+        if (row.responsableId) {
 
-    if (oficinaField && row.oficinaId) {
-        oficinaField.value = row.oficinaId.toString();  // Carga oficina
-    }
+            responsableField.value =
+                row.responsableId.toString();
 
-    dlgModal.show();
+            empleadoIdField.value =
+                row.responsableId;
 
-    if (row.fechaCompra) {
-        try {
-            if (row.fechaCompra.includes("/")) {
-                const [dia, mes, anio] = row.fechaCompra.split("/");
-                fechacompraField.value = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
-            } else {
-                const fecha = new Date(row.fechaCompra);
-                fechacompraField.value = fecha.toISOString().split("T")[0];
-            }
-        } catch (e) {
-            fechacompraField.value = "";
+        } else {
+
+            responsableField.value =
+                "";
+
+            empleadoIdField.value =
+                "0";
         }
-    } else {
-        fechacompraField.value = "";
+
+
+        categoriaField.value =
+            row.categoriaId ??
+            row.categoria ??
+            "";
+
+
+        tipoField.value =
+            row.tipoId ??
+            row.tipo ??
+            "";
+
+
+        if (
+            oficinaField &&
+            row.oficinaId
+        ) {
+
+            oficinaField.value =
+                row.oficinaId.toString();
+
+        } else if (oficinaField) {
+
+            oficinaField.value =
+                "";
+        }
+
+
+        // =====================================================
+        // FECHA COMPRA
+        // =====================================================
+
+        if (row.fechaCompra) {
+
+            try {
+
+                if (
+                    row.fechaCompra
+                        .includes("/")
+                ) {
+
+                    const [
+                        dia,
+                        mes,
+                        anio
+                    ] =
+                        row.fechaCompra
+                            .split("/");
+
+
+                    fechacompraField.value =
+                        `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+
+                } else {
+
+                    const fecha =
+                        new Date(
+                            row.fechaCompra
+                        );
+
+
+                    fechacompraField.value =
+                        fecha
+                            .toISOString()
+                            .split("T")[0];
+                }
+
+            } catch (e) {
+
+                fechacompraField.value =
+                    "";
+            }
+
+        } else {
+
+            fechacompraField.value =
+                "";
+        }
+
+
+        precioField.value =
+            row.precio ?? "";
+
+        marcaField.value =
+            row.marca ?? "";
+
+        numeroSerieField.value =
+            row.numeroSerie ?? "";
+
+        comentariosField.value =
+            row.comentarios ?? "";
+
+        cantidadesField.value =
+            row.cantidades ?? "";
+
+
+        // =====================================================
+        // FECHA RENOVACIÓN
+        // =====================================================
+
+        if (row.fechaRenovacion) {
+
+            try {
+
+                if (
+                    row.fechaRenovacion
+                        .includes("/")
+                ) {
+
+                    const [
+                        dia,
+                        mes,
+                        anio
+                    ] =
+                        row.fechaRenovacion
+                            .split("/");
+
+
+                    fechaRenovacionField.value =
+                        `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+
+                } else {
+
+                    const fecha =
+                        new Date(
+                            row.fechaRenovacion
+                        );
+
+
+                    fechaRenovacionField.value =
+                        fecha
+                            .toISOString()
+                            .split("T")[0];
+                }
+
+            } catch (e) {
+
+                fechaRenovacionField.value =
+                    "";
+            }
+
+        } else {
+
+            fechaRenovacionField.value =
+                "";
+        }
+
     }
 
-    precioField.value = row.precio ?? "";
-    marcaField.value = row.marca ?? "";
-    numeroSerieField.value = row.numeroSerie ?? "";
-    //ubicacionField.value = row.ubicacion ?? "";
-    comentariosField.value = row.comentarios ?? "";
+
+    // =====================================================
+    // FACTURA
+    // =====================================================
 
     let archivoContainer =
-        document.getElementById("archivoActualContainer");
+        document.getElementById(
+            "archivoActualContainer"
+        );
 
     let archivoLink =
-        document.getElementById("archivoActualLink");
+        document.getElementById(
+            "archivoActualLink"
+        );
 
     let nombreArchivo =
-        document.getElementById("facturaNombreArchivo");
+        document.getElementById(
+            "facturaNombreArchivo"
+        );
+
 
     if (archivoField) {
-        archivoField.value = "";
+
+        archivoField.value =
+            "";
     }
 
-    if (row.archivoAdjunto &&
-        row.archivoAdjunto.trim() !== "") {
 
-        archivoContainer.style.display = "flex";
-        archivoLink.href = row.archivoAdjunto;
+    if (
+        !conservarBorrador &&
+        row.archivoAdjunto &&
+        row.archivoAdjunto.trim() !==
+        ""
+    ) {
+
+        archivoContainer.style.display =
+            "flex";
+
+        archivoLink.href =
+            row.archivoAdjunto;
 
         nombreArchivo.textContent =
-            row.archivoAdjunto.split("/").pop();
+            row.archivoAdjunto
+                .split("/")
+                .pop();
+
 
         cargarVistaPreviaFactura(
             row.archivoAdjunto
         );
+
     } else {
-        archivoContainer.style.display = "none";
-        archivoLink.href = "#";
+
+        archivoContainer.style.display =
+            "none";
+
+        archivoLink.href =
+            "#";
 
         nombreArchivo.textContent =
             "Ningún archivo seleccionado";
 
         limpiarVistaPreviaFactura();
     }
+
+
+    // =====================================================
+    // IMAGEN DEL ACTIVO
+    // =====================================================
 
     let imagenActualContainer =
         document.getElementById(
@@ -890,13 +1347,19 @@ function initActivoFijoDialog(action, row) {
             "imagenActivoNombreArchivo"
         );
 
+
     if (imagenField) {
-        imagenField.value = "";
+
+        imagenField.value =
+            "";
     }
 
+
     if (
+        !conservarBorrador &&
         row.imagenActivo &&
-        row.imagenActivo.trim() !== ""
+        row.imagenActivo.trim() !==
+        ""
     ) {
 
         imagenActualContainer.style.display =
@@ -909,6 +1372,7 @@ function initActivoFijoDialog(action, row) {
             row.imagenActivo
                 .split("/")
                 .pop();
+
 
         cargarVistaPreviaImagenActivo(
             row.imagenActivo
@@ -928,32 +1392,24 @@ function initActivoFijoDialog(action, row) {
         limpiarVistaPreviaImagenActivo();
     }
 
-    cantidadesField.value = row.cantidades ?? "";
 
-    if (row.fechaRenovacion) {
-        try {
-            if (row.fechaRenovacion.includes("/")) {
-                const [dia, mes, anio] = row.fechaRenovacion.split("/");
-                fechaRenovacionField.value = `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
-            } else {
-                const fecha = new Date(row.fechaRenovacion);
-                fechaRenovacionField.value = fecha.toISOString().split("T")[0];
-            }
-        } catch (e) {
-            fechaRenovacionField.value = "";
-        }
-    } else {
-        fechaRenovacionField.value = "";
-    }
+    // =====================================================
+    // RESPONSABLE
+    // =====================================================
 
-    // Al cambiar el select de responsable, actualiza el hidden de EmpleadoId
-    responsableField.addEventListener("change", function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const empleadoId = selectedOption.getAttribute("data-id");
-        empleadoIdField.value = empleadoId || "0";
-    });
+    responsableField.onchange =
+        function () {
 
-    dlgModal.toggle();
+            empleadoIdField.value =
+                this.value || "0";
+        };
+
+
+    // =====================================================
+    // ABRIR MODAL
+    // =====================================================
+
+    dlgModal.show();
 }
 
 
@@ -1089,6 +1545,20 @@ function onGuardarClick() {
 
                 showError(dlgTitle.innerHTML, resp.mensaje);
                 return;
+            }
+
+            // =====================================================
+            // BORRAR BORRADOR DESPUÉS DEL GUARDADO EXITOSO
+            // =====================================================
+
+            if (
+                window.IntranetDrafts &&
+                typeof window.IntranetDrafts.clearById ===
+                "function"
+            ) {
+                window.IntranetDrafts.clearById(
+                    "theForm"
+                );
             }
 
             btnClose.click();
@@ -1438,3 +1908,27 @@ function imprimirEtiquetaActivo() {
             );
         };
 }
+
+// =========================================================
+// BORRADOR AUTOMÁTICO - ACTIVOS FIJOS
+// =========================================================
+
+document.addEventListener(
+    "erpsei:draft-restored",
+
+    function (event) {
+
+        if (
+            event.detail?.form?.id !==
+            "theForm"
+        ) {
+            return;
+        }
+
+
+        showSuccess(
+            "Borrador recuperado",
+            "Se restauró la información del activo fijo que estabas capturando antes de que finalizara tu sesión."
+        );
+    }
+);

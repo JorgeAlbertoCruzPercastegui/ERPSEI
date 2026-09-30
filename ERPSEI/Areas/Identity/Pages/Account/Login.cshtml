@@ -34,7 +34,10 @@
             <span>Iniciar Sesión</span>
         </div>
 
-        <form id="account" method="post" class="login-form">
+        <form id="account"
+              method="post"
+              asp-route-returnUrl="@Model.ReturnUrl"
+              class="login-form">
             <h1>@ViewData["Title"]</h1>
             <div class="login-line"></div>
 

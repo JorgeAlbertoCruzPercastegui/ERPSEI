@@ -33,6 +33,30 @@ document.addEventListener("DOMContentLoaded", function (event) {
     btnBuscar.click();
 
     autoCompletar("#inpEmpleadoJefeId");
+
+    const jefeEmpleado =
+        document.getElementById(
+            "inpEmpleadoJefeId"
+        );
+
+    if (jefeEmpleado) {
+
+        jefeEmpleado.addEventListener(
+            "input",
+            function () {
+
+                setTimeout(
+                    guardarBorradorJefeEmpleado,
+                    100
+                );
+            }
+        );
+
+        jefeEmpleado.addEventListener(
+            "change",
+            guardarBorradorJefeEmpleado
+        );
+    }
 });
 //Función para redimensionar los textareas cada que cambie el tamaño de pantalla.
 window.addEventListener('resize', function (event) {
@@ -499,6 +523,22 @@ function initEmpleadoDialog(action, row) {
     summaryContainer.innerHTML = "";
 
     idField.setAttribute("disabled", true);
+
+    // =========================================================
+    // BORRADOR AUTOMÁTICO - GESTIÓN DE TALENTO
+    // =========================================================
+
+    const formEmpleado =
+        document.getElementById(
+            "theForm"
+        );
+
+    const conservarBorrador =
+        action === NUEVO &&
+        formEmpleado &&
+        formEmpleado.dataset.draftRestored ===
+        "true";
+
     switch (action) {
         case NUEVO:
         case EDITAR:
@@ -525,28 +565,93 @@ function initEmpleadoDialog(action, row) {
             break;
     }
 
+    // =========================================================
+    // ID
+    // =========================================================
+
     idField.value = row.id;
-    primerNombreField.value = row.nombre;
-    nombrePreferidoField.value = row.nombrePreferido;
-    apellidoPaternoField.value = row.apellidoPaterno;
-    apellidoMaternoField.value = row.apellidoMaterno;
-    fechaNacimientoField.value = row.fechaNacimientoJS;
-    telefonoField.value = row.telefono;
-    generoField.value = row.generoId;
-    estadoCivilIdField.value = row.estadoCivilId;
-    direccionField.value = row.direccion;
-    puestoField.value = row.puestoId;
-    areaField.value = row.areaId;
-    if (action == EDITAR) { onAreaChanged(areaField); }
-    subareaField.value = row.subareaId;
-    oficinaField.value = row.oficinaId;
-    jefeField.setAttribute("idselected", row.jefeId);
-    fechaIngresoField.value = row.fechaIngresoJS;
-    emailField.value = row.email;
-    curpField.value = row.curp;
-    rfcField.value = row.rfc;
-    nssField.value = row.nss;
-    horarioField.value = row.horarioId;
+
+
+    // =========================================================
+    // DATOS DEL EMPLEADO
+    // =========================================================
+
+    if (!conservarBorrador) {
+
+        primerNombreField.value =
+            row.nombre ?? "";
+
+        nombrePreferidoField.value =
+            row.nombrePreferido ?? "";
+
+        apellidoPaternoField.value =
+            row.apellidoPaterno ?? "";
+
+        apellidoMaternoField.value =
+            row.apellidoMaterno ?? "";
+
+        fechaNacimientoField.value =
+            row.fechaNacimientoJS ?? "";
+
+        telefonoField.value =
+            row.telefono ?? "";
+
+        generoField.value =
+            row.generoId ?? 0;
+
+        estadoCivilIdField.value =
+            row.estadoCivilId ?? 0;
+
+        direccionField.value =
+            row.direccion ?? "";
+
+        puestoField.value =
+            row.puestoId ?? 0;
+
+        areaField.value =
+            row.areaId ?? 0;
+
+
+        if (action === EDITAR) {
+
+            onAreaChanged(
+                areaField
+            );
+        }
+
+
+        subareaField.value =
+            row.subareaId ?? 0;
+
+        oficinaField.value =
+            row.oficinaId ?? 0;
+
+        jefeField.setAttribute(
+            "idselected",
+            row.jefeId ?? 0
+        );
+
+        jefeField.value =
+            row.jefe ?? "";
+
+        fechaIngresoField.value =
+            row.fechaIngresoJS ?? "";
+
+        emailField.value =
+            row.email ?? "";
+
+        curpField.value =
+            row.curp ?? "";
+
+        rfcField.value =
+            row.rfc ?? "";
+
+        nssField.value =
+            row.nss ?? "";
+
+        horarioField.value =
+            row.horarioId ?? 0;
+    }
 
     if (action == NUEVO || (row.hasDatosAdicionales||false)) {
         establecerDatosAdicionales(row, action);
@@ -602,16 +707,79 @@ function establecerDatosAdicionales(row, action) {
     let telefonoContacto2Field = document.getElementById("inpEmpleadoTelefonoContacto2");
     let jefeField = document.getElementById("inpEmpleadoJefeId");
 
-    //Se establece la información del Jefe
-    jefeField.setAttribute("idselected", row.jefeId);
-    jefeField.value = row.jefe;
+    const formEmpleado =
+        document.getElementById(
+            "theForm"
+        );
 
-    //Se establecen los contactos de emergencia
-    row.contactosEmergencia = row.contactosEmergencia || [];
-    nombreContacto1Field.value = "";
-    telefonoContacto1Field.value = "";
-    nombreContacto2Field.value = "";
-    telefonoContacto2Field.value = "";
+    const conservarBorrador =
+        action === NUEVO &&
+        formEmpleado &&
+        formEmpleado.dataset.draftRestored ===
+        "true";
+
+    // =========================================================
+    // JEFE Y CONTACTOS
+    // =========================================================
+
+    if (!conservarBorrador) {
+
+        jefeField.setAttribute(
+            "idselected",
+            row.jefeId ?? 0
+        );
+
+        jefeField.value =
+            row.jefe ?? "";
+
+
+        row.contactosEmergencia =
+            row.contactosEmergencia || [];
+
+
+        nombreContacto1Field.value =
+            "";
+
+        telefonoContacto1Field.value =
+            "";
+
+        nombreContacto2Field.value =
+            "";
+
+        telefonoContacto2Field.value =
+            "";
+
+
+        if (
+            row.contactosEmergencia.length >=
+            1
+        ) {
+
+            nombreContacto1Field.value =
+                row.contactosEmergencia[0]
+                    .nombre ?? "";
+
+            telefonoContacto1Field.value =
+                row.contactosEmergencia[0]
+                    .telefono ?? "";
+        }
+
+
+        if (
+            row.contactosEmergencia.length >=
+            2
+        ) {
+
+            nombreContacto2Field.value =
+                row.contactosEmergencia[1]
+                    .nombre ?? "";
+
+            telefonoContacto2Field.value =
+                row.contactosEmergencia[1]
+                    .telefono ?? "";
+        }
+    }
+
     if (row.contactosEmergencia.length >= 1) {
         nombreContacto1Field.value = row.contactosEmergencia[0].nombre || "";
         telefonoContacto1Field.value = row.contactosEmergencia[0].telefono || "";
@@ -962,6 +1130,26 @@ function onGuardarClick() {
                 return;
             }
 
+            // =========================================================
+            // BORRAR BORRADOR DESPUÉS DEL GUARDADO EXITOSO
+            // =========================================================
+
+            if (
+                window.IntranetDrafts &&
+                typeof window.IntranetDrafts.clearById ===
+                "function"
+            ) {
+
+                window.IntranetDrafts.clearById(
+                    "theForm"
+                );
+            }
+
+
+            // Borrar dato adicional del jefe.
+
+            eliminarBorradorJefeEmpleado();
+
             btnClose.click();
 
             onBuscarClick();
@@ -1082,4 +1270,173 @@ function onExcelSelectorChanged(input) {
         }
     }
 }
-////////////////////////////////
+
+
+// =========================================================
+// BORRADOR ADICIONAL - JEFE DEL EMPLEADO
+// =========================================================
+
+function obtenerClaveBorradorJefeEmpleado() {
+
+    const usuario =
+        document.getElementById(
+            "intranetCurrentUser"
+        );
+
+    const usuarioId =
+        usuario?.dataset?.userId ??
+        "sin-usuario";
+
+    const ruta =
+        window.location.pathname
+            .toLowerCase();
+
+    return (
+        "ERPSEI_GESTION_TALENTO_JEFE_DRAFT:" +
+        usuarioId +
+        ":" +
+        ruta
+    );
+}
+
+
+function guardarBorradorJefeEmpleado() {
+
+    const jefe =
+        document.getElementById(
+            "inpEmpleadoJefeId"
+        );
+
+    if (!jefe) {
+        return;
+    }
+
+
+    const id =
+        jefe.getAttribute(
+            "idselected"
+        ) ?? "0";
+
+
+    localStorage.setItem(
+        obtenerClaveBorradorJefeEmpleado(),
+        JSON.stringify({
+            jefeId: id,
+            jefeNombre:
+                jefe.value ?? ""
+        })
+    );
+}
+
+
+function restaurarBorradorJefeEmpleado() {
+
+    try {
+
+        const json =
+            localStorage.getItem(
+                obtenerClaveBorradorJefeEmpleado()
+            );
+
+
+        if (!json) {
+            return;
+        }
+
+
+        const datos =
+            JSON.parse(
+                json
+            );
+
+
+        const jefe =
+            document.getElementById(
+                "inpEmpleadoJefeId"
+            );
+
+
+        if (!jefe) {
+            return;
+        }
+
+
+        jefe.setAttribute(
+            "idselected",
+            datos.jefeId ?? "0"
+        );
+
+
+        if (!jefe.value) {
+
+            jefe.value =
+                datos.jefeNombre ?? "";
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "No fue posible recuperar el jefe del empleado.",
+            error
+        );
+    }
+}
+
+
+function eliminarBorradorJefeEmpleado() {
+
+    localStorage.removeItem(
+        obtenerClaveBorradorJefeEmpleado()
+    );
+}
+
+// =========================================================
+// BORRADOR RECUPERADO - GESTIÓN DE TALENTO
+// =========================================================
+
+document.addEventListener(
+    "erpsei:draft-restored",
+    function (event) {
+
+        const form =
+            event.detail?.form;
+
+
+        if (
+            !form ||
+            form.id !== "theForm"
+        ) {
+
+            return;
+        }
+
+
+        restaurarBorradorJefeEmpleado();
+
+
+        setTimeout(
+            function () {
+
+                calculateTextAreaHeight(
+                    document.querySelectorAll(
+                        "#theForm textarea"
+                    )
+                );
+
+            },
+            100
+        );
+
+
+        if (
+            typeof showSuccess ===
+            "function"
+        ) {
+
+            showSuccess(
+                "Borrador recuperado",
+                "Se restauró la información del empleado que estabas capturando antes de que finalizara tu sesión."
+            );
+        }
+    }
+);

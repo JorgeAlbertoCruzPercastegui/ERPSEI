@@ -209,7 +209,8 @@
 <!-- --------------------------- -->
 <!-- Sección Nuevo/Editar/Ver Registro --- -->
 
-<form id="theForm" method="post">
+<form id="theForm"
+      method="post">
     <div id="dlgVacaciones" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
@@ -549,7 +550,11 @@
 </div>
 
 <!--Modal para solicitar vacaciones-->
-<form id="theFormS" method="post">
+<!--Modal para solicitar vacaciones-->
+<form id="theFormS"
+      method="post"
+      data-autosave-draft="true"
+      data-draft-key="SolicitudVacaciones">
     <div id="dlgVacacionesSolicitud" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">

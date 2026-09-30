@@ -14649,6 +14649,256 @@ document.addEventListener(
             1;
 
         // =========================================================
+        // BORRADOR LOCAL - PRODUCTOS DE ADQUISICIONES
+        // =========================================================
+
+        function obtenerClaveBorradorProductosAdq() {
+
+            const usuario =
+                document.getElementById(
+                    "intranetCurrentUser"
+                );
+
+
+            const usuarioId =
+                usuario?.dataset?.userId
+                ?? "sin-usuario";
+
+
+            const ruta =
+                window.location.pathname
+                    .toLowerCase();
+
+
+            return (
+                "ERPSEI_ADQ_PRODUCTOS_DRAFT:"
+                + usuarioId
+                + ":"
+                + ruta
+            );
+        }
+
+
+        function obtenerProductosActualesAdq() {
+
+            if (!contenedorDetalles) {
+                return [];
+            }
+
+
+            const productos = [];
+
+
+            contenedorDetalles
+                .querySelectorAll(
+                    ".adq-product-item"
+                )
+                .forEach(
+                    function (item) {
+
+                        const producto =
+                            item.querySelector(
+                                '[data-field="ProductoServicio"]'
+                            );
+
+                        const cantidad =
+                            item.querySelector(
+                                '[data-field="Cantidad"]'
+                            );
+
+                        const unidad =
+                            item.querySelector(
+                                '[data-field="Unidad"]'
+                            );
+
+                        const descripcion =
+                            item.querySelector(
+                                '[data-field="Descripcion"]'
+                            );
+
+
+                        productos.push({
+                            productoServicio:
+                                producto?.value ?? "",
+
+                            cantidad:
+                                cantidad?.value ?? "",
+
+                            unidad:
+                                unidad?.value ?? "",
+
+                            descripcion:
+                                descripcion?.value ?? ""
+                        });
+                    }
+                );
+
+
+            return productos;
+        }
+
+
+        function guardarBorradorProductosAdq() {
+
+            try {
+
+                const productos =
+                    obtenerProductosActualesAdq();
+
+
+                const clave =
+                    obtenerClaveBorradorProductosAdq();
+
+
+                if (
+                    productos.length ===
+                    0
+                ) {
+
+                    localStorage.removeItem(
+                        clave
+                    );
+
+                    return;
+                }
+
+
+                localStorage.setItem(
+                    clave,
+                    JSON.stringify({
+                        version: 1,
+                        fecha:
+                            new Date()
+                                .toISOString(),
+                        productos:
+                            productos
+                    })
+                );
+
+            } catch (error) {
+
+                console.warn(
+                    "No fue posible guardar el borrador de productos de Adquisiciones.",
+                    error
+                );
+            }
+        }
+
+
+        function restaurarBorradorProductosAdq() {
+
+            try {
+
+                if (
+                    solicitudEditarId?.value
+                ) {
+
+                    return false;
+                }
+
+
+                const clave =
+                    obtenerClaveBorradorProductosAdq();
+
+
+                const json =
+                    localStorage.getItem(
+                        clave
+                    );
+
+
+                if (!json) {
+                    return false;
+                }
+
+
+                const borrador =
+                    JSON.parse(
+                        json
+                    );
+
+
+                if (
+                    !Array.isArray(
+                        borrador?.productos
+                    )
+                    ||
+                    borrador.productos.length ===
+                    0
+                ) {
+
+                    return false;
+                }
+
+
+                limpiarProductosAdq();
+
+
+                borrador.productos.forEach(
+                    function (producto) {
+
+                        agregarProductoExistenteAdq({
+                            productoServicio:
+                                producto.productoServicio
+                                ?? "",
+
+                            cantidad:
+                                producto.cantidad
+                                ?? "1",
+
+                            unidad:
+                                producto.unidad
+                                ?? "",
+
+                            descripcion:
+                                producto.descripcion
+                                ?? ""
+                        });
+                    }
+                );
+
+
+                renumerarProductosAdq();
+
+                actualizarContadorProductosAdq();
+
+                verificarListaProductosVaciaAdq();
+
+                actualizarEstadoEnviar();
+
+
+                return true;
+
+            } catch (error) {
+
+                console.warn(
+                    "No fue posible recuperar los productos de Adquisiciones.",
+                    error
+                );
+
+                return false;
+            }
+        }
+
+
+        function eliminarBorradorProductosAdq() {
+
+            try {
+
+                localStorage.removeItem(
+                    obtenerClaveBorradorProductosAdq()
+                );
+
+            } catch (error) {
+
+                console.warn(
+                    "No fue posible eliminar el borrador de productos.",
+                    error
+                );
+            }
+        }
+
+        // =========================================================
         // UTILIDADES
         // =========================================================
 
@@ -15421,6 +15671,13 @@ document.addEventListener(
             limpiarCapturaProductoAdq();
 
             actualizarEstadoEnviar();
+
+
+            // =========================================================
+            // GUARDAR BORRADOR DE PRODUCTOS
+            // =========================================================
+
+            guardarBorradorProductosAdq();
         }
 
 
@@ -15485,7 +15742,6 @@ document.addEventListener(
 
             item.remove();
 
-
             renumerarProductosAdq();
 
             actualizarContadorProductosAdq();
@@ -15493,6 +15749,13 @@ document.addEventListener(
             verificarListaProductosVaciaAdq();
 
             actualizarEstadoEnviar();
+
+
+            // =========================================================
+            // ACTUALIZAR BORRADOR
+            // =========================================================
+
+            guardarBorradorProductosAdq();
         }
 
 
@@ -16607,40 +16870,65 @@ document.addEventListener(
             }
 
 
-            formulario.reset();
+            // =========================================================
+            // BORRADOR AUTOMÁTICO
+            // =========================================================
+
+            const conservarBorrador =
+                formulario.dataset.draftRestored ===
+                "true"
+                &&
+                !solicitudEditarId?.value;
 
 
-            if (
-                solicitudEditarId
-            ) {
+            // =========================================================
+            // SOLICITUD NUEVA SIN BORRADOR
+            // =========================================================
 
-                solicitudEditarId.value =
-                    "";
+            if (!conservarBorrador) {
 
+                formulario.reset();
+
+
+                if (
+                    solicitudEditarId
+                ) {
+
+                    solicitudEditarId.value =
+                        "";
+                }
+
+
+                limpiarProductosAdq();
+
+                limpiarArchivosAdq();
+
+                limpiarCapturaProductoAdq();
             }
 
 
-            limpiarProductosAdq();
-
-            limpiarArchivosAdq();
-
-            limpiarCapturaProductoAdq();
-
+            // =========================================================
+            // TÍTULO DEL MODAL
+            // =========================================================
 
             if (tituloModal) {
 
                 tituloModal.innerHTML = `
-                    <i class="bi bi-cart-plus me-2"></i>
-                    Nueva solicitud de compra
-                `;
-
+            <i class="bi bi-cart-plus me-2"></i>
+            Nueva solicitud de compra
+        `;
             }
 
+
+            // =========================================================
+            // BOTONES
+            // =========================================================
 
             btnGuardarCambios
                 ?.classList.add(
                     "d-none"
                 );
+
 
             btnEnviarBorrador
                 ?.classList.add(
@@ -22966,5 +23254,94 @@ document.addEventListener(
                 }
             );
 
+        // =========================================================
+        // LIMPIAR / RECUPERAR BORRADOR LOCAL - ADQUISICIONES
+        // =========================================================
+
+        if (
+            window.adqLimpiarBorradorLocal ===
+            true
+        ) {
+
+            // =====================================================
+            // BORRADOR GENERAL DEL FORMULARIO
+            // =====================================================
+
+            if (
+                window.IntranetDrafts &&
+                typeof window.IntranetDrafts.clearById ===
+                "function"
+            ) {
+
+                window.IntranetDrafts.clearById(
+                    "formNuevaSolicitudAdq"
+                );
+            }
+
+
+            // =====================================================
+            // BORRADOR DINÁMICO DE PRODUCTOS
+            // =====================================================
+
+            eliminarBorradorProductosAdq();
+
+
+            // Seguridad adicional por si el motor global
+            // todavía dejó marcada la restauración.
+
+            if (formulario) {
+
+                delete formulario.dataset.draftRestored;
+            }
+
+        }
+        else if (
+            formulario &&
+            formulario.dataset.draftRestored ===
+            "true"
+        ) {
+
+            // =====================================================
+            // RESTAURAR PRODUCTOS DINÁMICOS
+            // =====================================================
+
+            restaurarBorradorProductosAdq();
+
+
+            // =====================================================
+            // RECONSTRUIR INTERFAZ
+            // =====================================================
+
+            setTimeout(
+                function () {
+
+                    renumerarProductosAdq();
+
+                    actualizarContadorProductosAdq();
+
+                    verificarListaProductosVaciaAdq();
+
+                    actualizarEstadoEnviar();
+
+                },
+                100
+            );
+
+
+            // =====================================================
+            // MENSAJE
+            // =====================================================
+
+            if (
+                typeof showSuccess ===
+                "function"
+            ) {
+
+                showSuccess(
+                    "Borrador recuperado",
+                    "Se restauró la información de la solicitud de Adquisiciones que estabas capturando antes de que finalizara tu sesión."
+                );
+            }
+        }
     }
 );

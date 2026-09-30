@@ -3,6 +3,10 @@
 
 @{
     ViewData["Title"] = "Adquisiciones";
+
+    bool limpiarBorradorAdquisiciones =
+        TempData["LimpiarBorradorAdquisiciones"] is bool valor
+        && valor;
 }
 
 @section Styles
@@ -3877,8 +3881,10 @@
         <div class="modal-content">
 
             <form method="post"
-                  id="formNuevaSolicitudAdq"
-                  enctype="multipart/form-data">
+              id="formNuevaSolicitudAdq"
+              enctype="multipart/form-data"
+              data-autosave-draft="true"
+              data-draft-key="AdquisicionesNuevaSolicitud">
 
                 @Html.AntiForgeryToken()
 
@@ -9173,6 +9179,10 @@
             puedeTodo:
                 @Model.AbacPuedeTodo.ToString().ToLower()
         };
+
+        window.adqLimpiarBorradorLocal =
+        @limpiarBorradorAdquisiciones.ToString().ToLower();
+
     </script>
 
 

@@ -766,14 +766,46 @@ function guardarIncapacidad() {
         processData: false,
         contentType: false,
         success: function (resp) {
+
             if (!resp.tieneError) {
-                bootstrap.Modal.getInstance(document.getElementById("modalIncapacidad"))?.hide();
-                $("#formIncapacidad")[0].reset();
-                $("#inpDocumentosIncapacidad").val("");
-                $("#lblDiasIncapacidad").text("0");
+
+                if (
+                    window.IntranetDrafts &&
+                    typeof window.IntranetDrafts.clearById ===
+                    "function"
+                ) {
+                    window.IntranetDrafts.clearById(
+                        "formIncapacidad"
+                    );
+                }
+
+
+                bootstrap.Modal
+                    .getInstance(
+                        document.getElementById(
+                            "modalIncapacidad"
+                        )
+                    )
+                    ?.hide();
+
+
+                $("#formIncapacidad")[0]
+                    .reset();
+
+                $("#inpDocumentosIncapacidad")
+                    .val("");
+
+                $("#lblDiasIncapacidad")
+                    .text("0");
+
                 refrescarTablas();
             }
-            mostrarResultado(resp.tieneError, resp.mensaje);
+
+
+            mostrarResultado(
+                resp.tieneError,
+                resp.mensaje
+            );
         },
         error: function (xhr) {
             mostrarResultado(true, `Error ${xhr.status}: no fue posible guardar la incapacidad.`);
@@ -811,6 +843,16 @@ function guardarInasistencia() {
         contentType: false,
         success: function (resp) {
             if (!resp.tieneError) {
+                if (
+                    window.IntranetDrafts &&
+                    typeof window.IntranetDrafts.clearById ===
+                    "function"
+                ) {
+                    window.IntranetDrafts.clearById(
+                        "formInasistencia"
+                    );
+                }
+
                 bootstrap.Modal
                     .getInstance(document.getElementById("modalInasistencia"))
                     ?.hide();
@@ -825,7 +867,10 @@ function guardarInasistencia() {
                 refrescarTablas();
             }
 
-            mostrarResultado(resp.tieneError, resp.mensaje);
+            mostrarResultado(
+                resp.tieneError,
+                resp.mensaje
+            );
         },
         error: function (xhr) {
             mostrarResultado(
@@ -866,6 +911,15 @@ function guardarPermiso() {
         contentType: false,
         success: function (resp) {
             if (!resp.tieneError) {
+                if (
+                    window.IntranetDrafts &&
+                    typeof window.IntranetDrafts.clearById ===
+                    "function"
+                ) {
+                    window.IntranetDrafts.clearById(
+                        "formPermiso"
+                    );
+                }
                 bootstrap.Modal.getInstance(document.getElementById("modalPermiso"))?.hide();
                 $("#formPermiso")[0].reset();
                 $("#inpDocumentosPermiso").val("");
@@ -877,6 +931,7 @@ function guardarPermiso() {
                 $(".campo-dias-permiso").show();
                 refrescarTablas();
             }
+
             mostrarResultado(resp.tieneError, resp.mensaje);
         },
         error: function (xhr) {
@@ -914,23 +969,61 @@ function solicitarPermiso() {
         processData: false,
         contentType: false,
         success: function (resp) {
-            if (!resp.tieneError) {
-                bootstrap.Modal.getInstance(document.getElementById("modalSolicitarPermiso"))?.hide();
-                $("#formSolicitarPermiso")[0].reset();
 
-                if ($("#inpDocumentosSolicitudPermiso").length) {
-                    $("#inpDocumentosSolicitudPermiso").val("");
+            if (!resp.tieneError) {
+
+                if (
+                    window.IntranetDrafts &&
+                    typeof window.IntranetDrafts.clearById ===
+                    "function"
+                ) {
+                    window.IntranetDrafts.clearById(
+                        "formSolicitarPermiso"
+                    );
                 }
+
+
+                bootstrap.Modal
+                    .getInstance(
+                        document.getElementById(
+                            "modalSolicitarPermiso"
+                        )
+                    )
+                    ?.hide();
+
+
+                $("#formSolicitarPermiso")[0]
+                    .reset();
+
+
+                if (
+                    $("#inpDocumentosSolicitudPermiso")
+                        .length
+                ) {
+
+                    $("#inpDocumentosSolicitudPermiso")
+                        .val("");
+                }
+
 
                 $("#lblResumenSolicitudPermiso")
                     .text(
                         "Estás solicitando 0 días de permiso"
                     );
-                $(".campo-horas-solicitud").show();
+
+
+                $(".campo-horas-solicitud")
+                    .show();
+
+
                 refrescarTablas();
             }
 
-            mostrarResultado(resp.tieneError, resp.mensaje);
+
+            mostrarResultado(
+                resp.tieneError,
+                resp.mensaje
+            );
         },
         error: function (xhr) {
             mostrarResultado(true, `Error ${xhr.status}: no fue posible solicitar el permiso.`);
@@ -1260,4 +1353,226 @@ function validarComentario(selector) {
     }
 
     return true;
+}
+
+// =========================================================
+// BORRADOR AUTOMÁTICO - AUSENCIAS
+// =========================================================
+
+document.addEventListener(
+    "erpsei:draft-restored",
+
+    function (event) {
+
+        const form =
+            event.detail?.form;
+
+        if (!form)
+            return;
+
+
+        // =========================================
+        // INASISTENCIA
+        // =========================================
+
+        if (
+            form.id ===
+            "formInasistencia"
+        ) {
+
+            calcularDias(
+                "#inpInasistenciaFechaInicio",
+                "#inpInasistenciaFechaFin",
+                "#inpInasistenciaDias",
+                "#lblDiasInasistencia"
+            );
+
+
+            actualizarContadorComentarioBorrador(
+                "#txtComentarioInasistencia"
+            );
+
+
+            mostrarMensajeBorradorAusencias(
+                "Inasistencia"
+            );
+
+            return;
+        }
+
+
+        // =========================================
+        // INCAPACIDAD
+        // =========================================
+
+        if (
+            form.id ===
+            "formIncapacidad"
+        ) {
+
+            calcularDias(
+                "#inpIncapacidadFechaInicio",
+                "#inpIncapacidadFechaFin",
+                "#inpDiasIncapacidad",
+                "#lblDiasIncapacidad"
+            );
+
+
+            actualizarContadorComentarioBorrador(
+                "#txtComentarioIncapacidad"
+            );
+
+
+            mostrarMensajeBorradorAusencias(
+                "Incapacidad"
+            );
+
+            return;
+        }
+
+
+        // =========================================
+        // REGISTRAR PERMISO
+        // =========================================
+
+        if (
+            form.id ===
+            "formPermiso"
+        ) {
+
+            setTimeout(
+                function () {
+
+                    alternarCamposPermiso(
+                        $("#selTipoAusenciaPermiso")
+                            .val(),
+                        false
+                    );
+
+
+                    actualizarResumenPermiso();
+
+
+                    actualizarContadorComentarioBorrador(
+                        "#txtComentarioPermiso"
+                    );
+
+                },
+                300
+            );
+
+
+            mostrarMensajeBorradorAusencias(
+                "Permiso"
+            );
+
+            return;
+        }
+
+
+        // =========================================
+        // SOLICITAR PERMISO
+        // =========================================
+
+        if (
+            form.id ===
+            "formSolicitarPermiso"
+        ) {
+
+            setTimeout(
+                function () {
+
+                    alternarCamposPermiso(
+                        $("#selTipoAusenciaSolicitud")
+                            .val(),
+                        true
+                    );
+
+
+                    actualizarResumenSolicitudPermiso();
+
+
+                    actualizarContadorComentarioBorrador(
+                        "#txtComentarioSolicitudPermiso"
+                    );
+
+                },
+                300
+            );
+
+
+            mostrarMensajeBorradorAusencias(
+                "Solicitud de permiso"
+            );
+        }
+    }
+);
+
+
+// =========================================================
+// MENSAJE DE BORRADOR RECUPERADO
+// =========================================================
+
+function mostrarMensajeBorradorAusencias(
+    tipo
+) {
+
+    if (
+        typeof showSuccess ===
+        "function"
+    ) {
+
+        showSuccess(
+            "Borrador recuperado",
+            `Se restauró la información de ${tipo.toLowerCase()} que estabas capturando antes de que finalizara tu sesión.`
+        );
+
+        return;
+    }
+
+
+    console.log(
+        `Borrador recuperado: ${tipo}`
+    );
+}
+
+
+// =========================================================
+// ACTUALIZAR CONTADOR DEL COMENTARIO RESTAURADO
+// =========================================================
+
+function actualizarContadorComentarioBorrador(
+    selector
+) {
+
+    const textarea =
+        document.querySelector(
+            selector
+        );
+
+    if (!textarea)
+        return;
+
+
+    const contenedor =
+        textarea.closest(
+            ".comentario-ausencia-container"
+        );
+
+
+    if (!contenedor)
+        return;
+
+
+    const contador =
+        contenedor.querySelector(
+            ".contador-actual"
+        );
+
+
+    if (contador) {
+
+        contador.textContent =
+            textarea.value.length;
+    }
 }

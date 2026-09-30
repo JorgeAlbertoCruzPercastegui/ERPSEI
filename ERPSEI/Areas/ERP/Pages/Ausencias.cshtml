@@ -126,7 +126,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formInasistencia" method="post">
+                <form id="formInasistencia"
+                      method="post"
+                      data-autosave-draft="true"
+                      data-draft-key="AusenciaInasistencia">
                     @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
@@ -217,7 +220,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formIncapacidad" method="post">
+                <form id="formIncapacidad"
+                      method="post"
+                      data-autosave-draft="true"
+                      data-draft-key="AusenciaIncapacidad">
                     @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
@@ -326,7 +332,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formPermiso" method="post">
+                <form id="formPermiso"
+                      method="post"
+                      data-autosave-draft="true"
+                      data-draft-key="AusenciaPermiso">
                     @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">
@@ -454,7 +463,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <form id="formSolicitarPermiso" method="post">
+                <form id="formSolicitarPermiso"
+                      method="post"
+                      data-autosave-draft="true"
+                      data-draft-key="SolicitudPermiso">
                     @Html.AntiForgeryToken()
                     <div class="row">
                         <div class="col-md-6">

@@ -461,42 +461,126 @@ function initEmpresaDialog(action, row) {
 
     summaryContainer.innerHTML = "";
     dialogMode = action;
+
     idField.setAttribute("disabled", true);
-    idField.value = row.id;
+
+    // =====================================================
+    // BORRADOR AUTOMÁTICO
+    // =====================================================
+
+    const formEmpresa =
+        document.getElementById("theForm");
+
+    const conservarBorrador =
+        action === NUEVO &&
+        formEmpresa &&
+        formEmpresa.dataset.draftRestored === "true";
+
+
+    // Solamente establecemos el ID normal
+    // cuando NO estamos recuperando una empresa nueva.
+    if (!conservarBorrador) {
+        idField.value = row.id;
+    }
 
     if (tieneAccesoEmpresas) {
-        razonSocialField.value = row.razonSocial;
-        origenField.value = row.origenId;
-        nivelField.value = row.nivelId;
-        fechaConstitucionField.value = row.fechaConstitucionJS;
-        fechaInicioOperacionField.value = row.fechaInicioOperacionJS;
-        fechaInicioFacturacionField.value = row.fechaInicioFacturacionJS;
-        fechaInicioAsimiladosField.value = row.fechaInicioAsimiladosJS;
-        rfcField.value = row.rfc;
-        domicilioFiscalField.value = row.domicilioFiscal;
-        administradorField.value = row.administrador;
-        accionistaField.value = row.accionista;
-        correoGeneralField.value = row.correoGeneral;
-        correoBancosField.value = row.correoBancos;
-        correoFiscalField.value = row.correoFiscal;
-        correoFacturacionField.value = row.correoFacturacion;
-        telefonoField.value = row.telefono;
-        objetoSocialField.value = row.objetoSocial;
-        perfilField.value = row.perfilId;
+
+        // =====================================================
+        // NO SOBRESCRIBIR BORRADOR DE EMPRESA NUEVA
+        // =====================================================
+
+        if (!conservarBorrador) {
+
+            razonSocialField.value =
+                row.razonSocial ?? "";
+
+            origenField.value =
+                row.origenId ?? 0;
+
+            nivelField.value =
+                row.nivelId ?? 0;
+
+            fechaConstitucionField.value =
+                row.fechaConstitucionJS ?? "";
+
+            fechaInicioOperacionField.value =
+                row.fechaInicioOperacionJS ?? "";
+
+            fechaInicioFacturacionField.value =
+                row.fechaInicioFacturacionJS ?? "";
+
+            fechaInicioAsimiladosField.value =
+                row.fechaInicioAsimiladosJS ?? "";
+
+            rfcField.value =
+                row.rfc ?? "";
+
+            domicilioFiscalField.value =
+                row.domicilioFiscal ?? "";
+
+            administradorField.value =
+                row.administrador ?? "";
+
+            accionistaField.value =
+                row.accionista ?? "";
+
+            correoGeneralField.value =
+                row.correoGeneral ?? "";
+
+            correoBancosField.value =
+                row.correoBancos ?? "";
+
+            correoFiscalField.value =
+                row.correoFiscal ?? "";
+
+            correoFacturacionField.value =
+                row.correoFacturacion ?? "";
+
+            telefonoField.value =
+                row.telefono ?? "";
+
+            objetoSocialField.value =
+                row.objetoSocial ?? "";
+
+            perfilField.value =
+                row.perfilId ?? 0;
+        }
+
+
+        // =====================================================
+        // LAS CONTRASEÑAS NUNCA SE RECUPERAN
+        // =====================================================
+
         oldPasswordField.value = "";
         newPasswordField.value = "";
         confirmNewPasswordField.value = "";
+
+
         if (row.hasPasswordSAT == "True") {
-            $("#divChangePasswordSAT").show();
-            $("#divPasswordSAT").hide();
 
-            $("#inpEmpresaArchivosSATOldPassword").parent().parent().show();
-        }
-        else {
-            $("#divChangePasswordSAT").hide();
-            $("#divPasswordSAT").show();
+            $("#divChangePasswordSAT")
+                .show();
 
-            $("#inpEmpresaArchivosSATOldPassword").parent().parent().hide();
+            $("#divPasswordSAT")
+                .hide();
+
+            $("#inpEmpresaArchivosSATOldPassword")
+                .parent()
+                .parent()
+                .show();
+
+        } else {
+
+            $("#divChangePasswordSAT")
+                .hide();
+
+            $("#divPasswordSAT")
+                .show();
+
+            $("#inpEmpresaArchivosSATOldPassword")
+                .parent()
+                .parent()
+                .hide();
         }
     }
 
@@ -1197,6 +1281,20 @@ function onGuardarClick() {
                 return;
             }
 
+            // =====================================================
+            // BORRAR BORRADOR DESPUÉS DEL GUARDADO EXITOSO
+            // =====================================================
+
+            if (
+                window.IntranetDrafts &&
+                typeof window.IntranetDrafts.clearById ===
+                "function"
+            ) {
+                window.IntranetDrafts.clearById(
+                    "theForm"
+                );
+            }
+
             btnClose.click();
 
             onBuscarClick();
@@ -1444,4 +1542,51 @@ function onExcelSelectorChanged(input) {
         }
     }
 }
-////////////////////////////////
+// =========================================================
+// BORRADOR AUTOMÁTICO - EMPRESAS
+// =========================================================
+
+document.addEventListener(
+    "erpsei:draft-restored",
+
+    function (event) {
+
+        const form =
+            event.detail?.form;
+
+        if (
+            !form ||
+            form.id !== "theForm"
+        ) {
+            return;
+        }
+
+
+        // Ajustamos nuevamente los textarea
+        // porque pudieron recuperar contenido.
+        setTimeout(
+            function () {
+
+                calculateTextAreaHeight(
+                    document.querySelectorAll(
+                        "#theForm textarea"
+                    )
+                );
+
+            },
+            100
+        );
+
+
+        if (
+            typeof showSuccess ===
+            "function"
+        ) {
+
+            showSuccess(
+                "Borrador recuperado",
+                "Se restauró la información de la empresa que estabas capturando antes de que finalizara tu sesión."
+            );
+        }
+    }
+);

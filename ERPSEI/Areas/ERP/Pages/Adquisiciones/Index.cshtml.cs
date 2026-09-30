@@ -10210,6 +10210,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 TempData["MensajeExito"] =
                     "La solicitud se guardó como borrador correctamente.";
 
+                TempData["LimpiarBorradorAdquisiciones"] = true;
+
 
                 return RedirectToPage();
             }
@@ -10363,6 +10365,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                 TempData["MensajeExito"] =
                     "La solicitud se envió correctamente para aprobación.";
+
+                TempData["LimpiarBorradorAdquisiciones"] = true;
 
 
                 return RedirectToPage();
@@ -10669,6 +10673,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                 TempData["MensajeExito"] =
                     "La solicitud se actualizó correctamente.";
+
+                TempData["LimpiarBorradorAdquisiciones"] = true;
 
 
                 return RedirectToPage();
@@ -11031,6 +11037,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                 TempData["MensajeExito"] =
                     "La solicitud fue enviada correctamente para aprobación del gerente.";
+
+                TempData["LimpiarBorradorAdquisiciones"] = true;
 
 
                 return RedirectToPage();

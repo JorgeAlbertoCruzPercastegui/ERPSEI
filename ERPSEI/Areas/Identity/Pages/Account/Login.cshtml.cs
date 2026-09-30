@@ -204,6 +204,11 @@ namespace ERPSEI.Areas.Identity.Pages.Account
 
                             await _db.SaveChangesAsync();
 
+                            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                            {
+                                return LocalRedirect(returnUrl);
+                            }
+
                             return LocalRedirect("/");
                         }
                     }

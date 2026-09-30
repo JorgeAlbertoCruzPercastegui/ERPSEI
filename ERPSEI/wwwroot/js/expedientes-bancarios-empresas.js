@@ -2736,7 +2736,30 @@ function abrirModalCrearEmpresa() {
 
     modoEmpresa = "crear";
 
-    limpiarFormularioEmpresa();
+    // =========================================================
+    // BORRADOR AUTOMÁTICO - COMPLIANCE
+    // =========================================================
+
+    const formulario =
+        document.getElementById(
+            "formEmpresa"
+        );
+
+    const conservarBorrador =
+        formulario &&
+        formulario.dataset.draftRestored ===
+        "true";
+
+
+    // Solamente limpiar cuando realmente sea
+    // una captura nueva sin borrador recuperado.
+    if (!conservarBorrador) {
+
+        limpiarFormularioEmpresa();
+    }
+
+
+    // Siempre habilitamos los campos para creación.
     habilitarFormularioEmpresa(true);
 
     const titulo = document.getElementById(
@@ -2986,6 +3009,21 @@ async function guardarEmpresa() {
             }
 
             return;
+        }
+
+        // =========================================================
+        // BORRAR BORRADOR DESPUÉS DEL GUARDADO EXITOSO
+        // =========================================================
+
+        if (
+            window.IntranetDrafts &&
+            typeof window.IntranetDrafts.clearById ===
+            "function"
+        ) {
+
+            window.IntranetDrafts.clearById(
+                "formEmpresa"
+            );
         }
 
         modalEmpresa.hide();
@@ -7050,3 +7088,49 @@ function mostrarErrorDocumentos(mensaje) {
 
     alerta?.classList.remove("d-none");
 }
+
+// =========================================================
+// BORRADOR AUTOMÁTICO - COMPLIANCE
+// =========================================================
+
+document.addEventListener(
+    "erpsei:draft-restored",
+    function (event) {
+
+        const formulario =
+            event.detail?.form;
+
+
+        if (
+            !formulario ||
+            formulario.id !==
+            "formEmpresa"
+        ) {
+
+            return;
+        }
+
+
+        // =====================================================
+        // SOLAMENTE INFORMAR AL USUARIO
+        // =====================================================
+
+        if (
+            typeof showSuccess ===
+            "function"
+        ) {
+
+            showSuccess(
+                "Borrador recuperado",
+                "Se restauró la información de la empresa de Compliance que estabas capturando antes de que finalizara tu sesión."
+            );
+
+            return;
+        }
+
+
+        console.log(
+            "Borrador de Compliance recuperado."
+        );
+    }
+);

@@ -690,6 +690,14 @@
 
     <body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme") @(ViewData["BodyClass"] ?? "")">
 
+    @if (SignInManager.IsSignedIn(User) && usr != null)
+    {
+        <div id="intranetCurrentUser"
+             data-user-id="@usr.Id"
+             style="display:none;">
+        </div>
+    }
+
         <div id="layoutWrapper">
     <header>
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light header-bg shadow-none border-0 @(headerEsVideo ? "header-bg-video-mode" : "")"
@@ -1372,6 +1380,9 @@
     <script src="@Context.Request.Scheme://@Context.Request.Host/js/MessageDialog.js"></script>
     <script src="@Context.Request.Scheme://@Context.Request.Host/js/Utilities.js"></script>
     <script src="@Context.Request.Scheme://@Context.Request.Host/js/site.js" asp-append-version="true"></script>
+    <script src="@Context.Request.Scheme://@Context.Request.Host/js/IntranetDrafts.js"
+            asp-append-version="true">
+    </script>
 
     <script type="text/javascript">
         function OnSubmenuClick() {
@@ -1621,6 +1632,22 @@
             if (sesionExpiradaMostrada)
             return;
 
+
+            // ================================================
+            // GUARDAR BORRADORES ANTES DE CERRAR SESIÓN
+            // ================================================
+
+            if (
+            window.IntranetDrafts &&
+            typeof window.IntranetDrafts.saveAll ===
+            "function"
+            ) {
+
+            window.IntranetDrafts
+            .saveAll();
+            }
+
+
             try {
 
             await fetch(
@@ -1628,8 +1655,10 @@
             {
             method: "POST",
             credentials: "same-origin",
+
             headers: {
-            "Accept": "application/json"
+            "Accept":
+            "application/json"
             }
             }
             );
@@ -1641,6 +1670,7 @@
             error
             );
             }
+
 
             mostrarSesionExpirada();
             }
@@ -1656,8 +1686,8 @@
             document.getElementById("modalSesionExpirada");
 
             if (!modalElement) {
-            window.location.href =
-            "/Identity/Account/Login?sesionExpirada=true";
+
+            irAlLoginSesionExpirada();
 
             return;
             }
@@ -1670,8 +1700,30 @@
 
             function irAlLoginSesionExpirada() {
 
+            if (
+            window.IntranetDrafts &&
+            typeof window.IntranetDrafts.saveAll ===
+            "function"
+            ) {
+
+            window.IntranetDrafts
+            .saveAll();
+            }
+
+
+            const returnUrl =
+            window.location.pathname +
+            window.location.search +
+            window.location.hash;
+
+
             window.location.href =
-            "/Identity/Account/Login?sesionExpirada=true";
+            "/Identity/Account/Login" +
+            "?sesionExpirada=true" +
+            "&returnUrl=" +
+            encodeURIComponent(
+            returnUrl
+            );
             }
 
             async function mantenerSesionActiva() {
