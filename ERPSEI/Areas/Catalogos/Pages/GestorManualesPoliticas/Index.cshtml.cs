@@ -462,6 +462,30 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 
             string tipo = documento.Tipo ?? "Documento";
 
+            string articuloPublicacion =
+                tipo.Equals(
+                    "Manual",
+                    StringComparison.OrdinalIgnoreCase
+                ) ||
+                tipo.Equals(
+                    "Reglamento",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "Nuevo"
+                    : "Nueva";
+
+            string textoPublicado =
+                tipo.Equals(
+                    "Manual",
+                    StringComparison.OrdinalIgnoreCase
+                ) ||
+                tipo.Equals(
+                    "Reglamento",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "publicado"
+                    : "publicada";
+
             string url = Url.Page(
                 "/ManualesPoliticas",
                 pageHandler: null,
@@ -471,16 +495,43 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
 
             var notificacion = new NotificacionIntranet
             {
-                Titulo = $"Nuevo {tipo} publicado",
+                Titulo = $"{articuloPublicacion} {tipo} {textoPublicado}",
                 Descripcion = documento.Titulo,
                 Tipo = tipo,
                 Modulo = "Manuales / Políticas / Reglamentos",
                 Url = "/ManualesPoliticas",
-                Icono = tipo.Equals("Manual", StringComparison.OrdinalIgnoreCase)
+                Icono =
+                tipo.Equals(
+                    "Manual",
+                    StringComparison.OrdinalIgnoreCase
+                )
                     ? "bi bi-journal-bookmark-fill"
-                    : tipo.Equals("Politica", StringComparison.OrdinalIgnoreCase)
-                        ? "bi bi-shield-check"
-                        : "bi bi-file-earmark-text-fill",
+
+                : tipo.Equals(
+                    "Politica",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "bi bi-shield-check"
+
+                : tipo.Equals(
+                    "Reglamento",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "bi bi-file-earmark-text-fill"
+
+                : tipo.Equals(
+                    "Minuta",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "bi bi-card-checklist"
+
+                : tipo.Equals(
+                    "Poliza",
+                    StringComparison.OrdinalIgnoreCase
+                )
+                    ? "bi bi-file-earmark-lock-fill"
+
+                : "bi bi-file-earmark-fill",
                 FechaPublicacion = DateTime.Now,
                 Activa = true,
                 UserIdCreador = _userManager.GetUserId(User)
@@ -502,7 +553,9 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
             string cuerpo = $@"
         <div style='font-family:Arial,sans-serif;color:#1f1466;'>
             <div style='background:#1f1466;padding:18px 22px;border-radius:14px 14px 0 0;color:#ffffff;'>
-                <h2 style='margin:0;font-size:22px;'>Nuevo {tipo} publicado</h2>
+                <h2 style='margin:0;font-size:22px;'>
+                    {articuloPublicacion} {tipo} {textoPublicado}
+                </h2>
             </div>
 
             <div style='border:1px solid #e5e7eb;border-top:0;padding:24px;border-radius:0 0 14px 14px;background:#ffffff;'>
@@ -547,7 +600,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.GestorManualesPoliticas
             {
                 await _emailSender.SendEmailAsync(
                     correo,
-                    $"Nuevo {tipo} publicado - Intranet SEI",
+                    $"{articuloPublicacion} {tipo} {textoPublicado} - Intranet SEI",
                     cuerpo
                 );
             }

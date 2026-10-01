@@ -13,7 +13,7 @@
     <div class="module-shell">
 
         <div class="module-header mb-4">
-            <h2 class="module-title mb-1">Manuales, Políticas y Reglamentos</h2>
+            <h2 class="module-title mb-1">Biblioteca Corporativa</h2>
             <p class="module-subtitle mb-0">
                 Consulta los materiales activos publicados en la intranet.
             </p>
@@ -45,6 +45,20 @@
                asp-page="/ManualesPoliticas"
                asp-route-Tipo="Reglamento">
                 Reglamentos (@Model.TotalReglamentos)
+            </a>
+
+            <a class="mp-tab @(string.Equals(Model.Tipo, "Minuta", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                   asp-area=""
+                   asp-page="/ManualesPoliticas"
+                   asp-route-Tipo="Minuta">
+                Minutas (@Model.TotalMinutas)
+            </a>
+
+            <a class="mp-tab @(string.Equals(Model.Tipo, "Poliza", StringComparison.OrdinalIgnoreCase) ? "active" : "")"
+                   asp-area=""
+                   asp-page="/ManualesPoliticas"
+                   asp-route-Tipo="Poliza">
+                Pólizas (@Model.TotalPolizas)
             </a>
         </div>
 

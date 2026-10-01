@@ -32,6 +32,8 @@ namespace ERPSEI.Pages
         public int TotalPoliticas { get; set; }
         public int TotalReglamentos { get; set; }
         public int TotalTodos { get; set; }
+        public int TotalMinutas { get; set; }
+        public int TotalPolizas { get; set; }
 
         public async Task OnGetAsync()
         {
@@ -73,6 +75,14 @@ namespace ERPSEI.Pages
 
             TotalReglamentos = await baseQuery.CountAsync(x =>
                 x.Tipo != null && x.Tipo.ToLower() == "reglamento");
+
+            TotalMinutas = await baseQuery.CountAsync(x =>
+                x.Tipo != null &&
+                x.Tipo.ToLower() == "minuta");
+
+            TotalPolizas = await baseQuery.CountAsync(x =>
+                x.Tipo != null &&
+                x.Tipo.ToLower() == "poliza");
 
             IQueryable<ManualPoliticaIntranet> query = baseQuery;
 
