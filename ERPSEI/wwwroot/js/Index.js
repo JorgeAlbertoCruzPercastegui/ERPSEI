@@ -12,6 +12,7 @@ document.addEventListener(
             window.adqAbac
             ??
             {
+                esAdministradorSistema: false,
                 puedeVisualizar: false,
                 puedeCrear: false,
                 puedeEditar: false,
@@ -19,6 +20,13 @@ document.addEventListener(
                 puedeDescargar: false,
                 puedeTodo: false
             };
+
+
+        const esAdministradorSistemaAdq =
+            Boolean(
+                permisosAbacAdq
+                    .esAdministradorSistema
+            );
 
         // =========================================================
         // MENSAJES DE PERMISOS ABAC
@@ -17493,6 +17501,17 @@ document.addEventListener(
                     // ACCIONES DISPONIBLES DESDE EL DETALLE
                     // =========================================================
 
+                    /*
+                     * IMPORTANTE:
+                     *
+                     * El Administrador tiene acceso total mediante ABAC,
+                     * pero las acciones siguen dependiendo del estado
+                     * actual de la solicitud.
+                     *
+                     * No se deben mostrar acciones incompatibles con
+                     * el flujo solamente por ser Administrador.
+                     */
+
                     btnEditarDesdeDetalle
                         ?.classList.add(
                             "d-none"
@@ -17526,10 +17545,7 @@ document.addEventListener(
                      * Borrador:
                      * editar + cancelar + enviar.
                      */
-                    /*
- * Borrador:
- * editar + cancelar + enviar.
- */
+                    
                     if (
                         solicitud.estatusId ===
                         1
@@ -18673,7 +18689,7 @@ document.addEventListener(
             );
 
         // =========================================================
-        // FILTROS + PAGINACIÓN - MIS SOLICITUDES
+        // FILTROS + PAGINACIÓN - SOLICITUDES
         // =========================================================
 
         function aplicarFiltros(

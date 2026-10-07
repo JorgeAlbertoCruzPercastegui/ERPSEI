@@ -26,5 +26,16 @@ namespace ERPSEI.Services.Adquisiciones
             string nombreAprobador,
             IEnumerable<EmailAttachment>? adjuntos = null
         );
+
+        Task NotificarSolicitudPendienteGerenteAsync(
+            int solicitudId,
+            string usuarioGerenteId
+        );
+
+
+        Task NotificarSolicitudAprobadaPorGerenteAsync(
+            int solicitudId,
+            string nombreGerente
+        );
     }
 }

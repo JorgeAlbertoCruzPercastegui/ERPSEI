@@ -4793,18 +4793,25 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // =====================================================
             // SOLO SOLICITANTE ORIGINAL
             // =====================================================
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
 
             if (
+                !esAdministradorSistema
+                &&
                 solicitud.UsuarioSolicitanteId !=
-                usuarioActual.Id
+                    usuarioActual.Id
             )
             {
                 return new JsonResult(
                     new
                     {
                         success = false,
+
                         message =
-                            "Solamente el solicitante original puede generar la solicitud de pago."
+                            "Solamente el solicitante original o un Administrador puede generar la solicitud de pago."
                     }
                 )
                 {
@@ -10404,6 +10411,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostEditarSolicitudAsync()
         {
+
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -10481,9 +10494,15 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .FirstOrDefaultAsync(
                         x =>
                             x.Id ==
-                                SolicitudEditarId.Value &&
-                            x.UsuarioSolicitanteId ==
-                                usuarioActual.Id &&
+                                SolicitudEditarId.Value
+                            &&
+                            (
+                                esAdministradorSistema
+                                ||
+                                x.UsuarioSolicitanteId ==
+                                    usuarioActual.Id
+                            )
+                            &&
                             !x.Eliminado
                     );
 
@@ -10716,6 +10735,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostEnviarBorradorAsync()
         {
+
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -10784,8 +10809,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             x.Id ==
                                 SolicitudEditarId.Value
                             &&
-                            x.UsuarioSolicitanteId ==
-                                usuarioActual.Id
+                            (
+                                esAdministradorSistema
+                                ||
+                                x.UsuarioSolicitanteId ==
+                                    usuarioActual.Id
+                            )
                             &&
                             !x.Eliminado
                     );
@@ -10806,10 +10835,29 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            Empleado? empleado =
-                await ObtenerEmpleadoActualAsync(
-                    usuarioActual
-                );
+            Empleado? empleado;
+
+
+            if (esAdministradorSistema)
+            {
+                empleado =
+                    await _context.Empleados
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                    solicitud.EmpleadoSolicitanteId
+                                &&
+                                x.Deshabilitado == 0
+                        );
+            }
+            else
+            {
+                empleado =
+                    await ObtenerEmpleadoActualAsync(
+                        usuarioActual
+                    );
+            }
 
 
             if (empleado == null)
@@ -11034,6 +11082,27 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 await transaccion
                     .CommitAsync();
 
+                // =========================================================
+                // CORREO AL JEFE DIRECTO
+                // =========================================================
+
+                try
+                {
+                    await _adquisicionesEmailService
+                        .NotificarSolicitudPendienteGerenteAsync(
+                            solicitud.Id,
+                            jefe.UserId!
+                        );
+                }
+                catch (Exception exCorreo)
+                {
+                    _logger.LogError(
+                        exCorreo,
+                        "El borrador {SolicitudId} fue enviado correctamente, pero no fue posible enviar el correo al jefe directo.",
+                        solicitud.Id
+                    );
+                }
+
 
                 TempData["MensajeExito"] =
                     "La solicitud fue enviada correctamente para aprobación del gerente.";
@@ -11080,6 +11149,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return Challenge();
             }
 
+            bool esAdministradorSistema =
+            User.IsInRole(
+                "Administrador"
+            );
+
 
             string comentario =
                 ComentarioDecision?
@@ -11106,8 +11180,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 x.SolicitudId ==
                                     SolicitudDecisionId
                                 &&
-                                x.UsuarioAprobadorId ==
-                                    usuarioActual.Id
+                                (
+                                    esAdministradorSistema
+                                    ||
+                                    x.UsuarioAprobadorId ==
+                                        usuarioActual.Id
+                                )
                                 &&
                                 x.TipoAprobacion ==
                                     "GerenteArea"
@@ -11265,6 +11343,35 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 await transaccion
                     .CommitAsync();
 
+                // =========================================================
+                // CORREO AL SOLICITANTE
+                // =========================================================
+
+                try
+                {
+                    string nombreGerente =
+                        usuarioActual.UserName
+                        ??
+                        usuarioActual.Email
+                        ??
+                        "Jefe directo";
+
+
+                    await _adquisicionesEmailService
+                        .NotificarSolicitudAprobadaPorGerenteAsync(
+                            solicitud.Id,
+                            nombreGerente
+                        );
+                }
+                catch (Exception exCorreo)
+                {
+                    _logger.LogError(
+                        exCorreo,
+                        "La solicitud {SolicitudId} fue aprobada correctamente por el gerente, pero no fue posible enviar el correo al solicitante.",
+                        solicitud.Id
+                    );
+                }
+
 
                 TempData["MensajeExito"] =
                     "La solicitud fue aprobada y enviada al área de Adquisiciones.";
@@ -11300,6 +11407,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostRechazarGerenteAsync()
         {
+
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -11357,8 +11470,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                 x.SolicitudId ==
                                     SolicitudDecisionId
                                 &&
-                                x.UsuarioAprobadorId ==
-                                    usuarioActual.Id
+                                (
+                                    esAdministradorSistema
+                                    ||
+                                    x.UsuarioAprobadorId ==
+                                        usuarioActual.Id
+                                )
                                 &&
                                 x.TipoAprobacion ==
                                     "GerenteArea"
@@ -18007,6 +18124,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostCancelarSolicitudUsuarioAsync()
         {
+
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -18056,8 +18179,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             x.Id ==
                                 SolicitudCancelarUsuarioId
                             &&
-                            x.UsuarioSolicitanteId ==
-                                usuarioActual.Id
+                            (
+                                esAdministradorSistema
+                                ||
+                                x.UsuarioSolicitanteId ==
+                                    usuarioActual.Id
+                            )
                             &&
                             !x.Eliminado
                     );
@@ -18117,8 +18244,13 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                     x.TipoAprobacion ==
                                         "GerenteArea"
                                     &&
-                                    x.Estatus ==
-                                        "EnRevision"
+                                    (
+                                        x.Estatus ==
+                                            "Pendiente"
+                                        ||
+                                        x.Estatus ==
+                                            "EnRevision"
+                                    )
                             )
                             .ToListAsync();
 
@@ -18234,6 +18366,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .BeginTransactionAsync(
                         IsolationLevel.Serializable
                     );
+
+
+            string? usuarioJefeNotificarId =
+                null;
 
 
             try
@@ -18431,6 +18567,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         );
                     }
 
+                    usuarioJefeNotificarId = jefe.UserId;
+
                     // =====================================================
                     // NOTIFICAR AL JEFE DIRECTO
                     // =====================================================
@@ -18482,6 +18620,36 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                 await transaccion
                     .CommitAsync();
+
+                // =========================================================
+                // CORREO AL JEFE DIRECTO
+                // =========================================================
+
+                if (
+                    enviar
+                    &&
+                    !string.IsNullOrWhiteSpace(
+                        usuarioJefeNotificarId
+                    )
+                )
+                {
+                    try
+                    {
+                        await _adquisicionesEmailService
+                            .NotificarSolicitudPendienteGerenteAsync(
+                                solicitud.Id,
+                                usuarioJefeNotificarId
+                            );
+                    }
+                    catch (Exception exCorreo)
+                    {
+                        _logger.LogError(
+                            exCorreo,
+                            "La solicitud {SolicitudId} fue creada y enviada correctamente, pero no fue posible enviar el correo al jefe directo.",
+                            solicitud.Id
+                        );
+                    }
+                }
             }
             catch
             {
@@ -22392,9 +22560,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // SOLICITUDES
         // =========================================================
 
-        private async Task CargarSolicitudesAsync(
-            AppUser usuarioActual)
+        private async Task CargarSolicitudesAsync(AppUser usuarioActual)
         {
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
+
             Solicitudes =
                 await _context.AdqSolicitudes
                     .AsNoTracking()
@@ -22406,9 +22579,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     )
                     .Where(
                         x =>
-                            x.UsuarioSolicitanteId ==
-                                usuarioActual.Id &&
                             !x.Eliminado
+                            &&
+                            (
+                                esAdministradorSistema
+                                ||
+                                x.UsuarioSolicitanteId ==
+                                    usuarioActual.Id
+                            )
                     )
                     .OrderByDescending(
                         x =>
@@ -22424,6 +22602,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         private async Task CargarSolicitudesPorAprobarAsync(
             AppUser usuarioActual)
         {
+
+            bool esAdministradorSistema =
+            User.IsInRole(
+                "Administrador"
+            );
+
             SolicitudesPorAprobar =
                 await (
                     from aprobacion
@@ -22443,8 +22627,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         equals area.Id
 
                     where
-                        aprobacion.UsuarioAprobadorId ==
-                            usuarioActual.Id
+                        (
+                            esAdministradorSistema
+                            ||
+                            aprobacion.UsuarioAprobadorId ==
+                                usuarioActual.Id
+                        )
                         &&
                         aprobacion.TipoAprobacion ==
                             "GerenteArea"

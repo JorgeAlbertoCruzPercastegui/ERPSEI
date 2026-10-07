@@ -5729,3 +5729,50 @@ td {
             min-width: 900px;
         }
 }
+
+#modalSolicitudPagoAdq .adq-payment-modal {
+    border: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 26px 70px rgba(33, 22, 111, .24);
+}
+
+#modalSolicitudPagoAdq .adq-payment-modal-header {
+    background: linear-gradient( 135deg, #21166f 0%, #3c2ca3 100% );
+    color: #fff;
+    border-bottom: 0;
+    padding: 1.25rem 1.5rem;
+}
+
+    #modalSolicitudPagoAdq .adq-payment-modal-header .modal-title {
+        color: #fff;
+        font-weight: 800;
+    }
+
+    #modalSolicitudPagoAdq .adq-payment-modal-header .text-muted {
+        color: rgba(255,255,255,.68) !important;
+    }
+
+    #modalSolicitudPagoAdq .adq-payment-modal-header .adq-section-icon {
+        background: rgba(255,255,255,.14);
+        color: #fff;
+    }
+
+#modalSolicitudPagoAdq .modal-body {
+    background: #f8f9fd;
+}
+
+#modalSolicitudPagoAdq .adq-payment-summary {
+    border: 1px solid rgba(33,22,111,.10);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(33,22,111,.06);
+}
+
+#modalSolicitudPagoAdq .adq-form-section {
+    padding: 1.1rem 1.2rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7ef;
+    border-radius: 14px;
+    background: #fff;
+}

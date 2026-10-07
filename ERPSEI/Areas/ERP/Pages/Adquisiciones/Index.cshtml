@@ -788,12 +788,17 @@
                 </span>
 
                 <h2>
-                    Mis solicitudes
+                    @(Model.EsAdministradorSistema
+                        ? "Todas las solicitudes"
+                        : "Mis solicitudes")
                 </h2>
 
                 <p>
-                    Consulta el estado y seguimiento
-                    de tus solicitudes de compra.
+                    @(
+                        Model.EsAdministradorSistema
+                            ? "Consulta y administra todas las solicitudes de compra registradas en el módulo."
+                            : "Consulta el estado y seguimiento de tus solicitudes de compra."
+                    )
                 </p>
 
             </div>
@@ -923,11 +928,19 @@
                                     <i class="bi bi-inbox"></i>
 
                                     <strong>
-                                        No tienes solicitudes registradas.
+                                        @(
+                                            Model.EsAdministradorSistema
+                                                ? "No hay solicitudes registradas."
+                                                : "No tienes solicitudes registradas."
+                                        )
                                     </strong>
 
                                     <span>
-                                        Crea tu primera solicitud de compra.
+                                        @(
+                                            Model.EsAdministradorSistema
+                                                ? "Las solicitudes creadas por los usuarios aparecerán en esta sección."
+                                                : "Crea tu primera solicitud de compra."
+                                        )
                                     </span>
 
                                 </div>
@@ -1151,11 +1164,19 @@
                     </span>
 
                     <h2>
-                        Aprobaciones presupuestales
+                        @(
+                            Model.EsAdministradorSistema
+                                ? "Solicitudes pendientes de autorización"
+                                : "Solicitudes por autorizar"
+                        )
                     </h2>
 
                     <p>
-                        Solicitudes pendientes de tu autorización presupuestal.
+                        @(
+                            Model.EsAdministradorSistema
+                                ? "Solicitudes que actualmente requieren autorización del jefe directo."
+                                : "Solicitudes pendientes de tu autorización como jefe directo."
+                        )
                     </p>
                 </div>
 
@@ -5917,9 +5938,9 @@
 
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
 
-            <div class="modal-content">
+            <div class="modal-content adq-payment-modal">
 
-                <div class="modal-header">
+                <div class="modal-header adq-payment-modal-header">
 
                     <div>
 
@@ -9161,6 +9182,10 @@
 
     <script>
         window.adqAbac = {
+
+             esAdministradorSistema:
+                @Model.EsAdministradorSistema.ToString().ToLower(),
+
             puedeVisualizar:
                 @Model.AbacPuedeVisualizar.ToString().ToLower(),
 

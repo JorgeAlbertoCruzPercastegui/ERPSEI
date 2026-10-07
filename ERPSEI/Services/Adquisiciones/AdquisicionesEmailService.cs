@@ -383,6 +383,670 @@ namespace ERPSEI.Services.Adquisiciones
             );
         }
 
+        // =========================================================
+        // SOLICITUD PENDIENTE DE APROBACIÓN DEL GERENTE
+        // =========================================================
+
+        public async Task NotificarSolicitudPendienteGerenteAsync(
+            int solicitudId,
+            string usuarioGerenteId
+        )
+        {
+            if (
+                string.IsNullOrWhiteSpace(
+                    usuarioGerenteId
+                )
+            )
+            {
+                return;
+            }
+
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id == solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (solicitud == null)
+            {
+                return;
+            }
+
+
+            AppUser? gerente =
+                await _userManager.FindByIdAsync(
+                    usuarioGerenteId
+                );
+
+            if (
+                gerente != null
+                &&
+                await _userManager.IsInRoleAsync(
+                    gerente,
+                    "Administrador"
+                )
+            )
+                        {
+                            return;
+                        }
+
+
+            if (
+                gerente == null
+                ||
+                string.IsNullOrWhiteSpace(
+                    gerente.Email
+                )
+            )
+            {
+                return;
+            }
+
+
+            AppUser? solicitante =
+                null;
+
+
+            if (
+                !string.IsNullOrWhiteSpace(
+                    solicitud.UsuarioSolicitanteId
+                )
+            )
+            {
+                solicitante =
+                    await _userManager.FindByIdAsync(
+                        solicitud.UsuarioSolicitanteId
+                    );
+            }
+
+
+            string nombreGerente =
+                !string.IsNullOrWhiteSpace(
+                    gerente.UserName
+                )
+                    ? gerente.UserName
+                    : gerente.Email;
+
+
+            string nombreSolicitante =
+                solicitante != null
+                &&
+                !string.IsNullOrWhiteSpace(
+                    solicitante.UserName
+                )
+                    ? solicitante.UserName
+                    : solicitante?.Email
+                        ?? "Usuario solicitante";
+
+
+            string gerenteHtml =
+                WebUtility.HtmlEncode(
+                    nombreGerente
+                );
+
+
+            string solicitanteHtml =
+                WebUtility.HtmlEncode(
+                    nombreSolicitante
+                );
+
+
+            string folio =
+                WebUtility.HtmlEncode(
+                    solicitud.Folio
+                );
+
+
+            string titulo =
+                WebUtility.HtmlEncode(
+                    solicitud.Titulo
+                );
+
+
+            string enlace =
+                ConstruirEnlaceSolicitud(
+                    solicitudId
+                );
+
+
+            string asunto =
+                $"Solicitud pendiente de aprobación | {solicitud.Folio} | {solicitud.Titulo}";
+
+
+            string html =
+                $@"
+<!DOCTYPE html>
+<html lang=""es"">
+
+<head>
+    <meta charset=""utf-8"" />
+</head>
+
+<body style=""
+    margin:0;
+    padding:0;
+    background:#f4f6f8;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#212529;
+"">
+
+    <div style=""
+        max-width:680px;
+        margin:0 auto;
+        padding:32px 16px;
+    "">
+
+        <div style=""
+            background:#ffffff;
+            border:1px solid #e4e8ef;
+            border-radius:14px;
+            overflow:hidden;
+            box-shadow:0 4px 18px rgba(0,0,0,.04);
+        "">
+
+            <div style=""
+                padding:26px 30px;
+                background:#21166f;
+                color:#ffffff;
+            "">
+
+                <div style=""
+                    font-size:12px;
+                    font-weight:700;
+                    text-transform:uppercase;
+                    letter-spacing:.08em;
+                    opacity:.85;
+                "">
+                    Intranet · Adquisiciones
+                </div>
+
+                <h2 style=""
+                    margin:8px 0 0;
+                    font-size:22px;
+                    line-height:1.3;
+                "">
+                    Solicitud pendiente de aprobación
+                </h2>
+
+            </div>
+
+
+            <div style=""padding:30px;"">
+
+                <p style=""
+                    margin:0 0 18px;
+                    line-height:1.6;
+                "">
+                    Hola <strong>{gerenteHtml}</strong>,
+                </p>
+
+
+                <p style=""
+                    margin:0 0 24px;
+                    color:#4b5563;
+                    line-height:1.7;
+                "">
+                    Se ha creado una nueva solicitud de compra
+                    que requiere tu autorización como jefe directo.
+                </p>
+
+
+                <div style=""
+                    padding:20px;
+                    border:1px solid #e5e7eb;
+                    border-radius:10px;
+                    background:#fafbfc;
+                "">
+
+                    <table style=""
+                        width:100%;
+                        border-collapse:collapse;
+                        font-size:14px;
+                    "">
+
+                        <tr>
+                            <td style=""
+                                width:35%;
+                                padding:9px 0;
+                                color:#6b7280;
+                            "">
+                                Folio
+                            </td>
+
+                            <td style=""
+                                padding:9px 0;
+                                font-weight:700;
+                                color:#111827;
+                            "">
+                                {folio}
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td style=""
+                                padding:9px 0;
+                                color:#6b7280;
+                            "">
+                                Solicitud
+                            </td>
+
+                            <td style=""
+                                padding:9px 0;
+                                font-weight:600;
+                                color:#111827;
+                            "">
+                                {titulo}
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td style=""
+                                padding:9px 0;
+                                color:#6b7280;
+                            "">
+                                Solicitante
+                            </td>
+
+                            <td style=""
+                                padding:9px 0;
+                                font-weight:600;
+                                color:#111827;
+                            "">
+                                {solicitanteHtml}
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+
+                <div style=""
+                    text-align:center;
+                    margin:30px 0 24px;
+                "">
+
+                    <a href=""{enlace}""
+                       style=""
+                            display:inline-block;
+                            padding:14px 26px;
+                            border-radius:8px;
+                            background:#0d6efd;
+                            color:#ffffff;
+                            text-decoration:none;
+                            font-size:15px;
+                            font-weight:700;
+                       "">
+
+                        Revisar y autorizar
+
+                    </a>
+
+                </div>
+
+
+                <p style=""
+                    margin:0;
+                    color:#6b7280;
+                    font-size:13px;
+                    line-height:1.6;
+                    text-align:center;
+                "">
+                    El botón te dirigirá a la Intranet SEI
+                    para consultar la solicitud y registrar tu decisión.
+                </p>
+
+            </div>
+
+
+            <div style=""
+                padding:17px 30px;
+                border-top:1px solid #e5e7eb;
+                background:#f8f9fb;
+                color:#8a9099;
+                font-size:12px;
+            "">
+
+                Este mensaje fue generado automáticamente por
+                el módulo de Adquisiciones de la Intranet SEI.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>";
+
+
+            await _emailSender.SendEmailAsync(
+                gerente.Email,
+                asunto,
+                html
+            );
+        }
+
+        // =========================================================
+        // SOLICITUD APROBADA POR EL GERENTE
+        // =========================================================
+
+        public async Task NotificarSolicitudAprobadaPorGerenteAsync(
+            int solicitudId,
+            string nombreGerente
+        )
+        {
+            DatosCorreoSolicitud? datos =
+                await ObtenerDatosSolicitudAsync(
+                    solicitudId
+                );
+
+
+            if (datos == null)
+            {
+                return;
+            }
+
+
+            string folio =
+                WebUtility.HtmlEncode(
+                    datos.Folio
+                );
+
+
+            string titulo =
+                WebUtility.HtmlEncode(
+                    datos.Titulo
+                );
+
+
+            string solicitante =
+                WebUtility.HtmlEncode(
+                    datos.NombreSolicitante
+                );
+
+
+            string gerente =
+                WebUtility.HtmlEncode(
+                    nombreGerente
+                );
+
+
+            string enlace =
+                ConstruirEnlaceSolicitud(
+                    solicitudId
+                );
+
+
+            string asunto =
+                $"Solicitud autorizada | {datos.Folio} | {datos.Titulo}";
+
+
+            string html =
+                $@"
+<!DOCTYPE html>
+<html lang=""es"">
+
+<head>
+    <meta charset=""utf-8"" />
+</head>
+
+<body style=""
+    margin:0;
+    padding:0;
+    background:#f4f6f8;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#212529;
+"">
+
+    <div style=""
+        max-width:680px;
+        margin:0 auto;
+        padding:32px 16px;
+    "">
+
+        <div style=""
+            background:#ffffff;
+            border:1px solid #e4e8ef;
+            border-radius:14px;
+            overflow:hidden;
+            box-shadow:0 4px 18px rgba(0,0,0,.04);
+        "">
+
+            <div style=""
+                padding:26px 30px;
+                background:#198754;
+                color:#ffffff;
+            "">
+
+                <div style=""
+                    font-size:12px;
+                    font-weight:700;
+                    text-transform:uppercase;
+                    letter-spacing:.08em;
+                    opacity:.85;
+                "">
+                    Intranet · Adquisiciones
+                </div>
+
+                <h2 style=""
+                    margin:8px 0 0;
+                    font-size:22px;
+                    line-height:1.3;
+                "">
+                    Solicitud autorizada
+                </h2>
+
+            </div>
+
+
+            <div style=""padding:30px;"">
+
+                <p style=""
+                    margin:0 0 18px;
+                    line-height:1.6;
+                "">
+
+                    Hola <strong>{solicitante}</strong>,
+
+                </p>
+
+
+                <p style=""
+                    margin:0 0 24px;
+                    color:#4b5563;
+                    line-height:1.7;
+                "">
+
+                    Tu solicitud de compra fue autorizada
+                    por tu jefe directo y continuará con el proceso
+                    correspondiente dentro del área de Adquisiciones.
+
+                </p>
+
+
+                <div style=""
+                    padding:18px;
+                    margin-bottom:22px;
+                    border:1px solid #cfe8db;
+                    border-radius:10px;
+                    background:#f2fbf6;
+                "">
+
+                    <div style=""
+                        margin-bottom:6px;
+                        color:#198754;
+                        font-size:16px;
+                        font-weight:700;
+                    "">
+
+                        ✓ Autorización registrada correctamente
+
+                    </div>
+
+
+                    <div style=""
+                        color:#52605a;
+                        font-size:13px;
+                    "">
+
+                        Autorizada por {gerente}.
+
+                    </div>
+
+                </div>
+
+
+                <div style=""
+                    padding:20px;
+                    border:1px solid #e5e7eb;
+                    border-radius:10px;
+                    background:#fafbfc;
+                "">
+
+                    <table style=""
+                        width:100%;
+                        border-collapse:collapse;
+                        font-size:14px;
+                    "">
+
+                        <tr>
+                            <td style=""
+                                width:35%;
+                                padding:9px 0;
+                                color:#6b7280;
+                            "">
+                                Folio
+                            </td>
+
+                            <td style=""
+                                padding:9px 0;
+                                font-weight:700;
+                                color:#111827;
+                            "">
+                                {folio}
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td style=""
+                                padding:9px 0;
+                                color:#6b7280;
+                            "">
+                                Solicitud
+                            </td>
+
+                            <td style=""
+                                padding:9px 0;
+                                font-weight:600;
+                                color:#111827;
+                            "">
+                                {titulo}
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td style=""
+                                padding:9px 0;
+                                color:#6b7280;
+                            "">
+                                Estatus
+                            </td>
+
+                            <td style=""
+                                padding:9px 0;
+                                font-weight:700;
+                                color:#198754;
+                            "">
+                                Autorizada por jefe directo
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+
+
+                <div style=""
+                    text-align:center;
+                    margin:30px 0 24px;
+                "">
+
+                    <a href=""{enlace}""
+                       style=""
+                            display:inline-block;
+                            padding:14px 26px;
+                            border-radius:8px;
+                            background:#21166f;
+                            color:#ffffff;
+                            text-decoration:none;
+                            font-size:15px;
+                            font-weight:700;
+                       "">
+
+                        Consultar solicitud
+
+                    </a>
+
+                </div>
+
+
+                <p style=""
+                    margin:0;
+                    color:#6b7280;
+                    font-size:13px;
+                    line-height:1.6;
+                    text-align:center;
+                "">
+
+                    Puedes consultar el detalle y seguimiento
+                    de tu solicitud desde la Intranet.
+
+                </p>
+
+            </div>
+
+
+            <div style=""
+                padding:17px 30px;
+                border-top:1px solid #e5e7eb;
+                background:#f8f9fb;
+                color:#8a9099;
+                font-size:12px;
+            "">
+
+                Este mensaje fue generado automáticamente por
+                el módulo de Adquisiciones de la Intranet SEI.
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>";
+
+
+            await _emailSender.SendEmailAsync(
+                datos.Email,
+                asunto,
+                html
+            );
+        }
+
         private async Task<DatosCorreoSolicitud?>
             ObtenerDatosSolicitudAsync(
                 int solicitudId
