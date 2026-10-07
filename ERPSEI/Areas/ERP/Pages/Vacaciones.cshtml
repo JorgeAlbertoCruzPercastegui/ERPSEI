@@ -179,6 +179,64 @@
     </thead>
 </table>
 
+@if (Model.EsJefeInmediato)
+{
+    <div class="card shadow-sm mb-4"
+         id="cardVacacionesEquipo">
+
+        <div class="card-header d-flex
+            justify-content-between
+            align-items-center">
+
+            <div>
+                <i class="bi bi-people-fill me-2"></i>
+                <span>
+                    Vacaciones de mi equipo
+                </span>
+            </div>
+
+            <span class="badge bg-light text-primary">
+                Personal a mi cargo
+            </span>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="mb-3">
+
+                <small class="text-muted">
+
+                    Consulta el total de vacaciones
+                    acumuladas, tomadas, vencidas
+                    y el saldo actual del personal
+                    que tienes directamente a cargo.
+
+                </small>
+
+            </div>
+
+
+            <table id="tableVacacionesEquipo"
+                   class="table-sm"
+                   data-search="true"
+                   data-pagination="true"
+                   data-page-size="10"
+                   data-page-list="[10,20,30,50]"
+                   data-side-pagination="client"
+                   data-url="/ERP/Vacaciones?handler=VacacionesEquipo">
+
+                <thead>
+                    <tr></tr>
+                </thead>
+
+            </table>
+
+        </div>
+
+    </div>
+}
+
 @if (Model.PuedeAprobarJefeDirecto || Model.PuedeAprobarTH)
 {
     <div class="card shadow-sm mb-4">
@@ -406,6 +464,221 @@
         </div>
     </div>
 </div>
+
+@if (Model.EsJefeInmediato)
+{
+    <div class="modal fade modal-vacaciones-equipo"
+         id="modalDetalleVacacionesEquipo"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+            <div class="modal-content vacaciones-equipo-detail">
+
+                <div class="modal-header modal-header-gold">
+
+                    <div>
+                        <h5 class="modal-title mb-1">
+                            Detalle de vacaciones del colaborador
+                        </h5>
+
+                        <small id="lblEquipoEmpleadoEmail"
+                               class="text-white-50">
+                        </small>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-4">
+
+                        <h5 id="lblEquipoEmpleadoNombre"
+                            class="fw-bold text-primary mb-3">
+                        </h5>
+
+                        <div class="table-responsive">
+
+                            <table class="table table-sm table-bordered align-middle tabla-resumen-equipo">
+
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Concepto</th>
+                                        <th class="text-end">Días</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+
+                                    <tr>
+                                        <td>Acumuladas</td>
+                                        <td class="text-end fw-bold"
+                                            id="tdEquipoAcumuladas">
+                                            0.0 días
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Tomadas</td>
+                                        <td class="text-end fw-bold"
+                                            id="tdEquipoTomadas">
+                                            0.0 días
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Vencidas</td>
+                                        <td class="text-end fw-bold"
+                                            id="tdEquipoVencidas">
+                                            0.0 días
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>Tomadas a futuro</td>
+                                        <td class="text-end fw-bold"
+                                            id="tdEquipoFuturas">
+                                            0.0 días
+                                        </td>
+                                    </tr>
+
+                                    <tr class="table-light">
+                                        <td class="fw-bold">
+                                            Total saldo
+                                        </td>
+
+                                        <td class="text-end fw-bold text-primary"
+                                            id="tdEquipoSaldo">
+                                            0.0 días
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+
+                            <h6 class="fw-bold mb-0">
+                                Historial de vacaciones
+                            </h6>
+
+                            <small class="text-muted"
+                                   id="lblTotalHistorialVacacionesEquipo">
+                                0 solicitudes registradas
+                            </small>
+
+                        </div>
+
+
+                        <div class="table-responsive">
+
+                            <table class="table table-sm table-hover align-middle tabla-historial-equipo"
+                                   id="tableHistorialVacacionesEquipo">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th>Solicitud</th>
+                                        <th>Inicio</th>
+                                        <th>Fin</th>
+                                        <th>Días</th>
+                                        <th>Tipo</th>
+                                        <th>Estatus</th>
+                                        <th>Jefe</th>
+                                        <th>TH</th>
+                                        <th>Autorizador</th>
+                                        <th>Comentario</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody id="tbodyHistorialVacacionesEquipo">
+
+                                    <tr>
+                                        <td colspan="10"
+                                            class="text-center text-muted">
+
+                                            Selecciona un colaborador para consultar su información.
+
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cerrar
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="historial-equipo-paginador"
+         id="paginadorHistorialVacacionesEquipo">
+
+        <div class="historial-equipo-controles">
+
+            <span class="historial-equipo-info">
+                Página
+                <strong id="historialEquipoPaginaActual">1</strong>
+                de
+                <strong id="historialEquipoTotalPaginas">1</strong>
+            </span>
+
+            <button type="button"
+                    id="btnHistorialEquipoAnterior"
+                    class="btn btn-sm btn-outline-primary"
+                    onclick="cambiarPaginaHistorialVacacionesEquipo(-1)">
+
+                <i class="bi bi-chevron-left"></i>
+
+            </button>
+
+            <button type="button"
+                    id="btnHistorialEquipoSiguiente"
+                    class="btn btn-sm btn-outline-primary"
+                    onclick="cambiarPaginaHistorialVacacionesEquipo(1)">
+
+                <i class="bi bi-chevron-right"></i>
+
+            </button>
+
+        </div>
+
+    </div>
+}
 
 <!--Modal para editar Vacacion por registro-->
 <form id="theFormEditarVacacion" method="post">

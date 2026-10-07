@@ -1,5 +1,9 @@
 ﻿var table;
 var tableSolicitudesAutorizar;
+var tableVacacionesEquipo;
+var historialVacacionesEquipo = [];
+var paginaHistorialVacacionesEquipo = 1;
+const registrosHistorialVacacionesEquipo = 10;
 var buttonRemove;
 var selections = [];
 var dlg = null;
@@ -15,6 +19,7 @@ const postOptions = { headers: { "RequestVerificationToken": $('input[name="__Re
 document.addEventListener("DOMContentLoaded", function (event) {
     table = $("#table");
     tableSolicitudesAutorizar = $("#tableSolicitudesAutorizar");
+    tableVacacionesEquipo = $("#tableVacacionesEquipo");
     buttonRemove = $("#remove");
 
     dlg = document.getElementById('dlgVacaciones');
@@ -33,6 +38,10 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     if (tableSolicitudesAutorizar.length) {
         initTableSolicitudesAutorizar();
+    }
+
+    if (tableVacacionesEquipo.length) {
+        initTableVacacionesEquipo();
     }
 
     obtenerDiasDisponibles();
@@ -383,6 +392,617 @@ function initTableSolicitudesAutorizar() {
         ]
     });
 }
+
+function accionesVacacionesEquipoFormatter(
+    value,
+    row,
+    index
+) {
+    return `
+        <button type="button"
+                class="btn btn-sm btn-outline-primary btn-ver-vacaciones-equipo"
+                title="Ver detalle de vacaciones">
+
+            <i class="bi bi-eye"></i>
+            Ver
+
+        </button>
+    `;
+}
+
+
+window.accionesVacacionesEquipoEvents = {
+
+    "click .btn-ver-vacaciones-equipo":
+        function (
+            e,
+            value,
+            row,
+            index
+        ) {
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            abrirDetalleVacacionesEquipo(
+                row.empleadoId
+            );
+        }
+};
+
+async function abrirDetalleVacacionesEquipo(
+    empleadoId
+) {
+
+    try {
+
+        const response =
+            await fetch(
+                `/ERP/Vacaciones?handler=DetalleVacacionesEquipo&empleadoId=${encodeURIComponent(empleadoId)}`
+            );
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            data.tieneError
+        ) {
+            showError(
+                "Vacaciones",
+                data.mensaje ||
+                "No fue posible cargar el detalle del colaborador."
+            );
+
+            return;
+        }
+
+
+        $("#lblEquipoEmpleadoNombre")
+            .text(
+                data.empleado || "-"
+            );
+
+        $("#lblEquipoEmpleadoEmail")
+            .text(
+                data.email || ""
+            );
+
+        $("#tdEquipoAcumuladas")
+            .text(
+                `${Number(data.acumuladas || 0).toFixed(1)} días`
+            );
+
+        $("#tdEquipoTomadas")
+            .text(
+                `${Number(data.tomadas || 0).toFixed(1)} días`
+            );
+
+        $("#tdEquipoVencidas")
+            .text(
+                `${Number(data.vencidas || 0).toFixed(1)} días`
+            );
+
+        $("#tdEquipoFuturas")
+            .text(
+                `${Number(data.futuras || 0).toFixed(1)} días`
+            );
+
+        $("#tdEquipoSaldo")
+            .text(
+                `${Number(data.saldo || 0).toFixed(1)} días`
+            );
+
+
+        // =====================================================
+        // AQUÍ VA EL PUNTO 2
+        // =====================================================
+
+        historialVacacionesEquipo =
+            Array.isArray(data.historial)
+                ? data.historial
+                : [];
+
+
+        paginaHistorialVacacionesEquipo =
+            1;
+
+
+        renderHistorialVacacionesEquipo();
+
+
+        const modalElement =
+            document.getElementById(
+                "modalDetalleVacacionesEquipo"
+            );
+
+
+        const modal =
+            bootstrap.Modal.getOrCreateInstance(
+                modalElement
+            );
+
+
+        modal.show();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Error al cargar detalle de vacaciones del equipo:",
+            error
+        );
+
+        showError(
+            "Vacaciones",
+            "No fue posible cargar el detalle del colaborador."
+        );
+    }
+}
+
+function badgeEstadoVacacionesEquipo(
+    estado
+) {
+
+    const texto =
+        estado || "-";
+
+    const normalizado =
+        texto
+            .toLowerCase()
+            .trim();
+
+
+    let clase =
+        "vac-equipo-status-neutral";
+
+
+    if (
+        normalizado.includes(
+            "aprobado"
+        )
+    ) {
+        clase =
+            "vac-equipo-status-approved";
+    }
+    else if (
+        normalizado.includes(
+            "rechazado"
+        )
+    ) {
+        clase =
+            "vac-equipo-status-rejected";
+    }
+    else if (
+        normalizado.includes(
+            "pendiente"
+        )
+    ) {
+        clase =
+            "vac-equipo-status-pending";
+    }
+
+
+    return `
+        <span class="vac-equipo-status ${clase}">
+            ${texto}
+        </span>
+    `;
+}
+
+function renderHistorialVacacionesEquipo() {
+
+    const tbody =
+        document.getElementById(
+            "tbodyHistorialVacacionesEquipo"
+        );
+
+    const lblTotalHistorial =
+        document.getElementById(
+            "lblTotalHistorialVacacionesEquipo"
+        );
+
+    const totalRegistros =
+        historialVacacionesEquipo.length;
+
+    if (lblTotalHistorial) {
+
+        lblTotalHistorial.textContent =
+            totalRegistros === 1
+                ? "1 solicitud registrada"
+                : `${totalRegistros} solicitudes registradas`;
+    }
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    tbody.innerHTML =
+        "";
+
+
+    if (
+        !Array.isArray(
+            historialVacacionesEquipo
+        ) ||
+        historialVacacionesEquipo.length === 0
+    ) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10"
+                    class="text-center text-muted">
+                    El colaborador no tiene solicitudes de vacaciones registradas.
+                </td>
+            </tr>
+        `;
+
+
+        actualizarPaginadorHistorialVacacionesEquipo();
+
+        return;
+    }
+
+
+    const inicio =
+        (
+            paginaHistorialVacacionesEquipo - 1
+        ) *
+        registrosHistorialVacacionesEquipo;
+
+
+    const fin =
+        inicio +
+        registrosHistorialVacacionesEquipo;
+
+
+    const registrosPagina =
+        historialVacacionesEquipo.slice(
+            inicio,
+            fin
+        );
+
+
+    registrosPagina.forEach(
+        function (item) {
+
+            const tr =
+                document.createElement(
+                    "tr"
+                );
+
+
+            tr.innerHTML = `
+                <td>${item.fechaSolicitud || "-"}</td>
+
+                <td>${item.fechaInicio || "-"}</td>
+
+                <td>${item.fechaFin || "-"}</td>
+
+                <td>
+                    ${Number(item.dias || 0).toFixed(1)}
+                </td>
+
+                <td>
+                    ${item.tipo || "-"}
+                </td>
+
+                <td>
+                    ${badgeEstadoVacacionesEquipo(
+                item.estado
+            )}
+                </td>
+
+                <td>
+                    ${badgeEstadoVacacionesEquipo(
+                item.estadoJefe
+            )}
+                </td>
+
+                <td>
+                    ${badgeEstadoVacacionesEquipo(
+                item.estadoTH
+            )}
+                </td>
+
+                <td>
+                    ${item.autorizador || "-"}
+                </td>
+
+                <td>
+                    ${item.comentario || "-"}
+                </td>
+            `;
+
+
+            tbody.appendChild(
+                tr
+            );
+        }
+    );
+
+
+    actualizarPaginadorHistorialVacacionesEquipo();
+}
+
+function actualizarPaginadorHistorialVacacionesEquipo() {
+
+    const totalRegistros =
+        historialVacacionesEquipo.length;
+
+
+    const totalPaginas =
+        totalRegistros > 0
+            ? Math.ceil(
+                totalRegistros /
+                registrosHistorialVacacionesEquipo
+            )
+            : 1;
+
+
+    const lblPagina =
+        document.getElementById(
+            "historialEquipoPaginaActual"
+        );
+
+
+    const lblTotalPaginas =
+        document.getElementById(
+            "historialEquipoTotalPaginas"
+        );
+
+
+    const btnAnterior =
+        document.getElementById(
+            "btnHistorialEquipoAnterior"
+        );
+
+
+    const btnSiguiente =
+        document.getElementById(
+            "btnHistorialEquipoSiguiente"
+        );
+
+
+    if (lblPagina) {
+
+        lblPagina.textContent =
+            paginaHistorialVacacionesEquipo;
+    }
+
+
+    if (lblTotalPaginas) {
+
+        lblTotalPaginas.textContent =
+            totalPaginas;
+    }
+
+
+    if (btnAnterior) {
+
+        btnAnterior.disabled =
+            paginaHistorialVacacionesEquipo <= 1;
+    }
+
+
+    if (btnSiguiente) {
+
+        btnSiguiente.disabled =
+            paginaHistorialVacacionesEquipo >=
+            totalPaginas;
+    }
+}
+
+function cambiarPaginaHistorialVacacionesEquipo(
+    direccion
+) {
+
+    const totalPaginas =
+        Math.ceil(
+            historialVacacionesEquipo.length /
+            registrosHistorialVacacionesEquipo
+        );
+
+
+    const nuevaPagina =
+        paginaHistorialVacacionesEquipo +
+        direccion;
+
+
+    if (
+        nuevaPagina < 1 ||
+        nuevaPagina > totalPaginas
+    ) {
+        return;
+    }
+
+
+    paginaHistorialVacacionesEquipo =
+        nuevaPagina;
+
+
+    renderHistorialVacacionesEquipo();
+}
+
+function initTableVacacionesEquipo() {
+
+    tableVacacionesEquipo
+        .bootstrapTable("destroy")
+        .bootstrapTable({
+
+            locale:
+                cultureName,
+
+            pagination:
+                true,
+
+            pageSize:
+                10,
+
+            pageList:
+                [10, 20, 30, 50],
+
+            paginationLoop:
+                false,
+
+            paginationParts:
+                [
+                    "pageInfo",
+                    "pageList"
+                ],
+
+            search:
+                true,
+
+            columns: [
+                {
+                    title:
+                        "Empleado",
+
+                    field:
+                        "empleado",
+
+                    align:
+                        "left",
+
+                    valign:
+                        "middle",
+
+                    sortable:
+                        true
+                },
+                {
+                    title:
+                        "Acumuladas",
+
+                    field:
+                        "acumuladas",
+
+                    align:
+                        "center",
+
+                    valign:
+                        "middle",
+
+                    sortable:
+                        true,
+
+                    formatter:
+                        diasVacacionesEquipoFormatter
+                },
+                {
+                    title:
+                        "Tomadas",
+
+                    field:
+                        "tomadas",
+
+                    align:
+                        "center",
+
+                    valign:
+                        "middle",
+
+                    sortable:
+                        true,
+
+                    formatter:
+                        diasVacacionesEquipoFormatter
+                },
+                {
+                    title:
+                        "Vencidas",
+
+                    field:
+                        "vencidas",
+
+                    align:
+                        "center",
+
+                    valign:
+                        "middle",
+
+                    sortable:
+                        true,
+
+                    formatter:
+                        diasVacacionesEquipoFormatter
+                },
+                {
+                    title: "Tomadas a futuro",
+                    field: "futuras",
+                    align: "center",
+                    valign: "middle",
+                    sortable: true,
+                    formatter: diasVacacionesEquipoFormatter
+                },
+                {
+                    title:
+                        "Saldo actual",
+
+                    field:
+                        "saldo",
+
+                    align:
+                        "center",
+
+                    valign:
+                        "middle",
+
+                    sortable:
+                        true,
+
+                    formatter:
+                        saldoVacacionesEquipoFormatter
+                },
+                {
+                    title: "Acciones",
+                    field: "acciones",
+                    align: "center",
+                    valign: "middle",
+                    clickToSelect: false,
+                    formatter: accionesVacacionesEquipoFormatter,
+                    events: window.accionesVacacionesEquipoEvents
+                }
+            ]
+        });
+}
+
+    function diasVacacionesEquipoFormatter(
+        value
+    ) {
+
+        const dias =
+            Number(
+                value ?? 0
+            );
+
+        return `
+            <span>
+                ${dias.toFixed(1)} días
+            </span>
+        `;
+    }
+
+
+    function saldoVacacionesEquipoFormatter(
+        value
+    ) {
+
+        const dias =
+            Number(
+                value ?? 0
+            );
+
+        return `
+            <span class="fw-bold">
+                ${dias.toFixed(1)} días
+            </span>
+        `;
+    }
 
 function refrescarTablasVacaciones() {
     if (table && table.length) {

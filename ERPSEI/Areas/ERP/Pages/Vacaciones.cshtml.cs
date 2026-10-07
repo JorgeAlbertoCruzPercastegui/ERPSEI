@@ -245,6 +245,19 @@ namespace ERPSEI.Areas.ERP.Pages
             public string FechaImportacion { get; set; } = "-";
         }
 
+        private class ResumenVacacionesEmpleadoModel
+        {
+            public decimal Acumuladas { get; set; }
+
+            public decimal Tomadas { get; set; }
+
+            public decimal Vencidas { get; set; }
+
+            public decimal Futuras { get; set; }
+
+            public decimal Saldo { get; set; }
+        }
+
         private class PeriodoVacacionSaldoModel
         {
             public int Anio { get; set; }
@@ -695,6 +708,678 @@ namespace ERPSEI.Areas.ERP.Pages
             PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
             PuedeAprobarTH = esAdministradorTH || esAdministrador;
             PuedeExportarDetalleVacaciones = esAdministrador || esAdministradorTH || esMaster;
+        }
+
+        // =========================================================
+        // RESUMEN DE VACACIONES DEL EQUIPO DEL JEFE DIRECTO
+        // GET ?handler=VacacionesEquipo
+        // =========================================================
+
+        public async Task<JsonResult> OnGetVacacionesEquipoAsync()
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            var userEmail =
+                User.Identity?.Name;
+
+            var usuario =
+                await userManager
+                    .FindByNameWithEmpleadoAsync(
+                        userEmail
+                    );
+
+            if (
+                usuario?.Empleado == null ||
+                !EsJefeInmediato
+            )
+            {
+                return new JsonResult(
+                    new List<object>()
+                );
+            }
+
+            int jefeEmpleadoId =
+                usuario.Empleado.Id;
+
+
+            // =====================================================
+            // ÚNICAMENTE PERSONAL DIRECTAMENTE A SU CARGO
+            // =====================================================
+
+            var empleados =
+                await db.Empleados
+                    .AsNoTracking()
+                    .Where(e =>
+                        e.Deshabilitado == 0 &&
+                        e.JefeId == jefeEmpleadoId
+                    )
+                    .OrderBy(e =>
+                        e.NombreCompleto
+                    )
+                    .ToListAsync();
+
+
+            var resultado =
+                new List<object>();
+
+
+            foreach (
+                var empleado
+                in empleados
+            )
+            {
+                var resumen =
+                    await ObtenerResumenVacacionesEmpleadoAsync(
+                        empleado.Id
+                    );
+
+
+                resultado.Add(
+                    new
+                    {
+                        empleadoId = empleado.Id,
+
+                        empleado = empleado.NombreCompleto,
+
+                        email = empleado.Email ?? "",
+
+                        acumuladas = resumen.Acumuladas,
+
+                        tomadas = resumen.Tomadas,
+
+                        vencidas = resumen.Vencidas,
+
+                        futuras = resumen.Futuras,
+
+                        saldo = resumen.Saldo
+                    }
+                );
+            }
+
+
+            return new JsonResult(
+                resultado
+            );
+        }
+
+        // =========================================================
+        // DETALLE DE VACACIONES DE UN EMPLEADO DEL EQUIPO
+        // GET ?handler=DetalleVacacionesEquipo&empleadoId=1
+        // =========================================================
+
+        public async Task<JsonResult>
+            OnGetDetalleVacacionesEquipoAsync(
+                int empleadoId)
+        {
+            await ConfigurarPermisosVacacionesAsync();
+
+            var userEmail =
+                User.Identity?.Name;
+
+            var usuario =
+                await userManager
+                    .FindByNameWithEmpleadoAsync(
+                        userEmail
+                    );
+
+
+            // =====================================================
+            // VALIDAR USUARIO / JEFE
+            // =====================================================
+
+            if (
+                usuario?.Empleado == null ||
+                !EsJefeInmediato
+            )
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje =
+                        "No tienes permisos para consultar esta información."
+                });
+            }
+
+
+            if (empleadoId <= 0)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje =
+                        "El empleado seleccionado no es válido."
+                });
+            }
+
+
+            int jefeEmpleadoId =
+                usuario.Empleado.Id;
+
+
+            // =====================================================
+            // VALIDAR QUE EL EMPLEADO PERTENEZCA AL JEFE
+            // =====================================================
+
+            var empleado =
+                await db.Empleados
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(e =>
+                        e.Id == empleadoId &&
+                        e.Deshabilitado == 0 &&
+                        e.JefeId == jefeEmpleadoId
+                    );
+
+
+            if (empleado == null)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje =
+                        "El empleado seleccionado no pertenece a tu equipo."
+                });
+            }
+
+
+            // =====================================================
+            // RESUMEN
+            // =====================================================
+
+            var resumen =
+                await ObtenerResumenVacacionesEmpleadoAsync(
+                    empleado.Id
+                );
+
+
+            // =====================================================
+            // HISTORIAL DE SOLICITUDES
+            // =====================================================
+
+            var solicitudes =
+                await db.SolicitudesVacaciones
+                    .AsNoTracking()
+                    .Include(s => s.Autorizador)
+                    .Where(s =>
+                        s.EmpleadoId ==
+                        empleado.Id
+                    )
+                    .OrderByDescending(s =>
+                        s.FechaSolicitud
+                    )
+                    .ToListAsync();
+
+
+            var historial =
+                solicitudes
+                    .Select(s =>
+                        new
+                        {
+                            id =
+                                s.Id,
+
+                            fechaSolicitud =
+                                s.FechaSolicitud
+                                    .ToString(
+                                        "dd/MM/yyyy"
+                                    ),
+
+                            fechaInicio =
+                                s.FechaInicio
+                                    .ToString(
+                                        "dd/MM/yyyy"
+                                    ),
+
+                            fechaFin =
+                                s.FechaFin
+                                    .ToString(
+                                        "dd/MM/yyyy"
+                                    ),
+
+                            dias =
+                                s.DiasSolicitados,
+
+                            tipo =
+                                s.EsVacacionAnticipada
+                                    ? "Anticipadas"
+                                    : s.EsVacacionSiguientePeriodo
+                                        ? "A cuenta del siguiente periodo"
+                                        : "Legales",
+
+                            estado =
+                                ObtenerEstadoVisualVacaciones(
+                                    s
+                                ),
+
+                            estadoJefe =
+                                s.EstadoJefeDirecto
+                                ?? "-",
+
+                            estadoTH =
+                                s.EstadoTH
+                                ?? "-",
+
+                            autorizador =
+                                s.Autorizador
+                                    ?.NombreCompleto
+                                ?? "-",
+
+                            comentario =
+                                s.ComentarioEmpleado
+                                ?? ""
+                        }
+                    )
+                    .ToList();
+
+
+            // =====================================================
+            // RESPUESTA
+            // =====================================================
+
+            return new JsonResult(new
+            {
+                tieneError =
+                    false,
+
+                empleadoId =
+                    empleado.Id,
+
+                empleado =
+                    empleado.NombreCompleto,
+
+                email =
+                    empleado.Email ?? "",
+
+                acumuladas =
+                    resumen.Acumuladas,
+
+                tomadas =
+                    resumen.Tomadas,
+
+                vencidas =
+                    resumen.Vencidas,
+
+                futuras =
+                    resumen.Futuras,
+
+                saldo =
+                    resumen.Saldo,
+
+                historial =
+                    historial
+            });
+        }
+
+        // =========================================================
+        // OBTENER RESUMEN DE VACACIONES DE UN EMPLEADO
+        // =========================================================
+
+        private async Task<ResumenVacacionesEmpleadoModel>
+            ObtenerResumenVacacionesEmpleadoAsync(
+                int empleadoId)
+        {
+            var empleado =
+                await db.Empleados
+                    .FirstOrDefaultAsync(
+                        e =>
+                            e.Id == empleadoId
+                    );
+
+            if (empleado == null)
+            {
+                return new ResumenVacacionesEmpleadoModel();
+            }
+
+
+            // =====================================================
+            // APLICAR DESCUENTOS PENDIENTES
+            // =====================================================
+
+            await AplicarDescuentoVacacionesAnticipadasAsync(
+                empleado.Id
+            );
+
+            await AplicarDescuentoVacacionesSiguientePeriodoAsync(
+                empleado.Id
+            );
+
+
+            // =====================================================
+            // SALDO IMPORTADO
+            // =====================================================
+
+            if (
+                empleado.SaldoVacacionesImportado
+                    .HasValue
+            )
+            {
+                decimal acumuladasImportadas =
+                empleado
+                    .SaldoVacacionesImportado
+                    .Value;
+
+
+                var solicitudes =
+                    await db.SolicitudesVacaciones
+                        .Where(s =>
+                            s.EmpleadoId ==
+                                empleado.Id &&
+                            s.Estado !=
+                                EstadoSolicitud.Rechazado
+                        )
+                        .ToListAsync();
+
+
+                decimal tomadas =
+                    0m;
+
+                decimal anticipadasPendientes =
+                    0m;
+
+
+                foreach (
+                    var solicitud
+                    in solicitudes
+                )
+                {
+                    if (
+                        solicitud
+                            .EsVacacionAnticipada
+                    )
+                    {
+                        if (
+                            solicitud
+                                .DescuentoAnticipadoAplicado
+                        )
+                        {
+                            tomadas +=
+                                solicitud
+                                    .DiasSolicitados;
+                        }
+                        else
+                        {
+                            anticipadasPendientes +=
+                                solicitud
+                                    .DiasSolicitados;
+                        }
+
+                        continue;
+                    }
+
+
+                    if (
+                        solicitud
+                            .EsVacacionSiguientePeriodo
+                    )
+                    {
+                        decimal diasSaldoActual =
+                            Math.Max(
+                                solicitud.DiasSolicitados -
+                                solicitud.DiasPendientesSiguientePeriodo,
+                                0m
+                            );
+
+                        tomadas +=
+                            diasSaldoActual;
+
+
+                        if (
+                            solicitud
+                                .DescuentoSiguientePeriodoAplicado
+                        )
+                        {
+                            tomadas +=
+                                solicitud
+                                    .DiasPendientesSiguientePeriodo;
+                        }
+
+                        continue;
+                    }
+
+
+                    if (
+                        solicitud.Estado ==
+                            EstadoSolicitud.Aprobado ||
+                        (
+                            solicitud.EstadoJefeDirecto ==
+                                "Aprobado" &&
+                            solicitud.EstadoTH ==
+                                "Aprobado"
+                        )
+                    )
+                    {
+                        tomadas +=
+                            solicitud
+                                .DiasSolicitados;
+                    }
+                }
+
+                decimal futurasImportadas =
+                    await db.SolicitudesVacaciones
+                        .Where(s =>
+                            s.EmpleadoId == empleado.Id &&
+                            s.Estado != EstadoSolicitud.Rechazado &&
+                            (
+                                (
+                                    s.EsVacacionAnticipada &&
+                                    !s.DescuentoAnticipadoAplicado
+                                )
+                                ||
+                                (
+                                    s.EsVacacionSiguientePeriodo &&
+                                    !s.DescuentoSiguientePeriodoAplicado
+                                )
+                            )
+                        )
+                        .SumAsync(s =>
+                            s.EsVacacionSiguientePeriodo
+                                ? (decimal?)s.DiasPendientesSiguientePeriodo
+                                : (decimal?)s.DiasSolicitados
+                        ) ?? 0m;
+
+                decimal vencidasImportadas =
+                    await ObtenerDiasVencidosAsync(
+                        empleado.Id
+                    );
+
+
+                decimal saldoImportadoFinal =
+                    Math.Max(
+                        acumuladasImportadas -
+                        tomadas -
+                        anticipadasPendientes,
+                        0m
+                    );
+
+
+                return new ResumenVacacionesEmpleadoModel
+                {
+                    Acumuladas = acumuladasImportadas,
+                    Tomadas = tomadas,
+                    Vencidas = vencidasImportadas,
+                    Futuras = futurasImportadas,
+                    Saldo = saldoImportadoFinal
+                };
+            }
+
+
+            // =====================================================
+            // CÁLCULO NORMAL
+            // =====================================================
+
+            var fechaHoy =
+                DateTime.Today;
+
+            var fechaIngreso =
+                empleado.FechaIngreso.Date;
+
+
+            string tipoAsignacion =
+                await ObtenerTipoVisualizacionVacacionesAsync();
+
+
+            var periodos =
+                await ObtenerPeriodosVacacionesConSaldoAsync(
+                    empleado.Id,
+                    fechaIngreso,
+                    fechaHoy
+                );
+
+
+            var periodosVigentes =
+                periodos
+                    .Where(p =>
+                        p.EstaVigente
+                    )
+                    .ToList();
+
+
+            decimal diasLegales =
+                periodosVigentes
+                    .Sum(p =>
+                        p.DiasGenerados
+                    );
+
+
+            decimal diasTomados =
+                periodosVigentes
+                    .Sum(p =>
+                        p.DiasTomados
+                    );
+
+
+            int aniosCumplidos =
+                fechaHoy.Year -
+                fechaIngreso.Year;
+
+
+            if (
+                fechaHoy <
+                fechaIngreso.AddYears(
+                    aniosCumplidos
+                )
+            )
+            {
+                aniosCumplidos--;
+            }
+
+
+            decimal diasProporcionales =
+                0m;
+
+
+            if (
+                tipoAsignacion ==
+                "LegalesProporcionales"
+            )
+            {
+                var fechaBase =
+                    aniosCumplidos >= 1
+                        ? fechaIngreso.AddYears(
+                            aniosCumplidos
+                        )
+                        : fechaIngreso;
+
+
+                decimal diasProximoAnio =
+                    ObtenerDiasVacacionesPorAntiguedad(
+                        aniosCumplidos + 1
+                    );
+
+
+                diasProporcionales =
+                    Math.Round(
+                        (
+                            diasProximoAnio /
+                            365m
+                        ) *
+                        (decimal)(
+                            fechaHoy -
+                            fechaBase
+                        ).TotalDays,
+                        1
+                    );
+            }
+
+
+            decimal acumuladas =
+                tipoAsignacion == "Legales"
+                    ? diasLegales
+                    : diasLegales +
+                      diasProporcionales;
+
+            decimal diasAnticipadasVisuales =
+    await db.SolicitudesVacaciones
+        .Where(s =>
+            s.EmpleadoId == empleado.Id &&
+            s.EsVacacionAnticipada &&
+            s.Estado != EstadoSolicitud.Rechazado &&
+            !s.DescuentoAnticipadoAplicado
+        )
+        .SumAsync(s =>
+            (decimal?)s.DiasSolicitados
+        ) ?? 0m;
+
+
+            decimal diasSiguientePeriodoVisuales =
+                await db.SolicitudesVacaciones
+                    .Where(s =>
+                        s.EmpleadoId == empleado.Id &&
+                        s.EsVacacionSiguientePeriodo &&
+                        s.Estado != EstadoSolicitud.Rechazado &&
+                        !s.DescuentoSiguientePeriodoAplicado
+                    )
+                    .SumAsync(s =>
+                        (decimal?)s.DiasPendientesSiguientePeriodo
+                    ) ?? 0m;
+
+
+            decimal diasFuturasVisuales =
+                diasAnticipadasVisuales +
+                diasSiguientePeriodoVisuales;
+
+
+            decimal diasFuturasDescontables =
+                await db
+                    .SolicitudesVacaciones
+                    .Where(s =>
+                        s.EmpleadoId ==
+                            empleado.Id &&
+                        s.EsVacacionAnticipada &&
+                        s.Estado ==
+                            EstadoSolicitud.Aprobado &&
+                        !s.DescuentoAnticipadoAplicado
+                    )
+                    .SumAsync(
+                        s =>
+                            (decimal?)
+                            s.DiasSolicitados
+                    )
+                    ?? 0m;
+
+
+            decimal vencidas =
+                await ObtenerDiasVencidosAsync(
+                    empleado.Id
+                );
+
+
+            decimal saldo =
+                Math.Max(
+                    acumuladas -
+                    diasTomados -
+                    diasFuturasDescontables,
+                    0m
+                );
+
+
+            return new ResumenVacacionesEmpleadoModel
+            {
+                Acumuladas = acumuladas,
+                Tomadas = diasTomados,
+                Vencidas = vencidas,
+                Futuras = diasFuturasVisuales,
+                Saldo = saldo
+            };
         }
 
         public async Task<JsonResult> OnGetVacacionesEmpleadosInfoAsync()

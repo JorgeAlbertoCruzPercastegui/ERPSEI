@@ -698,3 +698,472 @@ body.module-main-theme.vacaciones-page .notification-panel {
 body.module-main-theme.vacaciones-page .topbar-links {
     z-index: 1 !important;
 }
+
+/* =========================================================
+   DETALLE DE VACACIONES DEL EQUIPO
+   ========================================================= */
+
+#modalDetalleVacacionesEquipo .modal-dialog {
+    max-width: min(1400px, 96vw);
+}
+
+#modalDetalleVacacionesEquipo .vacaciones-equipo-detail {
+    border: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 24px 55px rgba(33, 22, 111, .18);
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+#modalDetalleVacacionesEquipo .modal-header {
+    padding: 1.35rem 1.5rem;
+    background: linear-gradient( 135deg, #21166f 0%, #30218f 100% ) !important;
+}
+
+#modalDetalleVacacionesEquipo .modal-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+#modalDetalleVacacionesEquipo #lblEquipoEmpleadoEmail {
+    display: block;
+    margin-top: .25rem;
+    color: rgba(255, 255, 255, .68) !important;
+    font-size: .88rem;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+#modalDetalleVacacionesEquipo .modal-body {
+    padding: 1.5rem;
+    background: #fbfbfe;
+}
+
+#modalDetalleVacacionesEquipo #lblEquipoEmpleadoNombre {
+    color: #21166f !important;
+    font-size: 1.25rem;
+    font-weight: 800;
+    margin-bottom: 1rem !important;
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   TABLA RESUMEN
+   ========================================================= */
+
+#modalDetalleVacacionesEquipo .tabla-resumen-equipo {
+    overflow: hidden;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+    #modalDetalleVacacionesEquipo .tabla-resumen-equipo thead th {
+        background: #f2f3fb !important;
+        color: #21166f !important;
+        border-color: #e2e4ef;
+        padding: .8rem 1rem;
+        font-weight: 800;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-resumen-equipo td {
+        padding: .75rem 1rem;
+        border-color: #e7e8f0;
+        color: #3d3d46;
+    }
+
+        #modalDetalleVacacionesEquipo .tabla-resumen-equipo td:last-child {
+            width: 180px;
+            white-space: nowrap;
+        }
+
+    #modalDetalleVacacionesEquipo .tabla-resumen-equipo tbody tr:last-child td {
+        background: #f4f2ff;
+        color: #21166f;
+        font-weight: 800;
+    }
+
+#modalDetalleVacacionesEquipo #tdEquipoSaldo {
+    color: #146cff !important;
+}
+
+
+/* =========================================================
+   HISTORIAL
+   ========================================================= */
+
+#modalDetalleVacacionesEquipo .tabla-historial-equipo {
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 0;
+    background: #ffffff;
+}
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo thead th {
+        background: #21166f !important;
+        color: #ffffff !important;
+        padding: .75rem .65rem;
+        font-size: .86rem;
+        font-weight: 700;
+        border-color: rgba(255, 255, 255, .12);
+        vertical-align: middle;
+    }
+
+    #modalDetalleVacacionesEquipo
+    .tabla-historial-equipo tbody td {
+        padding: .42rem .55rem;
+        font-size: .82rem;
+        color: #3f4148;
+        border-color: #ebecf3;
+        vertical-align: middle;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        line-height: 1.25;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo tbody tr:nth-child(even) td {
+        background: #fafaff;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo tbody tr:hover td {
+        background: #f2f1ff;
+    }
+
+
+    /* =========================================================
+   ANCHOS DEL HISTORIAL
+   ========================================================= */
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(1),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(1) {
+        width: 9%;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(2),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(2),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(3),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(3) {
+        width: 8.5%;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(4),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(4) {
+        width: 5%;
+        text-align: center;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(5),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(5) {
+        width: 11%;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(6),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(6) {
+        width: 12%;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(7),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(7),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(8),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(8) {
+        width: 7%;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(9),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(9) {
+        width: 15%;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo th:nth-child(10),
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo td:nth-child(10) {
+        width: 16%;
+    }
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+#modalDetalleVacacionesEquipo .modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(33, 22, 111, .08);
+    background: #ffffff;
+}
+
+    #modalDetalleVacacionesEquipo .modal-footer .btn {
+        min-width: 110px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 991.98px) {
+
+    #modalDetalleVacacionesEquipo .modal-dialog {
+        max-width: calc(100vw - 20px);
+        margin: 10px;
+    }
+
+    #modalDetalleVacacionesEquipo .modal-body {
+        padding: 1rem;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-historial-equipo {
+        min-width: 1150px;
+        table-layout: fixed;
+    }
+
+    #modalDetalleVacacionesEquipo .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+
+@media (max-width: 575.98px) {
+
+    #modalDetalleVacacionesEquipo .modal-header {
+        padding: 1rem;
+    }
+
+    #modalDetalleVacacionesEquipo .modal-title {
+        font-size: 1.05rem;
+    }
+
+    #modalDetalleVacacionesEquipo #lblEquipoEmpleadoNombre {
+        font-size: 1.1rem;
+    }
+
+    #modalDetalleVacacionesEquipo .tabla-resumen-equipo td:last-child {
+        width: 125px;
+    }
+}
+
+/* =========================================================
+   ESTATUS DEL HISTORIAL
+   ========================================================= */
+
+.vac-equipo-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    padding: .20rem .45rem;
+    border-radius: 999px;
+    font-size: .70rem;
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: normal;
+    text-align: center;
+}
+
+.vac-equipo-status-approved {
+    background: #dcf7df;
+    color: #247832;
+}
+
+.vac-equipo-status-pending {
+    background: #fff3cd;
+    color: #8a6500;
+}
+
+.vac-equipo-status-rejected {
+    background: #ffe2e2;
+    color: #a51e1e;
+}
+
+.vac-equipo-status-neutral {
+    background: #edf0f6;
+    color: #5f6673;
+}
+
+/* =========================================================
+   PAGINADOR HISTORIAL DEL EQUIPO
+   ========================================================= */
+
+#modalDetalleVacacionesEquipo
+.historial-equipo-paginador {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(33, 22, 111, .08);
+}
+
+
+#modalDetalleVacacionesEquipo
+.historial-equipo-controles {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+#modalDetalleVacacionesEquipo
+.historial-equipo-info {
+    margin-right: 6px;
+    font-size: .82rem;
+    color: #6b7280;
+}
+
+
+    #modalDetalleVacacionesEquipo
+    .historial-equipo-info strong {
+        color: #21166f;
+        font-weight: 700;
+    }
+
+
+#modalDetalleVacacionesEquipo
+.historial-equipo-controles .btn {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 9px;
+}
+
+/* =========================================================
+   TABLAS DE SOLICITUDES DE VACACIONES - VISTA COMPACTA
+   Aplica únicamente a:
+   - Mis solicitudes
+   - Solicitudes por autorizar
+   ========================================================= */
+
+#table tbody td,
+#tableSolicitudesAutorizar tbody td {
+    padding: .48rem .42rem !important;
+    font-size: .82rem;
+    line-height: 1.25;
+    vertical-align: middle !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+
+/* Mantener encabezados legibles pero un poco más compactos */
+#table thead th,
+#tableSolicitudesAutorizar thead th {
+    padding: .62rem .45rem !important;
+    font-size: .82rem !important;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   NOMBRES
+   ========================================================= */
+
+#table tbody td:nth-child(2),
+#tableSolicitudesAutorizar tbody td:nth-child(2) {
+    min-width: 120px;
+    max-width: 145px;
+}
+
+
+/* =========================================================
+   FECHAS
+   ========================================================= */
+
+#table tbody td:nth-child(3),
+#table tbody td:nth-child(4),
+#table tbody td:nth-child(5),
+#tableSolicitudesAutorizar tbody td:nth-child(3),
+#tableSolicitudesAutorizar tbody td:nth-child(4),
+#tableSolicitudesAutorizar tbody td:nth-child(5) {
+    white-space: nowrap;
+    min-width: 95px;
+}
+
+
+/* =========================================================
+   DÍAS
+   ========================================================= */
+
+#table tbody td:nth-child(6),
+#tableSolicitudesAutorizar tbody td:nth-child(6) {
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+
+/* =========================================================
+   ESTATUS
+   ========================================================= */
+
+#table tbody td:nth-child(7),
+#tableSolicitudesAutorizar tbody td:nth-child(7) {
+    min-width: 145px;
+}
+
+
+    /* Badges más compactos únicamente en estas tablas */
+    #table tbody td:nth-child(7) .badge,
+    #tableSolicitudesAutorizar tbody td:nth-child(7) .badge {
+        font-size: .68rem;
+        padding: .22rem .42rem;
+        white-space: normal;
+        line-height: 1.15;
+    }
+
+
+/* =========================================================
+   AUTORIZADOR
+   ========================================================= */
+
+#table tbody td:nth-child(8),
+#tableSolicitudesAutorizar tbody td:nth-child(8) {
+    min-width: 115px;
+    max-width: 140px;
+}
+
+
+/* =========================================================
+   COMENTARIO
+   ========================================================= */
+
+#table tbody td:nth-child(9),
+#tableSolicitudesAutorizar tbody td:nth-child(9) {
+    min-width: 145px;
+    max-width: 190px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   ACCIONES
+   ========================================================= */
+
+#table tbody td:nth-child(10),
+#tableSolicitudesAutorizar tbody td:nth-child(10) {
+    min-width: 75px;
+    white-space: nowrap;
+}
+
+
+    /* Iconos un poco más compactos */
+    #table tbody td:nth-child(10) .d-flex,
+    #tableSolicitudesAutorizar tbody td:nth-child(10) .d-flex {
+        gap: .35rem !important;
+    }
