@@ -102,29 +102,73 @@ namespace ERPSEI.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnGetAsync(string returnUrl = null)
         {
-
             if (!string.IsNullOrEmpty(ErrorMessage))
             {
-                ModelState.AddModelError(string.Empty, ErrorMessage);
+                ModelState.AddModelError(
+                    string.Empty,
+                    ErrorMessage
+                );
             }
 
-            returnUrl ??= Url.Content("~/");
+            // =====================================================
+            // NORMALIZAR RETURN URL
+            // =====================================================
 
-            if (_signInManager.IsSignedIn(User)) { return LocalRedirect("~/Identity/Account/Logout"); }
+            if (
+                string.IsNullOrWhiteSpace(returnUrl) ||
+                !Url.IsLocalUrl(returnUrl) ||
+                returnUrl.StartsWith(
+                    "/Identity/Account/Logout",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                returnUrl = Url.Content("~/");
+            }
 
-            // Clear the existing external cookie to ensure a clean login process
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            // =====================================================
+            // SI YA ESTÁ AUTENTICADO, IR AL INICIO
+            // =====================================================
 
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            if (_signInManager.IsSignedIn(User))
+            {
+                return LocalRedirect("~/");
+            }
 
-            ReturnUrl = returnUrl;
+            // =====================================================
+            // LIMPIAR COOKIE EXTERNA
+            // =====================================================
+
+            await HttpContext.SignOutAsync(
+                IdentityConstants.ExternalScheme
+            );
+
+            ExternalLogins =
+                (
+                    await _signInManager
+                        .GetExternalAuthenticationSchemesAsync()
+                )
+                .ToList();
+
+            ReturnUrl =
+                returnUrl;
 
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            returnUrl ??= Url.Content("~/");
+            if (
+                string.IsNullOrWhiteSpace(returnUrl) ||
+                !Url.IsLocalUrl(returnUrl) ||
+                returnUrl.StartsWith(
+                    "/Identity/Account/Logout",
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
+            {
+                returnUrl = Url.Content("~/");
+            }
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 

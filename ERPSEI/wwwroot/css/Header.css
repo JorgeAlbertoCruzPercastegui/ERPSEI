@@ -800,3 +800,127 @@ body.module-main-theme.headerimagenes-page .notification-panel {
 body.module-main-theme.headerimagenes-page .topbar-links {
     z-index: 1 !important;
 }
+
+/* =========================================================
+   NOTIFICACIONES - ACCIONES DE LECTURA
+   ========================================================= */
+
+.quick-notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.quick-notification-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+    .quick-notification-header-info span {
+        font-size: 0.75rem;
+        opacity: 0.75;
+    }
+
+.quick-notification-mark-all {
+    border: 0;
+    background: transparent;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+    .quick-notification-mark-all:hover {
+        text-decoration: underline;
+    }
+
+    .quick-notification-mark-all:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+
+/* =========================================================
+   NOTIFICACIÓN INDIVIDUAL
+   ========================================================= */
+
+.quick-notification-item {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.quick-notification-main {
+    display: flex;
+    align-items: flex-start;
+    flex: 1;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}
+
+    .quick-notification-main:hover {
+        color: inherit;
+    }
+
+.quick-notification-content {
+    flex: 1;
+    min-width: 0;
+    padding-right: 8px;
+}
+
+
+/* =========================================================
+   BOTÓN MARCAR COMO LEÍDA
+   ========================================================= */
+
+.quick-notification-read-btn {
+    flex: 0 0 auto;
+    align-self: center;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+    .quick-notification-read-btn:hover {
+        background: rgba(0, 0, 0, 0.06);
+    }
+
+    .quick-notification-read-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 576px) {
+
+    .quick-notification-header {
+        align-items: flex-start;
+    }
+
+    .quick-notification-mark-all span {
+        display: none;
+    }
+
+    .quick-notification-read-btn {
+        width: 28px;
+        height: 28px;
+        margin-right: 4px;
+    }
+}

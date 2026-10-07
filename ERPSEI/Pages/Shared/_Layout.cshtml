@@ -739,25 +739,74 @@
                             @if (SignInManager.IsSignedIn(User))
                             {
                                 <div class="quick-notifications dropdown">
+
                                     <button class="quick-notification-btn @(totalNotificacionesNoLeidas > 0 ? "has-alert" : "")"
                                             type="button"
                                             data-bs-toggle="dropdown"
+                                            data-bs-auto-close="outside"
                                             aria-expanded="false">
+
                                         <i class="bi bi-bell-fill"></i>
 
-                                        @if (totalNotificacionesNoLeidas > 0)
-                                        {
-                                            <span class="quick-notification-badge">
-                                                @totalNotificacionesNoLeidas
-                                            </span>
-                                        }
+                                        <span id="notificationBadge"
+                                              class="quick-notification-badge"
+                                              style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
+
+                                            @totalNotificacionesNoLeidas
+
+                                        </span>
+
                                     </button>
 
                                     <div class="dropdown-menu dropdown-menu-end quick-notification-menu">
+
+                                        @* =====================================================
+           TOKEN PARA PETICIONES POST
+           ===================================================== *@
+
+                                        <form id="notificationAntiForgeryForm"
+                                              method="post"
+                                              style="display:none;">
+
+                                            @Html.AntiForgeryToken()
+
+                                        </form>
+
+                                        @* =====================================================
+           ENCABEZADO
+           ===================================================== *@
+
                                         <div class="quick-notification-header">
-                                            <strong>Notificaciones</strong>
-                                            <span>@totalNotificacionesNoLeidas nueva(s)</span>
+
+                                            <div class="quick-notification-header-info">
+
+                                                <strong>
+                                                    Notificaciones
+                                                </strong>
+
+                                                <span id="notificationUnreadText">
+                                                    @(totalNotificacionesNoLeidas > 0
+                                                        ? $"{totalNotificacionesNoLeidas} nueva(s)"
+                                                        : "Todo al día")
+                                                </span>
+
+                                            </div>
+
+                                            <button type="button"
+                                                    id="btnMarcarTodasLeidas"
+                                                    class="quick-notification-mark-all"
+                                                    style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
+
+                                                <i class="bi bi-check2-all"></i>
+
+                                                <span>
+                                                    Marcar todas
+                                                </span>
+
+                                            </button>
+
                                         </div>
+
 
                                         @if (notificacionesUsuario.Any())
                                         {
@@ -769,35 +818,68 @@
 
                                                 @foreach (var n in notificacionesUsuario)
                                                 {
-                                                    <a class="quick-notification-item @(n.Leida ? "" : "is-unread")"
-                                                           data-notification-index="@indiceNotificacion"
-                                                           href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
+                                                    <div class="quick-notification-item @(n.Leida ? "" : "is-unread")"
+                                                         data-notification-index="@indiceNotificacion"
+                                                         data-notification-id="@n.Id">
 
-                                                        <div class="quick-notification-icon">
-                                                            <i class="@n.Icono"></i>
-                                                        </div>
+                                                        @* =================================================
+                           CONTENIDO / ABRIR NOTIFICACIÓN
+                           ================================================= *@
 
-                                                        <div class="quick-notification-content">
-                                                            <strong>
-                                                                @n.Titulo
-                                                            </strong>
+                                                        <a class="quick-notification-main"
+                                                               href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
 
-                                                            <span>
-                                                                @n.Descripcion
-                                                            </span>
+                                                            <div class="quick-notification-icon">
 
-                                                            <small>
-                                                                @n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")
-                                                            </small>
-                                                        </div>
+                                                                <i class="@n.Icono"></i>
 
-                                                    </a>
+                                                            </div>
+
+                                                            <div class="quick-notification-content">
+
+                                                                <strong>
+                                                                    @n.Titulo
+                                                                </strong>
+
+                                                                <span>
+                                                                    @n.Descripcion
+                                                                </span>
+
+                                                                <small>
+                                                                    @n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")
+                                                                </small>
+
+                                                            </div>
+
+                                                        </a>
+
+
+                                                        @* =================================================
+                           MARCAR INDIVIDUALMENTE COMO LEÍDA
+                           ================================================= *@
+
+                                                        <button type="button"
+                                                                class="quick-notification-read-btn"
+                                                                data-notification-id="@n.Id"
+                                                                title="Marcar como leída"
+                                                                aria-label="Marcar notificación como leída"
+                                                                style="@(n.Leida ? "display:none;" : "")">
+
+                                                            <i class="bi bi-check2"></i>
+
+                                                        </button>
+
+                                                    </div>
 
                                                     indiceNotificacion++;
                                                 }
 
                                             </div>
 
+
+                                            @* =====================================================
+               PAGINADOR
+               ===================================================== *@
 
                                             <div class="quick-notification-pagination"
                                                  id="quickNotificationPagination">
@@ -846,7 +928,9 @@
                                                 No tienes notificaciones.
                                             </div>
                                         }
+
                                     </div>
+
                                 </div>
                             }
 
@@ -1460,7 +1544,7 @@
         function () {
 
         // =====================================================
-        // PAGINADOR DE NOTIFICACIONES
+        // ELEMENTOS
         // =====================================================
 
         const elementos =
@@ -1470,56 +1554,71 @@
         )
         );
 
-
-        if (elementos.length === 0) {
-        return;
-        }
-
-
-        const POR_PAGINA = 3;
-
-        let paginaActual = 1;
-
-
-        const totalPaginas =
-        Math.ceil(
-        elementos.length /
-        POR_PAGINA
-        );
-
-
         const btnAnterior =
         document.getElementById(
         "btnNotificationPrev"
         );
-
 
         const btnSiguiente =
         document.getElementById(
         "btnNotificationNext"
         );
 
-
         const lblPaginaActual =
         document.getElementById(
         "notificationCurrentPage"
         );
-
 
         const lblTotalPaginas =
         document.getElementById(
         "notificationTotalPages"
         );
 
-
         const paginador =
         document.getElementById(
         "quickNotificationPagination"
         );
 
+        const notificationBadge =
+        document.getElementById(
+        "notificationBadge"
+        );
+
+        const notificationUnreadText =
+        document.getElementById(
+        "notificationUnreadText"
+        );
+
+        const btnMarcarTodas =
+        document.getElementById(
+        "btnMarcarTodasLeidas"
+        );
+
+        const token =
+        document.querySelector(
+        "#notificationAntiForgeryForm " +
+        "input[name='__RequestVerificationToken']"
+        )?.value;
+
+
+        // =====================================================
+        // PAGINACIÓN
+        // =====================================================
+
+        const POR_PAGINA = 3;
+
+        let paginaActual = 1;
+
+        const totalPaginas =
+        elementos.length > 0
+        ? Math.ceil(
+        elementos.length /
+        POR_PAGINA
+        )
+        : 0;
+
 
         if (lblTotalPaginas) {
-
         lblTotalPaginas.textContent =
         totalPaginas;
         }
@@ -1529,6 +1628,10 @@
         numeroPagina
         ) {
 
+        if (totalPaginas === 0) {
+        return;
+        }
+
         if (
         numeroPagina < 1 ||
         numeroPagina > totalPaginas
@@ -1536,17 +1639,14 @@
         return;
         }
 
-
         paginaActual =
         numeroPagina;
-
 
         const inicio =
         (
         paginaActual - 1
         ) *
         POR_PAGINA;
-
 
         const fin =
         inicio +
@@ -1569,31 +1669,24 @@
 
 
         if (lblPaginaActual) {
-
         lblPaginaActual.textContent =
         paginaActual;
         }
 
 
         if (btnAnterior) {
-
         btnAnterior.disabled =
         paginaActual === 1;
         }
 
 
         if (btnSiguiente) {
-
         btnSiguiente.disabled =
         paginaActual ===
         totalPaginas;
         }
         }
 
-
-        // =====================================================
-        // ANTERIOR
-        // =====================================================
 
         btnAnterior?.addEventListener(
         "click",
@@ -1609,10 +1702,6 @@
         );
 
 
-        // =====================================================
-        // SIGUIENTE
-        // =====================================================
-
         btnSiguiente?.addEventListener(
         "click",
         function (event) {
@@ -1627,9 +1716,6 @@
         );
 
 
-        // Evitar que Bootstrap cierre el dropdown
-        // cuando se utiliza el paginador.
-
         paginador?.addEventListener(
         "click",
         function (event) {
@@ -1639,11 +1725,294 @@
         );
 
 
+        if (totalPaginas > 0) {
+        mostrarPagina(1);
+        }
+
+
         // =====================================================
-        // INICIALIZAR
+        // ACTUALIZAR CONTADOR VISUAL
         // =====================================================
 
-        mostrarPagina(1);
+        function actualizarContador(
+        totalNoLeidas
+        ) {
+
+        totalNoLeidas =
+        Number(
+        totalNoLeidas ?? 0
+        );
+
+
+        if (notificationUnreadText) {
+
+        notificationUnreadText.textContent =
+        totalNoLeidas === 0
+        ? "Todo al día"
+        : totalNoLeidas === 1
+        ? "1 nueva"
+        : totalNoLeidas + " nuevas";
+        }
+
+
+        if (notificationBadge) {
+
+        notificationBadge.textContent =
+        totalNoLeidas;
+
+        notificationBadge.style.display =
+        totalNoLeidas > 0
+        ? ""
+        : "none";
+        }
+
+
+        if (btnMarcarTodas) {
+
+        btnMarcarTodas.style.display =
+        totalNoLeidas > 0
+        ? ""
+        : "none";
+        }
+
+
+        const botonCampana =
+        document.querySelector(
+        ".quick-notification-btn"
+        );
+
+        if (botonCampana) {
+
+        botonCampana.classList.toggle(
+        "has-alert",
+        totalNoLeidas > 0
+        );
+        }
+        }
+
+
+        // =====================================================
+        // MARCAR UNA COMO LEÍDA
+        // =====================================================
+
+        document
+        .querySelectorAll(
+        ".quick-notification-read-btn"
+        )
+        .forEach(
+        function (boton) {
+
+        boton.addEventListener(
+        "click",
+        async function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+
+        const id =
+        this.dataset
+        .notificationId;
+
+        if (!id) {
+        return;
+        }
+
+
+        this.disabled =
+        true;
+
+
+        try {
+
+        const response =
+        await fetch(
+        "/Catalogos/Notificaciones/Leer" +
+        "?handler=MarcarLeida" +
+        "&id=" +
+        encodeURIComponent(id),
+        {
+        method: "POST",
+
+        credentials:
+        "same-origin",
+
+        headers: {
+        "RequestVerificationToken":
+        token ?? "",
+
+        "Accept":
+        "application/json"
+        }
+        }
+        );
+
+
+        if (!response.ok) {
+
+        throw new Error(
+        "No fue posible marcar " +
+        "la notificación como leída."
+        );
+        }
+
+
+        const data =
+        await response.json();
+
+
+        if (!data.success) {
+
+        throw new Error(
+        data.message ??
+        "No fue posible actualizar " +
+        "la notificación."
+        );
+        }
+
+
+        const item =
+        this.closest(
+        ".quick-notification-item"
+        );
+
+
+        item?.classList.remove(
+        "is-unread"
+        );
+
+
+        this.style.display =
+        "none";
+
+
+        actualizarContador(
+        data.totalNoLeidas
+        );
+
+        }
+        catch (error) {
+
+        console.error(
+        "Error al marcar la " +
+        "notificación como leída:",
+        error
+        );
+
+        this.disabled =
+        false;
+        }
+        }
+        );
+        }
+        );
+
+
+        // =====================================================
+        // MARCAR TODAS COMO LEÍDAS
+        // =====================================================
+
+        btnMarcarTodas?.addEventListener(
+        "click",
+        async function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+
+        this.disabled =
+        true;
+
+
+        try {
+
+        const response =
+        await fetch(
+        "/Catalogos/Notificaciones/Leer" +
+        "?handler=MarcarTodasLeidas",
+        {
+        method: "POST",
+
+        credentials:
+        "same-origin",
+
+        headers: {
+        "RequestVerificationToken":
+        token ?? "",
+
+        "Accept":
+        "application/json"
+        }
+        }
+        );
+
+
+        if (!response.ok) {
+
+        throw new Error(
+        "No fue posible marcar todas " +
+        "las notificaciones como leídas."
+        );
+        }
+
+
+        const data =
+        await response.json();
+
+
+        if (!data.success) {
+
+        throw new Error(
+        data.message ??
+        "No fue posible actualizar " +
+        "las notificaciones."
+        );
+        }
+
+
+        document
+        .querySelectorAll(
+        ".quick-notification-item.is-unread"
+        )
+        .forEach(
+        function (item) {
+
+        item.classList.remove(
+        "is-unread"
+        );
+        }
+        );
+
+
+        document
+        .querySelectorAll(
+        ".quick-notification-read-btn"
+        )
+        .forEach(
+        function (boton) {
+
+        boton.style.display =
+        "none";
+        }
+        );
+
+
+        actualizarContador(0);
+
+        }
+        catch (error) {
+
+        console.error(
+        "Error al marcar todas las " +
+        "notificaciones como leídas:",
+        error
+        );
+
+        this.disabled =
+        false;
+        }
+        }
+        );
         }
         );
     </script>
