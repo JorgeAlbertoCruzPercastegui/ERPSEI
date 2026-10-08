@@ -327,6 +327,10 @@
                     {
                         <span>Todos los Tickets</span>
                     }
+                    else if (Model.EsTecnicoMesaAyuda)
+                    {
+                        <span>Mis Tickets Asignados</span>
+                    }
                     else
                     {
                         <span>Mis Tickets</span>
@@ -339,13 +343,22 @@
                     @if (Model.EsAdmin)
                     {
                         <span>
-                            Administra, filtra y da seguimiento a los tickets registrados en la Mesa de Ayuda.
+                            Administra, filtra y da seguimiento
+                            a los tickets registrados en la Mesa de Ayuda.
+                        </span>
+                    }
+                    else if (Model.EsTecnicoMesaAyuda)
+                    {
+                        <span>
+                            Consulta y da seguimiento
+                            a los tickets que tienes asignados.
                         </span>
                     }
                     else
                     {
                         <span>
-                            Consulta el estado y seguimiento de tus solicitudes en tiempo real.
+                            Consulta el estado y seguimiento
+                            de tus solicitudes en tiempo real.
                         </span>
                     }
 
@@ -521,9 +534,9 @@
                             <th>Estado</th>
                             <th>Fecha</th>
 
-                            @if (Model.EsAdmin)
+                            @if (Model.PuedeGestionarTickets)
                             {
-                                <th>Asignación</th>
+                                <th>Técnico asignado</th>
                             }
 
                             <th class="text-center">Acciones</th>
@@ -535,7 +548,7 @@
                         @if (!Model.Tickets.Any())
                         {
                             <tr>
-                                <td colspan="@(Model.EsAdmin ? 9 : 8)">
+                                <td colspan="@(Model.PuedeGestionarTickets ? 9 : 8)">
 
                                     <div class="sd-empty-pro">
 
@@ -701,22 +714,46 @@
                                         </div>
                                     </td>
 
-                                    <!-- ASIGNACIÓN -->
-                                    @if (Model.EsAdmin)
+                                    <!-- TÉCNICO ASIGNADO -->
+                                    @if (Model.PuedeGestionarTickets)
                                     {
                                         <td>
-                                            @if (string.IsNullOrWhiteSpace(ticket.UsuarioAsignadoId))
+
+                                            @if (
+                                                string.IsNullOrWhiteSpace(
+                                                    ticket.UsuarioAsignadoId
+                                                )
+                                            )
                                             {
                                                 <span class="sd-unassigned">
-                                                    <i class="bi bi-person-x me-1"></i> Sin asignar
+
+                                                    <i class="bi bi-person-x me-1"></i>
+
+                                                    Sin asignar
+
                                                 </span>
                                             }
                                             else
                                             {
+                                                string nombreTecnico =
+                                                    Model.NombresTecnicosAsignados
+                                                        .TryGetValue(
+                                                            ticket.UsuarioAsignadoId,
+                                                            out string? nombre
+                                                        )
+                                                            ? nombre
+                                                            : "Usuario asignado";
+
+
                                                 <span class="sd-assigned">
-                                                    <i class="bi bi-person-check me-1"></i> Asignado
+
+                                                    <i class="bi bi-person-check me-1"></i>
+
+                                                    @nombreTecnico
+
                                                 </span>
                                             }
+
                                         </td>
                                     }
 

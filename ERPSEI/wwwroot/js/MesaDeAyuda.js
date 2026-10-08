@@ -805,7 +805,8 @@
             );
 
             configurarComentarioAdmin(
-                respuesta.esAdmin
+                respuesta.esAdmin,
+                respuesta.esTecnicoMesaAyuda
             );
 
             cargarAdjuntosTicket(
@@ -854,9 +855,13 @@
                     "detallePanelAdmin"
                 );
 
-            if (
-                !respuesta.esAdmin
-            ) {
+            const puedeGestionar =
+                respuesta.esAdmin === true
+                ||
+                respuesta.esTecnicoMesaAyuda === true;
+
+
+            if (!puedeGestionar) {
 
                 panel?.classList.add(
                     "d-none"
@@ -873,6 +878,11 @@
             const ticket =
                 respuesta.ticket;
 
+            const esTecnicoRestringido =
+                respuesta.esTecnicoMesaAyuda === true
+                &&
+                respuesta.esAdmin !== true;
+
 
             // =============================================
             // TÉCNICOS
@@ -883,38 +893,100 @@
                     "detalleTecnicoSelect"
                 );
 
+
             if (tecnicoSelect) {
 
                 tecnicoSelect.innerHTML =
-                    '<option value="">Sin asignar</option>';
+                    "";
 
-                (
-                    respuesta.tecnicos ||
-                    []
-                )
-                    .forEach(
-                        function (tecnico) {
 
-                            const option =
-                                document.createElement(
-                                    "option"
-                                );
+                // =========================================
+                // TÉCNICO RESTRINGIDO
+                // Solo visualiza su propia asignación.
+                // =========================================
 
-                            option.value =
-                                tecnico.id;
+                if (esTecnicoRestringido) {
 
-                            option.textContent =
-                                tecnico.nombre;
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
 
-                            tecnicoSelect.appendChild(
-                                option
-                            );
-                        }
+                    option.value =
+                        ticket.usuarioAsignadoId ||
+                        "";
+
+                    option.textContent =
+                        ticket.usuarioAsignado ||
+                        "Técnico asignado";
+
+                    tecnicoSelect.appendChild(
+                        option
                     );
 
-                tecnicoSelect.value =
-                    ticket.usuarioAsignadoId ||
-                    "";
+                    tecnicoSelect.value =
+                        ticket.usuarioAsignadoId ||
+                        "";
+
+                    tecnicoSelect.disabled =
+                        true;
+                }
+
+                // =========================================
+                // ADMINISTRADOR FULL
+                // Puede reasignar el ticket.
+                // =========================================
+
+                else {
+
+                    const optionSinAsignar =
+                        document.createElement(
+                            "option"
+                        );
+
+                    optionSinAsignar.value =
+                        "";
+
+                    optionSinAsignar.textContent =
+                        "Sin asignar";
+
+                    tecnicoSelect.appendChild(
+                        optionSinAsignar
+                    );
+
+
+                    (
+                        respuesta.tecnicos ||
+                        []
+                    )
+                        .forEach(
+                            function (tecnico) {
+
+                                const option =
+                                    document.createElement(
+                                        "option"
+                                    );
+
+                                option.value =
+                                    tecnico.id;
+
+                                option.textContent =
+                                    tecnico.nombre;
+
+                                tecnicoSelect.appendChild(
+                                    option
+                                );
+                            }
+                        );
+
+
+                    tecnicoSelect.value =
+                        ticket.usuarioAsignadoId ||
+                        "";
+
+                    tecnicoSelect.disabled =
+                        false;
+                }
             }
 
 
@@ -2430,7 +2502,8 @@
         // =================================================
 
         function configurarComentarioAdmin(
-            esAdmin
+            esAdmin,
+            esTecnicoMesaAyuda
         ) {
 
             const contenedorNotaInterna =
@@ -2447,7 +2520,11 @@
                 return;
             }
 
-            if (esAdmin) {
+            if (
+                esAdmin === true
+                ||
+                esTecnicoMesaAyuda === true
+            ) {
 
                 contenedorNotaInterna
                     .classList

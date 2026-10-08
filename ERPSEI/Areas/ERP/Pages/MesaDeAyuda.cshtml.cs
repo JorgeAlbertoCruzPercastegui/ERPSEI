@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Tsp;
 using System.ComponentModel.DataAnnotations;
+using ERPSEI.Email;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -19,17 +20,20 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly AppUserManager _userManager;
         private readonly ILogger<MesaDeAyudaModel> _logger;
         private readonly IWebHostEnvironment _environment;
+        private readonly IEmailSender _emailSender;
 
         public MesaDeAyudaModel(
         ApplicationDbContext context,
         AppUserManager userManager,
         ILogger<MesaDeAyudaModel> logger,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        IEmailSender emailSender)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
             _environment = environment;
+            _emailSender = emailSender;
         }
 
         public class ActualizarTicketRequest
@@ -60,6 +64,22 @@ namespace ERPSEI.Areas.ERP.Pages
         // =========================================================
 
         public bool EsAdmin { get; private set; }
+
+        public bool EsTecnicoMesaAyuda { get; private set; }
+
+        public bool PuedeGestionarTickets =>
+            EsAdmin ||
+            EsTecnicoMesaAyuda;
+
+
+        // =========================================================
+        // NOMBRES DE TÉCNICOS ASIGNADOS
+        // =========================================================
+
+        public Dictionary<string, string>
+            NombresTecnicosAsignados
+        { get; private set; } =
+            new Dictionary<string, string>();
 
         // =========================================================
         // LISTADO PRINCIPAL
@@ -138,6 +158,9 @@ namespace ERPSEI.Areas.ERP.Pages
 
             EsAdmin = EsAdministradorMesa();
 
+            EsTecnicoMesaAyuda =
+                EsTecnicoMesaAyudaRestringido();
+
             await CargarCatalogosAsync();
 
             IQueryable<ServiceTicket> query =
@@ -154,17 +177,35 @@ namespace ERPSEI.Areas.ERP.Pages
              * El administrador puede consultar todos los tickets.
              * El usuario normal solamente puede consultar los suyos.
              */
-            if (!EsAdmin)
+            if (EsTecnicoMesaAyuda)
             {
-                query = query.Where(
-                    x => x.UsuarioSolicitanteId == usuarioActual.Id
-                );
+                // Técnico restringido:
+                // solamente tickets asignados a él.
+                query =
+                    query.Where(
+                        x =>
+                            x.UsuarioAsignadoId ==
+                            usuarioActual.Id
+                    );
+            }
+            else if (!EsAdmin)
+            {
+                // Usuario normal:
+                // solamente tickets creados por él.
+                query =
+                    query.Where(
+                        x =>
+                            x.UsuarioSolicitanteId ==
+                            usuarioActual.Id
+                    );
             }
 
             Tickets =
                 await query
                     .OrderByDescending(x => x.FechaCreacion)
                     .ToListAsync();
+
+            await CargarNombresTecnicosAsignadosAsync();
 
             CalcularKpis();
 
@@ -418,6 +459,17 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 await _context.SaveChangesAsync();
 
+
+                // =================================================
+                // NOTIFICAR NUEVO TICKET
+                // =================================================
+
+                await NotificarNuevoTicketAsync(
+                    ticket,
+                    usuarioActual
+                );
+
+
                 TempData["MensajeExito"] =
                     $"El ticket {ticket.Folio} fue creado correctamente.";
 
@@ -504,6 +556,8 @@ namespace ERPSEI.Areas.ERP.Pages
             bool esAdmin =
                 EsAdministradorMesa();
 
+            bool esTecnicoMesaAyuda = EsTecnicoMesaAyudaRestringido();
+
             // =====================================================
             // CONSULTAR TICKET
             // =====================================================
@@ -536,8 +590,10 @@ namespace ERPSEI.Areas.ERP.Pages
             // =====================================================
 
             if (
-                !esAdmin &&
-                ticket.UsuarioSolicitanteId != usuarioActual.Id
+                !PuedeConsultarTicket(
+                    ticket,
+                    usuarioActual
+                )
             )
             {
                 return StatusCode(
@@ -622,7 +678,10 @@ namespace ERPSEI.Areas.ERP.Pages
              * Las notas internas solamente deben ser visibles
              * para los administradores.
              */
-            if (!esAdmin)
+            if (
+                !esAdmin &&
+                !esTecnicoMesaAyuda
+            )
             {
                 comentariosQuery =
                     comentariosQuery.Where(
@@ -760,44 +819,72 @@ namespace ERPSEI.Areas.ERP.Pages
             object[] prioridades =
                 Array.Empty<object>();
 
-            if (esAdmin)
-            {
-                tecnicos =
-                    await ObtenerTecnicosAsync();
+            // =====================================================
+            // CATÁLOGOS DE GESTIÓN
+            // =====================================================
 
+            if (
+                esAdmin ||
+                esTecnicoMesaAyuda
+            )
+            {
                 estados =
                     (
                         await _context.ServiceTicketStatuses
                             .AsNoTracking()
-                            .Where(x => x.Activo)
-                            .OrderBy(x => x.Orden)
-                            .Select(x => new
-                            {
-                                id = x.Id,
-                                nombre = x.Nombre,
-                                codigo = x.Codigo
-                            })
+                            .Where(
+                                x => x.Activo
+                            )
+                            .OrderBy(
+                                x => x.Orden
+                            )
+                            .Select(
+                                x => new
+                                {
+                                    id = x.Id,
+                                    nombre = x.Nombre,
+                                    codigo = x.Codigo
+                                }
+                            )
                             .ToListAsync()
                     )
                     .Cast<object>()
                     .ToArray();
+
 
                 prioridades =
                     (
                         await _context.ServiceTicketPriorities
                             .AsNoTracking()
-                            .Where(x => x.Activo)
-                            .OrderBy(x => x.Nivel)
-                            .Select(x => new
-                            {
-                                id = x.Id,
-                                nombre = x.Nombre,
-                                codigo = x.Codigo
-                            })
+                            .Where(
+                                x => x.Activo
+                            )
+                            .OrderBy(
+                                x => x.Nivel
+                            )
+                            .Select(
+                                x => new
+                                {
+                                    id = x.Id,
+                                    nombre = x.Nombre,
+                                    codigo = x.Codigo
+                                }
+                            )
                             .ToListAsync()
                     )
                     .Cast<object>()
                     .ToArray();
+            }
+
+
+            // =====================================================
+            // SOLO ADMIN FULL PUEDE REASIGNAR
+            // =====================================================
+
+            if (esAdmin)
+            {
+                tecnicos =
+                    await ObtenerTecnicosAsync();
             }
 
             // =====================================================
@@ -809,6 +896,8 @@ namespace ERPSEI.Areas.ERP.Pages
                 success = true,
 
                 esAdmin,
+
+                esTecnicoMesaAyuda,
 
                 ticket = new
                 {
@@ -1032,13 +1121,11 @@ namespace ERPSEI.Areas.ERP.Pages
                 };
             }
 
-            bool esAdmin =
-                EsAdministradorMesa();
-
             if (
-                !esAdmin &&
-                ticket.UsuarioSolicitanteId !=
-                usuarioActual.Id
+                !PuedeConsultarTicket(
+                    ticket,
+                    usuarioActual
+                )
             )
             {
                 return new JsonResult(
@@ -1182,14 +1269,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 };
             }
 
-            bool esAdmin =
-                EsAdministradorMesa();
-
             if (
-                !esAdmin &&
-                ticket.UsuarioSolicitanteId !=
-                usuarioActual.Id
-            )
+                    !PuedeConsultarTicket(
+                        ticket,
+                        usuarioActual
+                    )
+                )
             {
                 return new JsonResult(
                     new
@@ -1523,13 +1608,11 @@ namespace ERPSEI.Areas.ERP.Pages
                 return NotFound();
             }
 
-            bool esAdmin =
-                EsAdministradorMesa();
-
             if (
-                !esAdmin &&
-                ticket.UsuarioSolicitanteId !=
-                usuarioActual.Id
+                !PuedeConsultarTicket(
+                    ticket,
+                    usuarioActual
+                )
             )
             {
                 return Forbid();
@@ -1633,7 +1716,16 @@ namespace ERPSEI.Areas.ERP.Pages
             // VALIDAR ADMINISTRADOR
             // =====================================================
 
-            if (!EsAdministradorMesa())
+            bool esAdmin =
+                EsAdministradorMesa();
+
+            bool esTecnicoMesaAyuda =
+                EsTecnicoMesaAyudaRestringido();
+
+            if (
+                !esAdmin &&
+                !esTecnicoMesaAyuda
+            )
             {
                 return new JsonResult(
                     new
@@ -1730,6 +1822,31 @@ namespace ERPSEI.Areas.ERP.Pages
                                 "No se encontró el ticket solicitado."
                         }
                     );
+                }
+
+                // =====================================================
+                // VALIDAR ACCESO AL TICKET
+                // =====================================================
+
+                if (
+                    !PuedeConsultarTicket(
+                        ticket,
+                        usuarioActual
+                    )
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            success = false,
+                            message =
+                                "No tienes permisos para modificar este ticket."
+                        }
+                    )
+                    {
+                        StatusCode =
+                            StatusCodes.Status403Forbidden
+                    };
                 }
 
 
@@ -1842,6 +1959,16 @@ namespace ERPSEI.Areas.ERP.Pages
                             );
                 }
 
+                // =====================================================
+                // TÉCNICO RESTRINGIDO
+                // No puede reasignar ni desasignar el ticket.
+                // =====================================================
+
+                if (esTecnicoMesaAyuda)
+                {
+                    request.UsuarioAsignadoId =
+                        usuarioActual.Id;
+                }
 
                 // =================================================
                 // VALIDAR TÉCNICO
@@ -2049,7 +2176,12 @@ namespace ERPSEI.Areas.ERP.Pages
                 bool huboCambios =
                     false;
 
+                bool notificarAsignacion = false;
 
+                AppUser? tecnicoANotificar =
+                    null;
+
+                bool notificarResolucion = false;
                 // =================================================
                 // CAMBIO DE TÉCNICO
                 // =================================================
@@ -2114,6 +2246,17 @@ namespace ERPSEI.Areas.ERP.Pages
 
                     ticket.UsuarioAsignadoId =
                         nuevoUsuarioAsignadoId;
+
+                    if (
+                            nuevoUsuarioAsignado != null
+                        )
+                    {
+                        notificarAsignacion =
+                            true;
+
+                        tecnicoANotificar =
+                            nuevoUsuarioAsignado;
+                    }
 
 
                     if (
@@ -2251,6 +2394,17 @@ namespace ERPSEI.Areas.ERP.Pages
                     request.StatusId
                 )
                 {
+                    if (
+                        request.StatusId ==
+                            ESTADO_RESUELTO &&
+                        estadoAnteriorId !=
+                            ESTADO_RESUELTO
+                    )
+                    {
+                        notificarResolucion =
+                            true;
+                    }
+
                     string estadoAnteriorNombre =
                         estadoAnterior?.Nombre ??
                         estadoAnteriorId.ToString();
@@ -2695,6 +2849,31 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 await _context.SaveChangesAsync();
 
+                // =================================================
+                // NOTIFICAR ASIGNACIÓN
+                // =================================================
+
+                if (
+                    notificarAsignacion &&
+                    tecnicoANotificar != null
+                )
+                {
+                    await NotificarAsignacionTicketAsync(
+                        ticket,
+                        tecnicoANotificar
+                    );
+                }
+
+                // =================================================
+                // NOTIFICAR RESOLUCIÓN
+                // =================================================
+
+                if (notificarResolucion)
+                {
+                    await NotificarResolucionTicketAsync(
+                        ticket
+                    );
+                }
 
                 return new JsonResult(
                     new
@@ -2735,6 +2914,233 @@ namespace ERPSEI.Areas.ERP.Pages
                         message =
                             "Ocurrió un error al actualizar el ticket."
                     }
+                );
+            }
+        }
+
+        // =========================================================
+        // NOTIFICAR RESOLUCIÓN AL SOLICITANTE
+        // =========================================================
+
+        private async Task NotificarResolucionTicketAsync(
+            ServiceTicket ticket)
+        {
+            try
+            {
+                AppUser? solicitante =
+                    await _context.Users
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.UsuarioSolicitanteId
+                        );
+
+
+                if (
+                    solicitante == null ||
+                    string.IsNullOrWhiteSpace(
+                        solicitante.Email
+                    )
+                )
+                {
+                    return;
+                }
+
+
+                AppUser? tecnicoAsignado =
+                    null;
+
+
+                if (
+                    !string.IsNullOrWhiteSpace(
+                        ticket.UsuarioAsignadoId
+                    )
+                )
+                {
+                    tecnicoAsignado =
+                        await _context.Users
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(
+                                x =>
+                                    x.Id ==
+                                    ticket.UsuarioAsignadoId
+                            );
+                }
+
+
+                ServiceTicketType? tipo =
+                    await _context.ServiceTicketTypes
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.TicketTypeId
+                        );
+
+
+                ServiceCategory? categoria =
+                    await _context.ServiceCategories
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.CategoryId
+                        );
+
+
+                string nombreSolicitante =
+                    solicitante.UserName ??
+                    solicitante.Email ??
+                    "Usuario";
+
+
+                string nombreTecnico =
+                    tecnicoAsignado?.UserName ??
+                    tecnicoAsignado?.Email ??
+                    "Mesa de Ayuda";
+
+
+                string urlModulo =
+                    $"{Request.Scheme}://{Request.Host}/ERP/MesaDeAyuda";
+
+
+                string asunto =
+                    $"Ticket resuelto - {ticket.Folio}";
+
+
+                string cuerpo = $@"
+            <div style='font-family:Arial,sans-serif;font-size:14px;color:#212529;'>
+
+                <p>
+                    Hola <strong>{nombreSolicitante}</strong>,
+                </p>
+
+                <p>
+                    Tu ticket de <strong>Mesa de Ayuda</strong>
+                    ha sido marcado como
+                    <strong>Resuelto</strong>.
+                </p>
+
+                <table
+                    border='1'
+                    cellpadding='8'
+                    cellspacing='0'
+                    style='
+                        border-collapse:collapse;
+                        width:100%;
+                        max-width:700px;
+                        font-size:14px;
+                    '>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Folio
+                        </th>
+                        <td>
+                            {ticket.Folio}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Asunto
+                        </th>
+                        <td>
+                            {ticket.Titulo}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Tipo
+                        </th>
+                        <td>
+                            {tipo?.Nombre ?? "Sin definir"}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Categoría
+                        </th>
+                        <td>
+                            {categoria?.Nombre ?? "Sin definir"}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Atendido por
+                        </th>
+                        <td>
+                            {nombreTecnico}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Estado
+                        </th>
+                        <td>
+                            Resuelto
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Resolución
+                        </th>
+                        <td>
+                            {ticket.Resolucion ?? "Sin detalle de resolución"}
+                        </td>
+                    </tr>
+
+                </table>
+
+                <br />
+
+                <p>
+                    Puedes consultar el detalle y seguimiento
+                    directamente desde la Intranet.
+                </p>
+
+                <a
+                    href='{urlModulo}'
+                    style='
+                        display:inline-block;
+                        padding:10px 18px;
+                        background-color:#1f4cd3;
+                        color:white;
+                        text-decoration:none;
+                        border-radius:5px;
+                        font-weight:bold;
+                    '>
+                    Ver ticket en la Intranet
+                </a>
+
+                <br /><br />
+
+                <p style='color:#6c757d;font-size:12px;'>
+                    Este es un mensaje automático de la Intranet SEI Consulting Group.
+                </p>
+
+            </div>
+        ";
+
+
+                await _emailSender.SendEmailAsync(
+                    solicitante.Email,
+                    asunto,
+                    cuerpo
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "No fue posible notificar la resolución del ticket {Folio}.",
+                    ticket.Folio
                 );
             }
         }
@@ -2824,6 +3230,12 @@ namespace ERPSEI.Areas.ERP.Pages
             bool esAdmin =
                 EsAdministradorMesa();
 
+            bool esTecnicoMesaAyuda = EsTecnicoMesaAyudaRestringido();
+
+            bool puedeGestionarTicket =
+                esAdmin ||
+                esTecnicoMesaAyuda;
+
             // =====================================================
             // OBTENER TICKET
             // =====================================================
@@ -2857,9 +3269,10 @@ namespace ERPSEI.Areas.ERP.Pages
             // =====================================================
 
             if (
-                !esAdmin &&
-                ticket.UsuarioSolicitanteId !=
-                usuarioActual.Id
+                !PuedeConsultarTicket(
+                    ticket,
+                    usuarioActual
+                )
             )
             {
                 return new JsonResult(
@@ -2880,12 +3293,11 @@ namespace ERPSEI.Areas.ERP.Pages
             // NOTA INTERNA
             // =====================================================
 
-            bool esNotaInterna =
-                request.EsNotaInterna;
+            bool esNotaInterna = request.EsNotaInterna;
 
             if (
                 esNotaInterna &&
-                !esAdmin
+                !puedeGestionarTicket
             )
             {
                 return new JsonResult(
@@ -2942,7 +3354,7 @@ namespace ERPSEI.Areas.ERP.Pages
                 // =================================================
 
                 if (
-                    esAdmin &&
+                    puedeGestionarTicket &&
                     !esNotaInterna &&
                     ticket.FechaPrimeraRespuesta ==
                     null
@@ -3060,8 +3472,10 @@ namespace ERPSEI.Areas.ERP.Pages
         private async Task CargarPantallaAsync(
             AppUser usuarioActual)
         {
-            EsAdmin =
-                EsAdministradorMesa();
+            EsAdmin = EsAdministradorMesa();
+
+            EsTecnicoMesaAyuda =
+                EsTecnicoMesaAyudaRestringido();
 
             await CargarCatalogosAsync();
 
@@ -3076,7 +3490,16 @@ namespace ERPSEI.Areas.ERP.Pages
                     .Include(x => x.SupportTeam);
 
 
-            if (!EsAdmin)
+            if (EsTecnicoMesaAyuda)
+            {
+                query =
+                    query.Where(
+                        x =>
+                            x.UsuarioAsignadoId ==
+                            usuarioActual.Id
+                    );
+            }
+            else if (!EsAdmin)
             {
                 query =
                     query.Where(
@@ -3092,6 +3515,8 @@ namespace ERPSEI.Areas.ERP.Pages
                         x => x.FechaCreacion
                     )
                     .ToListAsync();
+
+            await CargarNombresTecnicosAsignadosAsync();
 
             CalcularKpis();
         }
@@ -3219,9 +3644,57 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
-        // OBTENER TÉCNICOS
-        // Solamente usuarios con rol "Administrador TI"
+        // CARGAR NOMBRES DE TÉCNICOS ASIGNADOS
         // =========================================================
+
+        private async Task
+            CargarNombresTecnicosAsignadosAsync()
+        {
+            var idsTecnicos =
+                Tickets
+                    .Where(
+                        x =>
+                            !string.IsNullOrWhiteSpace(
+                                x.UsuarioAsignadoId
+                            )
+                    )
+                    .Select(
+                        x =>
+                            x.UsuarioAsignadoId!
+                    )
+                    .Distinct()
+                    .ToList();
+
+
+            if (idsTecnicos.Count == 0)
+            {
+                NombresTecnicosAsignados =
+                    new Dictionary<string, string>();
+
+                return;
+            }
+
+
+            NombresTecnicosAsignados =
+                await _context.Users
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            idsTecnicos.Contains(
+                                x.Id
+                            )
+                    )
+                    .ToDictionaryAsync(
+                        x => x.Id,
+
+                        x =>
+                            x.UserName
+                            ??
+                            x.Email
+                            ??
+                            "Usuario"
+                    );
+        }
 
         // =========================================================
         // OBTENER TÉCNICOS
@@ -3277,6 +3750,443 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
+        // NOTIFICAR NUEVO TICKET A ADMINISTRADORES
+        // =========================================================
+
+        private async Task NotificarNuevoTicketAsync(
+            ServiceTicket ticket,
+            AppUser solicitante)
+        {
+            try
+            {
+                IList<AppUser> administradores =
+                    await _userManager.GetUsersInRoleAsync(
+                        "Administrador"
+                    );
+
+                IList<AppUser> administradoresTi =
+                    await _userManager.GetUsersInRoleAsync(
+                        "Administrador TI"
+                    );
+
+
+                List<AppUser> destinatarios =
+                    administradores
+                        .Concat(administradoresTi)
+                        .Where(
+                            x =>
+                                !string.IsNullOrWhiteSpace(
+                                    x.Email
+                                )
+                        )
+                        .GroupBy(
+                            x => x.Id
+                        )
+                        .Select(
+                            x => x.First()
+                        )
+                        .ToList();
+
+
+                if (destinatarios.Count == 0)
+                {
+                    _logger.LogWarning(
+                        "No se encontraron destinatarios para notificar el ticket {Folio}.",
+                        ticket.Folio
+                    );
+
+                    return;
+                }
+
+
+                ServiceTicketType? tipo =
+                    await _context.ServiceTicketTypes
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.TicketTypeId
+                        );
+
+
+                ServiceCategory? categoria =
+                    await _context.ServiceCategories
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.CategoryId
+                        );
+
+
+                ServiceSubcategory? subcategoria =
+                    null;
+
+                if (
+                    ticket.SubcategoryId.HasValue
+                )
+                {
+                    subcategoria =
+                        await _context.ServiceSubcategories
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(
+                                x =>
+                                    x.Id ==
+                                    ticket.SubcategoryId.Value
+                            );
+                }
+
+
+                string nombreSolicitante =
+                    solicitante.UserName ??
+                    solicitante.Email ??
+                    "Usuario";
+
+
+                string urlModulo =
+                    $"{Request.Scheme}://{Request.Host}/ERP/MesaDeAyuda";
+
+
+                string asunto =
+                    $"Nuevo ticket de Mesa de Ayuda - {ticket.Folio}";
+
+
+                string cuerpo = $@"
+            <div style='font-family:Arial,sans-serif;font-size:14px;color:#212529;'>
+
+                <p>
+                    Se ha registrado un nuevo ticket en la
+                    <strong>Mesa de Ayuda</strong>.
+                </p>
+
+                <table
+                    border='1'
+                    cellpadding='8'
+                    cellspacing='0'
+                    style='
+                        border-collapse:collapse;
+                        width:100%;
+                        max-width:700px;
+                        font-size:14px;
+                    '>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Folio
+                        </th>
+                        <td>
+                            {ticket.Folio}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Solicitante
+                        </th>
+                        <td>
+                            {nombreSolicitante}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Tipo
+                        </th>
+                        <td>
+                            {tipo?.Nombre ?? "Sin definir"}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Categoría
+                        </th>
+                        <td>
+                            {categoria?.Nombre ?? "Sin definir"}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Subcategoría
+                        </th>
+                        <td>
+                            {subcategoria?.Nombre ?? "Sin definir"}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Asunto
+                        </th>
+                        <td>
+                            {ticket.Titulo}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Estado
+                        </th>
+                        <td>
+                            Nuevo
+                        </td>
+                    </tr>
+
+                </table>
+
+                <br />
+
+                <a
+                    href='{urlModulo}'
+                    style='
+                        display:inline-block;
+                        padding:10px 18px;
+                        background-color:#1f4cd3;
+                        color:white;
+                        text-decoration:none;
+                        border-radius:5px;
+                        font-weight:bold;
+                    '>
+                    Ver ticket en la Intranet
+                </a>
+
+                <br /><br />
+
+                <p style='color:#6c757d;font-size:12px;'>
+                    Este es un mensaje automático de la Intranet SEI Consulting Group.
+                </p>
+
+            </div>
+        ";
+
+
+                foreach (
+                    AppUser destinatario
+                    in destinatarios
+                )
+                {
+                    try
+                    {
+                        await _emailSender.SendEmailAsync(
+                            destinatario.Email!,
+                            asunto,
+                            cuerpo
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            ex,
+                            "No fue posible enviar la notificación del ticket {Folio} al usuario {UsuarioId}.",
+                            ticket.Folio,
+                            destinatario.Id
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al procesar las notificaciones del nuevo ticket {Folio}.",
+                    ticket.Folio
+                );
+            }
+        }
+
+        // =========================================================
+        // NOTIFICAR ASIGNACIÓN DE TICKET AL TÉCNICO
+        // =========================================================
+
+        private async Task NotificarAsignacionTicketAsync(
+            ServiceTicket ticket,
+            AppUser tecnicoAsignado)
+        {
+            try
+            {
+                if (
+                    string.IsNullOrWhiteSpace(
+                        tecnicoAsignado.Email
+                    )
+                )
+                {
+                    return;
+                }
+
+
+                AppUser? solicitante =
+                    await _context.Users
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.UsuarioSolicitanteId
+                        );
+
+
+                ServiceTicketType? tipo =
+                    await _context.ServiceTicketTypes
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.TicketTypeId
+                        );
+
+
+                ServiceCategory? categoria =
+                    await _context.ServiceCategories
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(
+                            x =>
+                                x.Id ==
+                                ticket.CategoryId
+                        );
+
+
+                string nombreSolicitante =
+                    solicitante?.UserName ??
+                    solicitante?.Email ??
+                    "Usuario";
+
+
+                string nombreTecnico =
+                    tecnicoAsignado.UserName ??
+                    tecnicoAsignado.Email ??
+                    "Técnico";
+
+
+                string urlModulo =
+                    $"{Request.Scheme}://{Request.Host}/ERP/MesaDeAyuda";
+
+
+                string asunto =
+                    $"Ticket asignado - {ticket.Folio}";
+
+
+                string cuerpo = $@"
+            <div style='font-family:Arial,sans-serif;font-size:14px;color:#212529;'>
+
+                <p>
+                    Hola <strong>{nombreTecnico}</strong>,
+                </p>
+
+                <p>
+                    Se te ha asignado un ticket en la
+                    <strong>Mesa de Ayuda</strong>.
+                </p>
+
+                <table
+                    border='1'
+                    cellpadding='8'
+                    cellspacing='0'
+                    style='
+                        border-collapse:collapse;
+                        width:100%;
+                        max-width:700px;
+                        font-size:14px;
+                    '>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Folio
+                        </th>
+                        <td>
+                            {ticket.Folio}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Solicitante
+                        </th>
+                        <td>
+                            {nombreSolicitante}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Tipo
+                        </th>
+                        <td>
+                            {tipo?.Nombre ?? "Sin definir"}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Categoría
+                        </th>
+                        <td>
+                            {categoria?.Nombre ?? "Sin definir"}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Asunto
+                        </th>
+                        <td>
+                            {ticket.Titulo}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th style='background-color:#f2f2f2;text-align:left;'>
+                            Prioridad
+                        </th>
+                        <td>
+                            {ticket.PriorityId}
+                        </td>
+                    </tr>
+
+                </table>
+
+                <br />
+
+                <a
+                    href='{urlModulo}'
+                    style='
+                        display:inline-block;
+                        padding:10px 18px;
+                        background-color:#1f4cd3;
+                        color:white;
+                        text-decoration:none;
+                        border-radius:5px;
+                        font-weight:bold;
+                    '>
+                    Ver ticket en la Intranet
+                </a>
+
+                <br /><br />
+
+                <p style='color:#6c757d;font-size:12px;'>
+                    Este es un mensaje automático de la Intranet SEI Consulting Group.
+                </p>
+
+            </div>
+        ";
+
+
+                await _emailSender.SendEmailAsync(
+                    tecnicoAsignado.Email,
+                    asunto,
+                    cuerpo
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "No fue posible notificar la asignación del ticket {Folio}.",
+                    ticket.Folio
+                );
+            }
+        }
+
+        // =========================================================
         // GENERAR FOLIO
         // =========================================================
 
@@ -3329,16 +4239,92 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
-        // VALIDAR ADMINISTRADOR DE MESA DE AYUDA
-        // Administrador y Administrador TI tienen acceso FULL
+        // TÉCNICO RESTRINGIDO DE MESA DE AYUDA
+        //
+        // Debe tener:
+        // - Administrador TI
+        // - Técnico Mesa de Ayuda
+        //
+        // Administrador y Master siempre conservan acceso total.
+        // =========================================================
+
+        private bool EsTecnicoMesaAyudaRestringido()
+        {
+            return
+                User.IsInRole("Administrador TI")
+                &&
+                User.IsInRole("Técnico Mesa de Ayuda")
+                &&
+                !User.IsInRole("Administrador")
+                &&
+                !User.IsInRole("Master");
+        }
+
+
+        // =========================================================
+        // ADMINISTRADOR FULL DE MESA DE AYUDA
         // =========================================================
 
         private bool EsAdministradorMesa()
         {
+            if (
+                User.IsInRole("Administrador")
+                ||
+                User.IsInRole("Master")
+            )
+            {
+                return true;
+            }
+
+
+            /*
+             * Administrador TI conserva acceso total
+             * siempre que NO tenga el rol restringido
+             * Técnico Mesa de Ayuda.
+             */
             return
-                User.IsInRole("Administrador") ||
-                User.IsInRole("Administrador TI") ||
-                User.IsInRole("Master");
+                User.IsInRole("Administrador TI")
+                &&
+                !User.IsInRole("Técnico Mesa de Ayuda");
+        }
+
+        // =========================================================
+        // VALIDAR ACCESO A UN TICKET
+        //
+        // ADMINISTRADOR:
+        // Puede consultar cualquier ticket.
+        //
+        // TÉCNICO MESA DE AYUDA:
+        // Solamente tickets asignados a él.
+        //
+        // USUARIO NORMAL:
+        // Solamente tickets creados por él.
+        // =========================================================
+
+        private bool PuedeConsultarTicket(
+            ServiceTicket ticket,
+            AppUser usuarioActual)
+        {
+            // Administrador / Master / Administrador TI full
+            if (EsAdministradorMesa())
+            {
+                return true;
+            }
+
+
+            // Técnico restringido
+            if (EsTecnicoMesaAyudaRestringido())
+            {
+                return
+                    ticket.UsuarioAsignadoId ==
+                    usuarioActual.Id;
+            }
+
+
+            // Usuario normal
+            return
+                ticket.UsuarioSolicitanteId ==
+                usuarioActual.Id;
         }
 
         // =========================================================
