@@ -20857,7 +20857,11 @@ document.addEventListener(
         btnGenerarSolicitudPagoDesdeDetalle
             ?.addEventListener(
                 "click",
-                abrirSolicitudPagoAdq
+                async function () {
+
+                    await abrirSolicitudPagoAdq();
+
+                }
             );
 
 
