@@ -5505,6 +5505,425 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         }
 
         // =========================================================
+        // GENERAR SOLICITUD DE PAGO FINAL
+        // POST ?handler=GenerarSolicitudPagoFinal&solicitudId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnPostGenerarSolicitudPagoFinalAsync(
+                int solicitudId
+            )
+        {
+            AppUser? usuarioActual =
+                await ObtenerUsuarioActualAsync();
+
+
+            if (
+                usuarioActual ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No fue posible identificar al usuario."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status401Unauthorized
+                };
+            }
+
+
+            if (
+                solicitudId <=
+                0
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se identificó la solicitud."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
+            // =====================================================
+            // PERMISOS
+            // =====================================================
+
+            bool puedeCrear =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Crear"
+                );
+
+
+            bool puedeEditar =
+                await TienePermisoAbacAsync(
+                    usuarioActual,
+                    "Editar"
+                );
+
+
+            bool esAdministradorSistema =
+                User.IsInRole(
+                    "Administrador"
+                );
+
+
+            if (
+                !esAdministradorSistema
+                &&
+                !puedeCrear
+                &&
+                !puedeEditar
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No tienes permisos para generar la Solicitud de Pago."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status403Forbidden
+                };
+            }
+
+
+            // =====================================================
+            // SOLICITUD
+            // =====================================================
+
+            AdqSolicitud? solicitud =
+                await _context.AdqSolicitudes
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.Id ==
+                                solicitudId
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitud ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La solicitud ya no se encuentra disponible."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+
+            // =====================================================
+            // VALIDAR FLUJO COMPLETO
+            // =====================================================
+
+            if (
+                solicitud.EstatusId !=
+                13
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "La aprobación presupuestal todavía no se encuentra completada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+            // =====================================================
+            // APROBACIÓN PRESUPUESTAL FINALIZADA
+            // =====================================================
+
+            AdqAprobacionPresupuestal? aprobacionPresupuestal =
+                await _context
+                    .AdqAprobacionesPresupuestales
+                    .AsNoTracking()
+                    .Where(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                            &&
+                            x.Estatus ==
+                                "Aprobada"
+                    )
+                    .OrderByDescending(
+                        x =>
+                            x.Id
+                    )
+                    .FirstOrDefaultAsync();
+
+
+            if (
+                aprobacionPresupuestal ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se encontró la aprobación presupuestal finalizada."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status409Conflict
+                };
+            }
+
+            // =====================================================
+            // DATOS DE PAGO YA CAPTURADOS
+            // =====================================================
+
+            AdqSolicitudPago? solicitudPago =
+                await _context.AdqSolicitudesPago
+                    .FirstOrDefaultAsync(
+                        x =>
+                            x.SolicitudId ==
+                                solicitud.Id
+                            &&
+                            !x.Eliminado
+                    );
+
+
+            if (
+                solicitudPago ==
+                null
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No se encontraron los datos previamente registrados de la Solicitud de Pago."
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status404NotFound
+                };
+            }
+
+            // =====================================================
+            // VINCULAR SOLICITUD DE PAGO CON EL FLUJO APROBADO
+            // =====================================================
+
+            solicitudPago.AprobacionPresupuestalId =
+                aprobacionPresupuestal.Id;
+
+            await _context.SaveChangesAsync();
+
+            // =====================================================
+            // YA EXISTE PDF
+            // =====================================================
+
+            if (
+                solicitudPago.PdfGenerado
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        pdfGenerado =
+                            true,
+
+                        nombreArchivo =
+                            solicitudPago.NombreArchivo,
+
+                        descargarUrl =
+                            $"{Request.Path}?handler=DescargarSolicitudPago&solicitudId={solicitud.Id}",
+
+                        message =
+                            "La Solicitud de Pago ya fue generada."
+                    }
+                );
+            }
+
+
+            try
+            {
+                // =================================================
+                // GENERAR PDF
+                // =================================================
+
+                ResultadoPdfSolicitudPago resultadoPdf =
+                    await GenerarPdfSolicitudPagoAsync(
+                        solicitudPago
+                    );
+
+
+                solicitudPago.NombreArchivo =
+                    resultadoPdf.NombreArchivo;
+
+
+                solicitudPago.RutaArchivo =
+                    Path.Combine(
+                        resultadoPdf.RutaRelativa,
+                        resultadoPdf.NombreArchivo
+                    );
+
+
+                solicitudPago.HashArchivo =
+                    resultadoPdf.HashSha256;
+
+
+                solicitudPago.PdfGenerado =
+                    true;
+
+
+                DateTime ahora =
+                    DateTime.Now;
+
+
+                solicitudPago.FechaGeneracion =
+                    ahora;
+
+
+                solicitudPago.UsuarioGeneracionId =
+                    usuarioActual.Id;
+
+
+                // =================================================
+                // HISTORIAL
+                // =================================================
+
+                _context.AdqHistorial.Add(
+                    new AdqHistorial
+                    {
+                        SolicitudId =
+                            solicitud.Id,
+
+                        TipoEvento =
+                            "SOLICITUD_PAGO_GENERADA",
+
+                        Descripcion =
+                            "La Solicitud de Pago fue generada correctamente después de concluir las cuatro aprobaciones presupuestales.",
+
+                        UsuarioId =
+                            usuarioActual.Id,
+
+                        EstatusAnteriorId =
+                            solicitud.EstatusId,
+
+                        EstatusNuevoId =
+                            solicitud.EstatusId,
+
+                        FechaEvento =
+                            ahora,
+
+                        DireccionIp =
+                            HttpContext
+                                .Connection
+                                .RemoteIpAddress?
+                                .ToString()
+                    }
+                );
+
+
+                await _context
+                    .SaveChangesAsync();
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = true,
+
+                        pdfGenerado =
+                            true,
+
+                        solicitudId =
+                            solicitud.Id,
+
+                        solicitudPagoId =
+                            solicitudPago.Id,
+
+                        nombreArchivo =
+                            solicitudPago.NombreArchivo,
+
+                        descargarUrl =
+                            $"{Request.Path}?handler=DescargarSolicitudPago&solicitudId={solicitud.Id}",
+
+                        message =
+                            "La Solicitud de Pago se generó correctamente."
+                    }
+                );
+            }
+            catch (
+                Exception ex
+            )
+            {
+                _logger.LogError(
+                    ex,
+                    "Error al generar la Solicitud de Pago final de la solicitud {SolicitudId}.",
+                    solicitud.Id
+                );
+
+
+                return new JsonResult(
+                    new
+                    {
+                        success = false,
+
+                        message =
+                            "No fue posible generar la Solicitud de Pago. " +
+                            ex.Message
+                    }
+                )
+                {
+                    StatusCode =
+                        StatusCodes.Status500InternalServerError
+                };
+            }
+        }
+
+        // =========================================================
         // DESCARGAR SOLICITUD DE PAGO
         // GET ?handler=DescargarSolicitudPago&solicitudId=12
         // =========================================================

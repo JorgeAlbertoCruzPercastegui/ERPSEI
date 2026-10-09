@@ -20854,12 +20854,285 @@ document.addEventListener(
             }
         }
 
+        // =========================================================
+        // GENERAR PDF FINAL DE SOLICITUD DE PAGO
+        // =========================================================
+
+        async function generarSolicitudPagoFinalAdq() {
+
+            const solicitudId =
+                Number(
+                    solicitudDetalleActualAdq?.id
+                    ??
+                    0
+                );
+
+
+            if (
+                solicitudId <=
+                0
+            ) {
+
+                mostrarAdvertenciaAdq(
+                    "Solicitud no identificada",
+                    "No fue posible identificar la solicitud."
+                );
+
+                return;
+            }
+
+
+            const confirmado =
+                await confirmarAccionAdq(
+                    {
+                        titulo:
+                            "Generar Solicitud de Pago",
+
+                        mensaje:
+                            `
+                    <p class="mb-3">
+                        Se generará el PDF final de la Solicitud de Pago.
+                    </p>
+
+                    <div class="alert alert-info mb-0">
+
+                        <div class="d-flex gap-2">
+
+                            <i class="bi bi-info-circle-fill"></i>
+
+                            <div>
+                                El documento utilizará la información previamente registrada
+                                y las cuatro firmas de aprobación presupuestal.
+                            </div>
+
+                        </div>
+
+                    </div>
+                `,
+
+                        textoConfirmar:
+                            "Generar PDF",
+
+                        textoCancelar:
+                            "Cancelar",
+
+                        tipo:
+                            "success",
+
+                        icono:
+                            "bi-file-earmark-pdf"
+                    }
+                );
+
+
+            if (
+                !confirmado
+            ) {
+                return;
+            }
+
+
+            try {
+
+                btnGenerarSolicitudPagoDesdeDetalle.disabled =
+                    true;
+
+
+                btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Generando...
+        `;
+
+
+                const token =
+                    document.querySelector(
+                        'input[name="__RequestVerificationToken"]'
+                    )?.value
+                    ??
+                    "";
+
+
+                const response =
+                    await fetch(
+                        `${window.location.pathname}?handler=GenerarSolicitudPagoFinal&solicitudId=${encodeURIComponent(
+                            solicitudId
+                        )}`,
+                        {
+                            method:
+                                "POST",
+
+                            headers:
+                            {
+                                "RequestVerificationToken":
+                                    token,
+
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+
+                const resultado =
+                    await response.json();
+
+
+                if (
+                    !response.ok
+                    ||
+                    !resultado?.success
+                ) {
+
+                    throw new Error(
+                        resultado?.message
+                        ??
+                        "No fue posible generar la Solicitud de Pago."
+                    );
+                }
+
+
+                solicitudDetalleActualAdq.pdfSolicitudPagoGenerado =
+                    true;
+
+
+                if (
+                    nombreArchivoSolicitudPagoAdq
+                ) {
+
+                    nombreArchivoSolicitudPagoAdq.textContent =
+                        resultado.nombreArchivo
+                        ??
+                        "Solicitud de Pago.pdf";
+                }
+
+
+                if (
+                    btnDescargarSolicitudPagoAdq
+                ) {
+
+                    btnDescargarSolicitudPagoAdq.href =
+                        resultado.descargarUrl;
+
+                    btnDescargarSolicitudPagoAdq.classList.remove(
+                        "disabled"
+                    );
+
+                    btnDescargarSolicitudPagoAdq.removeAttribute(
+                        "aria-disabled"
+                    );
+                }
+
+
+                bootstrap.Modal
+                    .getInstance(
+                        document.getElementById(
+                            "modalVerSolicitudAdq"
+                        )
+                    )
+                    ?.hide();
+
+
+                bootstrap.Modal
+                    .getOrCreateInstance(
+                        modalResultadoSolicitudPagoElementAdq
+                    )
+                    .show();
+
+            }
+            catch (
+            error
+            ) {
+
+                console.error(
+                    "Error al generar Solicitud de Pago:",
+                    error
+                );
+
+
+                mostrarAdvertenciaAdq(
+                    "No fue posible generar la Solicitud de Pago",
+                    error?.message
+                    ??
+                    "Ocurrió un error al generar el documento."
+                );
+
+            }
+            finally {
+
+                btnGenerarSolicitudPagoDesdeDetalle.disabled =
+                    false;
+
+
+                if (
+                    solicitudDetalleActualAdq
+                        ?.pdfSolicitudPagoGenerado
+                ) {
+
+                    btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
+                <i class="bi bi-download me-1"></i>
+                Descargar Solicitud de Pago
+            `;
+                }
+                else {
+
+                    btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
+                <i class="bi bi-file-earmark-pdf me-1"></i>
+                Generar Solicitud de Pago
+            `;
+                }
+            }
+        }
+
         btnGenerarSolicitudPagoDesdeDetalle
             ?.addEventListener(
                 "click",
                 async function () {
 
-                    await abrirSolicitudPagoAdq();
+                    const solicitudId =
+                        Number(
+                            solicitudDetalleActualAdq?.id
+                            ??
+                            0
+                        );
+
+
+                    if (
+                        solicitudId <=
+                        0
+                    ) {
+
+                        mostrarAdvertenciaAdq(
+                            "Solicitud no identificada",
+                            "No fue posible identificar la solicitud."
+                        );
+
+                        return;
+                    }
+
+
+                    // =============================================
+                    // PDF YA GENERADO
+                    // =============================================
+
+                    if (
+                        solicitudDetalleActualAdq
+                            ?.pdfSolicitudPagoGenerado
+                    ) {
+
+                        window.location.href =
+                            `${window.location.pathname}?handler=DescargarSolicitudPago&solicitudId=${encodeURIComponent(
+                                solicitudId
+                            )}`;
+
+                        return;
+                    }
+
+
+                    // =============================================
+                    // GENERAR PDF FINAL
+                    // =============================================
+
+                    await generarSolicitudPagoFinalAdq();
 
                 }
             );
