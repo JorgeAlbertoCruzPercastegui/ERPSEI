@@ -3882,7 +3882,24 @@ function guardarImportacionVacaciones() {
         );
 }
 
+// =========================================================
+// VARIABLES - SALDOS ACTUALES DE VACACIONES
+// =========================================================
+
+let vacacionesEmpleadosData = [];
+let vacacionesEmpleadosFiltrados = [];
+
+let paginaActualVacaciones = 1;
+
+const registrosPorPaginaVacaciones = 10;
+
+
+// =========================================================
+// ABRIR MODAL SALDOS ACTUALES DE VACACIONES
+// =========================================================
+
 function abrirModalVacacionesEmpleados() {
+
     fetch(
         "/ERP/Vacaciones?handler=VacacionesEmpleadosInfo"
     )
@@ -3894,79 +3911,72 @@ function abrirModalVacacionesEmpleados() {
         .then(
             data => {
 
-                const tbody =
+                vacacionesEmpleadosData =
+                    Array.isArray(data)
+                        ? data
+                        : [];
+
+
+                vacacionesEmpleadosFiltrados =
+                    [...vacacionesEmpleadosData];
+
+
+                paginaActualVacaciones =
+                    1;
+
+
+                const inputBuscar =
                     document.getElementById(
-                        "tbodyVacacionesEmpleadosInfo"
+                        "txtBuscarVacacionesEmpleado"
                     );
 
 
-                if (!tbody)
-                    return;
+                if (inputBuscar) {
 
+                    inputBuscar.value = "";
 
-                tbody.innerHTML =
-                    "";
-
-
-                if (
-                    !data ||
-                    data.length === 0
-                ) {
-
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="5"
-                                class="text-center text-muted">
-                                Sin registros.
-                            </td>
-                        </tr>
-                    `;
-
-                } else {
-
-                    data.forEach(
-                        x => {
-
-                            tbody.innerHTML += `
-                                <tr>
-
-                                    <td>
-                                        ${x.empleado || ""}
-                                    </td>
-
-                                    <td>
-                                        ${x.email || ""}
-                                    </td>
-
-                                    <td class="fw-bold text-primary">
-                                        ${Number(x.saldoActual || 0).toFixed(2)}
-                                    </td>
-
-                                    <td>
-                                        ${Number(x.saldoImportado || 0).toFixed(2)}
-                                    </td>
-
-                                    <td>
-                                        ${x.fechaImportacion || "-"}
-                                    </td>
-
-                                </tr>
-                            `;
-                        }
-                    );
+                    // Evitamos acumular listeners
+                    inputBuscar.oninput =
+                        filtrarVacacionesEmpleados;
                 }
 
 
-                new bootstrap.Modal(
+                renderizarTablaVacacionesEmpleados();
+
+
+                const modalElement =
                     document.getElementById(
                         "modalVacacionesEmpleadosInfo"
-                    )
-                ).show();
+                    );
+
+
+                let modal =
+                    bootstrap.Modal.getInstance(
+                        modalElement
+                    );
+
+
+                if (!modal) {
+
+                    modal =
+                        new bootstrap.Modal(
+                            modalElement
+                        );
+                }
+
+
+                modal.show();
             }
         )
 
         .catch(
-            () => {
+            error => {
+
+                console.error(
+                    "Error al consultar saldos de vacaciones:",
+                    error
+                );
+
 
                 showError(
                     "Saldos vacaciones",
@@ -3976,7 +3986,441 @@ function abrirModalVacacionesEmpleados() {
         );
 }
 
+
+// =========================================================
+// FILTRAR POR NOMBRE O CORREO
+// BUSCA A PARTIR DEL TERCER CARÁCTER
+// =========================================================
+
+function filtrarVacacionesEmpleados() {
+
+    const input =
+        document.getElementById(
+            "txtBuscarVacacionesEmpleado"
+        );
+
+
+    if (!input)
+        return;
+
+
+    const texto =
+        input.value
+            .trim()
+            .toLowerCase();
+
+
+    paginaActualVacaciones =
+        1;
+
+
+    // =====================================================
+    // VACÍO O MENOS DE 3 CARACTERES
+    // =====================================================
+
+    if (
+        texto.length === 0 ||
+        texto.length < 3
+    ) {
+
+        vacacionesEmpleadosFiltrados =
+            [...vacacionesEmpleadosData];
+
+
+        renderizarTablaVacacionesEmpleados();
+
+        return;
+    }
+
+
+    // =====================================================
+    // FILTRO EN TIEMPO REAL
+    // =====================================================
+
+    vacacionesEmpleadosFiltrados =
+        vacacionesEmpleadosData.filter(
+            x => {
+
+                const empleado =
+                    (
+                        x.empleado ||
+                        ""
+                    )
+                        .toLowerCase();
+
+
+                const email =
+                    (
+                        x.email ||
+                        ""
+                    )
+                        .toLowerCase();
+
+
+                return (
+                    empleado.includes(
+                        texto
+                    )
+                    ||
+                    email.includes(
+                        texto
+                    )
+                );
+            }
+        );
+
+
+    renderizarTablaVacacionesEmpleados();
+}
+
+
+// =========================================================
+// RENDERIZAR TABLA
+// =========================================================
+
+function renderizarTablaVacacionesEmpleados() {
+
+    const tbody =
+        document.getElementById(
+            "tbodyVacacionesEmpleadosInfo"
+        );
+
+
+    if (!tbody)
+        return;
+
+
+    tbody.innerHTML =
+        "";
+
+
+    const totalRegistros =
+        vacacionesEmpleadosFiltrados.length;
+
+
+    const totalPaginas =
+        Math.ceil(
+            totalRegistros /
+            registrosPorPaginaVacaciones
+        );
+
+
+    // Si el filtro reduce la cantidad de páginas
+    if (
+        totalPaginas > 0 &&
+        paginaActualVacaciones >
+        totalPaginas
+    ) {
+
+        paginaActualVacaciones =
+            totalPaginas;
+    }
+
+
+    if (
+        totalPaginas === 0
+    ) {
+
+        paginaActualVacaciones =
+            1;
+    }
+
+
+    const inicio =
+        (
+            paginaActualVacaciones - 1
+        )
+        *
+        registrosPorPaginaVacaciones;
+
+
+    const fin =
+        inicio +
+        registrosPorPaginaVacaciones;
+
+
+    const registrosPagina =
+        vacacionesEmpleadosFiltrados.slice(
+            inicio,
+            fin
+        );
+
+
+    // =====================================================
+    // SIN RESULTADOS
+    // =====================================================
+
+    if (
+        registrosPagina.length === 0
+    ) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5"
+                    class="text-center text-muted py-3">
+
+                    No se encontraron registros.
+
+                </td>
+            </tr>
+        `;
+
+    }
+
+    // =====================================================
+    // RESULTADOS
+    // =====================================================
+
+    else {
+
+        registrosPagina.forEach(
+            x => {
+
+                tbody.innerHTML += `
+                    <tr>
+
+                        <td>
+                            ${x.empleado || ""}
+                        </td>
+
+                        <td>
+                            ${x.email || ""}
+                        </td>
+
+                        <td class="fw-bold text-primary">
+                            ${Number(
+                    x.saldoActual || 0
+                ).toFixed(2)}
+                        </td>
+
+                        <td>
+                            ${Number(
+                    x.saldoImportado || 0
+                ).toFixed(2)}
+                        </td>
+
+                        <td>
+                            ${x.fechaImportacion || "-"}
+                        </td>
+
+                    </tr>
+                `;
+            }
+        );
+    }
+
+
+    // =====================================================
+    // PAGINADOR
+    // =====================================================
+
+    renderizarPaginadorVacacionesEmpleados(
+        totalPaginas
+    );
+
+
+    // =====================================================
+    // INFORMACIÓN DE REGISTROS
+    // =====================================================
+
+    actualizarInfoPaginacionVacacionesEmpleados(
+        inicio,
+        registrosPagina.length,
+        totalRegistros
+    );
+}
+
+
+// =========================================================
+// RENDERIZAR PAGINADOR
+// =========================================================
+
+function renderizarPaginadorVacacionesEmpleados(
+    totalPaginas
+) {
+
+    const paginador =
+        document.getElementById(
+            "paginadorVacacionesEmpleados"
+        );
+
+
+    if (!paginador)
+        return;
+
+
+    paginador.innerHTML =
+        "";
+
+
+    if (
+        totalPaginas <= 1
+    ) {
+        return;
+    }
+
+
+    // =====================================================
+    // BOTÓN ANTERIOR
+    // =====================================================
+
+    paginador.innerHTML += `
+        <li class="page-item
+            ${paginaActualVacaciones === 1
+            ? "disabled"
+            : ""}">
+
+            <button class="page-link"
+                    type="button"
+                    onclick="cambiarPaginaVacaciones(
+                        ${paginaActualVacaciones - 1}
+                    )">
+
+                Anterior
+
+            </button>
+
+        </li>
+    `;
+
+
+    // =====================================================
+    // NÚMEROS DE PÁGINA
+    // =====================================================
+
+    for (
+        let pagina = 1;
+        pagina <= totalPaginas;
+        pagina++
+    ) {
+
+        paginador.innerHTML += `
+            <li class="page-item
+                ${pagina === paginaActualVacaciones
+                ? "active"
+                : ""}">
+
+                <button class="page-link"
+                        type="button"
+                        onclick="cambiarPaginaVacaciones(
+                            ${pagina}
+                        )">
+
+                    ${pagina}
+
+                </button>
+
+            </li>
+        `;
+    }
+
+
+    // =====================================================
+    // BOTÓN SIGUIENTE
+    // =====================================================
+
+    paginador.innerHTML += `
+        <li class="page-item
+            ${paginaActualVacaciones === totalPaginas
+            ? "disabled"
+            : ""}">
+
+            <button class="page-link"
+                    type="button"
+                    onclick="cambiarPaginaVacaciones(
+                        ${paginaActualVacaciones + 1}
+                    )">
+
+                Siguiente
+
+            </button>
+
+        </li>
+    `;
+}
+
+
+// =========================================================
+// CAMBIAR PÁGINA
+// =========================================================
+
+function cambiarPaginaVacaciones(
+    pagina
+) {
+
+    const totalPaginas =
+        Math.ceil(
+            vacacionesEmpleadosFiltrados.length /
+            registrosPorPaginaVacaciones
+        );
+
+
+    if (
+        pagina < 1 ||
+        pagina > totalPaginas
+    ) {
+        return;
+    }
+
+
+    paginaActualVacaciones =
+        pagina;
+
+
+    renderizarTablaVacacionesEmpleados();
+}
+
+
+// =========================================================
+// MOSTRAR INFORMACIÓN DEL PAGINADOR
+// =========================================================
+
+function actualizarInfoPaginacionVacacionesEmpleados(
+    inicio,
+    cantidad,
+    total
+) {
+
+    const info =
+        document.getElementById(
+            "infoPaginacionVacacionesEmpleados"
+        );
+
+
+    if (!info)
+        return;
+
+
+    if (
+        total === 0
+    ) {
+
+        info.textContent =
+            "Mostrando 0 registros";
+
+        return;
+    }
+
+
+    const desde =
+        inicio + 1;
+
+
+    const hasta =
+        inicio + cantidad;
+
+
+    info.textContent =
+        `Mostrando ${desde} - ${hasta} de ${total} registros`;
+}
+
+
+// =========================================================
+// DESCARGAR EXCEL
+// =========================================================
+
 function descargarVacacionesEmpleadosInfo() {
+
     window.location.href =
         "/ERP/Vacaciones?handler=ExportarVacacionesEmpleadosInfo";
 }
