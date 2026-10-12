@@ -111,11 +111,34 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                 );
 
             // =====================================================
+            // USUARIOS EXCLUIDOS DE MÉTRICAS
+            // =====================================================
+
+            string[] usuariosExcluidos =
+            {
+                "jcruz@asesorcliente.com",
+                "jcruz@garantecommercial.com"
+            };
+
+
+            // =====================================================
+            // QUERY BASE DE ACTIVIDAD
+            // =====================================================
+
+            var actividadesBase =
+                _db
+                    .IntranetActividades
+                    .AsNoTracking()
+                    .Where(x =>
+                        string.IsNullOrWhiteSpace(x.UserName) ||
+                        !usuariosExcluidos.Contains(x.UserName)
+                    );
+
+            // =====================================================
             // KPI: LOGINS DE HOY
             // =====================================================
             LoginsHoy =
-                await _db
-                    .IntranetActividades
+                await actividadesBase
                     .AsNoTracking()
                     .CountAsync(x =>
                         x.TipoEvento == "Login" &&
@@ -127,8 +150,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
             // KPI: USUARIOS ACTIVOS HOY
             // =====================================================
             UsuariosActivosHoy =
-                await _db
-                    .IntranetActividades
+                await actividadesBase
                     .AsNoTracking()
                     .Where(x =>
                         x.FechaHora >= hoy &&
@@ -147,8 +169,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
             // KPI: VISITAS DEL MES
             // =====================================================
             VisitasMes =
-                await _db
-                    .IntranetActividades
+                await actividadesBase
                     .AsNoTracking()
                     .CountAsync(x =>
                         x.FechaHora >= inicioMes
@@ -158,8 +179,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
             // KPI: MÓDULO MÁS USADO
             // =====================================================
             var moduloMasUsado =
-                await _db
-                    .IntranetActividades
+                await actividadesBase
                     .AsNoTracking()
                     .Where(x =>
                         x.TipoEvento ==
@@ -191,8 +211,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
             // ACTIVIDAD GENERAL DE LA INTRANET
             // =====================================================
             var actividadesIntranet =
-                await _db
-                    .IntranetActividades
+                await actividadesBase
                     .AsNoTracking()
                     .OrderByDescending(x =>
                         x.FechaHora
@@ -250,7 +269,11 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                     .EbBitacoraEmpresas
                     .AsNoTracking()
                     .Where(x =>
-                        x.Exitoso
+                        x.Exitoso &&
+                        (
+                            string.IsNullOrWhiteSpace(x.NombreUsuario) ||
+                            !usuariosExcluidos.Contains(x.NombreUsuario)
+                        )
                     )
                     .OrderByDescending(x =>
                         x.FechaEvento
@@ -308,7 +331,11 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                     .EbBitacoraDocumentos
                     .AsNoTracking()
                     .Where(x =>
-                        x.Exitoso
+                        x.Exitoso &&
+                        (
+                            string.IsNullOrWhiteSpace(x.NombreUsuario) ||
+                            !usuariosExcluidos.Contains(x.NombreUsuario)
+                        )
                     )
                     .OrderByDescending(x =>
                         x.FechaEvento
@@ -381,8 +408,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
             // USUARIOS CON MÁS INICIOS DE SESIÓN
             // =====================================================
             UsuariosMasActivos =
-                await _db
-                    .IntranetActividades
+                await actividadesBase
                     .AsNoTracking()
                     .Where(x =>
                         x.TipoEvento ==
@@ -414,8 +440,7 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
             // MÓDULOS MÁS VISITADOS
             // =====================================================
             ModulosMasVisitados =
-                await _db
-                    .IntranetActividades
+                await actividadesBase
                     .AsNoTracking()
                     .Where(x =>
                         x.TipoEvento ==
