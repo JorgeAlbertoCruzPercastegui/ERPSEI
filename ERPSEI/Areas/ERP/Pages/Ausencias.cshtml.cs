@@ -37,6 +37,7 @@ namespace ERPSEI.Areas.ERP.Pages
         public bool PuedeVerTodasAusencias { get; set; }
         public bool EsJefeInmediato { get; set; }
         public bool PuedeExportarDetalleAusencias { get; set; }
+        public bool PuedeVerTrazabilidadAusencias { get; set; }
 
         [BindProperty] public GuardarInasistenciaInput InasistenciaInput { get; set; } = new();
         [BindProperty] public GuardarIncapacidadInput IncapacidadInput { get; set; } = new();
@@ -120,13 +121,21 @@ namespace ERPSEI.Areas.ERP.Pages
         private async Task ConfigurarPermisosAsync()
         {
             var user = await _userManager.GetUserAsync(User);
+
             if (user == null)
             {
                 EsJefeInmediato = false;
+
                 PuedeAprobarJefeDirecto = false;
+
                 PuedeAprobarTH = false;
+
                 PuedeVerTodasAusencias = false;
+
                 PuedeExportarDetalleAusencias = false;
+
+                PuedeVerTrazabilidadAusencias = false;
+
                 return;
             }
 
@@ -146,6 +155,12 @@ namespace ERPSEI.Areas.ERP.Pages
 
             // Solo estos roles pueden exportar
             PuedeExportarDetalleAusencias = esAdministrador || esAdministradorTH;
+
+            // Solamente Administrador y Administrador TH
+            // pueden consultar las fechas de trazabilidad.
+            PuedeVerTrazabilidadAusencias =
+                roles.Contains("Administrador") ||
+                roles.Contains("Administrador TH");
         }
 
         private async Task CargarCatalogosAsync()
@@ -394,6 +409,10 @@ namespace ERPSEI.Areas.ERP.Pages
             bool esAdministrador = roles.Contains("Administrador") || roles.Contains("Master");
             bool esAdministradorTH = roles.Contains("Administrador TH");
 
+            bool puedeVerTrazabilidad =
+                roles.Contains("Administrador") ||
+                roles.Contains("Administrador TH");
+
             bool esJefeInmediato = empleadoIdActual.HasValue &&
                 await _db.Empleados.AsNoTracking().AnyAsync(e => e.JefeId == empleadoIdActual.Value);
 
@@ -449,6 +468,25 @@ namespace ERPSEI.Areas.ERP.Pages
                     categoria = x.Categoria,
                     tipo = tipoVisual,
                     captura = x.TipoCaptura,
+                    fechaCreacion =
+                    puedeVerTrazabilidad
+                        ? x.FechaCreacion.ToString(
+                            "dd-MM-yyyy HH:mm"
+                        )
+                        : null,
+
+                                    fechaRevisionJefeDirecto =
+                    puedeVerTrazabilidad &&
+                    x.FechaRevisionJefeDirecto.HasValue
+                        ? x.FechaRevisionJefeDirecto.Value.ToString(
+                            "dd-MM-yyyy HH:mm"
+                        )
+                        : null,
+
+                                    estadoJefeDirecto =
+                    puedeVerTrazabilidad
+                        ? x.EstadoJefeDirecto
+                        : null,
                     fechaInicio = x.FechaInicio.HasValue ? x.FechaInicio.Value.ToString("dd-MM-yyyy") : "",
                     fechaFin = x.FechaFin.HasValue ? x.FechaFin.Value.ToString("dd-MM-yyyy") : "",
                     horaInicio = x.HoraInicio.HasValue ? x.HoraInicio.Value.ToString(@"hh\:mm") + " hrs." : "",
@@ -553,6 +591,28 @@ namespace ERPSEI.Areas.ERP.Pages
                 tipoAusenciaId = item.TipoAusenciaId,
                 tipoIncapacidadId = item.TipoIncapacidadId,
                 usuarioCreador = item.UsuarioCreador != null ? item.UsuarioCreador.UserName : "",
+                puedeVerTrazabilidad =
+                PuedeVerTrazabilidadAusencias,
+
+                            fechaCreacion =
+                PuedeVerTrazabilidadAusencias
+                    ? item.FechaCreacion.ToString(
+                        "dd-MM-yyyy HH:mm"
+                    )
+                    : null,
+
+                            fechaRevisionJefeDirecto =
+                PuedeVerTrazabilidadAusencias &&
+                item.FechaRevisionJefeDirecto.HasValue
+                    ? item.FechaRevisionJefeDirecto.Value.ToString(
+                        "dd-MM-yyyy HH:mm"
+                    )
+                    : null,
+
+                            estadoRevisionJefeDirecto =
+                PuedeVerTrazabilidadAusencias
+                    ? item.EstadoJefeDirecto
+                    : null,
 
                 puedeAprobarJefe =
                     PuedeAprobarJefeDirecto &&

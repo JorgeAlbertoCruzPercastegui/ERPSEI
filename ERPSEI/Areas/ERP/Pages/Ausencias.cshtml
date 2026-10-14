@@ -595,6 +595,56 @@
                     <div class="col-md-6"><strong>Suplencia:</strong> <span id="detSuplencia"></span></div>
                     <div class="col-md-6"><strong>Folio:</strong> <span id="detFolio"></span></div>
                     <div class="col-md-6"><strong>Creado por:</strong> <span id="detUsuarioCreador"></span></div>
+                    <div id="detTrazabilidadAusencia"
+                         class="col-12 d-none">
+
+                        <div class="border rounded p-3 bg-light">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+
+                                    <strong>
+                                        Solicitud creada:
+                                    </strong>
+
+                                    <span id="detFechaCreacion">
+                                        -
+                                    </span>
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <strong>
+                                        Revisión jefe directo:
+                                    </strong>
+
+                                    <span id="detFechaRevisionJefe">
+                                        -
+                                    </span>
+
+                                </div>
+
+
+                                <div class="col-md-6">
+
+                                    <strong>
+                                        Resultado jefe directo:
+                                    </strong>
+
+                                    <span id="detEstadoRevisionJefe">
+                                        -
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
                     <div class="col-12"><strong>Comentario:</strong> <div id="detComentario" class="border rounded p-3 bg-light mt-1"></div></div>
                     <div class="col-12">
                         <strong>Documentos adjuntos:</strong>
@@ -771,8 +821,17 @@
 
     <script type="text/javascript">
         var cultureName = "@cultureName";
-        var puedeAprobarJefeDirecto = @(Model.PuedeAprobarJefeDirecto.ToString().ToLower());
-        var puedeAprobarTH = @(Model.PuedeAprobarTH.ToString().ToLower());
-        var puedeVerTodasAusencias = @(Model.PuedeVerTodasAusencias.ToString().ToLower());
+
+        var puedeAprobarJefeDirecto =
+            @(Model.PuedeAprobarJefeDirecto.ToString().ToLower());
+
+        var puedeAprobarTH =
+            @(Model.PuedeAprobarTH.ToString().ToLower());
+
+        var puedeVerTodasAusencias =
+            @(Model.PuedeVerTodasAusencias.ToString().ToLower());
+
+        var puedeVerTrazabilidadAusencias =
+            @(Model.PuedeVerTrazabilidadAusencias.ToString().ToLower());
     </script>
 }

@@ -119,54 +119,209 @@ function initTableHoras() {
 }
 
 function initTableAutorizar() {
-    tableAutorizar.bootstrapTable('destroy').bootstrapTable({
-        pagination: true,
-        pageSize: 10,
-        pageList: [10, 25, 50, 100, "All"],
-        locale: cultureName,
-        columns: [
-            { field: "empleado", title: "Empleado", align: "left" },
-            { field: "categoria", title: "Categoría", align: "center" },
-            { field: "tipo", title: "Tipo", align: "left" },
-            {
-                field: "periodo",
-                title: "Periodo",
-                align: "center",
-                formatter: function (value, row) {
-                    if (row.captura === "Horas") {
-                        return `${row.horaInicio || ""} ${row.horaTermino ? " - " + row.horaTermino : ""}`;
-                    }
 
-                    return `${row.fechaInicio || ""} ${row.fechaFin ? " al " + row.fechaFin : ""}`;
-                }
-            },
-            {
-                field: "duracion",
-                title: "Duración",
-                align: "center",
-                formatter: function (value, row) {
-                    if (row.captura === "Horas") {
-                        return row.horas || "";
-                    }
+    const columnas = [
+        {
+            field:
+                "empleado",
 
-                    return row.dias || "";
-                }
-            },
+            title:
+                "Empleado",
+
+            align:
+                "left"
+        },
+        {
+            field:
+                "categoria",
+
+            title:
+                "Categoría",
+
+            align:
+                "center"
+        },
+        {
+            field:
+                "tipo",
+
+            title:
+                "Tipo",
+
+            align:
+                "left"
+        }
+    ];
+
+
+    // =====================================================
+    // FECHA DE REGISTRO
+    // Solamente Administrador y Administrador TH
+    // =====================================================
+
+    if (
+        typeof puedeVerTrazabilidadAusencias !==
+        "undefined" &&
+        puedeVerTrazabilidadAusencias === true
+    ) {
+
+        columnas.push(
             {
-                field: "estado",
-                title: "Estado",
-                align: "center",
-                formatter: estadoFormatter
-            },
-            {
-                field: "acciones",
-                title: "Acciones",
-                align: "center",
-                formatter: accionesFormatter,
-                events: accionesEvents
+                field:
+                    "fechaCreacion",
+
+                title:
+                    "Registrada",
+
+                align:
+                    "center",
+
+                formatter:
+                    function (value) {
+
+                        return (
+                            value ||
+                            "-"
+                        );
+                    }
             }
-        ]
-    });
+        );
+    }
+
+
+    columnas.push(
+        {
+            field:
+                "periodo",
+
+            title:
+                "Periodo",
+
+            align:
+                "center",
+
+            formatter:
+                function (
+                    value,
+                    row
+                ) {
+
+                    if (
+                        row.captura ===
+                        "Horas"
+                    ) {
+
+                        return (
+                            `${row.horaInicio || ""}` +
+                            `${row.horaTermino
+                                ? " - " + row.horaTermino
+                                : ""}`
+                        );
+                    }
+
+
+                    return (
+                        `${row.fechaInicio || ""}` +
+                        `${row.fechaFin
+                            ? " al " + row.fechaFin
+                            : ""}`
+                    );
+                }
+        },
+        {
+            field:
+                "duracion",
+
+            title:
+                "Duración",
+
+            align:
+                "center",
+
+            formatter:
+                function (
+                    value,
+                    row
+                ) {
+
+                    if (
+                        row.captura ===
+                        "Horas"
+                    ) {
+
+                        return (
+                            row.horas ||
+                            ""
+                        );
+                    }
+
+
+                    return (
+                        row.dias ||
+                        ""
+                    );
+                }
+        },
+        {
+            field:
+                "estado",
+
+            title:
+                "Estado",
+
+            align:
+                "center",
+
+            formatter:
+                estadoFormatter
+        },
+        {
+            field:
+                "acciones",
+
+            title:
+                "Acciones",
+
+            align:
+                "center",
+
+            formatter:
+                accionesFormatter,
+
+            events:
+                accionesEvents
+        }
+    );
+
+
+    tableAutorizar
+        .bootstrapTable(
+            "destroy"
+        )
+        .bootstrapTable(
+            {
+                pagination:
+                    true,
+
+                pageSize:
+                    10,
+
+                pageList:
+                    [
+                        10,
+                        25,
+                        50,
+                        100,
+                        "All"
+                    ],
+
+                locale:
+                    cultureName,
+
+                columns:
+                    columnas
+            }
+        );
 }
 
 function estadoFormatter(value) {
@@ -1052,6 +1207,69 @@ function verDetalle(id) {
         $("#detSuplencia").text(resp.suplencia ? "Sí" : "No");
         $("#detFolio").text(resp.numeroFolio || "");
         $("#detUsuarioCreador").text(resp.usuarioCreador || "");
+        // =====================================================
+        // TRAZABILIDAD
+        // Solo Administrador y Administrador TH
+        // =====================================================
+
+        const trazabilidad =
+            $("#detTrazabilidadAusencia");
+
+
+        if (
+            resp.puedeVerTrazabilidad ===
+            true
+        ) {
+
+            $("#detFechaCreacion")
+                .text(
+                    resp.fechaCreacion ||
+                    "-"
+                );
+
+
+            $("#detFechaRevisionJefe")
+                .text(
+                    resp.fechaRevisionJefeDirecto ||
+                    "Pendiente de revisión"
+                );
+
+
+            $("#detEstadoRevisionJefe")
+                .text(
+                    resp.estadoRevisionJefeDirecto ||
+                    "Pendiente"
+                );
+
+
+            trazabilidad.removeClass(
+                "d-none"
+            );
+        }
+        else {
+
+            $("#detFechaCreacion")
+                .text(
+                    ""
+                );
+
+
+            $("#detFechaRevisionJefe")
+                .text(
+                    ""
+                );
+
+
+            $("#detEstadoRevisionJefe")
+                .text(
+                    ""
+                );
+
+
+            trazabilidad.addClass(
+                "d-none"
+            );
+        }
         $("#detComentario").text(resp.comentario || "");
 
         const contenedorDocs = $("#detDocumentos");
