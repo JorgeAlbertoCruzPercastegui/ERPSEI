@@ -92,14 +92,28 @@
         <div class="metrica-table-card">
 
             <div class="metrica-table-header">
+
                 <div>
                     <h4>Última actividad</h4>
                 </div>
 
-                <input type="text"
-                       id="txtBuscarMetrica"
-                       class="form-control metrica-search"
-                       placeholder="Buscar usuario, evento o módulo..." />
+                <div class="metrica-table-actions">
+
+                    <input type="text"
+                           id="txtBuscarMetrica"
+                           class="form-control metrica-search"
+                           placeholder="Buscar usuario, evento o módulo..." />
+
+                    <a asp-page-handler="Exportar"
+                           class="btn metrica-export-btn">
+
+                        <i class="bi bi-file-earmark-excel me-1"></i>
+                        Exportar
+
+                    </a>
+
+                </div>
+
             </div>
 
             <div class="table-responsive">

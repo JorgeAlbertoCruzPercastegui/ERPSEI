@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using System.Text;
 
 namespace ERPSEI.Areas.Catalogos.Pages.Metricas
 {
@@ -468,6 +470,297 @@ namespace ERPSEI.Areas.Catalogos.Pages.Metricas
                     )
                     .Take(5)
                     .ToListAsync();
+        }
+
+        public async Task<IActionResult> OnGetExportarAsync()
+        {
+            string[] usuariosExcluidos =
+            {
+        "jcruz@asesorcliente.com",
+        "jcruz@garantecommercial.com"
+    };
+
+            // =====================================================
+            // ACTIVIDAD GENERAL
+            // =====================================================
+
+            var actividadesIntranet =
+                await _db.IntranetActividades
+                    .AsNoTracking()
+                    .Where(x =>
+                        string.IsNullOrWhiteSpace(x.UserName) ||
+                        !usuariosExcluidos.Contains(x.UserName)
+                    )
+                    .Select(x =>
+                        new ActividadGeneralDto
+                        {
+                            UserId =
+                                x.UserId ??
+                                string.Empty,
+
+                            UserName =
+                                x.UserName ??
+                                "Usuario desconocido",
+
+                            NombreEmpleado =
+                                x.NombreEmpleado ??
+                                x.UserName ??
+                                "Usuario desconocido",
+
+                            TipoEvento =
+                                x.TipoEvento,
+
+                            Modulo =
+                                string.IsNullOrWhiteSpace(x.Modulo)
+                                    ? "General"
+                                    : x.Modulo,
+
+                            Ruta =
+                                x.Ruta,
+
+                            FechaHora =
+                                x.FechaHora,
+
+                            Ip =
+                                x.Ip ??
+                                "-",
+
+                            Latitud =
+                                x.Latitud,
+
+                            Longitud =
+                                x.Longitud
+                        }
+                    )
+                    .ToListAsync();
+
+            // =====================================================
+            // COMPLIANCE / EMPRESAS
+            // =====================================================
+
+            var actividadEmpresasCompliance =
+                await _db.EbBitacoraEmpresas
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.Exitoso &&
+                        (
+                            string.IsNullOrWhiteSpace(x.NombreUsuario) ||
+                            !usuariosExcluidos.Contains(x.NombreUsuario)
+                        )
+                    )
+                    .Select(x =>
+                        new ActividadGeneralDto
+                        {
+                            UserId =
+                                x.UsuarioId,
+
+                            UserName =
+                                string.IsNullOrWhiteSpace(x.NombreUsuario)
+                                    ? x.UsuarioId
+                                    : x.NombreUsuario,
+
+                            NombreEmpleado =
+                                string.IsNullOrWhiteSpace(x.NombreUsuario)
+                                    ? x.UsuarioId
+                                    : x.NombreUsuario,
+
+                            TipoEvento =
+                                x.Accion,
+
+                            Modulo =
+                                "Compliance / Empresas",
+
+                            Ruta =
+                                "/ExpedientesBancarios/Empresas",
+
+                            FechaHora =
+                                x.FechaEvento,
+
+                            Ip =
+                                x.DireccionIp ??
+                                "-",
+
+                            Latitud =
+                                null,
+
+                            Longitud =
+                                null
+                        }
+                    )
+                    .ToListAsync();
+
+            // =====================================================
+            // COMPLIANCE / DOCUMENTOS
+            // =====================================================
+
+            var actividadDocumentosCompliance =
+                await _db.EbBitacoraDocumentos
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.Exitoso &&
+                        (
+                            string.IsNullOrWhiteSpace(x.NombreUsuario) ||
+                            !usuariosExcluidos.Contains(x.NombreUsuario)
+                        )
+                    )
+                    .Select(x =>
+                        new ActividadGeneralDto
+                        {
+                            UserId =
+                                x.UsuarioId ??
+                                string.Empty,
+
+                            UserName =
+                                !string.IsNullOrWhiteSpace(x.NombreUsuario)
+                                    ? x.NombreUsuario
+                                    : x.UsuarioId ??
+                                      "Usuario desconocido",
+
+                            NombreEmpleado =
+                                !string.IsNullOrWhiteSpace(x.NombreUsuario)
+                                    ? x.NombreUsuario
+                                    : x.UsuarioId ??
+                                      "Usuario desconocido",
+
+                            TipoEvento =
+                                x.Accion,
+
+                            Modulo =
+                                "Compliance / Documentos",
+
+                            Ruta =
+                                "/ExpedientesBancarios/Empresas",
+
+                            FechaHora =
+                                x.FechaEvento,
+
+                            Ip =
+                                x.DireccionIp ??
+                                "-",
+
+                            Latitud =
+                                null,
+
+                            Longitud =
+                                null
+                        }
+                    )
+                    .ToListAsync();
+
+            var registros =
+                actividadesIntranet
+                    .Concat(
+                        actividadEmpresasCompliance
+                    )
+                    .Concat(
+                        actividadDocumentosCompliance
+                    )
+                    .OrderByDescending(x =>
+                        x.FechaHora
+                    )
+                    .ToList();
+
+            // =====================================================
+            // CSV
+            // =====================================================
+
+            var csv =
+                new StringBuilder();
+
+            // BOM UTF-8 para Excel
+            csv.Append('\uFEFF');
+
+            csv.AppendLine(
+                "\"Usuario\",\"Empleado\",\"Evento\",\"Módulo\",\"Ruta\",\"Fecha\",\"IP\",\"Latitud\",\"Longitud\""
+            );
+
+            foreach (var item in registros)
+            {
+                csv.AppendLine(
+                    string.Join(
+                        ",",
+
+                        EscaparCsv(
+                            item.UserName
+                        ),
+
+                        EscaparCsv(
+                            item.NombreEmpleado
+                        ),
+
+                        EscaparCsv(
+                            item.TipoEvento
+                        ),
+
+                        EscaparCsv(
+                            item.Modulo
+                        ),
+
+                        EscaparCsv(
+                            item.Ruta
+                        ),
+
+                        EscaparCsv(
+                            item.FechaHora
+                                .ToString(
+                                    "dd/MM/yyyy HH:mm:ss"
+                                )
+                        ),
+
+                        EscaparCsv(
+                            item.Ip
+                        ),
+
+                        EscaparCsv(
+                            item.Latitud?
+                                .ToString(
+                                    System.Globalization
+                                        .CultureInfo
+                                        .InvariantCulture
+                                )
+                        ),
+
+                        EscaparCsv(
+                            item.Longitud?
+                                .ToString(
+                                    System.Globalization
+                                        .CultureInfo
+                                        .InvariantCulture
+                                )
+                        )
+                    )
+                );
+            }
+
+            byte[] bytes =
+                Encoding.UTF8
+                    .GetBytes(
+                        csv.ToString()
+                    );
+
+            string nombreArchivo =
+                $"Metricas_Intranet_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+            return File(
+                bytes,
+                "text/csv; charset=utf-8",
+                nombreArchivo
+            );
+        }
+
+        private static string EscaparCsv(object? valor)
+        {
+            string texto =
+                valor?.ToString() ??
+                string.Empty;
+
+            texto =
+                texto.Replace(
+                    "\"",
+                    "\"\""
+                );
+
+            return $"\"{texto}\"";
         }
     }
 }
