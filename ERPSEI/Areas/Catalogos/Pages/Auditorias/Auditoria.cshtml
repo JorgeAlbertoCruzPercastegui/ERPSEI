@@ -45,24 +45,47 @@
         <div class="auditoria-table-card">
 
             <div class="auditoria-table-header">
+
                 <h4>Movimientos recientes</h4>
 
                 <div class="auditoria-filters">
-                    <input type="text"
-                           id="txtBuscarAuditoria"
-                           class="form-control auditoria-search"
-                           placeholder="Buscar usuario, acción, módulo o registro..." />
 
-                    <select id="selAccionAuditoria" class="form-select auditoria-select">
-                        <option value="">Todas las acciones</option>
-                        <option value="Alta">Alta</option>
-                        <option value="Edición">Edición</option>
-                        <option value="Baja">Baja</option>
-                        <option value="Eliminación">Eliminación</option>
-                        <option value="Cambio de rol">Cambio de rol</option>
-                        <option value="Reset contraseña">Reset contraseña</option>
-                    </select>
+                    <div class="auditoria-filter-search">
+
+                        <input type="text"
+                               id="txtBuscarAuditoria"
+                               class="form-control auditoria-search"
+                               placeholder="Buscar usuario, acción, módulo o registro..." />
+
+                    </div>
+
+                    <div class="auditoria-filter-actions">
+
+                        <select id="selAccionAuditoria"
+                                class="form-select auditoria-select">
+
+                            <option value="">Todas las acciones</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Edición">Edición</option>
+                            <option value="Baja">Baja</option>
+                            <option value="Eliminación">Eliminación</option>
+                            <option value="Cambio de rol">Cambio de rol</option>
+                            <option value="Reset contraseña">Reset contraseña</option>
+
+                        </select>
+
+                        <a asp-page-handler="Exportar"
+                               class="btn btn-primary auditoria-export-btn">
+
+                            <i class="bi bi-file-earmark-excel me-1"></i>
+                            Exportar
+
+                        </a>
+
+                    </div>
+
                 </div>
+
             </div>
 
             <div class="table-responsive">
@@ -75,8 +98,13 @@
                             <th>Acción</th>
                             <th>Registro</th>
                             <th>Campo</th>
-                            <th>Valor anterior</th>
-                            <th>Valor nuevo</th>
+                            <th class="auditoria-col-valor">
+                                Valor anterior
+                            </th>
+
+                            <th class="auditoria-col-valor">
+                                Valor nuevo
+                            </th>
                             <th>IP</th>
                             <th>Ubicación</th>
                         </tr>
@@ -97,8 +125,13 @@
                                 </td>
                                 <td>@item.RegistroNombre</td>
                                 <td>@item.CampoModificado</td>
-                                <td>@item.ValorAnterior</td>
-                                <td>@item.ValorNuevo</td>
+                                <td class="auditoria-valor">
+                                    @item.ValorAnterior
+                                </td>
+
+                                <td class="auditoria-valor">
+                                    @item.ValorNuevo
+                                </td>
                                 <td>@item.Ip</td>
                                 <td>
                                     @if (item.Latitud.HasValue && item.Longitud.HasValue)
