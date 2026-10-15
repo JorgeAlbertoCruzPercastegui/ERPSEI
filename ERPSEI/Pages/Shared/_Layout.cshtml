@@ -675,6 +675,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!--<title>@ViewData["Title"] - Intranet SEI</title>-->
 
+    <link rel="manifest" href="~/manifest.webmanifest" />
+
+    <meta name="theme-color" content="#241773" />
+
+    <meta name="application-name" content="Intranet SEI" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <meta name="apple-mobile-web-app-title" content="Intranet SEI" />
+
+    <link rel="apple-touch-icon" href="~/img/pwa/icon-192.png" />
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/Password-rules.css" />
@@ -2434,5 +2448,26 @@
     }
     @await RenderSectionAsync("Scripts", required: false)
     </div>
+
+<script>
+    if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+    navigator.serviceWorker
+    .register("/service-worker.js")
+    .then(function (registration) {
+    console.log(
+    "PWA registrada correctamente:",
+    registration.scope
+    );
+    })
+    .catch(function (error) {
+    console.error(
+    "Error al registrar la PWA:",
+    error
+    );
+    });
+    });
+    }
+</script>
 </body>
 </html>
