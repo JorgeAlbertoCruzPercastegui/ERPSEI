@@ -566,18 +566,105 @@
         mostrarOrganigramaMenu ||
         mostrarDirectorioMenu;
 
-    // Subopciones internas de RH
-    bool mostrarBannersMenu = esAdminMenu || permisos["banners"];
-    bool mostrarGestionTalentoMenu = esAdminMenu || (permisos.ContainsKey("gestiondetalento") && permisos["gestiondetalento"]);
-    bool mostrarUsuariosMenu = esAdminMenu || (permisos.ContainsKey("usuarios") && permisos["usuarios"]);
-    bool mostrarRolesMenu = esAdminMenu || (permisos.ContainsKey("roles") && permisos["roles"]);
-    bool mostrarPuestosMenu = esAdminMenu || (permisos.ContainsKey("puestos") && permisos["puestos"]);
-    bool mostrarAreasMenu = esAdminMenu || (permisos.ContainsKey("areas") && permisos["areas"]);
-    bool mostrarSubareasMenu = esAdminMenu || (permisos.ContainsKey("subareas") && permisos["subareas"]);
-    bool mostrarOficinasMenu = esAdminMenu || (permisos.ContainsKey("oficinas") && permisos["oficinas"]);
-    bool mostrarOrigenesMenu = esAdminMenu || (permisos.ContainsKey("origenes") && permisos["origenes"]);
-    bool mostrarNivelesMenu = esAdminMenu || (permisos.ContainsKey("niveles") && permisos["niveles"]);
-    bool mostrarPerfilesMenu = esAdminMenu || (permisos.ContainsKey("perfiles") && permisos["perfiles"]);
+    // =====================================================
+    // SUBOPCIONES INTERNAS DE RECURSOS HUMANOS
+    // =====================================================
+
+    // Administrador y Administrador TH pueden ver estos módulos.
+    bool mostrarBannersMenu =
+        esAdministrador ||
+        esAdministradorTH ||
+        (permisos.ContainsKey("banners") && permisos["banners"]);
+
+    bool mostrarGestionTalentoMenu =
+        esAdministrador ||
+        esAdministradorTH ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("gestiondetalento") &&
+            permisos["gestiondetalento"]
+        );
+
+
+    // =====================================================
+    // MÓDULOS ADMINISTRATIVOS DE RH
+    //
+    // Administrador TH NO debe visualizarlos.
+    // Administrador conserva acceso completo.
+    // Otros perfiles pueden visualizarlos si tienen permiso.
+    // =====================================================
+
+    bool mostrarUsuariosMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("usuarios") &&
+            permisos["usuarios"]
+        );
+
+    bool mostrarRolesMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("roles") &&
+            permisos["roles"]
+        );
+
+    bool mostrarPuestosMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("puestos") &&
+            permisos["puestos"]
+        );
+
+    bool mostrarAreasMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("areas") &&
+            permisos["areas"]
+        );
+
+    bool mostrarSubareasMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("subareas") &&
+            permisos["subareas"]
+        );
+
+    bool mostrarOficinasMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("oficinas") &&
+            permisos["oficinas"]
+        );
+
+    bool mostrarOrigenesMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("origenes") &&
+            permisos["origenes"]
+        );
+
+    bool mostrarNivelesMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("niveles") &&
+            permisos["niveles"]
+        );
+
+    bool mostrarPerfilesMenu =
+        esAdministrador ||
+        (
+            !esAdministradorTH &&
+            permisos.ContainsKey("perfiles") &&
+            permisos["perfiles"]
+        );
 
     bool mostrarRecursosHumanos =
     esAdministrador ||
