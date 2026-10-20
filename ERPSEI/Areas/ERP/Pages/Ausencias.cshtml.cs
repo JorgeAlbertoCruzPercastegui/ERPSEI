@@ -431,13 +431,22 @@ namespace ERPSEI.Areas.ERP.Pages
                     x.EstadoJefeDirecto == "Aprobado" ||
                     x.EstadoJefeDirecto == "Rechazado");
             }
-            else if (esAdministradorTH)
+            /*else if (esAdministradorTH)
             {
                 // TH ve todos los registros que ya están en seguimiento del flujo
                 query = query.Where(x =>
                     x.EstadoJefeDirecto == "Pendiente" ||
                     x.EstadoJefeDirecto == "Aprobado" ||
                     x.EstadoJefeDirecto == "Rechazado");
+            }*/
+            else if (esAdministradorTH)
+            {
+                // TH solo ve solicitudes que ya fueron aprobadas
+                // por el jefe directo y están pendientes de revisión por TH.
+                query = query.Where(x =>
+                    x.EstadoJefeDirecto == "Aprobado" &&
+                    x.EstadoTH == "Pendiente"
+                );
             }
             else if (esJefeInmediato && empleadoIdActual.HasValue)
             {
