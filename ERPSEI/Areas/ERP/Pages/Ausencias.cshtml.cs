@@ -149,8 +149,13 @@ namespace ERPSEI.Areas.ERP.Pages
             EsJefeInmediato = empleadoIdActual.HasValue &&
                 await _db.Empleados.AsNoTracking().AnyAsync(e => e.JefeId == empleadoIdActual.Value);
 
-            PuedeAprobarJefeDirecto = EsJefeInmediato || esAdministrador;
-            PuedeAprobarTH = esAdministradorTH || esAdministrador;
+            PuedeAprobarJefeDirecto =
+            esAdministrador ||
+            (!esAdministradorTH && EsJefeInmediato);
+
+            PuedeAprobarTH =
+                esAdministradorTH ||
+                esAdministrador;
             PuedeVerTodasAusencias = EsJefeInmediato || esAdministradorTH || esAdministrador;
 
             // Solo estos roles pueden exportar
@@ -441,13 +446,15 @@ namespace ERPSEI.Areas.ERP.Pages
             }*/
             else if (esAdministradorTH)
             {
-                // TH solo ve solicitudes que ya fueron aprobadas
-                // por el jefe directo y están pendientes de revisión por TH.
                 query = query.Where(x =>
-                    x.EstadoJefeDirecto == "Aprobado" &&
-                    x.EstadoTH == "Pendiente"
+                    x.EstadoJefeDirecto == "Pendiente" ||
+                    (
+                        x.EstadoJefeDirecto == "Aprobado" &&
+                        x.EstadoTH == "Pendiente"
+                    )
                 );
             }
+
             else if (esJefeInmediato && empleadoIdActual.HasValue)
             {
                 // El jefe ve todos los registros de su personal, no solo los pendientes
@@ -514,9 +521,18 @@ namespace ERPSEI.Areas.ERP.Pages
 
                     // Solo puede aprobar jefe si sigue pendiente con jefe
                     puedeAprobarJefe =
-                        (esAdministrador || esJefeInmediato) &&
-                        x.EstadoJefeDirecto == "Pendiente" &&
-                        (esAdministrador || (empleadoIdActual.HasValue && x.JefeDirectoEmpleadoId == empleadoIdActual.Value)),
+                    (
+                        esAdministrador ||
+                        (!esAdministradorTH && esJefeInmediato)
+                    ) &&
+                    x.EstadoJefeDirecto == "Pendiente" &&
+                    (
+                        esAdministrador ||
+                        (
+                            empleadoIdActual.HasValue &&
+                            x.JefeDirectoEmpleadoId == empleadoIdActual.Value
+                        )
+                    ),
 
                     // Solo puede aprobar TH si ya aprobó jefe y sigue pendiente TH
                     puedeAprobarTH =

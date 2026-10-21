@@ -40,6 +40,8 @@ using Azure.Identity;
 using Microsoft.Graph;
 using ERPSEI.Services.Compliance;
 using ERPSEI.Services.Adquisiciones;
+using ERPSEI.Services.TimeIntegration;
+using System.Net;
 
 namespace ERPSEI
 {
@@ -173,6 +175,61 @@ namespace ERPSEI
                 fromEmail;
         }
 
+        // =====================================================
+        // TIME INTEGRATION API
+        // =====================================================
+
+        private static void ConfigureDITimeIntegration(
+            WebApplicationBuilder builder)
+        {
+            // Configuración de TIME.
+            builder.Services.Configure<TimeApiOptions>(
+                builder.Configuration.GetSection("TimeApi"));
+
+            // Cliente HTTP independiente para TIME.
+            builder.Services
+                .AddHttpClient<ITimeApiClient, TimeApiClient>(
+                    (serviceProvider, client) =>
+                    {
+                        var options = serviceProvider
+                            .GetRequiredService<
+                                Microsoft.Extensions.Options.IOptions<TimeApiOptions>>()
+                            .Value;
+
+                        client.BaseAddress = new Uri(
+                            options.BaseUrl,
+                            UriKind.Absolute);
+
+                        client.Timeout = TimeSpan.FromSeconds(30);
+                    })
+                .ConfigurePrimaryHttpMessageHandler(
+                    serviceProvider =>
+                    {
+                        var options = serviceProvider
+                            .GetRequiredService<
+                                Microsoft.Extensions.Options.IOptions<TimeApiOptions>>()
+                            .Value;
+
+                        var environment = serviceProvider
+                            .GetRequiredService<IWebHostEnvironment>();
+
+                        var handler = new HttpClientHandler();
+
+                        // Proxy SSH únicamente para desarrollo local.
+                        if (environment.IsDevelopment() &&
+                            !string.IsNullOrWhiteSpace(
+                                options.DevelopmentProxy))
+                        {
+                            handler.Proxy = new WebProxy(
+                                options.DevelopmentProxy);
+
+                            handler.UseProxy = true;
+                        }
+
+                        return handler;
+                    });
+        }
+
         public static void ConfigureDatabase(
             WebApplicationBuilder builder)
         {
@@ -271,6 +328,9 @@ namespace ERPSEI
                 IAdquisicionesEmailService,
                 AdquisicionesEmailService
             >();
+
+            // TIME Integration API
+            ConfigureDITimeIntegration(builder);
         }
 
         /*private static void ConfigureDICompliance(

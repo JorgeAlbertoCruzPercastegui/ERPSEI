@@ -1,0 +1,26 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.TimeApiTestModel
+
+@{
+    ViewData["Title"] = "Diagnóstico TIME API";
+}
+
+<div class="container mt-4">
+    <h3>Prueba de integración TIME API</h3>
+
+    @if (Model.Error != null)
+    {
+        <div class="alert alert-danger">
+            @Model.Error
+        </div>
+    }
+    else if (Model.Resultado != null)
+    {
+        <div class="alert alert-success">
+            Conexión con TIME API exitosa.
+        </div>
+
+        <pre class="bg-light p-3 rounded"
+             style="white-space:pre-wrap;overflow-wrap:anywhere;">@Model.Resultado</pre>
+    }
+</div>
