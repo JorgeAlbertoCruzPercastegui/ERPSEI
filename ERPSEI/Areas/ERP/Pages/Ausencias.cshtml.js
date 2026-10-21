@@ -79,6 +79,72 @@ function configurarEventos() {
     $("#editTipoAusenciaId").on("change", function () {
         alternarCamposEdicion($(this).val());
     });
+
+    $(".archivo-justificante").on("change", function () {
+
+        const input = this;
+
+        const archivosPermitidos = [
+            "application/pdf",
+            "image/png",
+            "image/jpeg"
+        ];
+
+        const extensionesPermitidas = [
+            ".pdf",
+            ".png",
+            ".jpg",
+            ".jpeg"
+        ];
+
+        const contenedor =
+            $(input).closest(".col-12");
+
+        const mensaje =
+            contenedor.find(".mensaje-archivo-invalido");
+
+        let archivoInvalido = false;
+
+        for (let i = 0; i < input.files.length; i++) {
+
+            const archivo = input.files[i];
+
+            const nombre =
+                archivo.name.toLowerCase();
+
+            const extensionValida =
+                extensionesPermitidas.some(
+                    extension =>
+                        nombre.endsWith(extension)
+                );
+
+            const tipoValido =
+                archivosPermitidos.includes(
+                    archivo.type
+                );
+
+            if (!extensionValida || !tipoValido) {
+
+                archivoInvalido = true;
+                break;
+            }
+        }
+
+        if (archivoInvalido) {
+
+            $(input).val("");
+
+            mensaje
+                .removeClass("d-none")
+                .text(
+                    "No puedes adjuntar ese archivo. Solo se permiten archivos PDF, PNG o JPG."
+                );
+
+            return;
+        }
+
+        mensaje.addClass("d-none");
+    });
 }
 
 function initTableDias() {
