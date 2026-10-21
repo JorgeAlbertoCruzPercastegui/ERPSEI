@@ -223,232 +223,46 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(data);
         }
 
-        private async Task<bool> EsArchivoJustificanteValidoAsync(
-    IFormFile archivo)
+        private async Task GuardarDocumentosAusenciaAsync(int ausenciaId, IEnumerable<IFormFile>? archivos, string usuarioId)
         {
-            if (archivo == null || archivo.Length <= 0)
-                return false;
-
-            var extension =
-                Path.GetExtension(
-                    archivo.FileName
-                )?.ToLowerInvariant();
-
-            if (
-                extension != ".pdf" &&
-                extension != ".png" &&
-                extension != ".jpg" &&
-                extension != ".jpeg"
-            )
-            {
-                return false;
-            }
-
-            await using var stream =
-                archivo.OpenReadStream();
-
-            byte[] encabezado =
-                new byte[8];
-
-            int leidos =
-                await stream.ReadAsync(
-                    encabezado,
-                    0,
-                    encabezado.Length
-                );
-
-            if (leidos < 3)
-                return false;
-
-            // PDF: %PDF
-            bool esPdf =
-                encabezado.Length >= 4 &&
-                encabezado[0] == 0x25 &&
-                encabezado[1] == 0x50 &&
-                encabezado[2] == 0x44 &&
-                encabezado[3] == 0x46;
-
-            // PNG
-            bool esPng =
-                encabezado.Length >= 8 &&
-                encabezado[0] == 0x89 &&
-                encabezado[1] == 0x50 &&
-                encabezado[2] == 0x4E &&
-                encabezado[3] == 0x47 &&
-                encabezado[4] == 0x0D &&
-                encabezado[5] == 0x0A &&
-                encabezado[6] == 0x1A &&
-                encabezado[7] == 0x0A;
-
-            // JPG / JPEG
-            bool esJpg =
-                encabezado[0] == 0xFF &&
-                encabezado[1] == 0xD8 &&
-                encabezado[2] == 0xFF;
-
-            return extension switch
-            {
-                ".pdf" =>
-                    esPdf,
-
-                ".png" =>
-                    esPng,
-
-                ".jpg" =>
-                    esJpg,
-
-                ".jpeg" =>
-                    esJpg,
-
-                _ =>
-                    false
-            };
-        }
-
-        private async Task<JsonResult?> ValidarDocumentosAsync(IEnumerable<IFormFile>? archivos)
-        {
-            if (
-                archivos == null ||
-                !archivos.Any()
-            )
-            {
-                return null;
-            }
-
-            foreach (var archivo in archivos)
-            {
-                if (
-                    !await EsArchivoJustificanteValidoAsync(
-                        archivo
-                    )
-                )
-                {
-                    return new JsonResult(
-                        new
-                        {
-                            tieneError = true,
-
-                            mensaje =
-                                $"El archivo '{archivo.FileName}' no está permitido. " +
-                                "Solo puedes adjuntar archivos PDF, PNG o JPG."
-                        }
-                    );
-                }
-            }
-
-            return null;
-        }
-
-        private async Task GuardarDocumentosAusenciaAsync(
-    int ausenciaId,
-    IEnumerable<IFormFile>? archivos,
-    string usuarioId)
-        {
-            if (
-                archivos == null ||
-                !archivos.Any()
-            )
-            {
+            if (archivos == null || !archivos.Any())
                 return;
-            }
 
-            string carpetaFisica =
-                Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot",
-                    "documentos",
-                    "ausencias"
-                );
-
+            string carpetaFisica = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "documentos", "ausencias");
             if (!Directory.Exists(carpetaFisica))
-            {
-                Directory.CreateDirectory(
-                    carpetaFisica
-                );
-            }
+                Directory.CreateDirectory(carpetaFisica);
 
             foreach (var archivo in archivos)
             {
-                if (
-                    archivo == null ||
-                    archivo.Length <= 0
-                )
-                {
+                if (archivo == null || archivo.Length <= 0)
                     continue;
-                }
 
-                if (
-                    !await EsArchivoJustificanteValidoAsync(
-                        archivo
-                    )
-                )
+                var extension = Path.GetExtension(archivo.FileName)?.ToLowerInvariant();
+                if (extension != ".pdf")
+                    continue;
+
+                string nombreGuardado = $"{Guid.NewGuid()}{extension}";
+                string rutaFisica = Path.Combine(carpetaFisica, nombreGuardado);
+                string rutaRelativa = $"/documentos/ausencias/{nombreGuardado}";
+
+                using (var stream = new FileStream(rutaFisica, FileMode.Create))
                 {
-                    throw new InvalidOperationException(
-                        $"El archivo '{archivo.FileName}' no está permitido."
-                    );
+                    await archivo.CopyToAsync(stream);
                 }
 
-                var extension =
-                    Path.GetExtension(
-                        archivo.FileName
-                    )?.ToLowerInvariant();
-
-                string nombreGuardado =
-                    $"{Guid.NewGuid()}{extension}";
-
-                string rutaFisica =
-                    Path.Combine(
-                        carpetaFisica,
-                        nombreGuardado
-                    );
-
-                string rutaRelativa =
-                    $"/documentos/ausencias/{nombreGuardado}";
-
-                await using (
-                    var stream =
-                        new FileStream(
-                            rutaFisica,
-                            FileMode.Create
-                        )
-                )
+                var doc = new AusenciaDocumento
                 {
-                    await archivo.CopyToAsync(
-                        stream
-                    );
-                }
+                    AusenciaId = ausenciaId,
+                    NombreOriginal = archivo.FileName,
+                    NombreGuardado = nombreGuardado,
+                    RutaArchivo = rutaRelativa,
+                    Extension = extension,
+                    TamanioBytes = archivo.Length,
+                    UsuarioCreadorId = usuarioId,
+                    FechaCreacion = DateTime.Now
+                };
 
-                var doc =
-                    new AusenciaDocumento
-                    {
-                        AusenciaId =
-                            ausenciaId,
-
-                        NombreOriginal =
-                            archivo.FileName,
-
-                        NombreGuardado =
-                            nombreGuardado,
-
-                        RutaArchivo =
-                            rutaRelativa,
-
-                        Extension =
-                            extension,
-
-                        TamanioBytes =
-                            archivo.Length,
-
-                        UsuarioCreadorId =
-                            usuarioId,
-
-                        FechaCreacion =
-                            DateTime.Now
-                    };
-
-                _db.AusenciasDocumentos.Add(
-                    doc
-                );
+                _db.AusenciasDocumentos.Add(doc);
             }
 
             await _db.SaveChangesAsync();
@@ -1214,14 +1028,6 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (validacionComentario != null)
                     return validacionComentario;
 
-                var validacionDocumentos =
-                await ValidarDocumentosAsync(
-                    InasistenciaInput.Documentos
-                );
-
-                if (validacionDocumentos != null)
-                    return validacionDocumentos;
-
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
@@ -1309,14 +1115,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (validacionComentario != null)
                     return validacionComentario;
-
-                var validacionDocumentos =
-                await ValidarDocumentosAsync(
-                    IncapacidadInput.Documentos
-                );
-
-                if (validacionDocumentos != null)
-                    return validacionDocumentos;
 
                 var jefeDirectoEmpleadoId =
                     await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
@@ -1429,14 +1227,6 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (validacionComentario != null)
                     return validacionComentario;
 
-                var validacionDocumentos =
-                await ValidarDocumentosAsync(
-                    PermisoInput.Documentos
-                );
-
-                if (validacionDocumentos != null)
-                    return validacionDocumentos;
-
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
@@ -1534,14 +1324,6 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (validacionComentario != null)
                     return validacionComentario;
-
-                var validacionDocumentos =
-                await ValidarDocumentosAsync(
-                    SolicitudPermisoInput.Documentos
-                );
-
-                if (validacionDocumentos != null)
-                    return validacionDocumentos;
 
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
