@@ -44,41 +44,221 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function configurarEventos() {
-    $("#inpInasistenciaFechaInicio, #inpInasistenciaFechaFin").on("change", function () {
-        calcularDias("#inpInasistenciaFechaInicio", "#inpInasistenciaFechaFin", "#inpInasistenciaDias", "#lblDiasInasistencia");
-    });
 
-    $("#inpIncapacidadFechaInicio, #inpIncapacidadFechaFin").on("change", function () {
-        calcularDias("#inpIncapacidadFechaInicio", "#inpIncapacidadFechaFin", "#inpDiasIncapacidad", "#lblDiasIncapacidad");
-    });
+    // =====================================================
+    // INASISTENCIA
+    // =====================================================
+
+    $("#inpInasistenciaFechaInicio, #inpInasistenciaFechaFin")
+        .on("change", function () {
+
+            calcularDias(
+                "#inpInasistenciaFechaInicio",
+                "#inpInasistenciaFechaFin",
+                "#inpInasistenciaDias",
+                "#lblDiasInasistencia"
+            );
+        });
+
+    $("#inpInasistenciaFechaInicio")
+        .on("change", function () {
+
+            const fechaInicio = $(this).val();
+
+            $("#inpInasistenciaFechaFin")
+                .attr("min", fechaInicio);
+
+            const fechaFin =
+                $("#inpInasistenciaFechaFin").val();
+
+            if (
+                fechaFin &&
+                fechaFin < fechaInicio
+            ) {
+                $("#inpInasistenciaFechaFin")
+                    .val("");
+
+                calcularDias(
+                    "#inpInasistenciaFechaInicio",
+                    "#inpInasistenciaFechaFin",
+                    "#inpInasistenciaDias",
+                    "#lblDiasInasistencia"
+                );
+            }
+        });
+
+
+    // =====================================================
+    // INCAPACIDAD
+    // =====================================================
+
+    $("#inpIncapacidadFechaInicio, #inpIncapacidadFechaFin")
+        .on("change", function () {
+
+            calcularDias(
+                "#inpIncapacidadFechaInicio",
+                "#inpIncapacidadFechaFin",
+                "#inpDiasIncapacidad",
+                "#lblDiasIncapacidad"
+            );
+        });
+
+    $("#inpIncapacidadFechaInicio")
+        .on("change", function () {
+
+            const fechaInicio = $(this).val();
+
+            $("#inpIncapacidadFechaFin")
+                .attr("min", fechaInicio);
+
+            const fechaFin =
+                $("#inpIncapacidadFechaFin").val();
+
+            if (
+                fechaFin &&
+                fechaFin < fechaInicio
+            ) {
+                $("#inpIncapacidadFechaFin")
+                    .val("");
+
+                calcularDias(
+                    "#inpIncapacidadFechaInicio",
+                    "#inpIncapacidadFechaFin",
+                    "#inpDiasIncapacidad",
+                    "#lblDiasIncapacidad"
+                );
+            }
+        });
+
+
+    // =====================================================
+    // REGISTRAR PERMISO
+    // =====================================================
 
     $("#inpPermisoFechaInicio, #inpPermisoFechaFin, #inpPermisoHoraInicio, #inpPermisoHoraTermino")
         .on("change input", function () {
+
             actualizarResumenPermiso();
         });
 
+    $("#inpPermisoFechaInicio")
+        .on("change", function () {
+
+            const fechaInicio = $(this).val();
+
+            $("#inpPermisoFechaFin")
+                .attr("min", fechaInicio);
+
+            const fechaFin =
+                $("#inpPermisoFechaFin").val();
+
+            if (
+                fechaFin &&
+                fechaFin < fechaInicio
+            ) {
+                $("#inpPermisoFechaFin")
+                    .val("");
+
+                actualizarResumenPermiso();
+            }
+        });
+
+
+    // =====================================================
+    // SOLICITAR PERMISO
+    // =====================================================
+
     $("#inpSolicitudPermisoFechaInicio, #inpSolicitudPermisoFechaFin, #inpSolicitudPermisoHoraInicio, #inpSolicitudPermisoHoraTermino")
         .on("change input", function () {
+
             actualizarResumenSolicitudPermiso();
         });
 
-    $("#selTipoAusenciaPermiso").on("change", function () {
+    $("#inpSolicitudPermisoFechaInicio")
+        .on("change", function () {
 
-        alternarCamposPermiso($(this).val(), false);
+            const fechaInicio = $(this).val();
 
-        actualizarResumenPermiso();
-    });
+            $("#inpSolicitudPermisoFechaFin")
+                .attr("min", fechaInicio);
 
-    $("#selTipoAusenciaSolicitud").on("change", function () {
+            const fechaFin =
+                $("#inpSolicitudPermisoFechaFin").val();
 
-        alternarCamposPermiso($(this).val(), true);
+            if (
+                fechaFin &&
+                fechaFin < fechaInicio
+            ) {
+                $("#inpSolicitudPermisoFechaFin")
+                    .val("");
 
-        actualizarResumenSolicitudPermiso();
-    });
+                actualizarResumenSolicitudPermiso();
+            }
+        });
 
-    $("#editTipoAusenciaId").on("change", function () {
-        alternarCamposEdicion($(this).val());
-    });
+
+    // =====================================================
+    // TIPO DE AUSENCIA - REGISTRAR PERMISO
+    // =====================================================
+
+    $("#selTipoAusenciaPermiso")
+        .on("change", function () {
+
+            alternarCamposPermiso(
+                $(this).val(),
+                false
+            );
+
+            actualizarResumenPermiso();
+        });
+
+
+    // =====================================================
+    // TIPO DE AUSENCIA - SOLICITAR PERMISO
+    // =====================================================
+
+    $("#selTipoAusenciaSolicitud")
+        .on("change", function () {
+
+            alternarCamposPermiso(
+                $(this).val(),
+                true
+            );
+
+            actualizarResumenSolicitudPermiso();
+        });
+
+
+    // =====================================================
+    // EDICIÓN
+    // =====================================================
+
+    $("#editTipoAusenciaId")
+        .on("change", function () {
+
+            alternarCamposEdicion(
+                $(this).val()
+            );
+        });
+
+    $("#editFechaInicio")
+        .on("change", function () {
+
+            const fechaInicio = $(this).val();
+
+            $("#editFechaFin")
+                .attr("min", fechaInicio);
+
+            const fechaFin =
+                $("#editFechaFin").val();
+
+            if (
+                fechaFin &&
+                fechaFin < fechaInicio
+            ) {
+                $("#editFechaFin").val("");
+            }
+        });
 }
 
 function initTableDias() {
@@ -897,6 +1077,18 @@ function guardarIncapacidad() {
 
     if (!validarComentario("#txtComentarioIncapacidad")) return;
 
+    if (!validarRangoFechas(
+        $("#inpIncapacidadFechaInicio").val(),
+        $("#inpIncapacidadFechaFin").val()
+    )) {
+        mostrarResultado(
+            true,
+            "La fecha de término debe ser igual o posterior a la fecha de inicio."
+        );
+
+        return;
+    }
+
     const formData = new FormData();
 
     formData.append("IncapacidadInput.FechaInicio", $("#inpIncapacidadFechaInicio").val());
@@ -972,6 +1164,18 @@ function guardarInasistencia() {
 
     if (!validarComentario("#txtComentarioInasistencia")) return;
 
+    if (!validarRangoFechas(
+        $("#inpInasistenciaFechaInicio").val(),
+        $("#inpInasistenciaFechaFin").val()
+    )) {
+        mostrarResultado(
+            true,
+            "La fecha de término debe ser igual o posterior a la fecha de inicio."
+        );
+
+        return;
+    }
+
     const formData = new FormData();
 
     formData.append("InasistenciaInput.FechaInicio", $("#inpInasistenciaFechaInicio").val());
@@ -1040,6 +1244,18 @@ function guardarPermiso() {
 
     if (!validarComentario("#txtComentarioPermiso")) return;
 
+    if (!validarRangoFechas(
+        $("#inpPermisoFechaInicio").val(),
+        $("#inpPermisoFechaFin").val()
+    )) {
+        mostrarResultado(
+            true,
+            "La fecha de término debe ser igual o posterior a la fecha de inicio."
+        );
+
+        return;
+    }
+
     const formData = new FormData();
 
     formData.append("PermisoInput.TipoAusenciaId", $("#selTipoAusenciaPermiso").val());
@@ -1098,6 +1314,18 @@ function guardarPermiso() {
 function solicitarPermiso() {
 
     if (!validarComentario("#txtComentarioSolicitudPermiso")) return;
+
+    if (!validarRangoFechas(
+        $("#inpSolicitudPermisoFechaInicio").val(),
+        $("#inpSolicitudPermisoFechaFin").val()
+    )) {
+        mostrarResultado(
+            true,
+            "La fecha de término debe ser igual o posterior a la fecha de inicio."
+        );
+
+        return;
+    }
 
     const formData = new FormData();
 
@@ -1338,6 +1566,19 @@ function abrirEdicion(id) {
 }
 
 function guardarEdicionAusencia() {
+
+    if (!validarRangoFechas(
+        $("#editFechaInicio").val(),
+        $("#editFechaFin").val()
+    )) {
+        mostrarResultado(
+            true,
+            "La fecha de término debe ser igual o posterior a la fecha de inicio."
+        );
+
+        return;
+    }
+
     $.ajax({
         url: "/ERP/Ausencias?handler=Editar",
         type: "POST",
@@ -1793,4 +2034,16 @@ function actualizarContadorComentarioBorrador(
         contador.textContent =
             textarea.value.length;
     }
+}
+
+function validarRangoFechas(fechaInicio, fechaFin) {
+
+    if (!fechaInicio || !fechaFin) {
+        return true;
+    }
+
+    const inicio = new Date(fechaInicio + "T00:00:00");
+    const fin = new Date(fechaFin + "T00:00:00");
+
+    return fin >= inicio;
 }

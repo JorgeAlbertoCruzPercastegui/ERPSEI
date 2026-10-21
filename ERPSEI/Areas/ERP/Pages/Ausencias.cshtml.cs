@@ -662,13 +662,23 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (user == null)
                     return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
 
-                var validacionComentario =
-                    ValidarComentario(EditarInput.Comentario);
+                var validacionComentario = ValidarComentario(EditarInput.Comentario);
 
                 if (validacionComentario != null)
                     return validacionComentario;
 
-                var item = await _db.Ausencias.FirstOrDefaultAsync(x => x.Id == EditarInput.Id);
+                var validacionFechas =
+                    ValidarRangoFechas(
+                        EditarInput.FechaInicio,
+                        EditarInput.FechaFin
+                    );
+
+                if (validacionFechas != null)
+                    return validacionFechas;
+
+                var item = await _db.Ausencias
+                    .FirstOrDefaultAsync(x => x.Id == EditarInput.Id);
+
                 if (item == null)
                     return new JsonResult(new { tieneError = true, mensaje = "Registro no encontrado." });
 
@@ -1044,6 +1054,15 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (validacionComentario != null)
                     return validacionComentario;
 
+                var validacionFechas =
+                ValidarRangoFechas(
+                    InasistenciaInput.FechaInicio,
+                    InasistenciaInput.FechaFin
+                );
+
+                if (validacionFechas != null)
+                    return validacionFechas;
+
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
@@ -1131,6 +1150,15 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (validacionComentario != null)
                     return validacionComentario;
+
+                var validacionFechas =
+                ValidarRangoFechas(
+                    IncapacidadInput.FechaInicio,
+                    IncapacidadInput.FechaFin
+                );
+
+                if (validacionFechas != null)
+                    return validacionFechas;
 
                 var jefeDirectoEmpleadoId =
                     await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
@@ -1243,6 +1271,15 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (validacionComentario != null)
                     return validacionComentario;
 
+                var validacionFechas =
+                ValidarRangoFechas(
+                    PermisoInput.FechaInicio,
+                    PermisoInput.FechaFin
+                );
+
+                if (validacionFechas != null)
+                    return validacionFechas;
+
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
@@ -1340,6 +1377,15 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (validacionComentario != null)
                     return validacionComentario;
+
+                var validacionFechas =
+                ValidarRangoFechas(
+                    SolicitudPermisoInput.FechaInicio,
+                    SolicitudPermisoInput.FechaFin
+                );
+
+                if (validacionFechas != null)
+                    return validacionFechas;
 
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
@@ -1454,6 +1500,25 @@ namespace ERPSEI.Areas.ERP.Pages
                 {
                     tieneError = true,
                     mensaje = "El comentario excede el límite de 1000 caracteres. Por favor, haz más corto tu comentario."
+                });
+            }
+
+            return null;
+        }
+
+        private JsonResult? ValidarRangoFechas(
+        DateTime? fechaInicio,
+        DateTime? fechaFin)
+        {
+            if (!fechaInicio.HasValue || !fechaFin.HasValue)
+                return null;
+
+            if (fechaFin.Value.Date < fechaInicio.Value.Date)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "La fecha de término debe ser igual o posterior a la fecha de inicio."
                 });
             }
 
