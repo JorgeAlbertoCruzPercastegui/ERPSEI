@@ -228,6 +228,12 @@ namespace ERPSEI
 
                         return handler;
                     });
+
+            // Servicio encargado de recorrer completamente
+            // una tabla de TIME utilizando paginación por cursor.
+            builder.Services.AddScoped<
+                ITimeTableReader,
+                TimeTableReader>();
         }
 
         public static void ConfigureDatabase(

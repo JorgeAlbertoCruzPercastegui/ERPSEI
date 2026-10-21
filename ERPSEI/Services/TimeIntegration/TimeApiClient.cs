@@ -1,5 +1,4 @@
-﻿
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -40,71 +39,94 @@ namespace ERPSEI.Services.TimeIntegration
         public async Task<JsonDocument> ObtenerTablaAsync(
             string tabla,
             long afterId = 0,
-            int limit = 2,
+            long? upperId = null,
+            int limit = 500,
             CancellationToken cancellationToken = default)
         {
-            // Validar que la tabla esté autorizada.
-            if (!TablasPermitidas.Contains(tabla))
+            if (string.IsNullOrWhiteSpace(tabla))
             {
                 throw new ArgumentException(
-                    "La tabla solicitada no está autorizada.",
+                    "La tabla es obligatoria.",
                     nameof(tabla));
             }
 
-            // Validar parámetros de paginación.
+            tabla = tabla
+                .Trim()
+                .ToLowerInvariant();
+
+            if (!TablasPermitidas.Contains(tabla))
+            {
+                throw new ArgumentException(
+                    $"La tabla '{tabla}' no está permitida.",
+                    nameof(tabla));
+            }
+
             if (afterId < 0)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(afterId),
-                    "El cursor no puede ser negativo.");
+                    "afterId no puede ser negativo.");
             }
 
-            if (limit < 1 || limit > 500)
+            if (upperId.HasValue &&
+                upperId.Value < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(upperId),
+                    "upperId no puede ser negativo.");
+            }
+
+            if (limit < 1 ||
+                limit > 500)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(limit),
                     "El límite debe estar entre 1 y 500.");
             }
 
-            // Validar la configuración del Bearer Token.
-            if (string.IsNullOrWhiteSpace(_options.ApiKey))
+            if (string.IsNullOrWhiteSpace(
+                _options.ApiKey))
             {
                 throw new InvalidOperationException(
-                    "No se ha configurado TimeApi:ApiKey.");
+                    "No se ha configurado la ApiKey de TIME.");
             }
 
-            // Construir la ruta solicitada.
-            string ruta =
-                $"api/v1/time/tablas/{tabla}" +
-                $"?after_id={afterId}&limit={limit}";
+            string url =
+                $"api/v1/time/tablas/{Uri.EscapeDataString(tabla)}" +
+                $"?after_id={afterId}" +
+                $"&limit={limit}";
 
-            using var request = new HttpRequestMessage(
-                HttpMethod.Get,
-                ruta);
+            if (upperId.HasValue)
+            {
+                url +=
+                    $"&upper_id={upperId.Value}";
+            }
 
-            // Autenticación Bearer Token.
-            request.Headers.Authorization =
-                new AuthenticationHeaderValue(
-                    "Bearer",
-                    _options.ApiKey);
+            using var request =
+                new HttpRequestMessage(
+                    HttpMethod.Get,
+                    url);
+
+            request.Headers.Accept.Clear();
 
             request.Headers.Accept.Add(
                 new MediaTypeWithQualityHeaderValue(
                     "application/json"));
 
-            // Enviar solicitud HTTPS.
-            using HttpResponseMessage response =
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    _options.ApiKey);
+
+            using var response =
                 await _httpClient.SendAsync(
                     request,
                     HttpCompletionOption.ResponseHeadersRead,
                     cancellationToken);
 
-            // Si TIME devuelve 401, 403, 500, etc.,
-            // se genera una excepción HTTP.
             response.EnsureSuccessStatusCode();
 
-            // Leer el JSON original de TIME.
-            await using Stream stream =
+            await using var stream =
                 await response.Content.ReadAsStreamAsync(
                     cancellationToken);
 

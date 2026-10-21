@@ -7,8 +7,8 @@ namespace ERPSEI.Services.TimeIntegration
         Task<JsonDocument> ObtenerTablaAsync(
             string tabla,
             long afterId = 0,
-            int limit = 2,
-            CancellationToken cancellationToken = default
-        );
+            long? upperId = null,
+            int limit = 500,
+            CancellationToken cancellationToken = default);
     }
 }

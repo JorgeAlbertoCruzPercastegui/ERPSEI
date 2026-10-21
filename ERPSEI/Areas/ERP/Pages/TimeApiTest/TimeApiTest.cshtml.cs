@@ -1,5 +1,4 @@
-﻿
-using ERPSEI.Services.TimeIntegration;
+﻿using ERPSEI.Services.TimeIntegration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Hosting;
@@ -10,14 +9,14 @@ namespace ERPSEI.Areas.ERP.Pages
     [Authorize(Roles = "Administrador,Master")]
     public class TimeApiTestModel : PageModel
     {
-        private readonly ITimeApiClient _timeApiClient;
+        private readonly ITimeTableReader _timeTableReader;
         private readonly IWebHostEnvironment _environment;
 
         public TimeApiTestModel(
-            ITimeApiClient timeApiClient,
+            ITimeTableReader timeTableReader,
             IWebHostEnvironment environment)
         {
-            _timeApiClient = timeApiClient;
+            _timeTableReader = timeTableReader;
             _environment = environment;
         }
 
@@ -34,25 +33,72 @@ namespace ERPSEI.Areas.ERP.Pages
 
             try
             {
-                using JsonDocument respuesta =
-                    await _timeApiClient.ObtenerTablaAsync(
-                        tabla: "periodos",
-                        afterId: 0,
-                        limit: 2,
-                        cancellationToken: HttpContext.RequestAborted);
+                int totalRegistros = 0;
+                int totalLotes = 0;
 
-                Resultado = JsonSerializer.Serialize(
-                    respuesta.RootElement,
-                    new JsonSerializerOptions
+                JsonElement? primerRegistro = null;
+                JsonElement? ultimoRegistro = null;
+
+                await _timeTableReader.ProcesarTablaPorLotesAsync(
+                    tabla: "horas",
+
+                    procesarLote: lote =>
                     {
-                        WriteIndented = true
-                    });
+                        totalLotes++;
+
+                        totalRegistros +=
+                            lote.Count;
+
+                        if (!primerRegistro.HasValue &&
+                            lote.Count > 0)
+                        {
+                            primerRegistro =
+                                lote[0].Clone();
+                        }
+
+                        if (lote.Count > 0)
+                        {
+                            ultimoRegistro =
+                                lote[^1].Clone();
+                        }
+
+                        return Task.CompletedTask;
+                    },
+
+                    limit: 500,
+
+                    cancellationToken:
+                        HttpContext.RequestAborted);
+
+                var resumen = new
+                {
+                    tabla = "horas",
+
+                    totalRegistros,
+
+                    totalLotes,
+
+                    registrosPorLote = 500,
+
+                    primerRegistro,
+
+                    ultimoRegistro
+                };
+
+                Resultado =
+                    JsonSerializer.Serialize(
+                        resumen,
+                        new JsonSerializerOptions
+                        {
+                            WriteIndented = true
+                        });
             }
             catch (Exception ex)
             {
-                Error = ex is HttpRequestException
-                    ? "Error HTTP al consultar TIME: " + ex.Message
-                    : "No fue posible consultar TIME: " + ex.Message;
+                Error =
+                    ex is HttpRequestException
+                        ? "Error HTTP al consultar TIME: " + ex.Message
+                        : "No fue posible consultar TIME: " + ex.Message;
             }
         }
     }
