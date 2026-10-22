@@ -134,5 +134,123 @@ namespace ERPSEI.Services.TimeIntegration
                 stream,
                 cancellationToken: cancellationToken);
         }
+
+
+        public async IAsyncEnumerable<JsonElement> LeerTodosAsync(
+            string tabla,
+            int tamanoLote = 500,
+            [System.Runtime.CompilerServices.EnumeratorCancellation]
+    CancellationToken cancellationToken = default)
+        {
+            if (tamanoLote < 1 || tamanoLote > 500)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(tamanoLote),
+                    "El tamaño del lote debe estar entre 1 y 500.");
+            }
+
+            long afterId = 0;
+            long? upperId = null;
+
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                string ruta =
+                    $"api/v1/time/tablas/{tabla}" +
+                    $"?after_id={afterId}&limit={tamanoLote}";
+
+                if (upperId.HasValue)
+                {
+                    ruta += $"&upper_id={upperId.Value}";
+                }
+
+                // Primera página: usamos el método ya implementado.
+                // Para las siguientes páginas necesitamos conservar upper_id.
+                // Por eso realizamos la solicitud con el cliente configurado.
+                JsonDocument respuesta;
+
+                if (!upperId.HasValue)
+                {
+                    respuesta = await ObtenerTablaAsync(
+                    tabla: tabla,
+                    afterId: afterId,
+                    limit: tamanoLote,
+                    cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    using var request = new HttpRequestMessage(
+                        HttpMethod.Get,
+                        ruta);
+
+                    request.Headers.Authorization =
+                        new System.Net.Http.Headers.AuthenticationHeaderValue(
+                            "Bearer",
+                            _options.ApiKey);
+
+                    request.Headers.Accept.Add(
+                        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue(
+                            "application/json"));
+
+                    using var response = await _httpClient.SendAsync(
+                        request,
+                        cancellationToken);
+
+                    response.EnsureSuccessStatusCode();
+
+                    await using var stream =
+                        await response.Content.ReadAsStreamAsync(
+                            cancellationToken);
+
+                    respuesta = await JsonDocument.ParseAsync(
+                        stream,
+                        cancellationToken: cancellationToken);
+                }
+
+                using (respuesta)
+                {
+                    JsonElement root = respuesta.RootElement;
+
+                    if (!root.GetProperty("success").GetBoolean())
+                    {
+                        throw new InvalidOperationException(
+                            "TIME API informó que la consulta no fue exitosa.");
+                    }
+
+                    JsonElement sync = root.GetProperty("sync");
+                    JsonElement data = root.GetProperty("data");
+
+                    upperId ??= sync.GetProperty("upper_id").GetInt64();
+
+                    foreach (JsonElement registro in data.EnumerateArray())
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+
+                        // Clone permite conservar el registro fuera del JsonDocument.
+                        yield return registro.Clone();
+                    }
+
+                    bool hayMas = sync.GetProperty("has_more").GetBoolean();
+
+                    long siguienteCursor =
+                        sync.GetProperty("next_after_id").GetInt64();
+
+                    if (!hayMas)
+                    {
+                        break;
+                    }
+
+                    if (siguienteCursor <= afterId)
+                    {
+                        throw new InvalidOperationException(
+                            "TIME API devolvió un cursor que no avanza.");
+                    }
+
+                    afterId = siguienteCursor;
+                }
+            }
+        }
+
     }
 }

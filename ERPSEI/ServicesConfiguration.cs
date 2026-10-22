@@ -234,6 +234,31 @@ namespace ERPSEI
             builder.Services.AddScoped<
                 ITimeTableReader,
                 TimeTableReader>();
+
+            // =====================================================
+            // TIME - CATÁLOGOS PARA MODAL DE REPORTES
+            // =====================================================
+            builder.Services.AddScoped<
+                ITimeReportCatalogService,
+                TimeReportCatalogService>();
+
+            builder.Services.AddScoped<
+                ITimeReportPreviewService,
+                TimeReportPreviewService>();
+
+            // =====================================================
+            // TIME - SINCRONIZACIÓN SQL SERVER
+            // =====================================================
+            builder.Services.AddScoped<
+                ITimeSyncService,
+                TimeSyncService>();
+
+            // =====================================================
+            // TIME - REPORTES DESDE SQL SERVER
+            // =====================================================
+            builder.Services.AddScoped<
+                ITimeSqlReportService,
+                TimeSqlReportService>();
         }
 
         public static void ConfigureDatabase(

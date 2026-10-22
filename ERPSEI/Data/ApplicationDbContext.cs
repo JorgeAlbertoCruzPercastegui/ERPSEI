@@ -28,6 +28,8 @@ using System.Security.Claims;
 using ERPSEI.Data.Entities.ServiceDesk;
 using ERPSEI.Data.Entities.ExpedientesBancarios;
 using ERPSEI.Data.Entities.Adquisiciones;
+using ERPSEI.Data.Entities.TimeIntegration;
+using ERPSEI.Data.Configurations.TimeIntegration;
 
 namespace ERPSEI.Data
 {
@@ -423,6 +425,30 @@ namespace ERPSEI.Data
             get;
             set;
         }
+
+        // =====================================================
+        // TIME INTEGRATION
+        // =====================================================
+
+        public DbSet<TimeUsuario> TimeUsuarios => Set<TimeUsuario>();
+
+        public DbSet<TimeDepartamento> TimeDepartamentos => Set<TimeDepartamento>();
+
+        public DbSet<TimeClave> TimeClaves => Set<TimeClave>();
+
+        public DbSet<TimeActividad> TimeActividades => Set<TimeActividad>();
+
+        public DbSet<TimeHora> TimeHoras => Set<TimeHora>();
+
+        public DbSet<TimeEstadoSincronizacion> TimeEstadosSincronizacion
+            => Set<TimeEstadoSincronizacion>();
+
+        // TIME - Empresas y Grupos
+        public DbSet<TimeEmpresa> TimeEmpresas
+            => Set<TimeEmpresa>();
+
+        public DbSet<TimeGrupo> TimeGrupos
+            => Set<TimeGrupo>();
 
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -970,6 +996,31 @@ namespace ERPSEI.Data
             BuildAdquisicionesCotizaciones(
                 modelBuilder
             );
+
+            modelBuilder.ApplyConfiguration(
+                new TimeUsuarioConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+                new TimeDepartamentoConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+                new TimeClaveConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+                new TimeActividadConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+                new TimeHoraConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+                new TimeEstadoSincronizacionConfiguration());
+
+            // TIME - Empresas y Grupos
+            modelBuilder.ApplyConfiguration(
+                new TimeEmpresaConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+                new TimeGrupoConfiguration());
         }
 
         private static void BuildAdquisicionesCotizaciones(ModelBuilder b)

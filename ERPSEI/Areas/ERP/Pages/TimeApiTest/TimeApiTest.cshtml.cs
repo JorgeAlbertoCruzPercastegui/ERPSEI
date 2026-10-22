@@ -11,20 +11,30 @@ namespace ERPSEI.Areas.ERP.Pages
     {
         private readonly ITimeTableReader _timeTableReader;
         private readonly IWebHostEnvironment _environment;
+        private readonly ITimeApiClient _timeApiClient;
 
         public TimeApiTestModel(
             ITimeTableReader timeTableReader,
+            ITimeApiClient timeApiClient,
             IWebHostEnvironment environment)
         {
             _timeTableReader = timeTableReader;
+            _timeApiClient = timeApiClient;
             _environment = environment;
         }
 
         public string? Resultado { get; private set; }
         public string? Error { get; private set; }
 
+
+
+
         public async Task OnGetAsync()
         {
+            // =====================================================
+            // SEGURIDAD: SOLO ENTORNO DE DESARROLLO
+            // =====================================================
+
             if (!_environment.IsDevelopment())
             {
                 Response.StatusCode = 404;
@@ -33,73 +43,146 @@ namespace ERPSEI.Areas.ERP.Pages
 
             try
             {
-                int totalRegistros = 0;
-                int totalLotes = 0;
+                // =====================================================
+                // TABLAS AUTORIZADAS DE TIME INTEGRATION API
+                // =====================================================
 
-                JsonElement? primerRegistro = null;
-                JsonElement? ultimoRegistro = null;
-
-                await _timeTableReader.ProcesarTablaPorLotesAsync(
-                    tabla: "horas",
-
-                    procesarLote: lote =>
-                    {
-                        totalLotes++;
-
-                        totalRegistros +=
-                            lote.Count;
-
-                        if (!primerRegistro.HasValue &&
-                            lote.Count > 0)
-                        {
-                            primerRegistro =
-                                lote[0].Clone();
-                        }
-
-                        if (lote.Count > 0)
-                        {
-                            ultimoRegistro =
-                                lote[^1].Clone();
-                        }
-
-                        return Task.CompletedTask;
-                    },
-
-                    limit: 500,
-
-                    cancellationToken:
-                        HttpContext.RequestAborted);
-
-                var resumen = new
+                string[] tablas =
                 {
-                    tabla = "horas",
+            "actividades",
+            "claves",
+            "configuraciones",
+            "departamento-actividades",
+            "departamentos",
+            "empresas",
+            "eventos",
+            "grupos",
+            "horas",
+            "ingresos",
+            "periodos",
+            "roles",
+            "sueldos",
+            "usuarios"
+        };
 
-                    totalRegistros,
+                var resultados = new List<object>();
 
-                    totalLotes,
+                int tablasExitosas = 0;
+                int tablasConError = 0;
 
-                    registrosPorLote = 500,
+                // =====================================================
+                // CONSULTAR ESQUEMAS DE LAS 14 TABLAS
+                // =====================================================
 
-                    primerRegistro,
+                foreach (string tabla in tablas)
+                {
+                    try
+                    {
+                        using JsonDocument respuesta =
+                            await _timeApiClient.ObtenerTablaAsync(
+                                tabla: tabla,
+                                afterId: 0,
+                                limit: 1,
+                                cancellationToken: HttpContext.RequestAborted);
 
-                    ultimoRegistro
-                };
+                        JsonElement root = respuesta.RootElement;
 
-                Resultado =
-                    JsonSerializer.Serialize(
-                        resumen,
-                        new JsonSerializerOptions
+                        bool success = root
+                            .GetProperty("success")
+                            .GetBoolean();
+
+                        JsonElement data = root.GetProperty("data");
+
+                        var columnas = new List<string>();
+
+                        // =====================================================
+                        // EXTRAER SOLO LOS NOMBRES DE LAS COLUMNAS
+                        // =====================================================
+
+                        if (data.ValueKind == JsonValueKind.Array &&
+                            data.GetArrayLength() > 0)
                         {
-                            WriteIndented = true
+                            JsonElement primerRegistro = data[0];
+
+                            columnas = primerRegistro
+                                .EnumerateObject()
+                                .Select(propiedad => propiedad.Name)
+                                .ToList();
+                        }
+
+                        // =====================================================
+                        // GUARDAR RESULTADO DE LA TABLA
+                        // =====================================================
+
+                        resultados.Add(new
+                        {
+                            tabla,
+                            success,
+                            columnas,
+                            totalColumnas = columnas.Count,
+                            registrosMuestra = data.GetArrayLength()
                         });
+
+                        if (success)
+                        {
+                            tablasExitosas++;
+                        }
+                        else
+                        {
+                            tablasConError++;
+                        }
+                    }
+                    catch (OperationCanceledException)
+                        when (HttpContext.RequestAborted.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        resultados.Add(new
+                        {
+                            tabla,
+                            success = false,
+                            error = ex.Message
+                        });
+
+                        tablasConError++;
+                    }
+                }
+
+                // =====================================================
+                // RESULTADO GENERAL DE LA VERIFICACIÓN
+                // =====================================================
+
+                Resultado = JsonSerializer.Serialize(
+                    new
+                    {
+                        success = tablasConError == 0,
+                        origen = "TIME Integration API",
+                        totalTablas = tablas.Length,
+                        tablasExitosas,
+                        tablasConError,
+                        resultados,
+                        mensaje =
+                            "Verificación de columnas de TIME finalizada."
+                    },
+                    new JsonSerializerOptions
+                    {
+                        WriteIndented = true
+                    });
+            }
+            catch (OperationCanceledException)
+                when (HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                // El navegador canceló la solicitud.
             }
             catch (Exception ex)
             {
                 Error =
-                    ex is HttpRequestException
-                        ? "Error HTTP al consultar TIME: " + ex.Message
-                        : "No fue posible consultar TIME: " + ex.Message;
+                    "No fue posible consultar TIME: " +
+                    ex.Message;
             }
         }
+
     }
 }

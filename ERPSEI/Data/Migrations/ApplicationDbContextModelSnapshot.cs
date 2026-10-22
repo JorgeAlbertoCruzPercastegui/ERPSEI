@@ -2870,63 +2870,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6762),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3730),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6777),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3750),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6778),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3751),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6779),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3752),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6780),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3753),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6781),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3754),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6782),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3755),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6783),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3756),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 9, 29, 13, 25, 40, 875, DateTimeKind.Local).AddTicks(6783),
+                            FechaCreacion = new DateTime(2026, 10, 22, 16, 13, 32, 23, DateTimeKind.Local).AddTicks(3757),
                             Nombre = "Otros"
                         });
                 });
@@ -9545,6 +9545,275 @@ namespace ERPSEI.Data.Migrations
                             Nombre = "Cambio",
                             Orden = 4
                         });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeActividad", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Actividad")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long?>("ClaveId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("DepartamentoActividadId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("Orden")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("PeriodoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("UsuarioId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId", "ClaveId");
+
+                    b.ToTable("Actividades", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeClave", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Clave")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("DepartamentoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("EmpresaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte?>("Estatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int?>("Incremental")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Proyecto")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<byte?>("Tipo")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartamentoId");
+
+                    b.ToTable("Claves", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeDepartamento", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Clave")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte?>("Estatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int?>("Incremental")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Departamentos", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeEmpresa", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Clave")
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte?>("Estatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<long?>("GrupoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("Incremental")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<byte?>("Tipo")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrupoId");
+
+                    b.HasIndex("Nombre");
+
+                    b.ToTable("Empresas", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeEstadoSincronizacion", b =>
+                {
+                    b.Property<string>("Tabla")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Estado")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<long>("RegistrosProcesados")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
+                    b.Property<DateTime?>("UltimaEjecucion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("UltimoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
+                    b.Property<long?>("UltimoUpperId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Tabla");
+
+                    b.ToTable("EstadoSincronizacion", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeGrupo", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte?>("Estatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Nombre")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre");
+
+                    b.ToTable("Grupos", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeHora", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ActividadId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("Fecha")
+                        .HasColumnType("date");
+
+                    b.Property<double?>("Horas")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActividadId");
+
+                    b.HasIndex("Fecha");
+
+                    b.ToTable("Horas", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeUsuario", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("DepartamentoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(191)
+                        .HasColumnType("nvarchar(191)");
+
+                    b.Property<byte?>("Estatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Nombre")
+                        .HasMaxLength(191)
+                        .HasColumnType("nvarchar(191)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartamentoId");
+
+                    b.ToTable("Usuarios", "TimeIntegracion");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.ClienteContrato", b =>

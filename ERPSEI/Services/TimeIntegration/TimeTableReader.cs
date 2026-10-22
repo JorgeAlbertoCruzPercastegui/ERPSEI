@@ -138,10 +138,23 @@ namespace ERPSEI.Services.TimeIntegration
                 if (!hasMore)
                     break;
 
-                afterId =
+
+                long siguienteCursor =
                     syncElement
                         .GetProperty("next_after_id")
                         .GetInt64();
+
+                if (siguienteCursor <= afterId)
+                {
+                    throw new InvalidOperationException(
+                        $"TIME API devolvió un cursor inválido " +
+                        $"para la tabla '{tabla}'. " +
+                        $"Cursor actual: {afterId}. " +
+                        $"Siguiente cursor: {siguienteCursor}.");
+                }
+
+                afterId = siguienteCursor;
+
             }
         }
     }

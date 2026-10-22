@@ -1,0 +1,429 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.Time.IndexModel
+
+@{
+    ViewData["Title"] = "TIME - Integración";
+    ViewData["BodyClass"] = "module-main-theme catalogo-page time-page";
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/css/CatalogosBase.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap-table/bootstrap-table.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/TimeIntegration.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/TimeReportes.css"
+          asp-append-version="true" />
+}
+
+<div class="time-module container-fluid">
+
+    
+    <!-- ENCABEZADO DEL MODULO TIME -->
+    <div class="d-flex justify-content-between
+        align-items-center flex-wrap gap-3 mb-4">
+
+        <div>
+            <h3 class="time-title">
+                <i class="bi bi-database-fill-gear"></i>
+                TIME | Integración de Información
+            </h3>
+
+            <p class="time-subtitle mb-0">
+                Consulta de información de CyberTrack
+                mediante TIME Integration API.
+            </p>
+        </div>
+
+        <!-- BOTON GENERAR REPORTES -->
+        <button type="button"
+                id="btnTimeReportes"
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#modalTimeReportes">
+
+            <i class="bi bi-file-earmark-bar-graph me-2"></i>
+            Generar reportes
+        </button>
+
+    </div>
+
+
+    <!-- FILTROS -->
+    <div class="card mb-4">
+
+        <div class="card-header">
+            <i class="bi bi-funnel-fill time-header-icon"></i>
+            Consulta de información
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-lg-6 col-md-6">
+                    <label for="timeTabla" class="form-label">
+                        Tabla de información
+                    </label>
+
+                    <select id="timeTabla" class="form-select">
+                        <option value="horas">Horas</option>
+                        <option value="actividades">Actividades</option>
+                        <option value="usuarios">Usuarios</option>
+                        <option value="empresas">Empresas</option>
+                        <option value="periodos">Periodos</option>
+                        <option value="departamentos">Departamentos</option>
+                        <option value="claves">Claves</option>
+                        <option value="ingresos">Ingresos</option>
+                        <option value="grupos">Grupos</option>
+                        <option value="sueldos">Sueldos</option>
+                        <option value="roles">Roles</option>
+                        <option value="eventos">Eventos</option>
+                        <option value="configuraciones">
+                            Configuraciones
+                        </option>
+                        <option value="departamento-actividades">
+                            Departamento actividades
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-3">
+                    <label for="timeLimit" class="form-label">
+                        Registros por página
+                    </label>
+
+                    <select id="timeLimit" class="form-select">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-3 d-flex align-items-end">
+                    <button id="btnTimeConsultar"
+                            type="button"
+                            class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i>
+                        Consultar registros
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ERRORES -->
+    <div id="timeError"
+         class="alert alert-danger d-none"
+         role="alert">
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="card mb-4">
+
+        <div class="card-header d-flex
+            justify-content-between
+            align-items-center
+            flex-wrap gap-2">
+
+            <span id="timeTitulo">
+                <i class="bi bi-table time-header-icon"></i>
+                Registros de TIME
+            </span>
+
+            <span id="timeEstado" class="time-status">
+                Preparando consulta...
+            </span>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="time-table-wrapper">
+
+                <table id="timeTablaDatos"
+                       class="table table-sm
+                    table-bordered
+                    table-striped">
+                </table>
+
+            </div>
+
+            <div class="time-navigation d-flex
+                justify-content-between
+                align-items-center mt-4">
+
+                <button id="btnTimeAnterior"
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        disabled>
+                    <i class="bi bi-chevron-left"></i>
+                    Anterior
+                </button>
+
+                <span id="timePagina"
+                      class="time-pagination">
+                    Página 1
+                </span>
+
+                <button id="btnTimeSiguiente"
+                        type="button"
+                        class="btn btn-primary"
+                        disabled>
+                    Siguiente
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     TIME - MODAL GENERADOR DE REPORTES
+     ===================================================== -->
+
+<div class="modal fade"
+     id="modalTimeReportes"
+     tabindex="-1"
+     aria-labelledby="modalTimeReportesLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered
+        modal-dialog-scrollable">
+
+        <div class="modal-content time-reportes-modal">
+
+            <!-- ENCABEZADO -->
+            <div class="modal-header time-reportes-header">
+
+                <h5 class="modal-title"
+                    id="modalTimeReportesLabel">
+
+                    <i class="bi bi-file-earmark-bar-graph me-2"></i>
+                    Generador de reportes TIME
+                </h5>
+
+                <button type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+
+            </div>
+
+            <!-- CUERPO -->
+            <div class="modal-body">
+
+                <p class="time-reportes-description">
+                    Configura los filtros para generar reportes
+                    relacionados con la información de TIME.
+                </p>
+
+                <form id="formTimeReportes">
+
+                    <div class="row g-3">
+
+                        <!-- TIPO DE REPORTE -->
+                        <div class="col-md-12">
+                            <label for="timeReporteTipo"
+                                   class="form-label">
+                                Tipo de reporte
+                            </label>
+
+                            <select id="timeReporteTipo"
+                                    class="form-select">
+
+                                <option value="horas">
+                                    Horas y actividades
+                                </option>
+
+                                <option value="proyectos">
+                                    Reporte por proyecto
+                                </option>
+
+                                <option value="usuarios">
+                                    Reporte por usuario
+                                </option>
+
+                                <option value="departamentos">
+                                    Reporte por departamento
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <!-- FECHA INICIAL -->
+                        <div class="col-md-6">
+                            <label for="timeReporteFechaInicio"
+                                   class="form-label">
+                                Fecha inicial
+                            </label>
+
+                            <input type="date"
+                                   id="timeReporteFechaInicio"
+                                   class="form-control" />
+                        </div>
+
+                        <!-- FECHA FINAL -->
+                        <div class="col-md-6">
+                            <label for="timeReporteFechaFin"
+                                   class="form-label">
+                                Fecha final
+                            </label>
+
+                            <input type="date"
+                                   id="timeReporteFechaFin"
+                                   class="form-control" />
+                        </div>
+
+                        <!-- USUARIO -->
+                        <div class="col-md-4">
+                            <label for="timeReporteUsuario"
+                                   class="form-label">
+                                Usuario
+                            </label>
+
+                            <select id="timeReporteUsuario"
+                                    class="form-select">
+
+                                <option value="">
+                                    Todos los usuarios
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <!-- PROYECTO -->
+                        <div class="col-md-4">
+                            <label for="timeReporteProyecto"
+                                   class="form-label">
+                                Proyecto
+                            </label>
+
+                            <select id="timeReporteProyecto"
+                                    class="form-select">
+
+                                <option value="">
+                                    Todos los proyectos
+                                </option>
+
+                            </select>
+                        </div>
+
+                        <!-- DEPARTAMENTO -->
+                        <div class="col-md-4">
+                            <label for="timeReporteDepartamento"
+                                   class="form-label">
+                                Departamento
+                            </label>
+
+                            <select id="timeReporteDepartamento"
+                                    class="form-select">
+
+                                <option value="">
+                                    Todos los departamentos
+                                </option>
+
+                            </select>
+                        </div>
+
+                    </div>
+
+                </form>
+
+                <hr class="my-4" />
+
+                <!-- ESTADO DE REPORTES -->
+                <div id="timeReporteMensaje"
+                     class="alert alert-info">
+
+                    <i class="bi bi-info-circle me-2"></i>
+                    Selecciona los filtros para preparar tu reporte.
+                </div>
+
+                <!-- RESULTADOS -->
+                <div id="timeReporteResultados"
+                     class="d-none">
+
+                    <h6 class="fw-bold mb-3">
+                        Vista previa del reporte
+                    </h6>
+
+                    <div class="table-responsive">
+                        <table id="timeReporteTabla"
+                               class="table table-striped
+                            table-bordered table-sm">
+                        </table>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- PIE -->
+            <div class="modal-footer time-reportes-footer">
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+
+                    <i class="bi bi-x-circle me-1"></i>
+                    Cerrar
+                </button>
+
+                <button type="button"
+                        id="btnTimeVistaPrevia"
+                        class="btn btn-primary">
+
+                    <i class="bi bi-search me-1"></i>
+                    Vista previa
+                </button>
+
+                <button type="button"
+                        id="btnTimeExportarExcel"
+                        class="btn btn-success"
+                        disabled>
+
+                    <i class="bi bi-file-earmark-excel me-1"></i>
+                    Excel
+                </button>
+
+                <button type="button"
+                        id="btnTimeExportarPdf"
+                        class="btn btn-danger"
+                        disabled>
+
+                    <i class="bi bi-file-earmark-pdf me-1"></i>
+                    PDF
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
+
+    <script src="~/js/TimeIntegration.js"
+            asp-append-version="true"></script>
+
+    <script src="~/js/TimeReportes.js"
+            asp-append-version="true"></script>
+}

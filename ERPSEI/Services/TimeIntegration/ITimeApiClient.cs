@@ -10,5 +10,10 @@ namespace ERPSEI.Services.TimeIntegration
             long? upperId = null,
             int limit = 500,
             CancellationToken cancellationToken = default);
+
+        IAsyncEnumerable<JsonElement> LeerTodosAsync(
+        string tabla,
+        int tamanoLote = 500,
+        CancellationToken cancellationToken = default);
     }
 }

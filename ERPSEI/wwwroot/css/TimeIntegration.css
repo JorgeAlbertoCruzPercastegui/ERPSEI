@@ -1,0 +1,218 @@
+﻿
+/* =====================================================
+   ERPSEI - TIME INTEGRATION
+   IDENTIDAD CORPORATIVA AZUL Y BLANCO
+   ===================================================== */
+
+/* FONDO GENERAL */
+body.time-page,
+body.module-main-theme.catalogo-page.time-page {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #21166b;
+    min-height: 100vh;
+}
+
+/* CONTENEDOR */
+.time-module {
+    padding: 20px 12px 40px;
+    color: #21166b;
+}
+
+    /* TITULOS */
+    .time-module .time-title {
+        color: #21166b !important;
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        text-shadow: none !important;
+    }
+
+    .time-module .time-subtitle {
+        color: #6d6d98 !important;
+        font-size: .95rem;
+    }
+
+    /* TARJETAS */
+    .time-module .card {
+        background: #ffffff;
+        border: 1px solid #e6e7f2;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 12px 25px rgba(26, 20, 88, .12);
+    }
+
+    /* ENCABEZADOS */
+    .time-module .card-header {
+        background: #21166b !important;
+        color: #ffffff !important;
+        border: none !important;
+        padding: 16px 20px;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .time-module .card-body {
+        background: #ffffff !important;
+        padding: 22px;
+    }
+
+    /* ICONOS DE ENCABEZADOS */
+    .time-module .time-header-icon {
+        color: #ffffff !important;
+        margin-right: 8px;
+    }
+
+    /* ETIQUETAS */
+    .time-module .form-label {
+        color: #21166b;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    /* SELECTORES */
+    .time-module .form-select {
+        background-color: #f7f7fd;
+        color: #21166b;
+        border: 1px solid #d8d9ed;
+        border-radius: 15px;
+        min-height: 52px;
+        padding: 12px 15px;
+        font-size: .95rem;
+    }
+
+        .time-module .form-select:focus {
+            background-color: #ffffff;
+            border-color: #21166b;
+            box-shadow: 0 0 0 .2rem rgba(33, 22, 107, .12);
+        }
+
+    /* BOTON PRINCIPAL */
+    .time-module .btn-primary {
+        background: #21166b !important;
+        color: #ffffff !important;
+        border: 1px solid #21166b !important;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+        transition: all .2s ease;
+    }
+
+        .time-module .btn-primary:hover,
+        .time-module .btn-primary:focus {
+            background: #33268a !important;
+            border-color: #33268a !important;
+            color: #ffffff !important;
+        }
+
+    /* BOTON SECUNDARIO */
+    .time-module .btn-outline-secondary {
+        background: #ffffff !important;
+        color: #21166b !important;
+        border: 1px solid #21166b !important;
+        border-radius: 12px;
+        padding: 11px 18px;
+        font-weight: 700;
+    }
+
+        .time-module .btn-outline-secondary:hover {
+            background: #f0effa !important;
+            color: #21166b !important;
+        }
+
+    /* BOTONES DESHABILITADOS */
+    .time-module .btn:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+    }
+
+    /* TABLA */
+    .time-module .time-table-wrapper {
+        overflow-x: auto;
+        border-radius: 12px;
+    }
+
+    .time-module .fixed-table-container {
+        border-radius: 12px;
+    }
+
+    /* ENCABEZADOS DE TABLA */
+    .time-module #timeTablaDatos thead th,
+    .time-module #timeTablaDatos thead th .th-inner {
+        background: #21166b !important;
+        color: #ffffff !important;
+        border-color: #deddf0 !important;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* REGISTROS */
+    .time-module #timeTablaDatos tbody td {
+        background: #ffffff !important;
+        color: #21166b !important;
+        border-color: #e7e8f1 !important;
+        vertical-align: middle;
+    }
+
+    /* FILAS ALTERNADAS */
+    .time-module #timeTablaDatos tbody tr:nth-child(even) td {
+        background: #fafaff !important;
+    }
+
+    /* EFECTO HOVER */
+    .time-module #timeTablaDatos tbody tr:hover td {
+        background: #f0effa !important;
+    }
+
+    /* BUSCADOR BOOTSTRAP TABLE */
+    .time-module .fixed-table-toolbar .search input {
+        background: #f7f7fd;
+        border: 1px solid #d8d9ed;
+        border-radius: 12px;
+        color: #21166b;
+        min-height: 44px;
+    }
+
+        .time-module .fixed-table-toolbar .search input:focus {
+            border-color: #21166b;
+            box-shadow: 0 0 0 .2rem rgba(33, 22, 107, .12);
+        }
+
+    /* INDICADORES */
+    .time-module .time-status {
+        color: #ffffff !important;
+        font-size: .9rem;
+        font-weight: 600;
+    }
+
+    .time-module .time-pagination {
+        color: #21166b;
+        font-weight: 700;
+    }
+
+    /* NAVEGACION */
+    .time-module .time-navigation {
+        border-top: 1px solid #e8e8f3;
+        padding-top: 20px;
+    }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .time-module {
+        padding: 12px 5px 25px;
+    }
+
+        .time-module .time-title {
+            font-size: 1.5rem;
+        }
+
+        .time-module .card-body {
+            padding: 14px;
+        }
+
+        .time-module .time-navigation {
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center !important;
+        }
+}

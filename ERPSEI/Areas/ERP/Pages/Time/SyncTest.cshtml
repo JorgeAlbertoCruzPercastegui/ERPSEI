@@ -1,0 +1,131 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.Time.SyncTestModel
+
+@{
+    ViewData["Title"] = "TIME - Sincronización";
+    ViewData["BodyClass"] = "module-main-theme catalogo-page time-page";
+}
+
+<div class="container-fluid py-4">
+
+    <h3 class="mb-3" style="color:#21166b;">
+        TIME | Sincronización de datos
+    </h3>
+
+    <p style="color:#6d6d98;">
+        Transferencia controlada de registros de TIME API
+        hacia las tablas TimeIntegracion de SQL Server.
+    </p>
+
+    <div class="card shadow-sm"
+         style="border-radius:16px;overflow:hidden;">
+
+        <div class="card-header text-white"
+             style="background:#21166b;">
+            Sincronización por recurso
+        </div>
+
+        <div class="card-body">
+
+            <div class="alert alert-info">
+                Ejecuta un recurso a la vez. La sincronización
+                es de solo lectura respecto a CyberTrack.
+                Los registros se guardan en SQL Server
+                por lotes de hasta 500.
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <form method="post">
+                        <button class="btn w-100 text-white"
+                                style="background:#21166b;"
+                                type="submit">
+                            Departamentos
+                        </button>
+                    </form>
+                </div>
+
+                <div class="col-md-4">
+                    <form method="post"
+                          asp-page-handler="Usuarios">
+                        <button class="btn w-100 text-white"
+                                style="background:#21166b;"
+                                type="submit">
+                            Usuarios
+                        </button>
+                    </form>
+                </div>
+
+                <div class="col-md-4">
+                    <form method="post"
+                          asp-page-handler="Claves">
+                        <button class="btn w-100 text-white"
+                                style="background:#21166b;"
+                                type="submit">
+                            Claves / Proyectos
+                        </button>
+                    </form>
+                </div>
+
+                <div class="col-md-6">
+                    <form method="post"
+                          asp-page-handler="Actividades">
+                        <button class="btn w-100 text-white"
+                                style="background:#21166b;"
+                                type="submit">
+                            Actividades
+                        </button>
+                    </form>
+                </div>
+
+                <div class="col-md-6">
+                    <form method="post"
+                          asp-page-handler="Horas">
+                        <button class="btn w-100 text-white"
+                                style="background:#21166b;"
+                                type="submit">
+                            Horas
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+
+            @if (Model.Resultado != null)
+            {
+                <div class="alert alert-success mt-4">
+                    <strong>Sincronización completada</strong>
+
+                    <p>Recurso: @Model.Resultado.Tabla</p>
+                    <p>Leídos: @Model.Resultado.RegistrosLeidos</p>
+                    <p>Insertados: @Model.Resultado.RegistrosInsertados</p>
+                    <p>Existentes procesados: @Model.Resultado.RegistrosActualizados</p>
+                    <p>Último ID: @Model.Resultado.UltimoId</p>
+                    <p>Estado: @Model.Resultado.Estado</p>
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Error))
+            {
+                <div class="alert alert-danger mt-4">
+                    @Model.Error
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll("form[method='post']")
+            .forEach(function (form) {
+                form.addEventListener("submit", function () {
+                    form.querySelector("button[type='submit']")
+                        ?.setAttribute("disabled", "disabled");
+                });
+            });
+    </script>
+}

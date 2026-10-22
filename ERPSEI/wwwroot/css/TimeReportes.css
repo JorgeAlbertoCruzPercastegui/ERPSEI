@@ -1,0 +1,159 @@
+﻿
+/* =====================================================
+   ERPSEI - TIME REPORTES
+   DISEÑO CORPORATIVO AZUL Y BLANCO
+   ===================================================== */
+
+.time-reportes-modal {
+    border-radius: 20px;
+    border: 1px solid #deddf0;
+    overflow: hidden;
+    box-shadow: 0 20px 55px rgba(17, 16, 71, .22);
+}
+
+/* ENCABEZADO */
+.time-reportes-header {
+    background: #21166b;
+    color: #ffffff;
+    padding: 18px 24px;
+    border-bottom: 0;
+}
+
+    .time-reportes-header .modal-title {
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .time-reportes-header .btn-close {
+        opacity: .95;
+    }
+
+/* CUERPO */
+.time-reportes-modal .modal-body {
+    background: #ffffff;
+    padding: 25px;
+}
+
+.time-reportes-description {
+    color: #6d6d98;
+    margin-bottom: 25px;
+}
+
+.time-reportes-modal .form-label {
+    font-weight: 700;
+    color: #21166b;
+}
+
+.time-reportes-modal .form-control,
+.time-reportes-modal .form-select {
+    background-color: #f7f7fd;
+    border: 1px solid #d8d9ed;
+    border-radius: 12px;
+    min-height: 44px;
+    color: #21166b;
+}
+
+    .time-reportes-modal .form-control:focus,
+    .time-reportes-modal .form-select:focus {
+        background: #ffffff;
+        border-color: #21166b;
+        box-shadow: 0 0 0 .2rem rgba(33,22,107,.12);
+    }
+
+/* PIE */
+.time-reportes-footer {
+    background: #f8f8fd;
+    border-top: 1px solid #e6e7f2;
+    padding: 16px 24px;
+    gap: 8px;
+}
+
+.time-reportes-modal .btn {
+    border-radius: 10px;
+    font-weight: 700;
+    padding: 9px 16px;
+}
+
+.time-reportes-modal .btn-primary {
+    background: #21166b;
+    border-color: #21166b;
+    color: #ffffff;
+}
+
+    .time-reportes-modal .btn-primary:hover {
+        background: #33268a;
+        border-color: #33268a;
+    }
+
+.time-reportes-modal .btn-outline-secondary {
+    color: #21166b;
+    border-color: #21166b;
+}
+
+    .time-reportes-modal .btn-outline-secondary:hover {
+        background: #efedf9;
+        color: #21166b;
+    }
+
+/* TABLA DE RESULTADOS */
+#timeReporteTabla thead th {
+    background: #21166b;
+    color: #ffffff;
+    white-space: nowrap;
+}
+
+#timeReporteTabla tbody td {
+    background: #ffffff;
+    color: #26315d;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+    .time-reportes-modal .modal-body {
+        padding: 15px;
+    }
+
+    .time-reportes-header {
+        padding: 15px;
+    }
+
+    .time-reportes-footer {
+        justify-content: center;
+    }
+}
+
+/* =====================================================
+   TIME - REPORTE DETALLADO DE 11 COLUMNAS
+   ===================================================== */
+
+.time-reportes-modal #timeReporteResultados .table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    border-radius: 10px;
+}
+
+.time-reportes-modal #timeReporteTabla {
+    min-width: 1550px;
+    width: 100%;
+}
+
+    .time-reportes-modal #timeReporteTabla thead th {
+        white-space: nowrap;
+        font-weight: 700;
+        padding: 12px;
+        background: #21166b !important;
+        color: #ffffff !important;
+    }
+
+    .time-reportes-modal #timeReporteTabla tbody td {
+        white-space: normal;
+        min-width: 100px;
+        padding: 10px;
+        vertical-align: middle;
+    }
+
+        .time-reportes-modal #timeReporteTabla tbody td:nth-child(1),
+        .time-reportes-modal #timeReporteTabla tbody td:nth-child(9),
+        .time-reportes-modal #timeReporteTabla tbody td:nth-child(10) {
+            min-width: 190px;
+        }
