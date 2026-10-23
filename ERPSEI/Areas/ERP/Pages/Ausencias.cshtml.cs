@@ -28,7 +28,7 @@ namespace ERPSEI.Areas.ERP.Pages
             _emailSender = emailSender;
         }
 
-       
+
         public List<SelectListItem> TiposAusencia { get; set; } = new();
         public List<SelectListItem> TiposIncapacidad { get; set; } = new();
 
@@ -228,47 +228,319 @@ namespace ERPSEI.Areas.ERP.Pages
             return new JsonResult(data);
         }
 
-        private async Task GuardarDocumentosAusenciaAsync(int ausenciaId, IEnumerable<IFormFile>? archivos, string usuarioId)
+        // =========================================================
+        // VALIDAR DOCUMENTOS JUSTIFICANTES
+        // PDF / PNG / JPG / JPEG
+        // =========================================================
+
+        private async Task<JsonResult?>
+            ValidarDocumentosAsync(
+                IEnumerable<IFormFile>? archivos)
         {
-            if (archivos == null || !archivos.Any())
-                return;
-
-            string carpetaFisica = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "documentos", "ausencias");
-            if (!Directory.Exists(carpetaFisica))
-                Directory.CreateDirectory(carpetaFisica);
-
-            foreach (var archivo in archivos)
+            if (
+                archivos == null ||
+                !archivos.Any()
+            )
             {
-                if (archivo == null || archivo.Length <= 0)
-                    continue;
+                return null;
+            }
 
-                var extension = Path.GetExtension(archivo.FileName)?.ToLowerInvariant();
-                if (extension != ".pdf")
-                    continue;
 
-                string nombreGuardado = $"{Guid.NewGuid()}{extension}";
-                string rutaFisica = Path.Combine(carpetaFisica, nombreGuardado);
-                string rutaRelativa = $"/documentos/ausencias/{nombreGuardado}";
-
-                using (var stream = new FileStream(rutaFisica, FileMode.Create))
+            foreach (
+                IFormFile archivo
+                in archivos
+            )
+            {
+                if (
+                    archivo == null ||
+                    archivo.Length <= 0
+                )
                 {
-                    await archivo.CopyToAsync(stream);
+                    continue;
                 }
 
-                var doc = new AusenciaDocumento
-                {
-                    AusenciaId = ausenciaId,
-                    NombreOriginal = archivo.FileName,
-                    NombreGuardado = nombreGuardado,
-                    RutaArchivo = rutaRelativa,
-                    Extension = extension,
-                    TamanioBytes = archivo.Length,
-                    UsuarioCreadorId = usuarioId,
-                    FechaCreacion = DateTime.Now
-                };
 
-                _db.AusenciasDocumentos.Add(doc);
+                bool valido =
+                    await EsArchivoJustificanteValidoAsync(
+                        archivo
+                    );
+
+
+                if (!valido)
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            tieneError = true,
+
+                            mensaje =
+                                "No puedes adjuntar ese archivo. Solo se permiten archivos PDF, PNG o JPG."
+                        }
+                    );
+                }
             }
+
+
+            return null;
+        }
+
+
+        // =========================================================
+        // VALIDAR EXTENSIÓN Y FIRMA BINARIA
+        // =========================================================
+
+        private async Task<bool>
+            EsArchivoJustificanteValidoAsync(
+                IFormFile archivo)
+        {
+            string extension =
+                (
+                    Path.GetExtension(
+                        archivo.FileName
+                    ) ??
+                    string.Empty
+                )
+                .ToLowerInvariant();
+
+
+            string[] extensionesPermitidas =
+            {
+        ".pdf",
+        ".png",
+        ".jpg",
+        ".jpeg"
+    };
+
+
+            if (
+                !extensionesPermitidas.Contains(
+                    extension
+                )
+            )
+            {
+                return false;
+            }
+
+
+            byte[] firma =
+                new byte[8];
+
+
+            await using Stream stream =
+                archivo.OpenReadStream();
+
+
+            int bytesLeidos =
+                await stream.ReadAsync(
+                    firma.AsMemory(
+                        0,
+                        firma.Length
+                    )
+                );
+
+
+            // =============================================
+            // PDF
+            // %PDF
+            // =============================================
+
+            if (
+                extension == ".pdf"
+            )
+            {
+                return
+                    bytesLeidos >= 4 &&
+                    firma[0] == 0x25 &&
+                    firma[1] == 0x50 &&
+                    firma[2] == 0x44 &&
+                    firma[3] == 0x46;
+            }
+
+
+            // =============================================
+            // PNG
+            // 89 50 4E 47 0D 0A 1A 0A
+            // =============================================
+
+            if (
+                extension == ".png"
+            )
+            {
+                return
+                    bytesLeidos >= 8 &&
+                    firma[0] == 0x89 &&
+                    firma[1] == 0x50 &&
+                    firma[2] == 0x4E &&
+                    firma[3] == 0x47 &&
+                    firma[4] == 0x0D &&
+                    firma[5] == 0x0A &&
+                    firma[6] == 0x1A &&
+                    firma[7] == 0x0A;
+            }
+
+
+            // =============================================
+            // JPG / JPEG
+            // FF D8 FF
+            // =============================================
+
+            if (
+                extension == ".jpg" ||
+                extension == ".jpeg"
+            )
+            {
+                return
+                    bytesLeidos >= 3 &&
+                    firma[0] == 0xFF &&
+                    firma[1] == 0xD8 &&
+                    firma[2] == 0xFF;
+            }
+
+
+            return false;
+        }
+
+        private async Task GuardarDocumentosAusenciaAsync(
+    int ausenciaId,
+    IEnumerable<IFormFile>? archivos,
+    string usuarioId)
+        {
+            if (
+                archivos == null ||
+                !archivos.Any()
+            )
+            {
+                return;
+            }
+
+
+            string carpetaFisica =
+                Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "documentos",
+                    "ausencias"
+                );
+
+
+            if (
+                !Directory.Exists(
+                    carpetaFisica
+                )
+            )
+            {
+                Directory.CreateDirectory(
+                    carpetaFisica
+                );
+            }
+
+
+            string[] extensionesPermitidas =
+            {
+        ".pdf",
+        ".png",
+        ".jpg",
+        ".jpeg"
+    };
+
+
+            foreach (
+                IFormFile archivo
+                in archivos
+            )
+            {
+                if (
+                    archivo == null ||
+                    archivo.Length <= 0
+                )
+                {
+                    continue;
+                }
+
+
+                string extension =
+                    (
+                        Path.GetExtension(
+                            archivo.FileName
+                        ) ??
+                        string.Empty
+                    )
+                    .ToLowerInvariant();
+
+
+                if (
+                    !extensionesPermitidas.Contains(
+                        extension
+                    )
+                )
+                {
+                    continue;
+                }
+
+
+                string nombreGuardado =
+                    $"{Guid.NewGuid()}{extension}";
+
+
+                string rutaFisica =
+                    Path.Combine(
+                        carpetaFisica,
+                        nombreGuardado
+                    );
+
+
+                string rutaRelativa =
+                    $"/documentos/ausencias/{nombreGuardado}";
+
+
+                await using (
+                    FileStream stream =
+                        new FileStream(
+                            rutaFisica,
+                            FileMode.Create
+                        )
+                )
+                {
+                    await archivo.CopyToAsync(
+                        stream
+                    );
+                }
+
+
+                AusenciaDocumento doc =
+                    new AusenciaDocumento
+                    {
+                        AusenciaId =
+                            ausenciaId,
+
+                        NombreOriginal =
+                            archivo.FileName,
+
+                        NombreGuardado =
+                            nombreGuardado,
+
+                        RutaArchivo =
+                            rutaRelativa,
+
+                        Extension =
+                            extension,
+
+                        TamanioBytes =
+                            archivo.Length,
+
+                        UsuarioCreadorId =
+                            usuarioId,
+
+                        FechaCreacion =
+                            DateTime.Now
+                    };
+
+
+                _db.AusenciasDocumentos.Add(
+                    doc
+                );
+            }
+
 
             await _db.SaveChangesAsync();
         }
@@ -327,7 +599,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     esAdministrador ||
                     (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
-                                    puedeEliminar =
+                    puedeEliminar =
                     esAdministrador ||
                     (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
@@ -388,7 +660,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     esAdministrador ||
                     (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
-                                    puedeEliminar =
+                    puedeEliminar =
                     esAdministrador ||
                     (x.EmpleadoId == empleadoIdActual && x.EstadoJefeDirecto == "Pendiente"),
 
@@ -491,7 +763,7 @@ namespace ERPSEI.Areas.ERP.Pages
                         )
                         : null,
 
-                                    fechaRevisionJefeDirecto =
+                    fechaRevisionJefeDirecto =
                     puedeVerTrazabilidad &&
                     x.FechaRevisionJefeDirecto.HasValue
                         ? x.FechaRevisionJefeDirecto.Value.ToString(
@@ -499,7 +771,7 @@ namespace ERPSEI.Areas.ERP.Pages
                         )
                         : null,
 
-                                    estadoJefeDirecto =
+                    estadoJefeDirecto =
                     puedeVerTrazabilidad
                         ? x.EstadoJefeDirecto
                         : null,
@@ -619,14 +891,14 @@ namespace ERPSEI.Areas.ERP.Pages
                 puedeVerTrazabilidad =
                 PuedeVerTrazabilidadAusencias,
 
-                            fechaCreacion =
+                fechaCreacion =
                 PuedeVerTrazabilidadAusencias
                     ? item.FechaCreacion.ToString(
                         "dd-MM-yyyy HH:mm"
                     )
                     : null,
 
-                            fechaRevisionJefeDirecto =
+                fechaRevisionJefeDirecto =
                 PuedeVerTrazabilidadAusencias &&
                 item.FechaRevisionJefeDirecto.HasValue
                     ? item.FechaRevisionJefeDirecto.Value.ToString(
@@ -634,7 +906,7 @@ namespace ERPSEI.Areas.ERP.Pages
                     )
                     : null,
 
-                            estadoRevisionJefeDirecto =
+                estadoRevisionJefeDirecto =
                 PuedeVerTrazabilidadAusencias
                     ? item.EstadoJefeDirecto
                     : null,
@@ -1044,87 +1316,246 @@ namespace ERPSEI.Areas.ERP.Pages
         {
             try
             {
-                var user = await _userManager.GetUserAsync(User);
-                if (user == null || user.EmpleadoId == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "No se encontró el empleado del usuario actual." });
+                // =====================================================
+                // USUARIO ACTUAL
+                // =====================================================
+
+                var user =
+                    await _userManager.GetUserAsync(
+                        User
+                    );
+
+
+                if (
+                    user == null ||
+                    user.EmpleadoId == null
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            tieneError = true,
+
+                            mensaje =
+                                "No se encontró el empleado del usuario actual."
+                        }
+                    );
+                }
+
+
+                // =====================================================
+                // VALIDAR COMENTARIO
+                // =====================================================
 
                 var validacionComentario =
-                    ValidarComentario(InasistenciaInput.Comentario);
+                    ValidarComentario(
+                        InasistenciaInput.Comentario
+                    );
 
-                if (validacionComentario != null)
+
+                if (
+                    validacionComentario != null
+                )
+                {
                     return validacionComentario;
+                }
+
+
+                // =====================================================
+                // VALIDAR FECHAS
+                // =====================================================
 
                 var validacionFechas =
-                ValidarRangoFechas(
-                    InasistenciaInput.FechaInicio,
-                    InasistenciaInput.FechaFin
+                    ValidarRangoFechas(
+                        InasistenciaInput.FechaInicio,
+                        InasistenciaInput.FechaFin
+                    );
+
+
+                if (
+                    validacionFechas != null
+                )
+                {
+                    return validacionFechas;
+                }
+
+
+                // =====================================================
+                // VALIDAR JUSTIFICANTES
+                // PDF / PNG / JPG / JPEG
+                // =====================================================
+
+                var validacionDocumentos =
+                    await ValidarDocumentosAsync(
+                        InasistenciaInput.Documentos
+                    );
+
+
+                if (
+                    validacionDocumentos != null
+                )
+                {
+                    return validacionDocumentos;
+                }
+
+
+                // =====================================================
+                // JEFE DIRECTO
+                // =====================================================
+
+                var jefeDirectoEmpleadoId =
+                    await ObtenerJefeDirectoEmpleadoIdAsync(
+                        user.EmpleadoId.Value
+                    );
+
+
+                if (
+                    !jefeDirectoEmpleadoId.HasValue
+                )
+                {
+                    return new JsonResult(
+                        new
+                        {
+                            tieneError = true,
+
+                            mensaje =
+                                "El empleado no tiene jefe directo asignado."
+                        }
+                    );
+                }
+
+
+                // =====================================================
+                // CREAR AUSENCIA
+                // =====================================================
+
+                var ausencia =
+                    new Ausencia
+                    {
+                        EmpleadoId =
+                            user.EmpleadoId,
+
+                        JefeDirectoEmpleadoId =
+                            jefeDirectoEmpleadoId,
+
+                        Categoria =
+                            "Inasistencia",
+
+                        TipoCaptura =
+                            "Dias",
+
+                        FechaInicio =
+                            InasistenciaInput.FechaInicio,
+
+                        FechaFin =
+                            InasistenciaInput.FechaFin,
+
+                        Dias =
+                            InasistenciaInput.Dias,
+
+                        FechaAplicacion =
+                            InasistenciaInput.FechaAplicacion,
+
+                        Suplencia =
+                            InasistenciaInput.Suplencia,
+
+                        Comentario =
+                            InasistenciaInput.Comentario,
+
+                        EstadoJefeDirecto =
+                            "Pendiente",
+
+                        EstadoTH =
+                            "Pendiente",
+
+                        UsuarioCreadorId =
+                            user.Id,
+
+                        FechaCreacion =
+                            DateTime.Now
+                    };
+
+
+                _db.Ausencias.Add(
+                    ausencia
                 );
 
-                if (validacionFechas != null)
-                    return validacionFechas;
 
-                var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
-
-                if (!jefeDirectoEmpleadoId.HasValue)
-                    return new JsonResult(new { tieneError = true, mensaje = "El empleado no tiene jefe directo asignado." });
-
-                var ausencia = new Ausencia
-                {
-                    EmpleadoId = user.EmpleadoId,
-                    JefeDirectoEmpleadoId = jefeDirectoEmpleadoId,
-
-                    Categoria = "Inasistencia",
-                    TipoCaptura = "Dias",
-                    FechaInicio = InasistenciaInput.FechaInicio,
-                    FechaFin = InasistenciaInput.FechaFin,
-                    Dias = InasistenciaInput.Dias,
-                    FechaAplicacion = InasistenciaInput.FechaAplicacion,
-                    Suplencia = InasistenciaInput.Suplencia,
-                    Comentario = InasistenciaInput.Comentario,
-
-                    EstadoJefeDirecto = "Pendiente",
-                    EstadoTH = "Pendiente",
-
-                    UsuarioCreadorId = user.Id,
-                    FechaCreacion = DateTime.Now
-                };
-
-                _db.Ausencias.Add(ausencia);
                 await _db.SaveChangesAsync();
+
+
+                // =====================================================
+                // GUARDAR JUSTIFICANTES
+                // =====================================================
 
                 await GuardarDocumentosAusenciaAsync(
                     ausencia.Id,
-                    InasistenciaInput.Documentos, // cambia según el método
+                    InasistenciaInput.Documentos,
                     user.Id
                 );
 
-                await EnviarCorreoAusenciaAJefeDirectoAsync(ausencia.Id);
 
-                return new JsonResult(new
-                {
-                    tieneError = false,
-                    mensaje = "Inasistencia registrada correctamente y enviada a aprobación del jefe directo."
-                });
+                // =====================================================
+                // NOTIFICAR JEFE DIRECTO
+                // =====================================================
+
+                await EnviarCorreoAusenciaAJefeDirectoAsync(
+                    ausencia.Id
+                );
+
+
+                // =====================================================
+                // RESPUESTA
+                // =====================================================
+
+                return new JsonResult(
+                    new
+                    {
+                        tieneError = false,
+
+                        mensaje =
+                            "Inasistencia registrada correctamente y enviada a aprobación del jefe directo."
+                    }
+                );
             }
-            catch (DbUpdateException ex)
+            catch (
+                DbUpdateException ex
+            )
             {
-                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+                Console.WriteLine(
+                    ex.InnerException?.Message ??
+                    ex.Message
+                );
 
-                return new JsonResult(new
-                {
-                    tieneError = true,
-                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
-                });
+
+                return new JsonResult(
+                    new
+                    {
+                        tieneError = true,
+
+                        mensaje =
+                            "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                    }
+                );
             }
-            catch (Exception ex)
+            catch (
+                Exception ex
+            )
             {
-                Console.WriteLine(ex);
+                Console.WriteLine(
+                    ex
+                );
 
-                return new JsonResult(new
-                {
-                    tieneError = true,
-                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
-                });
+
+                return new JsonResult(
+                    new
+                    {
+                        tieneError = true,
+
+                        mensaje =
+                            "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                    }
+                );
             }
         }
 
@@ -1159,6 +1590,14 @@ namespace ERPSEI.Areas.ERP.Pages
 
                 if (validacionFechas != null)
                     return validacionFechas;
+
+                var validacionDocumentos =
+                    await ValidarDocumentosAsync(
+                        IncapacidadInput.Documentos
+                    );
+
+                if (validacionDocumentos != null)
+                    return validacionDocumentos;
 
                 var jefeDirectoEmpleadoId =
                     await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
@@ -1280,6 +1719,14 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (validacionFechas != null)
                     return validacionFechas;
 
+                var validacionDocumentos =
+                    await ValidarDocumentosAsync(
+                        PermisoInput.Documentos
+                    );
+
+                if (validacionDocumentos != null)
+                    return validacionDocumentos;
+
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
@@ -1387,6 +1834,14 @@ namespace ERPSEI.Areas.ERP.Pages
                 if (validacionFechas != null)
                     return validacionFechas;
 
+                var validacionDocumentos =
+                    await ValidarDocumentosAsync(
+                        SolicitudPermisoInput.Documentos
+                    );
+
+                if (validacionDocumentos != null)
+                    return validacionDocumentos;
+
                 var jefeDirectoEmpleadoId = await ObtenerJefeDirectoEmpleadoIdAsync(user.EmpleadoId.Value);
 
                 if (!jefeDirectoEmpleadoId.HasValue)
@@ -1414,8 +1869,10 @@ namespace ERPSEI.Areas.ERP.Pages
                          SolicitudPermisoInput.FechaFin.HasValue)
                 {
                     dias = Convert.ToDecimal(
-                        (SolicitudPermisoInput.FechaFin.Value.Date -
-                         SolicitudPermisoInput.FechaInicio.Value.Date).TotalDays + 1
+                        CalcularDiasHabiles(
+                            SolicitudPermisoInput.FechaInicio.Value,
+                            SolicitudPermisoInput.FechaFin.Value
+                        )
                     );
 
                     tipoCaptura = "Dias";
@@ -1506,20 +1963,89 @@ namespace ERPSEI.Areas.ERP.Pages
             return null;
         }
 
-        private JsonResult? ValidarRangoFechas(
-        DateTime? fechaInicio,
-        DateTime? fechaFin)
+        private int CalcularDiasHabiles(
+            DateTime fechaInicio,
+            DateTime fechaFin)
         {
-            if (!fechaInicio.HasValue || !fechaFin.HasValue)
-                return null;
+            int diasHabiles = 0;
 
-            if (fechaFin.Value.Date < fechaInicio.Value.Date)
+            DateTime fechaActual =
+                fechaInicio.Date;
+
+            DateTime fin =
+                fechaFin.Date;
+
+            while (
+                fechaActual <= fin
+            )
             {
-                return new JsonResult(new
+                if (
+                    fechaActual.DayOfWeek != DayOfWeek.Saturday &&
+                    fechaActual.DayOfWeek != DayOfWeek.Sunday
+                )
                 {
-                    tieneError = true,
-                    mensaje = "La fecha de término debe ser igual o posterior a la fecha de inicio."
-                });
+                    diasHabiles++;
+                }
+
+                fechaActual =
+                    fechaActual.AddDays(1);
+            }
+
+            return diasHabiles;
+        }
+
+        private JsonResult? ValidarRangoFechas(
+            DateTime? fechaInicio,
+            DateTime? fechaFin)
+        {
+            const int maximoDiasHabiles = 40;
+
+            if (
+                !fechaInicio.HasValue ||
+                !fechaFin.HasValue
+            )
+            {
+                return null;
+            }
+
+            DateTime inicio =
+                fechaInicio.Value.Date;
+
+            DateTime fin =
+                fechaFin.Value.Date;
+
+            if (
+                fin < inicio
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        tieneError = true,
+                        mensaje =
+                            "La fecha de término debe ser igual o posterior a la fecha de inicio."
+                    }
+                );
+            }
+
+            int diasHabiles =
+                CalcularDiasHabiles(
+                    inicio,
+                    fin
+                );
+
+            if (
+                diasHabiles > maximoDiasHabiles
+            )
+            {
+                return new JsonResult(
+                    new
+                    {
+                        tieneError = true,
+                        mensaje =
+                            $"El periodo seleccionado no puede superar los {maximoDiasHabiles} días hábiles."
+                    }
+                );
             }
 
             return null;
