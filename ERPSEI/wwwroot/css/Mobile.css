@@ -7,13 +7,13 @@
 
     /* CONTENEDORES GENERALES */
 
-    body.home-main-theme {
+    body:is(.home-main-theme, .module-main-theme) {
         overflow-x: clip;
     }
 
-        body.home-main-theme .layout-content,
-        body.home-main-theme .layout-content > .container,
-        body.home-main-theme #mainContent {
+        body:is(.home-main-theme, .module-main-theme) .layout-content,
+        body:is(.home-main-theme, .module-main-theme) .layout-content > .container,
+        body:is(.home-main-theme, .module-main-theme) #mainContent {
             min-width: 0 !important;
             max-width: 100% !important;
         }
@@ -22,7 +22,7 @@
        BARRA AZUL: PERFIL + NOMBRE + MENÚ
        ========================================== */
 
-        body.home-main-theme .topbar-links {
+        body:is(.home-main-theme, .module-main-theme) .topbar-links {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
@@ -42,8 +42,8 @@
 
             /* BOTÓN IZQUIERDO DEL PERFIL */
 
-            body.home-main-theme .topbar-links #btnSidebar,
-            body.home-main-theme .topbar-links #btnSidebar.active {
+            body:is(.home-main-theme, .module-main-theme) .topbar-links #btnSidebar,
+            body:is(.home-main-theme, .module-main-theme) .topbar-links #btnSidebar.active {
                 position: static !important;
                 top: auto !important;
                 right: auto !important;
@@ -67,14 +67,14 @@
                 z-index: auto !important;
             }
 
-        body.home-main-theme #btnSidebar i {
+        body:is(.home-main-theme, .module-main-theme) #btnSidebar i {
             font-size: 22px !important;
             color: #ffffff !important;
         }
 
         /* NOMBRE DEL COLABORADOR */
 
-        body.home-main-theme .topbar-links > .small {
+        body:is(.home-main-theme, .module-main-theme) .topbar-links > .small {
             display: flex !important;
             align-items: center !important;
             justify-content: flex-start !important;
@@ -91,7 +91,7 @@
             color: #ffffff !important;
         }
 
-            body.home-main-theme .topbar-links > .small b {
+            body:is(.home-main-theme, .module-main-theme) .topbar-links > .small b {
                 white-space: normal !important;
                 overflow-wrap: anywhere !important;
                 color: #ffffff !important;
@@ -99,7 +99,7 @@
 
         /* BOTÓN DERECHO DEL MENÚ */
 
-        body.home-main-theme .quick-nav-wrap {
+        body:is(.home-main-theme, .module-main-theme) .quick-nav-wrap {
             display: flex !important;
             align-items: center !important;
             justify-content: flex-end !important;
@@ -111,7 +111,7 @@
             padding: 0 !important;
         }
 
-        body.home-main-theme .quick-nav-toggle {
+        body:is(.home-main-theme, .module-main-theme) .quick-nav-toggle {
             display: inline-flex !important;
             justify-content: center !important;
             align-items: center !important;
@@ -130,7 +130,7 @@
        NAVEGACIÓN DESPLEGABLE
        ========================================== */
 
-        body.home-main-theme #quickNavMenu {
+        body:is(.home-main-theme, .module-main-theme) #quickNavMenu {
             display: none !important;
             position: absolute !important;
             top: calc(100% + 8px) !important;
@@ -158,13 +158,13 @@
             z-index: 110 !important;
         }
 
-            body.home-main-theme #quickNavMenu.is-open {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu.is-open {
                 display: flex !important;
             }
 
             /* CONTENEDORES DE LAS CATEGORÍAS */
 
-            body.home-main-theme #quickNavMenu .quick-dd {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd {
                 display: block !important;
                 position: static !important;
                 flex: 0 0 auto !important;
@@ -177,7 +177,7 @@
 
             /* ENLACES PRINCIPALES */
 
-            body.home-main-theme #quickNavMenu .quick-link {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: flex-start !important;
@@ -197,11 +197,11 @@
                 text-decoration: none !important;
             }
 
-                body.home-main-theme #quickNavMenu .quick-link::after {
+                body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link::after {
                     display: none !important;
                 }
 
-            body.home-main-theme #quickNavMenu .quick-dd.open > .quick-link {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd.open > .quick-link {
                 color: #d4ad45 !important;
                 background: rgba(255,255,255,.10) !important;
             }
@@ -210,8 +210,8 @@
        SUBMENÚS TIPO ACORDEÓN
        ========================================== */
 
-            body.home-main-theme #quickNavMenu .quick-dd-menu,
-            body.home-main-theme #quickNavMenu .quick-dd-menu-wide {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd-menu,
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd-menu-wide {
                 display: none !important;
                 position: static !important;
                 top: auto !important;
@@ -235,11 +235,11 @@
                 float: none !important;
             }
 
-            body.home-main-theme #quickNavMenu .quick-dd.open > .quick-dd-menu {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd.open > .quick-dd-menu {
                 display: block !important;
             }
 
-            body.home-main-theme #quickNavMenu .quick-dd-item {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd-item {
                 display: block !important;
                 width: 100% !important;
                 height: auto !important;
@@ -257,13 +257,13 @@
                 text-decoration: none !important;
             }
 
-                body.home-main-theme #quickNavMenu .quick-dd-item:hover,
-                body.home-main-theme #quickNavMenu .quick-dd-item:focus {
+                body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd-item:hover,
+                body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd-item:focus {
                     background: rgba(255,255,255,.15) !important;
                     color: #d4ad45 !important;
                 }
 
-            body.home-main-theme #quickNavMenu .quick-dd-divider {
+            body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd-divider {
                 height: 1px !important;
                 margin: 8px 0 !important;
                 background: rgba(255,255,255,.18) !important;
@@ -273,7 +273,7 @@
        PANEL DEL COLABORADOR
        ========================================== */
 
-        body.home-main-theme #sidebarProfile {
+        body:is(.home-main-theme, .module-main-theme) #sidebarProfile {
             position: fixed !important;
             top: 0 !important;
             bottom: 0 !important;
@@ -294,11 +294,11 @@
             box-shadow: 8px 0 30px rgba(0,0,0,.18) !important;
         }
 
-            body.home-main-theme #sidebarProfile.active {
+            body:is(.home-main-theme, .module-main-theme) #sidebarProfile.active {
                 transform: translateX(0) !important;
             }
 
-            body.home-main-theme #sidebarProfile .employee-card {
+            body:is(.home-main-theme, .module-main-theme) #sidebarProfile .employee-card {
                 position: relative !important;
                 width: 100% !important;
                 min-width: 0 !important;
@@ -306,18 +306,18 @@
                 margin: 0 !important;
             }
 
-            body.home-main-theme #sidebarProfile .employee-card__header {
+            body:is(.home-main-theme, .module-main-theme) #sidebarProfile .employee-card__header {
                 padding-top: 0 !important;
             }
 
-            body.home-main-theme #sidebarProfile .employee-card__fullname,
-            body.home-main-theme #sidebarProfile .employee-card__item strong {
+            body:is(.home-main-theme, .module-main-theme) #sidebarProfile .employee-card__fullname,
+            body:is(.home-main-theme, .module-main-theme) #sidebarProfile .employee-card__item strong {
                 overflow-wrap: anywhere !important;
             }
 
             /* BOTÓN X DENTRO DEL PANEL */
 
-            body.home-main-theme #sidebarProfile .mobile-profile-close {
+            body:is(.home-main-theme, .module-main-theme) #sidebarProfile .mobile-profile-close {
                 position: absolute !important;
                 top: calc(17px + env(safe-area-inset-top, 0px)) !important;
                 right: 16px !important;
@@ -337,7 +337,7 @@
 
         /* FONDO OSCURO AL ABRIR PERFIL */
 
-        body.home-main-theme .mobile-profile-backdrop {
+        body:is(.home-main-theme, .module-main-theme) .mobile-profile-backdrop {
             position: fixed !important;
             inset: 0 !important;
             display: none !important;
@@ -345,13 +345,13 @@
             z-index: 2000 !important;
         }
 
-            body.home-main-theme .mobile-profile-backdrop.active {
+            body:is(.home-main-theme, .module-main-theme) .mobile-profile-backdrop.active {
                 display: block !important;
             }
 
         /* EL LAYOUT NO DEBE DESPLAZARSE */
 
-        body.home-main-theme #layoutWrapper.shifted {
+        body:is(.home-main-theme, .module-main-theme) #layoutWrapper.shifted {
             margin-left: 0 !important;
             transform: none !important;
         }
@@ -369,12 +369,12 @@
 
 @media (max-width: 991.98px) {
 
-    body.home-main-theme header button.navbar-toggler {
+    body:is(.home-main-theme, .module-main-theme) header button.navbar-toggler {
         display: none !important;
         visibility: hidden !important;
     }
 
-    body.home-main-theme header #navbarExample3 {
+    body:is(.home-main-theme, .module-main-theme) header #navbarExample3 {
         display: flex !important;
         visibility: visible !important;
         height: auto !important;
@@ -382,7 +382,7 @@
         flex-basis: auto !important;
     }
 
-    body.home-main-theme header .header-right-tools {
+    body:is(.home-main-theme, .module-main-theme) header .header-right-tools {
         display: flex !important;
         align-items: center !important;
         justify-content: flex-end !important;
@@ -397,7 +397,7 @@
 
 @media (max-width: 991.98px) {
 
-    body.home-main-theme #sidebarProfile {
+    body:is(.home-main-theme, .module-main-theme) #sidebarProfile {
         z-index: 10051 !important;
         left: 0 !important;
         transform: translateX(-105%) !important;
@@ -407,16 +407,16 @@
         -webkit-overflow-scrolling: touch;
     }
 
-        body.home-main-theme #sidebarProfile.active {
+        body:is(.home-main-theme, .module-main-theme) #sidebarProfile.active {
             left: 0 !important;
             transform: translateX(0) !important;
         }
 
-    body.home-main-theme .mobile-profile-backdrop {
+    body:is(.home-main-theme, .module-main-theme) .mobile-profile-backdrop {
         z-index: 10050 !important;
     }
 
-    body.home-main-theme #sidebarProfile .mobile-profile-close {
+    body:is(.home-main-theme, .module-main-theme) #sidebarProfile .mobile-profile-close {
         position: absolute !important;
         top: calc(16px + env(safe-area-inset-top, 0px)) !important;
         right: 16px !important;
@@ -433,39 +433,145 @@
         z-index: 2 !important;
     }
 
-        body.home-main-theme #sidebarProfile .mobile-profile-close i {
+        body:is(.home-main-theme, .module-main-theme) #sidebarProfile .mobile-profile-close i {
             color: white !important;
             font-size: 22px !important;
         }
 
-    body.home-main-theme #btnSidebar.active {
+    body:is(.home-main-theme, .module-main-theme) #btnSidebar.active {
         position: static !important;
         transform: none !important;
     }
 }
 
-/* No mostrar la X adicional en escritorio */
+/* =====================================================
+   ERPSEI - CONFIGURACION GLOBAL RESPONSIVE
+   INICIO Y MODULOS
+   ===================================================== */
+
+/* Ocultar la X adicional del perfil en escritorio */
 @media (min-width: 992px) {
+
     #sidebarProfile .mobile-profile-close {
         display: none !important;
     }
+}
 
-    @media (max-width: 991.98px) {
+/* Navegación móvil para todos los módulos */
+@media (max-width: 991.98px) {
 
-        header .intranet-auth-toggler {
+    /* Ocultar el botón gris superior */
+
+    body header .navbar-toggler,
+    body header .intranet-auth-toggler {
+        display: none !important;
+    }
+
+    /* Mostrar notificaciones y cerrar sesión */
+
+    body header #navbarExample3 {
+        display: flex !important;
+        visibility: visible !important;
+        height: auto !important;
+        flex-basis: auto !important;
+        flex-grow: 0 !important;
+        width: auto !important;
+    }
+
+    body header .header-right-tools {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        width: auto !important;
+        margin-left: auto !important;
+    }
+
+    /* Evitar desplazamientos horizontales */
+
+    body .layout-content,
+    body .layout-content > .container,
+    body #mainContent {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    /* Menú principal */
+
+    body #quickNavMenu {
+        max-height: min(70dvh, 650px) !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+        body #quickNavMenu .quick-dd {
+            display: block !important;
+            position: static !important;
+            height: auto !important;
+            min-height: 0 !important;
+            width: 100% !important;
+            flex: 0 0 auto !important;
+        }
+
+        /* Submenús debajo de cada categoría */
+
+        body #quickNavMenu .quick-dd-menu,
+        body #quickNavMenu .quick-dd-menu-wide {
+            position: static !important;
+            inset: auto !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            margin: 4px 0 8px !important;
+            padding: 8px !important;
+            background: rgba(255,255,255,.09) !important;
+            border: 1px solid rgba(255,255,255,.12) !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+            float: none !important;
             display: none !important;
         }
 
-        header #navbarExample3 {
-            display: flex !important;
-            visibility: visible !important;
-            height: auto !important;
-            flex-basis: auto !important;
+        /* Mostrar solamente el submenú abierto */
+
+        body #quickNavMenu .quick-dd.open > .quick-dd-menu,
+        body #quickNavMenu .quick-dd.open > .quick-dd-menu-wide {
+            display: block !important;
         }
 
-        header .header-right-tools {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
+        /* Enlaces secundarios */
+
+        body #quickNavMenu .quick-dd-item {
+            display: block !important;
+            width: 100% !important;
+            min-height: 40px !important;
+            padding: 10px 12px !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            line-height: 1.4 !important;
+            color: #ffffff !important;
+            background: transparent !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            border-radius: 8px !important;
+            text-decoration: none !important;
         }
-    }
+
+            body #quickNavMenu .quick-dd-item:hover,
+            body #quickNavMenu .quick-dd-item:focus {
+                color: #d4ad45 !important;
+                background: rgba(255,255,255,.15) !important;
+            }
+
+        /* Categoría activa */
+
+        body #quickNavMenu .quick-dd.open > .quick-link {
+            color: #d4ad45 !important;
+            background: rgba(255,255,255,.10) !important;
+        }
+}
