@@ -1,0 +1,435 @@
+﻿/* ======================================================
+   ERPSEI - CATÁLOGOS MULTIMEDIA RESPONSIVE
+   Módulos:
+   - Banners
+   - Imágenes del Header
+
+   Escritorio: conserva tablas originales
+   Móvil: registros en tarjetas
+   ====================================================== */
+
+@media (max-width: 767.98px) {
+
+    /* ============================================
+       CONTENEDORES PRINCIPALES
+       ============================================ */
+
+    body:is(.banners-page, .headerimagenes-page)
+    :is(.banners-theme-page, .headerimg-theme-page) {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: clip;
+    }
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-shell {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 4px !important;
+        margin: 0 auto !important;
+    }
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 18px !important;
+        overflow: hidden !important;
+    }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-card .card-body {
+            padding: 15px !important;
+            min-width: 0 !important;
+        }
+
+    /* ============================================
+       TABLA COMO CONTENEDOR DE TARJETAS
+       ============================================ */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+        border-radius: 0 !important;
+    }
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+        /* Ocultar únicamente el encabezado de la tabla */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table thead {
+            display: none !important;
+        }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table tbody {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;
+            gap: 14px !important;
+        }
+
+            /* ============================================
+       CADA REGISTRO COMO TARJETA
+       ============================================ */
+
+            body:is(.banners-page, .headerimagenes-page)
+            .module-table tbody tr:not(:has(.module-empty)) {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                gap: 12px !important;
+                padding: 15px !important;
+                background: #ffffff !important;
+                border: 1px solid rgba(33,22,111,.14) !important;
+                border-radius: 15px !important;
+                box-shadow: 0 5px 16px rgba(33,22,111,.06) !important;
+            }
+
+                /* ============================================
+       CELDAS
+       ============================================ */
+
+                body:is(.banners-page, .headerimagenes-page)
+                .module-table tbody tr:not(:has(.module-empty)) > td {
+                    display: block !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    max-width: 100% !important;
+                    height: auto !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
+                    border: 0 !important;
+                    white-space: normal !important;
+                    overflow-wrap: anywhere !important;
+                    color: #21166f !important;
+                    font-size: 13px !important;
+                    line-height: 1.5 !important;
+                }
+
+                    /* ============================================
+       PREVIEW - PRIMERA CELDA
+       ============================================ */
+
+                    body:is(.banners-page, .headerimagenes-page)
+                    .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(1) {
+                        grid-column: 1 / -1 !important;
+                        display: flex !important;
+                        justify-content: flex-start !important;
+                        align-items: center !important;
+                        padding-bottom: 10px !important;
+                        border-bottom: 1px solid #e7e9f4 !important;
+                    }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table .module-preview-table {
+            display: block !important;
+            width: 140px !important;
+            max-width: 100% !important;
+            height: 90px !important;
+            max-height: 90px !important;
+            object-fit: contain !important;
+            border-radius: 10px !important;
+            background: #f5f6fb !important;
+        }
+
+        /* ============================================
+       TÍTULO / TEMPORADA
+       ============================================ */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(2) {
+            grid-column: 1 / -1 !important;
+            padding-bottom: 10px !important;
+            border-bottom: 1px solid #e7e9f4 !important;
+        }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:nth-child(2) .fw-semibold {
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            color: #21166f !important;
+        }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:nth-child(2) .module-muted {
+            margin-top: 4px !important;
+            color: #64748b !important;
+            font-size: 12px !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        /* ============================================
+       VIGENCIA
+       ============================================ */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(3) {
+            grid-column: 1 / -1 !important;
+        }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:nth-child(3)::before {
+            content: "Vigencia";
+            display: block;
+            margin-bottom: 6px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+        /* ============================================
+       ORDEN Y ESTATUS
+       ============================================ */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:nth-child(4)::before {
+            content: "Orden";
+            display: block;
+            margin-bottom: 5px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:nth-child(5)::before {
+            content: "Activo";
+            display: block;
+            margin-bottom: 5px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table .badge {
+            display: inline-flex !important;
+            align-items: center !important;
+            padding: 6px 9px !important;
+            border-radius: 7px !important;
+            font-size: 11px !important;
+        }
+
+        /* ============================================
+       ACCIONES - ANCHO COMPLETO
+       ============================================ */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table tbody tr:not(:has(.module-empty)) > td:last-child {
+            grid-column: 1 / -1 !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: stretch !important;
+            justify-content: stretch !important;
+            width: 100% !important;
+            gap: 10px !important;
+            padding-top: 13px !important;
+            border-top: 1px solid #e7e9f4 !important;
+            white-space: normal !important;
+        }
+
+        /* Formulario de activar/desactivar */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:last-child form:first-child {
+            display: flex !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Formulario de eliminar */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:last-child form:last-child {
+            display: flex !important;
+            flex: 0 0 46px !important;
+            width: 46px !important;
+            margin: 0 !important;
+        }
+
+        /* ============================================
+       BOTÓN ACTIVAR / DESACTIVAR
+       ============================================ */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:last-child .module-btn-secondary {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 44px !important;
+            padding: 10px 8px !important;
+            background: #21166f !important;
+            color: #ffffff !important;
+            border: 1px solid #21166f !important;
+            border-radius: 10px !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            text-align: center !important;
+        }
+
+        /* ============================================
+       BOTÓN ELIMINAR
+       ============================================ */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table td:last-child .module-btn-danger {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 46px !important;
+            min-width: 46px !important;
+            height: 44px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #c62828 !important;
+            background: #ffffff !important;
+            border: 1px solid #c62828 !important;
+            border-radius: 10px !important;
+            font-size: 16px !important;
+        }
+
+        /* ============================================
+       MENSAJE SIN REGISTROS
+       ============================================ */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table tbody tr:has(.module-empty) {
+            display: block !important;
+            width: 100% !important;
+            background: #f8f9ff !important;
+            border-radius: 12px !important;
+        }
+
+            body:is(.banners-page, .headerimagenes-page)
+            .module-table tbody tr:has(.module-empty) > td {
+                display: block !important;
+                width: 100% !important;
+                padding: 20px 12px !important;
+                text-align: center !important;
+            }
+}
+
+/* =====================================================
+   ERPSEI - TARJETAS COMPACTAS
+   BANNERS E IMÁGENES HEADER
+   ===================================================== */
+
+@media (max-width: 767.98px) {
+
+    /* Una sola tarjeta de información */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table tbody tr:not(:has(.module-empty)) {
+        grid-template-columns: 105px minmax(0, 1fr) !important;
+        column-gap: 14px !important;
+        row-gap: 7px !important;
+        padding: 14px !important;
+    }
+
+        /* Imagen a la izquierda */
+
+        body:is(.banners-page, .headerimagenes-page)
+        .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(1) {
+            grid-column: 1 !important;
+            grid-row: 1 / span 4 !important;
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            border: 0 !important;
+        }
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table .module-preview-table {
+        width: 100% !important;
+        max-width: 105px !important;
+        height: 95px !important;
+        max-height: 95px !important;
+        object-fit: contain !important;
+    }
+
+    /* Nombre y archivo */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(2) {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        padding: 0 !important;
+        border: 0 !important;
+    }
+
+    /* Vigencia */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(3) {
+        grid-column: 2 !important;
+        grid-row: 2 !important;
+        padding: 0 !important;
+        border: 0 !important;
+    }
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table td:nth-child(3)::before {
+        display: none !important;
+    }
+
+    /* Orden */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(4) {
+        grid-column: 2 !important;
+        grid-row: 3 !important;
+    }
+
+    /* Estado activo */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table tbody tr:not(:has(.module-empty)) > td:nth-child(5) {
+        grid-column: 2 !important;
+        grid-row: 4 !important;
+    }
+
+    /* Etiquetas más pequeñas */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table td:nth-child(4)::before,
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table td:nth-child(5)::before {
+        display: inline !important;
+        margin-right: 6px !important;
+        font-size: 11px !important;
+    }
+
+    /* Botones en una sola fila */
+
+    body:is(.banners-page, .headerimagenes-page)
+    .module-table tbody tr:not(:has(.module-empty)) > td:last-child {
+        grid-column: 1 / -1 !important;
+        grid-row: 5 !important;
+        margin-top: 8px !important;
+        padding-top: 10px !important;
+        border-top: 1px solid #e7e9f4 !important;
+    }
+}

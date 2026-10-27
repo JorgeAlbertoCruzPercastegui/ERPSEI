@@ -1,0 +1,352 @@
+﻿/* =====================================================
+   ERPSEI - GESTOR MANUALES Y POLÍTICAS
+   TABLA RESPONSIVE + TARJETAS MÓVILES
+   ===================================================== */
+
+/* ============================================
+   CORRECCIÓN: TEXTO DE PUBLICADO
+   ============================================ */
+
+.gestor-manuales-listado .badge.text-bg-primary,
+.gestor-manuales-listado .badge.text-bg-warning {
+    color: #111111 !important;
+    font-weight: 700 !important;
+}
+
+.gestor-manuales-listado .badge.text-bg-primary {
+    background: #dbeafe !important;
+    border: 1px solid #93c5fd !important;
+}
+
+.gestor-manuales-listado .badge.text-bg-warning {
+    background: #fef3c7 !important;
+    border: 1px solid #fcd34d !important;
+}
+
+/* ============================================
+   CONTENEDOR GENERAL
+   ============================================ */
+
+.gestor-manuales-listado {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+    .gestor-manuales-listado .gestor-manuales-tabla {
+        width: 100%;
+        max-width: 100%;
+    }
+
+/* =====================================================
+   DISEÑO MÓVIL
+   ===================================================== */
+
+@media (max-width: 767.98px) {
+
+    /* ============================================
+       TARJETA PRINCIPAL
+       ============================================ */
+
+    .gestor-manuales-listado {
+        border-radius: 18px !important;
+        overflow: hidden !important;
+    }
+
+        .gestor-manuales-listado > .card-body {
+            padding: 14px !important;
+            min-width: 0 !important;
+        }
+
+        .gestor-manuales-listado .gestor-manuales-tabla {
+            overflow: visible !important;
+        }
+
+        /* ============================================
+       TRANSFORMAR TABLA EN TARJETAS
+       ============================================ */
+
+        .gestor-manuales-listado table {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+        }
+
+            .gestor-manuales-listado table thead {
+                display: none !important;
+            }
+
+            .gestor-manuales-listado table tbody {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 12px !important;
+            }
+
+                /* ============================================
+       REGISTRO COMPACTO
+       ============================================ */
+
+                .gestor-manuales-listado table tbody tr:not(:has(> td[colspan])) {
+                    display: grid !important;
+                    grid-template-columns: 96px minmax(0, 1fr) !important;
+                    grid-template-rows: repeat(4, auto) auto auto !important;
+                    column-gap: 14px !important;
+                    row-gap: 7px !important;
+                    width: 100% !important;
+                    min-width: 0 !important;
+                    padding: 14px !important;
+                    background: #ffffff !important;
+                    border: 1px solid #dce0f1 !important;
+                    border-radius: 15px !important;
+                    box-shadow: 0 4px 14px rgba(33,22,111,.06) !important;
+                }
+
+                    /* ============================================
+       CELDAS GENERALES
+       ============================================ */
+
+                    .gestor-manuales-listado table tbody tr:not(:has(> td[colspan])) > td {
+                        display: block !important;
+                        width: 100% !important;
+                        min-width: 0 !important;
+                        max-width: 100% !important;
+                        padding: 0 !important;
+                        margin: 0 !important;
+                        border: none !important;
+                        color: #21166f !important;
+                        font-size: 13px !important;
+                        line-height: 1.45 !important;
+                        overflow-wrap: anywhere !important;
+                        white-space: normal !important;
+                    }
+
+                /* ============================================
+       PORTADA
+       ============================================ */
+
+                .gestor-manuales-listado table tbody td:nth-child(1) {
+                    grid-column: 1 !important;
+                    grid-row: 1 / 5 !important;
+                    display: flex !important;
+                    justify-content: flex-start !important;
+                    align-items: flex-start !important;
+                }
+
+                    .gestor-manuales-listado table tbody td:nth-child(1) img {
+                        display: block !important;
+                        width: 96px !important;
+                        height: 100px !important;
+                        max-width: 100% !important;
+                        max-height: 100px !important;
+                        object-fit: contain !important;
+                        padding: 5px !important;
+                        background: #f7f8ff !important;
+                        border: 1px solid #dce0f1 !important;
+                        border-radius: 10px !important;
+                    }
+
+                /* ============================================
+       TÍTULO Y DESCRIPCIÓN
+       ============================================ */
+
+                .gestor-manuales-listado table tbody td:nth-child(2) {
+                    grid-column: 2 !important;
+                    grid-row: 1 !important;
+                }
+
+                    .gestor-manuales-listado table tbody td:nth-child(2) .fw-semibold {
+                        font-size: 14px !important;
+                        font-weight: 700 !important;
+                        color: #21166f !important;
+                    }
+
+                    .gestor-manuales-listado table tbody td:nth-child(2) .text-muted {
+                        margin-top: 3px !important;
+                        font-size: 12px !important;
+                        line-height: 1.35 !important;
+                        color: #64748b !important;
+                    }
+
+                /* ============================================
+       TIPO
+       ============================================ */
+
+                .gestor-manuales-listado table tbody td:nth-child(3) {
+                    grid-column: 2 !important;
+                    grid-row: 2 !important;
+                }
+
+                    .gestor-manuales-listado table tbody td:nth-child(3)::before {
+                        content: "Tipo: ";
+                        color: #64748b !important;
+                        font-size: 12px !important;
+                        font-weight: 600 !important;
+                    }
+
+                /* ============================================
+       MODO DE VISUALIZACIÓN
+       ============================================ */
+
+                .gestor-manuales-listado table tbody td:nth-child(4) {
+                    grid-column: 2 !important;
+                    grid-row: 3 !important;
+                }
+
+                    .gestor-manuales-listado table tbody td:nth-child(4)::before {
+                        content: "Modo: ";
+                        color: #64748b !important;
+                        font-size: 12px !important;
+                        font-weight: 600 !important;
+                    }
+
+                /* ============================================
+       ORDEN
+       ============================================ */
+
+                .gestor-manuales-listado table tbody td:nth-child(5) {
+                    grid-column: 2 !important;
+                    grid-row: 4 !important;
+                }
+
+                    .gestor-manuales-listado table tbody td:nth-child(5)::before {
+                        content: "Orden: ";
+                        color: #64748b !important;
+                        font-size: 12px !important;
+                        font-weight: 600 !important;
+                    }
+
+                /* ============================================
+       ESTADO DE PUBLICACIÓN
+       ============================================ */
+
+                .gestor-manuales-listado table tbody td:nth-child(6) {
+                    grid-column: 1 / -1 !important;
+                    grid-row: 5 !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 10px !important;
+                    padding-top: 5px !important;
+                }
+
+                    .gestor-manuales-listado table tbody td:nth-child(6)::before {
+                        content: "Publicación:";
+                        color: #64748b !important;
+                        font-size: 12px !important;
+                        font-weight: 600 !important;
+                    }
+
+                    .gestor-manuales-listado table tbody td:nth-child(6) .badge {
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        padding: 6px 10px !important;
+                        border-radius: 7px !important;
+                        font-size: 11px !important;
+                        font-weight: 700 !important;
+                        color: #111111 !important;
+                    }
+
+                /* ============================================
+       ACCIONES
+       ============================================ */
+
+                .gestor-manuales-listado table tbody td:nth-child(7) {
+                    grid-column: 1 / -1 !important;
+                    grid-row: 6 !important;
+                    padding-top: 10px !important;
+                    margin-top: 5px !important;
+                    border-top: 1px solid #e8eaf5 !important;
+                }
+
+                    /* CONTENEDOR DE BOTONES */
+
+                    .gestor-manuales-listado table tbody td:nth-child(7) > .d-flex {
+                        display: grid !important;
+                        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                        gap: 8px !important;
+                        width: 100% !important;
+                        min-width: 0 !important;
+                    }
+
+                    /* FORMULARIOS Y ENLACES */
+
+                    .gestor-manuales-listado table tbody td:nth-child(7) form,
+                    .gestor-manuales-listado table tbody td:nth-child(7) a {
+                        display: block !important;
+                        width: 100% !important;
+                        min-width: 0 !important;
+                        margin: 0 !important;
+                    }
+
+                    /* BOTONES GENERALES */
+
+                    .gestor-manuales-listado table tbody td:nth-child(7) .btn {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        width: 100% !important;
+                        min-height: 42px !important;
+                        padding: 9px 8px !important;
+                        font-size: 12px !important;
+                        font-weight: 700 !important;
+                        line-height: 1.3 !important;
+                        border-radius: 9px !important;
+                        text-align: center !important;
+                        white-space: normal !important;
+                    }
+
+                    /* ACTIVAR / DESACTIVAR */
+
+                    .gestor-manuales-listado table tbody td:nth-child(7) .btn-outline-secondary,
+                    .gestor-manuales-listado table tbody td:nth-child(7) .btn-outline-success {
+                        color: #ffffff !important;
+                        background: #21166f !important;
+                        border-color: #21166f !important;
+                    }
+
+                    /* PUBLICAR / DESPUBLICAR */
+
+                    .gestor-manuales-listado table tbody td:nth-child(7) .btn-outline-primary,
+                    .gestor-manuales-listado table tbody td:nth-child(7) .btn-outline-warning {
+                        color: #21166f !important;
+                        background: #f4f2ff !important;
+                        border-color: #21166f !important;
+                    }
+
+                    /* EDITAR */
+
+                    .gestor-manuales-listado table tbody td:nth-child(7) .btn-outline-info {
+                        color: #21166f !important;
+                        background: #eef2ff !important;
+                        border-color: #b9c5f2 !important;
+                    }
+
+                    /* ELIMINAR */
+
+                    .gestor-manuales-listado table tbody td:nth-child(7) .btn-outline-danger {
+                        color: #c62828 !important;
+                        background: #ffffff !important;
+                        border-color: #c62828 !important;
+                        font-size: 16px !important;
+                    }
+
+                /* ============================================
+       SIN REGISTROS
+       ============================================ */
+
+                .gestor-manuales-listado table tbody tr:has(> td[colspan]) {
+                    display: block !important;
+                    width: 100% !important;
+                    background: #f8f9ff !important;
+                    border-radius: 12px !important;
+                }
+
+                    .gestor-manuales-listado table tbody tr:has(> td[colspan]) td {
+                        display: block !important;
+                        width: 100% !important;
+                        padding: 18px 12px !important;
+                        text-align: center !important;
+                    }
+}

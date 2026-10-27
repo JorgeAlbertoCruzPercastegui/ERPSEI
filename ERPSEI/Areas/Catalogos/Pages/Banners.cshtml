@@ -2,12 +2,18 @@
 @model ERPSEI.Areas.Catalogos.Pages.Banners.IndexModel
 @{
     ViewData["Title"] = "Banners";
+    ViewData["BodyClass"] = "banners-page";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Banners.css" asp-append-version="true" />
-}
+    <link rel="stylesheet"
+          href="~/css/Banners.css"
+          asp-append-version="true" />
 
+    <link rel="stylesheet"
+          href="~/css/CatalogosMediaResponsive.css"
+          asp-append-version="true" />
+}
 <div class="banners-theme-page">
     <div class="module-shell">
         <!--<div class="module-header mb-4">

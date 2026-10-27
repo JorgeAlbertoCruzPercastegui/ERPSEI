@@ -4,6 +4,8 @@
 @{
     ViewData["Title"] = "Adquisiciones";
 
+    ViewData["BodyClass"] = "adquisiciones-responsive";
+
     bool limpiarBorradorAdquisiciones =
         TempData["LimpiarBorradorAdquisiciones"] is bool valor
         && valor;
