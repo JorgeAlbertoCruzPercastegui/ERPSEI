@@ -309,11 +309,7 @@ function initTableSolicitudesAutorizar() {
     tableSolicitudesAutorizar.bootstrapTable('destroy').bootstrapTable({
         locale: cultureName,
 
-        pagination: true,
-        pageSize: 10,
-        pageList: [10, 20, 30, 50, 100],
-        paginationLoop: false,
-        paginationParts: ['pageInfo', 'pageList'],
+        pagination: false,
 
         columns: [
             {

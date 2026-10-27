@@ -249,9 +249,7 @@
                    class="table-sm"
                    data-unique-id="id"
                    data-search="true"
-                   data-pagination="true"
-                   data-page-size="10"
-                   data-page-list="[10,20,30,50,100]"
+                   data-pagination="false"
                    data-side-pagination="client"
                    data-url="/ERP/Vacaciones?handler=SolicitudesAutorizar">
                 <thead>
@@ -623,6 +621,41 @@
 
                         </div>
 
+                        <!-- PAGINADOR DEL HISTORIAL -->
+                        <div class="historial-equipo-paginador"
+                             id="paginadorHistorialVacacionesEquipo">
+
+                            <div class="historial-equipo-controles">
+
+                                <span class="historial-equipo-info">
+                                    Página
+                                    <strong id="historialEquipoPaginaActual">1</strong>
+                                    de
+                                    <strong id="historialEquipoTotalPaginas">1</strong>
+                                </span>
+
+                                <button type="button"
+                                        id="btnHistorialEquipoAnterior"
+                                        class="btn btn-sm btn-outline-primary"
+                                        onclick="cambiarPaginaHistorialVacacionesEquipo(-1)">
+
+                                    <i class="bi bi-chevron-left"></i>
+
+                                </button>
+
+                                <button type="button"
+                                        id="btnHistorialEquipoSiguiente"
+                                        class="btn btn-sm btn-outline-primary"
+                                        onclick="cambiarPaginaHistorialVacacionesEquipo(1)">
+
+                                    <i class="bi bi-chevron-right"></i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
                     </div>
 
                 </div>
@@ -640,40 +673,6 @@
                 </div>
 
             </div>
-
-        </div>
-
-    </div>
-
-    <div class="historial-equipo-paginador"
-         id="paginadorHistorialVacacionesEquipo">
-
-        <div class="historial-equipo-controles">
-
-            <span class="historial-equipo-info">
-                Página
-                <strong id="historialEquipoPaginaActual">1</strong>
-                de
-                <strong id="historialEquipoTotalPaginas">1</strong>
-            </span>
-
-            <button type="button"
-                    id="btnHistorialEquipoAnterior"
-                    class="btn btn-sm btn-outline-primary"
-                    onclick="cambiarPaginaHistorialVacacionesEquipo(-1)">
-
-                <i class="bi bi-chevron-left"></i>
-
-            </button>
-
-            <button type="button"
-                    id="btnHistorialEquipoSiguiente"
-                    class="btn btn-sm btn-outline-primary"
-                    onclick="cambiarPaginaHistorialVacacionesEquipo(1)">
-
-                <i class="bi bi-chevron-right"></i>
-
-            </button>
 
         </div>
 
