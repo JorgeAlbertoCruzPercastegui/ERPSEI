@@ -3912,3 +3912,136 @@ td:last-child {
         width: 100%;
     }
 }
+
+/* =====================================================
+   COMPLIANCE - TABLA DE EMPRESAS RESPONSIVE
+   ===================================================== */
+
+.eb-empresas-listado {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.eb-empresas-tabla-contenedor {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* Evitar que Bootstrap Table se salga del contenedor */
+
+.eb-empresas-listado .bootstrap-table,
+.eb-empresas-listado .fixed-table-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* =====================================================
+   VISTA MÓVIL
+   ===================================================== */
+
+@media (max-width: 767.98px) {
+
+    .eb-container {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .eb-empresas-listado {
+        overflow: hidden;
+        border-radius: 16px;
+    }
+
+        /* Scroll horizontal dentro de la tabla */
+
+        .eb-empresas-listado .fixed-table-body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto !important;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
+        }
+
+        /* Dar espacio real a las columnas */
+
+        .eb-empresas-listado #tablaEmpresas {
+            width: 100%;
+            min-width: 1050px !important;
+            table-layout: auto !important;
+        }
+
+            /* Encabezados */
+
+            .eb-empresas-listado #tablaEmpresas thead th {
+                vertical-align: middle !important;
+                white-space: nowrap !important;
+                padding: 12px 14px !important;
+                font-size: 13px !important;
+            }
+
+            /* Celdas */
+
+            .eb-empresas-listado #tablaEmpresas tbody td {
+                vertical-align: middle !important;
+                padding: 12px 14px !important;
+                font-size: 13px !important;
+                line-height: 1.45 !important;
+            }
+
+            /* Razón social: permitir texto, pero sin
+       generar palabras excesivamente cortadas */
+
+            .eb-empresas-listado #tablaEmpresas th[data-field="razonSocial"],
+            .eb-empresas-listado #tablaEmpresas td:nth-child(4) {
+                min-width: 230px !important;
+                max-width: 320px !important;
+                white-space: normal !important;
+                overflow-wrap: break-word !important;
+                word-break: normal !important;
+            }
+
+            /* Nombre corto */
+
+            .eb-empresas-listado #tablaEmpresas th[data-field="nombreCorto"],
+            .eb-empresas-listado #tablaEmpresas td:nth-child(5) {
+                min-width: 135px !important;
+            }
+
+            /* RFC */
+
+            .eb-empresas-listado #tablaEmpresas th[data-field="rfc"],
+            .eb-empresas-listado #tablaEmpresas td:nth-child(6) {
+                min-width: 145px !important;
+                white-space: nowrap !important;
+            }
+
+            /* Identificadores y selección */
+
+            .eb-empresas-listado #tablaEmpresas td:nth-child(1),
+            .eb-empresas-listado #tablaEmpresas td:nth-child(2),
+            .eb-empresas-listado #tablaEmpresas td:nth-child(3) {
+                text-align: center !important;
+                white-space: nowrap !important;
+            }
+
+            /* Evitar alturas artificiales */
+
+            .eb-empresas-listado #tablaEmpresas tbody tr {
+                height: auto !important;
+            }
+
+        /* Los controles de paginación pueden
+       organizarse en varias líneas */
+
+        .eb-empresas-listado .fixed-table-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px;
+        }
+}

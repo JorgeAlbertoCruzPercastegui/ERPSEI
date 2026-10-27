@@ -2131,100 +2131,217 @@
     </script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        /* =====================================================
+        ERPSEI - NAVEGACIÓN PRINCIPAL V5
+        Control único de menús y submenús
+        ===================================================== */
+
+        (function () {
+
+        function iniciarNavegacion() {
+
         const btn = document.querySelector(".quick-nav-toggle");
         const menu = document.getElementById("quickNavMenu");
 
-        if (!btn || !menu) return;
-
-        const isMobile = () => window.matchMedia("(max-width: 991.98px)").matches;
-
-        function cerrarDropdowns(excepto = null) {
-        document.querySelectorAll(".quick-dd.open").forEach(drop => {
-        if (drop !== excepto) {
-        drop.classList.remove("open");
+        if (!btn || !menu) {
+        console.warn("ERPSEI: No se encontró el menú.");
+        return;
         }
+
+        // Evitar inicializaciones duplicadas
+        if (menu.dataset.navegacionInicializada === "true") {
+        return;
+        }
+
+        menu.dataset.navegacionInicializada = "true";
+
+        const mobileQuery = window.matchMedia(
+        "(max-width: 991.98px)"
+        );
+
+        const isMobile = () => mobileQuery.matches;
+
+        // ============================================
+        // CERRAR SUBMENÚS
+        // ============================================
+
+        function cerrarSubmenus(excepto = null) {
+
+        menu.querySelectorAll(".quick-dd.open").forEach(drop => {
+
+        if (drop === excepto) return;
+
+        drop.classList.remove("open");
+
+        const toggle = drop.querySelector(".quick-dd-toggle");
+
+        if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+        }
+
         });
         }
 
-        function cerrarMenuMovil() {
-        if (!isMobile()) return;
+        // ============================================
+        // ABRIR MENÚ
+        // ============================================
 
-        menu.classList.remove("is-open");
-        menu.style.display = "none";
-        btn.setAttribute("aria-expanded", "false");
-        }
-
-        function abrirMenuMovil() {
-        if (!isMobile()) return;
+        function abrirMenu() {
 
         menu.classList.add("is-open");
-        menu.style.display = "flex";
+
+        menu.style.removeProperty("display");
+
         btn.setAttribute("aria-expanded", "true");
+
         }
 
-        btn.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+        // ============================================
+        // CERRAR MENÚ
+        // ============================================
 
-        if (!isMobile()) return;
+        function cerrarMenu() {
+
+        menu.classList.remove("is-open");
+
+        menu.style.removeProperty("display");
+
+        btn.setAttribute("aria-expanded", "false");
+
+        cerrarSubmenus();
+
+        }
+
+        // ============================================
+        // CONTROL CENTRALIZADO DE CLICS
+        // ============================================
+
+        document.addEventListener("click", function (event) {
+
+        const objetivo = event.target;
+
+        if (!(objetivo instanceof Element)) return;
+
+        const botonMenu = objetivo.closest(".quick-nav-toggle");
+        const botonSubmenu = objetivo.closest(".quick-dd-toggle");
+
+        // BOTÓN PRINCIPAL DE TRES RAYITAS
+        if (botonMenu === btn && isMobile()) {
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
         if (menu.classList.contains("is-open")) {
-        cerrarDropdowns();
-        cerrarMenuMovil();
+        cerrarMenu();
         } else {
-        abrirMenuMovil();
+        abrirMenu();
         }
-        });
 
-        document.querySelectorAll(".quick-dd-toggle").forEach(toggle => {
-        toggle.addEventListener("click", function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+        return;
+        }
 
-        const drop = this.closest(".quick-dd");
-        if (!drop) return;
+        // SUBMENÚS
+        if (botonSubmenu && menu.contains(botonSubmenu)) {
 
-        const estabaAbierto = drop.classList.contains("open");
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
-        cerrarDropdowns(drop);
+        const dropdown = botonSubmenu.closest(".quick-dd");
 
-        if (estabaAbierto) {
-        drop.classList.remove("open");
+        if (!dropdown) return;
+
+        const estabaAbierto = dropdown.classList.contains("open");
+
+        cerrarSubmenus(dropdown);
+
+        dropdown.classList.toggle("open", !estabaAbierto);
+
+        botonSubmenu.setAttribute(
+        "aria-expanded",
+        String(!estabaAbierto)
+        );
+
+        return;
+        }
+
+        // CLIC FUERA DEL MENÚ
+        if (
+        !menu.contains(objetivo) &&
+        !btn.contains(objetivo)
+        ) {
+
+        if (isMobile()) {
+        cerrarMenu();
         } else {
-        drop.classList.add("open");
+        cerrarSubmenus();
         }
-        });
-        });
-
-        document.querySelectorAll(".quick-dd-menu").forEach(menuDropdown => {
-        menuDropdown.addEventListener("click", function (e) {
-        e.stopPropagation();
-        });
-        });
-
-        document.addEventListener("click", function (e) {
-        const clickDentroMenu = menu.contains(e.target);
-        const clickEnBoton = btn.contains(e.target);
-
-        if (!clickDentroMenu && !clickEnBoton) {
-        cerrarDropdowns();
-        cerrarMenuMovil();
         }
+
+        }, true);
+
+        // ============================================
+        // CERRAR CON ESCAPE
+        // ============================================
+
+        document.addEventListener("keydown", function (event) {
+
+        if (event.key !== "Escape") return;
+
+        cerrarMenu();
+        btn.focus();
+
         });
 
-        window.addEventListener("resize", function () {
-        cerrarDropdowns();
+        // ============================================
+        // CAMBIO DE TAMAÑO
+        // ============================================
 
-        if (!isMobile()) {
-        menu.style.display = "";
-        menu.classList.remove("is-open");
-        btn.setAttribute("aria-expanded", "false");
+        function actualizarVista() {
+
+        cerrarMenu();
+
+        }
+
+        if (mobileQuery.addEventListener) {
+
+        mobileQuery.addEventListener(
+        "change",
+        actualizarVista
+        );
+
         } else {
-        cerrarMenuMovil();
+
+        mobileQuery.addListener(
+        actualizarVista
+        );
         }
-        });
-        });
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+
+        cerrarMenu();
+
+        console.log("ERPSEI: Navegación inicializada correctamente.");
+        }
+
+        // Ejecutar aunque DOMContentLoaded ya haya ocurrido
+
+        if (document.readyState === "loading") {
+
+        document.addEventListener(
+        "DOMContentLoaded",
+        iniciarNavegacion,
+        { once: true }
+        );
+
+        } else {
+
+        iniciarNavegacion();
+
+        }
+
+        })();
     </script>
 
     <script>

@@ -234,12 +234,14 @@
     <!-- =====================================================
          TABLA
          ===================================================== -->
-    <div class="eb-card">
+    <div class="eb-card eb-empresas-listado">
 
         <div class="eb-card-body p-0">
 
-            <table id="tablaEmpresas"
-                   class="table">
+            <div class="eb-empresas-tabla-contenedor">
+
+                <table id="tablaEmpresas"
+                       class="table">
 
                 <thead>
                     <tr>
@@ -286,12 +288,13 @@
                     </tr>
                 </thead>
 
-            </table>
+                </table>
+
+            </div>
 
         </div>
-    </div>
 
-</div>
+    </div>
 
 
 @if (puedeAdministrarPermisosCompliance)

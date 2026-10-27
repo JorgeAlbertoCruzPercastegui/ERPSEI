@@ -575,3 +575,172 @@
             background: rgba(255,255,255,.10) !important;
         }
 }
+
+/* =====================================================
+   ERPSEI - CORRECCIÓN DEL MENÚ EN MÓDULOS
+   ===================================================== */
+
+@media (max-width: 991.98px) {
+
+    /* Barra azul como referencia del menú */
+
+    body.module-main-theme .topbar-links {
+        position: relative !important;
+        overflow: visible !important;
+        z-index: 1050 !important;
+        isolation: isolate;
+    }
+
+    /* Contenedor del botón */
+
+    body.module-main-theme .quick-nav-wrap {
+        position: static !important;
+        overflow: visible !important;
+    }
+
+    /* Botón de las tres rayitas */
+
+    body.module-main-theme .quick-nav-toggle {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 48px !important;
+        height: 48px !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        position: relative !important;
+        z-index: 2 !important;
+    }
+
+    /* Menú cerrado */
+
+    body.module-main-theme #quickNavMenu {
+        display: none !important;
+        position: absolute !important;
+        top: calc(100% + 8px) !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        max-height: 70dvh !important;
+        margin: 0 !important;
+        padding: 12px !important;
+        background: #21166f !important;
+        border-radius: 14px !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        z-index: 1051 !important;
+    }
+
+        /* Menú abierto */
+
+        body.module-main-theme #quickNavMenu.is-open {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            flex-wrap: nowrap !important;
+            gap: 5px !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        /* Categorías */
+
+        body.module-main-theme #quickNavMenu .quick-dd {
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            flex: 0 0 auto !important;
+        }
+
+        /* Submenús inicialmente cerrados */
+
+        body.module-main-theme #quickNavMenu .quick-dd-menu {
+            display: none !important;
+            position: static !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            height: auto !important;
+            margin: 5px 0 10px !important;
+            padding: 8px !important;
+            background: rgba(255,255,255,.10) !important;
+            border-radius: 10px !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+
+        /* Submenú abierto */
+
+        body.module-main-theme #quickNavMenu .quick-dd.open > .quick-dd-menu {
+            display: block !important;
+        }
+
+        /* Opciones legibles */
+
+        body.module-main-theme #quickNavMenu .quick-link,
+        body.module-main-theme #quickNavMenu .quick-dd-item {
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            padding: 11px 12px !important;
+            color: #ffffff !important;
+            background: transparent;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            font-size: 14px !important;
+            line-height: 1.4 !important;
+            text-decoration: none !important;
+        }
+
+        body.module-main-theme #quickNavMenu .quick-dd.open > .quick-link {
+            color: #d4ad45 !important;
+        }
+}
+
+/* ==========================================
+   ERPSEI - VISIBILIDAD DE MENÚS MÓVILES
+   ========================================== */
+
+@media (max-width: 991.98px) {
+
+    body:is(.home-main-theme, .module-main-theme)
+    #quickNavMenu:not(.is-open) {
+        display: none !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme)
+    #quickNavMenu.is-open {
+        display: flex !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme)
+    #quickNavMenu .quick-dd {
+        position: static !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme)
+    #quickNavMenu .quick-dd-menu {
+        display: none !important;
+        position: static !important;
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme)
+    #quickNavMenu .quick-dd.open > .quick-dd-menu {
+        display: block !important;
+    }
+}
