@@ -326,6 +326,134 @@ $(document).ready(function () {
         $resultados.removeClass("d-none");
     }
 
+
+    // =====================================================
+    // TIME - DESCARGAR EXCEL Y PDF
+    // =====================================================
+
+    async function descargarReporte(formato) {
+
+        if (!filtrosAplicados || cargandoReporte) {
+            mostrarMensaje(
+                "Primero genera una vista previa del reporte.",
+                "danger"
+            );
+            return;
+        }
+
+        const handler = formato === "excel"
+            ? "ExportarExcelTime"
+            : "ExportarPdfTime";
+
+        const extension = formato === "excel"
+            ? "xlsx"
+            : "pdf";
+
+        const parametros = new URLSearchParams({
+            handler: handler,
+            tipo: filtrosAplicados.tipo
+        });
+
+        [
+            "fechaInicio",
+            "fechaFin",
+            "usuarioId",
+            "proyectoId",
+            "departamentoId"
+        ].forEach(function (campo) {
+            if (filtrosAplicados[campo]) {
+                parametros.set(
+                    campo,
+                    filtrosAplicados[campo]
+                );
+            }
+        });
+
+        const $botones = $(
+            "#btnTimeExportarExcel, #btnTimeExportarPdf"
+        );
+
+        $botones.prop("disabled", true);
+
+        mostrarMensaje(
+            "Generando archivo " +
+            formato.toUpperCase() +
+            " con todos los registros filtrados..."
+        );
+
+        try {
+            const response = await fetch(
+                window.location.pathname + "?" +
+                parametros.toString(),
+                {
+                    method: "GET",
+                    credentials: "same-origin"
+                }
+            );
+
+            if (!response.ok) {
+                const mensaje = await response.text();
+
+                throw new Error(
+                    mensaje || "Error HTTP " + response.status
+                );
+            }
+
+            const blob = await response.blob();
+
+            const url = URL.createObjectURL(blob);
+
+            const enlace = document.createElement("a");
+            enlace.href = url;
+
+            enlace.download =
+                "TIME_Horas_" +
+                new Date().toISOString().slice(0, 10) +
+                "." + extension;
+
+            document.body.appendChild(enlace);
+            enlace.click();
+            enlace.remove();
+
+            // Esperar a que el navegador inicie la descarga
+            // antes de liberar la URL temporal.
+            setTimeout(function () {
+                URL.revokeObjectURL(url);
+            }, 60000);
+
+            mostrarMensaje(
+                "El archivo " +
+                formato.toUpperCase() +
+                " se generó correctamente.",
+                "success"
+            );
+
+        } catch (error) {
+            mostrarMensaje(
+                "No se pudo exportar: " + error.message,
+                "danger"
+            );
+
+        } finally {
+            if (filtrosAplicados) {
+                $botones.prop("disabled", false);
+            }
+        }
+    }
+
+    // =====================================================
+    // EVENTOS DE EXPORTACIÓN
+    // =====================================================
+
+    $("#btnTimeExportarExcel").on("click", function () {
+        descargarReporte("excel");
+    });
+
+    $("#btnTimeExportarPdf").on("click", function () {
+        descargarReporte("pdf");
+    });
+
+
     // =================================================
     // CONSULTAR REPORTE SQL
     // =================================================
@@ -407,6 +535,9 @@ $(document).ready(function () {
             );
 
             actualizarPaginacion();
+
+            $("#btnTimeExportarExcel, #btnTimeExportarPdf")
+                .prop("disabled", false);
 
         } catch (error) {
             mostrarMensaje(
@@ -497,9 +628,5 @@ $(document).ready(function () {
             "para consultar el nuevo resultado."
         );
     });
-
-    // Exportaciones pendientes de implementación.
-    $("#btnTimeExportarExcel, #btnTimeExportarPdf")
-        .prop("disabled", true);
 
 });

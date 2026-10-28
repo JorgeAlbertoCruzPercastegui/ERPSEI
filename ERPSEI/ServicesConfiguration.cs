@@ -357,8 +357,17 @@ namespace ERPSEI
 
             builder.Services.AddScoped<
                 IAdquisicionesEmailService,
-                AdquisicionesEmailService
-            >();
+                AdquisicionesEmailService>();
+
+            builder.Services.AddScoped<
+            ITimeReportExportService,
+            TimeReportExportService>();
+
+            builder.Services.AddHostedService<TimeSyncBackgroundService>();
+
+            builder.Services.AddScoped<
+            ITimeDeletionAuditService,
+            TimeDeletionAuditService>();
 
             // TIME Integration API
             ConfigureDITimeIntegration(builder);

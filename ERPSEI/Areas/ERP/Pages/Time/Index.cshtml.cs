@@ -14,6 +14,7 @@ namespace ERPSEI.Areas.ERP.Pages.Time
         private readonly ITimeReportCatalogService _catalogService;
         private readonly ITimeReportPreviewService _previewService;
         private readonly ITimeSqlReportService _sqlReportService;
+        private readonly ITimeReportExportService _exportService;
         private readonly ILogger<IndexModel> _logger;
 
         private static readonly HashSet<string> Tablas =
@@ -40,13 +41,172 @@ namespace ERPSEI.Areas.ERP.Pages.Time
             ITimeReportCatalogService catalogService,
             ITimeReportPreviewService previewService,
             ITimeSqlReportService sqlReportService,
+            ITimeReportExportService exportService,
             ILogger<IndexModel> logger)
         {
             _timeApiClient = timeApiClient;
             _catalogService = catalogService;
             _previewService = previewService;
             _sqlReportService = sqlReportService;
+            _exportService = exportService;
             _logger = logger;
+        }
+
+
+        // =====================================================
+        // TIME - FILTROS COMPARTIDOS DE EXPORTACIÓN
+        // =====================================================
+
+        private static TimeReporteHorasFiltro CrearFiltroExportacion(
+            DateTime? fechaInicio,
+            DateTime? fechaFin,
+            long? usuarioId,
+            long? proyectoId,
+            long? departamentoId)
+        {
+            if (fechaInicio.HasValue && fechaFin.HasValue &&
+                fechaInicio.Value.Date > fechaFin.Value.Date)
+            {
+                throw new ArgumentException(
+                    "La fecha inicial no puede superar la fecha final.");
+            }
+
+            if ((usuarioId.HasValue && usuarioId <= 0) ||
+                (proyectoId.HasValue && proyectoId <= 0) ||
+                (departamentoId.HasValue && departamentoId <= 0))
+            {
+                throw new ArgumentException(
+                    "Los identificadores de los filtros son inválidos.");
+            }
+
+            return new TimeReporteHorasFiltro
+            {
+                FechaInicio = fechaInicio,
+                FechaFin = fechaFin,
+                UsuarioId = usuarioId,
+                ProyectoId = proyectoId,
+                DepartamentoId = departamentoId,
+                Pagina = 1,
+                TamanoPagina = 100
+            };
+        }
+
+        // =====================================================
+        // TIME - EXPORTAR EXCEL
+        // =====================================================
+
+        public async Task<IActionResult> OnGetExportarExcelTimeAsync(
+            string tipo,
+            DateTime? fechaInicio,
+            DateTime? fechaFin,
+            long? usuarioId,
+            long? proyectoId,
+            long? departamentoId)
+        {
+            if (tipo != "horas")
+                return BadRequest("Tipo de reporte no disponible.");
+
+            try
+            {
+                var filtro = CrearFiltroExportacion(
+                    fechaInicio,
+                    fechaFin,
+                    usuarioId,
+                    proyectoId,
+                    departamentoId);
+
+                byte[] archivo = await _exportService
+                    .GenerarExcelAsync(
+                        filtro,
+                        HttpContext.RequestAborted);
+
+                return File(
+                    archivo,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"TIME_Horas_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (OperationCanceledException)
+                when (HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                return new EmptyResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "TIME: Error al generar Excel.");
+
+                return StatusCode(
+                    500,
+                    "No se pudo generar el archivo Excel.");
+            }
+        }
+
+        // =====================================================
+        // TIME - EXPORTAR PDF
+        // =====================================================
+
+        public async Task<IActionResult> OnGetExportarPdfTimeAsync(
+            string tipo,
+            DateTime? fechaInicio,
+            DateTime? fechaFin,
+            long? usuarioId,
+            long? proyectoId,
+            long? departamentoId)
+        {
+            if (tipo != "horas")
+                return BadRequest("Tipo de reporte no disponible.");
+
+            try
+            {
+                var filtro = CrearFiltroExportacion(
+                    fechaInicio,
+                    fechaFin,
+                    usuarioId,
+                    proyectoId,
+                    departamentoId);
+
+                byte[] archivo = await _exportService
+                    .GenerarPdfAsync(
+                        filtro,
+                        HttpContext.RequestAborted);
+
+                return File(
+                    archivo,
+                    "application/pdf",
+                    $"TIME_Horas_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (OperationCanceledException)
+                when (HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                return new EmptyResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "TIME: Error al generar PDF.");
+
+                return StatusCode(
+                    500,
+                    "No se pudo generar el archivo PDF.");
+            }
         }
 
 

@@ -169,14 +169,11 @@ namespace ERPSEI.Services.TimeIntegration
                     // para estos cuatro campos.
                     Puesto = null,
                     NivelCliente = null,
-                    GrupoEmpresa =
-                    x.Grupo != null && x.Empresa != null
-                        ? (x.Grupo.Nombre ?? "") + " / " + (x.Empresa.Nombre ?? "")
-                        : x.Empresa != null
-                            ? x.Empresa.Nombre
-                            : x.Grupo != null
-                                ? x.Grupo.Nombre
-                                : null,
+                    GrupoEmpresa = x.Empresa != null && x.Grupo != null
+                    ? (x.Grupo.Nombre ?? "") + " / " + (x.Empresa.Nombre ?? "")
+                    : x.Empresa != null
+                        ? x.Empresa.Nombre
+                        : null,
                     InternaExterna = null,
 
                     // Claves.Tipo existe, pero necesitamos

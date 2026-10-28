@@ -90,6 +90,104 @@
                     </form>
                 </div>
 
+                
+                <!-- ============================================
+                 TIME - SINCRONIZAR EMPRESAS
+                 ============================================ -->
+                <div class="col-md-6">
+                    <form method="post"
+                          asp-page-handler="Empresas">
+                        <button class="btn w-100 text-white"
+                                style="background:#21166b;"
+                                type="submit">
+                            <i class="bi bi-building me-2"></i>
+                            Empresas
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ============================================
+                 TIME - SINCRONIZAR GRUPOS
+                 ============================================ -->
+                <div class="col-md-6">
+                    <form method="post"
+                          asp-page-handler="Grupos">
+                        <button class="btn w-100 text-white"
+                                style="background:#21166b;"
+                                type="submit">
+                            <i class="bi bi-diagram-3 me-2"></i>
+                            Grupos
+                        </button>
+                    </form>
+                </div>
+
+                <div class="col-md-6">
+                    <form method="post" asp-page-handler="ConciliarHoras">
+                        <button type="submit"
+                                class="btn w-100 text-white"
+                                style="background:#21166b;">
+                            Conciliar histórico de Horas
+                        </button>
+                    </form>
+                </div>
+
+                <div class="col-md-6">
+                    <form method="post" asp-page-handler="ConciliarActividades">
+                        <button type="submit"
+                                class="btn w-100 text-white"
+                                style="background:#21166b;">
+                            Conciliar histórico de Actividades
+                        </button>
+                    </form>
+                </div>
+
+                
+                <div class="mt-4">
+                    <form method="post"
+                          asp-page-handler="DiagnosticarBajasHoras">
+                        <button type="submit"
+                                class="btn text-white"
+                                style="background:#21166b;">
+                            Diagnosticar posibles bajas de Horas
+                        </button>
+                    </form>
+                </div>
+
+                @if (Model.DiagnosticoBajas != null)
+                {
+                    <div class="alert alert-info mt-3">
+                        <h5>Diagnóstico de Horas</h5>
+
+                        <p>
+                            Registros locales evaluados:
+                            @Model.DiagnosticoBajas.RegistrosLocales
+                        </p>
+
+                        <p>
+                            Registros leídos de TIME:
+                            @Model.DiagnosticoBajas.RegistrosOrigenLeidos
+                        </p>
+
+                        <p>
+                            Último ID de la ventana:
+                            @Model.DiagnosticoBajas.UpperId
+                        </p>
+
+                        <p>
+                            Posibles eliminaciones:
+                            @Model.DiagnosticoBajas.PosiblesEliminaciones
+                        </p>
+
+                        <p>
+                            Primeros IDs:
+                            @string.Join(", ",
+                                Model.DiagnosticoBajas.PrimerosIdsFaltantes)
+                        </p>
+                    </div>
+                }
+
+
+
             </div>
 
             @if (Model.Resultado != null)

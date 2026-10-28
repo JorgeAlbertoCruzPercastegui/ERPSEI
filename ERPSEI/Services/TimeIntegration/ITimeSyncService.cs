@@ -27,5 +27,17 @@ namespace ERPSEI.Services.TimeIntegration
 
         Task<TimeSyncResultadoDto> SincronizarHorasAsync(
             CancellationToken cancellationToken = default);
+
+        Task<TimeSyncResultadoDto> SincronizarEmpresasAsync(
+        CancellationToken cancellationToken = default);
+
+        Task<TimeSyncResultadoDto> SincronizarGruposAsync(
+            CancellationToken cancellationToken = default);
+
+        Task<TimeSyncResultadoDto> ConciliarHorasAsync(
+    CancellationToken cancellationToken = default);
+
+        Task<TimeSyncResultadoDto> ConciliarActividadesAsync(
+            CancellationToken cancellationToken = default);
     }
 }

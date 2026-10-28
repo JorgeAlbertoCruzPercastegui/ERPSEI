@@ -426,6 +426,8 @@ namespace ERPSEI.Data
             set;
         }
 
+        public DbSet<TimeHallazgoConciliacion> TimeHallazgosConciliacion => Set<TimeHallazgoConciliacion>();
+
         // =====================================================
         // TIME INTEGRATION
         // =====================================================
@@ -449,6 +451,7 @@ namespace ERPSEI.Data
 
         public DbSet<TimeGrupo> TimeGrupos
             => Set<TimeGrupo>();
+
 
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -1021,6 +1024,9 @@ namespace ERPSEI.Data
 
             modelBuilder.ApplyConfiguration(
                 new TimeGrupoConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+               new TimeHallazgoConciliacionConfiguration());
         }
 
         private static void BuildAdquisicionesCotizaciones(ModelBuilder b)

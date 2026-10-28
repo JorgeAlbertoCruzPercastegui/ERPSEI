@@ -151,17 +151,117 @@ namespace ERPSEI.Services.TimeIntegration
                 cancellationToken: cancellationToken);
         }
 
+
+        // =====================================================
+        // 6. EMPRESAS
+        // =====================================================
+
+        public Task<TimeSyncResultadoDto> SincronizarEmpresasAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return SincronizarTablaAsync(
+                tabla: "empresas",
+                obtenerId: x => x.Id,
+                crear: id => new TimeEmpresa { Id = id },
+                asignar: (entidad, json) =>
+                {
+                    entidad.Nombre = LeerTexto(json, "nombre");
+                    entidad.Tipo = LeerByte(json, "tipo");
+                    entidad.Estatus = LeerByte(json, "estatus");
+                    entidad.Incremental = LeerInt(json, "incremental");
+                    entidad.GrupoId = LeerLong(json, "grupo_id");
+                    entidad.Clave = LeerTexto(json, "clave");
+                    entidad.CreatedAt = LeerFecha(json, "created_at");
+                    entidad.UpdatedAt = LeerFecha(json, "updated_at");
+                },
+                cancellationToken: cancellationToken);
+        }
+
+        // =====================================================
+        // 7. GRUPOS
+        // =====================================================
+
+        public Task<TimeSyncResultadoDto> SincronizarGruposAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return SincronizarTablaAsync(
+                tabla: "grupos",
+                obtenerId: x => x.Id,
+                crear: id => new TimeGrupo { Id = id },
+                asignar: (entidad, json) =>
+                {
+                    entidad.Nombre = LeerTexto(json, "nombre");
+                    entidad.Estatus = LeerByte(json, "estatus");
+                    entidad.CreatedAt = LeerFecha(json, "created_at");
+                    entidad.UpdatedAt = LeerFecha(json, "updated_at");
+                },
+                cancellationToken: cancellationToken);
+        }
+
+
+        // =====================================================
+        // TIME - CONCILIACIÓN HISTÓRICA DE HORAS
+        // =====================================================
+
+        public Task<TimeSyncResultadoDto> ConciliarHorasAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return SincronizarTablaAsync(
+                tabla: "horas",
+                obtenerId: x => x.Id,
+                crear: id => new TimeHora { Id = id },
+                asignar: (entidad, json) =>
+                {
+                    entidad.Fecha = LeerFechaSolo(json, "fecha");
+                    entidad.Horas = LeerDouble(json, "horas");
+                    entidad.ActividadId = LeerLong(json, "actividad_id");
+                    entidad.CreatedAt = LeerFecha(json, "created_at");
+                    entidad.UpdatedAt = LeerFecha(json, "updated_at");
+                },
+                cancellationToken: cancellationToken,
+                conciliacion: true);
+        }
+
+        // =====================================================
+        // TIME - CONCILIACIÓN HISTÓRICA DE ACTIVIDADES
+        // =====================================================
+
+        public Task<TimeSyncResultadoDto> ConciliarActividadesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return SincronizarTablaAsync(
+                tabla: "actividades",
+                obtenerId: x => x.Id,
+                crear: id => new TimeActividad { Id = id },
+                asignar: (entidad, json) =>
+                {
+                    entidad.PeriodoId = LeerLong(json, "periodo_id");
+                    entidad.UsuarioId = LeerLong(json, "usuario_id");
+                    entidad.ClaveId = LeerLong(json, "clave_id");
+                    entidad.Actividad = LeerTexto(json, "actividad");
+                    entidad.DepartamentoActividadId =
+                        LeerLong(json, "departamento_actividad_id");
+                    entidad.Orden = LeerInt(json, "orden");
+                    entidad.CreatedAt = LeerFecha(json, "created_at");
+                    entidad.UpdatedAt = LeerFecha(json, "updated_at");
+                },
+                cancellationToken: cancellationToken,
+                conciliacion: true);
+        }
+
+
         // =====================================================
         // MOTOR GENÉRICO DE SINCRONIZACIÓN
         // =====================================================
 
         private async Task<TimeSyncResultadoDto> SincronizarTablaAsync<T>(
-            string tabla,
-            Func<T, long> obtenerId,
-            Func<long, T> crear,
-            Action<T, JsonElement> asignar,
-            CancellationToken cancellationToken)
-            where T : class
+        string tabla,
+        Func<T, long> obtenerId,
+        Func<long, T> crear,
+        Action<T, JsonElement> asignar,
+        CancellationToken cancellationToken,
+        bool conciliacion = false)
+        where T : class
         {
             bool bloqueoAdquirido =
                 await SyncLock.WaitAsync(0, cancellationToken);
@@ -175,11 +275,12 @@ namespace ERPSEI.Services.TimeIntegration
             try
             {
                 return await EjecutarSincronizacionAsync(
-                    tabla,
-                    obtenerId,
-                    crear,
-                    asignar,
-                    cancellationToken);
+                tabla,
+                obtenerId,
+                crear,
+                asignar,
+                cancellationToken,
+                conciliacion);
             }
             finally
             {
@@ -187,14 +288,14 @@ namespace ERPSEI.Services.TimeIntegration
             }
         }
 
-        private async Task<TimeSyncResultadoDto>
-            EjecutarSincronizacionAsync<T>(
-                string tabla,
-                Func<T, long> obtenerId,
-                Func<long, T> crear,
-                Action<T, JsonElement> asignar,
-                CancellationToken cancellationToken)
-            where T : class
+        private async Task<TimeSyncResultadoDto> EjecutarSincronizacionAsync<T>(
+        string tabla,
+        Func<T, long> obtenerId,
+        Func<long, T> crear,
+        Action<T, JsonElement> asignar,
+        CancellationToken cancellationToken,
+        bool conciliacion)
+        where T : class
         {
             var resultado = new TimeSyncResultadoDto
             {
@@ -202,16 +303,20 @@ namespace ERPSEI.Services.TimeIntegration
                 Estado = "En proceso"
             };
 
+            string claveEstado = conciliacion
+            ? $"conciliacion:{tabla}"
+            : tabla;
+
             var estado = await _db.TimeEstadosSincronizacion
-                .SingleOrDefaultAsync(
-                    x => x.Tabla == tabla,
-                    cancellationToken);
+            .SingleOrDefaultAsync(
+                x => x.Tabla == claveEstado,
+                cancellationToken);
 
             if (estado == null)
             {
                 estado = new TimeEstadoSincronizacion
                 {
-                    Tabla = tabla,
+                    Tabla = claveEstado,
                     UltimoId = 0,
                     UltimoUpperId = null,
                     RegistrosProcesados = 0,
@@ -220,14 +325,18 @@ namespace ERPSEI.Services.TimeIntegration
 
                 _db.TimeEstadosSincronizacion.Add(estado);
             }
-            else if (estado.Estado == "Completado")
+
+            if (estado.Estado == "Completado")
             {
-                // Revisión completa: detecta nuevos registros
-                // y modificaciones de registros anteriores.
-                estado.UltimoId = 0;
+                if (conciliacion)
+                {
+                    estado.UltimoId = 0;
+                    estado.RegistrosProcesados = 0;
+                }
+
                 estado.UltimoUpperId = null;
-                estado.RegistrosProcesados = 0;
             }
+
 
             long afterId = estado.UltimoId;
             long? upperId = estado.UltimoUpperId;
@@ -244,12 +353,12 @@ namespace ERPSEI.Services.TimeIntegration
                 cancellationToken.ThrowIfCancellationRequested();
 
                 using JsonDocument respuesta =
-                    await _api.ObtenerTablaAsync(
-                        tabla: tabla,
-                        afterId: afterId,
-                        limit: TamanoLote,
-                        upperId: upperId,
-                        cancellationToken: cancellationToken);
+                await _api.ObtenerTablaAsync(
+                    tabla: tabla,
+                    afterId: afterId,
+                    limit: TamanoLote,
+                    upperId: upperId,
+                    cancellationToken: cancellationToken);
 
                 JsonElement root = respuesta.RootElement;
 
@@ -285,6 +394,25 @@ namespace ERPSEI.Services.TimeIntegration
                     .EnumerateArray()
                     .Select(x => x.Clone())
                     .ToList();
+
+                // Una consulta incremental puede regresar cero registros.
+                // Eso no debe reiniciar el cursor.
+                if (registros.Count == 0)
+                {
+                    if (hasMore)
+                    {
+                        throw new InvalidOperationException(
+                            $"TIME indicó más páginas en {tabla}, " +
+                            "pero devolvió un lote vacío.");
+                    }
+
+                    siguienteId = afterId;
+                }
+                else if (siguienteId <= afterId)
+                {
+                    throw new InvalidOperationException(
+                        $"TIME devolvió un cursor que no avanzó en {tabla}.");
+                }
 
                 if (hasMore &&
                     (registros.Count == 0 ||
@@ -345,11 +473,17 @@ namespace ERPSEI.Services.TimeIntegration
                     asignar(entidad, registro);
                 }
 
-                // Datos + cursor guardados en una
-                // misma operación transaccional de EF Core.
                 estado.UltimoId = siguienteId;
-                estado.UltimoUpperId = upperId;
+
+                // Mientras existan páginas pendientes, mantenemos
+                // la misma ventana de lectura.
+                // Al completar, permitimos una nueva ventana.
+                estado.UltimoUpperId = hasMore
+                    ? upperId
+                    : null;
+
                 estado.UltimaEjecucion = DateTime.UtcNow;
+
                 estado.Estado = hasMore
                     ? "En proceso"
                     : "Completado";
@@ -370,19 +504,21 @@ namespace ERPSEI.Services.TimeIntegration
                     siguienteId,
                     resultado.RegistrosLeidos);
 
-                // Evitar mantener cientos de miles de
-                // entidades en el ChangeTracker.
+                // Limpiar entidades procesadas del lote.
                 _db.ChangeTracker.Clear();
 
+                // Recuperar el estado correcto:
+                // horas o conciliacion:horas.
                 if (hasMore)
                 {
                     estado = await _db.TimeEstadosSincronizacion
                         .SingleAsync(
-                            x => x.Tabla == tabla,
+                            x => x.Tabla == claveEstado,
                             cancellationToken);
                 }
 
                 afterId = siguienteId;
+
             }
 
             resultado.Estado = "Completado";
