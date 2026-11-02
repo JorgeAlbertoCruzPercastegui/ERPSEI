@@ -49,6 +49,9 @@
     bool esAdministradorTI = rolesUsuario.Any(r =>
         r.Equals("Administrador TI", StringComparison.OrdinalIgnoreCase));
 
+    bool esAdministradorActivosFijos = rolesUsuario.Any(r =>
+        r.Equals("Administrador de Activos Fijos", StringComparison.OrdinalIgnoreCase));
+
     bool esAdministradorEmpresas = rolesUsuario.Any(r =>
         r.Equals("Administrador Empresas", StringComparison.OrdinalIgnoreCase));
 
@@ -534,17 +537,28 @@
     //bool mostrarGestionCorporativa = esAdminMenu;
     //bool mostrarGestionCorporativa = esAdministrador;
     bool mostrarGestionCorporativa =
-    esAdministrador ||
-    esAdministradorTI ||
-    esAdministradorEmpresas ||
-    esUsuarioConciliaciones ||
-    esAdministradorAdquisiciones ||
-    esUsuarioAdquisiciones ||
-    esAprobadorAdquisiciones ||
-    (permisos.ContainsKey("empresas") &&
-     permisos["empresas"]) ||
-    (permisos.ContainsKey("conciliaciones") &&
-     permisos["conciliaciones"]);
+        esAdministrador ||
+        esAdministradorTI ||
+        esAdministradorActivosFijos ||
+        esAdministradorEmpresas ||
+        esUsuarioConciliaciones ||
+        esAdministradorAdquisiciones ||
+        esUsuarioAdquisiciones ||
+        esAprobadorAdquisiciones ||
+        (permisos.ContainsKey("empresas") &&
+         permisos["empresas"]) ||
+        (permisos.ContainsKey("conciliaciones") &&
+         permisos["conciliaciones"]);
+
+    bool soloAdministradorActivosFijos =
+        esAdministradorActivosFijos &&
+        !esAdministrador &&
+        !esAdministradorTI &&
+        !esAdministradorEmpresas &&
+        !esUsuarioConciliaciones &&
+        !esAdministradorAdquisiciones &&
+        !esUsuarioAdquisiciones &&
+        !esAprobadorAdquisiciones;
 
     //bool mostrarRecursosHumanos = esAdminMenu;
 
@@ -672,35 +686,22 @@
 
     // Por si después quieres controlar empresas/activos con permisos
     bool mostrarEmpresasMenu =
-    !esPerfilExclusivoAdquisiciones
-    &&
-    !soloUsuarioConciliaciones
-    &&
+    !soloAdministradorActivosFijos &&
+    !esPerfilExclusivoAdquisiciones &&
+    !soloUsuarioConciliaciones &&
     (
-        esAdministrador
-        ||
-        esAdministradorEmpresas
-        ||
-        (
-            permisos.ContainsKey("empresas")
-            &&
-            permisos["empresas"]
-        )
+        esAdministrador ||
+        esAdministradorEmpresas ||
+        (permisos.ContainsKey("empresas") && permisos["empresas"])
     );
 
     bool mostrarConciliacionesMenu =
-    !esPerfilExclusivoAdquisiciones
-    &&
+    !soloAdministradorActivosFijos &&
+    !esPerfilExclusivoAdquisiciones &&
     (
-        esAdministrador
-        ||
-        esUsuarioConciliaciones
-        ||
-        (
-            permisos.ContainsKey("conciliaciones")
-            &&
-            permisos["conciliaciones"]
-        )
+        esAdministrador ||
+        esUsuarioConciliaciones ||
+        (permisos.ContainsKey("conciliaciones") && permisos["conciliaciones"])
     );
 
     bool mostrarAdquisicionesMenu =
@@ -710,8 +711,9 @@
         esAprobadorAdquisiciones;
 
     bool mostrarActivosFijosMenu =
-        esAdministrador ||
-        esAdministradorTI;
+    esAdministrador ||
+    esAdministradorTI ||
+    esAdministradorActivosFijos;
 
     bool mostrarMetricasMenu = esAdministrador;
     bool mostrarAuditoriaMenu = esAdministrador;

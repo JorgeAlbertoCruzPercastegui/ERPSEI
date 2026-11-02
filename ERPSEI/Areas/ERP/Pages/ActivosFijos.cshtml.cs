@@ -48,6 +48,7 @@ using static ERPSEI.Areas.ERP.Pages.ConciliacionesModel;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
+    [Authorize(Roles = "Administrador,Master,Administrador TI,Administrador de Activos Fijos")]
     public class ActivosFijosModel : ERPPageModel
     {
         private readonly IStringLocalizer<ActivosFijosModel> stringLocalizer;
