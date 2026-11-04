@@ -744,3 +744,93 @@
         display: block !important;
     }
 }
+
+
+/* =====================================================
+   ERPSEI - NOTIFICACIONES RESPONSIVE PWA
+   Compatible con iOS / Android
+   ===================================================== */
+
+@media (max-width: 767.98px) {
+
+    /* Contenedor de la campanita */
+    .header-right-tools .quick-notifications {
+        position: relative !important;
+    }
+
+    /* Panel de notificaciones */
+    .header-right-tools .quick-notification-menu {
+        position: fixed !important;
+        top: calc(110px + env(safe-area-inset-top, 0px)) !important;
+        left: 12px !important;
+        right: 12px !important;
+        bottom: auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        inset-inline: 12px !important;
+        border-radius: 18px !important;
+        box-sizing: border-box !important;
+        max-height: min(75dvh, 620px) !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        z-index: 99999 !important;
+    }
+
+    /* Encabezado */
+    .quick-notification-menu .quick-notification-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+        padding: 14px 16px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Información del encabezado */
+    .quick-notification-menu .quick-notification-header-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    /* Listado de notificaciones */
+    .quick-notification-menu #quickNotificationList {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Notificaciones individuales */
+    .quick-notification-menu .quick-notification-item {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Contenido y textos */
+    .quick-notification-menu .quick-notification-main,
+    .quick-notification-menu .quick-notification-content {
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .quick-notification-menu .quick-notification-content {
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+    }
+
+    /* Paginación */
+    .quick-notification-menu .quick-notification-pagination {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}

@@ -29,9 +29,11 @@ using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Data.Entities.Polizas;
 using ERPSEI.Data.Managers.Polizas;
 using ERPSEI.Data.Managers.AdministradorPolizas;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
+    [Authorize(Roles = "Administrador")]
     public class ConciliacionesModel : ERPPageModel
     {
         private readonly IStringLocalizer<ConciliacionesModel> stringLocalizer;

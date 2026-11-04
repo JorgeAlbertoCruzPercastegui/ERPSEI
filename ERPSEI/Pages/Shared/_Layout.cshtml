@@ -696,13 +696,8 @@
     );
 
     bool mostrarConciliacionesMenu =
-    !soloAdministradorActivosFijos &&
-    !esPerfilExclusivoAdquisiciones &&
-    (
-        esAdministrador ||
-        esUsuarioConciliaciones ||
-        (permisos.ContainsKey("conciliaciones") && permisos["conciliaciones"])
-    );
+    rolesUsuario.Any(r =>
+        r.Equals("Administrador", StringComparison.OrdinalIgnoreCase));
 
     bool mostrarAdquisicionesMenu =
         esAdministrador ||

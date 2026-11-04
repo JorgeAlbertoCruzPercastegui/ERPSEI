@@ -1,75 +1,216 @@
-﻿using ERPSEI.Data.Entities.Usuarios;
+﻿
+using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
 namespace ERPSEI.Authorization
 {
-	public class AccessHandlerEmpresas : AuthorizationHandler<AccessRequirementEmpresas>
-	{
-		readonly AppRoleManager _roleManager;
-		readonly AppUserManager _userManager;
+    public class AccessHandlerEmpresas
+        : AuthorizationHandler<AccessRequirementEmpresas>
+    {
+        private readonly AppUserManager _userManager;
+        private readonly AppRoleManager _roleManager;
+        private readonly IAccesoModuloManager _accesoModuloManager;
 
-		public AccessHandlerEmpresas(AppRoleManager roleManager, AppUserManager userManager) 
-		{ 
-			_roleManager = roleManager;
-			_userManager = userManager;
-		}
+        public AccessHandlerEmpresas(
+            AppRoleManager roleManager,
+            AppUserManager userManager,
+            IAccesoModuloManager accesoModuloManager)
+        {
+            _roleManager = roleManager;
+            _userManager = userManager;
+            _accesoModuloManager = accesoModuloManager;
+        }
 
-		protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, AccessRequirementEmpresas requirement)
-		{
-            AppUser? usr = await _userManager.GetUserAsync(context.User);
-            IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
-            List<AccesoModulo> accesos = [];
-			List<AccesoModulo> accesosBancos = [];
-			foreach (string rol in rolesUsuario)
+        protected override async Task HandleRequirementAsync(
+            AuthorizationHandlerContext context,
+            AccessRequirementEmpresas requirement)
+        {
+            if (context.User.Identity?.IsAuthenticated != true)
+                return;
+
+            AppUser? usuario =
+                await _userManager.GetUserAsync(context.User);
+
+            if (usuario == null)
+                return;
+
+            IList<string> rolesUsuario =
+                await _userManager.GetRolesAsync(usuario);
+
+            bool esAdministradorEmpresas =
+                rolesUsuario.Any(r =>
+                    r.Equals(
+                        "Administrador Empresas",
+                        StringComparison.OrdinalIgnoreCase));
+
+            bool esAdministradorGeneral =
+                rolesUsuario.Any(r =>
+                    r.Equals(
+                        "Administrador",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    r.Equals(
+                        "Master",
+                        StringComparison.OrdinalIgnoreCase));
+
+            bool controlTotalEmpresas =
+                esAdministradorEmpresas ||
+                esAdministradorGeneral;
+
+            List<AccesoModulo> accesosEmpresas = new();
+            List<AccesoModulo> accesosBancos = new();
+
+            foreach (string rol in rolesUsuario)
             {
-				AppRole? foundRole = await _roleManager.GetByNameAsync(rol);
-				accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "empresas" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
-				accesosBancos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
-			}
+                AppRole? rolEncontrado =
+                    await _roleManager.GetByNameAsync(rol);
 
-            var identity = context.User.Identity as ClaimsIdentity;
+                if (rolEncontrado == null)
+                    continue;
 
-			//Elimina las claims de acceso que puedan existir de otros módulos.
-			List<Claim> claims = (from c in context.User.Claims
-                                  where
-                                  c.Type == "PuedeTodo" ||
-                                  c.Type == "PuedeConsultar" ||
-                                  c.Type == "PuedeEditar" ||
-                                  c.Type == "PuedeEliminar" ||
-                                  c.Type == "PuedeAutorizar" ||
-								  c.Type == "PuedeTodoBancos" ||
-								  c.Type == "PuedeConsultarBancos" ||
-								  c.Type == "PuedeEditarBancos" ||
-								  c.Type == "PuedeEliminarBancos" ||
-								  c.Type == "PuedeAutorizarBancos"
-								  select c).ToList();
-            foreach (Claim claim in claims) { identity?.RemoveClaim(claim); }
+                List<AccesoModulo> accesosRol =
+                    await _accesoModuloManager
+                        .GetByRolIdAsync(rolEncontrado.Id);
 
-			//Si se encontraron accesos para el módulo visitado
-			if (accesos.Count >= 1 || accesosBancos.Count >= 1)
-			{
-                //Crea un nuevo set de claims de acceso para el módulo.
-                claims = [
-					new Claim("PuedeTodo", accesos.Where(a => a.PuedeTodo == 1).ToList().Count.ToString()),
-                    new Claim("PuedeConsultar", accesos.Where(a => a.PuedeConsultar == 1).ToList().Count.ToString()),
-                    new Claim("PuedeEditar", accesos.Where(a => a.PuedeEditar == 1).ToList().Count.ToString()),
-                    new Claim("PuedeEliminar", accesos.Where(a => a.PuedeEliminar == 1).ToList().Count.ToString()),
-                    new Claim("PuedeAutorizar", accesos.Where(a => a.PuedeAutorizar == 1).ToList().Count.ToString()),
-					new Claim("PuedeTodoBancos", accesosBancos.Where(a => a.PuedeTodo == 1).ToList().Count.ToString()),
-					new Claim("PuedeConsultarBancos", accesosBancos.Where(a => a.PuedeConsultar == 1).ToList().Count.ToString()),
-					new Claim("PuedeEditarBancos", accesosBancos.Where(a => a.PuedeEditar == 1).ToList().Count.ToString()),
-					new Claim("PuedeEliminarBancos", accesosBancos.Where(a => a.PuedeEliminar == 1).ToList().Count.ToString()),
-					new Claim("PuedeAutorizarBancos", accesosBancos.Where(a => a.PuedeAutorizar == 1).ToList().Count.ToString())
-				];
+                accesosEmpresas.AddRange(
+                    accesosRol.Where(a =>
+                        a.Modulo?.NombreNormalizado == "empresas"));
 
-                //Agrega los claims de accesos al identity del usuario.
-                identity?.AddClaims(claims);
+                accesosBancos.AddRange(
+                    accesosRol.Where(a =>
+                        a.Modulo?.NombreNormalizado == "bancos"));
+            }
 
-                //Confirma el acceso al módulo.
-                context.Succeed(requirement);
-			}
-		}
-	}
+            // PERMISOS ACUMULATIVOS DEL MÓDULO EMPRESAS
+
+            bool puedeTodo =
+                controlTotalEmpresas ||
+                accesosEmpresas.Any(a => a.PuedeTodo == 1);
+
+            bool puedeConsultar =
+                controlTotalEmpresas ||
+                accesosEmpresas.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeConsultar == 1);
+
+            bool puedeEditar =
+                controlTotalEmpresas ||
+                accesosEmpresas.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeEditar == 1);
+
+            bool puedeEliminar =
+                controlTotalEmpresas ||
+                accesosEmpresas.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeEliminar == 1);
+
+            bool puedeAutorizar =
+                controlTotalEmpresas ||
+                accesosEmpresas.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeAutorizar == 1);
+
+            // PERMISOS ACUMULATIVOS DE BANCOS EN EMPRESAS
+
+            bool puedeTodoBancos =
+                controlTotalEmpresas ||
+                accesosBancos.Any(a => a.PuedeTodo == 1);
+
+            bool puedeConsultarBancos =
+                controlTotalEmpresas ||
+                accesosBancos.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeConsultar == 1);
+
+            bool puedeEditarBancos =
+                controlTotalEmpresas ||
+                accesosBancos.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeEditar == 1);
+
+            bool puedeEliminarBancos =
+                controlTotalEmpresas ||
+                accesosBancos.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeEliminar == 1);
+
+            bool puedeAutorizarBancos =
+                controlTotalEmpresas ||
+                accesosBancos.Any(a =>
+                    a.PuedeTodo == 1 ||
+                    a.PuedeAutorizar == 1);
+
+            // VALIDAR ACCESO AL MÓDULO
+
+            bool tieneAccesoEmpresas =
+                puedeTodo ||
+                puedeConsultar ||
+                puedeEditar ||
+                puedeEliminar ||
+                puedeAutorizar;
+
+            bool tieneAccesoBancos =
+                puedeTodoBancos ||
+                puedeConsultarBancos ||
+                puedeEditarBancos ||
+                puedeEliminarBancos ||
+                puedeAutorizarBancos;
+
+            if (!tieneAccesoEmpresas && !tieneAccesoBancos)
+                return;
+
+            // ACTUALIZAR CLAIMS DE LA SOLICITUD
+
+            ClaimsIdentity? identity =
+                context.User.Identities
+                    .FirstOrDefault(i =>
+                        i.IsAuthenticated &&
+                        i is ClaimsIdentity);
+
+            if (identity == null)
+                return;
+
+            string[] tiposPermisos =
+            {
+                "PuedeTodo",
+                "PuedeConsultar",
+                "PuedeEditar",
+                "PuedeEliminar",
+                "PuedeAutorizar",
+                "PuedeTodoBancos",
+                "PuedeConsultarBancos",
+                "PuedeEditarBancos",
+                "PuedeEliminarBancos",
+                "PuedeAutorizarBancos"
+            };
+
+            foreach (Claim claim in identity.Claims
+                .Where(c => tiposPermisos.Contains(c.Type))
+                .ToList())
+            {
+                identity.RemoveClaim(claim);
+            }
+
+            List<Claim> nuevosClaims = new()
+            {
+                new Claim("PuedeTodo", puedeTodo ? "1" : "0"),
+                new Claim("PuedeConsultar", puedeConsultar ? "1" : "0"),
+                new Claim("PuedeEditar", puedeEditar ? "1" : "0"),
+                new Claim("PuedeEliminar", puedeEliminar ? "1" : "0"),
+                new Claim("PuedeAutorizar", puedeAutorizar ? "1" : "0"),
+
+                new Claim("PuedeTodoBancos", puedeTodoBancos ? "1" : "0"),
+                new Claim("PuedeConsultarBancos", puedeConsultarBancos ? "1" : "0"),
+                new Claim("PuedeEditarBancos", puedeEditarBancos ? "1" : "0"),
+                new Claim("PuedeEliminarBancos", puedeEliminarBancos ? "1" : "0"),
+                new Claim("PuedeAutorizarBancos", puedeAutorizarBancos ? "1" : "0")
+            };
+
+            identity.AddClaims(nuevosClaims);
+
+            context.Succeed(requirement);
+        }
+    }
 }

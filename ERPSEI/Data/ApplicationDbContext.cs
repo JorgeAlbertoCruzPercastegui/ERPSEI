@@ -1,10 +1,13 @@
-﻿using ERPSEI.Data.Entities.ActivosFijos;
+﻿using ERPSEI.Data.Configurations.TimeIntegration;
+using ERPSEI.Data.Entities.ActivosFijos;
+using ERPSEI.Data.Entities.Adquisiciones;
 using ERPSEI.Data.Entities.Clientes;
 using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Data.Entities.Cuentas;
 using ERPSEI.Data.Entities.Documentos;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Empresas;
+using ERPSEI.Data.Entities.ExpedientesBancarios;
 using ERPSEI.Data.Entities.Intranet;
 using ERPSEI.Data.Entities.Metricas;
 using ERPSEI.Data.Entities.Polizas;
@@ -16,20 +19,18 @@ using ERPSEI.Data.Entities.SAT.cfdiv40;
 using ERPSEI.Data.Entities.SAT.Nomina12;
 using ERPSEI.Data.Entities.SAT.Pagos20;
 using ERPSEI.Data.Entities.SAT.TimbreFiscalDigital11;
+using ERPSEI.Data.Entities.ServiceDesk;
+using ERPSEI.Data.Entities.TimeIntegration;
 using ERPSEI.Data.Entities.TipoContratos;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Entities.Vacaciones;
+using ERPSEI.Services.TimeIntegration;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Identity.Client;
 using System.Reflection.Emit;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Security.Claims;
-using ERPSEI.Data.Entities.ServiceDesk;
-using ERPSEI.Data.Entities.ExpedientesBancarios;
-using ERPSEI.Data.Entities.Adquisiciones;
-using ERPSEI.Data.Entities.TimeIntegration;
-using ERPSEI.Data.Configurations.TimeIntegration;
 
 namespace ERPSEI.Data
 {
@@ -452,6 +453,11 @@ namespace ERPSEI.Data
         public DbSet<TimeGrupo> TimeGrupos
             => Set<TimeGrupo>();
 
+        public DbSet<TimeEmpresaClasificacion> TimeEmpresaClasificaciones
+            => Set<TimeEmpresaClasificacion>();
+
+        public DbSet<TimeTipoClasificacion> TimeTipoClasificaciones
+            => Set<TimeTipoClasificacion>();
 
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -1025,8 +1031,70 @@ namespace ERPSEI.Data
             modelBuilder.ApplyConfiguration(
                 new TimeGrupoConfiguration());
 
+            modelBuilder.Entity<TimeEmpresaClasificacion>(entity =>
+            {
+                entity.ToTable("TimeEmpresaClasificaciones");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.NombreEmpresa)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.Tipo)
+                    .IsRequired()
+                    .HasMaxLength(20);
+
+                entity.HasIndex(x => x.NombreEmpresa)
+                    .HasDatabaseName("IX_TimeEmpresaClasificaciones_NombreEmpresa");
+            });
+
             modelBuilder.ApplyConfiguration(
                new TimeHallazgoConciliacionConfiguration());
+
+            modelBuilder.Entity<TimeTipoClasificacion>(entity =>
+            {
+                entity.ToTable("TimeTipoClasificaciones");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.NombreUsuario)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.NombreEmpresa)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.Actividad)
+                    .IsRequired()
+                    .HasMaxLength(300);
+
+                entity.Property(x => x.Descripcion)
+                    .IsRequired()
+                    .HasMaxLength(1000);
+
+                entity.Property(x => x.Tipo)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.HasIndex(x => new
+                {
+                    x.NombreUsuario,
+                    x.NombreEmpresa,
+                    x.Actividad,
+                    x.Descripcion
+                })
+                .HasDatabaseName("IX_TimeTipoClasificaciones_Relacion");
+
+                entity.ToTable(
+                    "TimeTipoClasificaciones",
+                    t => t.HasCheckConstraint(
+                        "CK_TimeTipoClasificaciones_Tipo",
+                        "[Tipo] IN ('Administrativa','Back Office','Clientes','Operativa')"
+                    )
+                );
+            });
         }
 
         private static void BuildAdquisicionesCotizaciones(ModelBuilder b)

@@ -25,81 +25,98 @@ using System.Net.Mime;
 namespace ERPSEI.Areas.Catalogos.Pages
 {
     [Authorize(Policy = "EmpresasPolicy")]
-	public class EmpresasModel(
-			IEmpresaManager _empresaManager,
-			IBancoEmpresaManager _bancoEmpresaManager,
-			IArchivoEmpresaManager _archivoEmpresaManager,
-			IPerfilManager _perfilManager,
-			IRWCatalogoManager<Origen> _origenManager,
-			IRWCatalogoManager<Nivel> _nivelManager,
-			IActividadEconomicaEmpresaManager _actividadesEconomicasEmpresaManager,
-			IRWCatalogoManager<ActividadEconomica> _actividadEconomicaManager,
-			IStringLocalizer<EmpresasModel> _strLocalizer,
-			ILogger<EmpresasModel> _logger,
-			ApplicationDbContext _db,
-			IEncriptacionAES _encriptacionAES,
-			AppUserManager _userManager,
-			AppRoleManager _roleManager,
+    public class EmpresasModel(
+            IEmpresaManager _empresaManager,
+            IBancoEmpresaManager _bancoEmpresaManager,
+            IArchivoEmpresaManager _archivoEmpresaManager,
+            IPerfilManager _perfilManager,
+            IRWCatalogoManager<Origen> _origenManager,
+            IRWCatalogoManager<Nivel> _nivelManager,
+            IActividadEconomicaEmpresaManager _actividadesEconomicasEmpresaManager,
+            IRWCatalogoManager<ActividadEconomica> _actividadEconomicaManager,
+            IStringLocalizer<EmpresasModel> _strLocalizer,
+            ILogger<EmpresasModel> _logger,
+            ApplicationDbContext _db,
+            IEncriptacionAES _encriptacionAES,
+            AppUserManager _userManager,
+            AppRoleManager _roleManager,
             AuditoriaContext _auditoriaContext
         ) : ERPPageModel
-	{
+    {
 
-		protected bool PuedeTodoBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeTodoBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
-		protected bool PuedeConsultarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeConsultarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
-		protected bool PuedeEditarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeEditarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
-		protected bool PuedeEliminarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeEliminarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
-		protected bool PuedeAutorizarBancos { get { return User.Claims.Where(c => c.Type.Equals("PuedeAutorizarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1"; } }
+        // El rol Administrador Empresas tiene control completo exclusivamente en este módulo.
+        // No se modifica ERPPageModel ni los permisos globales de otros módulos.
+        private bool EsAdministradorDeEmpresas =>
+            User.IsInRole("Administrador Empresas") ||
+            User.IsInRole("Administrador") ||
+            User.IsInRole("Master");
 
-		private const int MAX_BANCOS = 15;
+        // Se conservan los permisos originales para otros roles y se acumula el administrativo.
+        protected new bool PuedeTodo => EsAdministradorDeEmpresas || base.PuedeTodo;
+        protected new bool PuedeConsultar => EsAdministradorDeEmpresas || base.PuedeConsultar;
+        protected new bool PuedeEditar => EsAdministradorDeEmpresas || base.PuedeEditar;
+        protected new bool PuedeEliminar => EsAdministradorDeEmpresas || base.PuedeEliminar;
+        protected new bool PuedeAutorizar => EsAdministradorDeEmpresas || base.PuedeAutorizar;
 
-		[BindProperty]
-		public FiltroModel InputFiltro { get; set; } = new FiltroModel();
+        private bool TieneClaimActivo(string nombre) =>
+            User.HasClaim(c => c.Type.Equals(nombre, StringComparison.OrdinalIgnoreCase) && c.Value == "1");
 
-		public class FiltroModel
-		{
-			[Display(Name = "OrigenField")]
-			public int? OrigenId { get; set; }
+        protected bool PuedeTodoBancos => EsAdministradorDeEmpresas || TieneClaimActivo("PuedeTodoBancos");
+        protected bool PuedeConsultarBancos => EsAdministradorDeEmpresas || TieneClaimActivo("PuedeConsultarBancos");
+        protected bool PuedeEditarBancos => EsAdministradorDeEmpresas || TieneClaimActivo("PuedeEditarBancos");
+        protected bool PuedeEliminarBancos => EsAdministradorDeEmpresas || TieneClaimActivo("PuedeEliminarBancos");
+        protected bool PuedeAutorizarBancos => EsAdministradorDeEmpresas || TieneClaimActivo("PuedeAutorizarBancos");
 
-			[Display(Name = "NivelField")]
-			public int? NivelId { get; set; }
+        private const int MAX_BANCOS = 15;
+
+        [BindProperty]
+        public FiltroModel InputFiltro { get; set; } = new FiltroModel();
+
+        public class FiltroModel
+        {
+            [Display(Name = "OrigenField")]
+            public int? OrigenId { get; set; }
+
+            [Display(Name = "NivelField")]
+            public int? NivelId { get; set; }
 
             [Display(Name = "ActividadEconomicaField")]
             public int? ActividadEconomicaId { get; set; }
 
-			[Display(Name = "RFCField")]
-			public string? RFC {  get; set; }
+            [Display(Name = "RFCField")]
+            public string? RFC { get; set; }
 
             public int? Deshabilitado { get; set; }
         }
 
-		[BindProperty]
-		public EmpresaModel InputEmpresa { get; set; } = new EmpresaModel();
+        [BindProperty]
+        public EmpresaModel InputEmpresa { get; set; } = new EmpresaModel();
 
-		public class EmpresaModel
-		{
-			public int Id { get; set; }
+        public class EmpresaModel
+        {
+            public int Id { get; set; }
 
-			[DataType(DataType.Text)]
-			[StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 2)]
-			[RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "CompanyName")]
-			[Required(ErrorMessage = "Required")]
-			[Display(Name = "RazonSocialField")]
-			public string RazonSocial { get; set; } = string.Empty;
+            [DataType(DataType.Text)]
+            [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 2)]
+            [RegularExpression(RegularExpressions.AlphanumSpaceCommaDotParenthesisAmpersandMiddleDash, ErrorMessage = "CompanyName")]
+            [Required(ErrorMessage = "Required")]
+            [Display(Name = "RazonSocialField")]
+            public string RazonSocial { get; set; } = string.Empty;
 
-			[Display(Name = "OrigenField")]
-			public int? OrigenId { get; set; }
+            [Display(Name = "OrigenField")]
+            public int? OrigenId { get; set; }
 
-			[Required(ErrorMessage = "Required")]
-			[Display(Name = "NivelField")]
-			public int? NivelId { get; set; }
+            [Required(ErrorMessage = "Required")]
+            [Display(Name = "NivelField")]
+            public int? NivelId { get; set; }
 
             [DataType(DataType.DateTime)]
             [Display(Name = "FechaConstitucionField")]
             public DateTime? FechaConstitucion { get; set; }
 
             [DataType(DataType.DateTime)]
-			[Display(Name = "FechaInicioOperacionField")]
-			public DateTime? FechaInicioOperacion { get; set; }
+            [Display(Name = "FechaInicioOperacionField")]
+            public DateTime? FechaInicioOperacion { get; set; }
 
             [DataType(DataType.DateTime)]
             [Display(Name = "FechaInicioFacturacionField")]
@@ -110,112 +127,112 @@ namespace ERPSEI.Areas.Catalogos.Pages
             public DateTime? FechaInicioAsimilados { get; set; }
 
             [DataType(DataType.Text)]
-			[StringLength(13, ErrorMessage = "FieldLength", MinimumLength = 12)]
-			[RegularExpression(RegularExpressions.AlphanumNoSpaceNoUnderscore, ErrorMessage = "AlphanumNoSpaceNoUnderscore")]
-			[Display(Name = "RFCField")]
-			public string? RFC { get; set; } = string.Empty;
+            [StringLength(13, ErrorMessage = "FieldLength", MinimumLength = 12)]
+            [RegularExpression(RegularExpressions.AlphanumNoSpaceNoUnderscore, ErrorMessage = "AlphanumNoSpaceNoUnderscore")]
+            [Display(Name = "RFCField")]
+            public string? RFC { get; set; } = string.Empty;
 
-			[DataType(DataType.MultilineText)]
-			[StringLength(300, ErrorMessage = "FieldLength", MinimumLength = 1)]
-			[Display(Name = "DomicilioFiscalField")]
-			public string? DomicilioFiscal { get; set; } = string.Empty;
+            [DataType(DataType.MultilineText)]
+            [StringLength(300, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [Display(Name = "DomicilioFiscalField")]
+            public string? DomicilioFiscal { get; set; } = string.Empty;
 
-			[DataType(DataType.Text)]
-			[StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 2)]
-			[RegularExpression(RegularExpressions.PersonName, ErrorMessage = "PersonName")]
-			public string? Administrador { get; set; } = string.Empty;
+            [DataType(DataType.Text)]
+            [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 2)]
+            [RegularExpression(RegularExpressions.PersonName, ErrorMessage = "PersonName")]
+            public string? Administrador { get; set; } = string.Empty;
 
-			[DataType(DataType.Text)]
-			[StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 2)]
-			[RegularExpression(RegularExpressions.PersonName, ErrorMessage = "PersonName")]
-			[Display(Name = "AccionistaField")]
-			public string? Accionista { get; set; } = string.Empty;
-
-			[EmailAddress(ErrorMessage = "EmailFormat")]
-			[DataType(DataType.EmailAddress)]
-			[StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
-			[Display(Name = "CorreoGeneralField")]
-			public string? CorreoGeneral { get; set; } = string.Empty;
-
-			[EmailAddress(ErrorMessage = "EmailFormat")]
-			[DataType(DataType.EmailAddress)]
-			[StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
-			[Display(Name = "CorreoBancosField")]
-			public string? CorreoBancos { get; set; } = string.Empty;
-
-			[EmailAddress(ErrorMessage = "EmailFormat")]
-			[DataType(DataType.EmailAddress)]
-			[StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
-			[Display(Name = "CorreoFiscalField")]
-			public string? CorreoFiscal { get; set; } = string.Empty;
+            [DataType(DataType.Text)]
+            [StringLength(100, ErrorMessage = "FieldLength", MinimumLength = 2)]
+            [RegularExpression(RegularExpressions.PersonName, ErrorMessage = "PersonName")]
+            [Display(Name = "AccionistaField")]
+            public string? Accionista { get; set; } = string.Empty;
 
             [EmailAddress(ErrorMessage = "EmailFormat")]
             [DataType(DataType.EmailAddress)]
-			[StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [Display(Name = "CorreoGeneralField")]
+            public string? CorreoGeneral { get; set; } = string.Empty;
+
+            [EmailAddress(ErrorMessage = "EmailFormat")]
+            [DataType(DataType.EmailAddress)]
+            [StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [Display(Name = "CorreoBancosField")]
+            public string? CorreoBancos { get; set; } = string.Empty;
+
+            [EmailAddress(ErrorMessage = "EmailFormat")]
+            [DataType(DataType.EmailAddress)]
+            [StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [Display(Name = "CorreoFiscalField")]
+            public string? CorreoFiscal { get; set; } = string.Empty;
+
+            [EmailAddress(ErrorMessage = "EmailFormat")]
+            [DataType(DataType.EmailAddress)]
+            [StringLength(55, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [Display(Name = "CorreoFacturacionField")]
             public string? CorreoFacturacion { get; set; } = string.Empty;
 
             [Phone(ErrorMessage = "PhoneFormat")]
-			[StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 10)]
-			[DataType(DataType.PhoneNumber)]
-			[RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "NumericNoRestriction")]
-			[Display(Name = "PhoneNumberField")]
-			public string? Telefono { get; set; } = string.Empty;
+            [StringLength(10, ErrorMessage = "FieldLength", MinimumLength = 10)]
+            [DataType(DataType.PhoneNumber)]
+            [RegularExpression(RegularExpressions.NumericNoRestriction, ErrorMessage = "NumericNoRestriction")]
+            [Display(Name = "PhoneNumberField")]
+            public string? Telefono { get; set; } = string.Empty;
 
-			[Required(ErrorMessage = "Required")]
-			[Display(Name = "PerfilField")]
-			public int? PerfilId { get; set; }
+            [Required(ErrorMessage = "Required")]
+            [Display(Name = "PerfilField")]
+            public int? PerfilId { get; set; }
 
-			[Display(Name = "SearchEconomicActivityField")]
-            public int? ActividadEconomicaId {  get; set; }
-			public int?[] ActividadesEconomicas { get; set; } = [];
+            [Display(Name = "SearchEconomicActivityField")]
+            public int? ActividadEconomicaId { get; set; }
+            public int?[] ActividadesEconomicas { get; set; } = [];
 
-			[DataType(DataType.MultilineText)]
-			[StringLength(5000, ErrorMessage = "FieldLength", MinimumLength = 1)]
+            [DataType(DataType.MultilineText)]
+            [StringLength(5000, ErrorMessage = "FieldLength", MinimumLength = 1)]
             [Display(Name = "ObjetoSocialField")]
-            public string? ObjetoSocial {  get; set; } = string.Empty;
+            public string? ObjetoSocial { get; set; } = string.Empty;
 
             public BancoModel?[] Bancos { get; set; } = [];
 
             public ArchivoModel?[] Archivos { get; set; } = [];
 
-			[DataType(DataType.Password)]
-			[Display(Name = "OldPasswordField")]
-			public string? ArchivosSATOldPassword { get; set; } = string.Empty;
+            [DataType(DataType.Password)]
+            [Display(Name = "OldPasswordField")]
+            public string? ArchivosSATOldPassword { get; set; } = string.Empty;
 
-			[DataType(DataType.Password)]
-			[Display(Name = "NewPasswordField")]
-			public string? ArchivosSATNewPassword { get; set; } = string.Empty;
+            [DataType(DataType.Password)]
+            [Display(Name = "NewPasswordField")]
+            public string? ArchivosSATNewPassword { get; set; } = string.Empty;
 
-			[DataType(DataType.Password)]
-			[Display(Name = "ConfirmNewPasswordField")]
-			public string? ArchivosSATConfirmNewPassword { get; set; } = string.Empty;
-		}
+            [DataType(DataType.Password)]
+            [Display(Name = "ConfirmNewPasswordField")]
+            public string? ArchivosSATConfirmNewPassword { get; set; } = string.Empty;
+        }
 
-		public class BancoModel
-		{
+        public class BancoModel
+        {
             public string? Banco { get; set; } = string.Empty;
             public string? Responsable { get; set; } = string.Empty;
             public string? Firmante { get; set; } = string.Empty;
-			public decimal? Limite { get; set; } = 0m;
+            public decimal? Limite { get; set; } = 0m;
         }
 
-		public class ArchivoModel
-		{
-			public string? Id { get; set; } = string.Empty;
-			public string? Nombre { get; set; } = string.Empty;
-			public int? TipoArchivoId { get; set; }
-			public string? Extension { get; set; } = string.Empty;
-			public string? ImgSrc { get; set; } = string.Empty;
-		}
+        public class ArchivoModel
+        {
+            public string? Id { get; set; } = string.Empty;
+            public string? Nombre { get; set; } = string.Empty;
+            public int? TipoArchivoId { get; set; }
+            public string? Extension { get; set; } = string.Empty;
+            public string? ImgSrc { get; set; } = string.Empty;
+        }
 
-		[BindProperty]
-		public ImportarModel InputImportar { get; set; } = new ImportarModel();
-		public class ImportarModel
-		{
-			[Required(ErrorMessage = "Required")]
-			public IFormFile? Plantilla { get; set; }
-		}
+        [BindProperty]
+        public ImportarModel InputImportar { get; set; } = new ImportarModel();
+        public class ImportarModel
+        {
+            [Required(ErrorMessage = "Required")]
+            public IFormFile? Plantilla { get; set; }
+        }
 
         private async Task<string> GetDatosAdicionalesEmpresa(int idEmpresa)
         {
@@ -224,34 +241,34 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
             if (e == null) { return jsonResponse; }
 
-			List<string> jsonActividades = GetListJsonActividades(e.ActividadesEconomicasEmpresa);
+            List<string> jsonActividades = GetListJsonActividades(e.ActividadesEconomicasEmpresa);
 
-			List<string> jsonBancos = GetListJsonBancos(e.BancosEmpresa);
+            List<string> jsonBancos = GetListJsonBancos(e.BancosEmpresa);
 
             List<string> jsonArchivos;
             List<SemiArchivoEmpresa> archivos = await _archivoEmpresaManager.GetFilesByEmpresaIdAsync(idEmpresa);
             jsonArchivos = GetListJsonArchivos(archivos);
 
             jsonResponse = $"{{" +
-								$"\"actividadesEconomicas\": [{string.Join(",", jsonActividades)}], " +
-								$"\"bancos\": [{string.Join(",", jsonBancos)}], " +
+                                $"\"actividadesEconomicas\": [{string.Join(",", jsonActividades)}], " +
+                                $"\"bancos\": [{string.Join(",", jsonBancos)}], " +
                                 $"\"archivos\": [{string.Join(",", jsonArchivos)}] " +
                             $"}}";
 
             return jsonResponse;
         }
 
-		private async Task<List<object>> GetListaEmpresas(FiltroModel? filtro = null)
-		{
-			string nombreOrigen;
-			string nombreNivel;
-			string nombrePerfil;
+        private async Task<List<object>> GetListaEmpresas(FiltroModel? filtro = null)
+        {
+            string nombreOrigen;
+            string nombreNivel;
+            string nombrePerfil;
 
-			List<object> empresasJson = [];
-			List<Empresa> empresas;
+            List<object> empresasJson = [];
+            List<Empresa> empresas;
 
-			if (filtro != null)
-			{
+            if (filtro != null)
+            {
                 empresas = await _empresaManager.GetAllByEstatusAsync(
                     filtro.OrigenId,
                     filtro.NivelId,
@@ -260,63 +277,63 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     filtro.Deshabilitado
                 );
             }
-			else
-			{
-				empresas = await _empresaManager.GetAllAsync();
-			}
+            else
+            {
+                empresas = await _empresaManager.GetAllAsync();
+            }
 
-			foreach (Empresa e in empresas)
-			{
-				nombreOrigen = e.Origen != null ? e.Origen.Nombre : string.Empty;
-				nombreNivel = e.Nivel != null ? e.Nivel.Nombre : string.Empty;
-				nombrePerfil = e.Perfil != null ? e.Perfil.Nombre : string.Empty;
+            foreach (Empresa e in empresas)
+            {
+                nombreOrigen = e.Origen != null ? e.Origen.Nombre : string.Empty;
+                nombreNivel = e.Nivel != null ? e.Nivel.Nombre : string.Empty;
+                nombrePerfil = e.Perfil != null ? e.Perfil.Nombre : string.Empty;
 
-				e.ObjetoSocial = JsonEscape(e.ObjetoSocial ?? string.Empty);
+                e.ObjetoSocial = JsonEscape(e.ObjetoSocial ?? string.Empty);
 
-				DateTime? fechaConstitucion = e.FechaConstitucion == DateTime.MinValue ? null : e.FechaConstitucion;
-				DateTime? fechaInicioOperacion = e.FechaInicioOperacion == DateTime.MinValue ? null : e.FechaInicioOperacion;
-				DateTime? fechaInicioFacturacion = e.FechaInicioFacturacion == DateTime.MinValue ? null : e.FechaInicioFacturacion;
-				DateTime? fechaInicioAsimilados = e.FechaInicioAsimilados == DateTime.MinValue ? null : e.FechaInicioAsimilados;
+                DateTime? fechaConstitucion = e.FechaConstitucion == DateTime.MinValue ? null : e.FechaConstitucion;
+                DateTime? fechaInicioOperacion = e.FechaInicioOperacion == DateTime.MinValue ? null : e.FechaInicioOperacion;
+                DateTime? fechaInicioFacturacion = e.FechaInicioFacturacion == DateTime.MinValue ? null : e.FechaInicioFacturacion;
+                DateTime? fechaInicioAsimilados = e.FechaInicioAsimilados == DateTime.MinValue ? null : e.FechaInicioAsimilados;
 
-				empresasJson.Add(new
-				{
-					id = e.Id,
-					razonSocial = e.RazonSocial,
+                empresasJson.Add(new
+                {
+                    id = e.Id,
+                    razonSocial = e.RazonSocial,
                     deshabilitado = e.Deshabilitado,
                     estatus = e.Deshabilitado == 0 ? "Activa" : "Inactiva",
                     perfilId = e.PerfilId,
-					perfil = nombrePerfil,
-					origenId = e.OrigenId,
-					origen = nombreOrigen,
-					nivelId = e.NivelId,
-					nivel = nombreNivel,
-					fechaConstitucion = fechaConstitucion?.ToString("dd/MM/yyyy"),
-					fechaConstitucionJS = fechaConstitucion?.ToString("yyyy-MM-dd"),
-					fechaInicioOperacion = fechaInicioOperacion?.ToString("dd/MM/yyyy"),
-					fechaInicioOperacionJS = fechaInicioOperacion?.ToString("yyyy-MM-dd"),
-					fechaInicioFacturacion = fechaInicioFacturacion?.ToString("dd/MM/yyyy"),
-					fechaInicioFacturacionJS = fechaInicioFacturacion?.ToString("yyyy-MM-dd"),
-					fechaInicioAsimilados = fechaInicioAsimilados?.ToString("dd/MM/yyyy"),
-					fechaInicioAsimiladosJS = fechaInicioAsimilados?.ToString("yyyy-MM-dd"),
-					rfc = e.RFC,
-					domicilioFiscal = e.DomicilioFiscal,
-					administrador = e.Administrador,
-					accionista = e.Accionista,
-					correoGeneral = e.CorreoGeneral,
-					correoBancos = e.CorreoBancos,
-					correoFiscal = e.CorreoFiscal,
-					correoFacturacion = e.CorreoFacturacion,
-					telefono = e.Telefono,
-					objetoSocial = e.ObjetoSocial,
-					hasPasswordSAT = !string.IsNullOrEmpty(e.PFESAT)
-				});
-			}
+                    perfil = nombrePerfil,
+                    origenId = e.OrigenId,
+                    origen = nombreOrigen,
+                    nivelId = e.NivelId,
+                    nivel = nombreNivel,
+                    fechaConstitucion = fechaConstitucion?.ToString("dd/MM/yyyy"),
+                    fechaConstitucionJS = fechaConstitucion?.ToString("yyyy-MM-dd"),
+                    fechaInicioOperacion = fechaInicioOperacion?.ToString("dd/MM/yyyy"),
+                    fechaInicioOperacionJS = fechaInicioOperacion?.ToString("yyyy-MM-dd"),
+                    fechaInicioFacturacion = fechaInicioFacturacion?.ToString("dd/MM/yyyy"),
+                    fechaInicioFacturacionJS = fechaInicioFacturacion?.ToString("yyyy-MM-dd"),
+                    fechaInicioAsimilados = fechaInicioAsimilados?.ToString("dd/MM/yyyy"),
+                    fechaInicioAsimiladosJS = fechaInicioAsimilados?.ToString("yyyy-MM-dd"),
+                    rfc = e.RFC,
+                    domicilioFiscal = e.DomicilioFiscal,
+                    administrador = e.Administrador,
+                    accionista = e.Accionista,
+                    correoGeneral = e.CorreoGeneral,
+                    correoBancos = e.CorreoBancos,
+                    correoFiscal = e.CorreoFiscal,
+                    correoFacturacion = e.CorreoFacturacion,
+                    telefono = e.Telefono,
+                    objetoSocial = e.ObjetoSocial,
+                    hasPasswordSAT = !string.IsNullOrEmpty(e.PFESAT)
+                });
+            }
 
-			return empresasJson;
-		}
+            return empresasJson;
+        }
 
 
-		/*private async Task<string> GetListaEmpresas(FiltroModel? filtro = null)
+        /*private async Task<string> GetListaEmpresas(FiltroModel? filtro = null)
 		{
 			string nombreOrigen;
 			string nombreNivel;
@@ -390,32 +407,32 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			return jsonResponse;
 		}*/
 
-		private static string JsonEscape(string str)
-		{
-			return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
-		}
-		private static List<string> GetListJsonActividades(ICollection<ActividadEconomicaEmpresa>? actividades)
-		{
-			List<string> jsonActividades = [];
-			if (actividades != null)
-			{
-				foreach (ActividadEconomicaEmpresa a in actividades)
-				{
-					if (a.ActividadEconomica == null) { continue; }
+        private static string JsonEscape(string str)
+        {
+            return str.Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
+        }
+        private static List<string> GetListJsonActividades(ICollection<ActividadEconomicaEmpresa>? actividades)
+        {
+            List<string> jsonActividades = [];
+            if (actividades != null)
+            {
+                foreach (ActividadEconomicaEmpresa a in actividades)
+                {
+                    if (a.ActividadEconomica == null) { continue; }
 
-					jsonActividades.Add(
-						"{" +
-							$"\"id\": \"{a.ActividadEconomica.Id}\"," +
-							$"\"clave\": \"{a.ActividadEconomica.Clave}\"," +
-							$"\"nombre\": \"{a.ActividadEconomica.Nombre}\"" +
-						"}"
-					);
-				}
-			}
+                    jsonActividades.Add(
+                        "{" +
+                            $"\"id\": \"{a.ActividadEconomica.Id}\"," +
+                            $"\"clave\": \"{a.ActividadEconomica.Clave}\"," +
+                            $"\"nombre\": \"{a.ActividadEconomica.Nombre}\"" +
+                        "}"
+                    );
+                }
+            }
 
-			return jsonActividades;
-		}
-		private static List<string> GetListJsonBancos(ICollection<BancoEmpresa>? bancos)
+            return jsonActividades;
+        }
+        private static List<string> GetListJsonBancos(ICollection<BancoEmpresa>? bancos)
         {
             List<string> jsonBancos = [];
             if (bancos != null)
@@ -428,8 +445,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
                             $"\"banco\": \"{b.Banco}\"," +
                             $"\"responsable\": \"{b.Responsable}\"," +
                             $"\"firmante\": \"{b.Firmante}\", " +
-							$"\"limite\": \"{b.Limite}\"" +
-						"}"
+                            $"\"limite\": \"{b.Limite}\"" +
+                        "}"
                     );
                 }
             }
@@ -437,92 +454,92 @@ namespace ERPSEI.Areas.Catalogos.Pages
             return jsonBancos;
         }
 
-		private List<string> GetListJsonArchivos(ICollection<SemiArchivoEmpresa>? archivos)
-		{
-			List<string> jsonArchivos = [];
-			string imgSrc = string.Empty;
-			string htmlContainer = string.Empty;
-			SemiArchivoEmpresa? a = null;
-			string id = string.Empty;
+        private List<string> GetListJsonArchivos(ICollection<SemiArchivoEmpresa>? archivos)
+        {
+            List<string> jsonArchivos = [];
+            string imgSrc = string.Empty;
+            string htmlContainer = string.Empty;
+            SemiArchivoEmpresa? a = null;
+            string id = string.Empty;
 
-			// Ordena los archivos por tipo
-			List<SemiArchivoEmpresa> empresaFiles = [.. (from f in archivos orderby f.TipoArchivoId ascending select f)];
+            // Ordena los archivos por tipo
+            List<SemiArchivoEmpresa> empresaFiles = [.. (from f in archivos orderby f.TipoArchivoId ascending select f)];
 
-			// Recorre todos los tipos de archivos definidos
-			foreach (FileTypes i in Enum.GetValues(typeof(FileTypes)))
-			{
-				var archivosTipo = empresaFiles.Where(f => f.TipoArchivoId == (int)i).ToList();
+            // Recorre todos los tipos de archivos definidos
+            foreach (FileTypes i in Enum.GetValues(typeof(FileTypes)))
+            {
+                var archivosTipo = empresaFiles.Where(f => f.TipoArchivoId == (int)i).ToList();
 
-				if (archivosTipo.Count == 0)
-				{
-					id = Guid.NewGuid().ToString();
-					htmlContainer = "<i class='bi bi-file-image opacity-50' style='font-size:105px'></i>";
-					jsonArchivos.Add(
-						"{" +
-							$"\"id\": \"{id}\"," +
-							$"\"nombre\": \"\"," +
-							$"\"tipoArchivoId\": {(int)i}," +
-							$"\"extension\": \"\"," +
-							$"\"imgSrc\": \"\"," +
-							$"\"htmlContainer\": \"{htmlContainer}\"," +
-							$"\"fileSize\": \"0\"" +
-						"}"
-					);
-					continue;
-				}
+                if (archivosTipo.Count == 0)
+                {
+                    id = Guid.NewGuid().ToString();
+                    htmlContainer = "<i class='bi bi-file-image opacity-50' style='font-size:105px'></i>";
+                    jsonArchivos.Add(
+                        "{" +
+                            $"\"id\": \"{id}\"," +
+                            $"\"nombre\": \"\"," +
+                            $"\"tipoArchivoId\": {(int)i}," +
+                            $"\"extension\": \"\"," +
+                            $"\"imgSrc\": \"\"," +
+                            $"\"htmlContainer\": \"{htmlContainer}\"," +
+                            $"\"fileSize\": \"0\"" +
+                        "}"
+                    );
+                    continue;
+                }
 
-				foreach (SemiArchivoEmpresa aa in archivosTipo)
-				{
-					id = aa.Id ?? Guid.NewGuid().ToString();
-					string b64 = Convert.ToBase64String(aa.Archivo);
-					string extension = aa.Extension?.ToLower() ?? "";
-					imgSrc = "";
-					htmlContainer = "";
+                foreach (SemiArchivoEmpresa aa in archivosTipo)
+                {
+                    id = aa.Id ?? Guid.NewGuid().ToString();
+                    string b64 = Convert.ToBase64String(aa.Archivo);
+                    string extension = aa.Extension?.ToLower() ?? "";
+                    imgSrc = "";
+                    htmlContainer = "";
 
-					if (extension == "pdf")
-					{
-						imgSrc = $"data:application/pdf;base64,{b64}";
-						htmlContainer = $"<canvas id = '{id}' b64 = '{b64}' class = 'canvaspdf'></canvas>";
-					}
-					else if (extension == "jpg" || extension == "jpeg")
-					{
-						imgSrc = $"data:image/jpeg;base64,{b64}";
-						htmlContainer = $"<img id = '{id}' src = '{imgSrc}' style='max-height: 200px;' />";
-					}
-					else if (extension == "png")
-					{
-						imgSrc = $"data:image/png;base64,{b64}";
-						htmlContainer = $"<img id = '{id}' src = '{imgSrc}' style='max-height: 200px;' />";
-					}
+                    if (extension == "pdf")
+                    {
+                        imgSrc = $"data:application/pdf;base64,{b64}";
+                        htmlContainer = $"<canvas id = '{id}' b64 = '{b64}' class = 'canvaspdf'></canvas>";
+                    }
+                    else if (extension == "jpg" || extension == "jpeg")
+                    {
+                        imgSrc = $"data:image/jpeg;base64,{b64}";
+                        htmlContainer = $"<img id = '{id}' src = '{imgSrc}' style='max-height: 200px;' />";
+                    }
+                    else if (extension == "png")
+                    {
+                        imgSrc = $"data:image/png;base64,{b64}";
+                        htmlContainer = $"<img id = '{id}' src = '{imgSrc}' style='max-height: 200px;' />";
+                    }
 
-					AppUser? usr = _userManager.GetUserAsync(User).Result;
-					string safeL = string.Empty;
-					if (usr != null)
-					{
-						safeL = $"userId={usr.Id}&id={aa.Id}&module=empresas";
-						safeL = _encriptacionAES.PlainTextToBase64AES(safeL);
-					}
+                    AppUser? usr = _userManager.GetUserAsync(User).Result;
+                    string safeL = string.Empty;
+                    if (usr != null)
+                    {
+                        safeL = $"userId={usr.Id}&id={aa.Id}&module=empresas";
+                        safeL = _encriptacionAES.PlainTextToBase64AES(safeL);
+                    }
 
-					jsonArchivos.Add(
-						"{" +
-							$"\"id\": \"{aa.Id}\"," +
-							$"\"safeL\": \"{safeL}\"," +
-							$"\"nombre\": \"{aa.Nombre}\"," +
-							$"\"tipoArchivoId\": {aa.TipoArchivoId}," +
-							$"\"extension\": \"{aa.Extension}\"," +
-							$"\"imgSrc\": \"{imgSrc}\"," +
-							$"\"htmlContainer\": \"{htmlContainer}\"," +
-							$"\"fileSize\": \"{aa.FileSize}\"" +
-						"}"
-					);
-				}
-			}
+                    jsonArchivos.Add(
+                        "{" +
+                            $"\"id\": \"{aa.Id}\"," +
+                            $"\"safeL\": \"{safeL}\"," +
+                            $"\"nombre\": \"{aa.Nombre}\"," +
+                            $"\"tipoArchivoId\": {aa.TipoArchivoId}," +
+                            $"\"extension\": \"{aa.Extension}\"," +
+                            $"\"imgSrc\": \"{imgSrc}\"," +
+                            $"\"htmlContainer\": \"{htmlContainer}\"," +
+                            $"\"fileSize\": \"{aa.FileSize}\"" +
+                        "}"
+                    );
+                }
+            }
 
-			return jsonArchivos;
-		}
+            return jsonArchivos;
+        }
 
 
-		/*private List<string> GetListJsonArchivos(ICollection<SemiArchivoEmpresa>? archivos)
+        /*private List<string> GetListJsonArchivos(ICollection<SemiArchivoEmpresa>? archivos)
 		{
 			List<string> jsonArchivos = [];
 			string imgSrc = string.Empty;
@@ -610,33 +627,33 @@ namespace ERPSEI.Areas.Catalogos.Pages
 			return jsonArchivos;
 		}*/
 
-		public ActionResult OnGetDownloadPlantilla()
-		{
-			if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
-			{
-				return File("/templates/PlantillaEmpresas.xlsx", MediaTypeNames.Application.Octet, "PlantillaEmpresas.xlsx");
-			}
-			else
-			{
-				return new EmptyResult();
-			}
-		}
+        public ActionResult OnGetDownloadPlantilla()
+        {
+            if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+            {
+                return File("/templates/PlantillaEmpresas.xlsx", MediaTypeNames.Application.Octet, "PlantillaEmpresas.xlsx");
+            }
+            else
+            {
+                return new EmptyResult();
+            }
+        }
 
         public async Task<JsonResult> OnPostDatosAdicionalesEmpresa(int idEmpresa)
         {
             ServerResponse resp = new(true, _strLocalizer["ConsultadoUnsuccessfully"]);
-			try
-			{
-				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar || PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos)
-				{
-					resp.Datos = await GetDatosAdicionalesEmpresa(idEmpresa);
-					resp.TieneError = false;
-					resp.Mensaje = _strLocalizer["ConsultadoSuccessfully"];
-				}
-				else
-				{
-					resp.Mensaje = _strLocalizer["AccesoDenegado"];
-				}
+            try
+            {
+                if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar || PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos)
+                {
+                    resp.Datos = await GetDatosAdicionalesEmpresa(idEmpresa);
+                    resp.TieneError = false;
+                    resp.Mensaje = _strLocalizer["ConsultadoSuccessfully"];
+                }
+                else
+                {
+                    resp.Mensaje = _strLocalizer["AccesoDenegado"];
+                }
             }
             catch (Exception ex)
             {
@@ -646,29 +663,29 @@ namespace ERPSEI.Areas.Catalogos.Pages
             return new JsonResult(resp);
         }
         public async Task<JsonResult> OnPostFiltrarEmpresas()
-		{
-			ServerResponse resp = new(true, _strLocalizer["EmpresasFiltradasUnsuccessfully"]);
-			try
-			{
-				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar || PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos)
-				{
-					resp.Datos = await GetListaEmpresas(InputFiltro);
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpresasFiltradasUnsuccessfully"]);
+            try
+            {
+                if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar || PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos)
+                {
+                    resp.Datos = await GetListaEmpresas(InputFiltro);
 
-					resp.TieneError = false;
-					resp.Mensaje = _strLocalizer["EmpresasFiltradasSuccessfully"];
-				}
-				else
-				{
-					resp.Mensaje = _strLocalizer["AccesoDenegado"];
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex.Message);
-			}
+                    resp.TieneError = false;
+                    resp.Mensaje = _strLocalizer["EmpresasFiltradasSuccessfully"];
+                }
+                else
+                {
+                    resp.Mensaje = _strLocalizer["AccesoDenegado"];
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
 
-			return new JsonResult(resp);
-		}
+            return new JsonResult(resp);
+        }
 
         /*public async Task<JsonResult> OnPostDisableEmpresas(string[] ids)
 		{
@@ -770,10 +787,10 @@ namespace ERPSEI.Areas.Catalogos.Pages
                             )) ?? []);
                 }
 
-                bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
-                bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
+                bool puedeTodoBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeTodo == 1);
+                bool puedeEditarBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeEditar == 1);
 
-                if (puedeTodoBancos || puedeEditarBancos)
+                if (EsAdministradorDeEmpresas || puedeTodoBancos || puedeEditarBancos)
                 {
                     _auditoriaContext.Activar("Empresas", "Edición Bancos");
 
@@ -808,8 +825,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
         }
 
         public async Task<JsonResult> OnPostSaveEmpresa()
-		{
-			ServerResponse resp = new(true, _strLocalizer["EmpresaSavedUnsuccessfully"]);
+        {
+            ServerResponse resp = new(true, _strLocalizer["EmpresaSavedUnsuccessfully"]);
 
             AppUser? usr = await _userManager.GetUserAsync(User);
             IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
@@ -820,34 +837,34 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
             }
 
-            bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
+            bool puedeTodoBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeTodo == 1);
             bool puedeConsultarBancos = accesos.Where(a => a.PuedeConsultar == 1).Count() >= 1;
-            bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
-			bool accesoBancos = puedeTodoBancos || puedeEditarBancos;
+            bool puedeEditarBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeEditar == 1);
+            bool accesoBancos = EsAdministradorDeEmpresas || puedeTodoBancos || puedeEditarBancos;
 
-            if (PuedeTodo || PuedeEditar || puedeTodoBancos || puedeEditarBancos)
-			{
-				//Se remueve el campo Plantilla para que no sea validado ya que no pertenece a este proceso.
-				ModelState.Remove("Plantilla");
+            if (EsAdministradorDeEmpresas || PuedeTodo || PuedeEditar || puedeTodoBancos || puedeEditarBancos)
+            {
+                //Se remueve el campo Plantilla para que no sea validado ya que no pertenece a este proceso.
+                ModelState.Remove("Plantilla");
 
-				if (!ModelState.IsValid)
-				{
-					resp.Errores = ModelState.Keys.SelectMany(k => ModelState[k]?.Errors ?? []).Select(m => m.ErrorMessage).ToArray();
-					return new JsonResult(resp);
-				}
+                if (!ModelState.IsValid)
+                {
+                    resp.Errores = ModelState.Keys.SelectMany(k => ModelState[k]?.Errors ?? []).Select(m => m.ErrorMessage).ToArray();
+                    return new JsonResult(resp);
+                }
 
-				try
-				{
-					//Valida que no exista una empresa registrada con los mismos datos. En caso de haber, se deja el mensaje en resp.Mensajes para ser mostrado al usuario.
-					string validacion = await ValidarSiExisteEmpresa(InputEmpresa, false);
+                try
+                {
+                    //Valida que no exista una empresa registrada con los mismos datos. En caso de haber, se deja el mensaje en resp.Mensajes para ser mostrado al usuario.
+                    string validacion = await ValidarSiExisteEmpresa(InputEmpresa, false);
 
-					//Si la longitud del mensaje de respuesta es menor o igual a cero, se considera que no hubo errores anteriores.
-					if ((validacion ?? string.Empty).Length <= 0)
-					{
+                    //Si la longitud del mensaje de respuesta es menor o igual a cero, se considera que no hubo errores anteriores.
+                    if ((validacion ?? string.Empty).Length <= 0)
+                    {
                         //Procede a crear o actualizar la empresa.
                         string accionAuditoria = InputEmpresa.Id >= 1
-						? "Edición"
-						: "Alta";
+                        ? "Edición"
+                        : "Alta";
 
                         _auditoriaContext.Activar("Empresas", accionAuditoria);
 
@@ -856,58 +873,58 @@ namespace ERPSEI.Areas.Catalogos.Pages
                         _auditoriaContext.Desactivar();
 
                         if ((validacion ?? string.Empty).Length <= 0)
-						{
-							resp.TieneError = false;
-							resp.Mensaje = _strLocalizer["EmpresaSavedSuccessfully"];
-						}
-						else
-						{
-							resp.Mensaje = validacion;
-						}
-					}
-					else
-					{
-						resp.Mensaje = validacion;
-					}
-				}
-				catch (Exception ex)
-				{
+                        {
+                            resp.TieneError = false;
+                            resp.Mensaje = _strLocalizer["EmpresaSavedSuccessfully"];
+                        }
+                        else
+                        {
+                            resp.Mensaje = validacion;
+                        }
+                    }
+                    else
+                    {
+                        resp.Mensaje = validacion;
+                    }
+                }
+                catch (Exception ex)
+                {
                     _auditoriaContext.Desactivar();
                     _logger.LogError(ex.Message);
-				}
-			}
-			else
-			{
-				resp.Mensaje = _strLocalizer["AccesoDenegado"];
-			}
+                }
+            }
+            else
+            {
+                resp.Mensaje = _strLocalizer["AccesoDenegado"];
+            }
 
-			return new JsonResult(resp);
-		}
-		private async Task<string> ValidarSiExisteEmpresa(EmpresaModel emp, bool rfcAsKey)
-		{
-			List<Empresa> coincidences = [];
-			List<Empresa> emps = await _empresaManager.GetAllAsync();
+            return new JsonResult(resp);
+        }
+        private async Task<string> ValidarSiExisteEmpresa(EmpresaModel emp, bool rfcAsKey)
+        {
+            List<Empresa> coincidences = [];
+            List<Empresa> emps = await _empresaManager.GetAllAsync();
 
-			if (rfcAsKey)
-			{
-				//Excluyo a la empresa con el RFC actual.
-				emps = emps.Where(e => e.RFC != emp.RFC).ToList();
-			}
-			else
-			{
-				//Excluyo a la empresa con el Id actual.
-				emps = emps.Where(e => e.Id != emp.Id).ToList();
-			}
+            if (rfcAsKey)
+            {
+                //Excluyo a la empresa con el RFC actual.
+                emps = emps.Where(e => e.RFC != emp.RFC).ToList();
+            }
+            else
+            {
+                //Excluyo a la empresa con el Id actual.
+                emps = emps.Where(e => e.Id != emp.Id).ToList();
+            }
 
-			//Valido que no exista empresa que tenga los mismos datos.
-			coincidences = emps.Where(e => (e.RazonSocial ?? "").Length >= 1 && e.RazonSocial == emp.RazonSocial).ToList();
+            //Valido que no exista empresa que tenga los mismos datos.
+            coincidences = emps.Where(e => (e.RazonSocial ?? "").Length >= 1 && e.RazonSocial == emp.RazonSocial).ToList();
             if (coincidences.Count >= 1) { return $"{_strLocalizer["ErrorEmpresaExistenteA"]} {_strLocalizer["RazonSocial"]} {emp.RazonSocial}. {_strLocalizer["ErrorEmpresaExistenteB"]}."; }
 
-			coincidences = emps.Where(e => (e.RFC ?? "").Length >= 1 && e.RFC == emp.RFC).ToList();
-			if (coincidences.Count >= 1) { return $"{_strLocalizer["ErrorEmpresaExistenteA"]} {_strLocalizer["RFC"]} {emp.RFC}. {_strLocalizer["ErrorEmpresaExistenteB"]}."; }
+            coincidences = emps.Where(e => (e.RFC ?? "").Length >= 1 && e.RFC == emp.RFC).ToList();
+            if (coincidences.Count >= 1) { return $"{_strLocalizer["ErrorEmpresaExistenteA"]} {_strLocalizer["RFC"]} {emp.RFC}. {_strLocalizer["ErrorEmpresaExistenteB"]}."; }
 
-			return string.Empty;
-		}
+            return string.Empty;
+        }
         private async Task<string> CreateOrUpdateCompanyBanks(EmpresaModel e)
         {
             try
@@ -1859,15 +1876,15 @@ namespace ERPSEI.Areas.Catalogos.Pages
         }
 
         private static string NormalizePhrase(string s)
-		{
+        {
             string[] parts = s.Split(" ", StringSplitOptions.RemoveEmptyEntries);
-			List<string> normalizedPhrase = [];
+            List<string> normalizedPhrase = [];
 
-            foreach (string part in parts){ normalizedPhrase.Add(part.Trim()); }
+            foreach (string part in parts) { normalizedPhrase.Add(part.Trim()); }
 
             return string.Join(" ", normalizedPhrase);
-		}
-		private async Task<string> CreateCompanyFromExcelRow(DataRow row)
+        }
+        private async Task<string> CreateCompanyFromExcelRow(DataRow row)
         {
             AppUser? usr = await _userManager.GetUserAsync(User);
             IList<string> rolesUsuario = usr != null ? await _userManager.GetRolesAsync(usr) : [];
@@ -1878,141 +1895,142 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 accesos.AddRange(foundRole?.Accesos.Where(acceso => acceso.Modulo?.NombreNormalizado == "bancos" && (acceso.PuedeTodo == 1 || acceso.PuedeConsultar == 1 || acceso.PuedeEditar == 1 || acceso.PuedeEliminar == 1 || acceso.PuedeAutorizar == 1)) ?? []);
             }
 
-            bool puedeTodoBancos = accesos.Where(a => a.PuedeTodo == 1).Count() >= 1;
-            bool puedeEditarBancos = accesos.Where(a => a.PuedeEditar == 1).Count() >= 1;
+            bool puedeTodoBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeTodo == 1);
+            bool puedeEditarBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeEditar == 1);
 
             Perfil? perfil = await _perfilManager.GetByNameAsync(row[1].ToString()?.Trim() ?? string.Empty);
             Origen? origen = await _origenManager.GetByNameAsync(row[2].ToString()?.Trim() ?? string.Empty);
             Nivel? nivel = await _nivelManager.GetByNameAsync(row[3].ToString()?.Trim() ?? string.Empty);
 
-			string actividadesEconomicas = row[17].ToString()?.Trim() ?? string.Empty;
-			string[] actividades = actividadesEconomicas.Split((char)10, StringSplitOptions.RemoveEmptyEntries);
+            string actividadesEconomicas = row[17].ToString()?.Trim() ?? string.Empty;
+            string[] actividades = actividadesEconomicas.Split((char)10, StringSplitOptions.RemoveEmptyEntries);
 
-			List<int?> listActividades = [];
+            List<int?> listActividades = [];
             foreach (string item in actividades)
             {
-				string phrase = NormalizePhrase(item);
-				ActividadEconomica? actividadEconomica = await _actividadEconomicaManager.GetByNameAsync(phrase);
-				if(actividadEconomica != null) { listActividades.Add(actividadEconomica.Id); } else { _logger.LogDebug($"Actividad económica {phrase} no encontrada de la empresa {row[0].ToString()?.Trim() ?? string.Empty}"); }
+                string phrase = NormalizePhrase(item);
+                ActividadEconomica? actividadEconomica = await _actividadEconomicaManager.GetByNameAsync(phrase);
+                if (actividadEconomica != null) { listActividades.Add(actividadEconomica.Id); } else { _logger.LogDebug($"Actividad económica {phrase} no encontrada de la empresa {row[0].ToString()?.Trim() ?? string.Empty}"); }
             }
 
 
-			_ = DateTime.TryParse(row[4].ToString()?.Trim(), out DateTime fc);
-			_ = DateTime.TryParse(row[5].ToString()?.Trim(), out DateTime fio);
-			_ = DateTime.TryParse(row[6].ToString()?.Trim(), out DateTime fif);
-			_ = DateTime.TryParse(row[7].ToString()?.Trim(), out DateTime fia);
+            _ = DateTime.TryParse(row[4].ToString()?.Trim(), out DateTime fc);
+            _ = DateTime.TryParse(row[5].ToString()?.Trim(), out DateTime fio);
+            _ = DateTime.TryParse(row[6].ToString()?.Trim(), out DateTime fif);
+            _ = DateTime.TryParse(row[7].ToString()?.Trim(), out DateTime fia);
 
-			EmpresaModel e = new() {
-				RazonSocial = row[0].ToString()?.Trim() ?? string.Empty,
-				PerfilId = perfil?.Id,
-				OrigenId = origen?.Id,
-				NivelId = nivel?.Id,
-				FechaConstitucion = fc,
-				FechaInicioOperacion = fio,
-				FechaInicioFacturacion = fif,
-				FechaInicioAsimilados = fia,
-				RFC = row[8].ToString()?.Trim() ?? string.Empty,
-				DomicilioFiscal = row[9].ToString()?.Trim() ?? string.Empty,
-				Administrador = row[10].ToString()?.Trim() ?? string.Empty,
-				Accionista = row[11].ToString()?.Trim() ?? string.Empty,
-				CorreoGeneral = row[12].ToString()?.Trim() ?? string.Empty,
-				CorreoBancos = row[13].ToString()?.Trim() ?? string.Empty,
-				CorreoFiscal = row[14].ToString()?.Trim() ?? string.Empty,
-				CorreoFacturacion = row[15].ToString()?.Trim() ?? string.Empty,
-				Telefono = row[16].ToString()?.Trim() ?? string.Empty,
-				ActividadesEconomicas = [.. listActividades],
+            EmpresaModel e = new()
+            {
+                RazonSocial = row[0].ToString()?.Trim() ?? string.Empty,
+                PerfilId = perfil?.Id,
+                OrigenId = origen?.Id,
+                NivelId = nivel?.Id,
+                FechaConstitucion = fc,
+                FechaInicioOperacion = fio,
+                FechaInicioFacturacion = fif,
+                FechaInicioAsimilados = fia,
+                RFC = row[8].ToString()?.Trim() ?? string.Empty,
+                DomicilioFiscal = row[9].ToString()?.Trim() ?? string.Empty,
+                Administrador = row[10].ToString()?.Trim() ?? string.Empty,
+                Accionista = row[11].ToString()?.Trim() ?? string.Empty,
+                CorreoGeneral = row[12].ToString()?.Trim() ?? string.Empty,
+                CorreoBancos = row[13].ToString()?.Trim() ?? string.Empty,
+                CorreoFiscal = row[14].ToString()?.Trim() ?? string.Empty,
+                CorreoFacturacion = row[15].ToString()?.Trim() ?? string.Empty,
+                Telefono = row[16].ToString()?.Trim() ?? string.Empty,
+                ActividadesEconomicas = [.. listActividades],
                 ObjetoSocial = row[18].ToString()?.Trim() ?? string.Empty
-			};
+            };
 
-			e.ObjetoSocial = JsonEscape(e.ObjetoSocial);
+            e.ObjetoSocial = JsonEscape(e.ObjetoSocial);
 
-			if(puedeTodoBancos || puedeEditarBancos)
-			{
-				List<BancoModel> bancos = [];
-				//Si existe banco 1, agrega uno al listado.
-				if ((row[19].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[19].ToString()?.Trim() ?? string.Empty, Responsable = row[20].ToString()?.Trim() ?? string.Empty, Firmante = row[21].ToString()?.Trim() ?? string.Empty }); }
-				//Si existe banco 2, agrega uno al listado.
-				if ((row[22].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[22].ToString()?.Trim() ?? string.Empty, Responsable = row[23].ToString()?.Trim() ?? string.Empty, Firmante = row[24].ToString()?.Trim() ?? string.Empty }); }
-				//Si existe banco 3, agrega uno al listado.
-				if ((row[25].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[25].ToString()?.Trim() ?? string.Empty, Responsable = row[26].ToString()?.Trim() ?? string.Empty, Firmante = row[27].ToString()?.Trim() ?? string.Empty }); }
-				//Si existe banco 4, agrega uno al listado.
-				if ((row[28].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[28].ToString()?.Trim() ?? string.Empty, Responsable = row[29].ToString()?.Trim() ?? string.Empty, Firmante = row[30].ToString()?.Trim() ?? string.Empty }); }
-				//Si existe banco 5, agrega uno al listado.
-				if ((row[31].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[31].ToString()?.Trim() ?? string.Empty, Responsable = row[32].ToString()?.Trim() ?? string.Empty, Firmante = row[33].ToString()?.Trim() ?? string.Empty }); }
+            if (puedeTodoBancos || puedeEditarBancos)
+            {
+                List<BancoModel> bancos = [];
+                //Si existe banco 1, agrega uno al listado.
+                if ((row[19].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[19].ToString()?.Trim() ?? string.Empty, Responsable = row[20].ToString()?.Trim() ?? string.Empty, Firmante = row[21].ToString()?.Trim() ?? string.Empty }); }
+                //Si existe banco 2, agrega uno al listado.
+                if ((row[22].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[22].ToString()?.Trim() ?? string.Empty, Responsable = row[23].ToString()?.Trim() ?? string.Empty, Firmante = row[24].ToString()?.Trim() ?? string.Empty }); }
+                //Si existe banco 3, agrega uno al listado.
+                if ((row[25].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[25].ToString()?.Trim() ?? string.Empty, Responsable = row[26].ToString()?.Trim() ?? string.Empty, Firmante = row[27].ToString()?.Trim() ?? string.Empty }); }
+                //Si existe banco 4, agrega uno al listado.
+                if ((row[28].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[28].ToString()?.Trim() ?? string.Empty, Responsable = row[29].ToString()?.Trim() ?? string.Empty, Firmante = row[30].ToString()?.Trim() ?? string.Empty }); }
+                //Si existe banco 5, agrega uno al listado.
+                if ((row[31].ToString()?.Trim() ?? string.Empty).Length >= 1) { bancos.Add(new BancoModel() { Banco = row[31].ToString()?.Trim() ?? string.Empty, Responsable = row[32].ToString()?.Trim() ?? string.Empty, Firmante = row[33].ToString()?.Trim() ?? string.Empty }); }
 
-				e.Bancos = [.. bancos];
-			}
+                e.Bancos = [.. bancos];
+            }
 
-			List<ArchivoModel> archivos = [];
-			//Crea los archivos de la empresa.
-			foreach (FileTypes i in Enum.GetValues(typeof(FileTypes)))
-			{
-				archivos.Add(new ArchivoModel() { Extension = "", ImgSrc = "", Nombre = "", TipoArchivoId = (int)i });
-			}
+            List<ArchivoModel> archivos = [];
+            //Crea los archivos de la empresa.
+            foreach (FileTypes i in Enum.GetValues(typeof(FileTypes)))
+            {
+                archivos.Add(new ArchivoModel() { Extension = "", ImgSrc = "", Nombre = "", TipoArchivoId = (int)i });
+            }
 
-			e.Archivos = [.. archivos];
+            e.Archivos = [.. archivos];
 
-			//Valida que no exista una empresa registrada con los mismos datos. En caso de haber, se deja el mensaje en resp.Mensajes para ser mostrado al usuario.
-			string validationMsg = await ValidarSiExisteEmpresa(e, true);
+            //Valida que no exista una empresa registrada con los mismos datos. En caso de haber, se deja el mensaje en resp.Mensajes para ser mostrado al usuario.
+            string validationMsg = await ValidarSiExisteEmpresa(e, true);
 
-			//Si la longitud del mensaje de respuesta es menor o igual a cero, se considera que no hubo errores anteriores.
-			if ((validationMsg ?? "").Length <= 0)
-			{
-				//Procede a crear o actualizar la empresa.
-				await CreateOrUpdateCompany(e, puedeTodoBancos || puedeEditarBancos);
-			}
+            //Si la longitud del mensaje de respuesta es menor o igual a cero, se considera que no hubo errores anteriores.
+            if ((validationMsg ?? "").Length <= 0)
+            {
+                //Procede a crear o actualizar la empresa.
+                await CreateOrUpdateCompany(e, puedeTodoBancos || puedeEditarBancos);
+            }
 
-			return validationMsg ?? "";
-		}
+            return validationMsg ?? "";
+        }
 
-		public async Task<JsonResult> OnPostGetActividadesEconomicasSuggestion(string texto)
-		{
-			ServerResponse resp = new(true, _strLocalizer["ConsultadoUnsuccessfully"]);
-			try
-			{
-				if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
-				{
-					resp.Datos = await GetActividadesEconomicasSuggestion(texto);
-					resp.TieneError = false;
-					resp.Mensaje = _strLocalizer["ConsultadoSuccessfully"];
-				}
-				else
-				{
-					resp.Mensaje = _strLocalizer["AccesoDenegado"];
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex.Message);
-			}
+        public async Task<JsonResult> OnPostGetActividadesEconomicasSuggestion(string texto)
+        {
+            ServerResponse resp = new(true, _strLocalizer["ConsultadoUnsuccessfully"]);
+            try
+            {
+                if (PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar)
+                {
+                    resp.Datos = await GetActividadesEconomicasSuggestion(texto);
+                    resp.TieneError = false;
+                    resp.Mensaje = _strLocalizer["ConsultadoSuccessfully"];
+                }
+                else
+                {
+                    resp.Mensaje = _strLocalizer["AccesoDenegado"];
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+            }
 
-			return new JsonResult(resp);
-		}
+            return new JsonResult(resp);
+        }
 
-		private async Task<string> GetActividadesEconomicasSuggestion(string texto)
-		{
-			string jsonResponse;
-			List<string> jsons = [];
+        private async Task<string> GetActividadesEconomicasSuggestion(string texto)
+        {
+            string jsonResponse;
+            List<string> jsons = [];
 
-			List<ActividadEconomica> actividades = await _actividadEconomicaManager.GetAllAsync();
-			actividades = actividades.Where(e => e.Nombre.ToLowerInvariant().Contains(texto.ToLowerInvariant()) || e.Clave.ToLowerInvariant().Contains(texto.ToLowerInvariant())).Take(20).ToList();
+            List<ActividadEconomica> actividades = await _actividadEconomicaManager.GetAllAsync();
+            actividades = actividades.Where(e => e.Nombre.ToLowerInvariant().Contains(texto.ToLowerInvariant()) || e.Clave.ToLowerInvariant().Contains(texto.ToLowerInvariant())).Take(20).ToList();
 
-			if (actividades != null)
-			{
-				foreach (ActividadEconomica a in actividades)
-				{
-					jsons.Add($"{{" +
-										$"\"id\": {a.Id}, " +
-										$"\"value\": \"{a.Nombre}\", " +
-										$"\"label\": \"{a.Clave} - {a.Nombre}\", " +
-										$"\"clave\": \"{a.Clave}\"" +
-									$"}}");
-				}
-			}
+            if (actividades != null)
+            {
+                foreach (ActividadEconomica a in actividades)
+                {
+                    jsons.Add($"{{" +
+                                        $"\"id\": {a.Id}, " +
+                                        $"\"value\": \"{a.Nombre}\", " +
+                                        $"\"label\": \"{a.Clave} - {a.Nombre}\", " +
+                                        $"\"clave\": \"{a.Clave}\"" +
+                                    $"}}");
+                }
+            }
 
-			jsonResponse = $"[{string.Join(",", jsons)}]";
+            jsonResponse = $"[{string.Join(",", jsons)}]";
 
-			return jsonResponse;
-		}
-	}
+            return jsonResponse;
+        }
+    }
 }

@@ -35,20 +35,60 @@
 	List<Nivel> niveles = await NivelesManager.GetAllAsync();
 	List<ActividadEconomica> actividadesEconomicas = await ActividadesEconomicasManager.GetAllAsync();
 
-	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 
-	bool puedeTodoBancos = User.Claims.Where(c => c.Type.Equals("PuedeTodoBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeConsultarBancos = User.Claims.Where(c => c.Type.Equals("PuedeConsultarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeEditarBancos = User.Claims.Where(c => c.Type.Equals("PuedeEditarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeEliminarBancos = User.Claims.Where(c => c.Type.Equals("PuedeEliminarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
-	bool puedeAutorizarBancos = User.Claims.Where(c => c.Type.Equals("PuedeAutorizarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool esAdministradorEmpresas =
+		User.IsInRole("Administrador Empresas");
 
-	bool tieneAccesoEmpresas = puedeTodo || puedeConsultar || puedeEditar;
-	bool tieneAccesoBancos = puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
+	bool esAdministradorGeneral =
+		User.IsInRole("Administrador") ||
+		User.IsInRole("Master");
+
+	bool controlTotalEmpresas =
+		esAdministradorEmpresas || esAdministradorGeneral;
+
+	bool TienePermiso(string tipo) =>
+		User.HasClaim(c =>
+			c.Type.Equals(tipo, StringComparison.OrdinalIgnoreCase) &&
+			c.Value == "1");
+
+	// Permisos del módulo Empresas
+	bool puedeTodo = controlTotalEmpresas ||
+		TienePermiso("PuedeTodo");
+
+	bool puedeConsultar = controlTotalEmpresas ||
+		TienePermiso("PuedeConsultar");
+
+	bool puedeEditar = controlTotalEmpresas ||
+		TienePermiso("PuedeEditar");
+
+	bool puedeEliminar = controlTotalEmpresas ||
+		TienePermiso("PuedeEliminar");
+
+	bool puedeAutorizar = controlTotalEmpresas ||
+		TienePermiso("PuedeAutorizar");
+
+	// Permisos de bancos dentro de Empresas
+	bool puedeTodoBancos = controlTotalEmpresas ||
+		TienePermiso("PuedeTodoBancos");
+
+	bool puedeConsultarBancos = controlTotalEmpresas ||
+		TienePermiso("PuedeConsultarBancos");
+
+	bool puedeEditarBancos = controlTotalEmpresas ||
+		TienePermiso("PuedeEditarBancos");
+
+	bool puedeEliminarBancos = controlTotalEmpresas ||
+		TienePermiso("PuedeEliminarBancos");
+
+	bool puedeAutorizarBancos = controlTotalEmpresas ||
+		TienePermiso("PuedeAutorizarBancos");
+
+	bool tieneAccesoEmpresas =
+		puedeTodo || puedeConsultar || puedeEditar;
+
+	bool tieneAccesoBancos =
+		puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
+
 }
 
 @section Styles {
