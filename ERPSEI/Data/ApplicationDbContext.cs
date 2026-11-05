@@ -56,8 +56,7 @@ namespace ERPSEI.Data
         //Tablas de trabajo Empresas
         public DbSet<BancoEmpresa> BancosEmpresa { get; set; }
         public DbSet<ArchivoEmpresa> ArchivosEmpresa { get; set; }
-        // HU Intranet 2: documentos obligatorios configurables por empresa.
-        public DbSet<EmpresaDocumentoObligatorio> EmpresasDocumentosObligatorios { get; set; } = null!;
+        public DbSet<EmpresaEstadoDocumentalHU2> EmpresasEstadosDocumentalesHU2 => Set<EmpresaEstadoDocumentalHU2>();
         public DbSet<Empresa> Empresas { get; set; }
         public DbSet<ActividadEconomicaEmpresa> ActividadesEconomicasEmpresa { get; set; }
         public DbSet<ProductoServicioPerfil> ProductosServiciosPerfil { get; set; }
@@ -919,6 +918,15 @@ namespace ERPSEI.Data
 
             //Empresas
             BuildEmpresas(modelBuilder);
+
+            // CA-05: estado de completitud por empresa (sin modificar documentos).
+            modelBuilder.Entity<EmpresaEstadoDocumentalHU2>(e =>
+            {
+                e.ToTable("EmpresasEstadosDocumentalesHU2");
+                e.HasKey(x => x.EmpresaId);
+                e.Property(x => x.FirmaRegla).HasMaxLength(64).IsRequired();
+                e.HasOne(x => x.Empresa).WithOne().HasForeignKey<EmpresaEstadoDocumentalHU2>(x => x.EmpresaId).OnDelete(DeleteBehavior.NoAction);
+            });
 
             //Empleados
             BuildEmpleados(modelBuilder);
@@ -5569,23 +5577,6 @@ namespace ERPSEI.Data
             b.Entity<ActividadEconomica>().HasMany(a => a.ActividadesEconomicasEmpresa).WithOne(a => a.ActividadEconomica).OnDelete(DeleteBehavior.NoAction);
 
             b.Entity<ArchivoEmpresa>().HasOne(a => a.TipoArchivo).WithMany(ta => ta.ArchivosEmpresa).OnDelete(DeleteBehavior.NoAction);
-
-            // HU Intranet 2: la obligatoriedad se configura por empresa y tipo documental.
-            // No modifica ArchivoEmpresa, TipoArchivoEmpresa ni sus archivos almacenados.
-            b.Entity<EmpresaDocumentoObligatorio>(entity =>
-            {
-                entity.ToTable("EmpresasDocumentosObligatorios");
-                entity.HasKey(x => new { x.EmpresaId, x.TipoArchivoId });
-                entity.HasOne(x => x.Empresa)
-                    .WithMany()
-                    .HasForeignKey(x => x.EmpresaId)
-                    .OnDelete(DeleteBehavior.NoAction);
-                entity.HasOne(x => x.TipoArchivo)
-                    .WithMany()
-                    .HasForeignKey(x => x.TipoArchivoId)
-                    .OnDelete(DeleteBehavior.NoAction);
-                entity.HasIndex(x => x.TipoArchivoId);
-            });
 
             b.Entity<Perfil>().HasMany(p => p.ProductosServiciosPerfil).WithOne(p => p.Perfil).OnDelete(DeleteBehavior.NoAction);
 

@@ -6,6 +6,11 @@ var selections = [];
 var dlgEmpresa = null;
 var dlgEmpresaModal = null;
 
+// HU2 CA-05: enlace directo a expediente documental desde la campanita.
+let hu2EmpresaPendienteEnlace = null;
+let hu2EnlaceProcesandose = false;
+let hu2EnlaceAbierto = false;
+
 var dialogMode = null;
 const NUEVO = 0;
 const EDITAR = 1;
@@ -29,11 +34,46 @@ document.addEventListener("DOMContentLoaded", function (event) {
 
     //Función para ejecutar acciones posteriores al mostrado del diálogo.
     dlgEmpresa.addEventListener('shown.bs.modal', function (e) {
+        if (hu2EmpresaPendienteEnlace !== null) {
+            const idAbierto = Number(document.getElementById('inpEmpresaId')?.value);
+            if (idAbierto === hu2EmpresaPendienteEnlace) {
+                hu2EnlaceAbierto = true;
+                hu2EnlaceProcesandose = false;
+                hu2EmpresaPendienteEnlace = null;
+                // Quitar los parámetros solo DESPUÉS de que Bootstrap confirmó la apertura.
+                const url = new URL(window.location.href);
+                url.searchParams.delete('empresaId');
+                url.searchParams.delete('seccion');
+                window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+                requestAnimationFrame(() => {
+                    const seccion = document.getElementById('collapseSectionThree');
+                    if (seccion && !seccion.classList.contains('show')) {
+                        bootstrap.Collapse.getOrCreateInstance(seccion, { toggle: false }).show();
+                    }
+                    // Esperar al despliegue de la sección antes de desplazar la vista.
+                    const desplazar = () => {
+                        const cuerpo = dlgEmpresa.querySelector('.modal-body');
+                        const destino = document.getElementById('hu2EstadoServidor') || document.getElementById('bodyArchivos');
+                        if (cuerpo && destino) {
+                            const offset = destino.getBoundingClientRect().top - cuerpo.getBoundingClientRect().top;
+                            cuerpo.scrollTop += offset - 16;
+                        }
+                    };
+                    if (seccion && seccion.classList.contains('collapsing')) {
+                        seccion.addEventListener('shown.bs.collapse', desplazar, { once: true });
+                    } else {
+                        requestAnimationFrame(desplazar);
+                    }
+                });
+            }
+        }
         //Este evento es necesario para poder mostrar el text area ajustado al tamaño del contenido, basado en el tamaño del scroll.
         calculateTextAreaHeight(document.querySelectorAll("textarea"));
     })
 
     initTable();
+    // Abrir después de que Bootstrap Table termine de cargar/actualizar filas.
+    table.on('load-success.bs.table post-body.bs.table', hu2AbrirExpedienteDesdeEnlace);
 
     let btnBuscar = document.getElementById("btnBuscar");
     if (btnBuscar) { btnBuscar.click(); }
@@ -418,12 +458,42 @@ function onBuscarClick() {
             }
 
             table.bootstrapTable('load', responseHandler(resp.datos));
+            hu2AbrirExpedienteDesdeEnlace();
         }, function (error) {
             showError("Error", error);
         },
         postOptions
     );
 }
+// HU2 CA-05: abre el modal real de Ver empresa solo cuando el registro existe
+// en la tabla. Mantiene el enlace mientras la apertura no se haya confirmado.
+function hu2AbrirExpedienteDesdeEnlace() {
+    if (hu2EnlaceAbierto || hu2EnlaceProcesandose) return;
+    const parametros = new URLSearchParams(window.location.search);
+    const empresaId = Number(parametros.get('empresaId'));
+    const seccion = (parametros.get('seccion') || '').toLowerCase();
+    if (!Number.isSafeInteger(empresaId) || empresaId <= 0 || seccion !== 'documentos') return;
+    if (!table || typeof table.bootstrapTable !== 'function') return;
+
+    const datos = table.bootstrapTable('getData') || [];
+    const empresa = datos.find(x => Number(x.id) === empresaId);
+    if (!empresa) {
+        // No consumir la URL: puede que el listado todavía se esté cargando.
+        console.warn('HU2: Empresa no disponible en el listado aún:', empresaId);
+        return;
+    }
+    hu2EnlaceProcesandose = true;
+    hu2EmpresaPendienteEnlace = empresaId;
+    try {
+        // El mismo método que usa el botón de acciones > Ver.
+        initEmpresaDialog(VER, empresa);
+    } catch (error) {
+        hu2EnlaceProcesandose = false;
+        hu2EmpresaPendienteEnlace = null;
+        console.error('HU2: No se pudo abrir el expediente:', error);
+    }
+}
+
 ////////////////////////////////
 
 ////////////////////////////////
@@ -597,6 +667,7 @@ function initEmpresaDialog(action, row) {
         { idEmpresa: row.id },
         function (resp) {
             if (resp.tieneError) {
+                hu2EnlaceProcesandose = false;
                 if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
                     let summary = ``;
                     resp.errores.forEach(function (error) {
@@ -626,6 +697,7 @@ function initEmpresaDialog(action, row) {
             dlgEmpresaModal.toggle();
 
         }, function (error) {
+            hu2EnlaceProcesandose = false;
             showError("Error", error);
         },
         postOptions

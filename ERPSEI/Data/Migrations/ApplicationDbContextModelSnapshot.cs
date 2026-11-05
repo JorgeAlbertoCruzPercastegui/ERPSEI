@@ -2870,63 +2870,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9954),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3174),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9969),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3188),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9970),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3189),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9971),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3190),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9971),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3191),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9972),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3192),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9973),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3193),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9974),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3194),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9975),
+                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3195),
                             Nombre = "Otros"
                         });
                 });
@@ -3783,19 +3783,28 @@ namespace ERPSEI.Data.Migrations
                     b.ToTable("Empresas");
                 });
 
-            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaDocumentoObligatorio", b =>
+            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaEstadoDocumentalHU2", b =>
                 {
                     b.Property<int>("EmpresaId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TipoArchivoId")
-                        .HasColumnType("int");
+                    b.Property<bool>("Completo")
+                        .HasColumnType("bit");
 
-                    b.HasKey("EmpresaId", "TipoArchivoId");
+                    b.Property<DateTime>("FechaEvaluacion")
+                        .HasColumnType("datetime2");
 
-                    b.HasIndex("TipoArchivoId");
+                    b.Property<DateTime?>("FechaUltimaNotificacion")
+                        .HasColumnType("datetime2");
 
-                    b.ToTable("EmpresasDocumentosObligatorios", (string)null);
+                    b.Property<string>("FirmaRegla")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.HasKey("EmpresaId");
+
+                    b.ToTable("EmpresasEstadosDocumentalesHU2", (string)null);
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.Nivel", b =>
@@ -12132,23 +12141,15 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("RegimenFiscal");
                 });
 
-            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaDocumentoObligatorio", b =>
+            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaEstadoDocumentalHU2", b =>
                 {
                     b.HasOne("ERPSEI.Data.Entities.Empresas.Empresa", "Empresa")
-                        .WithMany()
-                        .HasForeignKey("EmpresaId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("ERPSEI.Data.Entities.Empresas.TipoArchivoEmpresa", "TipoArchivo")
-                        .WithMany()
-                        .HasForeignKey("TipoArchivoId")
+                        .WithOne()
+                        .HasForeignKey("ERPSEI.Data.Entities.Empresas.EmpresaEstadoDocumentalHU2", "EmpresaId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Empresa");
-
-                    b.Navigation("TipoArchivo");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.ProductoServicioPerfil", b =>

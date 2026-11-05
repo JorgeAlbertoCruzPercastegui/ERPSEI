@@ -40,6 +40,7 @@ using Azure.Identity;
 using Microsoft.Graph;
 using ERPSEI.Services.Compliance;
 using ERPSEI.Services.Adquisiciones;
+using ERPSEI.Services.Empresas;
 using ERPSEI.Services.TimeIntegration;
 using System.Net;
 
@@ -368,6 +369,12 @@ namespace ERPSEI
             builder.Services.AddScoped<
             ITimeDeletionAuditService,
             TimeDeletionAuditService>();
+
+            // HU2 - Notificaciones de expedientes documentales completos a Bancos.
+            // No reemplaza las notificaciones existentes ni envía correos Graph.
+            builder.Services.AddScoped<
+                INotificacionExpedienteBancosService,
+                NotificacionExpedienteBancosService>();
 
             // TIME Integration API
             ConfigureDITimeIntegration(builder);

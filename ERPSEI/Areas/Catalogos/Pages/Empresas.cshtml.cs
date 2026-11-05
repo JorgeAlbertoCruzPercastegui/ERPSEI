@@ -12,6 +12,7 @@ using ERPSEI.Pages.Shared;
 using ERPSEI.Requests;
 using ERPSEI.Resources;
 using ERPSEI.Utils;
+using ERPSEI.Services.Empresas;
 using ExcelDataReader;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,8 @@ using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Net.Mime;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ERPSEI.Areas.Catalogos.Pages
 {
@@ -40,7 +43,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
             IEncriptacionAES _encriptacionAES,
             AppUserManager _userManager,
             AppRoleManager _roleManager,
-            AuditoriaContext _auditoriaContext
+            AuditoriaContext _auditoriaContext,
+            INotificacionExpedienteBancosService _notificadorExpedientes
         ) : ERPPageModel
     {
 
@@ -684,41 +688,192 @@ namespace ERPSEI.Areas.Catalogos.Pages
             return new JsonResult(new { tieneError = false, datos = ids });
         }
 
-        public async Task<IActionResult> OnPostGuardarDocumentosObligatoriosAsync(List<int>? tiposArchivoIds)
+
+        public async Task<IActionResult> OnPostGuardarDocumentosObligatoriosAsync(
+            List<int>? tiposArchivoIds)
         {
             if (!EsAdministradorDeEmpresas)
-                return StatusCode(403, new { tieneError = true, mensaje = "No tiene permiso para configurar documentos obligatorios." });
+            {
+                return StatusCode(403, new
+                {
+                    tieneError = true,
+                    mensaje = "No tiene permiso para configurar documentos obligatorios."
+                });
+            }
 
-            var ids = (tiposArchivoIds ?? new List<int>()).Distinct().ToHashSet();
-            // Se admiten los documentos realmente presentados en el expediente.
-            // Los IDs 16 y 21 permanecen ocultos en la vista actual y no se pueden exigir.
-            var tipos = await _db.Set<TipoArchivoEmpresa>().ToListAsync();
-            var permitidos = tipos.Select(x => x.Id).Where(id => id != 16 && id != 21).ToHashSet();
+            var ids = (tiposArchivoIds ?? new List<int>())
+                .Distinct()
+                .ToHashSet();
+
+            var tipos = await _db.Set<TipoArchivoEmpresa>()
+                .ToListAsync();
+
+            var permitidos = tipos
+                .Select(x => x.Id)
+                .Where(id => id != 16 && id != 21)
+                .ToHashSet();
+
             if (ids.Except(permitidos).Any())
-                return BadRequest(new { tieneError = true, mensaje = "La selección incluye tipos documentales no disponibles en Empresas." });
+            {
+                return BadRequest(new
+                {
+                    tieneError = true,
+                    mensaje = "La selección incluye tipos documentales no disponibles en Empresas."
+                });
+            }
+
+            await using var tx = await _db.Database.BeginTransactionAsync();
 
             try
             {
+                bool cambioRegla = false;
+
                 foreach (var tipo in tipos)
                 {
-                    // No se alteran las reglas de tipos ocultos sin intervención administrativa.
-                    if (!permitidos.Contains(tipo.Id)) continue;
-                    tipo.EsObligatorio = ids.Contains(tipo.Id);
+                    if (!permitidos.Contains(tipo.Id))
+                        continue;
+
+                    bool nuevoValor = ids.Contains(tipo.Id);
+
+                    if (tipo.EsObligatorio != nuevoValor)
+                    {
+                        tipo.EsObligatorio = nuevoValor;
+                        cambioRegla = true;
+                    }
                 }
+
                 await _db.SaveChangesAsync();
+
+                // Cuando cambia la regla general, actualizar el estado
+                // documental de todas las empresas sin emitir avisos.
+                if (cambioRegla)
+                {
+                    await SincronizarEstadosDocumentalesHU2Async();
+                }
+
+                await tx.CommitAsync();
+
                 return new JsonResult(new
                 {
                     tieneError = false,
                     mensaje = "Regla documental general actualizada para todas las empresas.",
-                    datos = ids.OrderBy(x => x).ToArray()
+                    datos = tipos
+                        .Where(t => t.EsObligatorio)
+                        .Select(t => t.Id)
+                        .OrderBy(id => id)
+                        .ToArray()
                 });
             }
-            catch (DbUpdateException ex)
+            catch (Exception ex)
             {
-                _logger.LogError(ex, "HU2: error al guardar obligatoriedad global");
-                return StatusCode(500, new { tieneError = true, mensaje = "No fue posible guardar la regla documental general." });
+                await tx.RollbackAsync();
+
+                _logger.LogError(
+                    ex,
+                    "HU2: error al guardar y sincronizar la regla documental general.");
+
+                return StatusCode(500, new
+                {
+                    tieneError = true,
+                    mensaje = "No fue posible guardar la regla documental general."
+                });
             }
         }
+
+        // =============================================================
+        // HU2 - SINCRONIZACIÓN DE ESTADOS POR CAMBIO DE REGLA GLOBAL
+        // =============================================================
+        // Este método registra el estado actual sin generar avisos.
+        // Cuando posteriormente se carga un documento faltante,
+        // el servicio detectará la transición incompleto -> completo.
+        // =============================================================
+        private async Task SincronizarEstadosDocumentalesHU2Async()
+        {
+            var obligatorios = await _db.Set<TipoArchivoEmpresa>()
+                .AsNoTracking()
+                .Where(t => t.EsObligatorio)
+                .Select(t => t.Id)
+                .OrderBy(id => id)
+                .ToListAsync();
+
+            string firma = Convert.ToHexString(
+                SHA256.HashData(
+                    Encoding.UTF8.GetBytes(
+                        string.Join(",", obligatorios))));
+
+            var empresas = await _db.Empresas
+                .AsNoTracking()
+                .Where(e => e.Deshabilitado == 0)
+                .Select(e => e.Id)
+                .ToListAsync();
+
+            var idsEmpresas = empresas.ToHashSet();
+
+            // Solo recuperamos IDs y tipos documentales.
+            // No descargamos el contenido binario a memoria.
+            var archivos = await _db.ArchivosEmpresa
+                .AsNoTracking()
+                .Where(a =>
+                    a.TipoArchivoId.HasValue &&
+                    a.Archivo.Length > 0)
+                .Select(a => new
+                {
+                    a.EmpresaId,
+                    TipoArchivoId = a.TipoArchivoId!.Value
+                })
+                .ToListAsync();
+
+            var archivosPorEmpresa = archivos
+            .Where(a => a.EmpresaId.HasValue && idsEmpresas.Contains(a.EmpresaId.Value))
+            .GroupBy(a => a.EmpresaId!.Value)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(a => a.TipoArchivoId).ToHashSet());
+
+            var estados = await _db.Set<EmpresaEstadoDocumentalHU2>()
+                .Where(x => idsEmpresas.Contains(x.EmpresaId))
+                .ToDictionaryAsync(x => x.EmpresaId);
+
+            DateTime fecha = DateTime.UtcNow;
+
+            foreach (int empresaId in empresas)
+            {
+                archivosPorEmpresa.TryGetValue(
+                    empresaId,
+                    out var tiposCargados);
+
+                tiposCargados ??= new HashSet<int>();
+
+                bool completo =
+                    obligatorios.Count > 0 &&
+                    obligatorios.All(tiposCargados.Contains);
+
+                if (!estados.TryGetValue(empresaId, out var estado))
+                {
+                    estado = new EmpresaEstadoDocumentalHU2
+                    {
+                        EmpresaId = empresaId,
+                        FirmaRegla = firma,
+                        Completo = completo,
+                        FechaEvaluacion = fecha
+                    };
+
+                    _db.Set<EmpresaEstadoDocumentalHU2>().Add(estado);
+                }
+                else
+                {
+                    estado.FirmaRegla = firma;
+                    estado.Completo = completo;
+                    estado.FechaEvaluacion = fecha;
+                }
+
+                // No modificar FechaUltimaNotificacion.
+                // No crear NotificacionIntranet aquí.
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
 
         // HU2: consulta de cumplimiento por empresa contra una ÚNICA regla global.
         public async Task<IActionResult> OnGetEstadoDocumentalHU2Async(int empresaId)
@@ -1925,6 +2080,17 @@ namespace ERPSEI.Areas.Catalogos.Pages
                  */
                 await _db.Database
                     .CommitTransactionAsync();
+
+                // CA-05: evaluar el expediente después del COMMIT de sus archivos.
+                // No cancelar el guardado de la empresa si el aviso tiene un error.
+                try
+                {
+                    await _notificadorExpedientes.EvaluarDespuesDeGuardarAsync(idEmpresa);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "HU2 CA-05: no se pudo evaluar el expediente {EmpresaId}", idEmpresa);
+                }
 
                 return string.Empty;
             }
