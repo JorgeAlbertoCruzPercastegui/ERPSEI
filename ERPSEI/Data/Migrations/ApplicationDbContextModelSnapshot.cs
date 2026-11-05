@@ -2870,63 +2870,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8355),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9954),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8370),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9969),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8371),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9970),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8372),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9971),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8373),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9971),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8374),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9972),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8375),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9973),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8375),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9974),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 3, 15, 57, 46, 61, DateTimeKind.Local).AddTicks(8376),
+                            FechaCreacion = new DateTime(2026, 11, 5, 13, 20, 38, 521, DateTimeKind.Local).AddTicks(9975),
                             Nombre = "Otros"
                         });
                 });
@@ -3783,6 +3783,21 @@ namespace ERPSEI.Data.Migrations
                     b.ToTable("Empresas");
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaDocumentoObligatorio", b =>
+                {
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TipoArchivoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("EmpresaId", "TipoArchivoId");
+
+                    b.HasIndex("TipoArchivoId");
+
+                    b.ToTable("EmpresasDocumentosObligatorios", (string)null);
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.Nivel", b =>
                 {
                     b.Property<int>("Id")
@@ -3863,6 +3878,9 @@ namespace ERPSEI.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("EsObligatorio")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
                     b.ToTable("TipoArchivoEmpresa");
@@ -3871,107 +3889,128 @@ namespace ERPSEI.Data.Migrations
                         new
                         {
                             Id = 1,
-                            Description = "CSF"
+                            Description = "CSF",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 2,
-                            Description = "INE"
+                            Description = "INE",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 3,
-                            Description = "RFC"
+                            Description = "RFC",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 4,
-                            Description = "ComprobanteDomicilio"
+                            Description = "ComprobanteDomicilio",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 5,
-                            Description = "Otro"
+                            Description = "Otro",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 6,
-                            Description = "CER"
+                            Description = "CER",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 7,
-                            Description = "KEY"
+                            Description = "KEY",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 8,
-                            Description = "Logo"
+                            Description = "Logo",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 9,
-                            Description = "HojaMembretada"
+                            Description = "HojaMembretada",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 10,
-                            Description = "INE2"
+                            Description = "INE2",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 11,
-                            Description = "INE3"
+                            Description = "INE3",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 13,
-                            Description = "Organigrama"
+                            Description = "Organigrama",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 12,
-                            Description = "ActaConstitutiva"
+                            Description = "ActaConstitutiva",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 14,
-                            Description = "ActasAdicionales"
+                            Description = "ActasAdicionales",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 15,
-                            Description = "PoderNotarial"
+                            Description = "PoderNotarial",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 16,
-                            Description = "INEAccionistas"
+                            Description = "INEAccionistas",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 17,
-                            Description = "CSFAccionistas"
+                            Description = "CSFAccionistas",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 18,
-                            Description = "ComprobanteDomicilioAccionistas"
+                            Description = "ComprobanteDomicilioAccionistas",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 19,
-                            Description = "DeclaracionAnualMensual"
+                            Description = "DeclaracionAnualMensual",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 20,
-                            Description = "OpinionCumplimientoSAT"
+                            Description = "OpinionCumplimientoSAT",
+                            EsObligatorio = false
                         },
                         new
                         {
                             Id = 21,
-                            Description = "PruebaVida"
+                            Description = "PruebaVida",
+                            EsObligatorio = false
                         });
                 });
 
@@ -12091,6 +12130,25 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("Perfil");
 
                     b.Navigation("RegimenFiscal");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaDocumentoObligatorio", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Empresas.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Empresas.TipoArchivoEmpresa", "TipoArchivo")
+                        .WithMany()
+                        .HasForeignKey("TipoArchivoId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+
+                    b.Navigation("TipoArchivo");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.ProductoServicioPerfil", b =>

@@ -76,7 +76,7 @@ function rowStyle(row, index) {
     let fechaInvalida = new Date(1, 0, 1, 0, 0, 0, 0);
 
     let fcParts = (row.fechaConstitucionJS || "").split("-");
-    let fechaConstitucion = new Date((fcParts[0]||1), (fcParts[1]||1) - 1, (fcParts[2]||1), 0, 0, 0, 0);
+    let fechaConstitucion = new Date((fcParts[0] || 1), (fcParts[1] || 1) - 1, (fcParts[2] || 1), 0, 0, 0, 0);
     let fifParts = (row.fechaInicioFacturacionJS || "").split("-");
     let fechaInicioFacturacion = new Date((fifParts[0] || 1), (fifParts[1] || 1) - 1, (fifParts[2] || 1), 0, 0, 0, 0);
     let fiaParts = (row.fechaInicioAsimiladosJS || "").split("-");
@@ -88,7 +88,7 @@ function rowStyle(row, index) {
     let maxMesesFacturando = 12;
     let alertaMesesAsimilados = 4;
 
-    
+
     //Se verifica la fecha de consitución
     if (fechaInvalida.toLocaleString() != fechaConstitucion.toLocaleString()) {
         let cMonths = monthDiff(fechaConstitucion, fechaActual);
@@ -594,7 +594,7 @@ function initEmpresaDialog(action, row) {
 
     doAjax(
         "/Catalogos/Empresas/DatosAdicionalesEmpresa",
-        {idEmpresa: row.id},
+        { idEmpresa: row.id },
         function (resp) {
             if (resp.tieneError) {
                 if (Array.isArray(resp.errores) && resp.errores.length >= 1) {
@@ -613,6 +613,8 @@ function initEmpresaDialog(action, row) {
             row.bancos = resp.datos.bancos || [];
             row.archivos = resp.datos.archivos || [];
             row.actividadesEconomicas = resp.datos.actividadesEconomicas || [];
+            row.documentosObligatorios = Array.isArray(resp.datos.documentosObligatorios)
+                ? resp.datos.documentosObligatorios : [];
             row.hasDatosAdicionales = true;
 
             //Actualiza el row para no tener que volver a obtener los datos la próxima vez.
@@ -640,7 +642,7 @@ function onChangePasswordSATClick() {
 function prepareForm(action) {
     let btnDesactivar = document.getElementById("dlgEmpresaBtnDesactivar");
     let dlgTitle = document.getElementById("dlgEmpresaTitle");
-    
+
     switch (action) {
         case NUEVO:
         case EDITAR:
@@ -667,6 +669,310 @@ function prepareForm(action) {
     }
 }
 //Función para establecer los datos adicionales de la empresa
+let hu2EmpresaActual = null;
+let hu2ModoActual = VER;
+
+function dibujarResumenObligatoriedadHU2(row, action) {
+    hu2EmpresaActual = row;
+    hu2ModoActual = action;
+
+    const tiposVisibles = Object.keys(arrTiposDocumentos).map(Number);
+    const cargados = new Set((row.archivos || [])
+        .filter(a => Number(a.fileSize) > 0)
+        .map(a => Number(a.tipoArchivoId))
+        .filter(id => tiposVisibles.includes(id)));
+    const requeridos = [...new Set((row.documentosObligatorios || [])
+        .map(Number).filter(id => tiposVisibles.includes(id)))].sort((a, b) => a - b);
+    hu2TiposObligatoriosGlobales = new Set(requeridos);
+    const pendientes = requeridos.filter(id => !cargados.has(id));
+    const completados = requeridos.length - pendientes.length;
+    const pct = requeridos.length > 0 ? Math.round(completados * 100 / requeridos.length) : 0;
+    const estado = requeridos.length === 0
+        ? "Pendiente de configuración: no se han definido documentos obligatorios."
+        : pendientes.length === 0
+            ? "Documentos obligatorios cargados (pendiente de validación)."
+            : `${pendientes.length} documento(s) obligatorio(s) pendiente(s).`;
+    const ayuda = pendientes.length
+        ? `<div class="small text-muted mt-2">Faltantes: ${pendientes.map(id => arrTiposDocumentos[id]).join(", ")}</div>`
+        : "";
+    $("#resumenDocumentalEmpresa").remove();
+    $("#bodyArchivos").before(`
+        <div id="resumenDocumentalEmpresa" class="alert alert-light border mb-3" role="status">
+            <div class="d-flex justify-content-between gap-2 flex-wrap">
+                <strong>Documentación obligatoria</strong>
+                <span>${requeridos.length ? `${completados} de ${requeridos.length} (${pct}%)` : "Sin configurar"}</span>
+            </div>
+            <div class="progress mt-2" style="height: 7px">
+                <div class="progress-bar" role="progressbar" style="width: ${pct}%"
+                     aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <small class="text-muted d-block mt-2">${estado}</small>
+            ${ayuda}
+        </div>`);
+    if (row.id && Number(row.id) > 0) {
+        refrescarEstadoDocumentalHU2(row.id);
+    }
+}
+
+async function refrescarEstadoDocumentalHU2(empresaId) {
+    const contenedor = document.getElementById('hu2EstadoServidor');
+    if (!contenedor || !empresaId || Number(empresaId) <= 0) return;
+    contenedor.textContent = 'Consultando el estado real de documentos en servidor...';
+    try {
+        const respuesta = await fetch(`/Catalogos/Empresas?handler=EstadoDocumentalHU2&empresaId=${encodeURIComponent(empresaId)}`, { credentials: 'same-origin' });
+        if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+        const resultado = await respuesta.json();
+        if (Number(hu2EmpresaActual?.id) !== Number(empresaId)) return;
+        contenedor.textContent = `Estado en servidor: ${resultado.leyenda}. ${resultado.totalCargados}/${resultado.totalObligatorios} cargados (${resultado.porcentaje}%).`;
+    } catch (error) {
+        contenedor.textContent = 'No se pudo consultar el estado en servidor.';
+        console.error('HU2 Estado documental:', error);
+    }
+}
+
+async function consultarDuplicadosHU2() {
+    const modalElement = document.getElementById('dlgDuplicadosHU2');
+    if (!modalElement) return;
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+    const cargando = document.getElementById('hu2DuplicadosCargando');
+    const errorBox = document.getElementById('hu2DuplicadosError');
+    const vacio = document.getElementById('hu2DuplicadosSinResultados');
+    const resultados = document.getElementById('hu2DuplicadosResultados');
+    const filas = document.getElementById('hu2DuplicadosFilas');
+
+    // Abre el modal de inmediato y mantiene el detalle en la misma ventana.
+    modal.show();
+    cargando.classList.remove('d-none');
+    errorBox.classList.add('d-none');
+    vacio.classList.add('d-none');
+    resultados.classList.add('d-none');
+    filas.replaceChildren();
+
+    // Si el usuario presiona actualizar varias veces, ignora respuestas anteriores.
+    const solicitud = (window.hu2DuplicadosSolicitud = (window.hu2DuplicadosSolicitud || 0) + 1);
+
+    try {
+        const respuesta = await fetch('/Catalogos/Empresas?handler=PosiblesDuplicadosHU2', {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        });
+        if (!respuesta.ok) {
+            if (respuesta.status === 403) throw new Error('No tienes permisos para consultar posibles duplicados.');
+            if (respuesta.status === 401) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
+            throw new Error(`No fue posible consultar el catálogo (HTTP ${respuesta.status}).`);
+        }
+        const data = await respuesta.json();
+        if (solicitud !== window.hu2DuplicadosSolicitud) return;
+
+        const grupos = Array.isArray(data.grupos) ? data.grupos : [];
+        if (grupos.length === 0) {
+            vacio.classList.remove('d-none');
+            return;
+        }
+
+        const totalEmpresas = grupos.reduce((acumulado, g) => acumulado + (Array.isArray(g.empresas) ? g.empresas.length : 0), 0);
+        document.getElementById('hu2DuplicadosTotalGrupos').textContent = `${grupos.length} grupo${grupos.length === 1 ? '' : 's'} de RFC`;
+        document.getElementById('hu2DuplicadosTotalEmpresas').textContent = `${totalEmpresas} registros relacionados`;
+
+        // textContent evita interpretar nombres/RFC como HTML.
+        grupos.forEach(grupo => {
+            const tr = document.createElement('tr');
+            const tdRfc = document.createElement('td');
+            const rfc = document.createElement('span');
+            rfc.className = 'badge bg-light text-dark border font-monospace';
+            rfc.textContent = String(grupo.rfc ?? 'Sin RFC');
+            tdRfc.appendChild(rfc);
+
+            const tdEmpresas = document.createElement('td');
+            const lista = document.createElement('div');
+            lista.className = 'd-flex flex-column gap-1';
+            (Array.isArray(grupo.empresas) ? grupo.empresas : []).forEach(empresa => {
+                const registro = document.createElement('div');
+                const identificador = empresa.id ?? empresa.Id ?? '—';
+                const nombre = empresa.razonSocial ?? empresa.RazonSocial ?? 'Sin razón social';
+                registro.textContent = `#${identificador} · ${nombre}`;
+                lista.appendChild(registro);
+            });
+            tdEmpresas.appendChild(lista);
+
+            const tdCantidad = document.createElement('td');
+            tdCantidad.className = 'text-center fw-semibold';
+            tdCantidad.textContent = String(grupo.cantidad ?? lista.children.length);
+            tr.append(tdRfc, tdEmpresas, tdCantidad);
+            filas.appendChild(tr);
+        });
+        resultados.classList.remove('d-none');
+    } catch (error) {
+        if (solicitud !== window.hu2DuplicadosSolicitud) return;
+        errorBox.textContent = error.message || String(error);
+        errorBox.classList.remove('d-none');
+    } finally {
+        if (solicitud === window.hu2DuplicadosSolicitud) cargando.classList.add('d-none');
+    }
+}
+
+// HU2: las tarjetas se distinguen por la REGLA GLOBAL; no por empresa.
+let hu2TiposObligatoriosGlobales = new Set();
+
+function actualizarTarjetasObligatoriasHU2(ids) {
+    const requeridos = new Set((ids || []).map(Number));
+    hu2TiposObligatoriosGlobales = requeridos;
+    document.querySelectorAll('[data-hu2-tipo-documento]').forEach(tarjeta => {
+        const id = Number(tarjeta.dataset.hu2TipoDocumento);
+        const obligatorio = requeridos.has(id);
+        tarjeta.classList.toggle('hu2-documento-obligatorio', obligatorio);
+        tarjeta.classList.toggle('hu2-documento-pendiente', obligatorio && !tarjeta.querySelector('input[sourceId]'));
+        let insignia = tarjeta.querySelector('.hu2-etiqueta-requerido');
+        if (obligatorio && !insignia) {
+            insignia = document.createElement('span');
+            insignia.className = 'hu2-etiqueta-requerido';
+            insignia.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Obligatorio';
+            tarjeta.querySelector('.hu2-tipo-titulo')?.appendChild(insignia);
+        }
+        if (!obligatorio) insignia?.remove();
+    });
+}
+
+async function consultarReglaGlobalHU2() {
+    const resp = await fetch('/Catalogos/Empresas?handler=DocumentosObligatoriosGlobales', {
+        credentials: 'same-origin', headers: { 'Accept': 'application/json' }
+    });
+    if (!resp.ok) throw new Error(`No se pudo consultar la regla general (HTTP ${resp.status}).`);
+    const result = await resp.json();
+    if (result.tieneError || !Array.isArray(result.datos)) throw new Error(result.mensaje || 'Respuesta inválida del servidor.');
+    return result.datos.map(Number);
+}
+
+let hu2ModalObligatoriosBotonAnterior = null;
+
+function actualizarTotalObligatoriosHU2() {
+    const total = document.querySelectorAll('#hu2ModalListaDocumentos .hu2-obligatorio:checked').length;
+    const elemento = document.getElementById('hu2ModalTotalSeleccionados');
+    if (elemento) elemento.textContent = `${total} documento(s) seleccionado(s)`;
+}
+
+function seleccionarTodosObligatoriosHU2(marcar) {
+    document.querySelectorAll('#hu2ModalListaDocumentos .hu2-obligatorio').forEach(e => { e.checked = marcar; });
+    actualizarTotalObligatoriosHU2();
+}
+
+async function abrirModalObligatoriosHU2() {
+    if (typeof puedeConfigurarDocumentosObligatorios === 'undefined' || !puedeConfigurarDocumentosObligatorios) return;
+    const modal = document.getElementById('hu2ModalObligatorios');
+    const lista = document.getElementById('hu2ModalListaDocumentos');
+    if (!modal || !lista) return;
+    const errorBox = document.getElementById('hu2ModalObligatoriosError');
+    const guardar = document.getElementById('hu2ModalGuardarObligatorios');
+    if (errorBox) errorBox.classList.add('d-none');
+    if (guardar) guardar.disabled = true;
+    const requeridos = new Set();
+    // Construir elementos mediante textContent para no interpretar etiquetas de los nombres como HTML.
+    lista.replaceChildren();
+    Object.entries(arrTiposDocumentos).forEach(([id, nombre]) => {
+        const etiqueta = document.createElement('label');
+        etiqueta.className = 'hu2-document-item';
+        const check = document.createElement('input');
+        check.type = 'checkbox'; check.className = 'form-check-input hu2-obligatorio';
+        check.value = id; check.checked = requeridos.has(Number(id));
+        check.addEventListener('change', actualizarTotalObligatoriosHU2);
+        const texto = document.createElement('span');
+        texto.textContent = nombre;
+        etiqueta.append(check, texto);
+        lista.appendChild(etiqueta);
+    });
+    document.getElementById('hu2ModalEmpresaNombre').textContent =
+        "Esta regla será obligatoria para todos los expedientes de Empresas, actuales y futuros.";
+    document.getElementById('hu2ModalObligatoriosError')?.classList.add('d-none');
+    hu2ModalObligatoriosBotonAnterior = document.activeElement;
+    actualizarTotalObligatoriosHU2();
+    // Panel propio sobre el modal de Empresa: evita cerrar/reinicializar el expediente.
+    modal.classList.remove('d-none');
+    modal.setAttribute('aria-hidden', 'false');
+    try {
+        // Leer siempre el estado real, aunque no se haya abierto ningún expediente.
+        const ids = await consultarReglaGlobalHU2();
+        if (modal.classList.contains('d-none')) return;
+        lista.querySelectorAll('.hu2-obligatorio').forEach(el => { el.checked = ids.includes(Number(el.value)); });
+        actualizarTotalObligatoriosHU2();
+        if (guardar) guardar.disabled = false;
+        lista.querySelector('input')?.focus();
+    } catch (error) {
+        if (errorBox) { errorBox.textContent = error.message || String(error); errorBox.classList.remove('d-none'); }
+    }
+}
+
+function cerrarModalObligatoriosHU2() {
+    const modal = document.getElementById('hu2ModalObligatorios');
+    if (!modal) return;
+    modal.classList.add('d-none');
+    modal.setAttribute('aria-hidden', 'true');
+    hu2ModalObligatoriosBotonAnterior?.focus?.();
+}
+
+document.addEventListener('keydown', function (e) {
+    const modal = document.getElementById('hu2ModalObligatorios');
+    if (!modal || modal.classList.contains('d-none')) return;
+    if (e.key === 'Escape') {
+        e.preventDefault(); e.stopImmediatePropagation(); cerrarModalObligatoriosHU2();
+    }
+    if (e.key === 'Tab') {
+        const elementos = [...modal.querySelectorAll('button:not([disabled]), input:not([disabled])')];
+        const primero = elementos[0], ultimo = elementos[elementos.length - 1];
+        if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo?.focus(); }
+        else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero?.focus(); }
+    }
+}, true);
+
+async function guardarObligatoriosHU2(boton) {
+    if (typeof puedeConfigurarDocumentosObligatorios === 'undefined' ||
+        !puedeConfigurarDocumentosObligatorios) return;
+
+    const ids = Array.from(document.querySelectorAll('#hu2ModalListaDocumentos .hu2-obligatorio:checked'))
+        .map(el => Number(el.value));
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+    if (!token) {
+        showError('Documentos obligatorios', 'No se encontró el token de seguridad del formulario.');
+        return;
+    }
+    const params = new URLSearchParams();
+    ids.forEach(id => params.append('tiposArchivoIds', String(id)));
+    boton.disabled = true;
+    try {
+        const resp = await fetch('/Catalogos/Empresas/GuardarDocumentosObligatorios', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'RequestVerificationToken': token,
+                'Accept': 'application/json'
+            },
+            body: params.toString()
+        });
+        const datos = await resp.json();
+        if (!resp.ok || datos.tieneError) throw new Error(datos.mensaje || 'No fue posible guardar.');
+        const nuevosIds = Array.isArray(datos.datos) ? datos.datos.map(Number) : ids;
+        hu2TiposObligatoriosGlobales = new Set(nuevosIds);
+        // La lista es global: actualizar el expediente abierto y las filas cacheadas.
+        if (hu2EmpresaActual) {
+            hu2EmpresaActual.documentosObligatorios = nuevosIds;
+            dibujarResumenObligatoriedadHU2(hu2EmpresaActual, hu2ModoActual);
+        }
+        if (table && typeof table.bootstrapTable === 'function') {
+            try {
+                table.bootstrapTable('getData').forEach(fila => { fila.documentosObligatorios = nuevosIds; });
+            } catch (e) { console.warn('HU2: caché de empresas no disponible', e); }
+        }
+        actualizarTarjetasObligatoriasHU2(nuevosIds);
+        cerrarModalObligatoriosHU2();
+        showSuccess('Documentos obligatorios', datos.mensaje);
+    } catch (error) {
+        const errorBox = document.getElementById('hu2ModalObligatoriosError');
+        if (errorBox) { errorBox.textContent = error.message || String(error); errorBox.classList.remove('d-none'); }
+        boton.disabled = false;
+    }
+}
+
 function establecerDatosAdicionales(row, action) {
     if (tieneAccesoEmpresas) {
         // Actividades económicas
@@ -678,6 +984,7 @@ function establecerDatosAdicionales(row, action) {
         // Archivos
         let ID_TIPO_ARCHIVO_CER = 6;
         let ID_TIPO_ARCHIVO_KEY = 7;
+        $("#resumenDocumentalEmpresa").remove();
         $("#bodyArchivos, #bodyArchivosSAT").html("");
 
         row.archivos = (row.archivos || []).filter(a => parseInt(a.fileSize) >= 1);
@@ -694,6 +1001,10 @@ function establecerDatosAdicionales(row, action) {
                 tiposAgregados.add(a.tipoArchivoId);
             }
         });
+
+        // HU2: resumen real de obligatoriedad y selector administrativo.
+        // No mostrar "completo" si no se han configurado documentos obligatorios.
+        dibujarResumenObligatoriedadHU2(row, action);
 
         // Renderizar tarjetas por tipo
         Object.keys(arrTiposDocumentos).forEach(function (tipoArchivoIdStr) {
@@ -761,10 +1072,14 @@ function establecerDatosAdicionales(row, action) {
             </div>`;
 
 
+            const esObligatorio = hu2TiposObligatoriosGlobales.has(tipoArchivoId);
+            const insigniaObligatorio = esObligatorio
+                ? '<span class="hu2-etiqueta-requerido"><i class="bi bi-exclamation-circle me-1"></i> Obligatorio</span>'
+                : '';
             $(containerName).append(
-                `<div class="col-12 col-xl-6">
-                    <div><b>${arrTiposDocumentos[tipoArchivoId]}</b></div>
-                    <div id="container${tipoArchivoId}" class="alert mb-2 mt-2 ${containerClass} row me-0">
+                `<div class="col-12 col-xl-6 ${esObligatorio ? 'hu2-documento-obligatorio' : ''} ${esObligatorio && !archivo ? 'hu2-documento-pendiente' : ''}" data-hu2-tipo-documento="${tipoArchivoId}">
+                    <div class="hu2-tipo-titulo"><b>${arrTiposDocumentos[tipoArchivoId]}</b>${insigniaObligatorio}</div>
+                    <div id="container${tipoArchivoId}" class="alert mb-2 mt-2 ${containerClass} row me-0 hu2-document-card">
                         <div id="fileIcon${tipoArchivoId}" class="align-self-center col-1 ${iconClass} p-0 p-lg-2 p-xl-2"><i class='bi bi-file-image' style='font-size:25px'></i></div>
                         <div id="fileName${tipoArchivoId}" class="align-self-center col-10 ${nameClass} p-2" style="display:flex; color:dimgray">${nameHTML}</div>
                         <div class="align-self-center col-1">
@@ -772,11 +1087,11 @@ function establecerDatosAdicionales(row, action) {
                                actualizar="${actualizar}"
                                id="selector${tipoArchivoId}"
                                ${archivo
-                                            ? `sourceId="${archivo.id}"
+                    ? `sourceId="${archivo.id}"
                                        safeL="${archivo.safeL}"
                                        sourceName="${archivo.nombre}.${archivo.extension}"
                                        sourceLength="${archivo.fileSize}"`
-                                            : ""}
+                    : ""}
                                tipoArchivoId="${tipoArchivoId}"
                                containerName="container${tipoArchivoId}"
                                fileIconName="fileIcon${tipoArchivoId}"
@@ -992,7 +1307,7 @@ function onDeleteClick(button) {
     initializeDisableableButtons();
 }
 //Función para capturar el clic en el botón agregar banco, que añade un item de banco para capturar datos.
-function onAgregarBancoClick(row = {banco: "", responsable: "", firmante: "", limite: ""}) {
+function onAgregarBancoClick(row = { banco: "", responsable: "", firmante: "", limite: "" }) {
     let btnAgregarBanco = document.getElementById("dlgEmpresaBtnAgregarBanco");
     let currentRows = document.querySelectorAll(".rowBancos").length;
 
@@ -1007,7 +1322,7 @@ function onAgregarBancoClick(row = {banco: "", responsable: "", firmante: "", li
     if (puedeTodoBancos || puedeEliminarBancos) {
         iconoEliminarItemHTML = `<button type="button" class="btn-close formButton" onclick="onEliminarBancoClick(this);"></button>`;
     }
-    
+
     $("#bodyBancos").append(`
         <div class="card mb-3 shadow">    
             <span class="text-end mt-2" data-effect="fadeOut">
@@ -1048,7 +1363,7 @@ function onAgregarBancoClick(row = {banco: "", responsable: "", firmante: "", li
 //Función para capturar el cambio de valor en uno de los campos de límite transaccional bancario.
 function onLimiteBancoChanged() {
     let total = 0;
-    $(".limiteTransaccionalField").each(function (i, e) { total += parseFloat(e.value||"0"); });
+    $(".limiteTransaccionalField").each(function (i, e) { total += parseFloat(e.value || "0"); });
     $("#spanTotalTransaccional").text(`$${numFormatter.format(total.toFixed(2))}`);
 }
 //Función para capturar el clic en el botón eliminar banco, que elimina un item de banco del listado.
@@ -1117,7 +1432,7 @@ function onDocumentSelectorChanged(input, allowedExtensions) {
         }
         else {
             input.value = null;
-            showAlert(fileFormatTitle, `${fileFormatMessage} ${allowedExtensions}` );
+            showAlert(fileFormatTitle, `${fileFormatMessage} ${allowedExtensions}`);
 
             return;
         }
@@ -1391,8 +1706,8 @@ function getFile(inputId) {
     let fileField = document.getElementById(inputId),
         file = null,
         tipoArchivo = fileField.getAttribute("tipoArchivoId"),
-        b64 = fileField.getAttribute("b64")||"",
-        sourceId = fileField.getAttribute("sourceId") || "", 
+        b64 = fileField.getAttribute("b64") || "",
+        sourceId = fileField.getAttribute("sourceId") || "",
         actualizar = parseInt(fileField.getAttribute("actualizar") || "0")
 
     file = fileField != null ? fileField.files : null;
@@ -1405,7 +1720,7 @@ function getFile(inputId) {
         nombre: "",
         extension: ""
     }
-    
+
     if (file) {
         //Si se estableció archivo en pantalla, crea el json con el archivo.
         let fileParts = (file.name || "").split(".");
@@ -1536,7 +1851,7 @@ function onExcelSelectorChanged(input) {
         let docType = input.files[0].type;
         let isExcel = docType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" || docType == "application/vnd.ms-excel";
 
-        if(!isExcel){
+        if (!isExcel) {
             input.value = null;
             showAlert(invalidFormatTitle, invalidFormatMsg);
         }

@@ -2,53 +2,28 @@
 {
     public enum FileTypes
     {
-        CSF = 1,
-        INE = 2,
-        RFC = 3,
-        ComprobanteDomicilio = 4,
-        Otro = 5,
-        CER = 6,
-        KEY = 7,
-        Logo = 8,
-        HojaMembretada = 9,
-        INE2 = 10,
-        INE3 = 11,
-
-        ActaConstitutiva = 12,
-        Organigrama = 13,
-
-        ActasAdicionales = 14,
-        PoderNotarial = 15,
-        INEAccionistas = 16,
-        CSFAccionistas = 17,
-        ComprobanteDomicilioAccionistas = 18,
-        DeclaracionAnualMensual = 19,
-        OpinionCumplimientoSAT = 20,
-        PruebaVida = 21
+        CSF = 1, INE = 2, RFC = 3, ComprobanteDomicilio = 4,
+        Otro = 5, CER = 6, KEY = 7, Logo = 8, HojaMembretada = 9,
+        INE2 = 10, INE3 = 11, ActaConstitutiva = 12, Organigrama = 13,
+        ActasAdicionales = 14, PoderNotarial = 15, INEAccionistas = 16,
+        CSFAccionistas = 17, ComprobanteDomicilioAccionistas = 18,
+        DeclaracionAnualMensual = 19, OpinionCumplimientoSAT = 20, PruebaVida = 21,
+        AcuseFIEL = 22, PaginaInternet = 23, Croquis = 24, Triptico = 25,
+        INEApoderado = 26, CSFApoderado = 27,
+        ComprobanteDomicilioApoderado = 28, FacturaEmitida = 29,
+        FacturaRecibida = 30, SUA = 31, PagoSUA = 32,
+        EstadoCuentaBancario = 33, EntregableContratoPropuestaServicio = 34
     }
 
     public class TipoArchivoEmpresa
     {
-        public int Id
-        {
-            get;
-            set;
-        }
+        public int Id { get; set; }
+        public string Description { get; set; } = string.Empty;
+        // Regla general: aplica a todos los expedientes, no a una empresa individual.
+        public bool EsObligatorio { get; set; } = false;
+        public ICollection<ArchivoEmpresa>? ArchivosEmpresa { get; }
 
-        public string Description
-        {
-            get;
-            set;
-        }
-
-        public ICollection<ArchivoEmpresa>? ArchivosEmpresa
-        {
-            get;
-        }
-
-        public TipoArchivoEmpresa(
-            int id,
-            string description)
+        public TipoArchivoEmpresa(int id, string description)
         {
             Id = id;
             Description = description;

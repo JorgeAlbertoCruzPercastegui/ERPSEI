@@ -249,10 +249,19 @@ namespace ERPSEI.Areas.Catalogos.Pages
             List<SemiArchivoEmpresa> archivos = await _archivoEmpresaManager.GetFilesByEmpresaIdAsync(idEmpresa);
             jsonArchivos = GetListJsonArchivos(archivos);
 
+            // HU2: configuración GLOBAL para todos los expedientes, presentes y futuros.
+            List<int> documentosObligatorios = await _db.Set<TipoArchivoEmpresa>()
+                .AsNoTracking()
+                .Where(x => x.EsObligatorio)
+                .Select(x => x.Id)
+                .OrderBy(id => id)
+                .ToListAsync();
+
             jsonResponse = $"{{" +
                                 $"\"actividadesEconomicas\": [{string.Join(",", jsonActividades)}], " +
                                 $"\"bancos\": [{string.Join(",", jsonBancos)}], " +
-                                $"\"archivos\": [{string.Join(",", jsonArchivos)}] " +
+                                $"\"archivos\": [{string.Join(",", jsonArchivos)}], " +
+                                $"\"documentosObligatorios\": [{string.Join(",", documentosObligatorios)}] " +
                             $"}}";
 
             return jsonResponse;
@@ -662,6 +671,121 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
             return new JsonResult(resp);
         }
+        // ==========================================================
+        // ==========================================================
+        // HU2 - REGLA GLOBAL DE DOCUMENTACIÓN OBLIGATORIA
+        // Aplica a todas las empresas existentes y futuras.
+        // ==========================================================
+        public async Task<IActionResult> OnGetDocumentosObligatoriosGlobalesAsync()
+        {
+            if (!EsAdministradorDeEmpresas) return Forbid();
+            var ids = await _db.Set<TipoArchivoEmpresa>().AsNoTracking()
+                .Where(x => x.EsObligatorio).Select(x => x.Id).OrderBy(x => x).ToListAsync();
+            return new JsonResult(new { tieneError = false, datos = ids });
+        }
+
+        public async Task<IActionResult> OnPostGuardarDocumentosObligatoriosAsync(List<int>? tiposArchivoIds)
+        {
+            if (!EsAdministradorDeEmpresas)
+                return StatusCode(403, new { tieneError = true, mensaje = "No tiene permiso para configurar documentos obligatorios." });
+
+            var ids = (tiposArchivoIds ?? new List<int>()).Distinct().ToHashSet();
+            // Se admiten los documentos realmente presentados en el expediente.
+            // Los IDs 16 y 21 permanecen ocultos en la vista actual y no se pueden exigir.
+            var tipos = await _db.Set<TipoArchivoEmpresa>().ToListAsync();
+            var permitidos = tipos.Select(x => x.Id).Where(id => id != 16 && id != 21).ToHashSet();
+            if (ids.Except(permitidos).Any())
+                return BadRequest(new { tieneError = true, mensaje = "La selección incluye tipos documentales no disponibles en Empresas." });
+
+            try
+            {
+                foreach (var tipo in tipos)
+                {
+                    // No se alteran las reglas de tipos ocultos sin intervención administrativa.
+                    if (!permitidos.Contains(tipo.Id)) continue;
+                    tipo.EsObligatorio = ids.Contains(tipo.Id);
+                }
+                await _db.SaveChangesAsync();
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "Regla documental general actualizada para todas las empresas.",
+                    datos = ids.OrderBy(x => x).ToArray()
+                });
+            }
+            catch (DbUpdateException ex)
+            {
+                _logger.LogError(ex, "HU2: error al guardar obligatoriedad global");
+                return StatusCode(500, new { tieneError = true, mensaje = "No fue posible guardar la regla documental general." });
+            }
+        }
+
+        // HU2: consulta de cumplimiento por empresa contra una ÚNICA regla global.
+        public async Task<IActionResult> OnGetEstadoDocumentalHU2Async(int empresaId)
+        {
+            if (!(PuedeTodo || PuedeConsultar || PuedeEditar || PuedeEliminar ||
+                  PuedeTodoBancos || PuedeConsultarBancos || PuedeEditarBancos || PuedeEliminarBancos))
+                return Forbid();
+
+            if (empresaId <= 0 || !await _db.Empresas.AsNoTracking().AnyAsync(e => e.Id == empresaId))
+                return NotFound(new { mensaje = "Empresa no encontrada." });
+
+            var obligatorios = await _db.Set<TipoArchivoEmpresa>().AsNoTracking()
+                .Where(x => x.EsObligatorio).Select(x => x.Id).OrderBy(x => x).ToListAsync();
+
+            // Se consulta solo metadato del archivo, sin descargar su contenido binario.
+            var idsCargados = await _db.ArchivosEmpresa.AsNoTracking()
+                .Where(x => x.EmpresaId == empresaId && x.TipoArchivoId.HasValue &&
+                            x.Archivo != null && x.Archivo.Length > 0)
+                .Select(x => x.TipoArchivoId!.Value).Distinct().ToListAsync();
+
+            var cargados = idsCargados.ToHashSet();
+            var pendientes = obligatorios.Where(id => !cargados.Contains(id)).ToArray();
+            bool configurado = obligatorios.Count > 0;
+            return new JsonResult(new
+            {
+                empresaId,
+                configurado,
+                completo = configurado && pendientes.Length == 0,
+                totalObligatorios = obligatorios.Count,
+                totalCargados = obligatorios.Count - pendientes.Length,
+                porcentaje = configurado ? (int)Math.Round(100.0 * (obligatorios.Count - pendientes.Length) / obligatorios.Count) : 0,
+                pendientes,
+                leyenda = !configurado ? "Pendiente de configuración general" :
+                    pendientes.Length > 0 ? "Documentación obligatoria incompleta" :
+                    "Documentación obligatoria cargada; pendiente de revisión"
+            });
+        }
+
+        // HU2: reporte no destructivo. La decisión de fusionar/desactivar es de Operaciones Internas.
+        public async Task<IActionResult> OnGetPosiblesDuplicadosHU2Async()
+        {
+            if (!EsAdministradorDeEmpresas) return Forbid();
+
+            var empresas = await _db.Empresas.AsNoTracking()
+                .Select(e => new { e.Id, e.RFC, e.RazonSocial })
+                .ToListAsync();
+
+            static string Normalizar(string? valor) =>
+                new string((valor ?? string.Empty).Trim().ToUpperInvariant()
+                    .Where(c => !char.IsWhiteSpace(c) && c != '-').ToArray());
+
+            var porRfc = empresas
+                .Select(e => new { e.Id, e.RazonSocial, RFC = Normalizar(e.RFC) })
+                .Where(e => e.RFC.Length >= 12)
+                .GroupBy(e => e.RFC)
+                .Where(g => g.Count() > 1)
+                .OrderBy(g => g.Key)
+                .Select(g => new
+                {
+                    rfc = g.Key,
+                    cantidad = g.Count(),
+                    empresas = g.Select(e => new { e.Id, e.RazonSocial }).OrderBy(e => e.Id).ToArray()
+                }).ToArray();
+
+            return new JsonResult(new { grupos = porRfc, totalGrupos = porRfc.Length });
+        }
+
         public async Task<JsonResult> OnPostFiltrarEmpresas()
         {
             ServerResponse resp = new(true, _strLocalizer["EmpresasFiltradasUnsuccessfully"]);

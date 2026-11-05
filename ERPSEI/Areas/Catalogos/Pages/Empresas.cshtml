@@ -35,64 +35,119 @@
 	List<Nivel> niveles = await NivelesManager.GetAllAsync();
 	List<ActividadEconomica> actividadesEconomicas = await ActividadesEconomicasManager.GetAllAsync();
 
+	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEliminar = User.Claims.Where(c => c.Type.Equals("PuedeEliminar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeAutorizar = User.Claims.Where(c => c.Type.Equals("PuedeAutorizar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 
-	bool esAdministradorEmpresas =
-		User.IsInRole("Administrador Empresas");
+	bool puedeTodoBancos = User.Claims.Where(c => c.Type.Equals("PuedeTodoBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeConsultarBancos = User.Claims.Where(c => c.Type.Equals("PuedeConsultarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEditarBancos = User.Claims.Where(c => c.Type.Equals("PuedeEditarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeEliminarBancos = User.Claims.Where(c => c.Type.Equals("PuedeEliminarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
+	bool puedeAutorizarBancos = User.Claims.Where(c => c.Type.Equals("PuedeAutorizarBancos", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 
-	bool esAdministradorGeneral =
-		User.IsInRole("Administrador") ||
-		User.IsInRole("Master");
-
-	bool controlTotalEmpresas =
-		esAdministradorEmpresas || esAdministradorGeneral;
-
-	bool TienePermiso(string tipo) =>
-		User.HasClaim(c =>
-			c.Type.Equals(tipo, StringComparison.OrdinalIgnoreCase) &&
-			c.Value == "1");
-
-	// Permisos del módulo Empresas
-	bool puedeTodo = controlTotalEmpresas ||
-		TienePermiso("PuedeTodo");
-
-	bool puedeConsultar = controlTotalEmpresas ||
-		TienePermiso("PuedeConsultar");
-
-	bool puedeEditar = controlTotalEmpresas ||
-		TienePermiso("PuedeEditar");
-
-	bool puedeEliminar = controlTotalEmpresas ||
-		TienePermiso("PuedeEliminar");
-
-	bool puedeAutorizar = controlTotalEmpresas ||
-		TienePermiso("PuedeAutorizar");
-
-	// Permisos de bancos dentro de Empresas
-	bool puedeTodoBancos = controlTotalEmpresas ||
-		TienePermiso("PuedeTodoBancos");
-
-	bool puedeConsultarBancos = controlTotalEmpresas ||
-		TienePermiso("PuedeConsultarBancos");
-
-	bool puedeEditarBancos = controlTotalEmpresas ||
-		TienePermiso("PuedeEditarBancos");
-
-	bool puedeEliminarBancos = controlTotalEmpresas ||
-		TienePermiso("PuedeEliminarBancos");
-
-	bool puedeAutorizarBancos = controlTotalEmpresas ||
-		TienePermiso("PuedeAutorizarBancos");
-
-	bool tieneAccesoEmpresas =
-		puedeTodo || puedeConsultar || puedeEditar;
-
-	bool tieneAccesoBancos =
-		puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
-
+	bool tieneAccesoEmpresas = puedeTodo || puedeConsultar || puedeEditar;
+	bool tieneAccesoBancos = puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Empresas.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/css/Empresas.css" asp-append-version="true" />
+	<style>
+		/* HU2: acciones de la tabla alineadas con separación uniforme */
+		#toolbar {
+			display: inline-flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: .5rem;
+		}
+
+		#toolbar > button {
+			margin: 0 !important;
+		}
+
+		/* HU2: encabezado corporativo de duplicados */
+		#dlgDuplicadosHU2 .modal-header {
+			background-color: #1557a5 !important;
+			color: #fff !important;
+			border-bottom: 0;
+			padding: 1rem 1.25rem;
+		}
+
+		#dlgDuplicadosHU2 .modal-header .modal-title,
+		#dlgDuplicadosHU2 .modal-header small {
+			color: #fff !important;
+		}
+
+		#dlgDuplicadosHU2 .modal-header small {
+			opacity: .9;
+		}
+
+        /* HU2: botones alineados, incluida la regla general */
+        #toolbar .hu2-toolbar-text { white-space: nowrap; }
+        #toolbar { column-gap: .5rem !important; row-gap: .5rem !important; }
+
+        /* HU2: identificación visual de documentos obligatorios */
+        #bodyArchivos .hu2-documento-obligatorio > .hu2-tipo-titulo,
+        #bodyArchivosSAT .hu2-documento-obligatorio > .hu2-tipo-titulo {
+            color: #21166f; display: flex; align-items: center; gap: .4rem;
+            flex-wrap: wrap;
+        }
+        .hu2-etiqueta-requerido {
+            display: inline-flex; align-items: center; padding: .15rem .5rem;
+            border-radius: 999px; background: #21166f; color: white;
+            font-size: .7rem; font-weight: 600; letter-spacing: .01em;
+        }
+        #bodyArchivos .hu2-documento-obligatorio > .hu2-document-card,
+        #bodyArchivosSAT .hu2-documento-obligatorio > .hu2-document-card {
+            border: 1.5px solid #5a4bb7 !important;
+            border-left: 5px solid #21166f !important;
+            background: #f3f1ff !important;
+            box-shadow: 0 2px 9px rgba(33,22,111,.07);
+        }
+        #bodyArchivos .hu2-documento-obligatorio.hu2-documento-pendiente > .hu2-document-card,
+        #bodyArchivosSAT .hu2-documento-obligatorio.hu2-documento-pendiente > .hu2-document-card {
+            border-style: dashed !important;
+            border-left-style: solid !important;
+        }
+
+        /* HU2: modal de obligatoriedad por empresa (sin cerrar modal principal) */
+        #hu2ModalObligatorios {
+            position: fixed; inset: 0; z-index: 2000; display: flex;
+            align-items: center; justify-content: center; padding: 1rem;
+            background: rgba(15, 23, 42, .65);
+        }
+        #hu2ModalObligatorios.d-none { display: none !important; }
+        #hu2ModalObligatorios .hu2-modal-panel {
+            width: min(100%, 940px); max-height: min(90vh, 800px);
+            display: flex; flex-direction: column; overflow: hidden;
+            background: #fff; border-radius: 1rem; box-shadow: 0 24px 70px rgba(0,0,0,.3);
+        }
+        #hu2ModalObligatorios .hu2-modal-head {
+            background: #21166f; color: #fff; padding: 1.1rem 1.4rem;
+        }
+        #hu2ModalObligatorios .hu2-modal-head .btn-close { filter: invert(1) grayscale(1) brightness(2); opacity: 1; }
+        #hu2ModalObligatorios .hu2-modal-body { padding: 1.25rem; overflow-y: auto; }
+        #hu2ModalObligatorios .hu2-document-grid {
+            display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: .65rem;
+        }
+        #hu2ModalObligatorios .hu2-document-item {
+            display: flex; gap: .65rem; align-items: flex-start; padding: .75rem;
+            border: 1px solid #dde2ed; border-radius: .65rem; cursor: pointer;
+        }
+        #hu2ModalObligatorios .hu2-document-item:has(input:checked) {
+            border-color: #21166f; background: #f1efff;
+        }
+        #hu2ModalObligatorios .hu2-document-item input { margin-top: .2rem; flex-shrink: 0; }
+        #hu2ModalObligatorios .hu2-modal-foot {
+            padding: 1rem 1.25rem; border-top: 1px solid #e9ecef;
+            display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap;
+        }
+        @@media (max-width: 650px) {
+            #hu2ModalObligatorios .hu2-document-grid { grid-template-columns: 1fr; }
+            #hu2ModalObligatorios .hu2-modal-body { padding: .9rem; }
+        }
+	</style>
 }
 
 <h3 class="title mb-3">@ViewData["Title"]</h3>
@@ -179,7 +234,6 @@
 </div>
 <!-- --------------------------- -->
 <!-- --------------------------- -->
-
 <!-- --------------------------- -->
 <!-- Sección tabla de resultados -->
 <div id="toolbar" class="col-xl-12">
@@ -195,27 +249,39 @@
 			<i class="bi bi-ban"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
 		</button>
 	}
+	@if (User.IsInRole("Administrador Empresas") || User.IsInRole("Administrador") || User.IsInRole("Master"))
+	{
+		<button id="btnReglaGeneralHU2" type="button" class="btn btn-outline-primary hu2-toolbar-text" onclick="abrirModalObligatoriosHU2()" title="Configurar documentos obligatorios para todas las empresas">
+			<i class="bi bi-card-checklist me-1"></i> Regla general
+		</button>
+	}
+	@if (User.IsInRole("Administrador Empresas") || User.IsInRole("Administrador") || User.IsInRole("Master"))
+	{
+		<button id="btnDuplicadosHU2" type="button" class="btn btn-outline-primary" onclick="consultarDuplicadosHU2()">
+			<i class="bi bi-search me-1"></i> <span class="d-none d-sm-inline">Revisar posibles duplicados</span><span class="d-sm-none">Duplicados</span>
+		</button>
+	}
 </div>
 <table id="table" class="table-sm"
-		data-unique-id="id"
-		data-toolbar="#toolbar"
-		data-search="true"
-		data-show-toggle="true"
-		data-show-fullscreen="true"
-		data-show-columns="true"
-		data-show-columns-toggle-all="true"
-		data-show-export="true"
-		data-click-to-select="true"
-		data-minimum-count-columns="2"
-		data-show-pagination-switch="true"
-		data-pagination="true"
-		data-id-field="id"
-		data-page-list="[10, 25, 50, 100, all]"
-		data-show-footer="false"
-		data-side-pagination="client"
-		data-response-handler="responseHandler"
-		data-buttons-class="primary"
-		data-buttons="additionalButtons"
+	   data-unique-id="id"
+	   data-toolbar="#toolbar"
+	   data-search="true"
+	   data-show-toggle="true"
+	   data-show-fullscreen="true"
+	   data-show-columns="true"
+	   data-show-columns-toggle-all="true"
+	   data-show-export="true"
+	   data-click-to-select="true"
+	   data-minimum-count-columns="2"
+	   data-show-pagination-switch="true"
+	   data-pagination="true"
+	   data-id-field="id"
+	   data-page-list="[10, 25, 50, 100, all]"
+	   data-show-footer="false"
+	   data-side-pagination="client"
+	   data-response-handler="responseHandler"
+	   data-buttons-class="primary"
+	   data-buttons="additionalButtons"
 	   data-row-style="rowStyle">
 	<thead>
 		<tr align="center" valign="middle" class="bg-primary bg-opacity-10">
@@ -224,8 +290,61 @@
 </table>
 <!-- --------------------------- -->
 <!-- --------------------------- -->
-
 <!-- --------------------------- -->
+
+<!-- HU2 - Consulta de posibles empresas duplicadas (sin eliminación automática) -->
+<div class="modal fade" id="dlgDuplicadosHU2" tabindex="-1" aria-labelledby="dlgDuplicadosHU2Titulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header text-white">
+                <div>
+                    <h5 class="modal-title fw-semibold" id="dlgDuplicadosHU2Titulo">
+                        <i class="bi bi-buildings me-2"></i>Posibles empresas duplicadas
+                    </h5>
+                    <small class="text-muted">Coincidencias detectadas por RFC normalizado · Consulta de solo lectura</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="hu2DuplicadosCargando" class="text-center py-5" role="status" aria-live="polite">
+                    <div class="spinner-border text-primary mb-3" aria-hidden="true"></div>
+                    <p class="mb-0 text-muted">Consultando empresas en el servidor...</p>
+                </div>
+                <div id="hu2DuplicadosError" class="alert alert-danger d-none" role="alert"></div>
+                <div id="hu2DuplicadosSinResultados" class="text-center py-5 d-none">
+                    <i class="bi bi-check-circle text-success" style="font-size:2.5rem"></i>
+                    <h6 class="mt-3">No se encontraron RFC duplicados</h6>
+                    <p class="text-muted mb-0">La revisión actual no detectó grupos de empresas con el mismo RFC normalizado.</p>
+                </div>
+                <div id="hu2DuplicadosResultados" class="d-none">
+                    <div class="alert alert-info d-flex align-items-start gap-2" role="note">
+                        <i class="bi bi-info-circle-fill mt-1"></i>
+                        <div>Estos registros son <strong>posibles duplicados</strong>, no eliminaciones confirmadas. Revisa la documentación y las relaciones antes de decidir cómo depurarlos.</div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                        <span class="badge rounded-pill text-bg-primary" id="hu2DuplicadosTotalGrupos">0 grupos</span>
+                        <span class="text-muted small" id="hu2DuplicadosTotalEmpresas">0 registros relacionados</span>
+                    </div>
+                    <div class="table-responsive border rounded-3">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th scope="col">RFC</th><th scope="col">Empresas coincidentes</th><th scope="col" class="text-center">Cantidad</th></tr>
+                            </thead>
+                            <tbody id="hu2DuplicadosFilas"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-primary" onclick="consultarDuplicadosHU2()">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Actualizar
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Sección Nuevo/Editar/Ver Registro --- -->
 <!-- <div id="dlgEmpresa" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true"> -->
 <div id="dlgEmpresa" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
@@ -560,7 +679,8 @@
 													@Localizer["DocumentSuggestion"] <a target="_blank" href="https://compressjpeg.com/es/">https://compressjpeg.com/es/</a>
 												</div>
 											</div>
-											<div id="bodyArchivos" class="row"></div>
+				                            <div class="small text-muted mb-2" id="hu2EstadoServidor" aria-live="polite"></div>
+							<div id="bodyArchivos" class="row"></div>
 										</div>
 									</div>
 								</div>
@@ -597,7 +717,6 @@
 </div>
 <!-- --------------------------- -->
 <!-- --------------------------- -->
-
 <!-- --------------------------- -->
 <!-- Sección Diálogo Actividad - -->
 <div id="dlgActividad" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
@@ -636,7 +755,6 @@
 </div>
 <!-- --------------------------- -->
 <!-- --------------------------- -->
-
 <!-- --------------------------- -->
 <!-- Sección Importar Excel ---- -->
 <div id="dlgImportarExcel" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
@@ -651,18 +769,18 @@
 					<i class="bi bi-1-circle-fill me-2" style="font-size: x-large"></i>
 					<div>@Localizer["ImportExcelSuggestionA"]</div>
 				</div>
-                <div class="container">
-                    <div class="row">
+				<div class="container">
+					<div class="row">
 						<div class="col-12 text-center mb-3">
 							<a id="dlgExcelBtnPlantilla" href="@Url.Page("Empresas", "DownloadPlantilla")" class="btn btn-primary">
 								<i class="bi bi-file-earmark-ruled"></i> @Localizer["PlantillaButtonTitle"]
 							</a>
 						</div>
-                    </div>
-                </div>
+					</div>
+				</div>
 				<div class="alert d-flex align-items-center" role="alert">
 					<i class="bi bi-2-circle-fill me-2" style="font-size: x-large"></i>
-                    <div>@Localizer["ImportExcelSuggestionB"]</div>
+					<div>@Localizer["ImportExcelSuggestionB"]</div>
 				</div>
 				<div class="container">
 					<div class="row">
@@ -691,6 +809,36 @@
 </div>
 <!-- --------------------------- -->
 <!-- --------------------------- -->
+
+<!-- HU2: Configuración de obligatoriedad dentro del expediente de empresa -->
+<div id="hu2ModalObligatorios" class="d-none" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="hu2ModalObligatoriosTitulo">
+    <div class="hu2-modal-panel" role="document">
+        <div class="hu2-modal-head d-flex align-items-start justify-content-between gap-3">
+            <div>
+                <h5 class="mb-1 fw-semibold" id="hu2ModalObligatoriosTitulo"><i class="bi bi-card-checklist me-2"></i>Configurar documentos obligatorios de todas las empresas</h5>
+                <p class="mb-0 small" style="color:#fff;opacity:.9" id="hu2ModalEmpresaNombre">Selecciona los documentos requeridos para todos los expedientes de Empresas.</p>
+            </div>
+            <button type="button" class="btn-close btn-close-white" aria-label="Cerrar" onclick="cerrarModalObligatoriosHU2()"></button>
+        </div>
+        <div class="hu2-modal-body">
+            <div class="alert alert-info mb-3"><i class="bi bi-info-circle me-2"></i>Regla general: se aplicará a todas las empresas existentes y futuras. Los archivos ya cargados no se eliminarán ni modificarán.</div>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <strong id="hu2ModalTotalSeleccionados">0 documentos seleccionados</strong>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="seleccionarTodosObligatoriosHU2(true)">Marcar todos</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="seleccionarTodosObligatoriosHU2(false)">Desmarcar todos</button>
+                </div>
+            </div>
+            <div id="hu2ModalListaDocumentos" class="hu2-document-grid"></div>
+            <div id="hu2ModalObligatoriosError" class="alert alert-danger d-none mt-3" role="alert"></div>
+            <small class="d-block text-muted mt-3">Si no seleccionas ningún documento, todos los expedientes permanecerán como pendientes de configuración.</small>
+        </div>
+        <div class="hu2-modal-foot">
+            <button type="button" class="btn btn-outline-secondary" onclick="cerrarModalObligatoriosHU2()">Cancelar</button>
+            <button type="button" id="hu2ModalGuardarObligatorios" class="btn btn-primary" onclick="guardarObligatoriosHU2(this)"><i class="bi bi-floppy me-1"></i>Guardar configuración</button>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
 	<!-- Librería autocompletar y dependencias -->
@@ -749,7 +897,7 @@
 		var sinActividad = '@Localizer["SinActividad"]';
 		var actividadRepetida = '@Localizer["ActividadRepetida"]';
 			var arrTiposDocumentos = {
-			"1": '@Localizer["CSF"]',
+			"1": "CSF Empresa",
 
 			/*
 			 * INE general de la empresa.
@@ -757,11 +905,11 @@
 			 * Este documento NO corresponde al
 			 * INE de accionistas de Compliance.
 			 */
-			"2": '@Localizer["INE"]',
+			"2": "INE Representante Legal",
 
-			"3": '@Localizer["RFC"]',
+			"3": "RFC Empresa",
 
-			"4": '@Localizer["ComprobanteDomicilio"]',
+			"4": "Comprobante de Domicilio Empresa",
 
 			"5": "Contrato",
 
@@ -781,9 +929,9 @@
 
 			"9": '@Localizer["HojaMembretada"]',
 
-			"10": '@Localizer["INE2"]',
+			"10": "INE 2do Accionista",
 
-			"11": "CSF del RL",
+			"11": "CSF Representante Legal",
 
 			"12": '@Localizer["Organigrama"]',
 
@@ -802,13 +950,28 @@
 			 * Es independiente del Tipo 2.
 			 */
 
-			"17": "CSF accionistas",
+			"17": "CSF 2do Accionista",
 
-			"18": "Comprobante domicilio accionistas",
+			"18": "Comprobante de Domicilio Representante Legal",
 
 			"19": "Declaración anual o mensual",
 
-			"20": "Opinión de cumplimiento SAT",
+			"20": "Opinión de Cumplimiento Empresa",
+
+            // HU INTRANET 2 - Nuevos tipos documentales (IDs 22 a 34)
+            "22": "Acuse de FIEL",
+            "23": "Página de Internet",
+            "24": "Croquis",
+            "25": "Tríptico",
+            "26": "INE de Apoderado",
+            "27": "CSF Apoderado",
+            "28": "Comprobante de Domicilio de Apoderado",
+            "29": "Factura Emitida",
+            "30": "Factura Recibida",
+            "31": "SUA",
+            "32": "Pago SUA",
+            "33": "Estado de Cuenta Bancario",
+            "34": "Entregable Contrato / Propuesta de Servicio",
 
 			/*"21": "Prueba de vida"*/
 		};
@@ -826,6 +989,9 @@
 		var puedeConsultarBancos = '@puedeConsultarBancos' == 'True';
 		var puedeEditarBancos = '@puedeEditarBancos' == 'True';
 		var puedeEliminarBancos = '@puedeEliminarBancos' == 'True';
+
+        // HU2: cambiar documentos obligatorios requiere un rol administrativo.
+        var puedeConfigurarDocumentosObligatorios = @(User.IsInRole("Administrador Empresas") || User.IsInRole("Administrador") || User.IsInRole("Master") ? "true" : "false");
 
 		var tieneAccesoEmpresas = puedeTodo || puedeConsultar || puedeEditar;
 		var tieneAccesoBancos = puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;
