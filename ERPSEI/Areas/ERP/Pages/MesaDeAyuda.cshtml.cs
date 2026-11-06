@@ -1,5 +1,6 @@
 ﻿using ERPSEI.Data;
 using ERPSEI.Data.Entities.ServiceDesk;
+using ERPSEI.Data.Entities.Intranet;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,10 @@ using Microsoft.EntityFrameworkCore;
 using Org.BouncyCastle.Tsp;
 using System.ComponentModel.DataAnnotations;
 using ERPSEI.Email;
+using ClosedXML.Excel;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -163,42 +168,9 @@ namespace ERPSEI.Areas.ERP.Pages
 
             await CargarCatalogosAsync();
 
+            // Un solo filtro para administradores, técnicos y solicitantes.
             IQueryable<ServiceTicket> query =
-                _context.ServiceTickets
-                    .AsNoTracking()
-                    .Include(x => x.TicketType)
-                    .Include(x => x.Status)
-                    .Include(x => x.Priority)
-                    .Include(x => x.Category)
-                    .Include(x => x.Subcategory)
-                    .Include(x => x.SupportTeam);
-
-            /*
-             * El administrador puede consultar todos los tickets.
-             * El usuario normal solamente puede consultar los suyos.
-             */
-            if (EsTecnicoMesaAyuda)
-            {
-                // Técnico restringido:
-                // solamente tickets asignados a él.
-                query =
-                    query.Where(
-                        x =>
-                            x.UsuarioAsignadoId ==
-                            usuarioActual.Id
-                    );
-            }
-            else if (!EsAdmin)
-            {
-                // Usuario normal:
-                // solamente tickets creados por él.
-                query =
-                    query.Where(
-                        x =>
-                            x.UsuarioSolicitanteId ==
-                            usuarioActual.Id
-                    );
-            }
+                ConstruirConsultaTicketsVisibles(usuarioActual);
 
             Tickets =
                 await query
@@ -2863,6 +2835,13 @@ namespace ERPSEI.Areas.ERP.Pages
                     tecnicoANotificar != null
                 )
                 {
+                    // La campanita se registra de forma independiente del correo.
+                    await NotificarAsignacionIntranetAsync(
+                        ticket,
+                        tecnicoANotificar,
+                        usuarioActual.Id
+                    );
+
                     await NotificarAsignacionTicketAsync(
                         ticket,
                         tecnicoANotificar
@@ -2870,14 +2849,25 @@ namespace ERPSEI.Areas.ERP.Pages
                 }
 
                 // =================================================
-                // NOTIFICAR RESOLUCIÓN
+                // NOTIFICAR AL SOLICITANTE CUANDO CAMBIA EL ESTADO
+                // (En proceso, Resuelto o Cerrado)
                 // =================================================
 
+                if (estadoAnteriorId != ticket.StatusId &&
+                    (ticket.StatusId == ESTADO_EN_PROCESO ||
+                     ticket.StatusId == ESTADO_RESUELTO ||
+                     ticket.StatusId == ESTADO_CERRADO))
+                {
+                    await NotificarEstadoSolicitanteIntranetAsync(
+                        ticket,
+                        usuarioActual.Id
+                    );
+                }
+
+                // Se conserva el correo de resolución existente.
                 if (notificarResolucion)
                 {
-                    await NotificarResolucionTicketAsync(
-                        ticket
-                    );
+                    await NotificarResolucionTicketAsync(ticket);
                 }
 
                 return new JsonResult(
@@ -3485,34 +3475,7 @@ namespace ERPSEI.Areas.ERP.Pages
             await CargarCatalogosAsync();
 
             IQueryable<ServiceTicket> query =
-                _context.ServiceTickets
-                    .AsNoTracking()
-                    .Include(x => x.TicketType)
-                    .Include(x => x.Status)
-                    .Include(x => x.Priority)
-                    .Include(x => x.Category)
-                    .Include(x => x.Subcategory)
-                    .Include(x => x.SupportTeam);
-
-
-            if (EsTecnicoMesaAyuda)
-            {
-                query =
-                    query.Where(
-                        x =>
-                            x.UsuarioAsignadoId ==
-                            usuarioActual.Id
-                    );
-            }
-            else if (!EsAdmin)
-            {
-                query =
-                    query.Where(
-                        x =>
-                            x.UsuarioSolicitanteId ==
-                            usuarioActual.Id
-                    );
-            }
+                ConstruirConsultaTicketsVisibles(usuarioActual);
 
             Tickets =
                 await query
@@ -3524,6 +3487,225 @@ namespace ERPSEI.Areas.ERP.Pages
             await CargarNombresTecnicosAsignadosAsync();
 
             CalcularKpis();
+        }
+
+        // =========================================================
+        // EXPORTACIONES ADMINISTRATIVAS
+        // Se exportan todos los tickets de la Intranet, no solo
+        // la pestaña que esté seleccionada en el navegador.
+        // =========================================================
+
+        private sealed class FilaTicketExportacion
+        {
+            public ServiceTicket Ticket { get; init; } = null!;
+            public string Solicitante { get; init; } = "";
+            public string Tecnico { get; init; } = "Sin asignar";
+        }
+
+        private async Task<List<FilaTicketExportacion>> ObtenerTicketsParaExportacionAsync()
+        {
+            var tickets = await _context.ServiceTickets
+                .AsNoTracking()
+                .Include(t => t.TicketType)
+                .Include(t => t.Status)
+                .Include(t => t.Priority)
+                .Include(t => t.Category)
+                .Include(t => t.Subcategory)
+                .Include(t => t.SupportTeam)
+                .OrderByDescending(t => t.FechaCreacion)
+                .ToListAsync();
+
+            var ids = tickets
+                .SelectMany(t => new[] { t.UsuarioSolicitanteId, t.UsuarioAsignadoId })
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .ToList();
+
+            var usuarios = await _context.Users
+                .AsNoTracking()
+                .Where(u => ids.Contains(u.Id))
+                .Select(u => new { u.Id, u.UserName, u.Email })
+                .ToDictionaryAsync(u => u.Id, u => u.UserName ?? u.Email ?? "Usuario");
+
+            return tickets.Select(t => new FilaTicketExportacion
+            {
+                Ticket = t,
+                Solicitante = usuarios.TryGetValue(t.UsuarioSolicitanteId, out var solicitante)
+                    ? solicitante : "Usuario no encontrado",
+                Tecnico = t.UsuarioAsignadoId != null &&
+                    usuarios.TryGetValue(t.UsuarioAsignadoId, out var tecnico)
+                    ? tecnico : "Sin asignar"
+            }).ToList();
+        }
+
+        public async Task<IActionResult> OnGetExportarExcelAsync()
+        {
+            if (!EsAdministradorMesa()) return Forbid();
+
+            var datos = await ObtenerTicketsParaExportacionAsync();
+            using var libro = new XLWorkbook();
+            var hoja = libro.Worksheets.Add("Tickets");
+            string[] columnas = {
+                "Folio", "Tipo", "Asunto", "Descripción", "Solicitante",
+                "Técnico", "Equipo de soporte", "Categoría", "Subcategoría",
+                "Prioridad", "Estado", "Origen", "Creación", "Actualización",
+                "Asignación", "Primera respuesta", "Resolución fecha", "Cierre fecha",
+                "SLA respuesta límite", "SLA resolución límite",
+                "SLA respuesta vencido", "SLA resolución vencido", "Resolución detalle"
+            };
+
+            for (int c = 0; c < columnas.Length; c++)
+                hoja.Cell(1, c + 1).Value = columnas[c];
+
+            for (int i = 0; i < datos.Count; i++)
+            {
+                var d = datos[i];
+                var t = d.Ticket;
+                int r = i + 2;
+                string[] textos = {
+                    t.Folio, t.TicketType?.Nombre ?? "", t.Titulo,
+                    t.Descripcion, d.Solicitante, d.Tecnico,
+                    t.SupportTeam?.Nombre ?? "", t.Category?.Nombre ?? "",
+                    t.Subcategory?.Nombre ?? "", t.Priority?.Nombre ?? "",
+                    t.Status?.Nombre ?? "", t.Origen ?? ""
+                };
+                for (int c = 0; c < textos.Length; c++)
+                    hoja.Cell(r, c + 1).Value = textos[c];
+
+                hoja.Cell(r, 13).Value = t.FechaCreacion;
+                var fechas = new DateTime?[] {
+                    t.FechaActualizacion, t.FechaAsignacion,
+                    t.FechaPrimeraRespuesta, t.FechaResolucion, t.FechaCierre,
+                    t.FechaLimiteRespuestaSla, t.FechaLimiteResolucionSla
+                };
+                for (int c = 0; c < fechas.Length; c++)
+                    if (fechas[c].HasValue) hoja.Cell(r, 14 + c).Value = fechas[c]!.Value;
+
+                hoja.Cell(r, 21).Value = t.SlaRespuestaVencido ? "Sí" : "No";
+                hoja.Cell(r, 22).Value = t.SlaResolucionVencido ? "Sí" : "No";
+                hoja.Cell(r, 23).Value = t.Resolucion ?? "";
+            }
+
+            var encabezado = hoja.Range(1, 1, 1, columnas.Length);
+            encabezado.Style.Fill.BackgroundColor = XLColor.FromHtml("#21166F");
+            encabezado.Style.Font.FontColor = XLColor.White;
+            encabezado.Style.Font.Bold = true;
+            encabezado.Style.Alignment.WrapText = true;
+            hoja.Row(1).Height = 32;
+            hoja.Columns(1, columnas.Length).Width = 20;
+            hoja.Column(3).Width = 34;
+            hoja.Column(4).Width = 48;
+            hoja.Column(23).Width = 48;
+            hoja.Range(2, 13, Math.Max(2, datos.Count + 1), 20)
+                .Style.DateFormat.Format = "dd/mm/yyyy hh:mm";
+            hoja.SheetView.FreezeRows(1);
+            hoja.Range(1, 1, Math.Max(1, datos.Count + 1), columnas.Length).SetAutoFilter();
+
+            using var flujo = new MemoryStream();
+            libro.SaveAs(flujo);
+            return File(flujo.ToArray(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"MesaDeAyuda_Tickets_{DateTime.Now:yyyyMMdd_HHmm}.xlsx");
+        }
+
+        public async Task<IActionResult> OnGetExportarPdfAsync()
+        {
+            if (!EsAdministradorMesa()) return Forbid();
+
+            var datos = await ObtenerTicketsParaExportacionAsync();
+            var pdf = Document.Create(documento =>
+            {
+                documento.Page(pagina =>
+                {
+                    pagina.Size(PageSizes.A4);
+                    pagina.Margin(28);
+                    pagina.DefaultTextStyle(estilo => estilo.FontSize(9));
+                    pagina.Header().Column(col =>
+                    {
+                        col.Item().Text("INTRANET | Mesa de Ayuda")
+                            .Bold().FontSize(17).FontColor("#21166F");
+                        col.Item().Text($"Reporte integral de tickets • {DateTime.Now:dd/MM/yyyy HH:mm} • Total: {datos.Count}")
+                            .FontSize(9);
+                        col.Item().PaddingTop(7).LineHorizontal(1).LineColor("#D4AD45");
+                    });
+                    pagina.Content().PaddingVertical(12).Column(col =>
+                    {
+                        col.Spacing(10);
+                        if (datos.Count == 0)
+                            col.Item().Text("No hay tickets registrados.");
+
+                        foreach (var d in datos)
+                        {
+                            var t = d.Ticket;
+                            col.Item().Border(1).BorderColor("#DEDCEB").Padding(10).Column(ficha =>
+                            {
+                                ficha.Spacing(4);
+                                ficha.Item().Text($"{t.Folio}  |  {t.Titulo}")
+                                    .Bold().FontSize(11).FontColor("#21166F");
+                                ficha.Item().Text($"Estado: {t.Status?.Nombre ?? ""}   •   Prioridad: {t.Priority?.Nombre ?? ""}   •   Origen: {t.Origen ?? ""}");
+                                ficha.Item().Text($"Tipo: {t.TicketType?.Nombre ?? ""}   •   Categoría: {t.Category?.Nombre ?? ""} / {t.Subcategory?.Nombre ?? ""}");
+                                ficha.Item().Text($"Solicitante: {d.Solicitante}   •   Técnico: {d.Tecnico}");
+                                ficha.Item().Text($"Equipo: {t.SupportTeam?.Nombre ?? "Sin asignar"}");
+                                ficha.Item().Text($"Creado: {t.FechaCreacion:dd/MM/yyyy HH:mm}   •   Asignado: {FormatoFecha(t.FechaAsignacion)}");
+                                ficha.Item().Text($"Primera respuesta: {FormatoFecha(t.FechaPrimeraRespuesta)}   •   Resuelto: {FormatoFecha(t.FechaResolucion)}   •   Cerrado: {FormatoFecha(t.FechaCierre)}");
+                                ficha.Item().Text($"SLA respuesta: {FormatoFecha(t.FechaLimiteRespuestaSla)} ({(t.SlaRespuestaVencido ? "Vencido" : "No vencido")})   •   SLA resolución: {FormatoFecha(t.FechaLimiteResolucionSla)} ({(t.SlaResolucionVencido ? "Vencido" : "No vencido")})");
+                                ficha.Item().Text($"Descripción: {t.Descripcion}");
+                                if (!string.IsNullOrWhiteSpace(t.Resolucion))
+                                    ficha.Item().Text($"Resolución: {t.Resolucion}");
+                            });
+                        }
+                    });
+                    pagina.Footer().AlignCenter().Text(t =>
+                    {
+                        t.Span("Página ");
+                        t.CurrentPageNumber();
+                        t.Span(" de ");
+                        t.TotalPages();
+                    });
+                });
+            }).GeneratePdf();
+
+            return File(pdf, "application/pdf", $"MesaDeAyuda_Tickets_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
+        }
+
+        private static string FormatoFecha(DateTime? fecha) =>
+            fecha.HasValue ? fecha.Value.ToString("dd/MM/yyyy HH:mm") : "—";
+
+        // =========================================================
+        // VISIBILIDAD DE TICKETS SEGÚN ROL
+        // Administradores: todos, incluidos los sin asignar.
+        // Técnicos: exclusivamente los que tienen asignados.
+        // Otros usuarios: únicamente tickets solicitados por ellos.
+        // =========================================================
+
+        private IQueryable<ServiceTicket> ConstruirConsultaTicketsVisibles(
+            AppUser usuarioActual)
+        {
+            IQueryable<ServiceTicket> query =
+                _context.ServiceTickets
+                    .AsNoTracking()
+                    .Include(x => x.TicketType)
+                    .Include(x => x.Status)
+                    .Include(x => x.Priority)
+                    .Include(x => x.Category)
+                    .Include(x => x.Subcategory)
+                    .Include(x => x.SupportTeam);
+
+            if (EsAdministradorMesa())
+            {
+                return query;
+            }
+
+            if (EsTecnicoMesaAyudaRestringido())
+            {
+                // Los tickets sin asignar no coinciden con el Id del técnico.
+                return query.Where(x =>
+                    x.UsuarioAsignadoId != null &&
+                    x.UsuarioAsignadoId == usuarioActual.Id);
+            }
+
+            return query.Where(x =>
+                x.UsuarioSolicitanteId == usuarioActual.Id);
         }
 
         // =========================================================
@@ -3590,6 +3772,31 @@ namespace ERPSEI.Areas.ERP.Pages
                 Subcategorias =
                     new List<SelectListItem>();
             }
+        }
+
+        // =========================================================
+        // INDICADOR SLA: calculado con las fechas actuales, sin modificar datos.
+        // La ventana preventiva es de 60 minutos. El estado pendiente del usuario
+        // se muestra pausado; los vencimientos históricos se evalúan en otra etapa.
+        // =========================================================
+        public string ObtenerEstadoSla(ServiceTicket ticket, DateTime ahora)
+        {
+            if (ticket.StatusId == 5 || ticket.StatusId == 6 || ticket.StatusId == 8)
+                return "finalizado";
+
+            if (ticket.StatusId == 4)
+                return "pausado";
+
+            var limites = new List<DateTime>();
+            if (!ticket.FechaPrimeraRespuesta.HasValue && ticket.FechaLimiteRespuestaSla.HasValue)
+                limites.Add(ticket.FechaLimiteRespuestaSla.Value);
+            if (!ticket.FechaResolucion.HasValue && ticket.FechaLimiteResolucionSla.HasValue)
+                limites.Add(ticket.FechaLimiteResolucionSla.Value);
+
+            if (limites.Count == 0) return "sin-sla";
+            if (limites.Any(x => x < ahora)) return "vencido";
+            if (limites.Any(x => x <= ahora.AddMinutes(60))) return "proximo";
+            return "vigente";
         }
 
         // =========================================================
@@ -3983,6 +4190,138 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
+        // CAMPANITA INTRANET: CAMBIO DE ESTADO AL SOLICITANTE
+        // =========================================================
+        private async Task NotificarEstadoSolicitanteIntranetAsync(
+            ServiceTicket ticket,
+            string usuarioCreadorId)
+        {
+            string? nombreEstado = ticket.StatusId switch
+            {
+                3 => "En proceso",
+                5 => "Resuelto",
+                6 => "Cerrado",
+                _ => null
+            };
+
+            if (nombreEstado == null ||
+                string.IsNullOrWhiteSpace(ticket.UsuarioSolicitanteId))
+                return;
+
+            NotificacionIntranet? notificacion = null;
+
+            try
+            {
+                var ahora = DateTime.Now;
+                notificacion = new NotificacionIntranet
+                {
+                    Titulo = $"Ticket {ticket.Folio}: {nombreEstado}",
+                    Descripcion = $"Tu solicitud {ticket.Folio} ({ticket.Titulo}) cambió a {nombreEstado}.",
+                    Tipo = "MesaDeAyuda",
+                    Modulo = "Mesa de Ayuda",
+                    Url = Url.Page("/MesaDeAyuda", new { area = "ERP", ticketId = ticket.Id })
+                          ?? $"/ERP/MesaDeAyuda?ticketId={ticket.Id}",
+                    Icono = ticket.StatusId == 6
+                        ? "bi bi-check-circle-fill"
+                        : "bi bi-ticket-detailed",
+                    FechaPublicacion = ahora,
+                    Activa = true,
+                    UserIdCreador = usuarioCreadorId,
+                    UsuariosNotificados = new List<NotificacionIntranetUsuario>
+                    {
+                        new NotificacionIntranetUsuario
+                        {
+                            UserId = ticket.UsuarioSolicitanteId,
+                            Leida = false,
+                            FechaLectura = null,
+                            FechaCreacion = ahora
+                        }
+                    }
+                };
+
+                _context.NotificacionesIntranet.Add(notificacion);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "No se pudo notificar al solicitante el cambio de estado del ticket {Folio}.",
+                    ticket.Folio);
+
+                // Evitar reintentos accidentales en este mismo DbContext.
+                if (notificacion != null)
+                {
+                    foreach (var destinatario in notificacion.UsuariosNotificados)
+                        _context.Entry(destinatario).State = EntityState.Detached;
+
+                    _context.Entry(notificacion).State = EntityState.Detached;
+                }
+            }
+        }
+
+        // =========================================================
+        // CAMPANITA INTRANET: NOTIFICACIÓN AL TÉCNICO ASIGNADO
+        // =========================================================
+        private async Task NotificarAsignacionIntranetAsync(
+            ServiceTicket ticket,
+            AppUser tecnicoAsignado,
+            string usuarioCreadorId)
+        {
+            try
+            {
+                // Evita crear notificaciones cuando falta el usuario destino.
+                if (string.IsNullOrWhiteSpace(tecnicoAsignado.Id))
+                    return;
+
+                var ahora = DateTime.Now;
+                var notificacion = new NotificacionIntranet
+                {
+                    Titulo = $"Ticket asignado: {ticket.Folio}",
+                    Descripcion = $"Se te asignó el ticket {ticket.Folio}: {ticket.Titulo}",
+                    Tipo = "MesaDeAyuda",
+                    Modulo = "Mesa de Ayuda",
+                    // Ruta relativa: funciona en localhost y en el VPS sin cambiar el host.
+                    Url = Url.Page("/MesaDeAyuda", new { area = "ERP", ticketId = ticket.Id })
+                          ?? $"/ERP/MesaDeAyuda?ticketId={ticket.Id}",
+                    Icono = "bi bi-ticket-detailed",
+                    FechaPublicacion = ahora,
+                    Activa = true,
+                    UserIdCreador = usuarioCreadorId,
+                    UsuariosNotificados = new List<NotificacionIntranetUsuario>
+                    {
+                        new NotificacionIntranetUsuario
+                        {
+                            UserId = tecnicoAsignado.Id,
+                            Leida = false,
+                            FechaLectura = null,
+                            FechaCreacion = ahora
+                        }
+                    }
+                };
+
+                _context.NotificacionesIntranet.Add(notificacion);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Un fallo de notificación no revierte una asignación ya guardada.
+                _logger.LogError(ex,
+                    "No fue posible crear la notificación interna del ticket {Folio} para {TecnicoId}.",
+                    ticket.Folio,
+                    tecnicoAsignado.Id);
+
+                // Evitar que una notificación fallida quede pendiente en el DbContext.
+                foreach (var entry in _context.ChangeTracker.Entries<NotificacionIntranet>()
+                             .Where(e => e.State == EntityState.Added).ToList())
+                    entry.State = EntityState.Detached;
+
+                foreach (var entry in _context.ChangeTracker.Entries<NotificacionIntranetUsuario>()
+                             .Where(e => e.State == EntityState.Added).ToList())
+                    entry.State = EntityState.Detached;
+            }
+        }
+
+        // =========================================================
         // NOTIFICAR ASIGNACIÓN DE TICKET AL TÉCNICO
         // =========================================================
 
@@ -4228,11 +4567,8 @@ namespace ERPSEI.Areas.ERP.Pages
         // =========================================================
         // TÉCNICO RESTRINGIDO DE MESA DE AYUDA
         //
-        // Debe tener:
-        // - Administrador TI
-        // - Técnico Mesa de Ayuda
-        //
-        // Administrador y Master siempre conservan acceso total.
+        // Solo el rol Técnico Mesa de Ayuda, sin privilegios administrativos.
+        // Administrador, Master y Administrador TI tienen acceso total.
         // =========================================================
 
         private bool EsTecnicoMesaAyudaRestringido()

@@ -1154,3 +1154,43 @@ body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link {
         flex: 0 1 auto;
     }
 }
+
+
+/* =============================================================
+   ERPSEI - CENTRADO CONSISTENTE DEL MENÚ EN TODAS LAS PÁGINAS
+   Aplica solo a escritorio; conserva navegación móvil/PWA.
+   ============================================================= */
+@media (min-width: 992px) {
+    body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar > .quick-nav-wrap {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 1 1 0% !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin-inline: 0 !important;
+            padding-inline: 0 !important;
+        }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar #quickNavMenu {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 0 1 auto !important;
+            width: max-content !important;
+            max-width: 100% !important;
+            margin-inline: auto !important;
+            padding-inline: 0 !important;
+            flex-wrap: wrap !important;
+            column-gap: 18px !important;
+            row-gap: 8px !important;
+        }
+}

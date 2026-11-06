@@ -10,6 +10,40 @@
     <link rel="stylesheet"
           href="~/css/MesaDeAyuda.css"
           asp-append-version="true" />
+
+    <style>
+        /* Bandeja administrativa: pestañas de asignación, sin afectar a técnicos ni solicitantes. */
+        .sd-admin-toolbar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px 24px; margin:24px 24px 22px; }
+        .sd-asignacion-tabs { display:flex; flex:0 1 auto; flex-wrap:wrap; align-items:center; gap:12px; margin:0; }
+        .sd-asignacion-tab { display:inline-flex; align-items:center; gap:9px; min-height:42px; border:1px solid #d8d4ed; border-radius:12px; padding:9px 14px; background:#fff; color:#21166f; font-weight:700; cursor:pointer; transition:background .15s ease, color .15s ease; }
+        .sd-asignacion-tab:hover, .sd-asignacion-tab:focus-visible { border-color:#21166f; outline-offset:2px; }
+        .sd-asignacion-tab[aria-pressed="true"] { background:#21166f; border-color:#21166f; color:#fff; }
+        .sd-asignacion-numero { display:inline-grid; min-width:24px; height:24px; place-items:center; border-radius:999px; background:#ece9fa; color:#21166f; font-size:12px; padding:0 6px; }
+        .sd-asignacion-tab[aria-pressed="true"] .sd-asignacion-numero { background:#fff; }
+        #tablaMesaDeAyuda tbody tr.sd-tab-hidden { display:none !important; }
+        .sd-asignacion-vacia { padding:24px; text-align:center; color:#625f79; }
+        /* Semáforo SLA: solo lectura, fechas calculadas al abrir/actualizar la página. */
+        .sd-sla-resumen { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 22px; }
+        .sd-sla-resumen-item { display:flex; align-items:center; gap:10px; padding:13px 18px; min-height:54px; border:1px solid #e8e7ef; border-radius:12px; background:#fff; font-size:13px; font-weight:700; color:#252334; }
+        .sd-sla-resumen-item strong { font-size:21px; color:#21166f; }
+        .sd-sla-resumen-item.sd-sla-riesgo { border-color:#f2d59a; background:#fffaf0; }
+        .sd-sla-resumen-item.sd-sla-critico { border-color:#efb8bd; background:#fff6f7; }
+        .sd-sla-indicador { display:inline-flex; align-items:center; padding:6px 9px; border-radius:99px; font-size:11px; font-weight:750; white-space:nowrap; }
+        .sd-sla-indicador.vigente { background:#e9f7ef; color:#176b45; }
+        .sd-sla-indicador.proximo { background:#fff2d4; color:#915c00; }
+        .sd-sla-indicador.vencido { background:#ffe6e8; color:#ad2535; }
+        .sd-sla-indicador.pausado { background:#eef1f6; color:#545c72; }
+        .sd-sla-indicador.finalizado { background:#f1eff4; color:#606074; }
+        .sd-sla-indicador.sin-sla { background:#f1eff4; color:#606074; }
+        @@media(max-width:575.98px) { .sd-sla-resumen-item { flex:1 1 140px; justify-content:center; } }
+        .sd-exportaciones { display:flex; flex:0 0 auto; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end; margin:0 0 0 auto; }
+        .sd-exportar-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:10px 16px; background:#fff; border:1px solid #d8d4ed; border-radius:12px; font-size:13px; font-weight:700; color:#21166f; text-decoration:none; transition:background .15s ease,border-color .15s ease; }
+        .sd-exportar-btn:hover,.sd-exportar-btn:focus-visible { color:#21166f; background:#f1effb; border-color:#21166f; }
+        .sd-exportar-btn.pdf { color:#9c2536; border-color:#ebcad0; }
+        .sd-exportar-btn.pdf:hover { background:#fff4f5; color:#9c2536; }
+        @@media(max-width:575.98px) { .sd-admin-toolbar { margin:18px 16px 16px; gap:14px; } .sd-asignacion-tabs { width:100%; } .sd-exportaciones { width:100%; justify-content:flex-end; margin-left:0; gap:8px; } .sd-exportar-btn { flex:1 1 auto; } }
+        @@media(max-width:575.98px) { .sd-asignacion-tabs { gap:8px; } .sd-asignacion-tab { flex:1 1 auto; justify-content:center; padding:10px; font-size:13px; } }
+    </style>
 }
 
 
@@ -302,6 +336,19 @@
 
     </section>
 
+    @if (Model.PuedeGestionarTickets)
+    {
+        // Estos conteos aplican únicamente a tickets visibles para el usuario actual.
+        DateTime instanteSla = DateTime.Now;
+        int proximosSla = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, instanteSla) == "proximo");
+        int vencidosSla = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, instanteSla) == "vencido");
+        int pausadosSla = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, instanteSla) == "pausado");
+        <section class="sd-sla-resumen" aria-label="Resumen de acuerdos de nivel de servicio">
+            <div class="sd-sla-resumen-item sd-sla-riesgo"><i class="bi bi-hourglass-split"></i> Próximos a vencer (60 min) <strong>@proximosSla</strong></div>
+            <div class="sd-sla-resumen-item sd-sla-critico"><i class="bi bi-exclamation-triangle"></i> SLA vencidos <strong>@vencidosSla</strong></div>
+            <div class="sd-sla-resumen-item"><i class="bi bi-pause-circle"></i> Pendientes del usuario <strong>@pausadosSla</strong></div>
+        </section>
+    }
 
     <!-- ====================================================== -->
     <!-- PANEL TICKETS -->
@@ -381,6 +428,52 @@
 
         </div>
 
+
+        @if (Model.EsAdmin)
+        {
+            // Se usan los mismos tickets autorizados que carga el PageModel.
+            int ticketsSinAsignar = Model.Tickets.Count(t => string.IsNullOrWhiteSpace(t.UsuarioAsignadoId));
+            int ticketsAsignados = Model.Tickets.Count - ticketsSinAsignar;
+            int ticketsEnProceso = Model.Tickets.Count(t => t.StatusId == 3);
+            int ticketsCerrados = Model.Tickets.Count(t => t.StatusId == 6);
+            DateTime fechaIndicadores = DateTime.Now;
+            int ticketsSlaProximos = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, fechaIndicadores) == "proximo");
+            int ticketsSlaVencidos = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, fechaIndicadores) == "vencido");
+
+            <div class="sd-admin-toolbar">
+            <nav class="sd-asignacion-tabs" aria-label="Bandejas de tickets" id="mesaBandejasAdmin">
+                <button type="button" class="sd-asignacion-tab" data-bandeja="sin-asignar" aria-pressed="true" aria-controls="tablaMesaDeAyuda">
+                    <i class="bi bi-person-x" aria-hidden="true"></i> Sin asignar <span class="sd-asignacion-numero">@ticketsSinAsignar</span>
+                </button>
+                <button type="button" class="sd-asignacion-tab" data-bandeja="asignados" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
+                    <i class="bi bi-person-check" aria-hidden="true"></i> Asignados <span class="sd-asignacion-numero">@ticketsAsignados</span>
+                </button>
+                <button type="button" class="sd-asignacion-tab" data-bandeja="en-proceso" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
+                    <i class="bi bi-gear" aria-hidden="true"></i> En proceso <span class="sd-asignacion-numero">@ticketsEnProceso</span>
+                </button>
+                <button type="button" class="sd-asignacion-tab" data-bandeja="cerrados" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
+                    <i class="bi bi-lock" aria-hidden="true"></i> Cerrados <span class="sd-asignacion-numero">@ticketsCerrados</span>
+                </button>
+                <button type="button" class="sd-asignacion-tab" data-bandeja="sla-proximos" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
+                    <i class="bi bi-clock-history" aria-hidden="true"></i> Próximos SLA <span class="sd-asignacion-numero">@ticketsSlaProximos</span>
+                </button>
+                <button type="button" class="sd-asignacion-tab" data-bandeja="sla-vencidos" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
+                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i> SLA vencido <span class="sd-asignacion-numero">@ticketsSlaVencidos</span>
+                </button>
+                <button type="button" class="sd-asignacion-tab" data-bandeja="todos" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
+                    <i class="bi bi-inboxes" aria-hidden="true"></i> Todos <span class="sd-asignacion-numero">@Model.Tickets.Count</span>
+                </button>
+            </nav>
+            <div class="sd-exportaciones">
+                <a class="sd-exportar-btn" asp-area="ERP" asp-page="/MesaDeAyuda" asp-page-handler="ExportarExcel">
+                    <i class="bi bi-file-earmark-excel" aria-hidden="true"></i> Exportar Excel
+                </a>
+                <a class="sd-exportar-btn pdf" asp-area="ERP" asp-page="/MesaDeAyuda" asp-page-handler="ExportarPdf">
+                    <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> Exportar PDF
+                </a>
+            </div>
+            </div>
+        }
 
         <!-- ====================================================== -->
         <!-- FILTROS PRO -->
@@ -519,6 +612,13 @@
 
             </div>
 
+            @if (Model.EsAdmin)
+            {
+                <div id="mesaBandejaVacia" class="sd-asignacion-vacia d-none" role="status" aria-live="polite">
+                    No hay tickets en esta bandeja.
+                </div>
+            }
+
             <div class="table-responsive sd-table-wrap">
 
                 <table class="table sd-table sd-table-pro"
@@ -536,6 +636,11 @@
 
                             @if (Model.PuedeGestionarTickets)
                             {
+                                <th>SLA</th>
+                            }
+
+                            @if (Model.PuedeGestionarTickets)
+                            {
                                 <th>Técnico asignado</th>
                             }
 
@@ -548,7 +653,7 @@
                         @if (!Model.Tickets.Any())
                         {
                             <tr>
-                                <td colspan="@(Model.PuedeGestionarTickets ? 9 : 8)">
+                                <td colspan="@(Model.PuedeGestionarTickets ? 10 : 8)">
 
                                     <div class="sd-empty-pro">
 
@@ -585,11 +690,24 @@
                             {
                                 string estado = ticket.Status?.Nombre ?? "";
                                 string prioridad = ticket.Priority?.Codigo ?? "";
+                                string estadoSla = Model.ObtenerEstadoSla(ticket, DateTime.Now);
+                                string textoSla = estadoSla switch
+                                {
+                                    "vencido" => "Vencido",
+                                    "proximo" => "Próximo a vencer",
+                                    "vigente" => "Vigente",
+                                    "pausado" => "Pausado",
+                                    "finalizado" => "Finalizado",
+                                    _ => "Sin SLA"
+                                };
 
                                 <tr data-folio="@ticket.Folio"
                                     data-titulo="@ticket.Titulo"
                                     data-estado="@estado"
-                                    data-categoria="@ticket.Category?.Nombre">
+                                    data-categoria="@ticket.Category?.Nombre"
+                                    data-asignado="@(!string.IsNullOrWhiteSpace(ticket.UsuarioAsignadoId) ? "si" : "no")"
+                                     data-status-id="@ticket.StatusId"
+                                     data-sla="@estadoSla">
 
                                     <!-- FOLIO -->
                                     <td>
@@ -713,6 +831,11 @@
                                             @ticket.FechaCreacion.ToString("HH:mm")
                                         </div>
                                     </td>
+
+                                    @if (Model.PuedeGestionarTickets)
+                                    {
+                                        <td><span class="sd-sla-indicador @estadoSla" title="Estado de SLA al cargar la página">@textoSla</span></td>
+                                    }
 
                                     <!-- TÉCNICO ASIGNADO -->
                                     @if (Model.PuedeGestionarTickets)
@@ -2005,5 +2128,83 @@
 
     <script src="~/js/MesaDeAyuda.js"
             asp-append-version="true">
+    </script>
+
+    <script>
+        // Abrir el detalle al llegar desde la campanita (?ticketId=123).
+        // Reutiliza el botón de detalle existente y por tanto su autorización del backend.
+        document.addEventListener("DOMContentLoaded", function () {
+            const parametros = new URLSearchParams(window.location.search);
+            const ticketId = parametros.get("ticketId");
+            if (!ticketId || !/^\d+$/.test(ticketId) || Number(ticketId) <= 0) return;
+
+            const tabla = document.getElementById("tablaMesaDeAyuda");
+            if (!tabla) return;
+
+            const botonDetalle = Array.from(tabla.querySelectorAll("button[data-ticket-id]"))
+                .find(boton => boton.dataset.ticketId === ticketId);
+
+            if (!botonDetalle) {
+                // El ticket no está en la bandeja autorizada de este usuario.
+                // No se revelan datos ni se intenta omitir los permisos del servidor.
+                return;
+            }
+
+            // Puede encontrarse en una bandeja distinta de "Sin asignar".
+            const botonTodos = document.querySelector('#mesaBandejasAdmin button[data-bandeja="todos"]');
+            if (botonTodos) botonTodos.click();
+
+            // Activa el mismo manejador que usa el botón "Ver ticket" de la tabla.
+            botonDetalle.click();
+
+            // Retira el parámetro tras abrirlo, para que una recarga manual no vuelva a abrirlo.
+            parametros.delete("ticketId");
+            const resto = parametros.toString();
+            const urlLimpia = window.location.pathname + (resto ? "?" + resto : "") + window.location.hash;
+            window.history.replaceState(window.history.state, "", urlLimpia);
+        });
+
+        // Bandejas del administrador. Filtra filas ya autorizadas por el servidor.
+        // No sustituye las validaciones de seguridad del PageModel.
+        document.addEventListener("DOMContentLoaded", function () {
+            const nav = document.getElementById("mesaBandejasAdmin");
+            const tabla = document.getElementById("tablaMesaDeAyuda");
+            if (!nav || !tabla) return; // Técnicos y solicitantes conservan su vista.
+
+            const botones = Array.from(nav.querySelectorAll("[data-bandeja]"));
+            const filas = Array.from(tabla.querySelectorAll("tbody tr[data-asignado]"));
+            const mensajeVacio = document.getElementById("mesaBandejaVacia");
+            const badge = document.querySelector(".sd-table-shell-badge");
+
+            function mostrarBandeja(bandeja) {
+                let cantidad = 0;
+                filas.forEach(function (fila) {
+                    const asignado = fila.dataset.asignado === "si";
+                    const estado = Number(fila.dataset.statusId);
+                    const mostrar = bandeja === "todos" ||
+                        (bandeja === "asignados" && asignado) ||
+                        (bandeja === "sin-asignar" && !asignado) ||
+                        (bandeja === "en-proceso" && estado === 3) ||
+                        (bandeja === "cerrados" && estado === 6) ||
+                        (bandeja === "sla-proximos" && fila.dataset.sla === "proximo") ||
+                        (bandeja === "sla-vencidos" && fila.dataset.sla === "vencido");
+                    fila.classList.toggle("sd-tab-hidden", !mostrar);
+                    if (mostrar) cantidad++;
+                });
+
+                botones.forEach(function (boton) {
+                    boton.setAttribute("aria-pressed", String(boton.dataset.bandeja === bandeja));
+                });
+                if (mensajeVacio) mensajeVacio.classList.toggle("d-none", cantidad !== 0);
+                if (badge) badge.textContent = cantidad + " registro(s) en bandeja";
+            }
+
+            nav.addEventListener("click", function (event) {
+                const boton = event.target.closest("button[data-bandeja]");
+                if (boton && nav.contains(boton)) mostrarBandeja(boton.dataset.bandeja);
+            });
+
+            mostrarBandeja("sin-asignar");
+        });
     </script>
 }
