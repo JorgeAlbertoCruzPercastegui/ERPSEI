@@ -18,7 +18,7 @@ using QuestPDF.Infrastructure;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
-    [Authorize]
+    [Authorize(Roles = "Administrador")]
     public class MesaDeAyudaModel : PageModel
     {
         private readonly ApplicationDbContext _context;

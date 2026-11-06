@@ -1130,13 +1130,14 @@
 
                             @* Mesa de Ayuda: acceso independiente para todos los usuarios autenticados.
                                La vista y el PageModel determinan las operaciones permitidas por rol. *@
-                            <a class="quick-link @(menuMesaAyuda ? "menu-activo" : "")"
-                                   asp-area="ERP"
-                                   asp-page="/MesaDeAyuda"
-                                   aria-current="@(menuMesaAyuda ? "page" : null)"
-                                   aria-label="Mesa de Ayuda">
-                                <span class="quick-link-text">Mesa de Ayuda</span>
-                            </a>
+                            @if (User.IsInRole("Administrador"))
+                            {
+                                <a asp-area="ERP"
+                                       asp-page="/MesaDeAyuda"
+                                       class="quick-link">
+                                    <span class="quick-link-text">Mesa de Ayuda</span>
+                                </a>
+                            }
 
                             @if (mostrarBibliotecaCorporativa)
                             {
