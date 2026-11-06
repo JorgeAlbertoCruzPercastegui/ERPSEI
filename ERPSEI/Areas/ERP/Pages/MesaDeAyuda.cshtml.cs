@@ -2023,15 +2023,20 @@ namespace ERPSEI.Areas.ERP.Pages
                             "Administrador TI"
                         );
 
+                    bool esTecnicoMesa =
+                        await _userManager.IsInRoleAsync(
+                            nuevoUsuarioAsignado,
+                            "Técnico Mesa de Ayuda"
+                        );
 
-                    if (!esAdministradorTi)
+                    if (!esAdministradorTi && !esTecnicoMesa)
                     {
                         return new JsonResult(
                             new
                             {
                                 success = false,
                                 message =
-                                    "El usuario seleccionado no cuenta con el rol Administrador TI."
+                                    "El usuario seleccionado no tiene permisos para recibir tickets."
                             }
                         )
                         {
@@ -3696,57 +3701,39 @@ namespace ERPSEI.Areas.ERP.Pages
                     );
         }
 
+
         // =========================================================
-        // OBTENER TÉCNICOS
-        // Solamente usuarios con rol "Administrador TI"
+        // OBTENER TECNICOS DISPONIBLES
+        // Administrador TI y Tecnico Mesa de Ayuda
         // =========================================================
 
         private async Task<object[]> ObtenerTecnicosAsync()
         {
-            const string rolTecnico =
-                "Administrador TI";
-
-            IList<AppUser> usuariosAdministradorTi =
+            IList<AppUser> administradoresTi =
                 await _userManager.GetUsersInRoleAsync(
-                    rolTecnico
+                    "Administrador TI"
                 );
 
-            if (
-                usuariosAdministradorTi == null ||
-                usuariosAdministradorTi.Count == 0
-            )
-            {
-                return Array.Empty<object>();
-            }
+            IList<AppUser> tecnicosMesa =
+                await _userManager.GetUsersInRoleAsync(
+                    "Técnico Mesa de Ayuda"
+                );
 
-            var tecnicos =
-                usuariosAdministradorTi
-                    .OrderBy(
-                        x =>
-                            x.UserName ??
-                            x.Email
-                    )
-                    .Select(
-                        usuario =>
-                            new
-                            {
-                                id =
-                                    usuario.Id,
-
-                                nombre =
-                                    usuario.UserName ??
-                                    usuario.Email ??
-                                    "Usuario",
-
-                                correo =
-                                    usuario.Email ??
-                                    string.Empty
-                            }
-                    )
-                    .Cast<object>()
-                    .ToArray();
-
-            return tecnicos;
+            return administradoresTi
+                .Concat(tecnicosMesa)
+                .GroupBy(x => x.Id)
+                .Select(x => x.First())
+                .OrderBy(x => x.UserName ?? x.Email)
+                .Select(usuario => new
+                {
+                    id = usuario.Id,
+                    nombre = usuario.UserName
+                        ?? usuario.Email
+                        ?? "Usuario",
+                    correo = usuario.Email ?? string.Empty
+                })
+                .Cast<object>()
+                .ToArray();
         }
 
         // =========================================================
@@ -4251,9 +4238,9 @@ namespace ERPSEI.Areas.ERP.Pages
         private bool EsTecnicoMesaAyudaRestringido()
         {
             return
-                User.IsInRole("Administrador TI")
-                &&
                 User.IsInRole("Técnico Mesa de Ayuda")
+                &&
+                !User.IsInRole("Administrador TI")
                 &&
                 !User.IsInRole("Administrador")
                 &&
@@ -4267,25 +4254,12 @@ namespace ERPSEI.Areas.ERP.Pages
 
         private bool EsAdministradorMesa()
         {
-            if (
+            return
                 User.IsInRole("Administrador")
                 ||
                 User.IsInRole("Master")
-            )
-            {
-                return true;
-            }
-
-
-            /*
-             * Administrador TI conserva acceso total
-             * siempre que NO tenga el rol restringido
-             * Técnico Mesa de Ayuda.
-             */
-            return
-                User.IsInRole("Administrador TI")
-                &&
-                !User.IsInRole("Técnico Mesa de Ayuda");
+                ||
+                User.IsInRole("Administrador TI");
         }
 
         // =========================================================

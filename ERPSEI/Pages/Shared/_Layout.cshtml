@@ -198,6 +198,29 @@
     string nombreMesActual = hoyCumple.ToString("MMMM", new System.Globalization.CultureInfo("es-MX"));
 
     var paginaActual = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+    // Marcar únicamente la sección que corresponde a la ruta actual.
+    string areaMenuActual = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+    bool EnPagina(string area, params string[] rutas) =>
+        areaMenuActual.Equals(area, StringComparison.OrdinalIgnoreCase) &&
+        rutas.Any(r => paginaActual.Equals(r, StringComparison.OrdinalIgnoreCase));
+    bool EnSeccion(string area, params string[] prefijos) =>
+        areaMenuActual.Equals(area, StringComparison.OrdinalIgnoreCase) &&
+        prefijos.Any(p => paginaActual.StartsWith(p, StringComparison.OrdinalIgnoreCase));
+
+    bool menuMiEspacio = EnPagina("", "/Index");
+    bool menuMesaAyuda = EnPagina("ERP", "/MesaDeAyuda");
+    bool menuBiblioteca = EnPagina("", "/ManualesPoliticas") || EnSeccion("Catalogos", "/GestorManualesPoliticas");
+    bool menuIncidencias = EnPagina("ERP", "/Ausencias", "/Vacaciones");
+    bool menuWorkspace = areaMenuActual.Equals("ExpedientesBancarios", StringComparison.OrdinalIgnoreCase);
+    bool menuGestionCorporativa =
+        EnPagina("Catalogos", "/Empresas", "/CorreosDominios/CorreoDominio") ||
+        EnSeccion("Catalogos", "/Metricas/", "/Auditorias/") ||
+        EnPagina("ERP", "/ActivosFijos", "/Conciliaciones") ||
+        EnSeccion("ERP", "/Adquisiciones/");
+    bool menuComunidad = EnSeccion("Catalogos", "/GestorComunicadosInternos/", "/ComunicadosInternos/", "/GestorEventos/", "/Eventos/", "/Organigrama/", "/Directorio/");
+    bool menuRecursosHumanos =
+        EnPagina("Catalogos", "/Banners", "/HeaderImagenes", "/GestionDeTalento", "/Usuarios", "/Roles", "/Puestos", "/Areas", "/Subareas", "/Oficinas", "/Origenes", "/Niveles", "/Perfiles");
+
     bool esPaginaInicio = paginaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase);
 
     bool esLogin = paginaActual.Equals("/Account/Login", StringComparison.OrdinalIgnoreCase);
@@ -206,7 +229,7 @@
 
     bool esAuthPage = esLogin || esLogout || esPrivacy;
 
-    string logoHeader = ""; 
+    string logoHeader = "";
     /*= esAuthPage
     ? $"{Context.Request.Scheme}://{Context.Request.Host}/img/Logo.png"
     : $"{Context.Request.Scheme}://{Context.Request.Host}/img/Logo.png";*/
@@ -793,7 +816,7 @@
     @RenderSection("Styles", required: false)
 </head>
 
-    <body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme") @(ViewData["BodyClass"] ?? "")">
+<body class="@(esPaginaInicio ? "home-main-theme" : "module-main-theme") @(ViewData["BodyClass"] ?? "")">
 
     @if (SignInManager.IsSignedIn(User) && usr != null)
     {
@@ -803,8 +826,8 @@
         </div>
     }
 
-        <div id="layoutWrapper">
-    <header>
+    <div id="layoutWrapper">
+        <header>
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light header-bg shadow-none border-0 @(headerEsVideo ? "header-bg-video-mode" : "")"
                  style="@(string.IsNullOrWhiteSpace(headerBg) || headerEsVideo ? "" : $"background-image:url('{headerBg}')")">
 
@@ -816,21 +839,35 @@
                 }
 
                 <div class="container header-bg-inner">
-                <a class="navbar-brand d-flex flex-column align-items-start"
-                   asp-area="@(SignInManager.IsSignedIn(User) ? "" : "Identity")"
-                   asp-page="@(SignInManager.IsSignedIn(User) ? "/Index" : "/Account/Login")">
-                    <img class="brandimage" src="@logoHeader" />
-                </a>
+                    @* Marca y saludo alineados en el encabezado de escritorio. *@
+                    <div class="header-brand-inline">
+                        <a class="navbar-brand d-flex flex-column align-items-start"
+                               asp-area="@(SignInManager.IsSignedIn(User) ? "" : "Identity")"
+                               asp-page="@(SignInManager.IsSignedIn(User) ? "/Index" : "/Account/Login")">
+                            <img class="brandimage" src="@logoHeader" />
+                        </a>
 
-                    <button class="navbar-toggler px-0 @(SignInManager.IsSignedIn(User) ? "intranet-auth-toggler" : "")"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#navbarExample3"
-                            aria-controls="navbarExample3"
-                            aria-expanded="false"
-                            aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
+                        @if (SignInManager.IsSignedIn(User) && usr != null)
+                        {
+                            <div class="header-brand-greeting" aria-label="Usuario conectado">
+                                Hola, <strong>
+                                @(empleadoActual != null
+                                    ? $"{empleadoActual.Nombre} {empleadoActual.ApellidoPaterno} {empleadoActual.ApellidoMaterno}"
+                                    : (usr.UserName ?? User.Identity?.Name))
+                            </strong>
+                        </div>
+                    }
+                </div>
+
+                <button class="navbar-toggler px-0 @(SignInManager.IsSignedIn(User) ? "intranet-auth-toggler" : "")"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#navbarExample3"
+                        aria-controls="navbarExample3"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
                 <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between" id="navbarExample3">
                     <ul class="navbar-nav flex-grow-1">
@@ -844,224 +881,224 @@
                         }
                     </ul>
 
-                        <div class="header-right-tools">
+                    <div class="header-right-tools">
 
-                            @if (SignInManager.IsSignedIn(User))
-                            {
-                                <div class="quick-notifications dropdown">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <div class="quick-notifications dropdown">
 
-                                    <button class="quick-notification-btn @(totalNotificacionesNoLeidas > 0 ? "has-alert" : "")"
-                                            type="button"
-                                            data-bs-toggle="dropdown"
-                                            data-bs-auto-close="outside"
-                                            aria-expanded="false">
+                                <button class="quick-notification-btn @(totalNotificacionesNoLeidas > 0 ? "has-alert" : "")"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside"
+                                        aria-expanded="false">
 
-                                        <i class="bi bi-bell-fill"></i>
+                                    <i class="bi bi-bell-fill"></i>
 
-                                        <span id="notificationBadge"
-                                              class="quick-notification-badge"
-                                              style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
+                                    <span id="notificationBadge"
+                                          class="quick-notification-badge"
+                                          style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
 
-                                            @totalNotificacionesNoLeidas
+                                        @totalNotificacionesNoLeidas
 
-                                        </span>
+                                    </span>
 
-                                    </button>
+                                </button>
 
-                                    <div class="dropdown-menu dropdown-menu-end quick-notification-menu">
+                                <div class="dropdown-menu dropdown-menu-end quick-notification-menu">
 
-                                        @* =====================================================
+                                    @* =====================================================
            TOKEN PARA PETICIONES POST
            ===================================================== *@
 
-                                        <form id="notificationAntiForgeryForm"
-                                              method="post"
-                                              style="display:none;">
+                                    <form id="notificationAntiForgeryForm"
+                                          method="post"
+                                          style="display:none;">
 
-                                            @Html.AntiForgeryToken()
+                                        @Html.AntiForgeryToken()
 
-                                        </form>
+                                    </form>
 
-                                        @* =====================================================
+                                    @* =====================================================
            ENCABEZADO
            ===================================================== *@
 
-                                        <div class="quick-notification-header">
+                                    <div class="quick-notification-header">
 
-                                            <div class="quick-notification-header-info">
+                                        <div class="quick-notification-header-info">
 
-                                                <strong>
-                                                    Notificaciones
-                                                </strong>
+                                            <strong>
+                                                Notificaciones
+                                            </strong>
 
-                                                <span id="notificationUnreadText">
-                                                    @(totalNotificacionesNoLeidas > 0
-                                                        ? $"{totalNotificacionesNoLeidas} nueva(s)"
-                                                        : "Todo al día")
-                                                </span>
+                                            <span id="notificationUnreadText">
+                                                @(totalNotificacionesNoLeidas > 0
+                                                    ? $"{totalNotificacionesNoLeidas} nueva(s)"
+                                                    : "Todo al día")
+                                            </span>
 
-                                            </div>
+                                        </div>
 
-                                            <button type="button"
-                                                    id="btnMarcarTodasLeidas"
-                                                    class="quick-notification-mark-all"
-                                                    style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
+                                        <button type="button"
+                                                id="btnMarcarTodasLeidas"
+                                                class="quick-notification-mark-all"
+                                                style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
 
-                                                <i class="bi bi-check2-all"></i>
+                                            <i class="bi bi-check2-all"></i>
 
-                                                <span>
-                                                    Marcar todas
-                                                </span>
+                                            <span>
+                                                Marcar todas
+                                            </span>
 
-                                            </button>
+                                        </button>
+
+                                    </div>
+
+
+                                    @if (notificacionesUsuario.Any())
+                                    {
+                                        <div id="quickNotificationList">
+
+                                            @{
+                                                int indiceNotificacion = 0;
+                                            }
+
+                                            @foreach (var n in notificacionesUsuario)
+                                            {
+                                                <div class="quick-notification-item @(n.Leida ? "" : "is-unread")"
+                                                     data-notification-index="@indiceNotificacion"
+                                                     data-notification-id="@n.Id">
+
+                                                    @* =================================================
+                           CONTENIDO / ABRIR NOTIFICACIÓN
+                           ================================================= *@
+
+                                                    <a class="quick-notification-main"
+                                                           href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
+
+                                                        <div class="quick-notification-icon">
+
+                                                            <i class="@n.Icono"></i>
+
+                                                        </div>
+
+                                                        <div class="quick-notification-content">
+
+                                                            <strong>
+                                                                @n.Titulo
+                                                            </strong>
+
+                                                            <span>
+                                                                @n.Descripcion
+                                                            </span>
+
+                                                            <small>
+                                                                @n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")
+                                                            </small>
+
+                                                        </div>
+
+                                                    </a>
+
+
+                                                    @* =================================================
+                           MARCAR INDIVIDUALMENTE COMO LEÍDA
+                           ================================================= *@
+
+                                                    <button type="button"
+                                                            class="quick-notification-read-btn"
+                                                            data-notification-id="@n.Id"
+                                                            title="Marcar como leída"
+                                                            aria-label="Marcar notificación como leída"
+                                                            style="@(n.Leida ? "display:none;" : "")">
+
+                                                        <i class="bi bi-check2"></i>
+
+                                                    </button>
+
+                                                </div>
+
+                                                indiceNotificacion++;
+                                            }
 
                                         </div>
 
 
-                                        @if (notificacionesUsuario.Any())
-                                        {
-                                            <div id="quickNotificationList">
-
-                                                @{
-                                                    int indiceNotificacion = 0;
-                                                }
-
-                                                @foreach (var n in notificacionesUsuario)
-                                                {
-                                                    <div class="quick-notification-item @(n.Leida ? "" : "is-unread")"
-                                                         data-notification-index="@indiceNotificacion"
-                                                         data-notification-id="@n.Id">
-
-                                                        @* =================================================
-                           CONTENIDO / ABRIR NOTIFICACIÓN
-                           ================================================= *@
-
-                                                        <a class="quick-notification-main"
-                                                               href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
-
-                                                            <div class="quick-notification-icon">
-
-                                                                <i class="@n.Icono"></i>
-
-                                                            </div>
-
-                                                            <div class="quick-notification-content">
-
-                                                                <strong>
-                                                                    @n.Titulo
-                                                                </strong>
-
-                                                                <span>
-                                                                    @n.Descripcion
-                                                                </span>
-
-                                                                <small>
-                                                                    @n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")
-                                                                </small>
-
-                                                            </div>
-
-                                                        </a>
-
-
-                                                        @* =================================================
-                           MARCAR INDIVIDUALMENTE COMO LEÍDA
-                           ================================================= *@
-
-                                                        <button type="button"
-                                                                class="quick-notification-read-btn"
-                                                                data-notification-id="@n.Id"
-                                                                title="Marcar como leída"
-                                                                aria-label="Marcar notificación como leída"
-                                                                style="@(n.Leida ? "display:none;" : "")">
-
-                                                            <i class="bi bi-check2"></i>
-
-                                                        </button>
-
-                                                    </div>
-
-                                                    indiceNotificacion++;
-                                                }
-
-                                            </div>
-
-
-                                            @* =====================================================
+                                        @* =====================================================
                PAGINADOR
                ===================================================== *@
 
-                                            <div class="quick-notification-pagination"
-                                                 id="quickNotificationPagination">
+                                        <div class="quick-notification-pagination"
+                                             id="quickNotificationPagination">
 
-                                                <button type="button"
-                                                        class="quick-notification-page-btn"
-                                                        id="btnNotificationPrev"
-                                                        aria-label="Notificaciones anteriores">
+                                            <button type="button"
+                                                    class="quick-notification-page-btn"
+                                                    id="btnNotificationPrev"
+                                                    aria-label="Notificaciones anteriores">
 
-                                                    <i class="bi bi-chevron-left"></i>
+                                                <i class="bi bi-chevron-left"></i>
 
-                                                </button>
-
-
-                                                <div class="quick-notification-page-info">
-
-                                                    <span id="notificationCurrentPage">
-                                                        1
-                                                    </span>
-
-                                                    <span class="quick-notification-page-separator">
-                                                        /
-                                                    </span>
-
-                                                    <span id="notificationTotalPages">
-                                                        1
-                                                    </span>
-
-                                                </div>
+                                            </button>
 
 
-                                                <button type="button"
-                                                        class="quick-notification-page-btn"
-                                                        id="btnNotificationNext"
-                                                        aria-label="Notificaciones siguientes">
+                                            <div class="quick-notification-page-info">
 
-                                                    <i class="bi bi-chevron-right"></i>
+                                                <span id="notificationCurrentPage">
+                                                    1
+                                                </span>
 
-                                                </button>
+                                                <span class="quick-notification-page-separator">
+                                                    /
+                                                </span>
+
+                                                <span id="notificationTotalPages">
+                                                    1
+                                                </span>
 
                                             </div>
-                                        }
-                                        else
-                                        {
-                                            <div class="quick-notification-empty">
-                                                No tienes notificaciones.
-                                            </div>
-                                        }
 
-                                    </div>
 
-                                </div>
-                            }
+                                            <button type="button"
+                                                    class="quick-notification-page-btn"
+                                                    id="btnNotificationNext"
+                                                    aria-label="Notificaciones siguientes">
 
-                            @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
-                            {
-                                <div class="header-side-visual">
-                                    @if (headerEsVideo)
-                                    {
-                                        <video class="header-side-image" autoplay muted loop playsinline>
-                                            <source src="@headerBg" type="video/@(headerExt == ".mov" ? "quicktime" : headerExt.Replace(".", ""))" />
-                                        </video>
+                                                <i class="bi bi-chevron-right"></i>
+
+                                            </button>
+
+                                        </div>
                                     }
                                     else
                                     {
-                                        <img src="@headerBg" alt="Header visual" class="header-side-image" />
+                                        <div class="quick-notification-empty">
+                                            No tienes notificaciones.
+                                        </div>
                                     }
-                                </div>
-                            }
 
-                            <partial name="_LoginPartial" />
-                        </div>
+                                </div>
+
+                            </div>
+                        }
+
+                        @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
+                        {
+                            <div class="header-side-visual">
+                                @if (headerEsVideo)
+                                {
+                                    <video class="header-side-image" autoplay muted loop playsinline>
+                                        <source src="@headerBg" type="video/@(headerExt == ".mov" ? "quicktime" : headerExt.Replace(".", ""))" />
+                                    </video>
+                                }
+                                else
+                                {
+                                    <img src="@headerBg" alt="Header visual" class="header-side-image" />
+                                }
+                            </div>
+                        }
+
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
             </div>
         </nav>
@@ -1071,17 +1108,17 @@
         <div class="container">
             @if (SignInManager.IsSignedIn(User))
             {
-                <div class="topbar-links d-flex align-items-center justify-content-between py-1">
-                    <div class="small text-muted d-flex align-items-center gap-2">
-                        Hola, <b>
-                            @(
-                                empleadoActual != null
-                                ? $"{empleadoActual.Nombre} {empleadoActual.ApellidoPaterno} {empleadoActual.ApellidoMaterno}"
-                                : (usr?.UserName ?? User.Identity?.Name)
-                                )
-                        </b>
-                    </div>
+                @* Saludo solo para móvil: debajo del encabezado y encima del menú. *@
+                <div class="intranet-greeting intranet-mobile-welcome" aria-label="Usuario conectado">
+                    <span class="intranet-session-welcome__label">Hola,</span>
+                    <strong class="intranet-session-welcome__name">
+                        @(empleadoActual != null
+                            ? $"{empleadoActual.Nombre} {empleadoActual.ApellidoPaterno} {empleadoActual.ApellidoMaterno}"
+                            : (usr?.UserName ?? User.Identity?.Name))
+                    </strong>
+                </div>
 
+                <div class="topbar-links intranet-nav-bar d-flex align-items-center py-1">
                     <div class="quick-nav-wrap position-relative">
                         <button class="quick-nav-toggle d-lg-none" type="button" aria-expanded="false" aria-controls="quickNavMenu">
                             ☰
@@ -1089,12 +1126,22 @@
 
                         <nav id="quickNavMenu" class="quick-nav align-items-center gap-3">
 
-                            <a class="quick-link" asp-area="" asp-page="/Index">Mi Espacio</a>
+                            <a class="quick-link @(menuMiEspacio ? "menu-activo" : "")" asp-area="" asp-page="/Index" aria-current="@(menuMiEspacio ? "page" : null)"><span class="quick-link-text">Mi Espacio</span></a>
+
+                            @* Mesa de Ayuda: acceso independiente para todos los usuarios autenticados.
+                               La vista y el PageModel determinan las operaciones permitidas por rol. *@
+                            <a class="quick-link @(menuMesaAyuda ? "menu-activo" : "")"
+                                   asp-area="ERP"
+                                   asp-page="/MesaDeAyuda"
+                                   aria-current="@(menuMesaAyuda ? "page" : null)"
+                                   aria-label="Mesa de Ayuda">
+                                <span class="quick-link-text">Mesa de Ayuda</span>
+                            </a>
 
                             @if (mostrarBibliotecaCorporativa)
                             {
                                 <div class="quick-dd">
-                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Biblioteca Corporativa</a>
+                                    <a class="quick-link quick-dd-toggle @(menuBiblioteca ? "menu-activo" : "")" href="#" onclick="return false;"><span class="quick-link-text">Biblioteca Corporativa</span></a>
                                     <div class="quick-dd-menu">
                                         @if (mostrarBibliotecaFront)
                                         {
@@ -1106,8 +1153,8 @@
                                         @if (mostrarGestorBiblioteca)
                                         {
                                             <a class="quick-dd-item"
-                                               asp-area="Catalogos"
-                                               asp-page="/GestorManualesPoliticas/Index">
+                                                   asp-area="Catalogos"
+                                                   asp-page="/GestorManualesPoliticas/Index">
                                                 Gestor Manuales / Políticas / Reglamentos
                                             </a>
                                         }
@@ -1118,7 +1165,7 @@
                             @if (mostrarIncidencias)
                             {
                                 <div class="quick-dd">
-                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Incidencias</a>
+                                    <a class="quick-link quick-dd-toggle @(menuIncidencias ? "menu-activo" : "")" href="#" onclick="return false;"><span class="quick-link-text">Incidencias</span></a>
                                     <div class="quick-dd-menu">
                                         <a class="quick-dd-item" asp-area="ERP" asp-page="/Ausencias">Ausencias</a>
                                         <a class="quick-dd-item" asp-area="ERP" asp-page="/Vacaciones">Vacaciones</a>
@@ -1130,12 +1177,10 @@
                             {
                                 <div class="quick-dd">
 
-                                    <a class="quick-link quick-dd-toggle"
+                                    <a class="quick-link quick-dd-toggle" @(menuWorkspace ? "menu-activo" : "")
                                            href="#"
                                            onclick="return false;">
-
-                                        Workspace Corporativo
-
+                                        <span class="quick-link-text">Workspace Corporativo</span>
                                     </a>
 
                                     <div class="quick-dd-menu">
@@ -1216,11 +1261,10 @@
                             {
                                 <div class="quick-dd">
 
-                                    <a class="quick-link quick-dd-toggle"
+                                    <a class="quick-link quick-dd-toggle" @(menuGestionCorporativa ? "menu-activo" : "")
                                            href="#"
                                            onclick="return false;">
-
-                                        Gestión Corporativa
+                                        <span class="quick-link-text">Gestión Corporativa</span>
                                     </a>
 
                                     <div class="quick-dd-menu">
@@ -1302,14 +1346,14 @@
                             @if (mostrarComunidad)
                             {
                                 <div class="quick-dd">
-                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Comunidad</a>
+                                    <a class="quick-link quick-dd-toggle @(menuComunidad ? "menu-activo" : "")" href="#" onclick="return false;"><span class="quick-link-text">Comunidad</span></a>
                                     <div class="quick-dd-menu">
 
                                         @if (mostrarGestorComunicadosInternosMenu)
                                         {
                                             <a class="quick-dd-item"
-                                               asp-area="Catalogos"
-                                               asp-page="/GestorComunicadosInternos/Index">
+                                                   asp-area="Catalogos"
+                                                   asp-page="/GestorComunicadosInternos/Index">
                                                 Gestor Comunicados Internos
                                             </a>
                                         }
@@ -1317,8 +1361,8 @@
                                         @if (mostrarComunicadosInternosMenu)
                                         {
                                             <a class="quick-dd-item"
-                                               asp-area="Catalogos"
-                                               asp-page="/ComunicadosInternos/Index">
+                                                   asp-area="Catalogos"
+                                                   asp-page="/ComunicadosInternos/Index">
                                                 Comunicados Internos
                                             </a>
                                         }
@@ -1326,8 +1370,8 @@
                                         @if (mostrarGestorEventosMenu)
                                         {
                                             <a class="quick-dd-item"
-                                               asp-area="Catalogos"
-                                               asp-page="/GestorEventos/Index">
+                                                   asp-area="Catalogos"
+                                                   asp-page="/GestorEventos/Index">
                                                 Gestor Eventos
                                             </a>
                                         }
@@ -1335,8 +1379,8 @@
                                         @if (mostrarEventosMenu)
                                         {
                                             <a class="quick-dd-item"
-                                               asp-area="Catalogos"
-                                               asp-page="/Eventos/Index">
+                                                   asp-area="Catalogos"
+                                                   asp-page="/Eventos/Index">
                                                 Eventos
                                             </a>
                                         }
@@ -1352,11 +1396,11 @@
 
                                         @if (mostrarDirectorioMenu)
                                         {
-                                        <a class="quick-dd-item"
-                                               asp-area="Catalogos"
-                                               asp-page="/Directorio/Directorio">
-                                            Directorio
-                                        </a>
+                                            <a class="quick-dd-item"
+                                                   asp-area="Catalogos"
+                                                   asp-page="/Directorio/Directorio">
+                                                Directorio
+                                            </a>
                                         }
 
                                     </div>
@@ -1366,7 +1410,7 @@
                             @if (mostrarRecursosHumanos)
                             {
                                 <div class="quick-dd">
-                                    <a class="quick-link quick-dd-toggle" href="#" onclick="return false;">Recursos Humanos</a>
+                                    <a class="quick-link quick-dd-toggle @(menuRecursosHumanos ? "menu-activo" : "")" href="#" onclick="return false;"><span class="quick-link-text">Recursos Humanos</span></a>
                                     <div class="quick-dd-menu quick-dd-menu-wide">
                                         @if (mostrarBannersMenu)
                                         {
@@ -1643,8 +1687,8 @@
 
     <script type="text/javascript">
         function OnSubmenuClick() {
-            this.event.stopPropagation();
-            this.event.preventDefault();
+        this.event.stopPropagation();
+        this.event.preventDefault();
         }
     </script>
 

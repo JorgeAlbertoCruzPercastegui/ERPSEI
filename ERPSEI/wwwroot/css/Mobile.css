@@ -834,3 +834,323 @@
         box-sizing: border-box !important;
     }
 }
+
+
+/* =========================================================
+   ERPSEI - SALUDO FUERA DEL MENÚ / NAVEGACIÓN RESPONSIVA
+   ========================================================= */
+
+body:is(.home-main-theme, .module-main-theme) .intranet-greeting {
+    display: block;
+    width: 100%;
+    margin: 0 0 9px;
+    padding: 0 3px;
+    color: #21166f;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+    body:is(.home-main-theme, .module-main-theme) .intranet-greeting strong {
+        font-weight: 700;
+    }
+
+@media (min-width: 992px) {
+    body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar {
+        display: flex !important;
+        width: 100%;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 64px;
+        padding: 10px 16px !important;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar .quick-nav-wrap {
+            display: flex;
+            flex: 1 1 100%;
+            width: 100%;
+            min-width: 0;
+            justify-content: center;
+        }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar #quickNavMenu {
+            justify-content: center;
+            flex-wrap: wrap;
+            column-gap: 18px !important;
+            row-gap: 8px !important;
+        }
+}
+
+@media (max-width: 991.98px) {
+    body:is(.home-main-theme, .module-main-theme) .intranet-greeting {
+        font-size: 13px;
+        margin-bottom: 8px;
+        padding-inline: 4px;
+    }
+
+    body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar {
+        justify-content: flex-end !important;
+        min-height: 64px !important;
+    }
+}
+
+
+/* =============================================================
+   ERPSEI - AJUSTES FINOS NOV 2026
+   Saludo independiente, perfil a la izquierda y cumpleaños móvil
+   ============================================================= */
+
+/* Acercar ligeramente el saludo al encabezado, sin tocar el logo. */
+body:is(.home-main-theme, .module-main-theme) .intranet-greeting {
+    position: relative;
+    top: -9px;
+    margin-bottom: 0 !important;
+}
+
+@media (max-width: 991.98px) {
+    body:is(.home-main-theme, .module-main-theme) .intranet-greeting {
+        top: -7px;
+        margin-bottom: 1px !important;
+    }
+
+    /* El botón de perfil (#btnSidebar) es reubicado por el JS
+       existente dentro de .topbar-links. Alinear ambos controles
+       a la izquierda, sin afectar el despliegue de #quickNavMenu. */
+    body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar {
+        justify-content: flex-start !important;
+        gap: 8px !important;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar > #btnSidebar {
+            order: 0 !important;
+            margin-right: 0 !important;
+            flex-shrink: 0 !important;
+        }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar > .quick-nav-wrap {
+            order: 1 !important;
+            margin-left: 0 !important;
+            margin-right: auto !important;
+            justify-content: flex-start !important;
+        }
+}
+
+/* Compactar únicamente el encabezado del bloque de cumpleaños.
+   No se modifica la posición ni el tamaño del dibujo del pastel. */
+@media (max-width: 767.98px) {
+    body.home-main-theme .birthday-showcase--compact .birthday-showcase__top {
+        position: relative;
+        top: -14px;
+        margin-bottom: -14px !important;
+    }
+}
+
+/* ===========================================================
+   ERPSEI | BIENVENIDA EN HEADER (ESCRITORIO) Y MÓVIL
+   No cambia rutas, roles ni comportamiento de navegación.
+   =========================================================== */
+body:is(.home-main-theme, .module-main-theme) .intranet-session-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 0;
+    max-width: min(30vw, 365px);
+    margin-right: 12px;
+    color: #21166f;
+    text-align: right;
+    line-height: 1.25;
+}
+
+body:is(.home-main-theme, .module-main-theme) .intranet-session-welcome__label {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #62647a;
+}
+
+body:is(.home-main-theme, .module-main-theme) .intranet-session-welcome__name {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #21166f;
+    overflow-wrap: anywhere;
+}
+/* La copia móvil no debe ocupar espacio en escritorio. */
+body:is(.home-main-theme, .module-main-theme) .intranet-mobile-welcome {
+    display: none !important;
+}
+
+@media (max-width: 991.98px) {
+    /* El saludo abandona la zona de notificaciones en móvil. */
+    body:is(.home-main-theme, .module-main-theme) .intranet-session-welcome {
+        display: none !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme) .intranet-mobile-welcome {
+        position: static !important;
+        display: flex !important;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        gap: 2px;
+        margin: 3px 0 10px !important;
+        padding: 0 4px !important;
+        max-width: 100%;
+        line-height: 1.35;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-mobile-welcome .intranet-session-welcome__name {
+            font-size: 14px;
+        }
+    /* Perfil a la izquierda; menú hamburguesa a la derecha. */
+    body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar {
+        justify-content: space-between !important;
+        gap: 8px !important;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar > #btnSidebar {
+            order: 0 !important;
+            margin-right: auto !important;
+        }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar > .quick-nav-wrap {
+            order: 2 !important;
+            margin-left: auto !important;
+            margin-right: 0 !important;
+            justify-content: flex-end !important;
+        }
+}
+
+/* ============================================================
+   ERPSEI | SALUDO JUNTO A INTRANET (NOVIEMBRE 2026)
+   Escritorio: marca + Hola y nombre en una sola línea.
+   Móvil: saludo debajo del encabezado (sin desbordamiento).
+   ============================================================ */
+body:is(.home-main-theme, .module-main-theme) .header-brand-inline {
+    display: flex;
+    align-items: center;
+    flex: 0 1 auto;
+    min-width: 0;
+    gap: 24px;
+}
+
+    body:is(.home-main-theme, .module-main-theme) .header-brand-inline .navbar-brand {
+        flex: 0 0 auto;
+        margin-right: 0 !important;
+    }
+
+body:is(.home-main-theme, .module-main-theme) .header-brand-greeting {
+    min-width: 0;
+    color: #21166f;
+    font-size: 14px;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+
+    body:is(.home-main-theme, .module-main-theme) .header-brand-greeting strong {
+        font-weight: 700;
+    }
+
+@media (max-width: 1199.98px) and (min-width: 992px) {
+    body:is(.home-main-theme, .module-main-theme) .header-brand-inline {
+        gap: 12px;
+    }
+
+    body:is(.home-main-theme, .module-main-theme) .header-brand-greeting {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 991.98px) {
+    body:is(.home-main-theme, .module-main-theme) .header-brand-greeting {
+        display: none !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme) .intranet-mobile-welcome {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        align-items: baseline !important;
+        column-gap: 5px !important;
+        row-gap: 0 !important;
+        padding-inline: 4px !important;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-mobile-welcome .intranet-session-welcome__label,
+        body:is(.home-main-theme, .module-main-theme) .intranet-mobile-welcome .intranet-session-welcome__name {
+            display: inline !important;
+            font-size: 13px !important;
+            overflow-wrap: anywhere;
+        }
+    /* Mantener los dos controles como se acordó: perfil izq., menú der. */
+    body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar {
+        justify-content: space-between !important;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar > #btnSidebar {
+            order: 0 !important;
+            margin-right: auto !important;
+        }
+
+        body:is(.home-main-theme, .module-main-theme) .intranet-nav-bar > .quick-nav-wrap {
+            order: 2 !important;
+            margin-left: auto !important;
+            margin-right: 0 !important;
+            justify-content: flex-end !important;
+        }
+}
+
+/* =============================================================
+   ERPSEI - INDICADOR ÚNICO DE NAVEGACIÓN (ESCRITORIO / PWA)
+   La clase menu-activo se calcula en _Layout.cshtml por ruta.
+   El subrayado se aplica al SPAN, no al enlace de ancho completo.
+   ============================================================= */
+
+/* Anular subrayados antiguos que usaban el ancho del enlace. */
+body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link {
+    border-bottom: 0 !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+}
+
+    body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link::before,
+    body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link::after {
+        content: none !important;
+        display: none !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link .quick-link-text {
+        display: inline-block !important;
+        position: relative !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        border-bottom: 2px solid transparent !important;
+        padding-bottom: 3px;
+        line-height: 1.35;
+        white-space: normal;
+    }
+    /* Solo la página actual se muestra dorada; abrir un acordeón no activa la sección. */
+    body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link.menu-activo {
+        color: #d4ad45 !important;
+    }
+
+        body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link.menu-activo .quick-link-text {
+            color: #d4ad45 !important;
+            border-bottom-color: #d4ad45 !important;
+        }
+
+@media (max-width: 991.98px) {
+    /* El enlace puede ocupar toda la fila; solo su texto recibe la línea. */
+    body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link.menu-activo {
+        color: #d4ad45 !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-dd.open > .quick-link:not(.menu-activo) {
+        color: #ffffff !important;
+    }
+
+    body:is(.home-main-theme, .module-main-theme) #quickNavMenu .quick-link .quick-link-text {
+        flex: 0 1 auto;
+    }
+}
