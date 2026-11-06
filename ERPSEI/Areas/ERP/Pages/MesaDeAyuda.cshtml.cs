@@ -3775,31 +3775,6 @@ namespace ERPSEI.Areas.ERP.Pages
         }
 
         // =========================================================
-        // INDICADOR SLA: calculado con las fechas actuales, sin modificar datos.
-        // La ventana preventiva es de 60 minutos. El estado pendiente del usuario
-        // se muestra pausado; los vencimientos históricos se evalúan en otra etapa.
-        // =========================================================
-        public string ObtenerEstadoSla(ServiceTicket ticket, DateTime ahora)
-        {
-            if (ticket.StatusId == 5 || ticket.StatusId == 6 || ticket.StatusId == 8)
-                return "finalizado";
-
-            if (ticket.StatusId == 4)
-                return "pausado";
-
-            var limites = new List<DateTime>();
-            if (!ticket.FechaPrimeraRespuesta.HasValue && ticket.FechaLimiteRespuestaSla.HasValue)
-                limites.Add(ticket.FechaLimiteRespuestaSla.Value);
-            if (!ticket.FechaResolucion.HasValue && ticket.FechaLimiteResolucionSla.HasValue)
-                limites.Add(ticket.FechaLimiteResolucionSla.Value);
-
-            if (limites.Count == 0) return "sin-sla";
-            if (limites.Any(x => x < ahora)) return "vencido";
-            if (limites.Any(x => x <= ahora.AddMinutes(60))) return "proximo";
-            return "vigente";
-        }
-
-        // =========================================================
         // KPIs
         // =========================================================
 

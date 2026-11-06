@@ -22,20 +22,6 @@
         .sd-asignacion-tab[aria-pressed="true"] .sd-asignacion-numero { background:#fff; }
         #tablaMesaDeAyuda tbody tr.sd-tab-hidden { display:none !important; }
         .sd-asignacion-vacia { padding:24px; text-align:center; color:#625f79; }
-        /* Semáforo SLA: solo lectura, fechas calculadas al abrir/actualizar la página. */
-        .sd-sla-resumen { display:flex; flex-wrap:wrap; gap:12px; margin:0 0 22px; }
-        .sd-sla-resumen-item { display:flex; align-items:center; gap:10px; padding:13px 18px; min-height:54px; border:1px solid #e8e7ef; border-radius:12px; background:#fff; font-size:13px; font-weight:700; color:#252334; }
-        .sd-sla-resumen-item strong { font-size:21px; color:#21166f; }
-        .sd-sla-resumen-item.sd-sla-riesgo { border-color:#f2d59a; background:#fffaf0; }
-        .sd-sla-resumen-item.sd-sla-critico { border-color:#efb8bd; background:#fff6f7; }
-        .sd-sla-indicador { display:inline-flex; align-items:center; padding:6px 9px; border-radius:99px; font-size:11px; font-weight:750; white-space:nowrap; }
-        .sd-sla-indicador.vigente { background:#e9f7ef; color:#176b45; }
-        .sd-sla-indicador.proximo { background:#fff2d4; color:#915c00; }
-        .sd-sla-indicador.vencido { background:#ffe6e8; color:#ad2535; }
-        .sd-sla-indicador.pausado { background:#eef1f6; color:#545c72; }
-        .sd-sla-indicador.finalizado { background:#f1eff4; color:#606074; }
-        .sd-sla-indicador.sin-sla { background:#f1eff4; color:#606074; }
-        @@media(max-width:575.98px) { .sd-sla-resumen-item { flex:1 1 140px; justify-content:center; } }
         .sd-exportaciones { display:flex; flex:0 0 auto; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end; margin:0 0 0 auto; }
         .sd-exportar-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:10px 16px; background:#fff; border:1px solid #d8d4ed; border-radius:12px; font-size:13px; font-weight:700; color:#21166f; text-decoration:none; transition:background .15s ease,border-color .15s ease; }
         .sd-exportar-btn:hover,.sd-exportar-btn:focus-visible { color:#21166f; background:#f1effb; border-color:#21166f; }
@@ -336,19 +322,6 @@
 
     </section>
 
-    @if (Model.PuedeGestionarTickets)
-    {
-        // Estos conteos aplican únicamente a tickets visibles para el usuario actual.
-        DateTime instanteSla = DateTime.Now;
-        int proximosSla = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, instanteSla) == "proximo");
-        int vencidosSla = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, instanteSla) == "vencido");
-        int pausadosSla = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, instanteSla) == "pausado");
-        <section class="sd-sla-resumen" aria-label="Resumen de acuerdos de nivel de servicio">
-            <div class="sd-sla-resumen-item sd-sla-riesgo"><i class="bi bi-hourglass-split"></i> Próximos a vencer (60 min) <strong>@proximosSla</strong></div>
-            <div class="sd-sla-resumen-item sd-sla-critico"><i class="bi bi-exclamation-triangle"></i> SLA vencidos <strong>@vencidosSla</strong></div>
-            <div class="sd-sla-resumen-item"><i class="bi bi-pause-circle"></i> Pendientes del usuario <strong>@pausadosSla</strong></div>
-        </section>
-    }
 
     <!-- ====================================================== -->
     <!-- PANEL TICKETS -->
@@ -436,9 +409,6 @@
             int ticketsAsignados = Model.Tickets.Count - ticketsSinAsignar;
             int ticketsEnProceso = Model.Tickets.Count(t => t.StatusId == 3);
             int ticketsCerrados = Model.Tickets.Count(t => t.StatusId == 6);
-            DateTime fechaIndicadores = DateTime.Now;
-            int ticketsSlaProximos = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, fechaIndicadores) == "proximo");
-            int ticketsSlaVencidos = Model.Tickets.Count(t => Model.ObtenerEstadoSla(t, fechaIndicadores) == "vencido");
 
             <div class="sd-admin-toolbar">
             <nav class="sd-asignacion-tabs" aria-label="Bandejas de tickets" id="mesaBandejasAdmin">
@@ -453,12 +423,6 @@
                 </button>
                 <button type="button" class="sd-asignacion-tab" data-bandeja="cerrados" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
                     <i class="bi bi-lock" aria-hidden="true"></i> Cerrados <span class="sd-asignacion-numero">@ticketsCerrados</span>
-                </button>
-                <button type="button" class="sd-asignacion-tab" data-bandeja="sla-proximos" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
-                    <i class="bi bi-clock-history" aria-hidden="true"></i> Próximos SLA <span class="sd-asignacion-numero">@ticketsSlaProximos</span>
-                </button>
-                <button type="button" class="sd-asignacion-tab" data-bandeja="sla-vencidos" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
-                    <i class="bi bi-exclamation-circle" aria-hidden="true"></i> SLA vencido <span class="sd-asignacion-numero">@ticketsSlaVencidos</span>
                 </button>
                 <button type="button" class="sd-asignacion-tab" data-bandeja="todos" aria-pressed="false" aria-controls="tablaMesaDeAyuda">
                     <i class="bi bi-inboxes" aria-hidden="true"></i> Todos <span class="sd-asignacion-numero">@Model.Tickets.Count</span>
@@ -636,11 +600,6 @@
 
                             @if (Model.PuedeGestionarTickets)
                             {
-                                <th>SLA</th>
-                            }
-
-                            @if (Model.PuedeGestionarTickets)
-                            {
                                 <th>Técnico asignado</th>
                             }
 
@@ -653,7 +612,7 @@
                         @if (!Model.Tickets.Any())
                         {
                             <tr>
-                                <td colspan="@(Model.PuedeGestionarTickets ? 10 : 8)">
+                                <td colspan="@(Model.PuedeGestionarTickets ? 9 : 8)">
 
                                     <div class="sd-empty-pro">
 
@@ -690,24 +649,13 @@
                             {
                                 string estado = ticket.Status?.Nombre ?? "";
                                 string prioridad = ticket.Priority?.Codigo ?? "";
-                                string estadoSla = Model.ObtenerEstadoSla(ticket, DateTime.Now);
-                                string textoSla = estadoSla switch
-                                {
-                                    "vencido" => "Vencido",
-                                    "proximo" => "Próximo a vencer",
-                                    "vigente" => "Vigente",
-                                    "pausado" => "Pausado",
-                                    "finalizado" => "Finalizado",
-                                    _ => "Sin SLA"
-                                };
 
                                 <tr data-folio="@ticket.Folio"
                                     data-titulo="@ticket.Titulo"
                                     data-estado="@estado"
                                     data-categoria="@ticket.Category?.Nombre"
                                     data-asignado="@(!string.IsNullOrWhiteSpace(ticket.UsuarioAsignadoId) ? "si" : "no")"
-                                     data-status-id="@ticket.StatusId"
-                                     data-sla="@estadoSla">
+                                     data-status-id="@ticket.StatusId">
 
                                     <!-- FOLIO -->
                                     <td>
@@ -831,11 +779,6 @@
                                             @ticket.FechaCreacion.ToString("HH:mm")
                                         </div>
                                     </td>
-
-                                    @if (Model.PuedeGestionarTickets)
-                                    {
-                                        <td><span class="sd-sla-indicador @estadoSla" title="Estado de SLA al cargar la página">@textoSla</span></td>
-                                    }
 
                                     <!-- TÉCNICO ASIGNADO -->
                                     @if (Model.PuedeGestionarTickets)
@@ -2185,9 +2128,7 @@
                         (bandeja === "asignados" && asignado) ||
                         (bandeja === "sin-asignar" && !asignado) ||
                         (bandeja === "en-proceso" && estado === 3) ||
-                        (bandeja === "cerrados" && estado === 6) ||
-                        (bandeja === "sla-proximos" && fila.dataset.sla === "proximo") ||
-                        (bandeja === "sla-vencidos" && fila.dataset.sla === "vencido");
+                        (bandeja === "cerrados" && estado === 6);
                     fila.classList.toggle("sd-tab-hidden", !mostrar);
                     if (mostrar) cantidad++;
                 });
