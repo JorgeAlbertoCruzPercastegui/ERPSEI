@@ -1087,7 +1087,7 @@ function establecerDatosAdicionales(row, action) {
             let iconClass = "opacity-25";
             let nameClass = "opacity-25";
             let nameHTML = `<div class="overflowed-text">${emptySelectItemText}</div>`;
-            let editDisabled = (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) ? (action == VER ? "disabled" : "") : ("disabled");
+            let editDisabled = (puedeEditar || (action === NUEVO && puedeCrear)) ? (action == VER ? "disabled" : "") : ("disabled");
             let itemVerHTML = "";
             let itemEditarHTML = "";
             let itemEliminarHTML = "";
@@ -1207,7 +1207,7 @@ function establecerDatosAdicionales(row, action) {
             let iconClass = "opacity-25";
             let nameClass = "opacity-25";
             let nameHTML = `<div class="overflowed-text">${emptySelectItemText}</div>`;
-            let editDisabled = (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar) ? (action == VER ? "disabled" : "") : ("disabled");
+            let editDisabled = (puedeEditar || (action === NUEVO && puedeCrear)) ? (action == VER ? "disabled" : "") : ("disabled");
             let itemVerHTML = "";
             let itemEditarHTML = "";
             let itemEliminarHTML = "";
@@ -1535,7 +1535,7 @@ function onGuardarClick() {
     let summaryContainer = document.getElementById("saveValidationSummary");
     summaryContainer.innerHTML = "";
 
-    if ((puedeEditar && puedeEditarBancos) || (puedeEditar && !puedeEditarBancos)) {
+    if (puedeEditar || (puedeCrear && Number(idField.value) === Number(nuevoRegistro))) {
         //Ejecuta la validación
         $("#theForm").validate();
         //Determina los errores
@@ -1977,3 +1977,103 @@ document.addEventListener(
         }
     }
 );
+
+// HU2 - Administración individual de permisos (solo rol Administrador/Master).
+let hu2UsuariosPermisos = [];
+const hu2PermisosDef = [
+    ["puedeVisualizar", "Visualizar expedientes"],
+    ["puedeCrear", "Crear empresas"],
+    ["puedeEditar", "Editar información general"],
+    ["puedeCargarDocumentos", "Cargar o reemplazar documentos (requiere edición)"],
+    ["puedeDescargar", "Descargar documentos"],
+    ["puedeDesactivar", "Desactivar empresas"],
+    ["puedeEditarBancos", "Editar información bancaria"]
+];
+
+async function hu2AbrirPermisos() {
+    const modal = document.getElementById('hu2PermisosModal');
+    if (!modal) return;
+    bootstrap.Modal.getOrCreateInstance(modal).show();
+    const error = document.getElementById('hu2PermisosError');
+    error.classList.add('d-none');
+    try {
+        const r = await fetch('/Catalogos/Empresas/UsuariosPermisosHU2', { credentials: 'same-origin' });
+        if (!r.ok) throw new Error('No se pudo consultar la lista de usuarios.');
+        const obj = await r.json();
+        if (obj.tieneError) throw new Error(obj.mensaje || 'Error al cargar usuarios.');
+        hu2UsuariosPermisos = obj.datos || [];
+        const select = document.getElementById('hu2UsuarioPermisos');
+        select.replaceChildren();
+        for (const usr of hu2UsuariosPermisos) {
+            const option = document.createElement('option');
+            option.value = usr.userId;
+            option.textContent = `${usr.nombre} (${usr.correo || 'sin correo'})${usr.configurado ? '' : ' · Sin configuración individual'}`;
+            select.appendChild(option);
+        }
+        hu2SeleccionarUsuarioPermisos();
+    } catch (e) { error.textContent = e.message; error.classList.remove('d-none'); }
+}
+function hu2SeleccionarUsuarioPermisos() {
+    const userId = document.getElementById('hu2UsuarioPermisos')?.value;
+    const usuario = hu2UsuariosPermisos.find(x => x.userId === userId);
+    const container = document.getElementById('hu2PermisosOpciones');
+    if (!container) return;
+    container.replaceChildren();
+    if (!usuario) return;
+    for (const [key, label] of hu2PermisosDef) {
+        const col = document.createElement('div');
+        col.className = 'col-sm-6';
+        const item = document.createElement('label');
+        item.className = 'd-flex gap-2 align-items-center border rounded p-3 h-100';
+        const check = document.createElement('input');
+        check.type = 'checkbox'; check.className = 'form-check-input m-0 hu2PermisoCheck';
+        check.dataset.permiso = key; check.checked = Boolean(usuario[key]);
+        const span = document.createElement('span'); span.textContent = label;
+        item.append(check, span); col.appendChild(item); container.appendChild(col);
+        check.addEventListener('change', hu2SincronizarPermisoVisualizar);
+    }
+    hu2SincronizarPermisoVisualizar();
+}
+// Crear o editar siempre implica poder consultar el expediente.
+// La misma regla se valida en el servidor y en el autorizador.
+function hu2SincronizarPermisoVisualizar() {
+    const obtener = clave => document.querySelector(`.hu2PermisoCheck[data-permiso="${clave}"]`);
+    const visualizar = obtener('puedeVisualizar');
+    const crear = obtener('puedeCrear');
+    const editar = obtener('puedeEditar');
+    if (!visualizar) return;
+    const requerido = Boolean(crear?.checked || editar?.checked);
+    if (requerido) visualizar.checked = true;
+    visualizar.disabled = requerido;
+    visualizar.title = requerido ? 'Obligatorio mientras Crear o Editar esté activo.' : '';
+}
+async function hu2GuardarPermisos() {
+    const userId = document.getElementById('hu2UsuarioPermisos')?.value;
+    const error = document.getElementById('hu2PermisosError');
+    error.classList.add('d-none');
+    if (!userId) return;
+    hu2SincronizarPermisoVisualizar();
+    const payload = { userId };
+    document.querySelectorAll('.hu2PermisoCheck').forEach(x => payload[x.dataset.permiso] = x.checked);
+    const boton = document.getElementById('hu2GuardarPermisosBtn');
+    boton.disabled = true;
+    try {
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+        const r = await fetch('/Catalogos/Empresas/GuardarPermisosEmpresaHU2', {
+            method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token || '' }, body: JSON.stringify(payload)
+        });
+        const obj = await r.json();
+        if (!r.ok || obj.tieneError) throw new Error(obj.mensaje || 'No se pudieron guardar los permisos.');
+        const target = hu2UsuariosPermisos.find(u => u.userId === userId);
+        payload.puedeVisualizar = Boolean(payload.puedeVisualizar || payload.puedeCrear || payload.puedeEditar);
+        if (target) Object.assign(target, payload, { configurado: true });
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('hu2PermisosModal')).hide();
+        if (typeof showSuccess === 'function') {
+            showSuccess(
+                "Permisos guardados correctamente",
+                obj.mensaje || "Los permisos del usuario se han actualizado correctamente."
+            );
+        }
+    } catch (e) { error.textContent = e.message; error.classList.remove('d-none'); }
+    finally { boton.disabled = false; }
+}

@@ -48,10 +48,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
         ) : ERPPageModel
     {
 
-        // El rol Administrador Empresas tiene control completo exclusivamente en este módulo.
+        // Solo Administrador/Master tienen acceso total; Administrador Empresas usa permisos individuales.
         // No se modifica ERPPageModel ni los permisos globales de otros módulos.
         private bool EsAdministradorDeEmpresas =>
-            User.IsInRole("Administrador Empresas") ||
             User.IsInRole("Administrador") ||
             User.IsInRole("Master");
 
@@ -61,6 +60,14 @@ namespace ERPSEI.Areas.Catalogos.Pages
         protected new bool PuedeEditar => EsAdministradorDeEmpresas || base.PuedeEditar;
         protected new bool PuedeEliminar => EsAdministradorDeEmpresas || base.PuedeEliminar;
         protected new bool PuedeAutorizar => EsAdministradorDeEmpresas || base.PuedeAutorizar;
+
+        private bool PuedeCrearEmpresa => EsAdministradorDeEmpresas || TieneClaimActivo("EmpresasPuedeCrear");
+        private bool PuedeCargarDocumentosEmpresa => EsAdministradorDeEmpresas || TieneClaimActivo("EmpresasPuedeCargar");
+        private bool PuedeDescargarDocumentosEmpresa => EsAdministradorDeEmpresas || TieneClaimActivo("EmpresasPuedeDescargar");
+
+        // Administración individual: únicamente Administrador o Master.
+        public bool PuedeAdministrarPermisosHU2 => User.IsInRole("Administrador") || User.IsInRole("Master");
+
 
         private bool TieneClaimActivo(string nombre) =>
             User.HasClaim(c => c.Type.Equals(nombre, StringComparison.OrdinalIgnoreCase) && c.Value == "1");
@@ -676,6 +683,84 @@ namespace ERPSEI.Areas.Catalogos.Pages
             return new JsonResult(resp);
         }
         // ==========================================================
+        // HU2: gestión individual de permisos del rol Administrador Empresas.
+        public async Task<IActionResult> OnGetUsuariosPermisosHU2Async()
+        {
+            if (!PuedeAdministrarPermisosHU2) return Forbid();
+            var usuarios = await _userManager.GetUsersInRoleAsync("Administrador Empresas");
+            var ids = usuarios.Select(u => u.Id).ToArray();
+            var permisos = await _db.Set<EmpresaPermisoUsuarioHU2>().AsNoTracking()
+                .Where(p => ids.Contains(p.UserId)).ToDictionaryAsync(p => p.UserId);
+            var datos = usuarios.OrderBy(u => u.UserName).Select(u =>
+            {
+                permisos.TryGetValue(u.Id, out var p);
+                return new
+                {
+                    userId = u.Id,
+                    nombre = u.UserName ?? u.Email ?? u.Id,
+                    correo = u.Email,
+                    configurado = p != null,
+                    puedeVisualizar = p == null || p.PuedeVisualizar || p.PuedeCrear || p.PuedeEditar,
+                    puedeCrear = p?.PuedeCrear ?? true,
+                    puedeEditar = p?.PuedeEditar ?? true,
+                    puedeCargarDocumentos = p?.PuedeCargarDocumentos ?? true,
+                    puedeDescargar = p?.PuedeDescargar ?? true,
+                    puedeDesactivar = p?.PuedeDesactivar ?? true,
+                    puedeEditarBancos = p?.PuedeEditarBancos ?? true
+                };
+            }).ToArray();
+            return new JsonResult(new { tieneError = false, datos });
+        }
+
+        public class GuardarPermisosEmpresaHU2Request
+        {
+            public string UserId { get; set; } = string.Empty;
+            public bool PuedeVisualizar { get; set; }
+            public bool PuedeCrear { get; set; }
+            public bool PuedeEditar { get; set; }
+            public bool PuedeCargarDocumentos { get; set; }
+            public bool PuedeDescargar { get; set; }
+            public bool PuedeDesactivar { get; set; }
+            public bool PuedeEditarBancos { get; set; }
+        }
+
+        public async Task<IActionResult> OnPostGuardarPermisosEmpresaHU2Async(
+            [FromBody] GuardarPermisosEmpresaHU2Request datos)
+        {
+            if (!PuedeAdministrarPermisosHU2) return Forbid();
+            if (datos == null || string.IsNullOrWhiteSpace(datos.UserId)) return BadRequest();
+            var user = await _userManager.FindByIdAsync(datos.UserId);
+            if (user == null || !await _userManager.IsInRoleAsync(user, "Administrador Empresas"))
+                return BadRequest(new { tieneError = true, mensaje = "El usuario no pertenece a Administrador Empresas." });
+
+            // Crear o editar permisos con una única fila por usuario.
+            var permiso = await _db.Set<EmpresaPermisoUsuarioHU2>().FindAsync(datos.UserId);
+            if (permiso == null)
+            {
+                permiso = new EmpresaPermisoUsuarioHU2 { UserId = datos.UserId };
+                _db.Set<EmpresaPermisoUsuarioHU2>().Add(permiso);
+            }
+            // Regla obligatoria: crear/editar empresas requiere visualizar.
+            // Se aplica en servidor aunque alguien omita/desactive el checkbox desde HTTP.
+            permiso.PuedeVisualizar = datos.PuedeVisualizar || datos.PuedeCrear || datos.PuedeEditar;
+            permiso.PuedeCrear = datos.PuedeCrear;
+            permiso.PuedeEditar = datos.PuedeEditar;
+            permiso.PuedeCargarDocumentos = datos.PuedeCargarDocumentos;
+            permiso.PuedeDescargar = datos.PuedeDescargar;
+            permiso.PuedeDesactivar = datos.PuedeDesactivar;
+            permiso.PuedeEditarBancos = datos.PuedeEditarBancos;
+            permiso.FechaActualizacion = DateTime.UtcNow;
+            permiso.ActualizadoPorUserId = _userManager.GetUserId(User);
+            await _db.SaveChangesAsync();
+            _logger.LogInformation("HU2: permisos Empresas actualizados para usuario {UserId} por {AdminId}", datos.UserId, permiso.ActualizadoPorUserId);
+            return new JsonResult(new
+            {
+                tieneError = false,
+                mensaje = "Los permisos del usuario se han actualizado exitosamente y se aplicarán conforme a la configuración establecida.",
+                puedeVisualizar = permiso.PuedeVisualizar
+            });
+        }
+
         // ==========================================================
         // HU2 - REGLA GLOBAL DE DOCUMENTACIÓN OBLIGATORIA
         // Aplica a todas las empresas existentes y futuras.
@@ -1007,7 +1092,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
             try
             {
-                if (PuedeTodo || PuedeEliminar)
+                if (EsAdministradorDeEmpresas || PuedeEliminar)
                 {
                     _auditoriaContext.Activar("Empresas", "Eliminación");
 
@@ -1069,7 +1154,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
                 bool puedeTodoBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeTodo == 1);
                 bool puedeEditarBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeEditar == 1);
 
-                if (EsAdministradorDeEmpresas || puedeTodoBancos || puedeEditarBancos)
+                if (PuedeEditarBancos)
                 {
                     _auditoriaContext.Activar("Empresas", "Edición Bancos");
 
@@ -1121,7 +1206,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
             bool puedeEditarBancos = EsAdministradorDeEmpresas || accesos.Any(a => a.PuedeEditar == 1);
             bool accesoBancos = EsAdministradorDeEmpresas || puedeTodoBancos || puedeEditarBancos;
 
-            if (EsAdministradorDeEmpresas || PuedeTodo || PuedeEditar || puedeTodoBancos || puedeEditarBancos)
+            if ((InputEmpresa.Id <= 0 && PuedeCrearEmpresa) || (InputEmpresa.Id > 0 && (PuedeTodo || PuedeEditar)))
             {
                 //Se remueve el campo Plantilla para que no sea validado ya que no pertenece a este proceso.
                 ModelState.Remove("Plantilla");
@@ -1147,7 +1232,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
                         _auditoriaContext.Activar("Empresas", accionAuditoria);
 
-                        validacion = await CreateOrUpdateCompany(InputEmpresa, accesoBancos);
+                        validacion = await CreateOrUpdateCompany(InputEmpresa, accesoBancos && PuedeEditarBancos, PuedeCargarDocumentosEmpresa);
 
                         _auditoriaContext.Desactivar();
 
@@ -1656,7 +1741,8 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
         private async Task<string> CreateOrUpdateCompany(
     EmpresaModel e,
-    bool accesoBancos)
+    bool accesoBancos,
+    bool permitirCambiosArchivos = true)
         {
             try
             {
@@ -1911,21 +1997,24 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     /*
                      * Eliminar archivos que requieran actualizarse.
                      */
-                    foreach (
-                        ArchivoModel? archivo
-                        in e.Archivos ?? []
-                    )
+                    if (permitirCambiosArchivos)
                     {
-                        if (archivo == null)
+                        foreach (
+                            ArchivoModel? archivo
+                            in e.Archivos ?? []
+                        )
                         {
-                            continue;
-                        }
+                            if (archivo == null)
+                            {
+                                continue;
+                            }
 
-                        await _archivoEmpresaManager
-                            .DeleteByIdAsync(
-                                archivo.Id ??
-                                string.Empty
-                            );
+                            await _archivoEmpresaManager
+                                .DeleteByIdAsync(
+                                    archivo.Id ??
+                                    string.Empty
+                                );
+                        }
                     }
                 }
                 else
@@ -2030,48 +2119,52 @@ namespace ERPSEI.Areas.Catalogos.Pages
                  * ARCHIVOS
                  * ==========================================================
                  */
-                foreach (
-                    ArchivoModel? archivo
-                    in e.Archivos ?? []
-                )
+                if (permitirCambiosArchivos)
                 {
-                    if (archivo == null)
+                    foreach (
+                        ArchivoModel? archivo
+                        in e.Archivos ?? []
+                    )
                     {
-                        continue;
-                    }
+                        if (archivo == null)
+                        {
+                            continue;
+                        }
 
-                    byte[] contenidoArchivo =
-                        !string.IsNullOrWhiteSpace(
-                            archivo.ImgSrc
-                        )
-                            ? Convert.FromBase64String(
+                        byte[] contenidoArchivo =
+                            !string.IsNullOrWhiteSpace(
                                 archivo.ImgSrc
                             )
-                            : Array.Empty<byte>();
+                                ? Convert.FromBase64String(
+                                    archivo.ImgSrc
+                                )
+                                : Array.Empty<byte>();
 
-                    await _archivoEmpresaManager
-                        .CreateAsync(
-                            new ArchivoEmpresa
-                            {
-                                Archivo =
-                                    contenidoArchivo,
+                        await _archivoEmpresaManager
+                            .CreateAsync(
+                                new ArchivoEmpresa
+                                {
+                                    Archivo =
+                                        contenidoArchivo,
 
-                                EmpresaId =
-                                    idEmpresa,
+                                    EmpresaId =
+                                        idEmpresa,
 
-                                Extension =
-                                    archivo.Extension ??
-                                    string.Empty,
+                                    Extension =
+                                        archivo.Extension ??
+                                        string.Empty,
 
-                                Nombre =
-                                    archivo.Nombre ??
-                                    string.Empty,
+                                    Nombre =
+                                        archivo.Nombre ??
+                                        string.Empty,
 
-                                TipoArchivoId =
-                                    archivo.TipoArchivoId
-                            }
-                        );
-                }
+                                    TipoArchivoId =
+                                        archivo.TipoArchivoId
+                                }
+                            );
+                    }
+
+                } // fin permitirCambiosArchivos
 
                 /*
                  * ==========================================================
@@ -2109,7 +2202,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
             try
             {
-                if (PuedeTodo || PuedeEditar)
+                if (PuedeCrearEmpresa)
                 {
                     if (Request.Form.Files.Count >= 1)
                     {

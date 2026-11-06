@@ -2870,63 +2870,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3174),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7715),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3188),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7724),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3189),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7725),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3190),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7726),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3191),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7727),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3192),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7728),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3193),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7729),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3194),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7729),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 5, 14, 4, 59, 186, DateTimeKind.Local).AddTicks(3195),
+                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7730),
                             Nombre = "Otros"
                         });
                 });
@@ -3805,6 +3805,45 @@ namespace ERPSEI.Data.Migrations
                     b.HasKey("EmpresaId");
 
                     b.ToTable("EmpresasEstadosDocumentalesHU2", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaPermisoUsuarioHU2", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ActualizadoPorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("FechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("PuedeCargarDocumentos")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeCrear")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeDesactivar")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeDescargar")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeEditar")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeEditarBancos")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PuedeVisualizar")
+                        .HasColumnType("bit");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("EmpresasPermisosUsuariosHU2", (string)null);
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.Nivel", b =>
@@ -12150,6 +12189,17 @@ namespace ERPSEI.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Empresa");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.EmpresaPermisoUsuarioHU2", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Empresas.ProductoServicioPerfil", b =>

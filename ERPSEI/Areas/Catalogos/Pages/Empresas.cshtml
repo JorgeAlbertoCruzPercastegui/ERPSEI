@@ -35,6 +35,10 @@
 	List<Nivel> niveles = await NivelesManager.GetAllAsync();
 	List<ActividadEconomica> actividadesEconomicas = await ActividadesEconomicasManager.GetAllAsync();
 
+	bool puedeCrear = User.HasClaim("EmpresasPuedeCrear", "1");
+	bool puedeCargarDocumentos = User.HasClaim("EmpresasPuedeCargar", "1");
+	bool puedeDescargar = User.HasClaim("EmpresasPuedeDescargar", "1");
+	bool adminPermisosHU2 = User.IsInRole("Administrador") || User.IsInRole("Master");
 	bool puedeTodo = User.Claims.Where(c => c.Type.Equals("PuedeTodo", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeConsultar = User.Claims.Where(c => c.Type.Equals("PuedeConsultar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
 	bool puedeEditar = User.Claims.Where(c => c.Type.Equals("PuedeEditar", StringComparison.OrdinalIgnoreCase)).FirstOrDefault()?.Value == "1";
@@ -237,7 +241,7 @@
 <!-- --------------------------- -->
 <!-- Sección tabla de resultados -->
 <div id="toolbar" class="col-xl-12">
-	@if (puedeTodo || puedeEditar)
+	@if (puedeCrear)
 	{
 		<button id="btnAgregar" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dlgEmpresa" onclick="onAgregarClick();">
 			<i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
@@ -249,18 +253,22 @@
 			<i class="bi bi-ban"></i> <span class="d-none d-sm-inline">@Localizer["DeactivateButton"]</span>
 		</button>
 	}
-	@if (User.IsInRole("Administrador Empresas") || User.IsInRole("Administrador") || User.IsInRole("Master"))
+	@if (User.IsInRole("Administrador") || User.IsInRole("Master"))
 	{
 		<button id="btnReglaGeneralHU2" type="button" class="btn btn-outline-primary hu2-toolbar-text" onclick="abrirModalObligatoriosHU2()" title="Configurar documentos obligatorios para todas las empresas">
 			<i class="bi bi-card-checklist me-1"></i> Regla general
 		</button>
 	}
-	@if (User.IsInRole("Administrador Empresas") || User.IsInRole("Administrador") || User.IsInRole("Master"))
+	@if (User.IsInRole("Administrador") || User.IsInRole("Master"))
 	{
 		<button id="btnDuplicadosHU2" type="button" class="btn btn-outline-primary" onclick="consultarDuplicadosHU2()">
 			<i class="bi bi-search me-1"></i> <span class="d-none d-sm-inline">Revisar posibles duplicados</span><span class="d-sm-none">Duplicados</span>
 		</button>
 	}
+    @if (adminPermisosHU2)
+    {
+        <button id="hu2BtnPermisos" type="button" class="btn btn-outline-primary hu2-toolbar-text" onclick="hu2AbrirPermisos()"><i class="bi bi-shield-lock me-1"></i> Administrar permisos</button>
+    }
 </div>
 <table id="table" class="table-sm"
 	   data-unique-id="id"
@@ -553,7 +561,7 @@
 											<div class="row mb-3">
 												<h5 class="col-12"><i>@Localizer["ActividadesEconomicasPlaceholder"]</i></h5>
 												<div id="toolbarActividad" class="col-xl-12">
-													@if (puedeTodo || puedeEditar)
+													@if (puedeTodo || puedeEditar || puedeCrear)
 													{
 														<button type="button" id="btnAgregarActividad" class="btn btn-primary formButton" data-bs-toggle="modal" data-bs-target="#dlgActividad" onclick="initDialogActividad();">
 															<i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">@Localizer["AddButton"]</span>
@@ -743,7 +751,7 @@
 				<button id="dlgBtnCancelar" type="button" class="btn btn-secondary" data-bs-dismiss="modal">
 					<i class="bi bi-x-lg"></i> @Localizer["CloseButtonTitle"]
 				</button>
-				@if (puedeTodo || puedeEditar)
+				@if (puedeTodo || puedeEditar || puedeCrear)
 				{
 					<button id="dlgBtnAgregar" type="button" class="btn btn-primary formButton" onclick="onAgregarActividadClick();">
 						<i class="bi bi-plus-lg"></i> @Localizer["AddButton"]
@@ -797,7 +805,7 @@
 				<button id="dlgExcelBtnCancelar" type="button" class="btn btn-secondary" onclick="onCerrarImportarClick();" data-bs-dismiss="modal">
 					<i class="bi bi-x-lg"></i> @Localizer["CancelButtonTitle"]
 				</button>
-				@if (puedeTodo || puedeEditar)
+				@if (puedeTodo || puedeEditar || puedeCrear)
 				{
 					<button id="dlgExcelBtnImportar" type="button" class="btn btn-primary" onclick="onImportarClick();">
 						<i class="bi bi-upload"></i> @Localizer["ImportButtonText"]
@@ -839,6 +847,31 @@
         </div>
     </div>
 </div>
+
+@if (adminPermisosHU2)
+{
+<div class="modal fade" id="hu2PermisosModal" tabindex="-1" aria-labelledby="hu2PermisosTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#21166f;color:white">
+                <h5 class="modal-title" id="hu2PermisosTitle"><i class="bi bi-shield-lock me-2"></i>Administrar permisos de Empresas</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Los cambios aplican únicamente a los usuarios del rol Administrador Empresas. No modifican otros módulos.</p>
+                <label for="hu2UsuarioPermisos" class="form-label fw-semibold">Usuario</label>
+                <select class="form-select mb-3" id="hu2UsuarioPermisos" onchange="hu2SeleccionarUsuarioPermisos()"></select>
+                <div id="hu2PermisosOpciones" class="row g-2"></div>
+                <div id="hu2PermisosError" class="alert alert-danger mt-3 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="hu2GuardarPermisosBtn" class="btn btn-primary" onclick="hu2GuardarPermisos()"><i class="bi bi-check2-circle me-1"></i>Guardar permisos</button>
+            </div>
+        </div>
+    </div>
+</div>
+}
 
 @section Scripts {
 	<!-- Librería autocompletar y dependencias -->
@@ -979,6 +1012,9 @@
 		var invalidFormatTitle = '@Localizer["InvalidFormatTitle"]';
 		var invalidFormatMsg = '@Localizer["InvalidFormatMsg"]';
 
+		var puedeCrear = '@puedeCrear' == 'True';
+		var puedeCargarDocumentos = '@puedeCargarDocumentos' == 'True';
+		var puedeDescargar = '@puedeDescargar' == 'True';
 		var puedeTodo = '@puedeTodo' == 'True';
 		var puedeConsultar = '@puedeConsultar' == 'True';
 		var puedeEditar = '@puedeEditar' == 'True';
@@ -991,7 +1027,7 @@
 		var puedeEliminarBancos = '@puedeEliminarBancos' == 'True';
 
         // HU2: cambiar documentos obligatorios requiere un rol administrativo.
-        var puedeConfigurarDocumentosObligatorios = @(User.IsInRole("Administrador Empresas") || User.IsInRole("Administrador") || User.IsInRole("Master") ? "true" : "false");
+        var puedeConfigurarDocumentosObligatorios = @(User.IsInRole("Administrador") || User.IsInRole("Master") ? "true" : "false");
 
 		var tieneAccesoEmpresas = puedeTodo || puedeConsultar || puedeEditar;
 		var tieneAccesoBancos = puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos;

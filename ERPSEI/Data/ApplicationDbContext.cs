@@ -57,6 +57,7 @@ namespace ERPSEI.Data
         public DbSet<BancoEmpresa> BancosEmpresa { get; set; }
         public DbSet<ArchivoEmpresa> ArchivosEmpresa { get; set; }
         public DbSet<EmpresaEstadoDocumentalHU2> EmpresasEstadosDocumentalesHU2 => Set<EmpresaEstadoDocumentalHU2>();
+        public DbSet<EmpresaPermisoUsuarioHU2> EmpresasPermisosUsuariosHU2 => Set<EmpresaPermisoUsuarioHU2>();
         public DbSet<Empresa> Empresas { get; set; }
         public DbSet<ActividadEconomicaEmpresa> ActividadesEconomicasEmpresa { get; set; }
         public DbSet<ProductoServicioPerfil> ProductosServiciosPerfil { get; set; }
@@ -915,6 +916,17 @@ namespace ERPSEI.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // HU2: permisos individuales por usuario en Empresas.
+            modelBuilder.Entity<EmpresaPermisoUsuarioHU2>(e =>
+            {
+                e.ToTable("EmpresasPermisosUsuariosHU2");
+                e.HasKey(x => x.UserId);
+                e.Property(x => x.UserId).HasMaxLength(450);
+                e.Property(x => x.ActualizadoPorUserId).HasMaxLength(450);
+                e.HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             //Empresas
             BuildEmpresas(modelBuilder);
