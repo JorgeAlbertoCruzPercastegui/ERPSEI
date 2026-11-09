@@ -1802,6 +1802,37 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             // =====================================================
+            // HU#1 - CONSULTAR PLAN DE PARCIALIDADES PARA PDF
+            // =====================================================
+
+            List<AdqSolicitudPagoParcialidad> parcialidadesPdf =
+                await _context.AdqSolicitudesPagoParcialidades
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.SolicitudPagoId == solicitudPago.Id
+                        && !x.Eliminado)
+                    .OrderBy(x => x.NumeroParcialidad)
+                    .ToListAsync();
+
+            if (parcialidadesPdf.Count > 0)
+            {
+                decimal totalPorcentajesPdf =
+                    parcialidadesPdf.Sum(x => x.Porcentaje);
+
+                decimal totalImportesPdf =
+                    parcialidadesPdf.Sum(x => x.Importe);
+
+                if (totalPorcentajesPdf != 100m
+                    || totalImportesPdf != solicitudPago.Total
+                    || parcialidadesPdf.Any(x =>
+                        x.Porcentaje <= 0m || x.Importe <= 0m))
+                {
+                    throw new InvalidOperationException(
+                        "El plan de parcialidades no coincide con el total autorizado.");
+                }
+            }
+
+            // =====================================================
             // ARCHIVO DE DESTINO
             // =====================================================
 
@@ -2472,6 +2503,99 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                                                 // =================================
+                                                // HU#1 - PLAN DE PAGOS
+                                                // =================================
+
+                                                if (parcialidadesPdf.Count > 0)
+                                                {
+                                                    column.Item()
+                                                        .PaddingTop(7)
+                                                        .Text("Plan de pagos y parcialidades")
+                                                        .Bold()
+                                                        .FontSize(9);
+
+                                                    column.Item()
+                                                        .Table(table =>
+                                                        {
+                                                            table.ColumnsDefinition(columns =>
+                                                            {
+                                                                columns.RelativeColumn(2);
+                                                                columns.RelativeColumn(1);
+                                                                columns.RelativeColumn(2);
+                                                            });
+
+                                                            table.Header(header =>
+                                                            {
+                                                                foreach (string titulo in new[]
+                                                                {
+                                                                    "Parcialidad",
+                                                                    "Porcentaje",
+                                                                    "Importe"
+                                                                })
+                                                                {
+                                                                    header.Cell()
+                                                                        .Background("#21166F")
+                                                                        .Padding(5)
+                                                                        .Text(titulo)
+                                                                        .FontColor("#FFFFFF")
+                                                                        .Bold()
+                                                                        .FontSize(7);
+                                                                }
+                                                            });
+
+                                                            foreach (var parcialidad in parcialidadesPdf)
+                                                            {
+                                                                table.Cell()
+                                                                    .BorderBottom(0.5f)
+                                                                    .BorderColor("#DDDDDD")
+                                                                    .Padding(4)
+                                                                    .Text($"Pago {parcialidad.NumeroParcialidad}");
+
+                                                                table.Cell()
+                                                                    .BorderBottom(0.5f)
+                                                                    .BorderColor("#DDDDDD")
+                                                                    .Padding(4)
+                                                                    .Text($"{parcialidad.Porcentaje:0.####}%");
+
+                                                                table.Cell()
+                                                                    .BorderBottom(0.5f)
+                                                                    .BorderColor("#DDDDDD")
+                                                                    .Padding(4)
+                                                                    .AlignRight()
+                                                                    .Text($"${Dinero(parcialidad.Importe)}");
+                                                            }
+
+                                                            table.Cell()
+                                                                .Background("#F0EDFA")
+                                                                .Padding(5)
+                                                                .Text("TOTAL")
+                                                                .Bold();
+
+                                                            table.Cell()
+                                                                .Background("#F0EDFA")
+                                                                .Padding(5)
+                                                                .Text("100%")
+                                                                .Bold();
+
+                                                            table.Cell()
+                                                                .Background("#F0EDFA")
+                                                                .Padding(5)
+                                                                .AlignRight()
+                                                                .Text($"${Dinero(solicitudPago.Total)}")
+                                                                .Bold();
+                                                        });
+
+                                                    column.Item()
+                                                        .PaddingBottom(4)
+                                                        .Text(
+                                                            "Importes programados conforme al plan autorizado. " +
+                                                            "Este documento no acredita la realización de los pagos.")
+                                                        .FontSize(7)
+                                                        .FontColor("#666666");
+                                                }
+
+
+                                                // =================================
                                                 // DOCUMENTOS ANEXOS
                                                 // =================================
 
@@ -3106,6 +3230,313 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 }
             );
         }
+
+
+        // =========================================================
+        // HU#1 - CONSULTAR SEGUIMIENTO DE PARCIALIDADES
+        // GET ?handler=SeguimientoParcialidades&solicitudId=1
+        // =========================================================
+
+        public async Task<IActionResult>
+            OnGetSeguimientoParcialidadesAsync(int solicitudId)
+        {
+            var usuario = await ObtenerUsuarioActualAsync();
+
+            if (usuario == null)
+                return Unauthorized();
+
+            if (solicitudId <= 0)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "La solicitud es inválida."
+                });
+
+            var solicitud = await _context.AdqSolicitudes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.Id == solicitudId && !x.Eliminado);
+
+            if (solicitud == null)
+                return NotFound(new
+                {
+                    success = false,
+                    message = "No se encontró la solicitud."
+                });
+
+            bool tienePermiso = await TienePermisoAbacAsync(
+                usuario, "Visualizar");
+
+            bool esAdministrador = User.IsInRole("Administrador");
+
+            bool esAdquisiciones =
+                User.IsInRole("Administrador Adquisiciones")
+                || User.IsInRole("Usuario Adquisiciones");
+
+            bool esSolicitante =
+                solicitud.UsuarioSolicitanteId == usuario.Id;
+
+            bool esAgente =
+                solicitud.UsuarioAsignadoId == usuario.Id;
+
+            bool esAprobador = await _context
+                .AdqAprobacionesPresupuestalesDetalle
+                .AsNoTracking()
+                .AnyAsync(x =>
+                    x.AprobacionPresupuestal.SolicitudId == solicitudId
+                    && x.UsuarioAprobadorId == usuario.Id
+                    && !x.Eliminado);
+
+            bool puedeConsultar = esAdministrador
+                || esAprobador
+                || (tienePermiso &&
+                    (esAdquisiciones || esSolicitante || esAgente));
+
+            if (!puedeConsultar)
+                return StatusCode(403, new
+                {
+                    success = false,
+                    message = "No tienes permiso para consultar estos pagos."
+                });
+
+            var pago = await _context.AdqSolicitudesPago
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x =>
+                    x.SolicitudId == solicitudId && !x.Eliminado);
+
+            if (pago == null)
+                return NotFound(new
+                {
+                    success = false,
+                    message = "No existe una Solicitud de Pago registrada."
+                });
+
+            var parcialidades = await _context
+                .AdqSolicitudesPagoParcialidades
+                .AsNoTracking()
+                .Where(x =>
+                    x.SolicitudPagoId == pago.Id && !x.Eliminado)
+                .OrderBy(x => x.NumeroParcialidad)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.NumeroParcialidad,
+                    x.Porcentaje,
+                    x.Importe,
+                    x.Estatus,
+                    x.FechaPago,
+                    x.UsuarioPagoId,
+                    x.ReferenciaPago,
+                    tieneComprobante = x.ComprobanteNombreAlmacenado != null
+                })
+                .ToListAsync();
+
+            decimal totalDistribuido =
+                parcialidades.Sum(x => x.Importe);
+
+            decimal porcentajeDistribuido =
+                parcialidades.Sum(x => x.Porcentaje);
+
+            decimal importePagado = parcialidades
+                .Where(x => x.Estatus == "Pagada")
+                .Sum(x => x.Importe);
+
+            decimal porcentajePagado = parcialidades
+                .Where(x => x.Estatus == "Pagada")
+                .Sum(x => x.Porcentaje);
+
+            decimal saldoPendiente = pago.Total - importePagado;
+
+            bool distribucionValida =
+                parcialidades.Count > 0
+                && porcentajeDistribuido == 100m
+                && totalDistribuido == pago.Total
+                && parcialidades.All(x =>
+                    x.Importe > 0m
+                    && x.Porcentaje > 0m
+                    && (x.Estatus == "Pendiente"
+                        || x.Estatus == "Pagada"));
+
+            return new JsonResult(new
+            {
+                success = true,
+                solicitudId,
+                solicitudPagoId = pago.Id,
+                moneda = pago.Moneda,
+                total = pago.Total,
+                pdfGenerado = pago.PdfGenerado,
+                distribucionValida,
+                porcentajeDistribuido,
+                porcentajePagado,
+                importePagado,
+                saldoPendiente,
+                totalParcialidades = parcialidades.Count,
+                parcialidades
+            });
+        }
+
+
+        // =========================================================
+        // HU#1 - REGISTRAR PAGO DE UNA PARCIALIDAD
+        // POST ?handler=RegistrarPagoParcialidad
+        // =========================================================
+
+        public async Task<IActionResult> OnPostRegistrarPagoParcialidadAsync(
+            [FromForm] RegistrarPagoParcialidadInput input)
+        {
+            AppUser? usuario = await ObtenerUsuarioActualAsync();
+            if (usuario == null) return Unauthorized();
+
+            bool rolAutorizado = User.IsInRole("Administrador") || User.IsInRole("Administrador Adquisiciones");
+            bool puedeEditar = User.IsInRole("Administrador") || await TienePermisoAbacAsync(usuario, "Editar");
+            if (!rolAutorizado || !puedeEditar)
+                return StatusCode(403, new { success = false, message = "No estás autorizado para registrar pagos." });
+
+            if (input == null || input.SolicitudId <= 0 || input.ParcialidadId <= 0 || string.IsNullOrWhiteSpace(input.ReferenciaPago))
+                return BadRequest(new { success = false, message = "Indica la parcialidad y la referencia del pago." });
+
+            string referencia = input.ReferenciaPago.Trim();
+            if (referencia.Length < 3 || referencia.Length > 250)
+                return BadRequest(new { success = false, message = "La referencia debe tener entre 3 y 250 caracteres." });
+
+            var pago = await _context.AdqSolicitudesPago.AsNoTracking()
+                .Where(x => x.SolicitudId == input.SolicitudId && !x.Eliminado && !x.Solicitud.Eliminado)
+                .Select(x => new { x.Id, x.Total, x.PdfGenerado })
+                .FirstOrDefaultAsync();
+
+            if (pago == null) return NotFound(new { success = false, message = "No se encontró la Solicitud de Pago." });
+            if (!pago.PdfGenerado)
+                return StatusCode(409, new { success = false, message = "El documento oficial debe estar generado antes de registrar pagos." });
+
+            var plan = await _context.AdqSolicitudesPagoParcialidades.AsNoTracking()
+                .Where(x => x.SolicitudPagoId == pago.Id && !x.Eliminado)
+                .Select(x => new { x.Id, x.Porcentaje, x.Importe, x.Estatus })
+                .ToListAsync();
+
+            bool planValido = plan.Count > 0 && plan.Sum(x => x.Porcentaje) == 100m &&
+                plan.Sum(x => x.Importe) == pago.Total &&
+                plan.All(x => x.Porcentaje > 0m && x.Importe > 0m && (x.Estatus == "Pendiente" || x.Estatus == "Pagada"));
+
+            if (!planValido)
+                return StatusCode(409, new { success = false, message = "El plan de pagos no es válido." });
+            if (!plan.Any(x => x.Id == input.ParcialidadId))
+                return NotFound(new { success = false, message = "La parcialidad no pertenece a esta solicitud." });
+
+            // El archivo es opcional, pero de estar presente debe ser válido.
+            IFormFile? archivo = input.Comprobante;
+            byte[]? bytes = null;
+            string? extensionSegura = null;
+            if (archivo != null && archivo.Length > 0)
+            {
+                const long maxBytes = 10 * 1024 * 1024;
+                if (archivo.Length > maxBytes)
+                    return BadRequest(new { success = false, message = "El comprobante supera el límite de 10 MB." });
+
+                if (Path.GetFileName(archivo.FileName.Replace('\\', '/')).Length > 260)
+                    return BadRequest(new { success = false, message = "El nombre del comprobante es demasiado largo." });
+                await using var memoria = new MemoryStream();
+                await archivo.CopyToAsync(memoria);
+                bytes = memoria.ToArray();
+
+                // Detectar tipo real por firma binaria, nunca confiar en ContentType.
+                bool pdf = bytes.Length >= 5 && bytes.AsSpan(0, 5).SequenceEqual(new byte[] { 37, 80, 68, 70, 45 });
+                bool png = bytes.Length >= 8 && bytes.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 });
+                bool jpg = bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF;
+                extensionSegura = pdf ? ".pdf" : png ? ".png" : jpg ? ".jpg" : null;
+                if (extensionSegura == null)
+                    return BadRequest(new { success = false, message = "El archivo debe ser un PDF, JPG o PNG válido." });
+            }
+            else if (archivo != null && archivo.Length == 0)
+                return BadRequest(new { success = false, message = "El comprobante adjunto está vacío." });
+
+            string? nombreAlmacenado = null;
+            string? rutaFisica = null;
+            if (bytes != null)
+            {
+                nombreAlmacenado = $"{Guid.NewGuid():N}{extensionSegura}";
+                string carpeta = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "Adquisiciones", "ComprobantesPago", pago.Id.ToString(), input.ParcialidadId.ToString());
+                Directory.CreateDirectory(carpeta);
+                rutaFisica = Path.Combine(carpeta, nombreAlmacenado);
+                await System.IO.File.WriteAllBytesAsync(rutaFisica, bytes);
+            }
+
+            DateTime ahora = DateTime.UtcNow;
+            try
+            {
+                // La condición pendiente evita pagos duplicados y mantiene el mismo flujo.
+                int modificadas = await _context.AdqSolicitudesPagoParcialidades
+                    .Where(x => x.Id == input.ParcialidadId && x.SolicitudPagoId == pago.Id && !x.Eliminado &&
+                        x.Estatus == "Pendiente" && !x.SolicitudPago.Eliminado && x.SolicitudPago.PdfGenerado)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(x => x.Estatus, "Pagada")
+                        .SetProperty(x => x.FechaPago, (DateTime?)ahora)
+                        .SetProperty(x => x.UsuarioPagoId, usuario.Id)
+                        .SetProperty(x => x.ReferenciaPago, referencia)
+                        .SetProperty(x => x.FechaActualizacion, (DateTime?)ahora)
+                        .SetProperty(x => x.ComprobanteNombreAlmacenado, nombreAlmacenado)
+                        .SetProperty(x => x.ComprobanteNombreOriginal, bytes != null ? Path.GetFileName(archivo!.FileName.Replace('\\', '/')) : null)
+                        .SetProperty(x => x.ComprobanteHashSha256, bytes != null ? Convert.ToHexString(SHA256.HashData(bytes)) : null));
+
+                if (modificadas != 1)
+                {
+                    if (rutaFisica != null && System.IO.File.Exists(rutaFisica)) System.IO.File.Delete(rutaFisica);
+                    return StatusCode(409, new { success = false, message = "La parcialidad ya fue registrada o dejó de estar disponible." });
+                }
+            }
+            catch (Exception ex)
+            {
+                if (rutaFisica != null && System.IO.File.Exists(rutaFisica)) System.IO.File.Delete(rutaFisica);
+                _logger.LogError(ex, "Error al registrar el pago de parcialidad {ParcialidadId}", input.ParcialidadId);
+                return StatusCode(500, new { success = false, message = "No fue posible guardar el pago y su comprobante." });
+            }
+
+            _logger.LogInformation("HU#1 Pago registrado. Solicitud {SolicitudId}, parcialidad {ParcialidadId}, usuario {UsuarioId}", input.SolicitudId, input.ParcialidadId, usuario.Id);
+            return new JsonResult(new { success = true, message = "Pago registrado correctamente.", parcialidadId = input.ParcialidadId, estatus = "Pagada", fechaPago = ahora, tieneComprobante = bytes != null });
+        }
+
+        // =========================================================
+        // HU#1 - DESCARGAR COMPROBANTE (CON VALIDACIÓN DE PERMISOS)
+        // GET ?handler=ComprobantePagoParcialidad&solicitudId=4&parcialidadId=2
+        // =========================================================
+        public async Task<IActionResult> OnGetComprobantePagoParcialidadAsync(int solicitudId, int parcialidadId)
+        {
+            var usuario = await ObtenerUsuarioActualAsync();
+            if (usuario == null) return Unauthorized();
+            if (solicitudId <= 0 || parcialidadId <= 0) return BadRequest();
+
+            var solicitud = await _context.AdqSolicitudes.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == solicitudId && !x.Eliminado);
+            if (solicitud == null) return NotFound();
+
+            bool tienePermiso = await TienePermisoAbacAsync(usuario, "Visualizar");
+            bool esAdministrador = User.IsInRole("Administrador");
+            bool esAdquisiciones = User.IsInRole("Administrador Adquisiciones") || User.IsInRole("Usuario Adquisiciones");
+            bool esSolicitante = solicitud.UsuarioSolicitanteId == usuario.Id;
+            bool esAgente = solicitud.UsuarioAsignadoId == usuario.Id;
+            bool esAprobador = await _context.AdqAprobacionesPresupuestalesDetalle.AsNoTracking()
+                .AnyAsync(x => x.AprobacionPresupuestal.SolicitudId == solicitudId && x.UsuarioAprobadorId == usuario.Id && !x.Eliminado);
+            if (!(esAdministrador || esAprobador || (tienePermiso && (esAdquisiciones || esSolicitante || esAgente))))
+                return Forbid();
+
+            var registro = await _context.AdqSolicitudesPagoParcialidades.AsNoTracking()
+                .Where(x => x.Id == parcialidadId && !x.Eliminado && x.SolicitudPago.SolicitudId == solicitudId && !x.SolicitudPago.Eliminado)
+                .Select(x => new { x.SolicitudPagoId, x.Id, x.ComprobanteNombreAlmacenado, x.ComprobanteNombreOriginal, x.ComprobanteHashSha256 })
+                .FirstOrDefaultAsync();
+            if (registro == null || string.IsNullOrEmpty(registro.ComprobanteNombreAlmacenado)) return NotFound();
+
+            // Solo nombres de archivo generados internamente.
+            if (!System.Text.RegularExpressions.Regex.IsMatch(registro.ComprobanteNombreAlmacenado, @"^[0-9a-f]{32}\.(pdf|png|jpg)$")) return NotFound();
+            string ruta = Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "Adquisiciones", "ComprobantesPago", registro.SolicitudPagoId.ToString(), registro.Id.ToString(), registro.ComprobanteNombreAlmacenado);
+            if (!System.IO.File.Exists(ruta)) return NotFound();
+            byte[] datos = await System.IO.File.ReadAllBytesAsync(ruta);
+            if (registro.ComprobanteHashSha256 != Convert.ToHexString(SHA256.HashData(datos)))
+                return StatusCode(409, "El comprobante no superó la verificación de integridad.");
+
+            string mime = ruta.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? "application/pdf" :
+                ruta.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "image/png" : "image/jpeg";
+            return File(datos, mime, registro.ComprobanteNombreOriginal ?? Path.GetFileName(ruta));
+        }
+
 
         // =========================================================
         // DATOS PARA SOLICITUD DE PAGO
@@ -4325,6 +4756,32 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            // =====================================================
+            // VALIDAR DISTRIBUCIÓN DE PARCIALIDADES
+            // =====================================================
+
+            List<AdqSolicitudPagoParcialidad> nuevasParcialidades;
+
+            try
+            {
+                nuevasParcialidades = ConstruirParcialidadesPago(
+                    input.Parcialidades,
+                    totalFinal);
+            }
+            catch (ArgumentException ex)
+            {
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = ex.Message
+                })
+                {
+                    StatusCode =
+                        StatusCodes.Status400BadRequest
+                };
+            }
+
+
             DateTime ahora =
                 DateTime.Now;
 
@@ -4514,6 +4971,49 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
                 solicitudPago.PdfGenerado =
                     false;
+
+
+                // =====================================================
+                // REGISTRAR PARCIALIDADES
+                // =====================================================
+
+                if (solicitudPago.Id > 0)
+                {
+                    bool existenPagos =
+                        await _context
+                            .AdqSolicitudesPagoParcialidades
+                            .AnyAsync(x =>
+                                x.SolicitudPagoId == solicitudPago.Id
+                                && x.Estatus == "Pagada"
+                                && !x.Eliminado);
+
+                    if (existenPagos)
+                    {
+                        await transaccion.RollbackAsync();
+
+                        return new JsonResult(new
+                        {
+                            success = false,
+                            message =
+                                "No es posible modificar una distribución con pagos registrados."
+                        })
+                        {
+                            StatusCode =
+                                StatusCodes.Status409Conflict
+                        };
+                    }
+
+                    await _context
+                        .AdqSolicitudesPagoParcialidades
+                        .Where(x =>
+                            x.SolicitudPagoId == solicitudPago.Id)
+                        .ExecuteDeleteAsync();
+                }
+
+                foreach (var parcialidad in nuevasParcialidades)
+                {
+                    solicitudPago.Parcialidades.Add(parcialidad);
+                }
 
 
                 // =================================================
@@ -5226,6 +5726,62 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     );
 
             // =====================================================
+            // HU#1 - VALIDAR CONSISTENCIA DE PARCIALIDADES
+            // =====================================================
+
+            if (solicitudPago != null && !solicitudPago.Eliminado)
+            {
+                var parcialidadesRegistradas =
+                    await _context.AdqSolicitudesPagoParcialidades
+                        .AsNoTracking()
+                        .Where(x =>
+                            x.SolicitudPagoId == solicitudPago.Id
+                            && !x.Eliminado)
+                        .ToListAsync();
+
+                if (parcialidadesRegistradas.Count > 0)
+                {
+                    decimal porcentajeDistribuido =
+                        parcialidadesRegistradas.Sum(x => x.Porcentaje);
+
+                    decimal importeDistribuido =
+                        parcialidadesRegistradas.Sum(x => x.Importe);
+
+                    if (porcentajeDistribuido != 100m ||
+                        importeDistribuido != solicitudPago.Total)
+                    {
+                        return new JsonResult(new
+                        {
+                            success = false,
+                            message =
+                                "La distribución de parcialidades registrada " +
+                                "no coincide con el importe original del pago."
+                        })
+                        {
+                            StatusCode =
+                                StatusCodes.Status409Conflict
+                        };
+                    }
+
+                    if (totalFinal != solicitudPago.Total)
+                    {
+                        return new JsonResult(new
+                        {
+                            success = false,
+                            message =
+                                "El importe total cambió y existen parcialidades " +
+                                "registradas. Es necesario actualizar y validar " +
+                                "el plan de pagos antes de generar el documento."
+                        })
+                        {
+                            StatusCode =
+                                StatusCodes.Status409Conflict
+                        };
+                    }
+                }
+            }
+
+            // =====================================================
             // DOCUMENTO OFICIAL YA GENERADO
             // =====================================================
 
@@ -5718,34 +6274,66 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // =====================================================
 
             AdqSolicitudPago? solicitudPago =
-                await _context.AdqSolicitudesPago
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.SolicitudId ==
-                                solicitud.Id
-                            &&
-                            !x.Eliminado
-                    );
+            await _context.AdqSolicitudesPago
+         .FirstOrDefaultAsync(x =>
+             x.SolicitudId == solicitud.Id
+             && !x.Eliminado);
 
-
-            if (
-                solicitudPago ==
-                null
-            )
+            // 1. Verificar que existe la Solicitud de Pago.
+            if (solicitudPago == null)
             {
-                return new JsonResult(
-                    new
+                return new JsonResult(new
+                {
+                    success = false,
+                    message = "No se encontraron los datos previamente registrados de la Solicitud de Pago."
+                })
+                {
+                    StatusCode = StatusCodes.Status404NotFound
+                };
+            }
+
+            // =====================================================
+            // HU#1 - VALIDAR PLAN DE PAGOS ANTES DEL PDF
+            // =====================================================
+
+            var parcialidades =
+                await _context.AdqSolicitudesPagoParcialidades
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.SolicitudPagoId == solicitudPago.Id
+                        && !x.Eliminado)
+                    .OrderBy(x => x.NumeroParcialidad)
+                    .ToListAsync();
+
+            if (parcialidades.Count > 0)
+            {
+                decimal sumaPorcentajes =
+                    parcialidades.Sum(x => x.Porcentaje);
+
+                decimal sumaImportes =
+                    parcialidades.Sum(x => x.Importe);
+
+                bool distribucionValida =
+                    sumaPorcentajes == 100m
+                    && sumaImportes == solicitudPago.Total
+                    && parcialidades.All(x =>
+                        x.Porcentaje > 0
+                        && x.Importe > 0);
+
+                if (!distribucionValida)
+                {
+                    return new JsonResult(new
                     {
                         success = false,
-
                         message =
-                            "No se encontraron los datos previamente registrados de la Solicitud de Pago."
-                    }
-                )
-                {
-                    StatusCode =
-                        StatusCodes.Status404NotFound
-                };
+                            "No es posible generar el PDF porque la " +
+                            "distribución de parcialidades es incorrecta."
+                    })
+                    {
+                        StatusCode =
+                            StatusCodes.Status409Conflict
+                    };
+                }
             }
 
             // =====================================================
@@ -8038,18 +8626,18 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         public async Task<IActionResult>
             OnGetConfiguracionAprobacionPresupuestalAsync()
-                {
-                    var usuarioActual =
-                        await _userManager.GetUserAsync(
-                            User
-                        );
+        {
+            var usuarioActual =
+                await _userManager.GetUserAsync(
+                    User
+                );
 
-                    if (
-                        usuarioActual == null
-                    )
-                    {
-                        return Unauthorized();
-                    }
+            if (
+                usuarioActual == null
+            )
+            {
+                return Unauthorized();
+            }
 
 
             await CargarPermisosAdquisicionesAsync(
@@ -10045,7 +10633,145 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 get;
                 set;
             }
+
+            public List<ParcialidadPagoInput> Parcialidades
+            {
+                get;
+                set;
+            } = new();
         }
+
+        public class RegistrarPagoParcialidadInput
+        {
+            [Range(1, int.MaxValue)]
+            public int SolicitudId { get; set; }
+
+            [Range(1, int.MaxValue)]
+            public int ParcialidadId { get; set; }
+
+            [Required(ErrorMessage = "La referencia de pago es obligatoria.")]
+            [StringLength(250, MinimumLength = 3)]
+            public string ReferenciaPago { get; set; } = string.Empty;
+
+            // PDF/JPG/PNG opcional; la referencia continúa siendo obligatoria.
+            public IFormFile? Comprobante { get; set; }
+        }
+
+        public class ParcialidadPagoInput
+        {
+            [Range(typeof(decimal), "0.0001", "100")]
+            public decimal Porcentaje { get; set; }
+        }
+
+
+        public class RegistrarParcialidadPagadaInput
+        {
+            [Range(1, int.MaxValue)]
+            public int ParcialidadId { get; set; }
+
+            [Required(ErrorMessage = "La referencia del pago es obligatoria.")]
+            [StringLength(250)]
+            public string ReferenciaPago { get; set; } = string.Empty;
+        }
+
+
+        private static List<AdqSolicitudPagoParcialidad>
+            ConstruirParcialidadesPago(
+                List<ParcialidadPagoInput>? parcialidades,
+                decimal total)
+        {
+            if (total <= 0)
+            {
+                throw new ArgumentException(
+                    "El total del pago debe ser mayor que cero.");
+            }
+
+            if (parcialidades == null || parcialidades.Count == 0)
+            {
+                throw new ArgumentException(
+                    "Debes configurar el plan de pagos.");
+            }
+
+            if (parcialidades.Count > 100)
+            {
+                throw new ArgumentException(
+                    "No se permiten más de 100 parcialidades.");
+            }
+
+            decimal porcentajeAcumulado = 0m;
+            decimal importeAcumulado = 0m;
+
+            var resultado =
+                new List<AdqSolicitudPagoParcialidad>();
+
+            for (int i = 0; i < parcialidades.Count; i++)
+            {
+                decimal porcentaje = parcialidades[i].Porcentaje;
+
+                if (porcentaje <= 0 || porcentaje > 100)
+                {
+                    throw new ArgumentException(
+                        $"El porcentaje de la parcialidad {i + 1} es inválido.");
+                }
+
+                if (decimal.Round(porcentaje, 4) != porcentaje)
+                {
+                    throw new ArgumentException(
+                        "Los porcentajes admiten hasta cuatro decimales.");
+                }
+
+                porcentajeAcumulado += porcentaje;
+
+                if (porcentajeAcumulado > 100m)
+                {
+                    throw new ArgumentException(
+                        "La distribución no puede superar el 100%.");
+                }
+
+                decimal importe = decimal.Round(
+                    total * porcentaje / 100m,
+                    2,
+                    MidpointRounding.AwayFromZero);
+
+                if (i == parcialidades.Count - 1)
+                {
+                    importe = total - importeAcumulado;
+                }
+
+                if (importe <= 0)
+                {
+                    throw new ArgumentException(
+                        "Cada parcialidad debe tener un importe mayor que cero.");
+                }
+
+                resultado.Add(new AdqSolicitudPagoParcialidad
+                {
+                    NumeroParcialidad = i + 1,
+                    Porcentaje = porcentaje,
+                    Importe = importe,
+                    Estatus = "Pendiente",
+                    FechaCreacion = DateTime.UtcNow,
+                    Eliminado = false
+                });
+
+                importeAcumulado += importe;
+            }
+
+            if (porcentajeAcumulado != 100m)
+            {
+                throw new ArgumentException(
+                    $"La distribución debe sumar 100%. Actualmente suma {porcentajeAcumulado}%.");
+            }
+
+            if (importeAcumulado != total)
+            {
+                throw new ArgumentException(
+                    "La suma de las parcialidades no coincide con el total.");
+            }
+
+            return resultado;
+        }
+
 
         // =========================================================
         // INPUT SOLICITUD
@@ -13341,7 +14067,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             InputCotizacion.SolicitudId
                     }
                 );
-         }
+            }
 
 
             // =====================================================
@@ -16513,33 +17239,33 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                 return new JsonResult(new
-                    {
-                        success = true,
+                {
+                    success = true,
 
-                        message =
+                    message =
                         "El flujo de aprobación presupuestal se inició correctamente.",
 
-                        solicitudId =
+                    solicitudId =
                             solicitud.Id,
 
-                        aprobacionPresupuestalId =
+                    aprobacionPresupuestalId =
                             aprobacionPresupuestal.Id,
 
-                        estatusId =
+                    estatusId =
                             12,
 
-                        proveedor =
+                    proveedor =
                             cotizacion.NombreProveedor,
 
-                        subtotal =
+                    subtotal =
                             cotizacion.Subtotal,
 
-                        iva =
+                    iva =
                             cotizacion.ImporteIva,
 
-                        total =
+                    total =
                             cotizacion.Total
-                    }
+                }
                 );
             }
             catch (Exception ex)
@@ -17189,8 +17915,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             $"PIN incorrecto. Te quedan {intentosRestantes} intento(s) antes del bloqueo temporal."
                     }
                 )
-                                {
-                                    StatusCode =
+                {
+                    StatusCode =
                         StatusCodes.Status422UnprocessableEntity
                 };
             }
@@ -18409,7 +19135,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 IFormFile archivo,
                 AppUser usuarioActual,
                 DateTime ahora)
-            {
+        {
             if (
                 archivo == null
                 ||
@@ -23169,8 +23895,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 string.Empty;
 
 
-                        string[] tiposDocumentoPermitidos =
-                        {
+            string[] tiposDocumentoPermitidos =
+            {
                 "Factura",
                 "Contrato",
                 "Cotizaciones",

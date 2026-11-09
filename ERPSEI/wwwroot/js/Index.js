@@ -829,6 +829,314 @@ document.addEventListener(
                 "mensajeSolicitudPagoAdq"
             );
 
+
+        // =========================================================
+        // HU#1 - PLAN DE PAGOS Y PARCIALIDADES
+        // =========================================================
+
+        const tablaParcialidadesAdq =
+            document.getElementById("adqTablaParcialidades");
+
+        const contenedorParcialidadesAdq =
+            document.getElementById("adqContenedorParcialidades");
+
+        const btnAgregarParcialidadAdq =
+            document.getElementById("adqBtnAgregarParcialidad");
+
+        const totalParcialidadesAdq =
+            document.getElementById("adqParcialidadesTotal");
+
+        const porcentajeParcialidadesAdq =
+            document.getElementById("adqParcialidadesPorcentaje");
+
+        const pendienteParcialidadesAdq =
+            document.getElementById("adqParcialidadesPendiente");
+
+        const barraParcialidadesAdq =
+            document.getElementById("adqBarraParcialidades");
+
+        const mensajeParcialidadesAdq =
+            document.getElementById("adqMensajeParcialidades");
+
+        let basePagoParcialidadesAdq = {
+            subtotal: 0,
+            iva: 0
+        };
+
+        let porcentajesParcialidadesAdq = [100];
+
+        function modalidadPagoActualAdq() {
+            return document.querySelector(
+                'input[name="modalidadPagoAdq"]:checked'
+            )?.value ?? "Unico";
+        }
+
+        function numeroPagoAdq(elemento) {
+            const valor = Number(elemento?.value ?? 0);
+            return Number.isFinite(valor) ? valor : NaN;
+        }
+
+        function redondearPagoAdq(valor) {
+            return Math.round((valor + Number.EPSILON) * 100) / 100;
+        }
+
+        function totalFinalParcialidadesAdq() {
+            return redondearPagoAdq(
+                basePagoParcialidadesAdq.subtotal
+                + basePagoParcialidadesAdq.iva
+                - numeroPagoAdq(retencionIvaSolicitudPagoAdq)
+                - numeroPagoAdq(retencionIsrSolicitudPagoAdq)
+                + numeroPagoAdq(otrosImpuestosSolicitudPagoAdq)
+                + numeroPagoAdq(otrosServiciosSolicitudPagoAdq)
+            );
+        }
+
+        function importesParcialidadesAdq(total) {
+            const porcentajes = modalidadPagoActualAdq() === "Unico"
+                ? [100]
+                : porcentajesParcialidadesAdq;
+
+            const importes = [];
+            let acumulado = 0;
+
+            porcentajes.forEach((porcentaje, indice) => {
+                const importe = indice === porcentajes.length - 1
+                    ? redondearPagoAdq(total - acumulado)
+                    : redondearPagoAdq(total * porcentaje / 100);
+
+                importes.push(importe);
+                acumulado = redondearPagoAdq(acumulado + importe);
+            });
+
+            return importes;
+        }
+
+        function renderizarParcialidadesAdq() {
+            if (!tablaParcialidadesAdq) return;
+
+            const esParcial = modalidadPagoActualAdq() === "Parcialidades";
+            const total = totalFinalParcialidadesAdq();
+
+            contenedorParcialidadesAdq.classList.toggle(
+                "d-none", !esParcial
+            );
+
+            const porcentajes = esParcial
+                ? porcentajesParcialidadesAdq
+                : [100];
+
+            const suma = porcentajes.reduce((a, b) => a + b, 0);
+            const importes = importesParcialidadesAdq(total);
+
+            tablaParcialidadesAdq.replaceChildren();
+
+            if (esParcial) {
+                porcentajes.forEach((porcentaje, indice) => {
+                    const fila = document.createElement("tr");
+
+                    const numero = document.createElement("td");
+                    numero.textContent = `Pago ${indice + 1}`;
+
+                    const celdaPorcentaje = document.createElement("td");
+                    const input = document.createElement("input");
+
+                    input.type = "number";
+                    input.className = "form-control form-control-sm";
+                    input.min = "0.0001";
+                    input.max = "100";
+                    input.step = "0.0001";
+                    input.value = porcentaje;
+                    input.dataset.indice = indice;
+                    input.setAttribute(
+                        "aria-label",
+                        `Porcentaje de parcialidad ${indice + 1}`
+                    );
+
+                    celdaPorcentaje.appendChild(input);
+
+                    const importe = document.createElement("td");
+                    importe.className = "text-end fw-semibold";
+                    importe.textContent = Number.isFinite(total)
+                        ? formatearMonedaAdq(importes[indice])
+                        : "—";
+
+                    const accion = document.createElement("td");
+                    accion.className = "text-center";
+
+                    const eliminar = document.createElement("button");
+                    eliminar.type = "button";
+                    eliminar.className = "btn btn-sm btn-outline-danger";
+                    eliminar.dataset.eliminarIndice = indice;
+                    eliminar.disabled = porcentajes.length <= 2;
+                    eliminar.setAttribute(
+                        "aria-label",
+                        `Eliminar parcialidad ${indice + 1}`
+                    );
+                    eliminar.innerHTML = '<i class="bi bi-trash"></i>';
+
+                    accion.appendChild(eliminar);
+                    fila.append(numero, celdaPorcentaje, importe, accion);
+                    tablaParcialidadesAdq.appendChild(fila);
+                });
+            }
+
+            totalParcialidadesAdq.textContent = Number.isFinite(total)
+                ? formatearMonedaAdq(total)
+                : "—";
+
+            porcentajeParcialidadesAdq.textContent =
+                `${suma.toFixed(4).replace(/\.?0+$/, "")}%`;
+
+            const pendienteDistribuir = Number.isFinite(total)
+                ? redondearPagoAdq(total * Math.max(0, 100 - suma) / 100)
+                : NaN;
+
+            pendienteParcialidadesAdq.textContent =
+                Number.isFinite(pendienteDistribuir)
+                    ? formatearMonedaAdq(pendienteDistribuir)
+                    : "—";
+
+            barraParcialidadesAdq.style.width =
+                `${Math.max(0, Math.min(100, suma))}%`;
+
+            barraParcialidadesAdq.setAttribute(
+                "aria-valuenow",
+                String(Math.max(0, Math.min(100, suma)))
+            );
+
+            const valido = Number.isFinite(total)
+                && total > 0
+                && porcentajes.every(p =>
+                    Number.isFinite(p) && p > 0
+                    && p <= 100
+                    && Math.round(p * 10000) === p * 10000
+                )
+                && Math.abs(suma - 100) < 0.000001
+                && (!esParcial || porcentajes.length >= 2)
+                && importes.every(i => i > 0);
+
+            mensajeParcialidadesAdq.textContent = !Number.isFinite(total)
+                || total <= 0
+                ? "El total del pago debe ser mayor que cero."
+                : suma > 100
+                    ? "La distribución excede el 100%."
+                    : valido
+                        ? "Distribución completa al 100%."
+                        : `Revisa los porcentajes e importes. Distribuido: ${suma.toFixed(4)}%.`;
+
+            mensajeParcialidadesAdq.classList.toggle(
+                "text-danger", !valido
+            );
+            mensajeParcialidadesAdq.classList.toggle(
+                "text-success", valido
+            );
+
+            barraParcialidadesAdq.classList.toggle(
+                "bg-danger", suma > 100
+            );
+
+            if (btnAgregarParcialidadAdq) {
+                btnAgregarParcialidadAdq.disabled =
+                    porcentajesParcialidadesAdq.length >= 100;
+            }
+
+            return valido;
+        }
+
+        document.querySelectorAll(
+            'input[name="modalidadPagoAdq"]'
+        ).forEach(radio => radio.addEventListener("change", () => {
+            if (modalidadPagoActualAdq() === "Parcialidades") {
+                porcentajesParcialidadesAdq = [50, 50];
+            } else {
+                porcentajesParcialidadesAdq = [100];
+            }
+
+            renderizarParcialidadesAdq();
+        }));
+
+        btnAgregarParcialidadAdq?.addEventListener("click", () => {
+            if (porcentajesParcialidadesAdq.length >= 100) return;
+
+            const ultimo = porcentajesParcialidadesAdq.length - 1;
+            const restante = porcentajesParcialidadesAdq[ultimo];
+
+            if (restante > 0.0001) {
+                const primeraParte =
+                    Math.round(restante * 5000) / 10000;
+
+                const segundaParte =
+                    Math.round((restante - primeraParte) * 10000) / 10000;
+
+                if (primeraParte > 0 && segundaParte > 0) {
+                    porcentajesParcialidadesAdq[ultimo] = primeraParte;
+                    porcentajesParcialidadesAdq.push(segundaParte);
+                } else {
+                    porcentajesParcialidadesAdq.push(0);
+                }
+            } else {
+                porcentajesParcialidadesAdq.push(0);
+            }
+
+            renderizarParcialidadesAdq();
+        });
+
+        tablaParcialidadesAdq?.addEventListener("change", event => {
+            const input = event.target.closest("input[data-indice]");
+            if (!input) return;
+
+            const indice = Number(input.dataset.indice);
+            porcentajesParcialidadesAdq[indice] =
+                input.value === "" ? 0 : Number(input.value);
+
+            renderizarParcialidadesAdq();
+
+            const nuevoInput = tablaParcialidadesAdq.querySelector(
+                `input[data-indice="${indice}"]`
+            );
+
+            nuevoInput?.focus();
+        });
+
+        tablaParcialidadesAdq?.addEventListener("click", event => {
+            const boton = event.target.closest(
+                "button[data-eliminar-indice]"
+            );
+            if (!boton || porcentajesParcialidadesAdq.length <= 2) return;
+
+            const indice = Number(boton.dataset.eliminarIndice);
+            porcentajesParcialidadesAdq.splice(indice, 1);
+            renderizarParcialidadesAdq();
+        });
+
+        [
+            retencionIvaSolicitudPagoAdq,
+            retencionIsrSolicitudPagoAdq,
+            otrosImpuestosSolicitudPagoAdq,
+            otrosServiciosSolicitudPagoAdq
+        ].forEach(elemento => {
+            elemento?.addEventListener(
+                "input", renderizarParcialidadesAdq
+            );
+        });
+
+        function obtenerParcialidadesValidasAdq() {
+            if (!renderizarParcialidadesAdq()) {
+                throw new Error(
+                    "El plan de pagos debe sumar 100%, tener importes positivos y contener al menos dos parcialidades cuando corresponda."
+                );
+            }
+
+            const porcentajes = modalidadPagoActualAdq() === "Unico"
+                ? [100]
+                : porcentajesParcialidadesAdq;
+
+            return porcentajes.map(porcentaje => ({
+                porcentaje
+            }));
+        }
+
+
         // =========================================================
         // DATOS DE PAGO - APROBACIÓN PRESUPUESTAL
         // =========================================================
@@ -5242,7 +5550,7 @@ document.addEventListener(
                         }
                     );
                 }
-        );
+            );
 
         btnConfirmarDecisionPresupuestalAdq
             ?.addEventListener(
@@ -5252,13 +5560,13 @@ document.addEventListener(
                     await abrirFirmaDecisionPresupuestalAdq();
 
                 }
-        );
+            );
 
         pinDecisionPresupuestalAdq
             ?.addEventListener(
                 "input",
                 actualizarEstadoBotonFirmaDecisionAdq
-        );
+            );
 
         btnVerPinDecisionPresupuestalAdq
             ?.addEventListener(
@@ -5288,7 +5596,7 @@ document.addEventListener(
                             ? `<i class="bi bi-eye"></i>`
                             : `<i class="bi bi-eye-slash"></i>`;
                 }
-        );
+            );
 
         // =========================================================
         // FIRMAR Y REGISTRAR DECISIÓN PRESUPUESTAL
@@ -5767,7 +6075,7 @@ document.addEventListener(
                     }
 
                 }
-        );
+            );
 
         modalFirmaDecisionPresupuestalElementAdq
             ?.addEventListener(
@@ -6219,8 +6527,8 @@ document.addEventListener(
                         data-orden="${etapa.orden}">
 
                         ${crearOpcionesResponsablesAdq(
-                            etapa.usuarioResponsableId
-                        )}
+                        etapa.usuarioResponsableId
+                    )}
 
                     </select>
 
@@ -6234,8 +6542,8 @@ document.addEventListener(
                         data-orden="${etapa.orden}">
 
                         ${crearOpcionesAsistentesAdq(
-                            etapa.usuarioAsistenteId
-                        )}
+                        etapa.usuarioAsistenteId
+                    )}
 
                     </select>
 
@@ -6422,7 +6730,7 @@ document.addEventListener(
 
                     await cargarConfiguracionAprobadoresAdq();
                 }
-        );
+            );
 
         tablaConfiguracionAprobadoresAdqBody
             ?.addEventListener(
@@ -6476,7 +6784,7 @@ document.addEventListener(
                             "";
                     }
                 }
-        );
+            );
 
         function obtenerConfiguracionAprobadoresFormularioAdq() {
 
@@ -7469,7 +7777,7 @@ document.addEventListener(
 
                     await cargarPermisosAdquisicionesAdq();
                 }
-        );
+            );
 
         function actualizarTotalPermisosAdq() {
 
@@ -7576,7 +7884,7 @@ document.addEventListener(
                     buscarPermisoAdquisicionesAdq
                         ?.focus();
                 }
-        );
+            );
 
         // =========================================================
         // OBTENER VALOR DE CHECKBOX DE PERMISO
@@ -10898,8 +11206,8 @@ document.addEventListener(
                             )}"
                             data-total="${total}"
                             ${!tienePermisoAbacAdq("puedeEditar")
-                                                    ? "disabled"
-                                                    : ""}>
+                                ? "disabled"
+                                : ""}>
 
                             <i class="bi bi-check2-circle me-1"></i>
 
@@ -17545,7 +17853,7 @@ document.addEventListener(
                      * Borrador:
                      * editar + cancelar + enviar.
                      */
-                    
+
                     if (
                         solicitud.estatusId ===
                         1
@@ -17637,7 +17945,7 @@ document.addEventListener(
                                 btnGenerarSolicitudPagoDesdeDetalle.disabled
                                     ? "No tienes permiso para descargar archivos."
                                     : "Descargar Solicitud de Pago";
-                                    }
+                        }
                         else {
 
                             btnGenerarSolicitudPagoDesdeDetalle.innerHTML = `
@@ -18431,6 +18739,26 @@ document.addEventListener(
                     }
 
 
+                    // =====================================================
+                    // VALIDAR PLAN DE PAGOS
+                    // =====================================================
+
+                    let parcialidades;
+
+                    try {
+                        parcialidades =
+                            obtenerParcialidadesValidasAdq();
+                    }
+                    catch (error) {
+                        mostrarAdvertenciaAdq(
+                            "Distribución de pagos incompleta",
+                            error.message
+                        );
+
+                        return;
+                    }
+
+
                     const payload =
                     {
                         solicitudId,
@@ -18500,13 +18828,17 @@ document.addEventListener(
                                 0
                             ),
 
+
                         otrosServicios:
                             Number(
                                 otrosServiciosSolicitudPagoAdq
                                     ?.value
-                                ??
-                                0
-                            )
+                                ?? 0
+                            ),
+
+                        // HU#1 - Plan de pagos
+                        parcialidades: parcialidades
+
                     };
 
 
@@ -19698,7 +20030,7 @@ document.addEventListener(
                     }
                 }
             );
-           
+
 
         // =========================================================
         // HISTORIAL DE APROBACIONES - FILTROS
@@ -20597,6 +20929,27 @@ document.addEventListener(
                     );
 
 
+                // =====================================================
+                // INICIALIZAR PLAN DE PAGOS
+                // =====================================================
+
+                basePagoParcialidadesAdq = {
+                    subtotal: Number(resultado.subtotal ?? 0),
+                    iva: Number(resultado.iva ?? 0)
+                };
+
+                porcentajesParcialidadesAdq = [100];
+
+                const radioPagoUnico = document.querySelector(
+                    'input[name="modalidadPagoAdq"][value="Unico"]'
+                );
+
+                if (radioPagoUnico) {
+                    radioPagoUnico.checked = true;
+                }
+
+
+
                 companiaSolicitudPagoAdq.value =
                     resultado.compania
                     ??
@@ -20669,6 +21022,8 @@ document.addEventListener(
                     resultado.tipoDocumento
                     ??
                     "No definido";
+
+                renderizarParcialidadesAdq();
 
                 if (
                     resultado.pdfGenerado
@@ -23526,6 +23881,181 @@ document.addEventListener(
                 );
             }
         }
+
+
+        // =========================================================
+        // HU#1 - SEGUIMIENTO DE PAGOS Y PARCIALIDADES
+        // =========================================================
+        const modalSeguimientoPagosAdq = document.getElementById("modalSeguimientoPagosAdq");
+        const tablaSeguimientoPagosAdq = document.getElementById("tablaSeguimientoPagosAdq");
+        const mensajeSeguimientoPagosAdq = document.getElementById("mensajeSeguimientoPagosAdq");
+        const contenidoSeguimientoPagosAdq = document.getElementById("contenidoSeguimientoPagosAdq");
+        const cargandoSeguimientoPagosAdq = document.getElementById("cargandoSeguimientoPagosAdq");
+        const confirmacionPagoParcialidadAdq = document.getElementById("confirmacionPagoParcialidadAdq");
+        const referenciaSeguimientoPagoAdq = document.getElementById("referenciaSeguimientoPagoAdq");
+        const confirmarSeguimientoPagoAdq = document.getElementById("confirmarSeguimientoPagoAdq");
+        let solicitudSeguimientoPagoActualAdq = 0;
+        let parcialidadParaRegistrarAdq = null;
+
+        function monedaSeguimientoPagoAdq(valor, moneda) {
+            const monedaIso = moneda === "Dolares" || moneda === "Dólares" ? "USD" : "MXN";
+            return new Intl.NumberFormat("es-MX", { style: "currency", currency: monedaIso }).format(Number(valor));
+        }
+
+        function errorSeguimientoPagoAdq(mensaje) {
+            mensajeSeguimientoPagosAdq.textContent = mensaje;
+            mensajeSeguimientoPagosAdq.classList.remove("d-none");
+        }
+
+        async function cargarSeguimientoPagosAdq() {
+            if (!solicitudSeguimientoPagoActualAdq || !modalSeguimientoPagosAdq) return;
+            mensajeSeguimientoPagosAdq.classList.add("d-none");
+            contenidoSeguimientoPagosAdq.classList.add("d-none");
+            cargandoSeguimientoPagosAdq.classList.remove("d-none");
+            confirmacionPagoParcialidadAdq.classList.add("d-none");
+            parcialidadParaRegistrarAdq = null;
+            try {
+                const respuesta = await fetch(`${window.location.pathname}?handler=SeguimientoParcialidades&solicitudId=${encodeURIComponent(solicitudSeguimientoPagoActualAdq)}`, {
+                    method: "GET", headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+                const datos = await respuesta.json();
+                if (!respuesta.ok || !datos.success) throw new Error(datos.message || "No fue posible consultar el seguimiento.");
+                if (datos.distribucionValida !== true) throw new Error(datos.esHistoricaSinPlan
+                    ? "Esta solicitud no cuenta con un plan de parcialidades registrado. No se modificará automáticamente."
+                    : "El plan de pagos presenta inconsistencias; contacta al administrador antes de registrar pagos.");
+
+                document.getElementById("totalSeguimientoPagosAdq").textContent = monedaSeguimientoPagoAdq(datos.total, datos.moneda);
+                document.getElementById("pagadoSeguimientoPagosAdq").textContent = monedaSeguimientoPagoAdq(datos.importePagado, datos.moneda);
+                document.getElementById("saldoSeguimientoPagosAdq").textContent = monedaSeguimientoPagoAdq(datos.saldoPendiente, datos.moneda);
+                tablaSeguimientoPagosAdq.replaceChildren();
+                const puedeRegistrar = modalSeguimientoPagosAdq.dataset.puedeRegistrar === "true" && datos.pdfGenerado === true;
+                for (const parcialidad of datos.parcialidades || []) {
+                    const fila = document.createElement("tr");
+                    const celda = (valor, clase = "") => {
+                        const td = document.createElement("td");
+                        td.textContent = String(valor);
+                        if (clase) td.className = clase;
+                        fila.appendChild(td);
+                        return td;
+                    };
+                    celda(`Pago ${parcialidad.numeroParcialidad}`);
+                    celda(`${Number(parcialidad.porcentaje).toLocaleString("es-MX", { maximumFractionDigits: 4 })}%`);
+                    celda(monedaSeguimientoPagoAdq(parcialidad.importe, datos.moneda), "text-end fw-semibold");
+                    const estatus = celda(parcialidad.estatus);
+                    estatus.className = parcialidad.estatus === "Pagada" ? "text-success fw-semibold" : "text-secondary";
+                    celda(parcialidad.fechaPago ? new Date(parcialidad.fechaPago).toLocaleString("es-MX") : "—");
+                    celda(parcialidad.referenciaPago || "—");
+                    if (parcialidad.tieneComprobante === true) {
+                        const refCell = fila.lastElementChild;
+                        const enlace = document.createElement("a");
+                        enlace.href = `${window.location.pathname}?handler=ComprobantePagoParcialidad&solicitudId=${encodeURIComponent(solicitudSeguimientoPagoActualAdq)}&parcialidadId=${encodeURIComponent(parcialidad.id)}`;
+                        enlace.className = "d-block small";
+                        enlace.textContent = "Ver comprobante";
+                        enlace.target = "_blank";
+                        enlace.rel = "noopener noreferrer";
+                        refCell.appendChild(enlace);
+                    }
+                    const accion = celda("", "text-end");
+                    if (puedeRegistrar && parcialidad.estatus === "Pendiente") {
+                        const boton = document.createElement("button");
+                        boton.type = "button";
+                        boton.className = "btn btn-sm btn-outline-success";
+                        boton.textContent = "Registrar pago";
+                        boton.dataset.parcialidadId = String(parcialidad.id);
+                        boton.dataset.numero = String(parcialidad.numeroParcialidad);
+                        boton.dataset.importe = monedaSeguimientoPagoAdq(parcialidad.importe, datos.moneda);
+                        accion.appendChild(boton);
+                    }
+                    tablaSeguimientoPagosAdq.appendChild(fila);
+                }
+                contenidoSeguimientoPagosAdq.classList.remove("d-none");
+            } catch (error) {
+                errorSeguimientoPagoAdq(error.message || "Ocurrió un error al consultar pagos.");
+            } finally {
+                cargandoSeguimientoPagosAdq.classList.add("d-none");
+            }
+        }
+
+        document.addEventListener("click", async event => {
+            const boton = event.target.closest(".btnSeguimientoPagosAdq");
+            if (!boton || !modalSeguimientoPagosAdq) return;
+            solicitudSeguimientoPagoActualAdq = Number(boton.dataset.solicitudId || 0);
+            if (!solicitudSeguimientoPagoActualAdq) return;
+            document.getElementById("folioSeguimientoPagosAdq").textContent = boton.dataset.folio || "—";
+            bootstrap.Modal.getOrCreateInstance(modalSeguimientoPagosAdq).show();
+            await cargarSeguimientoPagosAdq();
+        });
+
+        document.getElementById("actualizarSeguimientoPagosAdq")?.addEventListener("click", cargarSeguimientoPagosAdq);
+
+        const comprobanteSeguimientoPagoAdq = document.getElementById("comprobanteSeguimientoPagoAdq");
+
+        tablaSeguimientoPagosAdq?.addEventListener("click", event => {
+            const boton = event.target.closest("button[data-parcialidad-id]");
+            if (!boton) return;
+            parcialidadParaRegistrarAdq = Number(boton.dataset.parcialidadId);
+            referenciaSeguimientoPagoAdq.value = "";
+            if (comprobanteSeguimientoPagoAdq) comprobanteSeguimientoPagoAdq.value = "";
+            document.getElementById("textoConfirmacionPagoAdq").textContent =
+                `Registrar pago ${boton.dataset.numero} por ${boton.dataset.importe}`;
+            confirmacionPagoParcialidadAdq.classList.remove("d-none");
+            referenciaSeguimientoPagoAdq.focus();
+        });
+
+        document.getElementById("cancelarSeguimientoPagoAdq")?.addEventListener("click", () => {
+            parcialidadParaRegistrarAdq = null;
+            confirmacionPagoParcialidadAdq.classList.add("d-none");
+        });
+
+        confirmarSeguimientoPagoAdq?.addEventListener("click", async () => {
+            const referencia = referenciaSeguimientoPagoAdq.value.trim();
+            if (!parcialidadParaRegistrarAdq || !solicitudSeguimientoPagoActualAdq || referencia.length < 3 || referencia.length > 250) {
+                errorSeguimientoPagoAdq("Ingresa una referencia de pago de 3 a 250 caracteres.");
+                return;
+            }
+            const archivo = comprobanteSeguimientoPagoAdq?.files?.[0];
+            if (archivo && (archivo.size > 10 * 1024 * 1024 || !/\.(pdf|png|jpe?g)$/i.test(archivo.name))) {
+                errorSeguimientoPagoAdq("El comprobante debe ser PDF, JPG o PNG y no superar 10 MB.");
+                return;
+            }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
+            if (!token) {
+                errorSeguimientoPagoAdq("No se encontró el token de seguridad. Actualiza la página.");
+                return;
+            }
+            confirmarSeguimientoPagoAdq.disabled = true;
+            mensajeSeguimientoPagosAdq.classList.add("d-none");
+            try {
+                const formData = new FormData();
+                formData.append("SolicitudId", String(solicitudSeguimientoPagoActualAdq));
+                formData.append("ParcialidadId", String(parcialidadParaRegistrarAdq));
+                formData.append("ReferenciaPago", referencia);
+                if (archivo) formData.append("Comprobante", archivo, archivo.name);
+                const respuesta = await fetch(`${window.location.pathname}?handler=RegistrarPagoParcialidad`, {
+                    method: "POST",
+                    headers: {
+                        "RequestVerificationToken": token,
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: formData
+                });
+                const datos = await respuesta.json();
+                if (!respuesta.ok || !datos.success) throw new Error(datos.message || "No fue posible registrar el pago.");
+                await cargarSeguimientoPagosAdq();
+            } catch (error) {
+                errorSeguimientoPagoAdq(error.message || "Ocurrió un error al registrar el pago.");
+            } finally {
+                confirmarSeguimientoPagoAdq.disabled = false;
+            }
+        });
+
+        modalSeguimientoPagosAdq?.addEventListener("hidden.bs.modal", () => {
+            solicitudSeguimientoPagoActualAdq = 0;
+            parcialidadParaRegistrarAdq = null;
+            referenciaSeguimientoPagoAdq.value = "";
+            if (comprobanteSeguimientoPagoAdq) comprobanteSeguimientoPagoAdq.value = "";
+            confirmacionPagoParcialidadAdq.classList.add("d-none");
+        });
 
         // =========================================================
         // INICIALIZAR TOOLTIPS

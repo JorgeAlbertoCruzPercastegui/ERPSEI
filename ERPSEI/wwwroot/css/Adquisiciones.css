@@ -6016,3 +6016,80 @@ td {
             color: #d4ad45 !important;
         }
 }
+
+
+/* ============================================================
+   ADQUISICIONES - PLAN DE PAGOS Y PARCIALIDADES
+   ============================================================ */
+
+.adq-parcialidades-panel {
+    padding: 20px;
+    background: #faf9ff;
+    border: 1px solid #e5e0fa;
+    border-radius: 14px;
+}
+
+.adq-parcialidad-resumen {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 85px;
+    padding: 14px;
+    background: #ffffff;
+    border: 1px solid #e7e3f5;
+    border-radius: 10px;
+}
+
+    .adq-parcialidad-resumen span {
+        color: #6c757d;
+        font-size: .78rem;
+    }
+
+    .adq-parcialidad-resumen strong {
+        color: #21166f;
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+
+#adqTablaParcialidades th {
+    color: #21166f;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+#adqTablaParcialidades td {
+    vertical-align: middle;
+}
+
+#adqTablaParcialidades .form-control {
+    max-width: 140px;
+}
+
+#adqBarraParcialidades {
+    background-color: #21166f;
+    transition: width .2s ease;
+}
+
+#adqBtnAgregarParcialidad {
+    border-color: #21166f;
+    color: #21166f;
+}
+
+    #adqBtnAgregarParcialidad:hover {
+        color: #ffffff;
+        background-color: #21166f;
+    }
+
+@media (max-width: 767px) {
+    .adq-parcialidades-panel {
+        padding: 12px;
+    }
+
+    .adq-parcialidad-resumen {
+        min-height: auto;
+    }
+
+    #adqTablaParcialidades {
+        min-width: 450px;
+    }
+}

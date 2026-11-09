@@ -256,11 +256,17 @@ namespace ERPSEI.Data.Entities.Adquisiciones
             set;
         }
 
-
         public AdqCotizacion? Cotizacion
         {
             get;
             set;
         }
+
+        public ICollection<AdqSolicitudPagoParcialidad> Parcialidades
+        {
+            get;
+            set;
+        } = new List<AdqSolicitudPagoParcialidad>();
+
     }
 }

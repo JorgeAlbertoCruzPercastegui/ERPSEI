@@ -1979,6 +1979,83 @@ namespace ERPSEI.Data.Migrations
                     b.ToTable("ADQ_SolicitudesPago");
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqSolicitudPagoParcialidad", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ComprobanteHashSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ComprobanteNombreAlmacenado")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("ComprobanteNombreOriginal")
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Estatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("FechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaPago")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Importe")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("NumeroParcialidad")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Porcentaje")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<string>("ReferenciaPago")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<int>("SolicitudPagoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UsuarioPagoId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SolicitudPagoId", "NumeroParcialidad")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ADQ_SolicitudesPagoParcialidades_SolicitudPagoId_NumeroParcialidad");
+
+                    b.ToTable("ADQ_SolicitudesPagoParcialidades", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ADQ_Parcialidad_Estatus", "[Estatus] IN ('Pendiente', 'Pagada')");
+
+                            t.HasCheckConstraint("CK_ADQ_Parcialidad_Importe", "[Importe] > 0");
+
+                            t.HasCheckConstraint("CK_ADQ_Parcialidad_Numero", "[NumeroParcialidad] > 0");
+
+                            t.HasCheckConstraint("CK_ADQ_Parcialidad_Porcentaje", "[Porcentaje] > 0 AND [Porcentaje] <= 100");
+                        });
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.Clientes.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -2870,63 +2947,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7715),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6589),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7724),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6601),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7725),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6602),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7726),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6603),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7727),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6604),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7728),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6605),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7729),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6606),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7729),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6607),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 6, 10, 13, 0, 635, DateTimeKind.Local).AddTicks(7730),
+                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6608),
                             Nombre = "Otros"
                         });
                 });
@@ -11243,7 +11320,7 @@ namespace ERPSEI.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NombreUsuario", "NombreEmpresa", "Actividad", "Descripcion")
+                    b.HasIndex("NombreUsuario")
                         .HasDatabaseName("IX_TimeTipoClasificaciones_Relacion");
 
                     b.ToTable("TimeTipoClasificaciones", null, t =>
@@ -11772,6 +11849,17 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("Cotizacion");
 
                     b.Navigation("Solicitud");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqSolicitudPagoParcialidad", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Adquisiciones.AdqSolicitudPago", "SolicitudPago")
+                        .WithMany("Parcialidades")
+                        .HasForeignKey("SolicitudPagoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SolicitudPago");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Clientes.Cliente", b =>
@@ -13444,6 +13532,11 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("Detalles");
 
                     b.Navigation("Historial");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqSolicitudPago", b =>
+                {
+                    b.Navigation("Parcialidades");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Clientes.Cliente", b =>

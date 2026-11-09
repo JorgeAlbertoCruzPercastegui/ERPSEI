@@ -429,6 +429,15 @@ namespace ERPSEI.Data
             set;
         }
 
+
+        public DbSet<AdqSolicitudPagoParcialidad>
+            AdqSolicitudesPagoParcialidades
+        {
+            get;
+            set;
+        } = null!;
+
+
         public DbSet<TimeHallazgoConciliacion> TimeHallazgosConciliacion => Set<TimeHallazgoConciliacion>();
 
         // =====================================================
@@ -1100,14 +1109,7 @@ namespace ERPSEI.Data
                     .IsRequired()
                     .HasMaxLength(50);
 
-                entity.HasIndex(x => new
-                {
-                    x.NombreUsuario,
-                    x.NombreEmpresa,
-                    x.Actividad,
-                    x.Descripcion
-                })
-                .HasDatabaseName("IX_TimeTipoClasificaciones_Relacion");
+                entity.HasIndex(x => x.NombreUsuario).HasDatabaseName("IX_TimeTipoClasificaciones_Relacion");
 
                 entity.ToTable(
                     "TimeTipoClasificaciones",
@@ -1256,6 +1258,76 @@ namespace ERPSEI.Data
                     x => x.SolicitudId
                 )
                 .IsUnique();
+
+
+            // =========================================================
+            // SOLICITUD DE PAGO - PARCIALIDADES
+            // =========================================================
+
+
+            // =========================================================
+            // HU#1 - SOLICITUD DE PAGO - PARCIALIDADES
+            // =========================================================
+
+            b.Entity<AdqSolicitudPagoParcialidad>(entity =>
+            {
+                entity.ToTable("ADQ_SolicitudesPagoParcialidades", t =>
+                {
+                    t.HasCheckConstraint(
+                        "CK_ADQ_Parcialidad_Porcentaje",
+                        "[Porcentaje] > 0 AND [Porcentaje] <= 100");
+
+                    t.HasCheckConstraint(
+                        "CK_ADQ_Parcialidad_Importe",
+                        "[Importe] > 0");
+
+                    t.HasCheckConstraint(
+                        "CK_ADQ_Parcialidad_Estatus",
+                        "[Estatus] IN ('Pendiente', 'Pagada')");
+
+                    t.HasCheckConstraint(
+                        "CK_ADQ_Parcialidad_Numero",
+                        "[NumeroParcialidad] > 0");
+                });
+
+                entity.HasKey(x => x.Id);
+
+                entity.HasOne(x => x.SolicitudPago)
+                    .WithMany(x => x.Parcialidades)
+                    .HasForeignKey(x => x.SolicitudPagoId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(x => x.Porcentaje)
+                    .HasPrecision(9, 4)
+                    .IsRequired();
+
+                entity.Property(x => x.Importe)
+                    .HasPrecision(18, 2)
+                    .IsRequired();
+
+                entity.Property(x => x.Estatus)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.Property(x => x.ReferenciaPago)
+                    .HasMaxLength(250);
+
+                entity.Property(x => x.UsuarioPagoId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.ComprobanteNombreAlmacenado).HasMaxLength(80);
+                entity.Property(x => x.ComprobanteNombreOriginal).HasMaxLength(260);
+                entity.Property(x => x.ComprobanteHashSha256).HasMaxLength(64);
+
+                entity.HasIndex(x => new
+                {
+                    x.SolicitudPagoId,
+                    x.NumeroParcialidad
+                })
+                .IsUnique()
+                .HasDatabaseName(
+                    "IX_ADQ_SolicitudesPagoParcialidades_SolicitudPagoId_NumeroParcialidad");
+            });
         }
 
 

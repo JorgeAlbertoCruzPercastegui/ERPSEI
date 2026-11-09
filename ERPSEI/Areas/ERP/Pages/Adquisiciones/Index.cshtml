@@ -159,10 +159,10 @@
                       data-bs-toggle="tooltip"
                       data-bs-placement="top"
                       title="@(
-                              Model.AbacPuedeCrear
-                                  ? ""
-                                  : "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
-                                    )">
+                                          Model.AbacPuedeCrear
+                                              ? ""
+                                              : "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
+                                                                          )">
 
                     <button type="button"
                             id="btnNuevaSolicitudAdq"
@@ -171,10 +171,10 @@
                             data-bs-target="#modalNuevaSolicitud"
                             disabled="@(!Model.AbacPuedeCrear)"
                             style="@(
-                                        !Model.AbacPuedeCrear
-                                            ? "pointer-events: none;"
-                                            : ""
-                                                    )">
+                                                    !Model.AbacPuedeCrear
+                                                        ? "pointer-events: none;"
+                                                        : ""
+                                                                                                    )">
 
                         <i class="bi bi-plus-lg me-1"></i>
 
@@ -1012,20 +1012,20 @@
                                               data-bs-toggle="@(!Model.AbacPuedeVisualizar ? "tooltip" : null)"
                                               data-bs-placement="top"
                                               title="@(
-                                                  !Model.AbacPuedeVisualizar
-                                                      ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
-                                                      : null
-                                                    )">
+                                                                                          !Model.AbacPuedeVisualizar
+                                                                                              ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
+                                                                                              : null
+                                                                                                                                          )">
 
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
                                                     data-id="@solicitud.Id"
                                                     disabled="@(!Model.AbacPuedeVisualizar)"
                                                     style="@(
-                                                            !Model.AbacPuedeVisualizar
-                                                                ? "pointer-events: none;"
-                                                                : null
-                                                                    )"
+                                                                                                    !Model.AbacPuedeVisualizar
+                                                                                                        ? "pointer-events: none;"
+                                                                                                        : null
+                                                                                                                                                                    )"
                                                     title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
                                                 <i class="bi bi-eye"></i>
@@ -1034,6 +1034,23 @@
 
                                         </span>
 
+                                        @if (
+                                            solicitud.EstatusId >= 10 &&
+                                            Model.AbacPuedeVisualizar &&
+                                            (Model.EsAdministradorSistema ||
+                                             Model.EsAdministradorAdquisiciones ||
+                                             Model.EsUsuarioOperativoAdquisiciones)
+                                        )
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-success btnSeguimientoPagosAdq"
+                                                    data-solicitud-id="@solicitud.Id"
+                                                    data-folio="@solicitud.Folio"
+                                                    title="Seguimiento de pagos"
+                                                    aria-label="Seguimiento de pagos de @solicitud.Folio">
+                                                <i class="bi bi-cash-stack"></i>
+                                            </button>
+                                        }
 
                                         @if (
                                             solicitud.EstatusId == 1 ||
@@ -1045,20 +1062,20 @@
                                                   data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
                                                   data-bs-placement="top"
                                                   title="@(
-                                                      !Model.AbacPuedeEditar
-                                                          ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
-                                                          : null
-                                                        )">
+                                                                                                  !Model.AbacPuedeEditar
+                                                                                                      ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                                                                      : null
+                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-secondary btnEditarSolicitudAdq"
                                                         data-id="@solicitud.Id"
                                                         disabled="@(!Model.AbacPuedeEditar)"
                                                         style="@(
-                                                                !Model.AbacPuedeEditar
-                                                                    ? "pointer-events: none;"
-                                                                    : null
-                                                                        )"
+                                                                                                            !Model.AbacPuedeEditar
+                                                                                                                ? "pointer-events: none;"
+                                                                                                                : null
+                                                                                                                                                                                )"
                                                         title="@(Model.AbacPuedeEditar ? "Editar solicitud" : null)">
 
                                                     <i class="bi bi-pencil"></i>
@@ -1073,10 +1090,10 @@
                                                   data-bs-toggle="@(!Model.AbacPuedeEliminar ? "tooltip" : null)"
                                                   data-bs-placement="top"
                                                   title="@(
-                                                      !Model.AbacPuedeEliminar
-                                                          ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
-                                                          : null
-                                                        )">
+                                                                                                  !Model.AbacPuedeEliminar
+                                                                                                      ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
+                                                                                                      : null
+                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-danger btnCancelarSolicitudUsuarioAdq"
@@ -1084,10 +1101,10 @@
                                                         data-folio="@solicitud.Folio"
                                                         disabled="@(!Model.AbacPuedeEliminar)"
                                                         style="@(
-                                                                !Model.AbacPuedeEliminar
-                                                                    ? "pointer-events: none;"
-                                                                    : null
-                                                                        )"
+                                                                                                            !Model.AbacPuedeEliminar
+                                                                                                                ? "pointer-events: none;"
+                                                                                                                : null
+                                                                                                                                                                                )"
                                                         title="@(Model.AbacPuedeEliminar ? "Cancelar solicitud" : null)">
 
                                                     <i class="bi bi-x-lg"></i>
@@ -1826,20 +1843,20 @@
                                                   data-bs-toggle="@(!Model.AbacPuedeVisualizar ? "tooltip" : null)"
                                                   data-bs-placement="top"
                                                   title="@(
-                                                      !Model.AbacPuedeVisualizar
-                                                          ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
-                                                          : null
-                                                        )">
+                                                                                                  !Model.AbacPuedeVisualizar
+                                                                                                      ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
+                                                                                                      : null
+                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
                                                         data-id="@solicitud.Id"
                                                         disabled="@(!Model.AbacPuedeVisualizar)"
                                                         style="@(
-                                                                !Model.AbacPuedeVisualizar
-                                                                    ? "pointer-events: none;"
-                                                                    : null
-                                                                        )"
+                                                                                                            !Model.AbacPuedeVisualizar
+                                                                                                                ? "pointer-events: none;"
+                                                                                                                : null
+                                                                                                                                                                                )"
                                                         title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
                                                     <i class="bi bi-eye"></i>
@@ -1860,10 +1877,10 @@
                                                       data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
                                                       data-bs-placement="top"
                                                       title="@(
-                                                          !Model.AbacPuedeEditar
-                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
-                                                              : null
-                                                            )">
+                                                                                                          !Model.AbacPuedeEditar
+                                                                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                                                                              : null
+                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-success btnAccionAdquisiciones"
@@ -1872,10 +1889,10 @@
                                                             data-accion="aprobar"
                                                             disabled="@(!Model.AbacPuedeEditar)"
                                                             style="@(
-                                                                    !Model.AbacPuedeEditar
-                                                                        ? "pointer-events: none;"
-                                                                        : null
-                                                                            )"
+                                                                                                                    !Model.AbacPuedeEditar
+                                                                                                                        ? "pointer-events: none;"
+                                                                                                                        : null
+                                                                                                                                                                                            )"
                                                             title="@(Model.AbacPuedeEditar ? "Aprobar solicitud" : null)">
 
                                                         <i class="bi bi-check-lg"></i>
@@ -1890,10 +1907,10 @@
                                                       data-bs-toggle="@(!Model.AbacPuedeEliminar ? "tooltip" : null)"
                                                       data-bs-placement="top"
                                                       title="@(
-                                                          !Model.AbacPuedeEliminar
-                                                              ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
-                                                              : null
-                                                            )">
+                                                                                                          !Model.AbacPuedeEliminar
+                                                                                                              ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
+                                                                                                              : null
+                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-danger btnAccionAdquisiciones"
@@ -1902,10 +1919,10 @@
                                                             data-accion="cancelar"
                                                             disabled="@(!Model.AbacPuedeEliminar)"
                                                             style="@(
-                                                                    !Model.AbacPuedeEliminar
-                                                                        ? "pointer-events: none;"
-                                                                        : null
-                                                                            )"
+                                                                                                                    !Model.AbacPuedeEliminar
+                                                                                                                        ? "pointer-events: none;"
+                                                                                                                        : null
+                                                                                                                                                                                            )"
                                                             title="@(Model.AbacPuedeEliminar ? "Cancelar solicitud" : null)">
 
                                                         <i class="bi bi-x-lg"></i>
@@ -1927,10 +1944,10 @@
                                                       data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
                                                       data-bs-placement="top"
                                                       title="@(
-                                                          !Model.AbacPuedeEditar
-                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
-                                                              : null
-                                                            )">
+                                                                                                          !Model.AbacPuedeEditar
+                                                                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                                                                              : null
+                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-primary btnAsignarAdquisiciones"
@@ -1938,10 +1955,10 @@
                                                             data-folio="@solicitud.Folio"
                                                             disabled="@(!Model.AbacPuedeEditar)"
                                                             style="@(
-                                                                    !Model.AbacPuedeEditar
-                                                                        ? "pointer-events: none;"
-                                                                        : null
-                                                                            )"
+                                                                                                                    !Model.AbacPuedeEditar
+                                                                                                                        ? "pointer-events: none;"
+                                                                                                                        : null
+                                                                                                                                                                                            )"
                                                             title="@(Model.AbacPuedeEditar ? "Asignar agente" : null)">
 
                                                         <i class="bi bi-person-plus"></i>
@@ -1971,7 +1988,8 @@
     <!-- ========================================================= -->
     <!-- APROBACIONES PRESUPUESTALES PENDIENTES -->
     <!-- ========================================================= -->
-    @if (Model.PuedeVerAprobacionesPresupuestales && Model.TotalAprobacionesPresupuestalesPendientes > 0){
+    @if (Model.PuedeVerAprobacionesPresupuestales && Model.TotalAprobacionesPresupuestalesPendientes > 0)
+    {
         <section class="adq-panel mt-4"
                  id="seccionAprobacionesPresupuestalesAdq">
 
@@ -2841,20 +2859,20 @@
                                                   data-bs-toggle="@(!Model.AbacPuedeVisualizar ? "tooltip" : null)"
                                                   data-bs-placement="top"
                                                   title="@(
-                                                      !Model.AbacPuedeVisualizar
-                                                          ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
-                                                          : null
-                                                        )">
+                                                                                                  !Model.AbacPuedeVisualizar
+                                                                                                      ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
+                                                                                                      : null
+                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
                                                         data-id="@orden.Id"
                                                         disabled="@(!Model.AbacPuedeVisualizar)"
                                                         style="@(
-                                                                !Model.AbacPuedeVisualizar
-                                                                    ? "pointer-events: none;"
-                                                                    : null
-                                                                        )"
+                                                                                                            !Model.AbacPuedeVisualizar
+                                                                                                                ? "pointer-events: none;"
+                                                                                                                : null
+                                                                                                                                                                                )"
                                                         title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
                                                     <i class="bi bi-eye"></i>
@@ -2896,20 +2914,20 @@
                                                       data-bs-toggle="@(!Model.AbacPuedeCrear ? "tooltip" : null)"
                                                       data-bs-placement="top"
                                                       title="@(
-                                                          !Model.AbacPuedeCrear
-                                                              ? "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
-                                                              : null
-                                                            )">
+                                                                                                          !Model.AbacPuedeCrear
+                                                                                                              ? "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
+                                                                                                              : null
+                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btnGenerarCotizacionAdq adq-btn-cotizar"
                                                             data-id="@orden.Id"
                                                             disabled="@(!Model.AbacPuedeCrear)"
                                                             style="@(
-                                                                    !Model.AbacPuedeCrear
-                                                                        ? "pointer-events: none;"
-                                                                        : null
-                                                                            )"
+                                                                                                                    !Model.AbacPuedeCrear
+                                                                                                                        ? "pointer-events: none;"
+                                                                                                                        : null
+                                                                                                                                                                                            )"
                                                             title="@(Model.AbacPuedeCrear ? "Gestionar cotización" : null)">
 
                                                         <i class="bi bi-file-earmark-text"></i>
@@ -2930,10 +2948,10 @@
                                                       data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
                                                       data-bs-placement="top"
                                                       title="@(
-                                                          !Model.AbacPuedeEditar
-                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
-                                                              : null
-                                                            )">
+                                                                                                          !Model.AbacPuedeEditar
+                                                                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                                                                              : null
+                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-primary btnReabrirCotizacionAdq"
@@ -2941,10 +2959,10 @@
                                                             data-folio="@orden.Folio"
                                                             disabled="@(!Model.AbacPuedeEditar)"
                                                             style="@(
-                                                                    !Model.AbacPuedeEditar
-                                                                        ? "pointer-events: none;"
-                                                                        : null
-                                                                            )"
+                                                                                                                    !Model.AbacPuedeEditar
+                                                                                                                        ? "pointer-events: none;"
+                                                                                                                        : null
+                                                                                                                                                                                            )"
                                                             title="@(Model.AbacPuedeEditar ? "Modificar cotizaciones" : null)">
 
                                                         <i class="bi bi-pencil-square"></i>
@@ -2959,20 +2977,20 @@
                                                       data-bs-toggle="@(!Model.AbacPuedeEditar ? "tooltip" : null)"
                                                       data-bs-placement="top"
                                                       title="@(
-                                                          !Model.AbacPuedeEditar
-                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
-                                                              : null
-                                                            )">
+                                                                                                          !Model.AbacPuedeEditar
+                                                                                                              ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
+                                                                                                              : null
+                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center btnSolicitarPresupuestoAdq"
                                                             data-id="@orden.Id"
                                                             disabled="@(!Model.AbacPuedeEditar)"
                                                             style="@(
-                                                                    !Model.AbacPuedeEditar
-                                                                        ? "width: 38px; height: 38px; padding: 0; pointer-events: none;"
-                                                                        : "width: 38px; height: 38px; padding: 0;"
-                                                                            )"
+                                                                                                                    !Model.AbacPuedeEditar
+                                                                                                                        ? "width: 38px; height: 38px; padding: 0; pointer-events: none;"
+                                                                                                                        : "width: 38px; height: 38px; padding: 0;"
+                                                                                                                                                                                            )"
                                                             title="@(Model.AbacPuedeEditar ? "Solicitar aprobación presupuestal" : null)">
 
                                                         <i class="bi bi-cash-stack"></i>
@@ -3889,209 +3907,209 @@
     </div>
 
 
-<!-- ========================================================== -->
-<!-- MODAL NUEVA / EDITAR SOLICITUD -->
-<!-- ========================================================== -->
+    <!-- ========================================================== -->
+    <!-- MODAL NUEVA / EDITAR SOLICITUD -->
+    <!-- ========================================================== -->
 
-<div class="modal fade"
-     id="modalNuevaSolicitud"
-     tabindex="-1"
-     aria-labelledby="modalNuevaSolicitudLabel"
-     aria-hidden="true">
+    <div class="modal fade"
+         id="modalNuevaSolicitud"
+         tabindex="-1"
+         aria-labelledby="modalNuevaSolicitudLabel"
+         aria-hidden="true">
 
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
 
-        <div class="modal-content">
+            <div class="modal-content">
 
-            <form method="post"
-              id="formNuevaSolicitudAdq"
-              enctype="multipart/form-data"
-              data-autosave-draft="true"
-              data-draft-key="AdquisicionesNuevaSolicitud">
+                <form method="post"
+                      id="formNuevaSolicitudAdq"
+                      enctype="multipart/form-data"
+                      data-autosave-draft="true"
+                      data-draft-key="AdquisicionesNuevaSolicitud">
 
-                @Html.AntiForgeryToken()
-
-
-                <input type="hidden"
-                       id="SolicitudEditarId"
-                       name="SolicitudEditarId"
-                       value="@Model.SolicitudEditarId" />
-
-                <div id="contenedorAdjuntosEliminarAdq">
-                </div>
+                    @Html.AntiForgeryToken()
 
 
-                <!-- ================================================= -->
-                <!-- HEADER -->
-                <!-- ================================================= -->
+                    <input type="hidden"
+                           id="SolicitudEditarId"
+                           name="SolicitudEditarId"
+                           value="@Model.SolicitudEditarId" />
 
-                <div class="modal-header">
-
-                    <div>
-
-                        <h5 class="modal-title"
-                            id="modalNuevaSolicitudLabel">
-
-                            <i class="bi bi-cart-plus me-2"></i>
-
-                            Nueva solicitud de compra
-
-                        </h5>
-
-
-                        <div class="small opacity-75 mt-1">
-
-                            Registra los productos o servicios
-                            requeridos para iniciar el proceso
-                            de adquisición.
-
-                        </div>
-
-                    </div>
-
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Cerrar">
-                    </button>
-
-                </div>
-
-
-                <!-- ================================================= -->
-                <!-- BODY -->
-                <!-- ================================================= -->
-
-                <div class="modal-body">
-
-                    <div asp-validation-summary="ModelOnly"
-                         class="text-danger mb-3">
+                    <div id="contenedorAdjuntosEliminarAdq">
                     </div>
 
 
                     <!-- ================================================= -->
-                    <!-- SOLICITANTE -->
+                    <!-- HEADER -->
                     <!-- ================================================= -->
 
-                    <div class="adq-form-section">
+                    <div class="modal-header">
 
-                        <div class="adq-form-section-title">
+                        <div>
 
-                            <i class="bi bi-person-badge"></i>
+                            <h5 class="modal-title"
+                                id="modalNuevaSolicitudLabel">
 
-                            Información del solicitante
+                                <i class="bi bi-cart-plus me-2"></i>
 
-                        </div>
+                                Nueva solicitud de compra
 
-
-                        <div class="row g-3">
-
-                            <div class="col-lg-3 col-md-6">
-
-                                <label class="form-label">
-                                    Solicitante
-                                </label>
-
-                                <input type="text"
-                                       class="form-control"
-                                       value="@Model.NombreSolicitante"
-                                       readonly />
-
-                            </div>
+                            </h5>
 
 
-                            <div class="col-lg-3 col-md-6">
+                            <div class="small opacity-75 mt-1">
 
-                                <label class="form-label">
-                                    Fecha de solicitud
-                                </label>
-
-                                <input type="text"
-                                       class="form-control"
-                                       value="@DateTime.Now.ToString("dd/MM/yyyy")"
-                                       readonly />
-
-                            </div>
-
-
-                            <div class="col-lg-3 col-md-6">
-
-                                <label class="form-label">
-                                    Área solicitante
-                                </label>
-
-                                <select asp-for="Input.AreaId"
-                                        asp-items="Model.Areas"
-                                        class="form-select">
-
-                                    <option value="0">
-                                        Selecciona...
-                                    </option>
-
-                                </select>
-
-                                <span asp-validation-for="Input.AreaId"
-                                      class="text-danger">
-                                </span>
-
-                            </div>
-
-
-                            <div class="col-lg-3 col-md-6">
-
-                                <label class="form-label">
-                                    Jefe directo
-                                </label>
-
-                                <input type="text"
-                                       class="form-control"
-                                       value="@Model.NombreJefe"
-                                       readonly />
+                                Registra los productos o servicios
+                                requeridos para iniciar el proceso
+                                de adquisición.
 
                             </div>
 
                         </div>
+
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Cerrar">
+                        </button>
 
                     </div>
 
 
                     <!-- ================================================= -->
-                    <!-- GENERAL -->
+                    <!-- BODY -->
                     <!-- ================================================= -->
 
-                    <div class="adq-form-section">
+                    <div class="modal-body">
 
-                        <div class="adq-form-section-title">
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3">
+                        </div>
 
-                            <i class="bi bi-card-text"></i>
 
-                            Información general
+                        <!-- ================================================= -->
+                        <!-- SOLICITANTE -->
+                        <!-- ================================================= -->
+
+                        <div class="adq-form-section">
+
+                            <div class="adq-form-section-title">
+
+                                <i class="bi bi-person-badge"></i>
+
+                                Información del solicitante
+
+                            </div>
+
+
+                            <div class="row g-3">
+
+                                <div class="col-lg-3 col-md-6">
+
+                                    <label class="form-label">
+                                        Solicitante
+                                    </label>
+
+                                    <input type="text"
+                                           class="form-control"
+                                           value="@Model.NombreSolicitante"
+                                           readonly />
+
+                                </div>
+
+
+                                <div class="col-lg-3 col-md-6">
+
+                                    <label class="form-label">
+                                        Fecha de solicitud
+                                    </label>
+
+                                    <input type="text"
+                                           class="form-control"
+                                           value="@DateTime.Now.ToString("dd/MM/yyyy")"
+                                           readonly />
+
+                                </div>
+
+
+                                <div class="col-lg-3 col-md-6">
+
+                                    <label class="form-label">
+                                        Área solicitante
+                                    </label>
+
+                                    <select asp-for="Input.AreaId"
+                                            asp-items="Model.Areas"
+                                            class="form-select">
+
+                                        <option value="0">
+                                            Selecciona...
+                                        </option>
+
+                                    </select>
+
+                                    <span asp-validation-for="Input.AreaId"
+                                          class="text-danger">
+                                    </span>
+
+                                </div>
+
+
+                                <div class="col-lg-3 col-md-6">
+
+                                    <label class="form-label">
+                                        Jefe directo
+                                    </label>
+
+                                    <input type="text"
+                                           class="form-control"
+                                           value="@Model.NombreJefe"
+                                           readonly />
+
+                                </div>
+
+                            </div>
 
                         </div>
 
 
-                        <div class="row g-3">
+                        <!-- ================================================= -->
+                        <!-- GENERAL -->
+                        <!-- ================================================= -->
 
-                            <div class="col-12">
+                        <div class="adq-form-section">
 
-                                <label asp-for="Input.Titulo"
-                                       class="form-label">
+                            <div class="adq-form-section-title">
 
-                                    Título de la solicitud
+                                <i class="bi bi-card-text"></i>
 
-                                </label>
-
-                                <input asp-for="Input.Titulo"
-                                       class="form-control"
-                                       maxlength="250"
-                                       placeholder="Ej. Compra de equipo de cómputo" />
-
-                                <span asp-validation-for="Input.Titulo"
-                                      class="text-danger">
-                                </span>
+                                Información general
 
                             </div>
+
+
+                            <div class="row g-3">
+
+                                <div class="col-12">
+
+                                    <label asp-for="Input.Titulo"
+                                           class="form-label">
+
+                                        Título de la solicitud
+
+                                    </label>
+
+                                    <input asp-for="Input.Titulo"
+                                           class="form-control"
+                                           maxlength="250"
+                                           placeholder="Ej. Compra de equipo de cómputo" />
+
+                                    <span asp-validation-for="Input.Titulo"
+                                          class="text-danger">
+                                    </span>
+
+                                </div>
 
                                 <div class="col-12">
 
@@ -4196,460 +4214,617 @@
                                 </div>
 
 
-                            <div class="col-12">
+                                <div class="col-12">
 
-                                <label asp-for="Input.Descripcion"
-                                       class="form-label">
+                                    <label asp-for="Input.Descripcion"
+                                           class="form-label">
 
-                                    Descripción general
+                                        Descripción general
 
-                                </label>
+                                    </label>
 
-                                <textarea asp-for="Input.Descripcion"
-                                          class="form-control"
-                                          rows="3"
-                                          maxlength="5000"
-                                          placeholder="Describe de manera general el requerimiento..."></textarea>
+                                    <textarea asp-for="Input.Descripcion"
+                                              class="form-control"
+                                              rows="3"
+                                              maxlength="5000"
+                                              placeholder="Describe de manera general el requerimiento..."></textarea>
 
-                                <span asp-validation-for="Input.Descripcion"
-                                      class="text-danger">
-                                </span>
+                                    <span asp-validation-for="Input.Descripcion"
+                                          class="text-danger">
+                                    </span>
 
-                            </div>
+                                </div>
 
 
-                            <div class="col-12">
+                                <div class="col-12">
 
-                                <label asp-for="Input.Justificacion"
-                                       class="form-label">
+                                    <label asp-for="Input.Justificacion"
+                                           class="form-label">
 
-                                    Justificación
+                                        Justificación
 
-                                </label>
+                                    </label>
 
-                                <textarea asp-for="Input.Justificacion"
-                                          class="form-control"
-                                          rows="3"
-                                          maxlength="5000"
-                                          placeholder="Indica por qué se requiere realizar esta compra..."></textarea>
+                                    <textarea asp-for="Input.Justificacion"
+                                              class="form-control"
+                                              rows="3"
+                                              maxlength="5000"
+                                              placeholder="Indica por qué se requiere realizar esta compra..."></textarea>
 
-                                <span asp-validation-for="Input.Justificacion"
-                                      class="text-danger">
-                                </span>
+                                    <span asp-validation-for="Input.Justificacion"
+                                          class="text-danger">
+                                    </span>
+
+                                </div>
 
                             </div>
 
                         </div>
 
-                    </div>
+
+                        <!-- ================================================= -->
+                        <!-- PRODUCTOS -->
+                        <!-- ================================================= -->
+
+                        <div class="adq-form-section"
+                             id="seccionCompraAdq">
+
+                            <div class="adq-form-section-heading">
+
+                                <div class="adq-form-section-title">
+
+                                    <i class="bi bi-box-seam"></i>
+
+                                    Productos / Servicios
+
+                                </div>
+
+                            </div>
 
 
-                    <!-- ================================================= -->
-                    <!-- PRODUCTOS -->
-                    <!-- ================================================= -->
+                            <div class="adq-product-capture">
 
-                    <div class="adq-form-section"
-                         id="seccionCompraAdq">
+                                <div class="row g-3 align-items-end">
 
-                        <div class="adq-form-section-heading">
+                                    <div class="col-xl-4 col-lg-4">
+
+                                        <label class="form-label">
+                                            Producto / Servicio
+                                        </label>
+
+                                        <input type="text"
+                                               id="adqProductoServicio"
+                                               class="form-control"
+                                               maxlength="500"
+                                               placeholder="Ej. Laptop Dell Latitude" />
+
+                                    </div>
+
+
+                                    <div class="col-xl-2 col-lg-2">
+
+                                        <label class="form-label">
+                                            Cantidad
+                                        </label>
+
+                                        <input type="number"
+                                               id="adqCantidad"
+                                               class="form-control"
+                                               value="1"
+                                               min="1"
+                                               step="1" />
+
+                                    </div>
+
+
+                                    <div class="col-xl-2 col-lg-2">
+
+                                        <label class="form-label">
+                                            Unidad
+                                        </label>
+
+                                        <select id="adqUnidad"
+                                                class="form-select">
+
+                                            <option value="">
+                                                Selecciona...
+                                            </option>
+
+                                            <option value="Pieza">
+                                                Pieza
+                                            </option>
+
+                                            <option value="Servicio">
+                                                Servicio
+                                            </option>
+
+                                            <option value="Equipo">
+                                                Equipo
+                                            </option>
+
+                                            <option value="Licencia">
+                                                Licencia
+                                            </option>
+
+                                            <option value="Caja">
+                                                Caja
+                                            </option>
+
+                                            <option value="Paquete">
+                                                Paquete
+                                            </option>
+
+                                            <option value="Metro">
+                                                Metro
+                                            </option>
+
+                                            <option value="Litro">
+                                                Litro
+                                            </option>
+
+                                            <option value="Kilogramo">
+                                                Kilogramo
+                                            </option>
+
+                                            <option value="Hora">
+                                                Hora
+                                            </option>
+
+                                            <option value="Día">
+                                                Día
+                                            </option>
+
+                                            <option value="Mes">
+                                                Mes
+                                            </option>
+
+                                            <option value="Año">
+                                                Año
+                                            </option>
+
+                                            <option value="Otro">
+                                                Otro
+                                            </option>
+
+                                        </select>
+
+                                    </div>
+
+
+                                    <div class="col-xl-3 col-lg-3">
+
+                                        <label class="form-label">
+                                            Descripción
+                                        </label>
+
+                                        <input type="text"
+                                               id="adqDescripcionProducto"
+                                               class="form-control"
+                                               maxlength="2000"
+                                               placeholder="Especificaciones..." />
+
+                                    </div>
+
+
+                                    <div class="col-xl-1 col-lg-1 d-grid">
+
+                                        <button type="button"
+                                                id="btnAgregarDetalleAdq"
+                                                class="btn btn-outline-primary"
+                                                title="Agregar producto">
+
+                                            <i class="bi bi-plus-lg"></i>
+
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-products-header mt-4">
+
+                                <div>
+
+                                    <strong>
+                                        Productos agregados
+                                    </strong>
+
+                                    <span id="adqContadorProductos">
+                                        @Model.Input.Detalles.Count producto@(Model.Input.Detalles.Count == 1 ? "" : "s")
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div id="contenedorDetallesAdq"
+                                 class="adq-products-list">
+
+                                @if (Model.Input.Detalles.Count == 0)
+                                {
+                                    <div id="adqProductosVacio"
+                                         class="adq-products-empty">
+
+                                        <i class="bi bi-box"></i>
+
+                                        <strong>
+                                            Aún no has agregado productos o servicios
+                                        </strong>
+
+                                        <span>
+                                            Captura la información superior
+                                            y presiona el botón +.
+                                        </span>
+
+                                    </div>
+                                }
+                                else
+                                {
+                                    for (
+                                        int i = 0;
+                                        i < Model.Input.Detalles.Count;
+                                        i++)
+                                    {
+                                        var detalle =
+                                            Model.Input.Detalles[i];
+
+                                        <div class="adq-product-item">
+
+                                            <div class="adq-product-main">
+
+                                                <div class="adq-product-icon">
+
+                                                    <i class="bi bi-box-seam"></i>
+
+                                                </div>
+
+
+                                                <div class="adq-product-information">
+
+                                                    <strong class="adq-product-name">
+                                                        @detalle.ProductoServicio
+                                                    </strong>
+
+                                                    <span class="adq-product-description">
+
+                                                        @(string.IsNullOrWhiteSpace(detalle.Descripcion)
+                                                            ? "Sin descripción adicional"
+                                                            : detalle.Descripcion)
+
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <div class="adq-product-data">
+
+                                                <div>
+
+                                                    <span>
+                                                        Cantidad
+                                                    </span>
+
+                                                    <strong>
+                                                        @detalle.Cantidad
+                                                    </strong>
+
+                                                </div>
+
+
+                                                <div>
+
+                                                    <span>
+                                                        Unidad
+                                                    </span>
+
+                                                    <strong>
+                                                        @detalle.Unidad
+                                                    </strong>
+
+                                                </div>
+
+                                            </div>
+
+
+                                            <button type="button"
+                                                    class="btn btn-outline-danger btnEliminarDetalleAdq"
+                                                    title="Eliminar producto">
+
+                                                <i class="bi bi-trash"></i>
+
+                                            </button>
+
+
+                                            <input type="hidden"
+                                                   data-field="ProductoServicio"
+                                                   name="Input.Detalles[@i].ProductoServicio"
+                                                   value="@detalle.ProductoServicio" />
+
+                                            <input type="hidden"
+                                                   data-field="Cantidad"
+                                                   name="Input.Detalles[@i].Cantidad"
+                                                   value="@detalle.Cantidad" />
+
+                                            <input type="hidden"
+                                                   data-field="Unidad"
+                                                   name="Input.Detalles[@i].Unidad"
+                                                   value="@detalle.Unidad" />
+
+                                            <input type="hidden"
+                                                   data-field="Descripcion"
+                                                   name="Input.Detalles[@i].Descripcion"
+                                                   value="@detalle.Descripcion" />
+
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ================================================= -->
+                        <!-- DOCUMENTACIÓN -->
+                        <!-- ================================================= -->
+
+                        <div class="adq-form-section">
 
                             <div class="adq-form-section-title">
 
-                                <i class="bi bi-box-seam"></i>
+                                <i class="bi bi-paperclip"></i>
 
-                                Productos / Servicios
+                                Documentación de soporte
 
                             </div>
 
-                        </div>
 
+                            <div class="adq-upload-box">
 
-                        <div class="adq-product-capture">
+                                <div class="adq-upload-icon">
 
-                            <div class="row g-3 align-items-end">
-
-                                <div class="col-xl-4 col-lg-4">
-
-                                    <label class="form-label">
-                                        Producto / Servicio
-                                    </label>
-
-                                    <input type="text"
-                                           id="adqProductoServicio"
-                                           class="form-control"
-                                           maxlength="500"
-                                           placeholder="Ej. Laptop Dell Latitude" />
+                                    <i class="bi bi-cloud-arrow-up"></i>
 
                                 </div>
 
 
-                                <div class="col-xl-2 col-lg-2">
+                                <div class="adq-upload-content">
 
-                                    <label class="form-label">
-                                        Cantidad
-                                    </label>
+                                    <strong>
+                                        Adjunta archivos relacionados con la solicitud
+                                    </strong>
 
-                                    <input type="number"
-                                           id="adqCantidad"
-                                           class="form-control"
-                                           value="1"
-                                           min="1"
-                                           step="1" />
+                                    <span>
+                                        Puedes agregarlos uno por uno
+                                        o seleccionar varios al mismo tiempo.
+                                    </span>
 
-                                </div>
+                                    <small id="contadorArchivosAdq"
+                                           class="text-muted">
 
+                                        0 archivos agregados
 
-                                <div class="col-xl-2 col-lg-2">
-
-                                    <label class="form-label">
-                                        Unidad
-                                    </label>
-
-                                    <select id="adqUnidad"
-                                            class="form-select">
-
-                                        <option value="">
-                                            Selecciona...
-                                        </option>
-
-                                        <option value="Pieza">
-                                            Pieza
-                                        </option>
-
-                                        <option value="Servicio">
-                                            Servicio
-                                        </option>
-
-                                        <option value="Equipo">
-                                            Equipo
-                                        </option>
-
-                                        <option value="Licencia">
-                                            Licencia
-                                        </option>
-
-                                        <option value="Caja">
-                                            Caja
-                                        </option>
-
-                                        <option value="Paquete">
-                                            Paquete
-                                        </option>
-
-                                        <option value="Metro">
-                                            Metro
-                                        </option>
-
-                                        <option value="Litro">
-                                            Litro
-                                        </option>
-
-                                        <option value="Kilogramo">
-                                            Kilogramo
-                                        </option>
-
-                                        <option value="Hora">
-                                            Hora
-                                        </option>
-
-                                        <option value="Día">
-                                            Día
-                                        </option>
-
-                                        <option value="Mes">
-                                            Mes
-                                        </option>
-
-                                        <option value="Año">
-                                            Año
-                                        </option>
-
-                                        <option value="Otro">
-                                            Otro
-                                        </option>
-
-                                    </select>
+                                    </small>
 
                                 </div>
 
 
-                                <div class="col-xl-3 col-lg-3">
-
-                                    <label class="form-label">
-                                        Descripción
-                                    </label>
-
-                                    <input type="text"
-                                           id="adqDescripcionProducto"
-                                           class="form-control"
-                                           maxlength="2000"
-                                           placeholder="Especificaciones..." />
-
-                                </div>
-
-
-                                <div class="col-xl-1 col-lg-1 d-grid">
+                                <div class="adq-upload-actions">
 
                                     <button type="button"
-                                            id="btnAgregarDetalleAdq"
-                                            class="btn btn-outline-primary"
-                                            title="Agregar producto">
+                                            id="btnAgregarArchivosAdq"
+                                            class="btn btn-outline-primary">
 
-                                        <i class="bi bi-plus-lg"></i>
+                                        <i class="bi bi-plus-lg me-1"></i>
+
+                                        Agregar archivos
 
                                     </button>
 
                                 </div>
 
-                            </div>
 
-                        </div>
-
-
-                        <div class="adq-products-header mt-4">
-
-                            <div>
-
-                                <strong>
-                                    Productos agregados
-                                </strong>
-
-                                <span id="adqContadorProductos">
-                                    @Model.Input.Detalles.Count producto@(Model.Input.Detalles.Count == 1 ? "" : "s")
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div id="contenedorDetallesAdq"
-                             class="adq-products-list">
-
-                            @if (Model.Input.Detalles.Count == 0)
-                            {
-                                <div id="adqProductosVacio"
-                                     class="adq-products-empty">
-
-                                    <i class="bi bi-box"></i>
-
-                                    <strong>
-                                        Aún no has agregado productos o servicios
-                                    </strong>
-
-                                    <span>
-                                        Captura la información superior
-                                        y presiona el botón +.
-                                    </span>
-
-                                </div>
-                            }
-                            else
-                            {
-                                for (
-                                    int i = 0;
-                                    i < Model.Input.Detalles.Count;
-                                    i++)
-                                {
-                                    var detalle =
-                                        Model.Input.Detalles[i];
-
-                                    <div class="adq-product-item">
-
-                                        <div class="adq-product-main">
-
-                                            <div class="adq-product-icon">
-
-                                                <i class="bi bi-box-seam"></i>
-
-                                            </div>
-
-
-                                            <div class="adq-product-information">
-
-                                                <strong class="adq-product-name">
-                                                    @detalle.ProductoServicio
-                                                </strong>
-
-                                                <span class="adq-product-description">
-
-                                                    @(string.IsNullOrWhiteSpace(detalle.Descripcion)
-                                                        ? "Sin descripción adicional"
-                                                        : detalle.Descripcion)
-
-                                                </span>
-
-                                            </div>
-
-                                        </div>
-
-
-                                        <div class="adq-product-data">
-
-                                            <div>
-
-                                                <span>
-                                                    Cantidad
-                                                </span>
-
-                                                <strong>
-                                                    @detalle.Cantidad
-                                                </strong>
-
-                                            </div>
-
-
-                                            <div>
-
-                                                <span>
-                                                    Unidad
-                                                </span>
-
-                                                <strong>
-                                                    @detalle.Unidad
-                                                </strong>
-
-                                            </div>
-
-                                        </div>
-
-
-                                        <button type="button"
-                                                class="btn btn-outline-danger btnEliminarDetalleAdq"
-                                                title="Eliminar producto">
-
-                                            <i class="bi bi-trash"></i>
-
-                                        </button>
-
-
-                                        <input type="hidden"
-                                               data-field="ProductoServicio"
-                                               name="Input.Detalles[@i].ProductoServicio"
-                                               value="@detalle.ProductoServicio" />
-
-                                        <input type="hidden"
-                                               data-field="Cantidad"
-                                               name="Input.Detalles[@i].Cantidad"
-                                               value="@detalle.Cantidad" />
-
-                                        <input type="hidden"
-                                               data-field="Unidad"
-                                               name="Input.Detalles[@i].Unidad"
-                                               value="@detalle.Unidad" />
-
-                                        <input type="hidden"
-                                               data-field="Descripcion"
-                                               name="Input.Detalles[@i].Descripcion"
-                                               value="@detalle.Descripcion" />
-
-                                    </div>
-                                }
-                            }
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- ================================================= -->
-                    <!-- DOCUMENTACIÓN -->
-                    <!-- ================================================= -->
-
-                    <div class="adq-form-section">
-
-                        <div class="adq-form-section-title">
-
-                            <i class="bi bi-paperclip"></i>
-
-                            Documentación de soporte
-
-                        </div>
-
-
-                        <div class="adq-upload-box">
-
-                            <div class="adq-upload-icon">
-
-                                <i class="bi bi-cloud-arrow-up"></i>
-
-                            </div>
-
-
-                            <div class="adq-upload-content">
-
-                                <strong>
-                                    Adjunta archivos relacionados con la solicitud
-                                </strong>
-
-                                <span>
-                                    Puedes agregarlos uno por uno
-                                    o seleccionar varios al mismo tiempo.
-                                </span>
-
-                                <small id="contadorArchivosAdq"
-                                       class="text-muted">
-
-                                    0 archivos agregados
-
-                                </small>
-
-                            </div>
-
-
-                            <div class="adq-upload-actions">
-
-                                <button type="button"
-                                        id="btnAgregarArchivosAdq"
-                                        class="btn btn-outline-primary">
-
-                                    <i class="bi bi-plus-lg me-1"></i>
-
-                                    Agregar archivos
-
-                                </button>
-
-                            </div>
-
-
-                            <!--
+                                <!--
                                 El input real queda oculto.
                                 JS acumula los archivos con DataTransfer.
                             -->
 
-                            <input type="file"
-                                   id="ArchivosSolicitud"
-                                   name="ArchivosSolicitud"
-                                   class="d-none"
-                                   multiple
-                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+                                <input type="file"
+                                       id="ArchivosSolicitud"
+                                       name="ArchivosSolicitud"
+                                       class="d-none"
+                                       multiple
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
 
-                        </div>
+                            </div>
 
 
-                        <div id="listaArchivosAdq"
-                             class="adq-files-list">
+                            <div id="listaArchivosAdq"
+                                 class="adq-files-list">
 
-                            <div class="adq-files-empty">
+                                <div class="adq-files-empty">
 
-                                <i class="bi bi-folder2-open"></i>
+                                    <i class="bi bi-folder2-open"></i>
 
-                                <span>
-                                    Aún no has agregado archivos.
-                                </span>
+                                    <span>
+                                        Aún no has agregado archivos.
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="form-text mt-2">
+
+                                Formatos permitidos:
+                                PDF, DOC, DOCX, XLS, XLSX,
+                                PNG, JPG y JPEG.
+
+                                Máximo 15 MB por archivo.
 
                             </div>
 
                         </div>
 
 
-                        <div class="form-text mt-2">
+                        <!-- ================================================= -->
+                        <!-- APROBACIÓN -->
+                        <!-- ================================================= -->
 
-                            Formatos permitidos:
-                            PDF, DOC, DOCX, XLS, XLSX,
-                            PNG, JPG y JPEG.
+                        <div class="adq-form-section">
 
-                            Máximo 15 MB por archivo.
+                            <div class="adq-form-section-title">
+
+                                <i class="bi bi-person-check"></i>
+
+                                Autorización de la solicitud
+
+                            </div>
+
+
+                            <div class="adq-manager-validation">
+
+                                <div class="adq-manager-validation-icon">
+
+                                    @if (Model.TieneJefeConfigurado)
+                                    {
+                                        <i class="bi bi-shield-check"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    }
+
+                                </div>
+
+
+                                <div class="adq-manager-validation-content">
+
+                                    <span class="adq-manager-validation-label">
+                                        Gerente / jefe responsable
+                                    </span>
+
+                                    <strong>
+                                        @Model.NombreJefe
+                                    </strong>
+
+
+                                    @if (Model.TieneJefeConfigurado)
+                                    {
+                                        <span class="adq-manager-validation-ok">
+
+                                            <i class="bi bi-check-circle-fill"></i>
+
+                                            Validación configurada
+
+                                        </span>
+
+                                        <small>
+                                            Al enviar la solicitud se generará
+                                            automáticamente una aprobación
+                                            pendiente para este responsable.
+                                        </small>
+                                    }
+                                    else
+                                    {
+                                        <span class="adq-manager-validation-error">
+
+                                            <i class="bi bi-exclamation-circle-fill"></i>
+
+                                            No existe un aprobador configurado
+
+                                        </span>
+
+                                        <small>
+                                            La solicitud puede guardarse como borrador,
+                                            pero no podrá enviarse hasta configurar
+                                            correctamente al jefe del empleado.
+                                        </small>
+                                    }
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="adq-approval-preview mt-4">
+
+                                <div class="adq-approval-step active">
+
+                                    <span class="adq-approval-number">
+                                        1
+                                    </span>
+
+                                    <div>
+
+                                        <strong>
+                                            Solicitud
+                                        </strong>
+
+                                        <span>
+                                            Captura del usuario
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="adq-approval-line"></div>
+
+
+                                <div class="adq-approval-step">
+
+                                    <span class="adq-approval-number">
+                                        2
+                                    </span>
+
+                                    <div>
+
+                                        <strong>
+                                            Gerente del área
+                                        </strong>
+
+                                        <span>
+                                            Aprobación requerida
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="adq-approval-line"></div>
+
+
+                                <div class="adq-approval-step">
+
+                                    <span class="adq-approval-number">
+                                        3
+                                    </span>
+
+                                    <div>
+
+                                        <strong>
+                                            Adquisiciones
+                                        </strong>
+
+                                        <span>
+                                            Revisión y asignación
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
 
                         </div>
 
@@ -4657,513 +4832,356 @@
 
 
                     <!-- ================================================= -->
-                    <!-- APROBACIÓN -->
+                    <!-- FOOTER -->
                     <!-- ================================================= -->
 
-                    <div class="adq-form-section">
+                    <div class="modal-footer">
 
-                        <div class="adq-form-section-title">
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
 
-                            <i class="bi bi-person-check"></i>
+                            Cancelar
 
-                            Autorización de la solicitud
-
-                        </div>
-
-
-                        <div class="adq-manager-validation">
-
-                            <div class="adq-manager-validation-icon">
-
-                                @if (Model.TieneJefeConfigurado)
-                                {
-                                    <i class="bi bi-shield-check"></i>
-                                }
-                                else
-                                {
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                }
-
-                            </div>
+                        </button>
 
 
-                            <div class="adq-manager-validation-content">
+                        <button type="submit"
+                                id="btnGuardarCambiosAdq"
+                                formaction="?handler=EditarSolicitud"
+                                class="btn btn-primary d-none">
 
-                                <span class="adq-manager-validation-label">
-                                    Gerente / jefe responsable
-                                </span>
+                            <i class="bi bi-check-lg me-1"></i>
 
-                                <strong>
-                                    @Model.NombreJefe
-                                </strong>
+                            Guardar cambios
 
-
-                                @if (Model.TieneJefeConfigurado)
-                                {
-                                    <span class="adq-manager-validation-ok">
-
-                                        <i class="bi bi-check-circle-fill"></i>
-
-                                        Validación configurada
-
-                                    </span>
-
-                                    <small>
-                                        Al enviar la solicitud se generará
-                                        automáticamente una aprobación
-                                        pendiente para este responsable.
-                                    </small>
-                                }
-                                else
-                                {
-                                    <span class="adq-manager-validation-error">
-
-                                        <i class="bi bi-exclamation-circle-fill"></i>
-
-                                        No existe un aprobador configurado
-
-                                    </span>
-
-                                    <small>
-                                        La solicitud puede guardarse como borrador,
-                                        pero no podrá enviarse hasta configurar
-                                        correctamente al jefe del empleado.
-                                    </small>
-                                }
-
-                            </div>
-
-                        </div>
+                        </button>
 
 
-                        <div class="adq-approval-preview mt-4">
+                        <button type="submit"
+                                id="btnEnviarBorradorAdq"
+                                formaction="?handler=EnviarBorrador"
+                                class="btn btn-success d-none">
 
-                            <div class="adq-approval-step active">
+                            <i class="bi bi-send me-1"></i>
 
-                                <span class="adq-approval-number">
-                                    1
-                                </span>
+                            Guardar y enviar
 
-                                <div>
-
-                                    <strong>
-                                        Solicitud
-                                    </strong>
-
-                                    <span>
-                                        Captura del usuario
-                                    </span>
-
-                                </div>
-
-                            </div>
+                        </button>
 
 
-                            <div class="adq-approval-line"></div>
+                        <button type="submit"
+                                id="btnGuardarBorradorAdq"
+                                formaction="?handler=GuardarBorrador"
+                                class="btn btn-outline-primary">
+
+                            <i class="bi bi-save me-1"></i>
+
+                            Guardar borrador
+
+                        </button>
 
 
-                            <div class="adq-approval-step">
+                        <button type="submit"
+                                id="btnEnviarSolicitudAdq"
+                                formaction="?handler=EnviarSolicitud"
+                                class="btn btn-primary"
+                                disabled>
 
-                                <span class="adq-approval-number">
-                                    2
-                                </span>
+                            <i class="bi bi-send me-1"></i>
 
-                                <div>
+                            Enviar solicitud
 
-                                    <strong>
-                                        Gerente del área
-                                    </strong>
-
-                                    <span>
-                                        Aprobación requerida
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="adq-approval-line"></div>
-
-
-                            <div class="adq-approval-step">
-
-                                <span class="adq-approval-number">
-                                    3
-                                </span>
-
-                                <div>
-
-                                    <strong>
-                                        Adquisiciones
-                                    </strong>
-
-                                    <span>
-                                        Revisión y asignación
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                        </div>
+                        </button>
 
                     </div>
 
-                </div>
+                </form>
 
-
-                <!-- ================================================= -->
-                <!-- FOOTER -->
-                <!-- ================================================= -->
-
-                <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
-
-                        Cancelar
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnGuardarCambiosAdq"
-                            formaction="?handler=EditarSolicitud"
-                            class="btn btn-primary d-none">
-
-                        <i class="bi bi-check-lg me-1"></i>
-
-                        Guardar cambios
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnEnviarBorradorAdq"
-                            formaction="?handler=EnviarBorrador"
-                            class="btn btn-success d-none">
-
-                        <i class="bi bi-send me-1"></i>
-
-                        Guardar y enviar
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnGuardarBorradorAdq"
-                            formaction="?handler=GuardarBorrador"
-                            class="btn btn-outline-primary">
-
-                        <i class="bi bi-save me-1"></i>
-
-                        Guardar borrador
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnEnviarSolicitudAdq"
-                            formaction="?handler=EnviarSolicitud"
-                            class="btn btn-primary"
-                            disabled>
-
-                        <i class="bi bi-send me-1"></i>
-
-                        Enviar solicitud
-
-                    </button>
-
-                </div>
-
-            </form>
+            </div>
 
         </div>
 
     </div>
 
-</div>
+    <!-- ========================================================== -->
+    <!-- MODAL VER SOLICITUD -->
+    <!-- ========================================================== -->
 
-<!-- ========================================================== -->
-<!-- MODAL VER SOLICITUD -->
-<!-- ========================================================== -->
+    <div class="modal fade"
+         id="modalVerSolicitudAdq"
+         tabindex="-1"
+         aria-hidden="true">
 
-<div class="modal fade"
-     id="modalVerSolicitudAdq"
-     tabindex="-1"
-     aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
 
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
 
-        <div class="modal-content">
+                <div class="modal-header">
 
-            <div class="modal-header">
+                    <div>
 
-                <div>
+                        <h5 class="modal-title">
 
-                    <h5 class="modal-title">
+                            <i class="bi bi-eye me-2"></i>
 
-                        <i class="bi bi-eye me-2"></i>
+                            Detalle de solicitud
 
-                        Detalle de solicitud
-
-                    </h5>
+                        </h5>
 
 
-                    <div class="small text-muted"
-                         id="verSolicitudFolio">
+                        <div class="small text-muted"
+                             id="verSolicitudFolio">
+                        </div>
+
                     </div>
+
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
 
                 </div>
 
 
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal">
-                </button>
+                <div class="modal-body adq-detail-modal-body">
 
-            </div>
+                    <!-- ====================================================== -->
+                    <!-- PESTAÑAS -->
+                    <!-- ====================================================== -->
 
+                    <ul class="nav nav-tabs adq-detail-tabs"
+                        id="tabsDetalleSolicitudAdq"
+                        role="tablist">
 
-            <div class="modal-body adq-detail-modal-body">
+                        <!-- INFORMACIÓN -->
 
-                <!-- ====================================================== -->
-                <!-- PESTAÑAS -->
-                <!-- ====================================================== -->
+                        <li class="nav-item"
+                            role="presentation">
 
-                <ul class="nav nav-tabs adq-detail-tabs"
-                    id="tabsDetalleSolicitudAdq"
-                    role="tablist">
+                            <button class="nav-link active"
+                                    id="tabInformacionAdq"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#contenidoInformacionAdq"
+                                    type="button"
+                                    role="tab">
 
-                    <!-- INFORMACIÓN -->
+                                <i class="bi bi-file-text me-1"></i>
 
-                    <li class="nav-item"
-                        role="presentation">
+                                Información
 
-                        <button class="nav-link active"
-                                id="tabInformacionAdq"
-                                data-bs-toggle="tab"
-                                data-bs-target="#contenidoInformacionAdq"
-                                type="button"
-                                role="tab">
+                            </button>
 
-                            <i class="bi bi-file-text me-1"></i>
-
-                            Información
-
-                        </button>
-
-                    </li>
+                        </li>
 
 
-                    <!-- CHAT -->
+                        <!-- CHAT -->
 
-                    <li class="nav-item d-none"
-                        id="itemTabSeguimientoAdq"
-                        role="presentation">
+                        <li class="nav-item d-none"
+                            id="itemTabSeguimientoAdq"
+                            role="presentation">
 
-                        <button class="nav-link"
-                                id="tabSeguimientoAdq"
-                                data-bs-toggle="tab"
-                                data-bs-target="#contenidoSeguimientoAdq"
-                                type="button"
-                                role="tab">
+                            <button class="nav-link"
+                                    id="tabSeguimientoAdq"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#contenidoSeguimientoAdq"
+                                    type="button"
+                                    role="tab">
 
-                            <i class="bi bi-chat-dots me-1"></i>
+                                <i class="bi bi-chat-dots me-1"></i>
 
-                            Chat de seguimiento
+                                Chat de seguimiento
 
-                            <span id="badgeMensajesPendientesAdq"
-                                  class="badge bg-danger ms-1 d-none">
-                            </span>
-
-                        </button>
-
-                    </li>
-
-
-                    <!-- HISTORIAL -->
-
-                    <li class="nav-item d-none"
-                        id="itemTabHistorialAdq"
-                        role="presentation">
-
-                        <button class="nav-link"
-                                id="tabHistorialAdq"
-                                data-bs-toggle="tab"
-                                data-bs-target="#contenidoHistorialAdq"
-                                type="button"
-                                role="tab">
-
-                            <i class="bi bi-clock-history me-1"></i>
-
-                            Historial
-
-                        </button>
-
-                    </li>
-
-                </ul>
-
-
-                <!-- ====================================================== -->
-                <!-- CONTENIDO DE LAS PESTAÑAS -->
-                <!-- ====================================================== -->
-
-                <div class="tab-content adq-detail-tab-content">
-
-
-                    <!-- ================================================== -->
-                    <!-- INFORMACIÓN -->
-                    <!-- ================================================== -->
-
-                    <div class="tab-pane fade show active"
-                         id="contenidoInformacionAdq"
-                         role="tabpanel">
-
-
-                        <!-- ====================================================== -->
-                        <!-- RESUMEN -->
-                        <!-- ====================================================== -->
-
-                        <div class="adq-detail-summary">
-
-                            <div class="adq-detail-field adq-detail-field-wide">
-
-                                <span class="adq-detail-label">
-                                    Solicitud
+                                <span id="badgeMensajesPendientesAdq"
+                                      class="badge bg-danger ms-1 d-none">
                                 </span>
 
-                                <div class="adq-detail-value"
-                                     id="verSolicitudTitulo">
+                            </button>
+
+                        </li>
+
+
+                        <!-- HISTORIAL -->
+
+                        <li class="nav-item d-none"
+                            id="itemTabHistorialAdq"
+                            role="presentation">
+
+                            <button class="nav-link"
+                                    id="tabHistorialAdq"
+                                    data-bs-toggle="tab"
+                                    data-bs-target="#contenidoHistorialAdq"
+                                    type="button"
+                                    role="tab">
+
+                                <i class="bi bi-clock-history me-1"></i>
+
+                                Historial
+
+                            </button>
+
+                        </li>
+
+                    </ul>
+
+
+                    <!-- ====================================================== -->
+                    <!-- CONTENIDO DE LAS PESTAÑAS -->
+                    <!-- ====================================================== -->
+
+                    <div class="tab-content adq-detail-tab-content">
+
+
+                        <!-- ================================================== -->
+                        <!-- INFORMACIÓN -->
+                        <!-- ================================================== -->
+
+                        <div class="tab-pane fade show active"
+                             id="contenidoInformacionAdq"
+                             role="tabpanel">
+
+
+                            <!-- ====================================================== -->
+                            <!-- RESUMEN -->
+                            <!-- ====================================================== -->
+
+                            <div class="adq-detail-summary">
+
+                                <div class="adq-detail-field adq-detail-field-wide">
+
+                                    <span class="adq-detail-label">
+                                        Solicitud
+                                    </span>
+
+                                    <div class="adq-detail-value"
+                                         id="verSolicitudTitulo">
+                                    </div>
+
+                                </div>
+
+
+                                <div class="adq-detail-field">
+
+                                    <span class="adq-detail-label">
+                                        Solicitante
+                                    </span>
+
+                                    <div class="adq-detail-value"
+                                         id="verSolicitudSolicitante">
+                                    </div>
+
+                                </div>
+
+
+                                <div class="adq-detail-field">
+
+                                    <span class="adq-detail-label">
+                                        Fecha
+                                    </span>
+
+                                    <div class="adq-detail-value"
+                                         id="verSolicitudFecha">
+                                    </div>
+
+                                </div>
+
+
+                                <div class="adq-detail-field">
+
+                                    <span class="adq-detail-label">
+                                        Área
+                                    </span>
+
+                                    <div class="adq-detail-value"
+                                         id="verSolicitudArea">
+                                    </div>
+
+                                </div>
+
+
+                                <div class="adq-detail-field">
+
+                                    <span class="adq-detail-label">
+                                        Estatus
+                                    </span>
+
+                                    <div class="adq-detail-value"
+                                         id="verSolicitudEstatus">
+                                    </div>
+
                                 </div>
 
                             </div>
 
 
-                            <div class="adq-detail-field">
+                            <!-- ====================================================== -->
+                            <!-- DESCRIPCIÓN -->
+                            <!-- ====================================================== -->
 
-                                <span class="adq-detail-label">
-                                    Solicitante
-                                </span>
+                            <div class="adq-detail-section">
 
-                                <div class="adq-detail-value"
-                                     id="verSolicitudSolicitante">
+                                <div class="adq-detail-section-title">
+
+                                    <i class="bi bi-card-text"></i>
+
+                                    Descripción
+
+                                </div>
+
+                                <div class="adq-detail-text"
+                                     id="verSolicitudDescripcion">
                                 </div>
 
                             </div>
 
 
-                            <div class="adq-detail-field">
+                            <!-- ====================================================== -->
+                            <!-- JUSTIFICACIÓN -->
+                            <!-- ====================================================== -->
 
-                                <span class="adq-detail-label">
-                                    Fecha
-                                </span>
+                            <div class="adq-detail-section">
 
-                                <div class="adq-detail-value"
-                                     id="verSolicitudFecha">
+                                <div class="adq-detail-section-title">
+
+                                    <i class="bi bi-chat-left-text"></i>
+
+                                    Justificación
+
+                                </div>
+
+                                <div class="adq-detail-text"
+                                     id="verSolicitudJustificacion">
                                 </div>
 
                             </div>
 
 
-                            <div class="adq-detail-field">
+                            <!-- ====================================================== -->
+                            <!-- PRODUCTOS -->
+                            <!-- ====================================================== -->
 
-                                <span class="adq-detail-label">
-                                    Área
-                                </span>
+                            <div class="adq-detail-section">
 
-                                <div class="adq-detail-value"
-                                     id="verSolicitudArea">
+                                <div class="adq-detail-section-title">
+
+                                    <i class="bi bi-box-seam"></i>
+
+                                    Productos / Servicios
+
+                                </div>
+
+
+                                <div id="verSolicitudProductos"
+                                     class="adq-products-list">
                                 </div>
 
                             </div>
 
 
-                            <div class="adq-detail-field">
-
-                                <span class="adq-detail-label">
-                                    Estatus
-                                </span>
-
-                                <div class="adq-detail-value"
-                                     id="verSolicitudEstatus">
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- ====================================================== -->
-                        <!-- DESCRIPCIÓN -->
-                        <!-- ====================================================== -->
-
-                        <div class="adq-detail-section">
-
-                            <div class="adq-detail-section-title">
-
-                                <i class="bi bi-card-text"></i>
-
-                                Descripción
-
-                            </div>
-
-                            <div class="adq-detail-text"
-                                 id="verSolicitudDescripcion">
-                            </div>
-
-                        </div>
-
-
-                        <!-- ====================================================== -->
-                        <!-- JUSTIFICACIÓN -->
-                        <!-- ====================================================== -->
-
-                        <div class="adq-detail-section">
-
-                            <div class="adq-detail-section-title">
-
-                                <i class="bi bi-chat-left-text"></i>
-
-                                Justificación
-
-                            </div>
-
-                            <div class="adq-detail-text"
-                                 id="verSolicitudJustificacion">
-                            </div>
-
-                        </div>
-
-
-                        <!-- ====================================================== -->
-                        <!-- PRODUCTOS -->
-                        <!-- ====================================================== -->
-
-                        <div class="adq-detail-section">
-
-                            <div class="adq-detail-section-title">
-
-                                <i class="bi bi-box-seam"></i>
-
-                                Productos / Servicios
-
-                            </div>
-
-
-                            <div id="verSolicitudProductos"
-                                 class="adq-products-list">
-                            </div>
-
-                        </div>
-
-
-                        <!-- ====================================================== -->
-                        <!-- DOCUMENTACIÓN -->
-                        <!-- ====================================================== -->
+                            <!-- ====================================================== -->
+                            <!-- DOCUMENTACIÓN -->
+                            <!-- ====================================================== -->
                             <!-- ====================================================== -->
                             <!-- DOCUMENTACIÓN -->
                             <!-- ====================================================== -->
@@ -5669,148 +5687,150 @@
 
                             </div>
 
-                    </div>
+                        </div>
 
 
-                    <!-- ================================================== -->
-                    <!-- CHAT DE SEGUIMIENTO -->
-                    <!-- ================================================== -->
+                        <!-- ================================================== -->
+                        <!-- CHAT DE SEGUIMIENTO -->
+                        <!-- ================================================== -->
 
-                    <div class="tab-pane fade"
-                         id="contenidoSeguimientoAdq"
-                         role="tabpanel">
+                        <div class="tab-pane fade"
+                             id="contenidoSeguimientoAdq"
+                             role="tabpanel">
 
-                        <div class="adq-followup-wrapper">
+                            <div class="adq-followup-wrapper">
 
-                            <!-- ENCABEZADO DEL CHAT -->
+                                <!-- ENCABEZADO DEL CHAT -->
 
-                            <div class="adq-followup-header">
+                                <div class="adq-followup-header">
 
-                                <div>
+                                    <div>
 
-                                    <span class="adq-detail-label">
-                                        Comunicación de la solicitud
-                                    </span>
+                                        <span class="adq-detail-label">
+                                            Comunicación de la solicitud
+                                        </span>
 
-                                    <strong>
-                                        Chat de seguimiento
-                                    </strong>
+                                        <strong>
+                                            Chat de seguimiento
+                                        </strong>
 
-                                    <small class="text-muted d-block">
-                                        Comunicación entre el solicitante,
-                                        el responsable de aprobación
-                                        y el área de Adquisiciones.
-                                    </small>
+                                        <small class="text-muted d-block">
+                                            Comunicación entre el solicitante,
+                                            el responsable de aprobación
+                                            y el área de Adquisiciones.
+                                        </small>
+
+                                    </div>
+
+
+                                    <div class="text-end">
+
+                                        <span class="adq-detail-label">
+                                            Estatus actual
+                                        </span>
+
+                                        <div>
+
+                                            <span id="seguimientoEstatusAdq"
+                                                  class="badge bg-primary">
+                                            </span>
+
+                                        </div>
+
+                                    </div>
 
                                 </div>
 
 
-                                <div class="text-end">
+                                <!-- MENSAJES -->
 
-                                    <span class="adq-detail-label">
-                                        Estatus actual
-                                    </span>
+                                <div id="listaComentariosAdq"
+                                     class="adq-chat-list">
 
-                                    <div>
+                                    <div class="adq-chat-empty">
 
-                                        <span id="seguimientoEstatusAdq"
-                                              class="badge bg-primary">
+                                        <i class="bi bi-chat-square-dots"></i>
+
+                                        <strong>
+                                            Aún no hay mensajes
+                                        </strong>
+
+                                        <span>
+                                            Inicia la conversación relacionada
+                                            con esta solicitud.
                                         </span>
 
                                     </div>
 
                                 </div>
 
-                            </div>
+
+                                <!-- NUEVO MENSAJE -->
+
+                                <div id="formComentarioAdq"
+                                     class="adq-chat-compose">
+
+                                    <input type="hidden"
+                                           id="SolicitudComentarioId" />
 
 
-                            <!-- MENSAJES -->
+                                    <label for="NuevoComentarioAdq"
+                                           class="form-label fw-semibold">
 
-                            <div id="listaComentariosAdq"
-                                 class="adq-chat-list">
+                                        Nuevo mensaje
 
-                                <div class="adq-chat-empty">
-
-                                    <i class="bi bi-chat-square-dots"></i>
-
-                                    <strong>
-                                        Aún no hay mensajes
-                                    </strong>
-
-                                    <span>
-                                        Inicia la conversación relacionada
-                                        con esta solicitud.
-                                    </span>
-
-                                </div>
-
-                            </div>
+                                    </label>
 
 
-                            <!-- NUEVO MENSAJE -->
-
-                            <div id="formComentarioAdq"
-                                 class="adq-chat-compose">
-
-                                <input type="hidden"
-                                       id="SolicitudComentarioId" />
+                                    <textarea id="NuevoComentarioAdq"
+                                              class="form-control"
+                                              rows="3"
+                                              maxlength="5000"
+                                              placeholder="Escribe un mensaje relacionado con esta solicitud..."></textarea>
 
 
-                                <label for="NuevoComentarioAdq"
-                                       class="form-label fw-semibold">
+                                    <!-- ARCHIVOS SELECCIONADOS PARA EL MENSAJE -->
 
-                                    Nuevo mensaje
-
-                                </label>
-
-
-                                <textarea id="NuevoComentarioAdq"
-                                          class="form-control"
-                                          rows="3"
-                                          maxlength="5000"
-                                          placeholder="Escribe un mensaje relacionado con esta solicitud..."></textarea>
-
-
-                                <!-- ARCHIVOS SELECCIONADOS PARA EL MENSAJE -->
-
-                                <div id="listaAdjuntosComentarioAdq"
-                                     class="mt-2">
-                                </div>
-
-
-                                <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
-
-                                    <div>
-
-                                        <button type="button"
-                                                id="btnSeleccionarAdjuntoComentarioAdq"
-                                                class="btn btn-outline-secondary">
-
-                                            <i class="bi bi-paperclip me-1"></i>
-
-                                            Adjuntar archivo
-
-                                        </button>
-
-
-                                        <input type="file"
-                                               id="archivoComentarioAdq"
-                                               class="d-none"
-                                               multiple
-                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
-
+                                    <div id="listaAdjuntosComentarioAdq"
+                                         class="mt-2">
                                     </div>
 
 
-                                    <button type="button"
-                                            id="btnEnviarComentarioAdq"
-                                            class="btn btn-primary">
+                                    <div class="d-flex justify-content-between align-items-center gap-2 mt-3">
 
-                                        <i class="bi bi-send me-1"></i>
+                                        <div>
 
-                                        Enviar mensaje
+                                            <button type="button"
+                                                    id="btnSeleccionarAdjuntoComentarioAdq"
+                                                    class="btn btn-outline-secondary">
 
-                                    </button>
+                                                <i class="bi bi-paperclip me-1"></i>
+
+                                                Adjuntar archivo
+
+                                            </button>
+
+
+                                            <input type="file"
+                                                   id="archivoComentarioAdq"
+                                                   class="d-none"
+                                                   multiple
+                                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" />
+
+                                        </div>
+
+
+                                        <button type="button"
+                                                id="btnEnviarComentarioAdq"
+                                                class="btn btn-primary">
+
+                                            <i class="bi bi-send me-1"></i>
+
+                                            Enviar mensaje
+
+                                        </button>
+
+                                    </div>
 
                                 </div>
 
@@ -5818,41 +5838,41 @@
 
                         </div>
 
-                    </div>
+
+                        <!-- ================================================== -->
+                        <!-- HISTORIAL -->
+                        <!-- ================================================== -->
+
+                        <div class="tab-pane fade"
+                             id="contenidoHistorialAdq"
+                             role="tabpanel">
+
+                            <div class="adq-history-wrapper">
+
+                                <div class="adq-form-section-title">
+
+                                    <i class="bi bi-clock-history"></i>
+
+                                    Historial de la solicitud
+
+                                </div>
 
 
-                    <!-- ================================================== -->
-                    <!-- HISTORIAL -->
-                    <!-- ================================================== -->
+                                <div class="text-muted small mb-3">
 
-                    <div class="tab-pane fade"
-                         id="contenidoHistorialAdq"
-                         role="tabpanel">
+                                    Consulta los movimientos y cambios
+                                    realizados durante el proceso de compra.
 
-                        <div class="adq-history-wrapper">
-
-                            <div class="adq-form-section-title">
-
-                                <i class="bi bi-clock-history"></i>
-
-                                Historial de la solicitud
-
-                            </div>
+                                </div>
 
 
-                            <div class="text-muted small mb-3">
+                                <div id="listaHistorialAdq"
+                                     class="adq-history-list">
 
-                                Consulta los movimientos y cambios
-                                realizados durante el proceso de compra.
+                                    <div class="text-muted small">
+                                        Cargando historial...
+                                    </div>
 
-                            </div>
-
-
-                            <div id="listaHistorialAdq"
-                                 class="adq-history-list">
-
-                                <div class="text-muted small">
-                                    Cargando historial...
                                 </div>
 
                             </div>
@@ -5863,51 +5883,49 @@
 
                 </div>
 
-            </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+
+                        Cerrar
+
+                    </button>
 
 
-            <div class="modal-footer">
+                    <button type="button"
+                            id="btnEditarDesdeDetalleAdq"
+                            class="btn btn-outline-primary d-none">
 
-                <button type="button"
-                        class="btn btn-outline-secondary"
-                        data-bs-dismiss="modal">
+                        <i class="bi bi-pencil me-1"></i>
 
-                    Cerrar
+                        Editar
 
-                </button>
-
-
-                <button type="button"
-                        id="btnEditarDesdeDetalleAdq"
-                        class="btn btn-outline-primary d-none">
-
-                    <i class="bi bi-pencil me-1"></i>
-
-                    Editar
-
-                </button>
+                    </button>
 
 
-                <button type="button"
-                        id="btnCancelarDesdeDetalleAdq"
-                        class="btn btn-outline-danger d-none">
+                    <button type="button"
+                            id="btnCancelarDesdeDetalleAdq"
+                            class="btn btn-outline-danger d-none">
 
-                    <i class="bi bi-x-circle me-1"></i>
+                        <i class="bi bi-x-circle me-1"></i>
 
-                    Cancelar solicitud
+                        Cancelar solicitud
 
-                </button>
+                    </button>
 
 
-                <button type="button"
-                        id="btnEnviarDesdeDetalleAdq"
-                        class="btn btn-primary d-none">
+                    <button type="button"
+                            id="btnEnviarDesdeDetalleAdq"
+                            class="btn btn-primary d-none">
 
-                    <i class="bi bi-send me-1"></i>
+                        <i class="bi bi-send me-1"></i>
 
-                    Enviar solicitud
+                        Enviar solicitud
 
-                </button>
+                    </button>
 
                     <button type="button"
                             id="btnGenerarSolicitudPagoAdq"
@@ -5919,13 +5937,78 @@
 
                     </button>
 
+                </div>
+
             </div>
 
         </div>
 
     </div>
 
-</div>
+    <!-- ========================================================== -->
+    <!-- HU#1 - SEGUIMIENTO DE PAGOS Y PARCIALIDADES -->
+    <!-- ========================================================== -->
+    <div class="modal fade" id="modalSeguimientoPagosAdq" tabindex="-1"
+         aria-labelledby="tituloSeguimientoPagosAdq" aria-hidden="true"
+         data-puede-registrar="@((Model.EsAdministradorSistema || (Model.EsAdministradorAdquisiciones && Model.AbacPuedeEditar)).ToString().ToLowerInvariant())">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content adq-payment-modal">
+                <div class="modal-header adq-payment-modal-header">
+                    <div>
+                        <h5 class="modal-title" id="tituloSeguimientoPagosAdq">
+                            <i class="bi bi-cash-stack me-2"></i>Seguimiento de pagos
+                        </h5>
+                        <span class="small" id="folioSeguimientoPagosAdq">-</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="mensajeSeguimientoPagosAdq" class="alert alert-danger d-none" role="alert" aria-live="polite"></div>
+                    <div id="cargandoSeguimientoPagosAdq" class="text-center py-4 d-none">
+                        <span class="spinner-border text-primary" role="status" aria-label="Cargando pagos"></span>
+                        <div class="small text-muted mt-2">Consultando parcialidades...</div>
+                    </div>
+                    <div id="contenidoSeguimientoPagosAdq" class="d-none">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4"><div class="adq-parcialidad-resumen"><span>Total autorizado</span><strong id="totalSeguimientoPagosAdq">-</strong></div></div>
+                            <div class="col-md-4"><div class="adq-parcialidad-resumen"><span>Total pagado</span><strong id="pagadoSeguimientoPagosAdq">-</strong></div></div>
+                            <div class="col-md-4"><div class="adq-parcialidad-resumen"><span>Saldo pendiente</span><strong id="saldoSeguimientoPagosAdq">-</strong></div></div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead><tr><th>Parcialidad</th><th>Porcentaje</th><th class="text-end">Importe</th><th>Estatus</th><th>Fecha de pago</th><th>Referencia</th><th class="text-end">Acción</th></tr></thead>
+                                <tbody id="tablaSeguimientoPagosAdq"></tbody>
+                            </table>
+                        </div>
+                        <div class="small text-muted">Los importes corresponden al plan autorizado. Registrar pagos no modifica el PDF oficial.</div>
+                        <div id="confirmacionPagoParcialidadAdq" class="border rounded-3 p-3 mt-3 d-none">
+                            <div class="fw-semibold mb-2" id="textoConfirmacionPagoAdq">Registrar pago</div>
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="referenciaSeguimientoPagoAdq">Referencia del pago <span class="text-danger">*</span></label>
+                                    <input type="text" id="referenciaSeguimientoPagoAdq" class="form-control" maxlength="250" minlength="3" autocomplete="off" placeholder="Folio de transferencia o comprobante" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="comprobanteSeguimientoPagoAdq">Adjuntar comprobante <span class="text-muted fw-normal">(opcional)</span></label>
+                                    <input type="file" id="comprobanteSeguimientoPagoAdq" class="form-control" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" />
+                                </div>
+                            </div>
+                            <div class="form-text">Formatos: PDF, JPG o PNG. Máximo 10 MB. La referencia es obligatoria; el archivo es opcional.</div>
+                            <p class="small text-muted mt-2 mb-3">Confirma únicamente cuando el pago se haya realizado y verificado.</p>
+                            <div class="d-flex gap-2 justify-content-end">
+                                <button type="button" id="cancelarSeguimientoPagoAdq" class="btn btn-outline-secondary">Cancelar</button>
+                                <button type="button" id="confirmarSeguimientoPagoAdq" class="btn btn-success">Confirmar pago</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="actualizarSeguimientoPagosAdq" class="btn btn-outline-primary"><i class="bi bi-arrow-clockwise me-1"></i>Actualizar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ========================================================== -->
     <!-- MODAL GENERAR SOLICITUD DE PAGO -->
@@ -6238,6 +6321,150 @@
 
                     </div>
 
+
+                    
+                    <!-- ===================================================== -->
+                    <!-- PLAN DE PAGOS Y PARCIALIDADES -->
+                    <!-- ===================================================== -->
+
+                    <div class="adq-form-section mb-4"
+                         id="seccionParcialidadesSolicitudPagoAdq">
+
+                        <div class="adq-form-section-title">
+                            <i class="bi bi-calendar2-check"></i>
+                            Plan de pagos y parcialidades
+                        </div>
+
+                        <div class="adq-parcialidades-panel">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    Modalidad del pago
+                                </label>
+
+                                <div class="d-flex flex-wrap gap-3">
+
+                                    <label class="form-check">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="modalidadPagoAdq"
+                                               value="Unico"
+                                               checked />
+                                        <span class="form-check-label">
+                                            Una sola exhibición
+                                        </span>
+                                    </label>
+
+                                    <label class="form-check">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="modalidadPagoAdq"
+                                               value="Parcialidades" />
+                                        <span class="form-check-label">
+                                            Pago en parcialidades
+                                        </span>
+                                    </label>
+
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+
+                                <div class="col-md-4">
+                                    <div class="adq-parcialidad-resumen">
+                                        <span>Total del pago</span>
+                                        <strong id="adqParcialidadesTotal">
+                                            $0.00
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="adq-parcialidad-resumen">
+                                        <span>Porcentaje distribuido</span>
+                                        <strong id="adqParcialidadesPorcentaje">
+                                            100%
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="adq-parcialidad-resumen">
+                                        <span>Importe pendiente de distribuir</span>
+                                        <strong id="adqParcialidadesPendiente">
+                                            $0.00
+                                        </strong>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div id="adqContenedorParcialidades"
+                                 class="d-none">
+
+                                <div class="table-responsive">
+
+                                    <table class="table table-sm align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Parcialidad</th>
+                                                <th style="min-width:140px">
+                                                    Porcentaje
+                                                </th>
+                                                <th class="text-end">
+                                                    Importe
+                                                </th>
+                                                <th class="text-center">
+                                                    Acción
+                                                </th>
+                                            </tr>
+                                        </thead>
+
+                                        <tbody id="adqTablaParcialidades">
+                                        </tbody>
+
+                                    </table>
+
+                                </div>
+
+                                <button type="button"
+                                        class="btn btn-outline-primary btn-sm"
+                                        id="adqBtnAgregarParcialidad">
+
+                                    <i class="bi bi-plus-lg me-1"></i>
+                                    Agregar parcialidad
+
+                                </button>
+
+                            </div>
+
+                            <div class="progress mt-3"
+                                 style="height:9px">
+                                <div class="progress-bar"
+                                     id="adqBarraParcialidades"
+                                     role="progressbar"
+                                     style="width:100%"
+                                     aria-valuenow="100"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+
+                            <div id="adqMensajeParcialidades"
+                                 class="small text-muted mt-2"
+                                 aria-live="polite">
+                                Pago distribuido al 100%.
+                            </div>
+
+                            <div class="small text-muted mt-3">
+                                Los importes se calcularán automáticamente
+                                considerando el total final de la solicitud,
+                                incluyendo retenciones y ajustes.
+                            </div>
+
+                        </div>
+
+                    </div>
 
                     <!-- ===================================================== -->
                     <!-- DATOS BANCARIOS -->
@@ -6603,528 +6830,528 @@
     </div>
 
 
-<!-- ========================================================== -->
-<!-- MODAL DECISIÓN GERENTE -->
-<!-- ========================================================== -->
+    <!-- ========================================================== -->
+    <!-- MODAL DECISIÓN GERENTE -->
+    <!-- ========================================================== -->
 
-<div class="modal fade"
-     id="modalDecisionGerenteAdq"
-     tabindex="-1"
-     aria-hidden="true">
+    <div class="modal fade"
+         id="modalDecisionGerenteAdq"
+         tabindex="-1"
+         aria-hidden="true">
 
-    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content">
+            <div class="modal-content">
 
-            <form method="post"
-                  id="formDecisionGerenteAdq">
+                <form method="post"
+                      id="formDecisionGerenteAdq">
 
-                @Html.AntiForgeryToken()
-
-
-                <input type="hidden"
-                       id="SolicitudDecisionId"
-                       name="SolicitudDecisionId" />
+                    @Html.AntiForgeryToken()
 
 
-                <div class="modal-header">
-
-                    <div>
-
-                        <h5 class="modal-title"
-                            id="tituloDecisionGerenteAdq">
-
-                            Decidir solicitud
-
-                        </h5>
+                    <input type="hidden"
+                           id="SolicitudDecisionId"
+                           name="SolicitudDecisionId" />
 
 
-                        <div class="small text-muted"
-                             id="folioDecisionGerenteAdq">
+                    <div class="modal-header">
+
+                        <div>
+
+                            <h5 class="modal-title"
+                                id="tituloDecisionGerenteAdq">
+
+                                Decidir solicitud
+
+                            </h5>
+
+
+                            <div class="small text-muted"
+                                 id="folioDecisionGerenteAdq">
+                            </div>
+
+                        </div>
+
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                        </button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <div id="mensajeDecisionGerenteAdq"
+                             class="alert mb-3">
+                        </div>
+
+
+                        <div>
+
+                            <label for="ComentarioDecision"
+                                   class="form-label"
+                                   id="labelComentarioDecisionAdq">
+
+                                Comentario
+
+                            </label>
+
+
+                            <textarea id="ComentarioDecision"
+                                      name="ComentarioDecision"
+                                      class="form-control"
+                                      rows="4"
+                                      maxlength="2000"
+                                      placeholder="Escribe un comentario..."></textarea>
+
+
+                            <div class="form-text"
+                                 id="ayudaComentarioDecisionAdq">
+                            </div>
+
                         </div>
 
                     </div>
 
 
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal">
-                    </button>
+                    <div class="modal-footer">
 
-                </div>
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
 
+                            Cancelar
 
-                <div class="modal-body">
-
-                    <div id="mensajeDecisionGerenteAdq"
-                         class="alert mb-3">
-                    </div>
+                        </button>
 
 
-                    <div>
+                        <button type="submit"
+                                id="btnConfirmarAprobacionAdq"
+                                formaction="?handler=AprobarGerente"
+                                class="btn btn-success d-none">
 
-                        <label for="ComentarioDecision"
-                               class="form-label"
-                               id="labelComentarioDecisionAdq">
+                            <i class="bi bi-check-lg me-1"></i>
 
-                            Comentario
+                            Confirmar aprobación
 
-                        </label>
-
-
-                        <textarea id="ComentarioDecision"
-                                  name="ComentarioDecision"
-                                  class="form-control"
-                                  rows="4"
-                                  maxlength="2000"
-                                  placeholder="Escribe un comentario..."></textarea>
+                        </button>
 
 
-                        <div class="form-text"
-                             id="ayudaComentarioDecisionAdq">
-                        </div>
+                        <button type="submit"
+                                id="btnConfirmarRechazoAdq"
+                                formaction="?handler=RechazarGerente"
+                                class="btn btn-danger d-none">
+
+                            <i class="bi bi-x-lg me-1"></i>
+
+                            Confirmar rechazo
+
+                        </button>
 
                     </div>
 
-                </div>
+                </form>
 
-
-                <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
-
-                        Cancelar
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnConfirmarAprobacionAdq"
-                            formaction="?handler=AprobarGerente"
-                            class="btn btn-success d-none">
-
-                        <i class="bi bi-check-lg me-1"></i>
-
-                        Confirmar aprobación
-
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnConfirmarRechazoAdq"
-                            formaction="?handler=RechazarGerente"
-                            class="btn btn-danger d-none">
-
-                        <i class="bi bi-x-lg me-1"></i>
-
-                        Confirmar rechazo
-
-                    </button>
-
-                </div>
-
-            </form>
+            </div>
 
         </div>
 
     </div>
 
-</div>
+
+    <!-- ========================================================== -->
+    <!-- MODAL ACCIÓN ADQUISICIONES -->
+    <!-- ========================================================== -->
+
+    <div class="modal fade"
+         id="modalAccionAdquisiciones"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <form method="post"
+                      id="formAccionAdquisiciones">
+
+                    @Html.AntiForgeryToken()
 
 
-<!-- ========================================================== -->
-<!-- MODAL ACCIÓN ADQUISICIONES -->
-<!-- ========================================================== -->
-
-<div class="modal fade"
-     id="modalAccionAdquisiciones"
-     tabindex="-1"
-     aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <form method="post"
-                  id="formAccionAdquisiciones">
-
-                @Html.AntiForgeryToken()
+                    <input type="hidden"
+                           id="SolicitudAdquisicionesId"
+                           name="SolicitudAdquisicionesId" />
 
 
-                <input type="hidden"
-                       id="SolicitudAdquisicionesId"
-                       name="SolicitudAdquisicionesId" />
+                    <div class="modal-header">
+
+                        <div>
+
+                            <h5 class="modal-title"
+                                id="tituloAccionAdquisiciones">
+
+                                Gestión de solicitud
+
+                            </h5>
 
 
-                <div class="modal-header">
+                            <small class="text-muted"
+                                   id="folioAccionAdquisiciones">
+                            </small>
 
-                    <div>
-
-                        <h5 class="modal-title"
-                            id="tituloAccionAdquisiciones">
-
-                            Gestión de solicitud
-
-                        </h5>
+                        </div>
 
 
-                        <small class="text-muted"
-                               id="folioAccionAdquisiciones">
-                        </small>
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Cerrar">
+                        </button>
 
                     </div>
 
 
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Cerrar">
-                    </button>
+                    <div class="modal-body">
 
-                </div>
+                        <div id="mensajeAccionAdquisiciones"
+                             class="alert mb-3">
+                        </div>
 
 
-                <div class="modal-body">
+                        <div>
 
-                    <div id="mensajeAccionAdquisiciones"
-                         class="alert mb-3">
-                    </div>
+                            <label for="ComentarioAdquisiciones"
+                                   class="form-label fw-bold"
+                                   id="labelComentarioAdquisiciones">
 
+                                Comentario
 
-                    <div>
-
-                        <label for="ComentarioAdquisiciones"
-                               class="form-label fw-bold"
-                               id="labelComentarioAdquisiciones">
-
-                            Comentario
-
-                        </label>
+                            </label>
 
 
-                        <textarea id="ComentarioAdquisiciones"
-                                  name="ComentarioAdquisiciones"
-                                  class="form-control"
-                                  rows="4"
-                                  maxlength="2000"
-                                  placeholder="Escribe un comentario..."></textarea>
+                            <textarea id="ComentarioAdquisiciones"
+                                      name="ComentarioAdquisiciones"
+                                      class="form-control"
+                                      rows="4"
+                                      maxlength="2000"
+                                      placeholder="Escribe un comentario..."></textarea>
 
 
-                        <div class="form-text"
-                             id="ayudaComentarioAdquisiciones">
+                            <div class="form-text"
+                                 id="ayudaComentarioAdquisiciones">
+                            </div>
+
                         </div>
 
                     </div>
 
-                </div>
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cerrar
+
+                        </button>
 
 
-                <div class="modal-footer">
+                        <button type="submit"
+                                id="btnAprobarAdquisiciones"
+                                formaction="?handler=AprobarAdquisiciones"
+                                class="btn btn-success d-none">
 
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
+                            <i class="bi bi-check-lg me-1"></i>
 
-                        Cerrar
+                            Aprobar solicitud
 
-                    </button>
-
-
-                    <button type="submit"
-                            id="btnAprobarAdquisiciones"
-                            formaction="?handler=AprobarAdquisiciones"
-                            class="btn btn-success d-none">
-
-                        <i class="bi bi-check-lg me-1"></i>
-
-                        Aprobar solicitud
-
-                    </button>
+                        </button>
 
 
-                    <button type="submit"
-                            id="btnCancelarAdquisiciones"
-                            formaction="?handler=CancelarAdquisiciones"
-                            class="btn btn-danger d-none">
+                        <button type="submit"
+                                id="btnCancelarAdquisiciones"
+                                formaction="?handler=CancelarAdquisiciones"
+                                class="btn btn-danger d-none">
 
-                        <i class="bi bi-x-lg me-1"></i>
+                            <i class="bi bi-x-lg me-1"></i>
 
-                        Confirmar cancelación
+                            Confirmar cancelación
 
-                    </button>
+                        </button>
 
-                </div>
+                    </div>
 
-            </form>
+                </form>
+
+            </div>
 
         </div>
 
     </div>
 
-</div>
+
+    <!-- ========================================================== -->
+    <!-- MODAL ASIGNAR AGENTE -->
+    <!-- ========================================================== -->
+
+    <div class="modal fade"
+         id="modalAsignarAdquisiciones"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <form method="post"
+                      asp-page-handler="AsignarAgente">
+
+                    @Html.AntiForgeryToken()
 
 
-<!-- ========================================================== -->
-<!-- MODAL ASIGNAR AGENTE -->
-<!-- ========================================================== -->
-
-<div class="modal fade"
-     id="modalAsignarAdquisiciones"
-     tabindex="-1"
-     aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <form method="post"
-                  asp-page-handler="AsignarAgente">
-
-                @Html.AntiForgeryToken()
+                    <input type="hidden"
+                           id="SolicitudAsignarAdqId"
+                           name="SolicitudAdquisicionesId" />
 
 
-                <input type="hidden"
-                       id="SolicitudAsignarAdqId"
-                       name="SolicitudAdquisicionesId" />
+                    <div class="modal-header">
+
+                        <div>
+
+                            <h5 class="modal-title">
+
+                                <i class="bi bi-person-plus me-2"></i>
+
+                                Asignar agente de compras
+
+                            </h5>
 
 
-                <div class="modal-header">
+                            <small id="folioAsignarAdq"
+                                   class="text-muted">
+                            </small>
 
-                    <div>
-
-                        <h5 class="modal-title">
-
-                            <i class="bi bi-person-plus me-2"></i>
-
-                            Asignar agente de compras
-
-                        </h5>
+                        </div>
 
 
-                        <small id="folioAsignarAdq"
-                               class="text-muted">
-                        </small>
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Cerrar">
+                        </button>
 
                     </div>
 
 
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Cerrar">
-                    </button>
+                    <div class="modal-body">
 
-                </div>
+                        <div class="mb-3">
 
+                            <label class="form-label fw-bold">
 
-                <div class="modal-body">
+                                Agente de compras
 
-                    <div class="mb-3">
-
-                        <label class="form-label fw-bold">
-
-                            Agente de compras
-
-                        </label>
+                            </label>
 
 
-                        <select name="UsuarioAsignadoAdqId"
-                                class="form-select"
-                                required>
+                            <select name="UsuarioAsignadoAdqId"
+                                    class="form-select"
+                                    required>
 
-                            <option value="">
-                                Selecciona...
-                            </option>
-
-
-                            @foreach (
-                                var agente
-                                in Model.AgentesCompras)
-                            {
-                                <option value="@agente.Value">
-
-                                    @agente.Text
-
+                                <option value="">
+                                    Selecciona...
                                 </option>
-                            }
-
-                        </select>
-
-                    </div>
 
 
-                    <div>
+                                @foreach (
+                                    var agente
+                                    in Model.AgentesCompras)
+                                {
+                                    <option value="@agente.Value">
 
-                        <label class="form-label fw-bold">
+                                        @agente.Text
 
-                            Observaciones
+                                    </option>
+                                }
 
-                        </label>
+                            </select>
 
-
-                        <textarea name="ComentarioAdquisiciones"
-                                  class="form-control"
-                                  rows="3"
-                                  maxlength="2000"
-                                  placeholder="Observaciones opcionales..."></textarea>
-
-                    </div>
-
-                </div>
+                        </div>
 
 
-                <div class="modal-footer">
+                        <div>
 
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
+                            <label class="form-label fw-bold">
 
-                        Cancelar
+                                Observaciones
 
-                    </button>
+                            </label>
 
 
-                    <button type="submit"
-                            class="btn btn-primary">
+                            <textarea name="ComentarioAdquisiciones"
+                                      class="form-control"
+                                      rows="3"
+                                      maxlength="2000"
+                                      placeholder="Observaciones opcionales..."></textarea>
 
-                        <i class="bi bi-person-check me-1"></i>
-
-                        Asignar agente
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- ========================================================== -->
-<!-- MODAL CANCELAR SOLICITUD DEL USUARIO -->
-<!-- ========================================================== -->
-
-<div class="modal fade"
-     id="modalCancelarSolicitudUsuarioAdq"
-     tabindex="-1"
-     aria-hidden="true">
-
-    <div class="modal-dialog modal-dialog-centered">
-
-        <div class="modal-content">
-
-            <form method="post"
-                  asp-page-handler="CancelarSolicitudUsuario">
-
-                @Html.AntiForgeryToken()
-
-
-                <input type="hidden"
-                       id="SolicitudCancelarUsuarioId"
-                       name="SolicitudCancelarUsuarioId" />
-
-
-                <div class="modal-header">
-
-                    <div>
-
-                        <h5 class="modal-title">
-
-                            <i class="bi bi-x-circle me-2"></i>
-
-                            Cancelar solicitud
-
-                        </h5>
-
-                        <small class="text-muted"
-                               id="folioCancelarSolicitudUsuarioAdq">
-                        </small>
-
-                    </div>
-
-
-                    <button type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                            aria-label="Cerrar">
-                    </button>
-
-                </div>
-
-
-                <div class="modal-body">
-
-                    <div class="alert alert-warning">
-
-                        <i class="bi bi-exclamation-triangle me-1"></i>
-
-                        La solicitud dejará de continuar en el proceso de compra.
-
-                    </div>
-
-
-                    <div>
-
-                        <label for="MotivoCancelacionUsuario"
-                               class="form-label fw-bold">
-
-                            Motivo de cancelación
-
-                        </label>
-
-
-                        <textarea id="MotivoCancelacionUsuario"
-                                  name="MotivoCancelacionUsuario"
-                                  class="form-control"
-                                  rows="4"
-                                  maxlength="2000"
-                                  required
-                                  placeholder="Indica por qué ya no requieres esta compra..."></textarea>
-
-                        <div class="form-text">
-                            El motivo quedará registrado en el historial.
                         </div>
 
                     </div>
 
-                </div>
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+
+                            Cancelar
+
+                        </button>
 
 
-                <div class="modal-footer">
+                        <button type="submit"
+                                class="btn btn-primary">
 
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            data-bs-dismiss="modal">
+                            <i class="bi bi-person-check me-1"></i>
 
-                        Regresar
+                            Asignar agente
 
-                    </button>
+                        </button>
 
+                    </div>
 
-                    <button type="submit"
-                            class="btn btn-danger">
+                </form>
 
-                        <i class="bi bi-x-lg me-1"></i>
-
-                        Confirmar cancelación
-
-                    </button>
-
-                </div>
-
-            </form>
+            </div>
 
         </div>
 
     </div>
 
-</div>
+
+    <!-- ========================================================== -->
+    <!-- MODAL CANCELAR SOLICITUD DEL USUARIO -->
+    <!-- ========================================================== -->
+
+    <div class="modal fade"
+         id="modalCancelarSolicitudUsuarioAdq"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content">
+
+                <form method="post"
+                      asp-page-handler="CancelarSolicitudUsuario">
+
+                    @Html.AntiForgeryToken()
+
+
+                    <input type="hidden"
+                           id="SolicitudCancelarUsuarioId"
+                           name="SolicitudCancelarUsuarioId" />
+
+
+                    <div class="modal-header">
+
+                        <div>
+
+                            <h5 class="modal-title">
+
+                                <i class="bi bi-x-circle me-2"></i>
+
+                                Cancelar solicitud
+
+                            </h5>
+
+                            <small class="text-muted"
+                                   id="folioCancelarSolicitudUsuarioAdq">
+                            </small>
+
+                        </div>
+
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Cerrar">
+                        </button>
+
+                    </div>
+
+
+                    <div class="modal-body">
+
+                        <div class="alert alert-warning">
+
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+
+                            La solicitud dejará de continuar en el proceso de compra.
+
+                        </div>
+
+
+                        <div>
+
+                            <label for="MotivoCancelacionUsuario"
+                                   class="form-label fw-bold">
+
+                                Motivo de cancelación
+
+                            </label>
+
+
+                            <textarea id="MotivoCancelacionUsuario"
+                                      name="MotivoCancelacionUsuario"
+                                      class="form-control"
+                                      rows="4"
+                                      maxlength="2000"
+                                      required
+                                      placeholder="Indica por qué ya no requieres esta compra..."></textarea>
+
+                            <div class="form-text">
+                                El motivo quedará registrado en el historial.
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+
+                            Regresar
+
+                        </button>
+
+
+                        <button type="submit"
+                                class="btn btn-danger">
+
+                            <i class="bi bi-x-lg me-1"></i>
+
+                            Confirmar cancelación
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
 
     <!-- ========================================================= -->
     <!-- MODAL APROBACIÓN PRESUPUESTAL -->
@@ -9213,13 +9440,13 @@
     </script>
 
 
-@section Scripts
-{
-    <partial name="_ValidationScriptsPartial" />
+    @section Scripts
+    {
+        <partial name="_ValidationScriptsPartial" />
 
-    <script src="~/js/Index.js"
-            asp-append-version="true">
-    </script>
+        <script src="~/js/Index.js"
+                asp-append-version="true">
+        </script>
 
         <script>
             document.addEventListener(
@@ -9558,29 +9785,29 @@
             );
         </script>
 
-    @if (!ViewData.ModelState.IsValid)
-    {
-        <script>
-            document.addEventListener(
-                "DOMContentLoaded",
-                function () {
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <script>
+                document.addEventListener(
+                    "DOMContentLoaded",
+                    function () {
 
-                    const modalElement =
-                        document.getElementById(
-                            "modalNuevaSolicitud"
-                        );
+                        const modalElement =
+                            document.getElementById(
+                                "modalNuevaSolicitud"
+                            );
 
-                    if (!modalElement) {
-                        return;
+                        if (!modalElement) {
+                            return;
+                        }
+
+                        bootstrap.Modal
+                            .getOrCreateInstance(
+                                modalElement
+                            )
+                            .show();
                     }
-
-                    bootstrap.Modal
-                        .getOrCreateInstance(
-                            modalElement
-                        )
-                        .show();
-                }
-            );
-        </script>
+                );
+            </script>
+        }
     }
-}
