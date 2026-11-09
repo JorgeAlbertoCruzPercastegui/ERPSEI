@@ -1,8 +1,9 @@
-﻿using ERPSEI.Data.Entities.SAT;
-using ERPSEI.Data.Entities.SAT.Catalogos;
-using ERPSEI.Data.Entities.Conciliaciones;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using ERPSEI.Data.Entities.Conciliaciones;
 using ERPSEI.Data.Entities.Cuentas;
+using ERPSEI.Data.Entities.SAT;
+using ERPSEI.Data.Entities.SAT.Catalogos;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ERPSEI.Data.Entities.Empresas
 {
@@ -45,7 +46,10 @@ namespace ERPSEI.Data.Entities.Empresas
 
 		public string? Telefono { get; set; } = string.Empty;
 
-		public int? PerfilId {  get; set; }
+        [StringLength(500)]
+        public string? PaginaInternet { get; set; }
+
+        public int? PerfilId {  get; set; }
 		public Perfil? Perfil {  get; set; }
 
 		public ICollection<ActividadEconomicaEmpresa> ActividadesEconomicasEmpresa { get; } = new List<ActividadEconomicaEmpresa>();

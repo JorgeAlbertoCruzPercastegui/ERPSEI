@@ -2947,63 +2947,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6589),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1678),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6601),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1687),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6602),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1688),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6603),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1689),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6604),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1690),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6605),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1690),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6606),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1691),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6607),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1692),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 15, 41, 27, 186, DateTimeKind.Local).AddTicks(6608),
+                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1693),
                             Nombre = "Otros"
                         });
                 });
@@ -3831,6 +3831,10 @@ namespace ERPSEI.Data.Migrations
 
                     b.Property<string>("PFESAT")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaginaInternet")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int?>("PerfilId")
                         .HasColumnType("int");

@@ -250,6 +250,7 @@ function onAgregarClick() {
         correoFiscal: "",
         correoFacturacion: "",
         telefono: "",
+        paginaInternet: "",
         actividadesEconomicas: [],
         objetoSocial: "",
         perfilId: 0,
@@ -416,7 +417,6 @@ function onBuscarClick() {
     let selNivel = document.getElementById("selFiltroNivel");
     let inpActividadEconomica = document.getElementById("inpFiltroActividadEconomica");
     let inpRFC = document.getElementById("inpFiltroRFC");
-    let selEstatus = document.getElementById("selFiltroEstatus");
 
     let oParams = {
         origenId: selOrigen.value == 0 ? null : parseInt(selOrigen.value),
@@ -424,10 +424,7 @@ function onBuscarClick() {
         actividadEconomicaId: (inpActividadEconomica.getAttribute('idselected') || "0") == "0"
             ? null
             : parseInt(inpActividadEconomica.getAttribute("idselected")),
-        rfc: inpRFC.value.trim().length <= 0 ? null : inpRFC.value,
-        deshabilitado: selEstatus.value === ""
-            ? null
-            : parseInt(selEstatus.value)
+        rfc: inpRFC.value.trim().length <= 0 ? null : inpRFC.value
     };
 
     //Resetea el valor de los filtros.
@@ -437,7 +434,6 @@ function onBuscarClick() {
 
     selOrigen.value = 0;
     selNivel.value = 0;
-    selEstatus.value = "";
 
     inpActividadEconomica.setAttribute("idselected", 0);
 
@@ -523,6 +519,7 @@ function initEmpresaDialog(action, row) {
     let correoFiscalField = document.getElementById("inpEmpresaCorreoFiscal");
     let correoFacturacionField = document.getElementById("inpEmpresaCorreoFacturacion");
     let telefonoField = document.getElementById("inpEmpresaTelefono");
+    let paginaInternetField = document.getElementById("inpEmpresaPaginaInternet");
     let objetoSocialField = document.getElementById("txtEmpresaObjetoSocial");
     let perfilField = document.getElementById("selEmpresaPerfil");
     let oldPasswordField = document.getElementById("inpEmpresaArchivosSATOldPassword");
@@ -608,6 +605,9 @@ function initEmpresaDialog(action, row) {
 
             telefonoField.value =
                 row.telefono ?? "";
+
+            paginaInternetField.value =
+                row.paginaInternet ?? "";
 
             objetoSocialField.value =
                 row.objetoSocial ?? "";
@@ -1559,6 +1559,7 @@ function onGuardarClick() {
         let correoFiscalField = document.getElementById("inpEmpresaCorreoFiscal");
         let correoFacturacionField = document.getElementById("inpEmpresaCorreoFacturacion");
         let telefonoField = document.getElementById("inpEmpresaTelefono");
+        let paginaInternetField = document.getElementById("inpEmpresaPaginaInternet");
         let objetoSocialField = document.getElementById("txtEmpresaObjetoSocial");
         let perfilField = document.getElementById("selEmpresaPerfil");
         let oldPasswordField = document.getElementById("inpEmpresaArchivosSATOldPassword");
@@ -1615,6 +1616,7 @@ function onGuardarClick() {
             correoFiscal: correoFiscalField.value.trim(),
             correoFacturacion: correoFacturacionField.value.trim(),
             telefono: telefonoField.value.trim(),
+            paginaInternet: paginaInternetField.value.trim(),
             actividadesEconomicas: activities,
             objetoSocial: objetoSocialField.value.trim(),
             perfilId: perfilField.value == 0 ? null : parseInt(perfilField.value),

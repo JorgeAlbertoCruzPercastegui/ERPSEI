@@ -65,6 +65,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
         private bool PuedeCargarDocumentosEmpresa => EsAdministradorDeEmpresas || TieneClaimActivo("EmpresasPuedeCargar");
         private bool PuedeDescargarDocumentosEmpresa => EsAdministradorDeEmpresas || TieneClaimActivo("EmpresasPuedeDescargar");
 
+
         // Administración individual: únicamente Administrador o Master.
         public bool PuedeAdministrarPermisosHU2 => User.IsInRole("Administrador") || User.IsInRole("Master");
 
@@ -190,6 +191,11 @@ namespace ERPSEI.Areas.Catalogos.Pages
             [Display(Name = "PhoneNumberField")]
             public string? Telefono { get; set; } = string.Empty;
 
+            [DataType(DataType.Url)]
+            [StringLength(500, ErrorMessage = "FieldLength")]
+            [Display(Name = "Página de Internet")]
+            public string? PaginaInternet { get; set; } = string.Empty;
+
             [Required(ErrorMessage = "Required")]
             [Display(Name = "PerfilField")]
             public int? PerfilId { get; set; }
@@ -294,13 +300,17 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     filtro.NivelId,
                     filtro.ActividadEconomicaId,
                     filtro.RFC,
-                    filtro.Deshabilitado
+                    0
                 );
             }
             else
             {
                 empresas = await _empresaManager.GetAllAsync();
             }
+
+            empresas = empresas
+            .Where(e => e.Deshabilitado == 0)
+            .ToList();
 
             foreach (Empresa e in empresas)
             {
@@ -344,6 +354,7 @@ namespace ERPSEI.Areas.Catalogos.Pages
                     correoFiscal = e.CorreoFiscal,
                     correoFacturacion = e.CorreoFacturacion,
                     telefono = e.Telefono,
+                    paginaInternet = e.PaginaInternet,
                     objetoSocial = e.ObjetoSocial,
                     hasPasswordSAT = !string.IsNullOrEmpty(e.PFESAT)
                 });
@@ -1955,6 +1966,9 @@ namespace ERPSEI.Areas.Catalogos.Pages
 
                 empresa.Telefono =
                     e.Telefono;
+
+                empresa.PaginaInternet =
+                    e.PaginaInternet?.Trim() ?? string.Empty;
 
                 empresa.ObjetoSocial =
                     e.ObjetoSocial;

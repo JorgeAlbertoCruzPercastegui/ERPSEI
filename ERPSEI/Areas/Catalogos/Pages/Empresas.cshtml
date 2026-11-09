@@ -209,17 +209,6 @@
 								<label for="inpFiltroRFC" asp-for="InputFiltro.RFC" class="form-label"></label>
 							</div>
 						</div>
-
-						<div class="col-sm-6 col-md-6 col-lg-4">
-							<div class="form-floating mb-3">
-								<select id="selFiltroEstatus" asp-for="InputFiltro.Deshabilitado" class="form-select">
-									<option value="">Todas</option>
-									<option value="0">Activas</option>
-									<option value="1">Inactivas</option>
-								</select>
-								<label for="selFiltroEstatus">Estatus</label>
-							</div>
-						</div>
 					</div>
 				</form>
 				@if (puedeTodo || puedeConsultar || puedeEditar || puedeEliminar || puedeTodoBancos || puedeConsultarBancos || puedeEditarBancos || puedeEliminarBancos)
@@ -508,6 +497,27 @@
 														<input id="inpEmpresaCorreoFacturacion" asp-for="InputEmpresa.CorreoFacturacion" type="text" class="form-control formInput" placeholder="@Localizer["CorreoFacturacionPlaceholder"]" />
 														<label for="inpEmpresaCorreoFacturacion" asp-for="InputEmpresa.CorreoFacturacion" class="form-label"></label>
 														<span asp-validation-for="InputEmpresa.CorreoFacturacion" class="text-danger"></span>
+													</div>
+												</div>
+											</div>
+
+											<!-- Página de Internet -->
+											<div class="row">
+												<div class="col-sm-12 col-md-12 col-lg-6">
+													<div class="form-floating mb-3">
+														<input id="inpEmpresaPaginaInternet"
+															   asp-for="InputEmpresa.PaginaInternet"
+															   type="url"
+															   maxlength="500"
+															   class="form-control formInput"
+															   placeholder="https://www.empresa.com.mx" />
+
+														<label for="inpEmpresaPaginaInternet" class="form-label">
+															Página de Internet
+														</label>
+
+														<span asp-validation-for="InputEmpresa.PaginaInternet"
+															  class="text-danger"></span>
 													</div>
 												</div>
 											</div>
@@ -993,7 +1003,6 @@
 
             // HU INTRANET 2 - Nuevos tipos documentales (IDs 22 a 34)
             "22": "Acuse de FIEL",
-            "23": "Página de Internet",
             "24": "Croquis",
             "25": "Tríptico",
             "26": "INE de Apoderado",
