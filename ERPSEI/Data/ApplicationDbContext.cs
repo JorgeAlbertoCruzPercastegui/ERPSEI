@@ -324,8 +324,27 @@ namespace ERPSEI.Data
 
         public DbSet<IntranetAuditoria> IntranetAuditorias { get; set; }
 
-        //Correos y Dominios
+        // =====================================================
+        // CORREOS Y DOMINIOS
+        // =====================================================
+
+        // Registros actuales
         public DbSet<CorreoDominio> CorreosDominios { get; set; }
+
+        // Configuración de notificaciones
+        public DbSet<ConfiguracionNotificacionesCorreoDominio>
+            ConfiguracionesNotificacionesCorreosDominios
+        { get; set; }
+
+        // Destinatarios de escalamiento
+        public DbSet<DestinatarioNotificacionCorreoDominio>
+            DestinatariosNotificacionesCorreosDominios
+        { get; set; }
+
+        // Historial de correos enviados
+        public DbSet<HistorialNotificacionCorreoDominio>
+            HistorialNotificacionesCorreosDominios
+        { get; set; }
 
         private readonly AuditoriaContext? _auditoriaContext;
 
@@ -1002,6 +1021,9 @@ namespace ERPSEI.Data
 
             //Notificaciones
             BuildNotificaciones(modelBuilder);
+
+            // CORREOS Y DOMINIOS - NOTIFICACIONES
+            BuildCorreosDominiosNotificaciones(modelBuilder);
 
             // Expedientes Bancarios
             BuildExpedientesBancarios(
@@ -4674,6 +4696,140 @@ namespace ERPSEI.Data
                     );
                 }
             );
+        }
+
+        // =====================================================
+        // CORREOS Y DOMINIOS - CONFIGURACIÓN DE NOTIFICACIONES
+        // =====================================================
+        private static void BuildCorreosDominiosNotificaciones(ModelBuilder b)
+        {
+            // Configuración general
+            b.Entity<ConfiguracionNotificacionesCorreoDominio>(entity =>
+            {
+                entity.ToTable("ConfiguracionesNotificacionesCorreosDominios");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.DiasAnticipacion)
+                    .HasDefaultValue(10);
+
+                entity.Property(x => x.DiasEscalamiento)
+                    .HasDefaultValue(2);
+
+                entity.Property(x => x.Habilitado)
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.RecordatoriosDiarios)
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.NotificarVencidos)
+                    .HasDefaultValue(true);
+
+                entity.Property(x => x.UsuarioModificador)
+                    .HasMaxLength(450);
+
+                entity.HasData(new ConfiguracionNotificacionesCorreoDominio
+                {
+                    Id = 1,
+                    Habilitado = false,
+                    DiasAnticipacion = 10,
+                    DiasEscalamiento = 2,
+                    RecordatoriosDiarios = true,
+                    NotificarVencidos = true
+                });
+            });
+
+            // Destinatarios configurables
+            b.Entity<DestinatarioNotificacionCorreoDominio>(entity =>
+            {
+                entity.ToTable("DestinatariosNotificacionesCorreosDominios");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.UserId)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.CorreoElectronico)
+                    .HasMaxLength(256);
+
+                entity.Property(x => x.Nombre)
+                    .HasMaxLength(150);
+
+                entity.Property(x => x.UsuarioCreador)
+                    .HasMaxLength(450);
+
+                entity.Property(x => x.UsuarioModificador)
+                    .HasMaxLength(450);
+
+                entity.HasIndex(x => x.UserId);
+
+                entity.HasIndex(x => x.CorreoElectronico);
+
+                entity.HasOne<AppUser>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.Property(x => x.TipoDestinatario)
+                    .HasMaxLength(30)
+                    .HasDefaultValue("Escalamiento")
+                    .IsRequired();
+            });
+
+            // Historial de notificaciones
+            b.Entity<HistorialNotificacionCorreoDominio>(entity =>
+            {
+                entity.ToTable("HistorialNotificacionesCorreosDominios");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.FechaCaducacion)
+                    .HasColumnType("date");
+
+                entity.Property(x => x.FechaAviso)
+                    .HasColumnType("date");
+
+                entity.Property(x => x.DestinatarioClave)
+                    .HasMaxLength(256)
+                    .IsRequired();
+
+                entity.Property(x => x.CorreoElectronico)
+                    .HasMaxLength(256);
+
+                entity.Property(x => x.TipoAviso)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.Property(x => x.Canal)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.Property(x => x.Estado)
+                    .HasMaxLength(30)
+                    .IsRequired();
+
+                entity.Property(x => x.Error)
+                    .HasMaxLength(2000);
+
+                entity.HasOne<CorreoDominio>()
+                    .WithMany()
+                    .HasForeignKey(x => x.CorreoDominioId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Evitar duplicados por registro,
+                // vencimiento, fecha, destinatario y canal.
+                entity.HasIndex(x => new
+                {
+                    x.CorreoDominioId,
+                    x.FechaCaducacion,
+                    x.FechaAviso,
+                    x.DestinatarioClave,
+                    x.Canal
+                })
+                .IsUnique()
+                .HasDatabaseName(
+                    "UX_CorreosDominios_Historial_NotificacionDiaria");
+            });
         }
 
         private static void BuildNotificaciones(ModelBuilder b)

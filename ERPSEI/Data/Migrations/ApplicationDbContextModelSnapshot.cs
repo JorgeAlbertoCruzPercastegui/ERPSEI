@@ -2947,63 +2947,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1678),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1245),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1687),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1254),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1688),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1255),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1689),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1256),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1690),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1256),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1690),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1257),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1691),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1258),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1692),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1259),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 9, 16, 19, 36, 172, DateTimeKind.Local).AddTicks(1693),
+                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1260),
                             Nombre = "Otros"
                         });
                 });
@@ -5200,6 +5200,115 @@ namespace ERPSEI.Data.Migrations
                     b.ToTable("ComunicadosInternos", (string)null);
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.ConfiguracionNotificacionesCorreoDominio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DiasAnticipacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(10);
+
+                    b.Property<int>("DiasEscalamiento")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(2);
+
+                    b.Property<DateTime?>("FechaModificacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Habilitado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("NotificarVencidos")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("RecordatoriosDiarios")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("UsuarioModificador")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ConfiguracionesNotificacionesCorreosDominios", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DiasAnticipacion = 10,
+                            DiasEscalamiento = 2,
+                            Habilitado = true,
+                            NotificarVencidos = true,
+                            RecordatoriosDiarios = true
+                        });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.DestinatarioNotificacionCorreoDominio", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CorreoElectronico")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaModificacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Nombre")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("TipoDestinatario")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("Escalamiento");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UsuarioCreador")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UsuarioModificador")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CorreoElectronico");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DestinatariosNotificacionesCorreosDominios", (string)null);
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.EventoIntranet", b =>
                 {
                     b.Property<int>("Id")
@@ -5376,6 +5485,66 @@ namespace ERPSEI.Data.Migrations
                     b.HasIndex("Activo", "EsPermanente", "Orden", "Temporada");
 
                     b.ToTable("HeaderImagenes", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.HistorialNotificacionCorreoDominio", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Canal")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("CorreoDominioId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CorreoElectronico")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("DestinatarioClave")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("FechaAviso")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("FechaCaducacion")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("FechaEnvio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TipoAviso")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CorreoDominioId", "FechaCaducacion", "FechaAviso", "DestinatarioClave", "Canal")
+                        .IsUnique()
+                        .HasDatabaseName("UX_CorreosDominios_Historial_NotificacionDiaria");
+
+                    b.ToTable("HistorialNotificacionesCorreosDominios", (string)null);
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.ManualPoliticaArea", b =>
@@ -12400,6 +12569,14 @@ namespace ERPSEI.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.DestinatarioNotificacionCorreoDominio", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.EventoIntranet", b =>
                 {
                     b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", null)
@@ -12421,6 +12598,15 @@ namespace ERPSEI.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("UsuarioCreador");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.HistorialNotificacionCorreoDominio", b =>
+                {
+                    b.HasOne("CorreoDominio", null)
+                        .WithMany()
+                        .HasForeignKey("CorreoDominioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Intranet.ManualPoliticaArea", b =>

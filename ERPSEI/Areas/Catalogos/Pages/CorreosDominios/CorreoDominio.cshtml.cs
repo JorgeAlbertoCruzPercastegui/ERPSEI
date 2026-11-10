@@ -8,6 +8,7 @@ using OfficeOpenXml;
 using System.Globalization;
 using OfficeOpenXml.Style;
 using System.Drawing;
+using System.ComponentModel.DataAnnotations;
 
 namespace ERPSEI.Areas.Catalogos.Pages.CorreosDominios
 {
@@ -305,6 +306,248 @@ namespace ERPSEI.Areas.Catalogos.Pages.CorreosDominios
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 fileName
             );
+        }
+
+
+        // =====================================================
+        // CONFIGURACION DE AVISOS - SOLO ROL ADMINISTRADOR
+        // El permiso se valida EN CADA handler, no solo en el boton.
+        // =====================================================
+        public async Task<IActionResult> OnGetConfiguracionAvisosAsync()
+        {
+            if (!User.IsInRole("Administrador")) return Forbid();
+
+            var config = await _db.ConfiguracionesNotificacionesCorreosDominios
+                .AsNoTracking().FirstOrDefaultAsync(x => x.Id == 1);
+            if (config == null) return NotFound("No se encontro la configuracion inicial.");
+
+            var destinatarios = await _db.DestinatariosNotificacionesCorreosDominios
+                .AsNoTracking().OrderByDescending(x => x.Activo).ThenBy(x => x.Nombre)
+                .Select(x => new { x.Id, x.UserId, x.CorreoElectronico, x.Nombre, x.TipoDestinatario, x.Activo })
+                .ToListAsync();
+
+            var usuarios = await _db.Users.AsNoTracking()
+                .Where(x => x.Email != null && x.Email != "")
+                .OrderBy(x => x.Email)
+                .Select(x => new { x.Id, x.Email, x.UserName })
+                .ToListAsync();
+
+            return new JsonResult(new
+            {
+                configuracion = new
+                {
+                    config.Habilitado,
+                    config.DiasAnticipacion,
+                    config.DiasEscalamiento,
+                    config.RecordatoriosDiarios,
+                    config.NotificarVencidos
+                },
+                destinatarios,
+                usuarios
+            });
+        }
+
+
+        // =====================================================
+        // SIMULACIÓN DE AVISOS - CONSULTA DE SOLO LECTURA
+        // No crea historial, campanitas, ni envía mensajes.
+        // Usa la configuración GUARDADA en base de datos.
+        // =====================================================
+        public async Task<IActionResult> OnGetSimularAvisosAsync(CancellationToken cancellationToken)
+        {
+            if (!User.IsInRole("Administrador")) return Forbid();
+
+            var config = await _db.ConfiguracionesNotificacionesCorreosDominios
+                .AsNoTracking().FirstOrDefaultAsync(x => x.Id == 1, cancellationToken);
+            if (config == null) return NotFound(new { message = "No existe configuración de avisos." });
+
+            TimeZoneInfo zona;
+            try { zona = TimeZoneInfo.FindSystemTimeZoneById("America/Mexico_City"); }
+            catch (TimeZoneNotFoundException) { zona = TimeZoneInfo.FindSystemTimeZoneById("Central Standard Time (Mexico)"); }
+            DateTime hoy = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, zona).Date;
+            DateTime limiteExclusivo = hoy.AddDays(config.DiasAnticipacion + 1);
+
+            var registros = await _db.CorreosDominios.AsNoTracking()
+                .Where(x => !x.Deshabilitado && x.FechaCaducacion.HasValue && x.FechaCaducacion.Value < limiteExclusivo)
+                .Select(x => new { x.Id, x.Empresa, x.Dominio, x.Proveedor, x.FechaCaducacion })
+                .ToListAsync(cancellationToken);
+
+            var asignaciones = await _db.DestinatariosNotificacionesCorreosDominios.AsNoTracking()
+                .Where(x => x.Activo).ToListAsync(cancellationToken);
+            var idsUsuario = asignaciones.Where(x => !string.IsNullOrWhiteSpace(x.UserId))
+                .Select(x => x.UserId!).Distinct().ToList();
+            var usuarios = await _db.Users.AsNoTracking()
+                .Where(x => idsUsuario.Contains(x.Id))
+                .Select(x => new { x.Id, x.Email }).ToListAsync(cancellationToken);
+            List<string> CorreosPorTipo(string tipo) => asignaciones
+                .Where(x => string.Equals(x.TipoDestinatario, tipo, StringComparison.OrdinalIgnoreCase))
+                .Select(x => string.IsNullOrWhiteSpace(x.UserId)
+                    ? x.CorreoElectronico : usuarios.FirstOrDefault(u => u.Id == x.UserId)?.Email)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x)
+                .ToList();
+
+            var seguimiento = CorreosPorTipo("Seguimiento");
+            var escalamiento = CorreosPorTipo("Escalamiento");
+
+            var vencidos = registros.Where(x => x.FechaCaducacion!.Value.Date < hoy)
+                .OrderBy(x => x.FechaCaducacion).ThenBy(x => x.Empresa).Select(x => new
+                {
+                    x.Id,
+                    x.Empresa,
+                    x.Dominio,
+                    x.Proveedor,
+                    fechaCaducacion = x.FechaCaducacion!.Value.ToString("dd/MM/yyyy"),
+                    diasAtraso = (hoy - x.FechaCaducacion.Value.Date).Days
+                }).ToList();
+
+            var proximos = registros.Where(x => x.FechaCaducacion!.Value.Date >= hoy)
+                .OrderBy(x => x.FechaCaducacion).ThenBy(x => x.Empresa).Select(x => new
+                {
+                    x.Id,
+                    x.Empresa,
+                    x.Dominio,
+                    fechaCaducacion = x.FechaCaducacion!.Value.ToString("dd/MM/yyyy"),
+                    diasRestantes = (x.FechaCaducacion.Value.Date - hoy).Days,
+                    categoria = (x.FechaCaducacion.Value.Date - hoy).Days <= config.DiasEscalamiento ? "Crítico" : "Preventivo",
+                    avisoSeguimiento = config.RecordatoriosDiarios || (x.FechaCaducacion.Value.Date - hoy).Days == config.DiasAnticipacion,
+                    avisoEscalamiento = (x.FechaCaducacion.Value.Date - hoy).Days <= config.DiasEscalamiento &&
+                        (config.RecordatoriosDiarios || (x.FechaCaducacion.Value.Date - hoy).Days == config.DiasEscalamiento)
+                }).ToList();
+
+            // Este es un plan de envíos, NO confirma entregas. Para vencidos,
+            // el servicio envía resumen solo con ambos controles habilitados.
+            bool resumenVencidos = config.NotificarVencidos && config.RecordatoriosDiarios && vencidos.Count > 0;
+            var correosResumen = resumenVencidos
+                ? seguimiento.Concat(escalamiento).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToList()
+                : new List<string>();
+
+            return new JsonResult(new
+            {
+                fechaCorte = hoy.ToString("dd/MM/yyyy"),
+                simulacion = true,
+                configuracionHabilitada = config.Habilitado,
+                diasAnticipacion = config.DiasAnticipacion,
+                diasEscalamiento = config.DiasEscalamiento,
+                recordatoriosDiarios = config.RecordatoriosDiarios,
+                notificarVencidos = config.NotificarVencidos,
+                totalVencidos = vencidos.Count,
+                totalProximos = proximos.Count,
+                resumenVencidos,
+                asuntoResumen = $"INTRANET | {vencidos.Count} dominio(s) vencido(s) - {hoy:dd/MM/yyyy}",
+                destinatariosResumen = correosResumen,
+                destinatariosSeguimiento = seguimiento,
+                destinatariosEscalamiento = escalamiento,
+                vencidos,
+                proximos,
+                nota = "Simulación de destinatarios y contenido según reglas guardadas; no evalúa historial ni envía correos."
+            });
+        }
+
+        public sealed class GuardarConfiguracionAvisosInput
+        {
+            public bool Habilitado { get; set; }
+            [Range(1, 365)] public int DiasAnticipacion { get; set; }
+            [Range(0, 365)] public int DiasEscalamiento { get; set; }
+            public bool RecordatoriosDiarios { get; set; }
+            public bool NotificarVencidos { get; set; }
+        }
+
+        public async Task<IActionResult> OnPostGuardarConfiguracionAvisosAsync([FromBody] GuardarConfiguracionAvisosInput input)
+        {
+            if (!User.IsInRole("Administrador")) return Forbid();
+            if (input == null || !TryValidateModel(input) || input.DiasEscalamiento > input.DiasAnticipacion)
+                return BadRequest(new { success = false, message = "Los dias de escalamiento deben ser menores o iguales a los dias de anticipacion." });
+
+            var config = await _db.ConfiguracionesNotificacionesCorreosDominios.FirstOrDefaultAsync(x => x.Id == 1);
+            if (config == null) return NotFound(new { success = false, message = "Configuracion no encontrada." });
+
+            config.Habilitado = input.Habilitado;
+            config.DiasAnticipacion = input.DiasAnticipacion;
+            config.DiasEscalamiento = input.DiasEscalamiento;
+            config.RecordatoriosDiarios = input.RecordatoriosDiarios;
+            config.NotificarVencidos = input.NotificarVencidos;
+            config.FechaModificacion = DateTime.Now;
+            config.UsuarioModificador = User.Identity?.Name;
+            await _db.SaveChangesAsync();
+            return new JsonResult(new { success = true, message = "Configuracion actualizada correctamente." });
+        }
+
+        public sealed class AgregarDestinatarioAvisosInput
+        {
+            public string? UserId { get; set; }
+            public string? CorreoElectronico { get; set; }
+            public string? Nombre { get; set; }
+            public string? TipoDestinatario { get; set; }
+        }
+
+        public async Task<IActionResult> OnPostAgregarDestinatarioAvisosAsync([FromBody] AgregarDestinatarioAvisosInput input)
+        {
+            if (!User.IsInRole("Administrador")) return Forbid();
+            if (input == null) return BadRequest(new { success = false, message = "Informacion invalida." });
+
+            string? userId = input.UserId?.Trim();
+            string? correo = input.CorreoElectronico?.Trim();
+            string? nombre = input.Nombre?.Trim();
+            string? tipo = input.TipoDestinatario?.Trim();
+            if (tipo != "Seguimiento" && tipo != "Escalamiento")
+                return BadRequest(new { success = false, message = "Selecciona un tipo de destinatario válido." });
+            if (string.IsNullOrEmpty(userId)) userId = null;
+            if (string.IsNullOrEmpty(correo)) correo = null;
+            if (string.IsNullOrEmpty(nombre)) nombre = null;
+            if ((userId == null) == (correo == null))
+                return BadRequest(new { success = false, message = "Selecciona un usuario O captura un correo externo." });
+
+            if (userId != null)
+            {
+                if (userId.Length > 450 || !await _db.Users.AnyAsync(x => x.Id == userId && x.Email != null && x.Email != ""))
+                    return BadRequest(new { success = false, message = "Usuario no valido o sin correo." });
+                if (await _db.DestinatariosNotificacionesCorreosDominios.AnyAsync(x => x.UserId == userId && x.TipoDestinatario == tipo))
+                    return BadRequest(new { success = false, message = "El usuario ya existe en la lista; puedes activarlo si esta inactivo." });
+            }
+            else
+            {
+                if (correo!.Length > 256 || !new EmailAddressAttribute().IsValid(correo))
+                    return BadRequest(new { success = false, message = "Correo electronico no valido." });
+                if (await _db.DestinatariosNotificacionesCorreosDominios.AnyAsync(x => x.UserId == null && x.CorreoElectronico == correo && x.TipoDestinatario == tipo))
+                    return BadRequest(new { success = false, message = "El correo ya existe en la lista; puedes activarlo si esta inactivo." });
+            }
+            if (nombre?.Length > 150)
+                return BadRequest(new { success = false, message = "El nombre es demasiado largo (maximo 150 caracteres)." });
+
+            _db.DestinatariosNotificacionesCorreosDominios.Add(new DestinatarioNotificacionCorreoDominio
+            {
+                UserId = userId,
+                CorreoElectronico = correo,
+                Nombre = nombre,
+                TipoDestinatario = tipo!,
+                Activo = true,
+                FechaCreacion = DateTime.Now,
+                UsuarioCreador = User.Identity?.Name
+            });
+            await _db.SaveChangesAsync();
+            return new JsonResult(new { success = true, message = "Destinatario agregado correctamente." });
+        }
+
+        public sealed class CambiarEstadoDestinatarioAvisosInput
+        {
+            public int Id { get; set; }
+            public bool Activo { get; set; }
+        }
+
+        public async Task<IActionResult> OnPostCambiarEstadoDestinatarioAvisosAsync([FromBody] CambiarEstadoDestinatarioAvisosInput input)
+        {
+            if (!User.IsInRole("Administrador")) return Forbid();
+            if (input == null || input.Id <= 0) return BadRequest(new { success = false, message = "Id invalido." });
+            var destinatario = await _db.DestinatariosNotificacionesCorreosDominios.FirstOrDefaultAsync(x => x.Id == input.Id);
+            if (destinatario == null) return NotFound(new { success = false, message = "Destinatario no encontrado." });
+            destinatario.Activo = input.Activo;
+            destinatario.FechaModificacion = DateTime.Now;
+            destinatario.UsuarioModificador = User.Identity?.Name;
+            await _db.SaveChangesAsync();
+            return new JsonResult(new { success = true, message = input.Activo ? "Destinatario activado." : "Destinatario desactivado." });
         }
 
         private static DateTime? ObtenerFechaExcel(object? valorCelda, string? textoCelda)

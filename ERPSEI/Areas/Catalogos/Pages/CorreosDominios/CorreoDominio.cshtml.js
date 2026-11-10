@@ -36,6 +36,18 @@
     });
 
     inicializarModalMensajeCorreoDominio();
+
+    // Evita el stacking context del layout, que deja el modal detrás del encabezado.
+    const modalAvisos = document.getElementById("dlgConfigAvisos");
+    if (modalAvisos) {
+        document.body.appendChild(modalAvisos);
+        modalAvisos.addEventListener("show.bs.modal", function () {
+            document.body.classList.add("modal-avisos-abierto");
+        });
+        modalAvisos.addEventListener("hidden.bs.modal", function () {
+            document.body.classList.remove("modal-avisos-abierto");
+        });
+    }
 });
 
 function cargarCorreosDominios() {
@@ -509,3 +521,146 @@ function fechaCaducacionFormatter(value, row) {
 
     return value;
 }
+
+// =====================================================
+// CONFIGURACION DE AVISOS (solo Administrador en backend)
+// =====================================================
+$(document).on("click", "#btnConfigAvisos", async function () {
+    abrirModal("dlgConfigAvisos");
+    await cargarConfigAvisos();
+});
+
+function tokenAvisos() {
+    return $('input:hidden[name="__RequestVerificationToken"]').val();
+}
+function mostrarErrorAvisos(mensaje) {
+    $("#avisoConfigError").text(mensaje || "Ocurrió un error.").removeClass("d-none");
+}
+function escaparAvisos(texto) {
+    return $("<div>").text(texto == null ? "" : String(texto)).html();
+}
+function mensajeErrorAjaxAvisos(xhr) {
+    return xhr.responseJSON?.message || (xhr.status === 403 ? "No tienes permisos para esta operación." : "No fue posible completar la operación.");
+}
+async function cargarConfigAvisos() {
+    $("#avisoConfigError").addClass("d-none");
+    try {
+        const data = await $.ajax({ url: window.location.pathname + "?handler=ConfiguracionAvisos", type: "GET" });
+        const c = data.configuracion;
+        $("#avisoHabilitado").prop("checked", c.habilitado);
+        $("#avisoDiasAnticipacion").val(c.diasAnticipacion);
+        $("#avisoDiasEscalamiento").val(c.diasEscalamiento);
+        $("#avisoDiarios").prop("checked", c.recordatoriosDiarios);
+        $("#avisoVencidos").prop("checked", c.notificarVencidos);
+        const sel = $("#avisoUsuario").empty().append($("<option>").val("").text("-- Elegir usuario --"));
+        for (const u of data.usuarios) sel.append($("<option>").val(u.id).text(u.email + (u.userName && u.userName !== u.email ? " (" + u.userName + ")" : "")));
+        const mapa = new Map(data.usuarios.map(u => [u.id, u.email]));
+        const tbody = $("#tablaDestinatariosAvisos").empty();
+        if (!data.destinatarios.length) tbody.append($("<tr>").append($("<td colspan='5' class='text-muted text-center'>").text("Todavía no hay destinatarios configurados.")));
+        for (const d of data.destinatarios) {
+            const correo = d.userId ? (mapa.get(d.userId) || "Usuario sin correo/disponibilidad") : d.correoElectronico;
+            const btn = $("<button type='button' class='btn btn-sm'>")
+                .addClass(d.activo ? "btn-outline-danger" : "btn-outline-success")
+                .text(d.activo ? "Desactivar" : "Activar")
+                .on("click", () => cambiarEstadoDestinatarioAvisos(d.id, !d.activo));
+            tbody.append($("<tr>")
+                .append($("<td>").text(d.tipoDestinatario || "—"))
+                .append($("<td>").text(d.nombre || "—"))
+                .append($("<td>").text(correo || "—"))
+                .append($("<td>").text(d.activo ? "Activo" : "Inactivo"))
+                .append($("<td>").append(btn)));
+        }
+    } catch (e) { mostrarErrorAvisos(mensajeErrorAjaxAvisos(e)); }
+}
+
+$(document).on("change", "#avisoUsuario", function () {
+    if ($(this).val()) $("#avisoCorreoExterno").val("");
+});
+$(document).on("input", "#avisoCorreoExterno", function () {
+    if ($(this).val().trim()) $("#avisoUsuario").val("");
+});
+$(document).on("click", "#btnGuardarConfigAvisos", async function () {
+    const dias = Number($("#avisoDiasAnticipacion").val());
+    const escalar = Number($("#avisoDiasEscalamiento").val());
+    if (!Number.isInteger(dias) || dias < 1 || dias > 365 || !Number.isInteger(escalar) || escalar < 0 || escalar > dias) {
+        mostrarErrorAvisos("Verifica que los días estén completos y que escalamiento no supere anticipación."); return;
+    }
+    try {
+        await $.ajax({
+            url: window.location.pathname + "?handler=GuardarConfiguracionAvisos", type: "POST", contentType: "application/json", headers: { RequestVerificationToken: tokenAvisos() },
+            data: JSON.stringify({
+                habilitado: $("#avisoHabilitado").is(":checked"), diasAnticipacion: dias, diasEscalamiento: escalar,
+                recordatoriosDiarios: $("#avisoDiarios").is(":checked"), notificarVencidos: $("#avisoVencidos").is(":checked")
+            })
+        });
+        $("#avisoConfigError").addClass("d-none");
+        mostrarMensajeCorreoDominio("success", "Configuración guardada", "Se actualizaron las reglas de notificación.");
+    } catch (e) { mostrarErrorAvisos(mensajeErrorAjaxAvisos(e)); }
+});
+$(document).on("click", "#btnAgregarDestinatarioAvisos", async function () {
+    const userId = $("#avisoUsuario").val() || null;
+    const correoElectronico = $("#avisoCorreoExterno").val().trim() || null;
+    const nombre = $("#avisoNombre").val().trim() || null;
+    const tipoDestinatario = $("#avisoTipoDestinatario").val();
+    if (!!userId === !!correoElectronico) { mostrarErrorAvisos("Selecciona un usuario o captura un correo externo."); return; }
+    try {
+        await $.ajax({
+            url: window.location.pathname + "?handler=AgregarDestinatarioAvisos", type: "POST", contentType: "application/json", headers: { RequestVerificationToken: tokenAvisos() },
+            data: JSON.stringify({ userId, correoElectronico, nombre, tipoDestinatario })
+        });
+        $("#avisoUsuario").val(""); $("#avisoCorreoExterno").val(""); $("#avisoNombre").val("");
+        await cargarConfigAvisos();
+    } catch (e) { mostrarErrorAvisos(mensajeErrorAjaxAvisos(e)); }
+});
+async function cambiarEstadoDestinatarioAvisos(id, activo) {
+    try {
+        await $.ajax({ url: window.location.pathname + "?handler=CambiarEstadoDestinatarioAvisos", type: "POST", contentType: "application/json", headers: { RequestVerificationToken: tokenAvisos() }, data: JSON.stringify({ id, activo }) });
+        await cargarConfigAvisos();
+    } catch (e) { mostrarErrorAvisos(mensajeErrorAjaxAvisos(e)); }
+}
+
+
+// =====================================================
+// SIMULACIÓN / VISTA PREVIA: SOLO LECTURA
+// =====================================================
+$(document).on("click", "#btnSimularAvisos", async function () {
+    const btn = $(this);
+    btn.prop("disabled", true).text("Consultando...");
+    $("#avisoConfigError").addClass("d-none");
+    try {
+        const d = await $.ajax({
+            url: window.location.pathname + "?handler=SimularAvisos",
+            type: "GET",
+            cache: false
+        });
+        $("#panelSimulacionAvisos").removeClass("d-none");
+        const estado = d.configuracionHabilitada ? "Habilitada" : "Deshabilitada (simulación disponible)";
+        $("#simulacionResumenAvisos").empty()
+            .append($("<strong>").text("Corte: " + d.fechaCorte + " | Vencidos: " + d.totalVencidos + " | Próximos: " + d.totalProximos))
+            .append($("<div class='small text-muted'>").text("Configuración guardada: " + estado + ". Resumen de vencidos: " + (d.resumenVencidos ? "Sí" : "No")));
+        const dest = $("#simulacionDestinatariosAvisos").empty();
+        dest.append($("<div>").text("Seguimiento: " + (d.destinatariosSeguimiento.join(", ") || "Ninguno")));
+        dest.append($("<div>").text("Escalamiento: " + (d.destinatariosEscalamiento.join(", ") || "Ninguno")));
+        dest.append($("<div>").text("Recibirían resumen vencidos: " + (d.destinatariosResumen.join(", ") || "Ninguno")));
+        $("#simulacionAsuntoAvisos").text("Asunto previsto: " + (d.resumenVencidos ? d.asuntoResumen : "No se generaría resumen con las reglas actuales"));
+        const tb = $("#simulacionTablaVencidos").empty();
+        if (!d.vencidos.length) tb.append($("<tr>").append($("<td colspan='5' class='text-muted text-center'>").text("Sin registros vencidos.")));
+        for (const r of d.vencidos) {
+            const tr = $("<tr>");
+            for (const v of [r.empresa, r.dominio, r.proveedor, r.fechaCaducacion, r.diasAtraso]) tr.append($("<td>").text(v ?? "—"));
+            tb.append(tr);
+        }
+        const tp = $("#simulacionTablaProximos").empty();
+        if (!d.proximos.length) tp.append($("<tr>").append($("<td colspan='5' class='text-muted text-center'>").text("No hay registros próximos a vencer.")));
+        for (const r of d.proximos) {
+            const tr = $("<tr>");
+            for (const v of [r.empresa, r.dominio, r.fechaCaducacion, r.diasRestantes, r.categoria]) tr.append($("<td>").text(v ?? "—"));
+            tp.append(tr);
+        }
+        $("#simulacionNotaAvisos").text(d.nota + " Guarda las reglas antes de simular cambios.");
+    } catch (err) {
+        mostrarErrorAvisos(mensajeErrorAjaxAvisos(err));
+    } finally {
+        btn.prop("disabled", false).html('<i class="bi bi-eye"></i> Simular avisos');
+    }
+});

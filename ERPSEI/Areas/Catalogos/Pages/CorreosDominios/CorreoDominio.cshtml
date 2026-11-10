@@ -9,6 +9,51 @@
 @section Styles {
     <link rel="stylesheet" href="~/lib/bootstrap-table/bootstrap-table.min.css" />
     <link rel="stylesheet" href="~/css/CorreosDominios.css" asp-append-version="true" />
+    <style>
+        /* Modal de avisos: por encima de la cabecera fija de INTRANET */
+        body.modal-avisos-abierto .modal-backdrop { z-index: 2147483000 !important; }
+        #dlgConfigAvisos { z-index: 2147483010 !important; padding: 0 !important; }
+        #dlgConfigAvisos .modal-dialog {
+            width: min(1120px, calc(100vw - 32px));
+            max-width: none;
+            height: calc(100dvh - 32px);
+            max-height: calc(100dvh - 32px);
+            margin: 16px auto;
+            display: flex;
+            align-items: stretch;
+        }
+        #dlgConfigAvisos .modal-content {
+            width: 100%;
+            max-height: 100%;
+            min-height: 0;
+            border: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        #dlgConfigAvisos .modal-header,
+        #dlgConfigAvisos .modal-footer { flex: 0 0 auto; }
+        #dlgConfigAvisos .modal-body {
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 20px 24px;
+        }
+        #dlgConfigAvisos .table-responsive { overflow-x: auto; }
+        #dlgConfigAvisos #panelSimulacionAvisos .table-responsive { max-height: 265px !important; }
+        #dlgConfigAvisos .modal-footer { background: #fff; }
+        @@media (max-width: 575.98px) {
+            #dlgConfigAvisos .modal-dialog {
+                width: calc(100vw - 16px);
+                height: calc(100dvh - 16px);
+                max-height: calc(100dvh - 16px);
+                margin: 8px auto;
+            }
+            #dlgConfigAvisos .modal-body { padding: 14px; }
+            #dlgConfigAvisos .modal-header { padding: 12px 14px; }
+        }
+    </style>
 }
 
 <form method="post">
@@ -123,6 +168,13 @@
                     <button type="button" id="btnAbrirImportacionMasiva" class="btn btn-success btn-sm btn-registro">
                         <i class="bi bi-file-earmark-excel"></i> Importar Masivamente
                     </button>
+
+                    @if (User.IsInRole("Administrador"))
+                    {
+                        <button type="button" id="btnConfigAvisos" class="btn btn-outline-primary btn-sm btn-registro">
+                            <i class="bi bi-gear-fill"></i> Configurar avisos
+                        </button>
+                    }
                 </div>
 
                 <div class="registros-search-right">
@@ -303,6 +355,109 @@
         </div>
     </div>
 </div>
+
+
+@if (User.IsInRole("Administrador"))
+{
+<div class="modal fade" id="dlgConfigAvisos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-gear-fill"></i> Configuración de avisos de caducidad</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="avisoConfigError" class="alert alert-danger d-none" role="alert"></div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label" for="avisoDiasAnticipacion">Días de anticipación</label>
+                        <input id="avisoDiasAnticipacion" type="number" min="1" max="365" class="form-control" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="avisoDiasEscalamiento">Escalar cuando falten (días)</label>
+                        <input id="avisoDiasEscalamiento" type="number" min="0" max="365" class="form-control" />
+                    </div>
+                    <div class="col-12 d-flex flex-column gap-2">
+                        <label><input id="avisoHabilitado" type="checkbox" class="form-check-input me-2" />Habilitar notificaciones</label>
+                        <label><input id="avisoDiarios" type="checkbox" class="form-check-input me-2" />Enviar recordatorios diarios</label>
+                        <label><input id="avisoVencidos" type="checkbox" class="form-check-input me-2" />Seguir notificando después del vencimiento</label>
+                    </div>
+                    <div class="col-12 text-end">
+                        <button id="btnGuardarConfigAvisos" type="button" class="btn btn-primary"><i class="bi bi-check-lg"></i> Guardar reglas</button>
+                    </div>
+                </div>
+
+                <hr />
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <div>
+                        <h6 class="fw-bold mb-1">Simulación de notificaciones</h6>
+                        <p class="small text-muted mb-0">Vista previa de solo lectura; no envía correos ni guarda historial.</p>
+                    </div>
+                    <button id="btnSimularAvisos" type="button" class="btn btn-outline-primary">
+                        <i class="bi bi-eye"></i> Simular avisos
+                    </button>
+                </div>
+                <div id="panelSimulacionAvisos" class="d-none border rounded p-3 mt-3" aria-live="polite">
+                    <div id="simulacionResumenAvisos" class="mb-2"></div>
+                    <div id="simulacionDestinatariosAvisos" class="small mb-3"></div>
+                    <h6 class="fw-bold">Vista previa del correo consolidado de vencidos</h6>
+                    <div id="simulacionAsuntoAvisos" class="small mb-2"></div>
+                    <div class="table-responsive" style="max-height:340px;overflow-y:auto;">
+                        <table class="table table-sm table-striped align-middle">
+                            <thead class="sticky-top bg-white"><tr><th>Empresa</th><th>Dominio</th><th>Proveedor</th><th>Caducidad</th><th>Días vencido</th></tr></thead>
+                            <tbody id="simulacionTablaVencidos"></tbody>
+                        </table>
+                    </div>
+                    <h6 class="fw-bold mt-3">Próximos a vencer (10 días o configuración vigente)</h6>
+                    <div class="table-responsive" style="max-height:210px;overflow-y:auto;">
+                        <table class="table table-sm table-striped align-middle">
+                            <thead><tr><th>Empresa</th><th>Dominio</th><th>Caducidad</th><th>Restan</th><th>Tipo</th></tr></thead>
+                            <tbody id="simulacionTablaProximos"></tbody>
+                        </table>
+                    </div>
+                    <p id="simulacionNotaAvisos" class="small text-muted mb-0"></p>
+                </div>
+                <hr />
+                <h6 class="fw-bold">Destinatarios de notificaciones</h6>
+                <p class="text-muted small">Configura los responsables de Seguimiento (10 días) y de Escalamiento (2 días o menos). Ambos reciben el resumen diario de vencidos cuando está habilitado.</p>
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label" for="avisoTipoDestinatario">Tipo de destinatario</label>
+                        <select id="avisoTipoDestinatario" class="form-select">
+                            <option value="Seguimiento">Seguimiento (preventivo)</option>
+                            <option value="Escalamiento">Escalamiento (crítico)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="avisoUsuario">Usuario de INTRANET</label>
+                        <select id="avisoUsuario" class="form-select"><option value="">-- Elegir usuario --</option></select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="avisoCorreoExterno">O correo externo</label>
+                        <input type="email" id="avisoCorreoExterno" maxlength="256" class="form-control" placeholder="correo@empresa.com" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="avisoNombre">Nombre / cargo (opcional)</label>
+                        <input id="avisoNombre" maxlength="150" class="form-control" placeholder="Dirección" />
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-success" id="btnAgregarDestinatarioAvisos"><i class="bi bi-person-plus"></i> Agregar destinatario</button>
+                    </div>
+                </div>
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm table-striped align-middle">
+                        <thead><tr><th>Tipo</th><th>Nombre</th><th>Correo / usuario</th><th>Estado</th><th>Acción</th></tr></thead>
+                        <tbody id="tablaDestinatariosAvisos"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+}
 
 @section Scripts {
     <script src="~/lib/bootstrap-table/bootstrap-table.min.js"></script>
