@@ -25,6 +25,9 @@ namespace ERPSEI.Services.TimeIntegration
         Task<TimeSyncResultadoDto> SincronizarActividadesAsync(
             CancellationToken cancellationToken = default);
 
+        Task<TimeSyncResultadoDto> SincronizarDepartamentoActividadesAsync(
+        CancellationToken cancellationToken = default);
+
         Task<TimeSyncResultadoDto> SincronizarHorasAsync(
             CancellationToken cancellationToken = default);
 

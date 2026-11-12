@@ -130,6 +130,29 @@ namespace ERPSEI.Services.TimeIntegration
         }
 
         // =====================================================
+        // 5. DEPARTAMENTO ACTIVIDADES
+        // =====================================================
+
+        public Task<TimeSyncResultadoDto> SincronizarDepartamentoActividadesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return SincronizarTablaAsync(
+                tabla: "departamento-actividades",
+                obtenerId: x => x.Id,
+                crear: id => new TimeDepartamentoActividad { Id = id },
+                asignar: (entidad, json) =>
+                {
+                    entidad.Nombre = LeerTexto(json, "nombre");
+                    entidad.DepartamentoId = LeerLong(json, "departamento_id");
+                    entidad.Descripcion = LeerTexto(json, "descripcion");
+                    entidad.Estatus = LeerByte(json, "estatus");
+                    entidad.CreatedAt = LeerFecha(json, "created_at");
+                    entidad.UpdatedAt = LeerFecha(json, "updated_at");
+                },
+                cancellationToken: cancellationToken);
+        }
+
+        // =====================================================
         // 5. HORAS
         // =====================================================
 

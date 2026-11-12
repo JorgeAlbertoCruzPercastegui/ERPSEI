@@ -1,5 +1,4 @@
-﻿
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
@@ -26,39 +25,51 @@ namespace ERPSEI.Services.TimeIntegration
             CancellationToken stoppingToken)
         {
             bool habilitado = _configuration.GetValue<bool>(
-                "TimeAutoSync:Enabled", false);
+                "TimeAutoSync:Enabled",
+                false);
 
             if (!habilitado)
             {
                 _logger.LogInformation(
                     "TIME: Sincronización automática deshabilitada.");
+
                 return;
             }
 
             int minutos = _configuration.GetValue<int>(
-                "TimeAutoSync:IntervalMinutes", 60);
+                "TimeAutoSync:IntervalMinutes",
+                60);
 
             if (minutos < 15)
+            {
                 minutos = 15;
+            }
 
             bool ejecutarAlIniciar = _configuration.GetValue<bool>(
-                "TimeAutoSync:RunOnStartup", true);
+                "TimeAutoSync:RunOnStartup",
+                true);
 
             _logger.LogInformation(
                 "TIME: Sincronización automática habilitada. " +
-                "Intervalo: {Minutos} minutos.", minutos);
+                "Intervalo: {Minutos} minutos.",
+                minutos);
 
             if (ejecutarAlIniciar)
-                await EjecutarCicloSeguroAsync(stoppingToken);
+            {
+                await EjecutarCicloSeguroAsync(
+                    stoppingToken);
+            }
 
             using var timer = new PeriodicTimer(
                 TimeSpan.FromMinutes(minutos));
 
             try
             {
-                while (await timer.WaitForNextTickAsync(stoppingToken))
+                while (await timer.WaitForNextTickAsync(
+                    stoppingToken))
                 {
-                    await EjecutarCicloSeguroAsync(stoppingToken);
+                    await EjecutarCicloSeguroAsync(
+                        stoppingToken);
                 }
             }
             catch (OperationCanceledException)
@@ -74,7 +85,8 @@ namespace ERPSEI.Services.TimeIntegration
         {
             try
             {
-                await EjecutarCicloAsync(cancellationToken);
+                await EjecutarCicloAsync(
+                    cancellationToken);
             }
             catch (OperationCanceledException)
                 when (cancellationToken.IsCancellationRequested)
@@ -97,53 +109,106 @@ namespace ERPSEI.Services.TimeIntegration
 
             // Crear un scope independiente para utilizar
             // servicios Scoped desde BackgroundService.
-            using var scope = _scopeFactory.CreateScope();
+            using var scope =
+                _scopeFactory.CreateScope();
 
-            var servicio = scope.ServiceProvider
-                .GetRequiredService<ITimeSyncService>();
+            var servicio =
+                scope.ServiceProvider
+                    .GetRequiredService<ITimeSyncService>();
 
-            // Orden de sincronización:
-            // primero catálogos y después datos relacionados.
+            // =====================================================
+            // ORDEN DE SINCRONIZACIÓN
+            //
+            // 1. Catálogos base.
+            // 2. Empresas / grupos.
+            // 3. Claves / proyectos.
+            // 4. Catálogo de actividades por departamento.
+            // 5. Actividades.
+            // 6. Horas.
+            // =====================================================
+
             var operaciones = new (
                 string Nombre,
-                Func<CancellationToken, Task<TimeSyncResultadoDto>> Ejecutar
+                Func<
+                    CancellationToken,
+                    Task<TimeSyncResultadoDto>
+                > Ejecutar
             )[]
             {
-                ("departamentos",
-                    ct => servicio.SincronizarDepartamentosAsync(ct)),
+                (
+                    "departamentos",
+                    ct =>
+                        servicio
+                            .SincronizarDepartamentosAsync(ct)
+                ),
 
-                ("usuarios",
-                    ct => servicio.SincronizarUsuariosAsync(ct)),
+                (
+                    "usuarios",
+                    ct =>
+                        servicio
+                            .SincronizarUsuariosAsync(ct)
+                ),
 
-                ("grupos",
-                    ct => servicio.SincronizarGruposAsync(ct)),
+                (
+                    "grupos",
+                    ct =>
+                        servicio
+                            .SincronizarGruposAsync(ct)
+                ),
 
-                ("empresas",
-                    ct => servicio.SincronizarEmpresasAsync(ct)),
+                (
+                    "empresas",
+                    ct =>
+                        servicio
+                            .SincronizarEmpresasAsync(ct)
+                ),
 
-                ("claves",
-                    ct => servicio.SincronizarClavesAsync(ct)),
+                (
+                    "claves",
+                    ct =>
+                        servicio
+                            .SincronizarClavesAsync(ct)
+                ),
 
-                ("actividades",
-                    ct => servicio.SincronizarActividadesAsync(ct)),
+                (
+                    "departamento-actividades",
+                    ct =>
+                        servicio
+                            .SincronizarDepartamentoActividadesAsync(ct)
+                ),
 
-                ("horas",
-                    ct => servicio.SincronizarHorasAsync(ct))
+                (
+                    "actividades",
+                    ct =>
+                        servicio
+                            .SincronizarActividadesAsync(ct)
+                ),
+
+                (
+                    "horas",
+                    ct =>
+                        servicio
+                            .SincronizarHorasAsync(ct)
+                )
             };
 
             foreach (var operacion in operaciones)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                cancellationToken
+                    .ThrowIfCancellationRequested();
 
                 try
                 {
-                    var resultado = await operacion.Ejecutar(
-                        cancellationToken);
+                    var resultado =
+                        await operacion.Ejecutar(
+                            cancellationToken);
 
                     _logger.LogInformation(
                         "TIME automático: {Tabla} - " +
-                        "Leídos: {Leidos}, Insertados: {Insertados}, " +
-                        "Existentes: {Existentes}, Estado: {Estado}",
+                        "Leídos: {Leidos}, " +
+                        "Insertados: {Insertados}, " +
+                        "Existentes: {Existentes}, " +
+                        "Estado: {Estado}",
                         operacion.Nombre,
                         resultado.RegistrosLeidos,
                         resultado.RegistrosInsertados,

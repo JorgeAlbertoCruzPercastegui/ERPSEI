@@ -469,9 +469,14 @@ namespace ERPSEI.Data
 
         public DbSet<TimeClave> TimeClaves => Set<TimeClave>();
 
-        public DbSet<TimeActividad> TimeActividades => Set<TimeActividad>();
+        public DbSet<TimeActividad> TimeActividades
+            => Set<TimeActividad>();
 
-        public DbSet<TimeHora> TimeHoras => Set<TimeHora>();
+        public DbSet<TimeDepartamentoActividad> TimeDepartamentoActividades
+            => Set<TimeDepartamentoActividad>();
+
+        public DbSet<TimeHora> TimeHoras
+            => Set<TimeHora>();
 
         public DbSet<TimeEstadoSincronizacion> TimeEstadosSincronizacion
             => Set<TimeEstadoSincronizacion>();
@@ -1067,6 +1072,9 @@ namespace ERPSEI.Data
 
             modelBuilder.ApplyConfiguration(
                 new TimeClaveConfiguration());
+
+            modelBuilder.ApplyConfiguration(
+                new TimeDepartamentoActividadConfiguration());
 
             modelBuilder.ApplyConfiguration(
                 new TimeActividadConfiguration());

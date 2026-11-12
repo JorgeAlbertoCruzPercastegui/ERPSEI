@@ -48,6 +48,10 @@ namespace ERPSEI.Services.TimeIntegration
                     on h.ActividadId equals (long?)a.Id into ga
                 from a in ga.DefaultIfEmpty()
 
+                join da in _db.TimeDepartamentoActividades.AsNoTracking()
+                    on a.DepartamentoActividadId equals (long?)da.Id into gda
+                from da in gda.DefaultIfEmpty()
+
                 join u in _db.TimeUsuarios.AsNoTracking()
                     on a.UsuarioId equals (long?)u.Id into gu
                 from u in gu.DefaultIfEmpty()
@@ -76,6 +80,7 @@ namespace ERPSEI.Services.TimeIntegration
                 {
                     Hora = h,
                     Actividad = a,
+                    DepartamentoActividad = da,
                     Usuario = u,
                     Clave = c,
                     Departamento = d,
@@ -257,9 +262,13 @@ namespace ERPSEI.Services.TimeIntegration
                             // Descripción corresponde a la
                             // actividad capturada en TIME.
                             Descripcion =
-                                x.Actividad != null
+                                x.Actividad != null &&
+                                x.Actividad.Actividad != null &&
+                                x.Actividad.Actividad != ""
                                     ? x.Actividad.Actividad
-                                    : null,
+                                    : x.DepartamentoActividad != null
+                                        ? x.DepartamentoActividad.Nombre
+                                        : null,
 
                             Horas =
                                 x.Hora.Horas,

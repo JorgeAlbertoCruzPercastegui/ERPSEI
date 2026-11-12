@@ -47,15 +47,56 @@ namespace ERPSEI.Data.Configurations.TimeIntegration
     }
 
     public class TimeActividadConfiguration
-        : IEntityTypeConfiguration<TimeActividad>
+    : IEntityTypeConfiguration<TimeActividad>
     {
-        public void Configure(EntityTypeBuilder<TimeActividad> b)
+        public void Configure(
+            EntityTypeBuilder<TimeActividad> b)
         {
-            b.ToTable("Actividades", "TimeIntegracion");
+            b.ToTable(
+                "Actividades",
+                "TimeIntegracion");
+
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).ValueGeneratedNever();
-            b.Property(x => x.Actividad).HasMaxLength(100);
-            b.HasIndex(x => new { x.UsuarioId, x.ClaveId });
+
+            b.Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            b.Property(x => x.Actividad)
+                .HasMaxLength(100);
+
+            b.HasIndex(x => new
+            {
+                x.UsuarioId,
+                x.ClaveId
+            });
+
+            b.HasIndex(x =>
+                x.DepartamentoActividadId);
+        }
+    }
+
+    public class TimeDepartamentoActividadConfiguration
+    : IEntityTypeConfiguration<TimeDepartamentoActividad>
+    {
+        public void Configure(
+            EntityTypeBuilder<TimeDepartamentoActividad> b)
+        {
+            b.ToTable(
+                "DepartamentoActividades",
+                "TimeIntegracion");
+
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id)
+                .ValueGeneratedNever();
+
+            b.Property(x => x.Nombre)
+                .HasMaxLength(191);
+
+            b.Property(x => x.Descripcion)
+                .HasMaxLength(2000);
+
+            b.HasIndex(x => x.DepartamentoId);
         }
     }
 

@@ -2947,63 +2947,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1245),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5452),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1254),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5463),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1255),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5464),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1256),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5465),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1256),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5465),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1257),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5466),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1258),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5467),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1259),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5468),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 10, 15, 11, 57, 393, DateTimeKind.Local).AddTicks(1260),
+                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5469),
                             Nombre = "Otros"
                         });
                 });
@@ -5250,7 +5250,7 @@ namespace ERPSEI.Data.Migrations
                             Id = 1,
                             DiasAnticipacion = 10,
                             DiasEscalamiento = 2,
-                            Habilitado = true,
+                            Habilitado = false,
                             NotificarVencidos = true,
                             RecordatoriosDiarios = true
                         });
@@ -9916,6 +9916,8 @@ namespace ERPSEI.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DepartamentoActividadId");
+
                     b.HasIndex("UsuarioId", "ClaveId");
 
                     b.ToTable("Actividades", "TimeIntegracion");
@@ -9990,6 +9992,38 @@ namespace ERPSEI.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Departamentos", "TimeIntegracion");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeDepartamentoActividad", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("DepartamentoId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<byte?>("Estatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Nombre")
+                        .HasMaxLength(191)
+                        .HasColumnType("nvarchar(191)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartamentoId");
+
+                    b.ToTable("DepartamentoActividades", "TimeIntegracion");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeEmpresa", b =>
