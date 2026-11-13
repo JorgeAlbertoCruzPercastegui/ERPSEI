@@ -1,5 +1,4 @@
-﻿
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
 
 namespace ERPSEI.Services.TimeIntegration
@@ -10,7 +9,7 @@ namespace ERPSEI.Services.TimeIntegration
         private readonly ITimeTableReader _reader;
         private readonly IMemoryCache _cache;
 
-        private const string CacheKey = "TIME_REPORT_CATALOGOS_V1";
+        private const string CacheKey = "TIME_REPORT_CATALOGOS_V2";
         private const int MaxRegistrosPorCatalogo = 20000;
 
         public TimeReportCatalogService(
@@ -25,8 +24,9 @@ namespace ERPSEI.Services.TimeIntegration
             CancellationToken cancellationToken = default)
         {
             if (_cache.TryGetValue(
-                CacheKey, out TimeReportCatalogosDto? existente)
-                && existente != null)
+                CacheKey,
+                out TimeReportCatalogosDto? existente) &&
+                existente != null)
             {
                 return existente;
             }
@@ -34,19 +34,22 @@ namespace ERPSEI.Services.TimeIntegration
             var catalogos = new TimeReportCatalogosDto
             {
                 Usuarios = await LeerOpcionesAsync(
-                    "usuarios",
-                    "nombre",
-                    cancellationToken),
+                    tabla: "usuarios",
+                    campoNombre: "nombre",
+                    soloActivos: true,
+                    cancellationToken: cancellationToken),
 
                 Proyectos = await LeerOpcionesAsync(
-                    "claves",
-                    "proyecto",
-                    cancellationToken),
+                    tabla: "claves",
+                    campoNombre: "proyecto",
+                    soloActivos: false,
+                    cancellationToken: cancellationToken),
 
                 Departamentos = await LeerOpcionesAsync(
-                    "departamentos",
-                    "nombre",
-                    cancellationToken)
+                    tabla: "departamentos",
+                    campoNombre: "nombre",
+                    soloActivos: false,
+                    cancellationToken: cancellationToken)
             };
 
             _cache.Set(
@@ -61,6 +64,7 @@ namespace ERPSEI.Services.TimeIntegration
             LeerOpcionesAsync(
                 string tabla,
                 string campoNombre,
+                bool soloActivos,
                 CancellationToken cancellationToken)
         {
             var opciones =
@@ -85,16 +89,57 @@ namespace ERPSEI.Services.TimeIntegration
 
                     foreach (JsonElement registro in lote)
                     {
+                        // =========================================
+                        // FILTRO DE REGISTROS ACTIVOS
+                        // =========================================
+
+                        if (soloActivos)
+                        {
+                            if (!registro.TryGetProperty(
+                                "estatus",
+                                out JsonElement estatusJson))
+                            {
+                                continue;
+                            }
+
+                            if (estatusJson.ValueKind !=
+                                JsonValueKind.Number)
+                            {
+                                continue;
+                            }
+
+                            if (!estatusJson.TryGetByte(
+                                out byte estatus))
+                            {
+                                continue;
+                            }
+
+                            if (estatus != 1)
+                            {
+                                continue;
+                            }
+                        }
+
+                        // =========================================
+                        // ID
+                        // =========================================
+
                         if (!registro.TryGetProperty(
-                            "id", out JsonElement idJson))
+                            "id",
+                            out JsonElement idJson))
                         {
                             continue;
                         }
 
-                        if (!idJson.TryGetInt64(out long id))
+                        if (!idJson.TryGetInt64(
+                            out long id))
                         {
                             continue;
                         }
+
+                        // =========================================
+                        // NOMBRE
+                        // =========================================
 
                         if (!registro.TryGetProperty(
                             campoNombre,
@@ -104,27 +149,33 @@ namespace ERPSEI.Services.TimeIntegration
                         }
 
                         string? nombre =
-                            nombreJson.ValueKind == JsonValueKind.String
+                            nombreJson.ValueKind ==
+                            JsonValueKind.String
                                 ? nombreJson.GetString()
                                 : null;
 
-                        if (string.IsNullOrWhiteSpace(nombre))
+                        if (string.IsNullOrWhiteSpace(
+                            nombre))
                         {
                             continue;
                         }
 
-                        opciones[id] = new TimeCatalogOptionDto
-                        {
-                            Id = id,
-                            Nombre = nombre.Trim()
-                        };
+                        opciones[id] =
+                            new TimeCatalogOptionDto
+                            {
+                                Id = id,
+                                Nombre = nombre.Trim()
+                            };
                     }
 
                     return Task.CompletedTask;
                 });
 
-            return opciones.Values
-                .OrderBy(x => x.Nombre, StringComparer.OrdinalIgnoreCase)
+            return opciones
+                .Values
+                .OrderBy(
+                    x => x.Nombre,
+                    StringComparer.OrdinalIgnoreCase)
                 .ThenBy(x => x.Id)
                 .ToList();
         }

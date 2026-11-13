@@ -115,13 +115,19 @@ namespace ERPSEI.Services.TimeIntegration
 
             if (filtro.UsuarioId.HasValue)
             {
-                long id =
-                    filtro.UsuarioId.Value;
+                // Usuario específico
+                long id = filtro.UsuarioId.Value;
 
-                consulta =
-                    consulta.Where(x =>
-                        x.Actividad != null &&
-                        x.Actividad.UsuarioId == id);
+                consulta = consulta.Where(x =>
+                    x.Actividad != null &&
+                    x.Actividad.UsuarioId == id);
+            }
+            else
+            {
+                // Todos los usuarios activos
+                consulta = consulta.Where(x =>
+                    x.Usuario != null &&
+                    x.Usuario.Estatus == 1);
             }
 
             if (filtro.ProyectoId.HasValue)
@@ -379,6 +385,161 @@ namespace ERPSEI.Services.TimeIntegration
             }
 
             // =====================================================
+            // COMPLETAR GRUPO / EMPRESA POR USUARIO
+            //
+            // Regla:
+            // - Se revisan todos los registros que cumplen los
+            //   filtros actuales del reporte.
+            // - Para cada usuario se identifica el Grupo / Empresa
+            //   no vacío más frecuente.
+            // - Solo se rellenan las filas vacías de ese usuario.
+            // - Si hay empate entre dos valores distintos con la
+            //   misma frecuencia máxima, no se completa para evitar
+            //   una asignación incorrecta.
+            //
+            // Este enriquecimiento se ejecuta ANTES de calcular Tipo
+            // porque GrupoEmpresa participa en esa clasificación.
+            // =====================================================
+
+            var frecuenciasGrupoEmpresa =
+                await consulta
+                    .Where(x =>
+                        x.Usuario != null &&
+                        x.Empresa != null &&
+                        x.Empresa.Nombre != null &&
+                        x.Empresa.Nombre != "")
+                    .Select(x =>
+                        new
+                        {
+                            UsuarioId =
+                                x.Usuario!.Id,
+
+                            NombreUsuario =
+                                x.Usuario.Nombre,
+
+                            GrupoEmpresa =
+                                x.Grupo != null
+                                    ? (x.Grupo.Nombre ?? "") +
+                                      " / " +
+                                      (x.Empresa!.Nombre ?? "")
+                                    : x.Empresa!.Nombre
+                        })
+                    .Where(x =>
+                        x.GrupoEmpresa != null &&
+                        x.GrupoEmpresa != "")
+                    .GroupBy(x =>
+                        new
+                        {
+                            x.UsuarioId,
+                            x.NombreUsuario,
+                            x.GrupoEmpresa
+                        })
+                    .Select(g =>
+                        new
+                        {
+                            g.Key.UsuarioId,
+                            g.Key.NombreUsuario,
+                            g.Key.GrupoEmpresa,
+                            Total =
+                                g.LongCount()
+                        })
+                    .ToListAsync(
+                        cancellationToken);
+
+            var grupoEmpresaPorUsuario =
+                new Dictionary<string, string>(
+                    StringComparer.OrdinalIgnoreCase);
+
+            foreach (var grupoUsuario
+                     in frecuenciasGrupoEmpresa
+                         .GroupBy(x =>
+                             NormalizarNombreParaComparacion(
+                                 x.NombreUsuario)))
+            {
+                string usuarioNormalizado =
+                    grupoUsuario.Key;
+
+                if (string.IsNullOrWhiteSpace(
+                    usuarioNormalizado))
+                {
+                    continue;
+                }
+
+                var candidatos =
+                    grupoUsuario
+                        .Where(x =>
+                            !string.IsNullOrWhiteSpace(
+                                x.GrupoEmpresa))
+                        .OrderByDescending(x =>
+                            x.Total)
+                        .ThenBy(x =>
+                            x.GrupoEmpresa,
+                            StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                if (candidatos.Count == 0)
+                {
+                    continue;
+                }
+
+                // Si los dos primeros tienen la misma frecuencia
+                // pero corresponden a valores distintos,
+                // no se asigna un valor por seguridad.
+                if (candidatos.Count > 1 &&
+                    candidatos[0].Total ==
+                    candidatos[1].Total &&
+                    !string.Equals(
+                        candidatos[0].GrupoEmpresa,
+                        candidatos[1].GrupoEmpresa,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string? grupoEmpresaDominante =
+                    candidatos[0].GrupoEmpresa;
+
+                if (string.IsNullOrWhiteSpace(
+                    grupoEmpresaDominante))
+                {
+                    continue;
+                }
+
+                grupoEmpresaPorUsuario[
+                    usuarioNormalizado] =
+                        grupoEmpresaDominante;
+            }
+
+            foreach (var registro
+                     in registros)
+            {
+                if (!string.IsNullOrWhiteSpace(
+                    registro.GrupoEmpresa))
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(
+                    registro.Nombre))
+                {
+                    continue;
+                }
+
+                string usuarioNormalizado =
+                    NormalizarNombreParaComparacion(
+                        registro.Nombre);
+
+                if (grupoEmpresaPorUsuario
+                    .TryGetValue(
+                        usuarioNormalizado,
+                        out string? grupoEmpresa))
+                {
+                    registro.GrupoEmpresa =
+                        grupoEmpresa;
+                }
+            }
+
+            // =====================================================
             // ENRIQUECER TIPO DESDE CATÁLOGO TIME
             //
             // Prioridad:
@@ -529,6 +690,28 @@ namespace ERPSEI.Services.TimeIntegration
             foreach (var registro
                      in registros)
             {
+                registro.Tipo =
+                    null;
+
+                // =============================================
+                // REGLA PRIORITARIA
+                // ACTIVIDADES ADMINISTRATIVAS
+                //
+                // Si la Actividad corresponde a cualquiera
+                // de las opciones administrativas definidas,
+                // el Tipo siempre será "Administrativa".
+                // No continúa con los niveles del catálogo.
+                // =============================================
+
+                if (EsActividadAdministrativa(
+                    registro.Actividad))
+                {
+                    registro.Tipo =
+                        "Administrativa";
+
+                    continue;
+                }
+
                 string usuario =
                     NormalizarNombreParaComparacion(
                         registro.Nombre);
@@ -544,9 +727,6 @@ namespace ERPSEI.Services.TimeIntegration
                 string descripcion =
                     NormalizarTextoTipo(
                         registro.Descripcion);
-
-                registro.Tipo =
-                    null;
 
                 // =============================================
                 // NIVEL 1
@@ -639,6 +819,48 @@ namespace ERPSEI.Services.TimeIntegration
             }
 
             // =====================================================
+            // AJUSTAR INTERNA / EXTERNA SEGÚN TIPO
+            //
+            // Reglas de negocio:
+            // - Clientes       => Externo
+            // - Operativa      => Interno
+            // - Administrativa => Interno
+            // - Back Office    => Interno
+            // =====================================================
+
+            foreach (var registro
+                     in registros)
+            {
+                if (string.Equals(
+                    registro.Tipo,
+                    "Clientes",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    registro.InternaExterna =
+                        "Externo";
+
+                    continue;
+                }
+
+                if (string.Equals(
+                        registro.Tipo,
+                        "Operativa",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        registro.Tipo,
+                        "Administrativa",
+                        StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(
+                        registro.Tipo,
+                        "Back Office",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    registro.InternaExterna =
+                        "Interno";
+                }
+            }
+
+            // =====================================================
             // RESULTADO
             // =====================================================
 
@@ -659,6 +881,43 @@ namespace ERPSEI.Services.TimeIntegration
                 Registros =
                     registros
             };
+        }
+
+        private static readonly HashSet<string>
+            ActividadesAdministrativasNormalizadas =
+                new(StringComparer.OrdinalIgnoreCase)
+                {
+                    NormalizarTextoTipo("Actividades con TI"),
+                    NormalizarTextoTipo("Capacitación"),
+                    NormalizarTextoTipo("Disponible"),
+                    NormalizarTextoTipo("Inasistencia (falta)"),
+                    NormalizarTextoTipo("Incapacidad"),
+                    NormalizarTextoTipo("Nuevo Ingreso"),
+                    NormalizarTextoTipo("Otros"),
+                    NormalizarTextoTipo("Permiso"),
+                    NormalizarTextoTipo("Retardo"),
+                    NormalizarTextoTipo("Reunión interna"),
+                    NormalizarTextoTipo("Sin Horas"),
+                    NormalizarTextoTipo("Vacaciones"),
+                    NormalizarTextoTipo("Viernes cortos")
+                };
+
+        private static bool EsActividadAdministrativa(
+            string? actividad)
+        {
+            if (string.IsNullOrWhiteSpace(
+                actividad))
+            {
+                return false;
+            }
+
+            string normalizada =
+                NormalizarTextoTipo(
+                    actividad);
+
+            return ActividadesAdministrativasNormalizadas
+                .Contains(
+                    normalizada);
         }
 
         // =========================================================
