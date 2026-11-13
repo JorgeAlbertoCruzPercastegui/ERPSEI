@@ -26,21 +26,38 @@ namespace ERPSEI.Services.TimeIntegration
         // =====================================================
 
         public async Task<TimeAnalyticsCatalogoDto> ObtenerCatalogosAsync(
-            CancellationToken cancellationToken = default)
+    long? departamentoId = null,
+    CancellationToken cancellationToken = default)
         {
-            var usuarios =
-                await _db.TimeUsuarios
+            var consultaUsuarios =
+                _db.TimeUsuarios
                     .AsNoTracking()
                     .Where(x =>
                         x.Estatus == 1 &&
                         x.Nombre != null &&
-                        x.Nombre != "")
-                    .OrderBy(x => x.Nombre)
+                        x.Nombre != "");
+
+            if (departamentoId.HasValue &&
+                departamentoId.Value > 0)
+            {
+                consultaUsuarios =
+                    consultaUsuarios.Where(x =>
+                        x.DepartamentoId ==
+                        departamentoId.Value);
+            }
+
+            var usuarios =
+                await consultaUsuarios
+                    .OrderBy(x =>
+                        x.Nombre)
                     .Select(x =>
                         new TimeCatalogOptionDto
                         {
-                            Id = x.Id,
-                            Nombre = x.Nombre!
+                            Id =
+                                x.Id,
+
+                            Nombre =
+                                x.Nombre!
                         })
                     .ToListAsync(
                         cancellationToken);
@@ -51,20 +68,27 @@ namespace ERPSEI.Services.TimeIntegration
                     .Where(x =>
                         x.Nombre != null &&
                         x.Nombre != "")
-                    .OrderBy(x => x.Nombre)
+                    .OrderBy(x =>
+                        x.Nombre)
                     .Select(x =>
                         new TimeCatalogOptionDto
                         {
-                            Id = x.Id,
-                            Nombre = x.Nombre!
+                            Id =
+                                x.Id,
+
+                            Nombre =
+                                x.Nombre!
                         })
                     .ToListAsync(
                         cancellationToken);
 
             return new TimeAnalyticsCatalogoDto
             {
-                Usuarios = usuarios,
-                Areas = areas
+                Usuarios =
+                    usuarios,
+
+                Areas =
+                    areas
             };
         }
 
@@ -215,8 +239,6 @@ namespace ERPSEI.Services.TimeIntegration
                         Horas =
                             horas,
 
-                        // DAX representa decimal:
-                        // 1 = 100%.
                         Cumplimiento =
                             tendencia,
 
@@ -498,6 +520,1220 @@ namespace ERPSEI.Services.TimeIntegration
 
                 Colaboradores =
                     colaboradores,
+
+                FechaActualizacion =
+                    DateTime.Now
+            };
+        }
+
+        public async Task<TimeAnalyticsEvaluacionAreasDto>
+    ObtenerEvaluacionAreasAsync(
+        TimeAnalyticsFiltroDto filtro,
+        CancellationToken cancellationToken = default)
+        {
+            ValidarFiltro(
+                filtro);
+
+            List<TimeReporteHorasFila> registros =
+                await ObtenerTodosLosRegistrosAsync(
+                    filtro,
+                    cancellationToken);
+
+            // =====================================================
+            // CATÁLOGOS DISPONIBLES ANTES DE FILTROS LOCALES
+            // =====================================================
+
+            var tipos =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Tipo))
+                    .Select(x =>
+                        x.Tipo!.Trim())
+                    .Distinct(
+                        StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x =>
+                        x)
+                    .ToList();
+
+            var puestos =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Puesto))
+                    .Select(x =>
+                        x.Puesto!.Trim())
+                    .Distinct(
+                        StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(x =>
+                        x)
+                    .ToList();
+
+            // =====================================================
+            // FILTROS LOCALES PBIX
+            // =====================================================
+
+            IEnumerable<TimeReporteHorasFila> consulta =
+                registros;
+
+            if (!string.IsNullOrWhiteSpace(
+                filtro.Tipo))
+            {
+                consulta =
+                    consulta.Where(x =>
+                        string.Equals(
+                            x.Tipo?.Trim(),
+                            filtro.Tipo.Trim(),
+                            StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(
+                filtro.Puesto))
+            {
+                consulta =
+                    consulta.Where(x =>
+                        string.Equals(
+                            x.Puesto?.Trim(),
+                            filtro.Puesto.Trim(),
+                            StringComparison.OrdinalIgnoreCase));
+            }
+
+            var filtrados =
+                consulta.ToList();
+
+            // =====================================================
+            // KPIs
+            // =====================================================
+
+            double horas =
+                filtrados.Sum(x =>
+                    x.Horas ?? 0);
+
+            int personas =
+                filtrados
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Nombre))
+                    .Select(x =>
+                        x.Nombre!.Trim())
+                    .Distinct(
+                        StringComparer.OrdinalIgnoreCase)
+                    .Count();
+
+            // =====================================================
+            // CLAVES CARGADAS POR ÁREA
+            //
+            // PBIX:
+            // Descripción + Tipo + SUM(Horas)
+            // =====================================================
+
+            var claves =
+                filtrados
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Descripcion))
+                    .GroupBy(x =>
+                        new
+                        {
+                            Descripcion =
+                                x.Descripcion!.Trim(),
+
+                            Tipo =
+                                string.IsNullOrWhiteSpace(
+                                    x.Tipo)
+                                    ? "Sin clasificación"
+                                    : x.Tipo!.Trim()
+                        })
+                    .Select(g =>
+                        new TimeAnalyticsEvaluacionTipoDto
+                        {
+                            Descripcion =
+                                g.Key.Descripcion,
+
+                            Tipo =
+                                g.Key.Tipo,
+
+                            Horas =
+                                g.Sum(x =>
+                                    x.Horas ?? 0)
+                        })
+                    .OrderByDescending(x =>
+                        x.Horas)
+                    .Take(20)
+                    .ToList();
+
+            // =====================================================
+            // DIVISIÓN POR PUESTO
+            // =====================================================
+
+            var distribucionPuestos =
+                filtrados
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Puesto))
+                    .GroupBy(
+                        x =>
+                            x.Puesto!.Trim(),
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                        new TimeAnalyticsPuestoDto
+                        {
+                            Puesto =
+                                g.Key,
+
+                            Horas =
+                                g.Sum(x =>
+                                    x.Horas ?? 0)
+                        })
+                    .OrderByDescending(x =>
+                        x.Horas)
+                    .ToList();
+
+            // =====================================================
+            // EMPRESA / COLABORADOR
+            // =====================================================
+
+            var empresaColaborador =
+                filtrados
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Nombre))
+                    .GroupBy(x =>
+                        new
+                        {
+                            GrupoEmpresa =
+                                string.IsNullOrWhiteSpace(
+                                    x.GrupoEmpresa)
+                                    ? "Sin Grupo / Empresa"
+                                    : x.GrupoEmpresa!.Trim(),
+
+                            Nombre =
+                                x.Nombre!.Trim()
+                        })
+                    .Select(g =>
+                        new TimeAnalyticsEmpresaColaboradorDto
+                        {
+                            GrupoEmpresa =
+                                g.Key.GrupoEmpresa,
+
+                            Nombre =
+                                g.Key.Nombre,
+
+                            Horas =
+                                g.Sum(x =>
+                                    x.Horas ?? 0)
+                        })
+                    .OrderBy(x =>
+                        x.GrupoEmpresa)
+                    .ThenByDescending(x =>
+                        x.Horas)
+                    .ThenBy(x =>
+                        x.Nombre)
+                    .ToList();
+
+            return new TimeAnalyticsEvaluacionAreasDto
+            {
+                Horas =
+                    horas,
+
+                Personas =
+                    personas,
+
+                Tipos =
+                    tipos,
+
+                Puestos =
+                    puestos,
+
+                Claves =
+                    claves,
+
+                DistribucionPuestos =
+                    distribucionPuestos,
+
+                EmpresaColaborador =
+                    empresaColaborador,
+
+                FechaActualizacion =
+                    DateTime.Now
+            };
+        }
+
+
+        // =====================================================
+        // ANÁLISIS DE PERSONAL
+        // =====================================================
+
+        public async Task<TimeAnalyticsAnalisisPersonalDto>
+            ObtenerAnalisisPersonalAsync(
+                TimeAnalyticsFiltroDto filtro,
+                CancellationToken cancellationToken = default)
+        {
+            TimeAnalyticsEvaluacionAreasDto baseAnalisis =
+                await ObtenerEvaluacionAreasAsync(
+                    filtro,
+                    cancellationToken);
+
+            return new TimeAnalyticsAnalisisPersonalDto
+            {
+                Horas =
+                    baseAnalisis.Horas,
+
+                Personas =
+                    baseAnalisis.Personas,
+
+                Tipos =
+                    baseAnalisis.Tipos,
+
+                Puestos =
+                    baseAnalisis.Puestos,
+
+                Claves =
+                    baseAnalisis.Claves,
+
+                DistribucionPuestos =
+                    baseAnalisis.DistribucionPuestos,
+
+                ColaboradoresEmpresa =
+                    baseAnalisis.EmpresaColaborador
+                        .OrderByDescending(x =>
+                            x.Horas)
+                        .ThenBy(x =>
+                            x.Nombre)
+                        .ThenBy(x =>
+                            x.GrupoEmpresa)
+                        .ToList(),
+
+                FechaActualizacion =
+                    DateTime.Now
+            };
+        }
+
+
+        // =====================================================
+        // ALINEACIÓN BACK OFFICE
+        // =====================================================
+
+        public async Task<TimeAnalyticsBackOfficeDto>
+            ObtenerAlineacionBackOfficeAsync(
+                TimeAnalyticsFiltroDto filtro,
+                CancellationToken cancellationToken = default)
+        {
+            ValidarFiltro(
+                filtro);
+
+            List<TimeReporteHorasFila> registros =
+                await ObtenerTodosLosRegistrosAsync(
+                    filtro,
+                    cancellationToken);
+
+            // =================================================
+            // CLASIFICACIÓN AGRUPADA DEL PBIX
+            //
+            // Administrativa   -> Administrativa
+            // Back Office      -> Horas Back Office
+            // Operativa/Clientes y resto -> Clientes
+            // =================================================
+
+            string ObtenerClasificacionAgrupada(
+                TimeReporteHorasFila fila)
+            {
+                if (EsTipo(
+                    fila.Tipo,
+                    "Administrativa"))
+                {
+                    return "Administrativa";
+                }
+
+                if (EsTipo(
+                    fila.Tipo,
+                    "Back Office"))
+                {
+                    return "Horas Back Office";
+                }
+
+                return "Clientes";
+            }
+
+            // =================================================
+            // KPIs
+            // =================================================
+
+            double horasTotales =
+                registros.Sum(x =>
+                    x.Horas ?? 0);
+
+            double horasBackOffice =
+                registros
+                    .Where(x =>
+                        EsTipo(
+                            x.Tipo,
+                            "Back Office"))
+                    .Sum(x =>
+                        x.Horas ?? 0);
+
+            // Evaluación Back Office:
+            // proporción de horas clasificadas como Back Office
+            // respecto a todas las horas registradas del contexto.
+            double evaluacionBackOffice =
+                Dividir(
+                    horasBackOffice,
+                    horasTotales);
+
+            // =================================================
+            // DISTRIBUCIÓN DE ACTIVIDADES
+            // =================================================
+
+            var distribucion =
+                registros
+                    .GroupBy(
+                        ObtenerClasificacionAgrupada,
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                        new TimeAnalyticsBackOfficeDistribucionDto
+                        {
+                            Clasificacion =
+                                g.Key,
+
+                            Horas =
+                                g.Sum(x =>
+                                    x.Horas ?? 0)
+                        })
+                    .OrderByDescending(x =>
+                        x.Horas)
+                    .ToList();
+
+            // =================================================
+            // HORAS CARGADAS POR ÁREA
+            // =================================================
+
+            var areas =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Area))
+                    .GroupBy(
+                        x => x.Area!.Trim(),
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                    {
+                        double total =
+                            g.Sum(x =>
+                                x.Horas ?? 0);
+
+                        double backOffice =
+                            g.Where(x =>
+                                    EsTipo(
+                                        x.Tipo,
+                                        "Back Office"))
+                                .Sum(x =>
+                                    x.Horas ?? 0);
+
+                        double administrativas =
+                            g.Where(x =>
+                                    EsTipo(
+                                        x.Tipo,
+                                        "Administrativa"))
+                                .Sum(x =>
+                                    x.Horas ?? 0);
+
+                        double clientes =
+                            total -
+                            backOffice -
+                            administrativas;
+
+                        if (clientes < 0)
+                        {
+                            clientes = 0;
+                        }
+
+                        return new TimeAnalyticsBackOfficeSerieDto
+                        {
+                            Etiqueta =
+                                g.Key,
+
+                            HorasBackOffice =
+                                backOffice,
+
+                            HorasAdministrativas =
+                                administrativas,
+
+                            HorasClientes =
+                                clientes,
+
+                            HorasTotales =
+                                total,
+
+                            Evaluacion =
+                                Dividir(
+                                    backOffice,
+                                    total)
+                        };
+                    })
+                    .OrderByDescending(x =>
+                        x.HorasTotales)
+                    .ThenBy(x =>
+                        x.Etiqueta)
+                    .ToList();
+
+            // =================================================
+            // TENDENCIA DE HORAS POR COLABORADOR
+            // =================================================
+
+            var colaboradores =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Nombre))
+                    .GroupBy(
+                        x => x.Nombre!.Trim(),
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                    {
+                        double total =
+                            g.Sum(x =>
+                                x.Horas ?? 0);
+
+                        double backOffice =
+                            g.Where(x =>
+                                    EsTipo(
+                                        x.Tipo,
+                                        "Back Office"))
+                                .Sum(x =>
+                                    x.Horas ?? 0);
+
+                        double administrativas =
+                            g.Where(x =>
+                                    EsTipo(
+                                        x.Tipo,
+                                        "Administrativa"))
+                                .Sum(x =>
+                                    x.Horas ?? 0);
+
+                        double clientes =
+                            total -
+                            backOffice -
+                            administrativas;
+
+                        if (clientes < 0)
+                        {
+                            clientes = 0;
+                        }
+
+                        return new TimeAnalyticsBackOfficeSerieDto
+                        {
+                            Etiqueta =
+                                g.Key,
+
+                            HorasBackOffice =
+                                backOffice,
+
+                            HorasAdministrativas =
+                                administrativas,
+
+                            HorasClientes =
+                                clientes,
+
+                            HorasTotales =
+                                total,
+
+                            Evaluacion =
+                                Dividir(
+                                    backOffice,
+                                    total)
+                        };
+                    })
+                    .OrderByDescending(x =>
+                        x.HorasTotales)
+                    .ThenBy(x =>
+                        x.Etiqueta)
+                    .ToList();
+
+            // =================================================
+            // RESUMEN DE HALLAZGOS
+            // =================================================
+
+            var hallazgos =
+                areas
+                    .Select(x =>
+                    {
+                        string nivel;
+                        string claseCss;
+
+                        double porcentaje =
+                            x.Evaluacion * 100d;
+
+                        if (x.HorasTotales <= 0 ||
+                            porcentaje <= 0)
+                        {
+                            nivel =
+                                "Sin horas";
+
+                            claseCss =
+                                "level-none";
+                        }
+                        else if (porcentaje < 30)
+                        {
+                            nivel =
+                                "Muy bajo";
+
+                            claseCss =
+                                "level-very-low";
+                        }
+                        else if (porcentaje < 50)
+                        {
+                            nivel =
+                                "Bajo";
+
+                            claseCss =
+                                "level-low";
+                        }
+                        else if (porcentaje <= 80)
+                        {
+                            nivel =
+                                "Medio";
+
+                            claseCss =
+                                "level-medium";
+                        }
+                        else
+                        {
+                            nivel =
+                                "Alto";
+
+                            claseCss =
+                                "level-high";
+                        }
+
+                        return new TimeAnalyticsBackOfficeHallazgoDto
+                        {
+                            Area =
+                                x.Etiqueta,
+
+                            HorasTotales =
+                                x.HorasTotales,
+
+                            HorasBackOffice =
+                                x.HorasBackOffice,
+
+                            Evaluacion =
+                                x.Evaluacion,
+
+                            Nivel =
+                                nivel,
+
+                            ClaseCss =
+                                claseCss
+                        };
+                    })
+                    .OrderBy(x =>
+                        x.Evaluacion)
+                    .ThenBy(x =>
+                        x.Area)
+                    .ToList();
+
+            return new TimeAnalyticsBackOfficeDto
+            {
+                HorasTotales =
+                    horasTotales,
+
+                HorasBackOffice =
+                    horasBackOffice,
+
+                EvaluacionBackOffice =
+                    evaluacionBackOffice,
+
+                Distribucion =
+                    distribucion,
+
+                Areas =
+                    areas,
+
+                Colaboradores =
+                    colaboradores,
+
+                Hallazgos =
+                    hallazgos,
+
+                FechaActualizacion =
+                    DateTime.Now
+            };
+        }
+
+
+        // =====================================================
+        // ALINEACIÓN OPERATIVAS
+        // =====================================================
+
+        public async Task<TimeAnalyticsOperativasDto>
+            ObtenerAlineacionOperativasAsync(
+                TimeAnalyticsFiltroDto filtro,
+                CancellationToken cancellationToken = default)
+        {
+            ValidarFiltro(
+                filtro);
+
+            List<TimeReporteHorasFila> registros =
+                await ObtenerTodosLosRegistrosAsync(
+                    filtro,
+                    cancellationToken);
+
+            double horasTotales =
+                registros.Sum(x =>
+                    x.Horas ?? 0);
+
+            double horasOperativasClientes =
+                registros
+                    .Where(x =>
+                        EsTipo(
+                            x.Tipo,
+                            "Operativa") ||
+                        EsTipo(
+                            x.Tipo,
+                            "Clientes"))
+                    .Sum(x =>
+                        x.Horas ?? 0);
+
+            double evaluacion =
+                Dividir(
+                    horasOperativasClientes,
+                    horasTotales);
+
+            string Clasificacion(
+                TimeReporteHorasFila fila)
+            {
+                if (EsTipo(
+                    fila.Tipo,
+                    "Operativa"))
+                {
+                    return "Operativa";
+                }
+
+                if (EsTipo(
+                    fila.Tipo,
+                    "Clientes"))
+                {
+                    return "Clientes";
+                }
+
+                if (EsTipo(
+                    fila.Tipo,
+                    "Administrativa"))
+                {
+                    return "Administrativa";
+                }
+
+                if (EsTipo(
+                    fila.Tipo,
+                    "Back Office"))
+                {
+                    return "Back Office";
+                }
+
+                return "Sin clasificación";
+            }
+
+            var distribucion =
+                registros
+                    .GroupBy(
+                        Clasificacion,
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                        new TimeAnalyticsBackOfficeDistribucionDto
+                        {
+                            Clasificacion =
+                                g.Key,
+
+                            Horas =
+                                g.Sum(x =>
+                                    x.Horas ?? 0)
+                        })
+                    .OrderByDescending(x =>
+                        x.Horas)
+                    .ToList();
+
+            TimeAnalyticsBackOfficeSerieDto CrearSerie(
+                string etiqueta,
+                IEnumerable<TimeReporteHorasFila> grupo)
+            {
+                var lista =
+                    grupo.ToList();
+
+                double total =
+                    lista.Sum(x =>
+                        x.Horas ?? 0);
+
+                double operativa =
+                    lista
+                        .Where(x =>
+                            EsTipo(
+                                x.Tipo,
+                                "Operativa"))
+                        .Sum(x =>
+                            x.Horas ?? 0);
+
+                double clientes =
+                    lista
+                        .Where(x =>
+                            EsTipo(
+                                x.Tipo,
+                                "Clientes"))
+                        .Sum(x =>
+                            x.Horas ?? 0);
+
+                double administrativas =
+                    lista
+                        .Where(x =>
+                            EsTipo(
+                                x.Tipo,
+                                "Administrativa"))
+                        .Sum(x =>
+                            x.Horas ?? 0);
+
+                return new TimeAnalyticsBackOfficeSerieDto
+                {
+                    Etiqueta =
+                        etiqueta,
+
+                    HorasBackOffice =
+                        0,
+
+                    HorasAdministrativas =
+                        administrativas,
+
+                    HorasClientes =
+                        clientes + operativa,
+
+                    HorasTotales =
+                        total,
+
+                    Evaluacion =
+                        Dividir(
+                            operativa + clientes,
+                            total)
+                };
+            }
+
+            var areas =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Area))
+                    .GroupBy(
+                        x => x.Area!.Trim(),
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                        CrearSerie(
+                            g.Key,
+                            g))
+                    .OrderByDescending(x =>
+                        x.HorasTotales)
+                    .ThenBy(x =>
+                        x.Etiqueta)
+                    .ToList();
+
+            var colaboradores =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Nombre))
+                    .GroupBy(
+                        x => x.Nombre!.Trim(),
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                        CrearSerie(
+                            g.Key,
+                            g))
+                    .OrderByDescending(x =>
+                        x.HorasTotales)
+                    .ThenBy(x =>
+                        x.Etiqueta)
+                    .ToList();
+
+            var totalArea =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Area))
+                    .GroupBy(
+                        x => x.Area!.Trim(),
+                        StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Sum(x =>
+                            x.Horas ?? 0),
+                        StringComparer.OrdinalIgnoreCase);
+
+            var resumen =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Area))
+                    .GroupBy(
+                        x =>
+                            new
+                            {
+                                Area =
+                                    x.Area!.Trim(),
+
+                                Tipo =
+                                    string.IsNullOrWhiteSpace(
+                                        x.Tipo)
+                                        ? "Sin clasificación"
+                                        : x.Tipo!.Trim()
+                            })
+                    .Select(g =>
+                    {
+                        double horas =
+                            g.Sum(x =>
+                                x.Horas ?? 0);
+
+                        double totalAreaValor =
+                            totalArea.TryGetValue(
+                                g.Key.Area,
+                                out double total)
+                                ? total
+                                : 0;
+
+                        return new TimeAnalyticsOperativasResumenDto
+                        {
+                            Area =
+                                g.Key.Area,
+
+                            Tipo =
+                                g.Key.Tipo,
+
+                            Horas =
+                                horas,
+
+                            Participacion =
+                                Dividir(
+                                    horas,
+                                    totalAreaValor)
+                        };
+                    })
+                    .OrderBy(x =>
+                        x.Area)
+                    .ThenByDescending(x =>
+                        x.Horas)
+                    .ToList();
+
+            return new TimeAnalyticsOperativasDto
+            {
+                HorasTotales =
+                    horasTotales,
+
+                HorasOperativasClientes =
+                    horasOperativasClientes,
+
+                EvaluacionOperativasClientes =
+                    evaluacion,
+
+                Distribucion =
+                    distribucion,
+
+                Areas =
+                    areas,
+
+                Colaboradores =
+                    colaboradores,
+
+                Resumen =
+                    resumen,
+
+                FechaActualizacion =
+                    DateTime.Now
+            };
+        }
+
+
+        // =====================================================
+        // HORAS EXTRAS
+        // =====================================================
+
+        public async Task<TimeAnalyticsHorasExtrasDto>
+            ObtenerHorasExtrasAsync(
+                TimeAnalyticsFiltroDto filtro,
+                CancellationToken cancellationToken = default)
+        {
+            ValidarFiltro(
+                filtro);
+
+            List<TimeReporteHorasFila> registros =
+                await ObtenerTodosLosRegistrosAsync(
+                    filtro,
+                    cancellationToken);
+
+            var grupos =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Nombre))
+                    .GroupBy(
+                        x => x.Nombre!.Trim(),
+                        StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+            var colaboradores =
+                new List<TimeAnalyticsHorasExtrasColaboradorDto>();
+
+            foreach (var grupo
+                     in grupos)
+            {
+                double horasColaborador =
+                    grupo.Sum(x =>
+                        x.Horas ?? 0);
+
+                double extras =
+                    Math.Max(
+                        horasColaborador -
+                        MetaHorasPersona,
+                        0);
+
+                double faltantes =
+                    Math.Max(
+                        MetaHorasPersona -
+                        horasColaborador,
+                        0);
+
+                string clasificacion;
+                string claseCss;
+
+                if (horasColaborador >
+                    MetaHorasPersona)
+                {
+                    clasificacion =
+                        "Con horas extras";
+
+                    claseCss =
+                        "extras-high";
+                }
+                else if (Math.Abs(
+                    horasColaborador -
+                    MetaHorasPersona) <
+                    0.0001)
+                {
+                    clasificacion =
+                        "Cumplimiento";
+
+                    claseCss =
+                        "extras-ok";
+                }
+                else
+                {
+                    clasificacion =
+                        "Por completar";
+
+                    claseCss =
+                        "extras-pending";
+                }
+
+                string area =
+                    grupo
+                        .Select(x =>
+                            x.Area)
+                        .FirstOrDefault(x =>
+                            !string.IsNullOrWhiteSpace(
+                                x))
+                    ?? "Sin área";
+
+                colaboradores.Add(
+                    new TimeAnalyticsHorasExtrasColaboradorDto
+                    {
+                        Nombre =
+                            grupo.Key,
+
+                        Area =
+                            area,
+
+                        Horas =
+                            horasColaborador,
+
+                        HorasExtras =
+                            extras,
+
+                        HorasFaltantes =
+                            faltantes,
+
+                        Clasificacion =
+                            clasificacion,
+
+                        ClaseCss =
+                            claseCss
+                    });
+            }
+
+            colaboradores =
+                colaboradores
+                    .OrderBy(x =>
+                        x.Nombre,
+                        StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+            int personas =
+                colaboradores.Count;
+
+            double horas =
+                colaboradores.Sum(x =>
+                    x.Horas);
+
+            double horasExtras =
+                colaboradores.Sum(x =>
+                    x.HorasExtras);
+
+            double horasTotales =
+                personas *
+                MetaHorasPersona;
+
+            double horasFaltantes =
+                colaboradores.Sum(x =>
+                    x.HorasFaltantes);
+
+            double promedioPersona =
+                personas == 0
+                    ? 0
+                    : horas /
+                      personas;
+
+            var clasificaciones =
+                colaboradores
+                    .GroupBy(
+                        x =>
+                            x.Clasificacion,
+                        StringComparer.OrdinalIgnoreCase)
+                    .Select(g =>
+                        new TimeAnalyticsHorasExtrasClasificacionDto
+                        {
+                            Clasificacion =
+                                g.Key,
+
+                            Personas =
+                                g.Count()
+                        })
+                    .OrderByDescending(x =>
+                        x.Personas)
+                    .ToList();
+
+            var extrasPorUsuario =
+                colaboradores
+                    .ToDictionary(
+                        x =>
+                            x.Nombre,
+                        x =>
+                            x.HorasExtras,
+                        StringComparer.OrdinalIgnoreCase);
+
+            var areasTipo =
+                registros
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(
+                            x.Nombre) &&
+                        !string.IsNullOrWhiteSpace(
+                            x.Area))
+                    .GroupBy(
+                        x =>
+                            new
+                            {
+                                Nombre =
+                                    x.Nombre!.Trim(),
+
+                                Area =
+                                    x.Area!.Trim(),
+
+                                Tipo =
+                                    string.IsNullOrWhiteSpace(
+                                        x.Tipo)
+                                        ? "Sin clasificación"
+                                        : x.Tipo!.Trim()
+                            })
+                    .Select(g =>
+                    {
+                        double horasTipo =
+                            g.Sum(x =>
+                                x.Horas ?? 0);
+
+                        double horasUsuario =
+                            registros
+                                .Where(x =>
+                                    string.Equals(
+                                        x.Nombre?.Trim(),
+                                        g.Key.Nombre,
+                                        StringComparison.OrdinalIgnoreCase))
+                                .Sum(x =>
+                                    x.Horas ?? 0);
+
+                        double extrasUsuario =
+                            Math.Max(
+                                horasUsuario -
+                                MetaHorasPersona,
+                                0);
+
+                        double proporcion =
+                            horasUsuario <= 0
+                                ? 0
+                                : horasTipo /
+                                  horasUsuario;
+
+                        return new
+                        {
+                            g.Key.Area,
+                            g.Key.Tipo,
+                            Extras =
+                                extrasUsuario *
+                                proporcion
+                        };
+                    })
+                    .GroupBy(
+                        x =>
+                            new
+                            {
+                                x.Area,
+                                x.Tipo
+                            })
+                    .Select(g =>
+                        new TimeAnalyticsHorasExtrasAreaDto
+                        {
+                            Area =
+                                g.Key.Area,
+
+                            Tipo =
+                                g.Key.Tipo,
+
+                            HorasExtras =
+                                g.Sum(x =>
+                                    x.Extras)
+                        })
+                    .Where(x =>
+                        x.HorasExtras > 0)
+                    .OrderByDescending(x =>
+                        x.HorasExtras)
+                    .ToList();
+
+            return new TimeAnalyticsHorasExtrasDto
+            {
+                Horas =
+                    horas,
+
+                HorasExtras =
+                    horasExtras,
+
+                HorasTotales =
+                    horasTotales,
+
+                HorasFaltantes =
+                    horasFaltantes,
+
+                PromedioPersona =
+                    promedioPersona,
+
+                Colaboradores =
+                    colaboradores,
+
+                Clasificaciones =
+                    clasificaciones,
+
+                AreasTipo =
+                    areasTipo,
 
                 FechaActualizacion =
                     DateTime.Now

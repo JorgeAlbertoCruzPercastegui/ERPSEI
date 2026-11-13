@@ -147,8 +147,13 @@
 
 .time-analytics-panel canvas {
     width: 100% !important;
-    height: 320px !important;
-    max-height: 320px;
+    min-height: 320px;
+}
+
+.time-analytics-chart-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 @media (max-width: 768px) {
@@ -162,19 +167,10 @@
     }
 }
 
-/* =========================================================
-   ANALÍTICA TIME - HEADER Y ESPACIADO GENERAL
-   HOMOLOGADO CON LOS DEMÁS MÓDULOS DE LA INTRANET
-   ========================================================= */
-
 body.time-analytics-page {
     background: #ffffff !important;
     background-image: none !important;
 }
-
-    /* =========================================================
-   HEADER SUPERIOR
-   ========================================================= */
 
     body.time-analytics-page .header-bg {
         background: #ffffff !important;
@@ -188,10 +184,6 @@ body.time-analytics-page {
         align-items: center;
         background: transparent !important;
     }
-
-    /* =========================================================
-   LOGO / TEXTO INTRANET
-   ========================================================= */
 
     body.time-analytics-page .navbar-brand {
         display: flex !important;
@@ -224,10 +216,6 @@ body.time-analytics-page {
         color: #21166f !important;
     }
 
-    /* =========================================================
-   BARRA DE MENÚ PRINCIPAL
-   ========================================================= */
-
     body.time-analytics-page .topbar-links {
         margin: 0 auto 14px auto !important;
         padding: 9px 14px !important;
@@ -238,10 +226,6 @@ body.time-analytics-page {
         box-shadow: none;
         gap: 10px;
     }
-
-    /* =========================================================
-   ESPACIO ENTRE MENÚ Y CONTENIDO
-   ========================================================= */
 
     body.time-analytics-page .time-analytics {
         padding-top: 26px !important;
@@ -259,3 +243,205 @@ body.time-analytics-page {
     font-weight: 700;
     letter-spacing: .01em;
 }
+
+.time-table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid rgba(33, 22, 111, .08);
+}
+
+.time-table-pagination-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #67627d;
+    font-size: .82rem;
+}
+
+    .time-table-pagination-left .form-select {
+        width: 76px;
+        min-width: 76px;
+        border-radius: 9px;
+    }
+
+.time-table-pagination-info {
+    color: #817b96;
+    font-size: .80rem;
+}
+
+.time-table-pagination-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .time-table-pagination-actions .btn {
+        min-width: 34px;
+        min-height: 32px;
+        border-radius: 9px;
+    }
+
+.time-table-page {
+    min-width: 58px;
+    text-align: center;
+    color: #21166f;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+@media (max-width: 767.98px) {
+    .time-table-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .time-table-pagination-left,
+    .time-table-pagination-actions {
+        justify-content: center;
+    }
+
+    .time-table-pagination-info {
+        text-align: center;
+    }
+}
+
+#vistaDashboardCumplimiento,
+#vistaEvaluacionAreas,
+#vistaAnalisisPersonal,
+#vistaAlineacionBackOffice,
+#vistaAlineacionOperativas,
+#vistaHorasExtras {
+    transition: opacity .22s ease, transform .22s ease, filter .22s ease;
+}
+
+    #vistaDashboardCumplimiento.time-analytics-refreshing,
+    #vistaEvaluacionAreas.time-analytics-refreshing,
+    #vistaAnalisisPersonal.time-analytics-refreshing,
+    #vistaAlineacionBackOffice.time-analytics-refreshing,
+    #vistaAlineacionOperativas.time-analytics-refreshing,
+    #vistaHorasExtras.time-analytics-refreshing {
+        opacity: .48;
+        transform: translateY(2px);
+        filter: saturate(.72);
+        pointer-events: none;
+    }
+
+.time-analytics-filter-card .form-control,
+.time-analytics-filter-card .form-select {
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+    .time-analytics-filter-card .form-control:focus,
+    .time-analytics-filter-card .form-select:focus {
+        border-color: #21166b;
+        box-shadow: 0 0 0 .2rem rgba(33, 22, 107, .10);
+    }
+
+
+/* =========================================================
+   ALINEACIÓN BACK OFFICE
+   ========================================================= */
+
+.time-backoffice-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.time-backoffice-level {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 92px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: .76rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+    .time-backoffice-level.level-none {
+        background: #f2f2f2;
+        color: #5f5b6d;
+    }
+
+    .time-backoffice-level.level-very-low {
+        background: #fff1f2;
+        color: #be123c;
+    }
+
+    .time-backoffice-level.level-low {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .time-backoffice-level.level-medium {
+        background: #fefce8;
+        color: #a16207;
+    }
+
+    .time-backoffice-level.level-high {
+        background: #ecfdf5;
+        color: #047857;
+    }
+
+
+/* =========================================================
+   HORAS EXTRAS
+   ========================================================= */
+
+.time-extras-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 112px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: .76rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+    .time-extras-badge.extras-high {
+        background: #fff1f2;
+        color: #be123c;
+    }
+
+    .time-extras-badge.extras-ok {
+        background: #ecfeff;
+        color: #0f766e;
+    }
+
+    .time-extras-badge.extras-pending {
+        background: #f1f5f9;
+        color: #475569;
+    }
+.time-chart-vertical-scroll {
+    width: 100%;
+    max-height: 650px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+}
+
+    .time-chart-vertical-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .time-chart-vertical-scroll::-webkit-scrollbar-track {
+        background: #f3f1f8;
+        border-radius: 999px;
+    }
+
+    .time-chart-vertical-scroll::-webkit-scrollbar-thumb {
+        background: #c7c3d7;
+        border-radius: 999px;
+    }
+
+        .time-chart-vertical-scroll::-webkit-scrollbar-thumb:hover {
+            background: #aaa4c1;
+        }
