@@ -219,7 +219,24 @@
         EnSeccion("ERP", "/Adquisiciones/");
     bool menuComunidad = EnSeccion("Catalogos", "/GestorComunicadosInternos/", "/ComunicadosInternos/", "/GestorEventos/", "/Eventos/", "/Organigrama/", "/Directorio/");
     bool menuRecursosHumanos =
-        EnPagina("Catalogos", "/Banners", "/HeaderImagenes", "/GestionDeTalento", "/Usuarios", "/Roles", "/Puestos", "/Areas", "/Subareas", "/Oficinas", "/Origenes", "/Niveles", "/Perfiles");
+    EnPagina(
+        "Catalogos",
+        "/Banners",
+        "/HeaderImagenes",
+        "/GestionDeTalento",
+        "/Usuarios",
+        "/Roles",
+        "/Puestos",
+        "/Areas",
+        "/Subareas",
+        "/Oficinas",
+        "/Origenes",
+        "/Niveles",
+        "/Perfiles")
+    ||
+    EnSeccion(
+        "ERP",
+        "/Time/Analytics");
 
     bool esPaginaInicio = paginaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase);
 
@@ -704,6 +721,10 @@
         );
 
     bool mostrarRecursosHumanos =
+    esAdministrador ||
+    esAdministradorTH;
+
+    bool mostrarAnaliticaTimeMenu =
     esAdministrador ||
     esAdministradorTH;
 
@@ -1413,6 +1434,16 @@
                                 <div class="quick-dd">
                                     <a class="quick-link quick-dd-toggle @(menuRecursosHumanos ? "menu-activo" : "")" href="#" onclick="return false;"><span class="quick-link-text">Recursos Humanos</span></a>
                                     <div class="quick-dd-menu quick-dd-menu-wide">
+
+                                        @if (mostrarAnaliticaTimeMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   asp-area="ERP"
+                                                   asp-page="/Time/Analytics/Index">
+                                                Analítica TIME
+                                            </a>
+                                        }
+
                                         @if (mostrarBannersMenu)
                                         {
                                             <a class="quick-dd-item" asp-area="Catalogos" asp-page="/Banners">Banners</a>

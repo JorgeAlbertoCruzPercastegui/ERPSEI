@@ -1,0 +1,387 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.Time.Analytics.IndexModel
+
+@{
+    ViewData["Title"] = "Analítica TIME";
+    ViewData["BodyClass"] =
+        "module-main-theme catalogo-page time-analytics-page";
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/css/TimeAnalytics.css"
+          asp-append-version="true" />
+}
+
+<div class="container-fluid time-analytics">
+
+    <div class="time-analytics-header mb-4">
+
+        <div>
+            <span class="time-analytics-eyebrow">
+                Recursos Humanos
+            </span>
+
+            <h2 class="time-analytics-title">
+                <i class="bi bi-bar-chart-line-fill me-2"></i>
+                Analítica TIME
+            </h2>
+
+            <p class="time-analytics-subtitle mb-0">
+                Monitoreo ejecutivo de cumplimiento, horas,
+                actividad y desempeño operativo.
+            </p>
+        </div>
+
+        <div class="time-analytics-status">
+            <span class="time-analytics-status-dot"></span>
+
+            <div>
+                <small>
+                    Estado de datos
+                </small>
+
+                <strong>
+                    Preparando información
+                </strong>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="time-analytics-tabs mb-4">
+
+        <button type="button"
+                class="time-analytics-tab active">
+            Dashboard Cumplimiento
+        </button>
+
+        <button type="button"
+                class="time-analytics-tab"
+                disabled>
+            Evaluación de Áreas
+        </button>
+
+        <button type="button"
+                class="time-analytics-tab"
+                disabled>
+            Análisis de Personal
+        </button>
+
+        <button type="button"
+                class="time-analytics-tab"
+                disabled>
+            Alineación Back Office
+        </button>
+
+        <button type="button"
+                class="time-analytics-tab"
+                disabled>
+            Alineación Operativas
+        </button>
+
+        <button type="button"
+                class="time-analytics-tab"
+                disabled>
+            Horas Extras
+        </button>
+
+    </div>
+
+
+    <div class="card time-analytics-filter-card mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-xl-3 col-md-6">
+
+                    <label class="form-label">
+                        Fecha inicial
+                    </label>
+
+                    <input type="date"
+                           id="analyticsFechaInicio"
+                           class="form-control" />
+
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+
+                    <label class="form-label">
+                        Fecha final
+                    </label>
+
+                    <input type="date"
+                           id="analyticsFechaFin"
+                           class="form-control" />
+
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+
+                    <label class="form-label">
+                        Área
+                    </label>
+
+                    <select id="analyticsArea"
+                            class="form-select">
+
+                        <option value="">
+                            Todas las áreas
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-xl-3 col-md-6">
+
+                    <label class="form-label">
+                        Colaborador
+                    </label>
+
+                    <select id="analyticsUsuario"
+                            class="form-select">
+
+                        <option value="">
+                            Todos los colaboradores
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="row g-3 mb-4">
+
+        <div class="col-xl col-md-6">
+            <div class="time-kpi-card">
+                <span>
+                    Horas registradas
+                </span>
+
+                <strong id="kpiHorasRegistradas">
+                    —
+                </strong>
+
+                <small>
+                    Periodo seleccionado
+                </small>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-6">
+            <div class="time-kpi-card">
+                <span>
+                    Horas faltantes
+                </span>
+
+                <strong id="kpiHorasFaltantes">
+                    —
+                </strong>
+
+                <small>
+                    Diferencia estimada
+                </small>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-6">
+            <div class="time-kpi-card">
+                <span>
+                    Cumplimiento
+                </span>
+
+                <strong id="kpiCumplimiento">
+                    —
+                </strong>
+
+                <small>
+                    Cumplimiento global
+                </small>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-6">
+            <div class="time-kpi-card">
+                <span>
+                    Colaboradores
+                </span>
+
+                <strong id="kpiColaboradores">
+                    —
+                </strong>
+
+                <small>
+                    Usuarios evaluados
+                </small>
+            </div>
+        </div>
+
+        <div class="col-xl col-md-6">
+            <div class="time-kpi-card">
+                <span>
+                    Áreas
+                </span>
+
+                <strong id="kpiAreas">
+                    —
+                </strong>
+
+                <small>
+                    Áreas con actividad
+                </small>
+            </div>
+        </div>
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <div class="col-xl-5">
+
+            <div class="card time-analytics-panel">
+
+                <div class="card-header">
+                    Distribución de horas por Tipo
+                </div>
+
+                <div class="card-body">
+
+                    <canvas id="chartDistribucionTipo">
+                    </canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-xl-7">
+
+            <div class="card time-analytics-panel">
+
+                <div class="card-header">
+                    Cumplimiento por Área
+                </div>
+
+                <div class="card-body">
+
+                    <canvas id="chartCumplimientoArea">
+                    </canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12">
+
+            <div class="card time-analytics-panel">
+
+                <div class="card-header">
+                    Tendencia de horas
+                </div>
+
+                <div class="card-body">
+
+                    <canvas id="chartTendencia">
+                    </canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-12">
+
+            <div class="card time-analytics-panel">
+
+                <div class="card-header">
+                    Detalle de colaboradores
+                </div>
+
+                <div class="card-body">
+
+                    <div class="table-responsive">
+
+                        <table class="table
+                            table-hover
+                            align-middle
+                            mb-0">
+
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Colaborador
+                                    </th>
+
+                                    <th>
+                                        Área
+                                    </th>
+
+                                    <th class="text-end">
+                                        Horas
+                                    </th>
+
+                                    <th class="text-end">
+                                        Cumplimiento
+                                    </th>
+
+                                    <th>
+                                        Tendencia
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="analyticsTablaUsuarios">
+
+                                <tr>
+                                    <td colspan="5"
+                                        class="text-center
+                                        text-muted
+                                        py-4">
+
+                                        Preparando información...
+
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <script src="~/js/TimeAnalytics.js"
+            asp-append-version="true">
+    </script>
+
+}
