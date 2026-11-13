@@ -260,6 +260,14 @@ namespace ERPSEI
             builder.Services.AddScoped<
                 ITimeSqlReportService,
                 TimeSqlReportService>();
+
+            // =====================================================
+            // TIME - ANALÍTICA EJECUTIVA
+            // =====================================================
+
+            builder.Services.AddScoped<
+                ITimeAnalyticsService,
+                TimeAnalyticsService>();
         }
 
         public static void ConfigureDatabase(

@@ -22,7 +22,7 @@ namespace ERPSEI.Services.TimeIntegration
         {
             if (filtro.Pagina < 1 ||
                 filtro.TamanoPagina < 1 ||
-                filtro.TamanoPagina > 100)
+                filtro.TamanoPagina > 50000)
             {
                 throw new ArgumentException(
                     "La paginación solicitada es inválida.");

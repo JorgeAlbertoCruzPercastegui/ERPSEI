@@ -147,7 +147,8 @@
 
 .time-analytics-panel canvas {
     width: 100% !important;
-    max-height: 360px;
+    height: 320px !important;
+    max-height: 320px;
 }
 
 @media (max-width: 768px) {
@@ -246,3 +247,15 @@ body.time-analytics-page {
         padding-top: 26px !important;
         padding-bottom: 32px !important;
     }
+
+.time-tendencia-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 105px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: .76rem;
+    font-weight: 700;
+    letter-spacing: .01em;
+}

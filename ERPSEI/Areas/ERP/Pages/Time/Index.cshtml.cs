@@ -229,6 +229,17 @@ namespace ERPSEI.Areas.ERP.Pages.Time
                 });
             }
 
+            if (pagina < 1 ||
+                tamanoPagina < 1 ||
+                tamanoPagina > 100)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "La paginación solicitada es inválida."
+                });
+            }
+
             if ((usuarioId.HasValue && usuarioId.Value <= 0) ||
                 (proyectoId.HasValue && proyectoId.Value <= 0) ||
                 (departamentoId.HasValue && departamentoId.Value <= 0))
