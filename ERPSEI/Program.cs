@@ -5,6 +5,7 @@ using ERPSEI.Email;
 using ERPSEI.Middleware;
 using ERPSEI.Services;
 using ERPSEI.Services.CorreosDominios;
+using ERPSEI.Services.TimeIntegration;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -118,6 +119,9 @@ builder.Services.AddHostedService<
 
 builder.Services.AddHostedService<
     CorreoDominioCaducidadService>();
+
+builder.Services.AddHostedService<
+    TimeSyncBackgroundService>();
 
 // =====================================================
 // QUESTPDF

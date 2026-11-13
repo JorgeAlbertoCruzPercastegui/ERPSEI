@@ -40,9 +40,9 @@ namespace ERPSEI.Services.TimeIntegration
                 "TimeAutoSync:IntervalMinutes",
                 60);
 
-            if (minutos < 15)
+            if (minutos < 5)
             {
-                minutos = 15;
+                minutos = 5;
             }
 
             bool ejecutarAlIniciar = _configuration.GetValue<bool>(
