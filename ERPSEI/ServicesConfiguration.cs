@@ -44,6 +44,7 @@ using Microsoft.Graph;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
+using ERPSEI.Services.TalentoHumano;
 
 namespace ERPSEI
 {
@@ -430,6 +431,16 @@ namespace ERPSEI
 
             // Worker para automatizar el archivado bimestral
             builder.Services.AddHostedService<BioTimeArchivadoBackgroundService>();
+
+
+            // =====================================================
+            // TALENTO HUMANO - PORTAL DE SOLICITUDES
+            // =====================================================
+
+            builder.Services.AddScoped<
+                ISolicitudesTHService,
+                SolicitudesTHService>();
+
 
         }
 

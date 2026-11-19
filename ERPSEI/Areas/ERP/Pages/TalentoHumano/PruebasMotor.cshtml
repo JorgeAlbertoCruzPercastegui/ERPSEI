@@ -1,0 +1,199 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.TalentoHumano.PruebasMotorModel
+
+@{
+    ViewData["Title"] = "Pruebas del motor de Talento Humano";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="mb-4">
+        <h2 class="mb-1">
+            Pruebas del motor de Talento Humano
+        </h2>
+
+        <p class="text-muted mb-0">
+            INTRANET | Ambiente de desarrollo
+        </p>
+    </div>
+
+    <div class="alert alert-warning">
+        <strong>Uso exclusivo de desarrollo.</strong>
+        Las solicitudes generadas se almacenarán en la
+        base de datos local. No ejecutar con datos de producción.
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Resultado))
+    {
+        <div class="alert alert-info">
+            @Model.Resultado
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-danger">
+            @Model.Error
+        </div>
+    }
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <strong>Configuración de prueba</strong>
+        </div>
+
+        <div class="card-body">
+
+            <form method="post">
+
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="TipoSeleccionado"
+                           class="form-label">
+                        Tipo de solicitud
+                    </label>
+
+                    <select asp-for="TipoSeleccionado"
+                            class="form-select">
+
+                        <option value="1">
+                            Constancia laboral
+                        </option>
+
+                        <option value="2">
+                            Desglose de nómina
+                        </option>
+
+                        <option value="3">
+                            Comprobante de nómina CFDI
+                        </option>
+
+                        <option value="4">
+                            Saldo de vacaciones
+                        </option>
+
+                        <option value="5">
+                            Préstamo
+                        </option>
+
+                        <option value="6">
+                            Anticipo de fondo de ahorro
+                        </option>
+
+                        <option value="7">
+                            Crédito Infonavit
+                        </option>
+
+                    </select>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <button type="submit"
+                            asp-page-handler="Crear"
+                            class="btn btn-primary">
+                        Crear una solicitud
+                    </button>
+
+                    <button type="submit"
+                            asp-page-handler="Concurrencia"
+                            class="btn btn-outline-primary">
+                        Probar cinco simultáneas
+                    </button>
+
+                    <button type="submit"
+                            asp-page-handler="TipoInvalido"
+                            class="btn btn-outline-secondary">
+                        Probar tipo inválido
+                    </button>
+
+                    
+                    <button type="submit"
+                            asp-page-handler="Rollback"
+                            class="btn btn-outline-danger">
+                        Probar rollback del servicio
+                    </button>
+
+                    <button type="submit"
+                            asp-page-handler="EmpleadoInactivo"
+                            class="btn btn-outline-warning">
+                        Probar empleado inactivo
+                    </button>
+
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <strong>Últimas solicitudes del usuario</strong>
+        </div>
+
+        <div class="card-body">
+
+            @if (Model.UltimasSolicitudes.Count == 0)
+            {
+                <div class="alert alert-light mb-0">
+                    Aún no se han registrado solicitudes.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-striped table-hover">
+
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Tipo</th>
+                                <th>Estatus</th>
+                                <th>Fecha UTC</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var solicitud in
+                                Model.UltimasSolicitudes)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>
+                                            @solicitud.Folio
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        @solicitud.Tipo
+                                    </td>
+
+                                    <td>
+                                        @solicitud.Estatus
+                                    </td>
+
+                                    <td>
+                                        @solicitud.FechaEnvioUtc.ToString(
+                                            "yyyy-MM-dd HH:mm:ss")
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>
