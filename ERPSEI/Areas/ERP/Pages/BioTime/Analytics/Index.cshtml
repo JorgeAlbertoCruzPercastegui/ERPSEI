@@ -4,72 +4,298 @@
     ViewData["Title"] = "Analítica BioTime";
     ViewData["BodyClass"] = "module-main-theme catalogo-page biotime-analytics-page";
 }
+
 @section Styles {
     <link rel="stylesheet" href="~/css/BioTimeAnalytics.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/BioTimeTabs.css" asp-append-version="true" />
 }
+
 <div class="container-fluid biotime-analytics py-4">
     <div class="d-none">@Html.AntiForgeryToken()</div>
+
     <div class="biotime-analytics-header mb-4">
-        <div><span class="biotime-analytics-eyebrow">Recursos Humanos</span><h2 class="biotime-analytics-title"><i class="bi bi-clock-history me-2"></i>Analítica BioTime</h2><p class="biotime-analytics-subtitle mb-0">Monitoreo ejecutivo de checadas y asistencia biométrica.</p></div>
-        <div class="biotime-analytics-status"><span class="biotime-analytics-status-dot" id="bioDot"></span><div><small>Estado de datos</small><strong id="bioEstado">Selecciona fecha inicial y fecha final</strong></div></div>
+        <div>
+            <span class="biotime-analytics-eyebrow">Recursos Humanos</span>
+            <h2 class="biotime-analytics-title"><i class="bi bi-clock-history me-2"></i>Analítica BioTime</h2>
+            <p class="biotime-analytics-subtitle mb-0">Monitoreo ejecutivo de checadas y asistencia biométrica.</p>
+        </div>
+        <div class="biotime-analytics-status" role="status" aria-live="polite">
+            <span class="biotime-analytics-status-dot" id="bioDot"></span>
+            <div>
+                <small>Estado de datos</small>
+                <strong id="bioEstado">Selecciona fecha inicial y fecha final</strong>
+            </div>
+        </div>
     </div>
-    <div class="biotime-analytics-tabs mb-4"><button class="biotime-analytics-tab active" type="button">Dashboard de asistencia</button><button class="biotime-analytics-tab" type="button" disabled>Indicadores de puntualidad (próximamente)</button></div>
+
+    <nav class="biotime-analytics-tabs mb-4 d-flex flex-wrap gap-2" aria-label="Secciones de Analítica BioTime" id="bioTabs">
+        <button class="biotime-analytics-tab active" data-bio-tab="dashboard" type="button" aria-pressed="true">Dashboard de asistencia</button>
+        <button class="biotime-analytics-tab" data-bio-tab="puntualidad" type="button" aria-pressed="false">Puntualidad (referencia)</button>
+        <button class="biotime-analytics-tab" data-bio-tab="jornadas" type="button" aria-pressed="false">Jornadas</button>
+        <button class="biotime-analytics-tab" data-bio-tab="incidencias" type="button" aria-pressed="false">Incidencias por revisar</button>
+        <button class="biotime-analytics-tab" data-bio-tab="reportes" type="button" aria-pressed="false">Reportes</button>
+        <button class="biotime-analytics-tab" data-bio-tab="sincronizacion" type="button" aria-pressed="false">Sincronización</button>
+    </nav>
+
     <div class="card biotime-analytics-filter-card mb-4">
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioInicio">Fecha inicial</label><input class="form-control" type="date" id="bioInicio" /></div>
-                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioFin">Fecha final</label><input class="form-control" type="date" id="bioFin" /></div>
-                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioDept">Departamento</label><select id="bioDept" class="form-select"><option value="">Todos los departamentos</option></select></div>
-                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioEmpleado">Colaborador</label><select id="bioEmpleado" class="form-select"><option value="">Todos los colaboradores</option></select></div>
+                <div class="col-xl-3 col-md-6">
+                    <label class="form-label" for="bioInicio">Fecha inicial</label>
+                    <input class="form-control" type="date" id="bioInicio" />
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <label class="form-label" for="bioFin">Fecha final</label>
+                    <input class="form-control" type="date" id="bioFin" />
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <label class="form-label" for="bioDept">Departamento</label>
+                    <select id="bioDept" class="form-select">
+                        <option value="">Todos los departamentos</option>
+                    </select>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <label class="form-label" for="bioEmpleado">Colaborador</label>
+                    <select id="bioEmpleado" class="form-select">
+                        <option value="">Todos los colaboradores</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
-    <div class="row g-3 mb-4">
-        <div class="col-lg-4 col-md-6"><div class="biotime-kpi-card"><span>Checadas registradas</span><strong id="bioTotal">—</strong><small>Periodo seleccionado</small></div></div>
-        <div class="col-lg-4 col-md-6"><div class="biotime-kpi-card"><span>Colaboradores con actividad</span><strong id="bioPersonas">—</strong><small>Con al menos una checada</small></div></div>
-        <div class="col-lg-4 col-md-12"><div class="biotime-kpi-card"><span>Última sincronización</span><strong class="biotime-kpi-small" id="bioSync">—</strong><small id="bioSyncDetalle">Sin información todavía</small></div></div>
-    </div>
-    <div class="card biotime-analytics-panel mb-4"><div class="card-header">Tendencia de checadas</div><div class="card-body"><div style="height:300px"><canvas id="bioChart"></canvas></div></div></div>
-    <div class="card biotime-analytics-panel">
-        <div class="card-header d-flex flex-wrap align-items-center gap-2">
-            <strong>Detalle de checadas</strong>
-            <small class="text-muted fw-normal">Los movimientos aún no están clasificados como entrada o salida</small>
+
+    <section id="bioPaneDashboard" data-bio-pane="dashboard">
+        <div class="row g-3 mb-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="biotime-kpi-card">
+                    <span>Checadas registradas</span>
+                    <strong id="bioTotal">—</strong>
+                    <small>Periodo seleccionado</small>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="biotime-kpi-card">
+                    <span>Colaboradores con actividad</span>
+                    <strong id="bioPersonas">—</strong>
+                    <small>Con al menos una checada</small>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12">
+                <div class="biotime-kpi-card">
+                    <span>Última sincronización</span>
+                    <strong class="biotime-kpi-small" id="bioSync">—</strong>
+                    <small id="bioSyncDetalle">Sin información todavía</small>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="row g-3 align-items-end mb-3">
-                <div class="col-lg-5 col-md-7">
-                    <label for="bioBuscar" class="form-label">Buscar registro</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input id="bioBuscar" type="search" class="form-control" placeholder="Nombre, código, departamento o dispositivo" autocomplete="off" />
+
+        <div class="card biotime-analytics-panel mb-4">
+            <div class="card-header">Tendencia de checadas</div>
+            <div class="card-body"><div style="height:300px"><canvas id="bioChart"></canvas></div></div>
+        </div>
+
+        <div class="card biotime-analytics-panel mb-4">
+            <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                <strong>Detalle de checadas</strong>
+                <small class="text-muted fw-normal">Los movimientos aún no están clasificados como entrada o salida</small>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-lg-5 col-md-7">
+                        <label for="bioBuscar" class="form-label">Buscar registro</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input id="bioBuscar" type="search" class="form-control" placeholder="Nombre, código, departamento o dispositivo" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="col-lg-7 col-md-5 text-md-end">
+                        <small class="text-muted" id="bioTablaEstado" aria-live="polite">Selecciona ambas fechas para consultar información.</small>
                     </div>
                 </div>
-                <div class="col-lg-7 col-md-5 text-md-end">
-                    <small class="text-muted" id="bioTablaEstado" aria-live="polite">Selecciona ambas fechas para consultar información.</small>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead><tr><th>Colaborador</th><th>Departamento</th><th>Fecha</th><th>Hora</th><th>Estado original</th><th>Dispositivo</th></tr></thead>
+                        <tbody id="bioTabla">
+                            <tr><td colspan="6" class="text-center text-muted py-4">Selecciona ambas fechas para consultar información.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead><tr><th>Colaborador</th><th>Departamento</th><th>Fecha</th><th>Hora</th><th>Estado original</th><th>Dispositivo</th></tr></thead>
-                    <tbody id="bioTabla"><tr><td colspan="6" class="text-center text-muted py-4">Selecciona ambas fechas para consultar información.</td></tr></tbody>
-                </table>
-            </div>
-            <div class="biotime-table-pagination mt-3">
-                <div class="biotime-table-pagination-left">
-                    <span>Mostrar</span>
-                    <select class="form-select form-select-sm" id="bioTamano" aria-label="Registros por página"><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="50">50</option></select>
-                    <span>registros</span>
+                <div class="biotime-table-pagination mt-3">
+                    <div class="biotime-table-pagination-left">
+                        <span>Mostrar</span>
+                        <select class="form-select form-select-sm" id="bioTamano" aria-label="Registros por página">
+                            <option value="10" selected>10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>registros</span>
+                    </div>
+                    <div class="biotime-table-pagination-info" id="bioInfoPagina" aria-live="polite">0 registros</div>
+                    <nav class="biotime-table-pagination-actions" aria-label="Paginación de checadas">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="bioAnterior" aria-label="Página anterior" disabled><i class="bi bi-chevron-left"></i></button>
+                        <span id="bioNumeroPagina" class="biotime-table-page">1 / 1</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="bioSiguiente" aria-label="Página siguiente" disabled><i class="bi bi-chevron-right"></i></button>
+                    </nav>
                 </div>
-                <div class="biotime-table-pagination-info" id="bioInfoPagina" aria-live="polite">0 registros</div>
-                <nav class="biotime-table-pagination-actions" aria-label="Paginación de checadas">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="bioAnterior" aria-label="Página anterior" disabled><i class="bi bi-chevron-left"></i></button>
-                    <span id="bioNumeroPagina" class="biotime-table-page">1 / 1</span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="bioSiguiente" aria-label="Página siguiente" disabled><i class="bi bi-chevron-right"></i></button>
-                </nav>
             </div>
         </div>
+
+        <!-- Resumen diario: agregado sin alterar la tabla de checadas existente. -->
+        <div class="card biotime-analytics-panel mb-4" id="bioResumenSeccion">
+            <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                <strong>Resumen diario de asistencia</strong>
+                <small class="text-muted fw-normal">Primera y última checada por colaborador; no representa horas efectivamente trabajadas.</small>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-lg-5 col-md-7">
+                        <label for="bioResumenBuscar" class="form-label">Buscar en resumen diario</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input id="bioResumenBuscar" type="search" class="form-control" placeholder="Nombre, código o departamento" autocomplete="off" />
+                        </div>
+                    </div>
+                    <div class="col-lg-7 col-md-5 text-md-end">
+                        <small class="text-muted" id="bioResumenEstado" aria-live="polite">Selecciona ambas fechas para consultar información.</small>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Colaborador</th>
+                                <th>Departamento</th>
+                                <th>Primera checada</th>
+                                <th>Última checada</th>
+                                <th>Total</th>
+                                <th>Tiempo entre extremos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bioResumenTabla">
+                            <tr><td colspan="7" class="text-center text-muted py-4">Selecciona ambas fechas para consultar información.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="biotime-table-pagination mt-3">
+                    <div class="biotime-table-pagination-left">
+                        <span>Mostrar</span>
+                        <select class="form-select form-select-sm" id="bioResumenTamano" aria-label="Registros por página del resumen diario">
+                            <option value="10" selected>10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>registros</span>
+                    </div>
+                    <div class="biotime-table-pagination-info" id="bioResumenInfoPagina" aria-live="polite">0 registros</div>
+                    <nav class="biotime-table-pagination-actions" aria-label="Paginación del resumen diario">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="bioResumenAnterior" aria-label="Página anterior del resumen" disabled><i class="bi bi-chevron-left"></i></button>
+                        <span id="bioResumenNumeroPagina" class="biotime-table-page">1 / 1</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="bioResumenSiguiente" aria-label="Página siguiente del resumen" disabled><i class="bi bi-chevron-right"></i></button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analítica por departamentos; indicadores de actividad biométrica, NO de puntualidad. -->
+        <div class="card biotime-analytics-panel mb-4" id="bioDeptSeccion">
+            <div class="card-header"><strong>Analítica por departamento</strong></div>
+            <div class="card-body">
+                <p class="text-muted small">Comparativa de actividad biométrica por departamento. No equivale a asistencia cumplida ni horas trabajadas.</p>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4"><div class="biotime-kpi-card"><span>Días-colaborador con actividad</span><strong id="bioDiasPersona">—</strong></div></div>
+                    <div class="col-md-4"><div class="biotime-kpi-card"><span>Promedio de checadas por día-colaborador</span><strong id="bioPromedio">—</strong></div></div>
+                    <div class="col-md-4 d-flex align-items-end"><button type="button" id="bioExportarChecadas" class="btn btn-outline-primary w-100" disabled><i class="bi bi-file-earmark-excel me-1"></i>Excel de checadas</button></div>
+                </div>
+                <div style="height:300px"><canvas id="bioDeptChart"></canvas></div>
+                <div class="d-flex justify-content-end my-3"><button type="button" id="bioExportarResumen" class="btn btn-outline-primary" disabled><i class="bi bi-file-earmark-excel me-1"></i>Excel de resumen diario</button></div>
+                <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Departamento</th><th>Colaboradores con actividad</th><th>Días-colaborador</th><th>Checadas</th><th>Promedio diario</th></tr></thead><tbody id="bioDeptTabla"><tr><td colspan="5" class="text-center text-muted py-4">Selecciona ambas fechas para consultar.</td></tr></tbody></table></div>
+                <small id="bioDeptEstado" class="text-muted" aria-live="polite">Sin periodo seleccionado</small>
+            </div>
+        </div>
+
+
+        <div class="card biotime-analytics-panel mb-4" id="bioColabSeccion">
+            <div class="card-header"><strong>Analítica por colaborador</strong></div>
+            <div class="card-body">
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-lg-5"><label class="form-label" for="bioColabBuscar">Buscar colaborador</label><input class="form-control" id="bioColabBuscar" type="search" placeholder="Nombre, código o departamento" /></div>
+                    <div class="col-lg-3"><label class="form-label" for="bioColabTamano">Mostrar registros</label><select class="form-select" id="bioColabTamano"><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="50">50</option></select></div>
+                    <div class="col-lg-4"><small class="text-muted" id="bioColabEstado">Selecciona ambas fechas.</small></div>
+                </div>
+                <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Colaborador</th><th>Departamento</th><th>Checadas</th><th>Días con actividad</th><th>Primera checada del periodo</th><th>Última checada del periodo</th></tr></thead><tbody id="bioColabTabla"><tr><td colspan="6" class="text-center text-muted py-4">Selecciona ambas fechas.</td></tr></tbody></table></div>
+                <div class="biotime-table-pagination mt-3"><div id="bioColabInfoPagina" class="biotime-table-pagination-info">0 registros</div><nav class="biotime-table-pagination-actions" aria-label="Paginación de colaboradores"><button type="button" id="bioColabAnterior" class="btn btn-sm btn-outline-secondary" disabled>Anterior</button><span id="bioColabNumeroPagina" class="biotime-table-page">1 / 1</span><button type="button" id="bioColabSiguiente" class="btn btn-sm btn-outline-secondary" disabled>Siguiente</button></nav></div>
+            </div>
+        </div>
+
+    </section>
+
+    <section id="bioPanePuntualidad" data-bio-pane="puntualidad" hidden>
+        <div class="card biotime-analytics-panel mb-4">
+            <div class="card-header"><strong>Observaciones de horario de primer registro</strong></div>
+            <div class="card-body">
+                <div class="alert alert-warning small" role="note">Esta vista es <strong>exploratoria, no determina retardos ni cumplimiento laboral</strong>. La primera checada no necesariamente es una entrada. Solo compara su hora con una referencia elegida para análisis; no aplica a turnos, descansos ni tolerancias individuales.</div>
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-sm-4 col-lg-3"><label class="form-label" for="bioHoraReferencia">Hora de referencia</label><input id="bioHoraReferencia" type="time" class="form-control" /></div>
+                    <div class="col-sm-4 col-lg-3"><label class="form-label" for="bioTolerancia">Margen en minutos</label><input id="bioTolerancia" type="number" min="0" max="120" value="0" class="form-control" /></div>
+                    <div class="col-sm-4 col-lg-3"><label class="form-label" for="bioPuntualidadTamano">Mostrar</label><select class="form-select" id="bioPuntualidadTamano"><option>10</option><option>15</option><option>20</option><option>25</option><option>50</option></select></div>
+                    <div class="col-lg-3"><small id="bioPuntualidadEstado" aria-live="polite" class="text-muted">Configura una hora de referencia y un periodo.</small></div>
+                </div>
+                <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Fecha</th><th>Colaborador</th><th>Departamento</th><th>Primera checada</th><th>Referencia + margen</th><th>Observación</th></tr></thead><tbody id="bioPuntualidadTabla"></tbody></table></div>
+                <div class="biotime-table-pagination mt-3"><div id="bioPuntualidadInfo" class="biotime-table-pagination-info">Sin resultados</div><nav class="biotime-table-pagination-actions"><button type="button" id="bioPuntualidadPrev" class="btn btn-sm btn-outline-secondary" disabled>Anterior</button><span id="bioPuntualidadPagina">1 / 1</span><button type="button" id="bioPuntualidadNext" class="btn btn-sm btn-outline-secondary" disabled>Siguiente</button></nav></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="bioPaneJornadas" data-bio-pane="jornadas" hidden>
+        <div class="card biotime-analytics-panel mb-4">
+            <div class="card-header"><strong>Análisis de registros por jornada calendario</strong></div><div class="card-body">
+            <p class="small text-muted">Agrupación por colaborador y fecha, sin clasificar entrada, comida ni salida. El intervalo entre extremos <strong>no equivale a horas trabajadas</strong>; turnos nocturnos requieren reglas específicas.</p>
+            <div class="row g-3 mb-3"><div class="col-lg-4"><label for="bioJornadasBuscar" class="form-label">Buscar</label><input id="bioJornadasBuscar" class="form-control" type="search" placeholder="Código, nombre o departamento" /></div><div class="col-lg-3"><label for="bioJornadasTamano" class="form-label">Mostrar</label><select id="bioJornadasTamano" class="form-select"><option>10</option><option>15</option><option>20</option><option>25</option><option>50</option></select></div><div class="col-lg-5 d-flex align-items-end"><small id="bioJornadasEstado" aria-live="polite" class="text-muted">Selecciona ambas fechas.</small></div></div>
+            <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Fecha</th><th>Colaborador</th><th>Departamento</th><th>Registros</th><th>Primera</th><th>Última</th><th>Entre extremos</th></tr></thead><tbody id="bioJornadasTabla"></tbody></table></div>
+            <div class="biotime-table-pagination mt-3"><div id="bioJornadasInfo" class="biotime-table-pagination-info">Sin resultados</div><nav class="biotime-table-pagination-actions"><button type="button" id="bioJornadasPrev" class="btn btn-sm btn-outline-secondary" disabled>Anterior</button><span id="bioJornadasPagina">1 / 1</span><button type="button" id="bioJornadasNext" class="btn btn-sm btn-outline-secondary" disabled>Siguiente</button></nav></div>
+        </div>
+    </div>
+</section>
+
+<section id="bioPaneIncidencias" data-bio-pane="incidencias" hidden>
+    <div class="card biotime-analytics-panel mb-4">
+        <div class="card-header"><strong>Observaciones de checadas para revisión de RH</strong></div><div class="card-body">
+        <div class="alert alert-info small" role="note">Son señales de revisión, <strong>no faltas ni incidencias confirmadas</strong>. No se cruzan todavía con vacaciones, permisos, incapacidades, calendarios ni turnos.</div>
+        <div class="row g-3 mb-3"><div class="col-lg-4"><label for="bioIncidenciasBuscar" class="form-label">Buscar</label><input id="bioIncidenciasBuscar" class="form-control" type="search" /></div><div class="col-lg-3"><label for="bioIncidenciasTamano" class="form-label">Mostrar</label><select id="bioIncidenciasTamano" class="form-select"><option>10</option><option>15</option><option>20</option><option>25</option><option>50</option></select></div><div class="col-lg-5 d-flex align-items-end"><small id="bioIncidenciasEstado" aria-live="polite" class="text-muted">Selecciona ambas fechas.</small></div></div>
+        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Fecha</th><th>Colaborador</th><th>Departamento</th><th>Checadas</th><th>Observación técnica</th></tr></thead><tbody id="bioIncidenciasTabla"></tbody></table></div>
+        <div class="biotime-table-pagination mt-3"><div id="bioIncidenciasInfo" class="biotime-table-pagination-info">Sin resultados</div><nav class="biotime-table-pagination-actions"><button type="button" id="bioIncidenciasPrev" class="btn btn-sm btn-outline-secondary" disabled>Anterior</button><span id="bioIncidenciasPagina">1 / 1</span><button type="button" id="bioIncidenciasNext" class="btn btn-sm btn-outline-secondary" disabled>Siguiente</button></nav></div>
     </div>
 </div>
+</section>
+
+<section id="bioPaneReportes" data-bio-pane="reportes" hidden>
+    <div class="card biotime-analytics-panel mb-4">
+        <div class="card-header"><strong>Reportes Excel</strong></div><div class="card-body">
+        <p class="small text-muted">Descargas del periodo seleccionado y filtros globales. Límite de 50,000 filas por archivo. Los datos requieren permisos de RH. Los reportes no establecen cumplimiento laboral.</p>
+        <div class="d-flex flex-wrap gap-3"><button type="button" class="btn btn-outline-primary" id="bioReporteChecadas" disabled><i class="bi bi-file-earmark-excel me-2"></i>Checadas</button><button type="button" class="btn btn-outline-primary" id="bioReporteResumen" disabled><i class="bi bi-file-earmark-excel me-2"></i>Resumen diario</button></div>
+        <p class="small text-muted mt-3 mb-0" id="bioReportesEstado">Selecciona ambas fechas para habilitar las descargas.</p>
+    </div>
+</div>
+</section>
+
+<section id="bioPaneSincronizacion" data-bio-pane="sincronizacion" hidden>
+    <div class="card biotime-analytics-panel mb-4">
+        <div class="card-header"><strong>Auditoría de sincronización</strong></div><div class="card-body">
+        <p class="small text-muted">Las importaciones históricas se inician al seleccionar ambas fechas. Se muestran los registros de auditoría; no se dispara una segunda importación al cambiar de pestaña.</p>
+        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Inicio UTC</th><th>Periodo consultado</th><th>Estado</th><th>Empleados</th><th>Checadas nuevas</th><th>Finalización UTC</th><th>Error</th></tr></thead><tbody id="bioSyncTabla"></tbody></table></div>
+        <div class="biotime-table-pagination mt-3"><div id="bioSyncInfo" class="biotime-table-pagination-info">Sin registros</div><nav class="biotime-table-pagination-actions"><button type="button" id="bioSyncPrev" class="btn btn-sm btn-outline-secondary" disabled>Anterior</button><span id="bioSyncPagina">1 / 1</span><button type="button" id="bioSyncNext" class="btn btn-sm btn-outline-secondary" disabled>Siguiente</button></nav></div>
+        <p class="text-muted small mt-3">El archivado bimestral genera Excel y copias verificadas cuando se configura y habilita. No ejecuta purga automática. La cola histórica actual es en memoria y se reinicia en cada despliegue.</p>
+    </div>
+</div>
+</section>
+</div>
+
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script><script src="~/js/BioTimeAnalytics.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+    <script src="~/js/BioTimeAnalytics.js" asp-append-version="true"></script>
 }

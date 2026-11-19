@@ -1,0 +1,20 @@
+﻿/* Complemento de pestañas sin modificar el CSS principal ya personalizado. */
+.biotime-analytics [data-bio-pane][hidden] {
+    display: none !important;
+}
+
+.biotime-analytics #bioTabs .biotime-analytics-tab {
+    cursor: pointer;
+}
+
+.biotime-analytics #bioTabs {
+    row-gap: .6rem;
+}
+
+.biotime-analytics [data-bio-pane] .table-responsive {
+    max-width: 100%;
+}
+
+.biotime-analytics [data-bio-pane] .alert {
+    border-radius: 12px;
+}

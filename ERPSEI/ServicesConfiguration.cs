@@ -393,19 +393,43 @@ namespace ERPSEI
             // BIOTIME CLOUD 2.0 - INTEGRACIÓN Y SINCRONIZACIÓN
             // =====================================================
 
-            builder.Services.Configure<BioTimeOptions>(
-                builder.Configuration.GetSection("BioTime")
-            );
 
+            // =====================================================
+            // BIOTIME CLOUD 2.0 - INTEGRACIÓN COMPLETA
+            // =====================================================
+
+            // Configuración de BioTime
+            builder.Services.Configure<BioTimeOptions>(
+                builder.Configuration.GetSection("BioTime"));
+
+            // Cliente HTTP para consultar BioTime Cloud
             builder.Services.AddHttpClient<BioTimeApiClient>();
 
+            // Sincronización de empleados y checadas
             builder.Services.AddScoped<BioTimeSyncService>();
 
-            // Cola de sincronizaciones históricas (hasta 365 días)
+            // Cola de sincronización histórica
             builder.Services.AddSingleton<BioTimeHistoricoQueue>();
 
-            // Worker que procesa los periodos en segundo plano
+            // Worker para sincronización de hasta 365 días
             builder.Services.AddHostedService<BioTimeHistoricoWorker>();
+
+            // =====================================================
+            // NUEVOS SERVICIOS - EXCEL Y ARCHIVADO
+            // =====================================================
+
+            // Generación y exportación de archivos Excel
+            builder.Services.AddScoped<BioTimeExcelService>();
+
+            // Configuración del archivado bimestral
+            builder.Services.Configure<BioTimeArchivoOptions>(
+                builder.Configuration.GetSection("BioTimeArchivo"));
+
+            // Servicio encargado de generar los respaldos
+            builder.Services.AddScoped<BioTimeArchivadoService>();
+
+            // Worker para automatizar el archivado bimestral
+            builder.Services.AddHostedService<BioTimeArchivadoBackgroundService>();
 
         }
 
