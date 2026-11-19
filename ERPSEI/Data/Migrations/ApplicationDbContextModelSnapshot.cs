@@ -3055,63 +3055,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9443),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9914),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9459),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9925),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9460),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9926),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9461),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9927),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9462),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9928),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9464),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9929),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9465),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9930),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9466),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9931),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9467),
+                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9931),
                             Nombre = "Otros"
                         });
                 });
@@ -9992,6 +9992,324 @@ namespace ERPSEI.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THDocumento", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("Anio")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DriveId")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("DriveItemId")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("EntregadoAlSolicitante")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("FechaEntregaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaRegistroUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Formato")
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
+
+                    b.Property<string>("HashSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("NombreAlmacenado")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NombreOriginal")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Periodo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("RespuestaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RutaAlmacenamiento")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<long>("SolicitudId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("TamanoBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TipoContenido")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("UsuarioCargaId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RespuestaId");
+
+                    b.HasIndex("UsuarioCargaId");
+
+                    b.HasIndex("DriveId", "DriveItemId");
+
+                    b.HasIndex("SolicitudId", "FechaRegistroUtc");
+
+                    b.ToTable("TH_Documentos", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THFolioConsecutivo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Anio")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaActualizacionUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UltimoConsecutivo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Tipo", "Anio")
+                        .IsUnique();
+
+                    b.ToTable("TH_FolioConsecutivos", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TH_Folios_Anio", "[Anio] >= 2000");
+
+                            t.HasCheckConstraint("CK_TH_Folios_Consecutivo", "[UltimoConsecutivo] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THHistorialSolicitud", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("EjecutadoPorSistema")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("EstatusAnterior")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("EstatusNuevo")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaHoraUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IpOrigen")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RolEjecutor")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long>("SolicitudId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("UsuarioId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.HasIndex("SolicitudId", "FechaHoraUtc");
+
+                    b.ToTable("TH_HistorialSolicitudes", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THRespuesta", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Contenido")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("EsAutomatica")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EsRespuestaFinal")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaRespuestaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("SolicitudId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TipoRespuesta")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("UsuarioRespuestaId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioRespuestaId");
+
+                    b.HasIndex("SolicitudId", "FechaRespuestaUtc");
+
+                    b.ToTable("TH_Respuestas", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THSolicitud", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("AreaSolicitante")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("AtendidoPorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("DiasObjetivoSla")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EmpleadoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Estatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FechaActualizacionUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaCierreUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaEnvioUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaInicioAtencionUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaLimiteSlaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaRespuestaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Folio")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("NombreSolicitante")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("NumeroEmpleado")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("OficinaSolicitante")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("RespondidaAutomaticamente")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SolicitanteUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AtendidoPorUserId");
+
+                    b.HasIndex("Folio")
+                        .IsUnique();
+
+                    b.HasIndex("SolicitanteUserId");
+
+                    b.HasIndex("EmpleadoId", "FechaEnvioUtc");
+
+                    b.HasIndex("Tipo", "Estatus", "FechaEnvioUtc");
+
+                    b.ToTable("TH_Solicitudes", (string)null);
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.TimeIntegration.TimeActividad", b =>
                 {
                     b.Property<long>("Id")
@@ -13561,6 +13879,93 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("Ticket");
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THDocumento", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.TalentoHumano.THRespuesta", "Respuesta")
+                        .WithMany()
+                        .HasForeignKey("RespuestaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ERPSEI.Data.Entities.TalentoHumano.THSolicitud", "Solicitud")
+                        .WithMany("Documentos")
+                        .HasForeignKey("SolicitudId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "UsuarioCarga")
+                        .WithMany()
+                        .HasForeignKey("UsuarioCargaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Respuesta");
+
+                    b.Navigation("Solicitud");
+
+                    b.Navigation("UsuarioCarga");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THHistorialSolicitud", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.TalentoHumano.THSolicitud", "Solicitud")
+                        .WithMany("Historial")
+                        .HasForeignKey("SolicitudId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Solicitud");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THRespuesta", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.TalentoHumano.THSolicitud", "Solicitud")
+                        .WithMany("Respuestas")
+                        .HasForeignKey("SolicitudId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "UsuarioRespuesta")
+                        .WithMany()
+                        .HasForeignKey("UsuarioRespuestaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Solicitud");
+
+                    b.Navigation("UsuarioRespuesta");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THSolicitud", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "AtendidoPor")
+                        .WithMany()
+                        .HasForeignKey("AtendidoPorUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ERPSEI.Data.Entities.Empleados.Empleado", "Empleado")
+                        .WithMany()
+                        .HasForeignKey("EmpleadoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", "Solicitante")
+                        .WithMany()
+                        .HasForeignKey("SolicitanteUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AtendidoPor");
+
+                    b.Navigation("Empleado");
+
+                    b.Navigation("Solicitante");
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.ClienteContrato", b =>
                 {
                     b.HasOne("ERPSEI.Data.Entities.TipoContratos.EmpresaContrato", "EmpresaContrato")
@@ -14300,6 +14705,15 @@ namespace ERPSEI.Data.Migrations
             modelBuilder.Entity("ERPSEI.Data.Entities.ServiceDesk.ServiceTicketType", b =>
                 {
                     b.Navigation("Tickets");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.TalentoHumano.THSolicitud", b =>
+                {
+                    b.Navigation("Documentos");
+
+                    b.Navigation("Historial");
+
+                    b.Navigation("Respuestas");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.TipoContratos.EmpresaContrato", b =>

@@ -32,6 +32,9 @@ using Microsoft.Identity.Client;
 using System.Reflection.Emit;
 using System.Security.Claims;
 using ERPSEI.Data.Entities.BioTime;
+using ERPSEI.Data.Entities.TalentoHumano;
+using ERPSEI.Data.Configurations.TalentoHumano;
+
 
 namespace ERPSEI.Data
 {
@@ -508,6 +511,27 @@ namespace ERPSEI.Data
         public DbSet<TimeTipoClasificacion> TimeTipoClasificaciones
             => Set<TimeTipoClasificacion>();
 
+
+        // =====================================================
+        // TALENTO HUMANO - PORTAL DE SOLICITUDES
+        // =====================================================
+
+        public DbSet<THSolicitud> THSolicitudes
+            => Set<THSolicitud>();
+
+        public DbSet<THFolioConsecutivo> THFolioConsecutivos
+            => Set<THFolioConsecutivo>();
+
+        public DbSet<THHistorialSolicitud> THHistorialSolicitudes
+            => Set<THHistorialSolicitud>();
+
+        public DbSet<THRespuesta> THRespuestas
+            => Set<THRespuesta>();
+
+        public DbSet<THDocumento> THDocumentos
+            => Set<THDocumento>();
+
+
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -575,6 +599,12 @@ namespace ERPSEI.Data
                 e.Entity is not IntranetAuditoria &&
                 e.Entity is not IntranetActividad &&
                 e.Entity is not ServiceTicketHistory &&
+                e.Entity is not THSolicitud &&
+                e.Entity is not THFolioConsecutivo &&
+                e.Entity is not THHistorialSolicitud &&
+                e.Entity is not THRespuesta &&
+                e.Entity is not THDocumento &&
+
                 !EsCambioDeRolUsuario(e) &&
                 (
                     e.State == EntityState.Added ||
@@ -1011,10 +1041,20 @@ namespace ERPSEI.Data
             //Activos Fijos
             BuildActivosFijos(modelBuilder);
 
-            //Vacaciones
+
+            // =====================================================
+            // VACACIONES
+            // =====================================================
             BuildVacaciones(modelBuilder);
 
-            //Ausencias
+            // =====================================================
+            // TALENTO HUMANO - PORTAL DE SOLICITUDES
+            // =====================================================
+            TalentoHumanoModelConfiguration.Configurar(modelBuilder);
+
+            // =====================================================
+            // AUSENCIAS
+            // =====================================================
             BuildAusencias(modelBuilder);
 
             //Contratos
@@ -3898,6 +3938,9 @@ namespace ERPSEI.Data
                 }
             );
         }
+
+
+        
 
         private static void BuildBitacoraEmpresas(
         ModelBuilder modelBuilder)
