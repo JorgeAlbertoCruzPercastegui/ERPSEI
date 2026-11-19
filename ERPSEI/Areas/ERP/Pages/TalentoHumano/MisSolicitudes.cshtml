@@ -1,0 +1,375 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.TalentoHumano.MisSolicitudesModel
+
+@{
+    ViewData["Title"] = "Mis Solicitudes | Talento Humano";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- ENCABEZADO -->
+
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-center gap-3 mb-4">
+
+        <div>
+            <h2 class="mb-1">
+                Portal de Solicitudes de Talento Humano
+            </h2>
+
+            <p class="text-muted mb-0">
+                INTRANET | Trámites y seguimiento para colaboradores
+            </p>
+        </div>
+
+        <span class="badge bg-light text-dark border px-3 py-2">
+            Mis Solicitudes
+        </span>
+
+    </div>
+
+    <!-- MENSAJES -->
+    @if (TempData["TH_Exito"] is string exito)
+    {
+        <div class="alert alert-success alert-dismissible fade show"
+             role="alert">
+
+            <strong>Solicitud enviada.</strong>
+            @exito
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Cerrar">
+            </button>
+        </div>
+    }
+
+    @if (TempData["TH_Error"] is string error)
+    {
+        <div class="alert alert-danger alert-dismissible fade show"
+             role="alert">
+
+            <strong>No se pudo completar la operación.</strong>
+            @error
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Cerrar">
+            </button>
+        </div>
+    }
+
+    <!-- CATÁLOGO DE TRÁMITES -->
+
+    <div class="mb-3">
+        <h4 class="mb-1">¿Qué necesitas solicitar?</h4>
+
+        <p class="text-muted">
+            Selecciona el trámite que deseas enviar
+            al área de Talento Humano.
+        </p>
+    </div>
+
+    <div class="row g-3 mb-5">
+
+        @foreach (var tramite in
+            ERPSEI.Areas.ERP.Pages.TalentoHumano
+                .MisSolicitudesModel.Tramites)
+        {
+            <div class="col-12 col-md-6 col-xl-4">
+
+                <div class="card h-100 shadow-sm">
+
+                    <div class="card-body d-flex flex-column">
+
+                        <h5 class="card-title">
+                            @tramite.Nombre
+                        </h5>
+
+                        <p class="card-text text-muted flex-grow-1">
+                            @tramite.Descripcion
+                        </p>
+
+                        <form method="post"
+                              asp-page-handler="Crear">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="TipoSeleccionado"
+                                   value="@((int)tramite.Tipo)" />
+
+                            <button type="submit"
+                                    class="btn btn-primary w-100">
+                                Solicitar trámite
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+    <!-- SECCIÓN DE SOLICITUDES -->
+
+    <div class="card shadow-sm">
+
+        <div class="card-header bg-white py-3">
+
+            <div class="d-flex flex-wrap
+                justify-content-between
+                align-items-center gap-2">
+
+                <div>
+                    <h4 class="mb-1">Mis Solicitudes</h4>
+
+                    <small class="text-muted">
+                        Consulta el estado de los trámites que has enviado.
+                    </small>
+                </div>
+
+                <span class="badge bg-primary">
+                    @Model.TotalMostradas registros mostrados
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <!-- FILTROS -->
+
+            <form method="get" class="row g-3 mb-4">
+
+                <div class="col-12 col-lg-4">
+
+                    <label asp-for="BuscarFolio"
+                           class="form-label">
+                        Buscar por folio
+                    </label>
+
+                    <input asp-for="BuscarFolio"
+                           class="form-control"
+                           maxlength="40"
+                           placeholder="Ej. SOL-CONST-2026-0001" />
+
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+
+                    <label asp-for="TipoFiltro"
+                           class="form-label">
+                        Tipo de trámite
+                    </label>
+
+                    <select asp-for="TipoFiltro"
+                            class="form-select">
+
+                        <option value="">Todos</option>
+
+                        @foreach (var tramite in
+                            ERPSEI.Areas.ERP.Pages.TalentoHumano
+                                .MisSolicitudesModel.Tramites)
+                        {
+                            <option value="@((int)tramite.Tipo)">
+                                @tramite.Nombre
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+
+                    <label asp-for="EstatusFiltro"
+                           class="form-label">
+                        Estatus
+                    </label>
+
+                    <select asp-for="EstatusFiltro"
+                            class="form-select">
+
+                        <option value="">Todos</option>
+                        <option value="1">Enviada</option>
+                        <option value="2">En proceso</option>
+                        <option value="3">Respondida</option>
+                        <option value="4">Cerrada</option>
+                        <option value="5">Rechazada</option>
+                        <option value="6">Cancelada</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-12 col-lg-2 d-flex align-items-end gap-2">
+
+                    <button type="submit"
+                            class="btn btn-primary flex-fill">
+                        Filtrar
+                    </button>
+
+                    <a asp-page="./MisSolicitudes"
+                           class="btn btn-outline-secondary">
+                        Limpiar
+                    </a>
+
+                </div>
+
+            </form>
+
+            <!-- TABLA -->
+            @if (Model.Solicitudes.Count == 0)
+            {
+                <div class="text-center py-5">
+
+                    <h5 class="mb-2">
+                        No hay solicitudes para mostrar
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Envía un trámite o modifica los filtros de búsqueda.
+                    </p>
+
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>Folio</th>
+                                <th>Trámite</th>
+                                <th>Fecha de envío (UTC)</th>
+                                <th>Estatus</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var solicitud in Model.Solicitudes)
+                            {
+                                var nombreTramite =
+                                    ERPSEI.Areas.ERP.Pages.TalentoHumano
+                                        .MisSolicitudesModel.Tramites
+                                        .FirstOrDefault(x =>
+                                            x.Tipo == solicitud.Tipo)?.Nombre
+                                    ?? solicitud.Tipo.ToString();
+
+                                var estatusTexto =
+                                    solicitud.Estatus switch
+                                    {
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Enviada
+                                            => "Enviada",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.EnProceso
+                                            => "En proceso",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Respondida
+                                            => "Respondida",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Cerrada
+                                            => "Cerrada",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Rechazada
+                                            => "Rechazada",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Cancelada
+                                            => "Cancelada",
+
+                                        _ => "Sin clasificar"
+                                    };
+
+                                var claseEstatus =
+                                    solicitud.Estatus switch
+                                    {
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Respondida
+                                            => "bg-success",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Cerrada
+                                            => "bg-secondary",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Rechazada
+                                            => "bg-danger",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.Cancelada
+                                            => "bg-secondary",
+
+                                        ERPSEI.Data.Entities.TalentoHumano
+                                            .EstatusSolicitudTH.EnProceso
+                                            => "bg-info text-dark",
+
+                                        _ => "bg-primary"
+                                    };
+
+                                <tr>
+
+                                    <td>
+                                        <strong>
+                                            @solicitud.Folio
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        @nombreTramite
+                                    </td>
+
+                                    <td>
+                                        @solicitud.FechaEnvioUtc.ToString(
+                                            "dd/MM/yyyy HH:mm")
+                                    </td>
+
+                                    <td>
+                                        <span class="badge @claseEstatus">
+                                            @estatusTexto
+                                        </span>
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="small text-muted mt-2">
+                    Se muestran hasta las 100 solicitudes más recientes
+                    que coinciden con los filtros.
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+    <p class="text-muted small mt-3">
+        Los trámites enviados quedarán pendientes de revisión
+        y atención por el área de Talento Humano.
+        Los documentos y respuestas estarán disponibles
+        en una siguiente etapa del portal.
+    </p>
+
+</div>
