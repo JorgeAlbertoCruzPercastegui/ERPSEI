@@ -235,8 +235,9 @@
         "/Perfiles")
     ||
     EnSeccion(
-        "ERP",
-        "/Time/Analytics");
+    "ERP",
+    "/Time/Analytics",
+    "/BioTime/Analytics");
 
     bool esPaginaInicio = paginaActual.Equals("/Index", StringComparison.OrdinalIgnoreCase);
 
@@ -727,6 +728,11 @@
     bool mostrarAnaliticaTimeMenu =
     esAdministrador ||
     esAdministradorTH;
+
+    // Analítica BioTime: Master, Administrador y Administrador TH
+    bool mostrarAnaliticaBioTimeMenu =
+        esAdministrador ||
+        esAdministradorTH;
 
     // Por si después quieres controlar empresas/activos con permisos
     bool mostrarEmpresasMenu =
@@ -1435,6 +1441,7 @@
                                     <a class="quick-link quick-dd-toggle @(menuRecursosHumanos ? "menu-activo" : "")" href="#" onclick="return false;"><span class="quick-link-text">Recursos Humanos</span></a>
                                     <div class="quick-dd-menu quick-dd-menu-wide">
 
+                                        
                                         @if (mostrarAnaliticaTimeMenu)
                                         {
                                             <a class="quick-dd-item"
@@ -1443,6 +1450,16 @@
                                                 Analítica TIME
                                             </a>
                                         }
+
+                                        @if (mostrarAnaliticaBioTimeMenu)
+                                        {
+                                            <a class="quick-dd-item"
+                                                   asp-area="ERP"
+                                                   asp-page="/BioTime/Analytics/Index">
+                                                Analítica BioTime
+                                            </a>
+                                        }
+
 
                                         @if (mostrarBannersMenu)
                                         {

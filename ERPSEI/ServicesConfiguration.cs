@@ -1,48 +1,49 @@
-﻿using ERPSEI.Authorization;
+﻿using Azure.Identity;
+using ERPSEI.Authorization;
 using ERPSEI.Data;
+using ERPSEI.Data.Entities.ActivosFijos;
+using ERPSEI.Data.Entities.Clientes;
+using ERPSEI.Data.Entities.Conciliaciones;
+using ERPSEI.Data.Entities.Documentos;
 using ERPSEI.Data.Entities.Empleados;
 using ERPSEI.Data.Entities.Empresas;
-using ERPSEI.Data.Entities.Conciliaciones;
-using ERPSEI.Data.Entities.Clientes;
-using ERPSEI.Data.Entities.ActivosFijos;
 using ERPSEI.Data.Entities.SAT.Catalogos;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers;
-using ERPSEI.Data.Managers.Empleados;
 using ERPSEI.Data.Managers.ActivosFijos;
-using ERPSEI.Data.Managers.Vacaciones;
-using ERPSEI.Data.Managers.Empresas;
-using ERPSEI.Data.Managers.Reportes;
+using ERPSEI.Data.Managers.AdministradorPolizas;
+using ERPSEI.Data.Managers.Clientes;
 using ERPSEI.Data.Managers.Conciliaciones;
+using ERPSEI.Data.Managers.Cuentas;
+using ERPSEI.Data.Managers.Documentos;
+using ERPSEI.Data.Managers.Empleados;
+using ERPSEI.Data.Managers.Empresas;
+using ERPSEI.Data.Managers.Intranet;
+using ERPSEI.Data.Managers.Polizas;
+using ERPSEI.Data.Managers.Reportes;
 using ERPSEI.Data.Managers.SAT;
 using ERPSEI.Data.Managers.SAT.Catalogos;
+using ERPSEI.Data.Managers.SAT.cfdiv40;
+using ERPSEI.Data.Managers.TipoContratos;
 using ERPSEI.Data.Managers.Usuarios;
+using ERPSEI.Data.Managers.Vacaciones;
 using ERPSEI.Email;
 using ERPSEI.Resources;
+using ERPSEI.Services.Adquisiciones;
+using ERPSEI.Services.BioTimeIntegration;
+using ERPSEI.Services.Compliance;
+using ERPSEI.Services.Empresas;
+using ERPSEI.Services.TimeIntegration;
 using ERPSEI.TokenProviders;
 using ERPSEI.Utils;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
-using System.Globalization;
-using System.Reflection;
-using ERPSEI.Data.Managers.SAT.cfdiv40;
-using ERPSEI.Data.Managers.Clientes;
-using ERPSEI.Data.Managers.Cuentas;
-using ERPSEI.Data.Managers.AdministradorPolizas;
-using ERPSEI.Data.Managers.Polizas;
-using Microsoft.AspNetCore.Http.Features;
-using ERPSEI.Data.Managers.TipoContratos;
-using ERPSEI.Data.Managers.Documentos;
-using ERPSEI.Data.Entities.Documentos;
-using ERPSEI.Data.Managers.Intranet;
-using Azure.Identity;
 using Microsoft.Graph;
-using ERPSEI.Services.Compliance;
-using ERPSEI.Services.Adquisiciones;
-using ERPSEI.Services.Empresas;
-using ERPSEI.Services.TimeIntegration;
+using System.Globalization;
 using System.Net;
+using System.Reflection;
 
 namespace ERPSEI
 {
@@ -386,6 +387,26 @@ namespace ERPSEI
 
             // TIME Integration API
             ConfigureDITimeIntegration(builder);
+
+
+            // =====================================================
+            // BIOTIME CLOUD 2.0 - INTEGRACIÓN Y SINCRONIZACIÓN
+            // =====================================================
+
+            builder.Services.Configure<BioTimeOptions>(
+                builder.Configuration.GetSection("BioTime")
+            );
+
+            builder.Services.AddHttpClient<BioTimeApiClient>();
+
+            builder.Services.AddScoped<BioTimeSyncService>();
+
+            // Cola de sincronizaciones históricas (hasta 365 días)
+            builder.Services.AddSingleton<BioTimeHistoricoQueue>();
+
+            // Worker que procesa los periodos en segundo plano
+            builder.Services.AddHostedService<BioTimeHistoricoWorker>();
+
         }
 
         /*private static void ConfigureDICompliance(

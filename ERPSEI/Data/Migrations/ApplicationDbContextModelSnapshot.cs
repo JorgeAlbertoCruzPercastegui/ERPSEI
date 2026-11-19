@@ -2056,6 +2056,114 @@ namespace ERPSEI.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.BioTime.BioTimeChecada", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("EmpCode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime>("FechaHora")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PunchState")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("SincronizadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TerminalSn")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("VerifyType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpCode");
+
+                    b.HasIndex("FechaHora", "EmpCode");
+
+                    b.ToTable("BioTimeChecadas", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.BioTime.BioTimeEmpleado", b =>
+                {
+                    b.Property<string>("EmpCode")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime>("ActualizadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Apellidos")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Departamento")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Nombre")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Puesto")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("EmpCode");
+
+                    b.ToTable("BioTimeEmpleados", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.BioTime.BioTimeSincronizacion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("ChecadasInsertadas")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EmpleadosProcesados")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("FechaFinConsulta")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaInicioConsulta")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FinUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("InicioUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InicioUtc");
+
+                    b.ToTable("BioTimeSincronizaciones", (string)null);
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.Clientes.Cliente", b =>
                 {
                     b.Property<int>("Id")
@@ -2947,63 +3055,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5452),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9443),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5463),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9459),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5464),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9460),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5465),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9461),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5465),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9462),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5466),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9464),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5467),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9465),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5468),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9466),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 12, 13, 13, 48, 669, DateTimeKind.Local).AddTicks(5469),
+                            FechaCreacion = new DateTime(2026, 11, 18, 18, 8, 58, 633, DateTimeKind.Local).AddTicks(9467),
                             Nombre = "Otros"
                         });
                 });

@@ -1,0 +1,75 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.BioTime.Analytics.IndexModel
+@{
+    ViewData["Title"] = "Analítica BioTime";
+    ViewData["BodyClass"] = "module-main-theme catalogo-page biotime-analytics-page";
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/BioTimeAnalytics.css" asp-append-version="true" />
+}
+<div class="container-fluid biotime-analytics py-4">
+    <div class="d-none">@Html.AntiForgeryToken()</div>
+    <div class="biotime-analytics-header mb-4">
+        <div><span class="biotime-analytics-eyebrow">Recursos Humanos</span><h2 class="biotime-analytics-title"><i class="bi bi-clock-history me-2"></i>Analítica BioTime</h2><p class="biotime-analytics-subtitle mb-0">Monitoreo ejecutivo de checadas y asistencia biométrica.</p></div>
+        <div class="biotime-analytics-status"><span class="biotime-analytics-status-dot" id="bioDot"></span><div><small>Estado de datos</small><strong id="bioEstado">Selecciona fecha inicial y fecha final</strong></div></div>
+    </div>
+    <div class="biotime-analytics-tabs mb-4"><button class="biotime-analytics-tab active" type="button">Dashboard de asistencia</button><button class="biotime-analytics-tab" type="button" disabled>Indicadores de puntualidad (próximamente)</button></div>
+    <div class="card biotime-analytics-filter-card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioInicio">Fecha inicial</label><input class="form-control" type="date" id="bioInicio" /></div>
+                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioFin">Fecha final</label><input class="form-control" type="date" id="bioFin" /></div>
+                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioDept">Departamento</label><select id="bioDept" class="form-select"><option value="">Todos los departamentos</option></select></div>
+                <div class="col-xl-3 col-md-6"><label class="form-label" for="bioEmpleado">Colaborador</label><select id="bioEmpleado" class="form-select"><option value="">Todos los colaboradores</option></select></div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4 col-md-6"><div class="biotime-kpi-card"><span>Checadas registradas</span><strong id="bioTotal">—</strong><small>Periodo seleccionado</small></div></div>
+        <div class="col-lg-4 col-md-6"><div class="biotime-kpi-card"><span>Colaboradores con actividad</span><strong id="bioPersonas">—</strong><small>Con al menos una checada</small></div></div>
+        <div class="col-lg-4 col-md-12"><div class="biotime-kpi-card"><span>Última sincronización</span><strong class="biotime-kpi-small" id="bioSync">—</strong><small id="bioSyncDetalle">Sin información todavía</small></div></div>
+    </div>
+    <div class="card biotime-analytics-panel mb-4"><div class="card-header">Tendencia de checadas</div><div class="card-body"><div style="height:300px"><canvas id="bioChart"></canvas></div></div></div>
+    <div class="card biotime-analytics-panel">
+        <div class="card-header d-flex flex-wrap align-items-center gap-2">
+            <strong>Detalle de checadas</strong>
+            <small class="text-muted fw-normal">Los movimientos aún no están clasificados como entrada o salida</small>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-lg-5 col-md-7">
+                    <label for="bioBuscar" class="form-label">Buscar registro</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input id="bioBuscar" type="search" class="form-control" placeholder="Nombre, código, departamento o dispositivo" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="col-lg-7 col-md-5 text-md-end">
+                    <small class="text-muted" id="bioTablaEstado" aria-live="polite">Selecciona ambas fechas para consultar información.</small>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th>Colaborador</th><th>Departamento</th><th>Fecha</th><th>Hora</th><th>Estado original</th><th>Dispositivo</th></tr></thead>
+                    <tbody id="bioTabla"><tr><td colspan="6" class="text-center text-muted py-4">Selecciona ambas fechas para consultar información.</td></tr></tbody>
+                </table>
+            </div>
+            <div class="biotime-table-pagination mt-3">
+                <div class="biotime-table-pagination-left">
+                    <span>Mostrar</span>
+                    <select class="form-select form-select-sm" id="bioTamano" aria-label="Registros por página"><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="50">50</option></select>
+                    <span>registros</span>
+                </div>
+                <div class="biotime-table-pagination-info" id="bioInfoPagina" aria-live="polite">0 registros</div>
+                <nav class="biotime-table-pagination-actions" aria-label="Paginación de checadas">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="bioAnterior" aria-label="Página anterior" disabled><i class="bi bi-chevron-left"></i></button>
+                    <span id="bioNumeroPagina" class="biotime-table-page">1 / 1</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="bioSiguiente" aria-label="Página siguiente" disabled><i class="bi bi-chevron-right"></i></button>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script><script src="~/js/BioTimeAnalytics.js" asp-append-version="true"></script>
+}

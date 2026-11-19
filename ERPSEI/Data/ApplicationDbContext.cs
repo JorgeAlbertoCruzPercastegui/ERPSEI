@@ -31,6 +31,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Identity.Client;
 using System.Reflection.Emit;
 using System.Security.Claims;
+using ERPSEI.Data.Entities.BioTime;
 
 namespace ERPSEI.Data
 {
@@ -487,6 +488,19 @@ namespace ERPSEI.Data
 
         public DbSet<TimeGrupo> TimeGrupos
             => Set<TimeGrupo>();
+
+        // =====================================================
+        // BIOTIME CLOUD 2.0 - INTEGRACIÓN
+        // =====================================================
+
+        public DbSet<BioTimeEmpleado> BioTimeEmpleados
+            => Set<BioTimeEmpleado>();
+
+        public DbSet<BioTimeChecada> BioTimeChecadas
+            => Set<BioTimeChecada>();
+
+        public DbSet<BioTimeSincronizacion> BioTimeSincronizaciones
+            => Set<BioTimeSincronizacion>();
 
         public DbSet<TimeEmpresaClasificacion> TimeEmpresaClasificaciones
             => Set<TimeEmpresaClasificacion>();
@@ -1148,6 +1162,79 @@ namespace ERPSEI.Data
                         "[Tipo] IN ('Administrativa','Back Office','Clientes','Operativa')"
                     )
                 );
+            });
+
+            // =====================================================
+            // BIOTIME CLOUD 2.0 - CONFIGURACIÓN DE ENTIDADES
+            // =====================================================
+
+            // EMPLEADOS
+            modelBuilder.Entity<BioTimeEmpleado>(entity =>
+            {
+                entity.ToTable("BioTimeEmpleados");
+
+                entity.HasKey(x => x.EmpCode);
+
+                entity.Property(x => x.EmpCode)
+                    .HasMaxLength(40)
+                    .IsRequired();
+
+                entity.Property(x => x.Nombre)
+                    .HasMaxLength(200);
+
+                entity.Property(x => x.Apellidos)
+                    .HasMaxLength(200);
+
+                entity.Property(x => x.Departamento)
+                    .HasMaxLength(250);
+
+                entity.Property(x => x.Puesto)
+                    .HasMaxLength(250);
+            });
+
+            // CHECADAS
+            modelBuilder.Entity<BioTimeChecada>(entity =>
+            {
+                entity.ToTable("BioTimeChecadas");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Id)
+                    .ValueGeneratedNever();
+
+                entity.Property(x => x.EmpCode)
+                    .HasMaxLength(40)
+                    .IsRequired();
+
+                entity.Property(x => x.PunchState)
+                    .HasMaxLength(20);
+
+                entity.Property(x => x.TerminalSn)
+                    .HasMaxLength(100);
+
+                entity.HasIndex(x => new
+                {
+                    x.FechaHora,
+                    x.EmpCode
+                });
+
+                entity.HasIndex(x => x.EmpCode);
+            });
+
+            // HISTORIAL DE SINCRONIZACIÓN
+            modelBuilder.Entity<BioTimeSincronizacion>(entity =>
+            {
+                entity.ToTable("BioTimeSincronizaciones");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Estado)
+                    .HasMaxLength(30);
+
+                entity.Property(x => x.Error)
+                    .HasMaxLength(250);
+
+                entity.HasIndex(x => x.InicioUtc);
             });
         }
 
