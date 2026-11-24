@@ -5,6 +5,7 @@
 @using ERPSEI.Data.Entities.Intranet
 @using Microsoft.EntityFrameworkCore
 @using ERPSEI.Data.Entities.Vacaciones
+@inject ERPSEI.Services.RelojChecador.RelojAccesoService RelojAcceso
 
 @inject IViewLocalizer Localizer
 @inject SignInManager<AppUser> SignInManager
@@ -910,8 +911,25 @@
 
                     <div class="header-right-tools">
 
-                        @if (SignInManager.IsSignedIn(User))
+                        
+                        @if (SignInManager.IsSignedIn(User)
+                            && await RelojAcceso.TieneAccesoAsync(User))
                         {
+                            <a asp-area="ERP"
+                                   asp-page="/RelojChecador/Index"
+                                   class="quick-clock-btn"
+                                   title="Reloj Checador"
+                                   aria-label="Abrir Mi Reloj Checador"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="bottom"
+                                   data-bs-title="Reloj Checador">
+
+                                <i class="bi bi-clock-history"
+                                   aria-hidden="true"></i>
+                            </a>
+                        
+                        }
+
                             <div class="quick-notifications dropdown">
 
                                 <button class="quick-notification-btn @(totalNotificacionesNoLeidas > 0 ? "has-alert" : "")"
@@ -1106,7 +1124,7 @@
                                 </div>
 
                             </div>
-                        }
+                        
 
                         @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
                         {

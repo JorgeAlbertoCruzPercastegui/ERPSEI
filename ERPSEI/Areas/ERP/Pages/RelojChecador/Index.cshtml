@@ -1,0 +1,246 @@
+﻿@page
+@model ERPSEI.Areas.ERP.Pages.RelojChecador.IndexModel
+
+@{
+    ViewData["Title"] = "Mi Reloj Checador";
+    ViewData["BodyClass"] =
+        "module-main-theme catalogo-page rc-page";
+}
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/css/RelojChecador.css"
+          asp-append-version="true" />
+}
+
+<div class="container rc-container">
+
+    @Html.AntiForgeryToken()
+
+    <div class="rc-heading mb-4">
+        <div>
+            <span class="rc-eyebrow">MI ESPACIO DIGITAL</span>
+            <h2>
+                <i class="bi bi-clock-history me-2"></i>
+                Mi Reloj Checador
+            </h2>
+            <p>
+                Consulta tu jornada y verifica los requisitos
+                de ubicación e identidad.
+            </p>
+        </div>
+
+        <span id="rcEstadoJornada"
+              class="rc-status">
+            Cargando...
+        </span>
+    </div>
+
+    <div id="rcAlerta"
+         class="alert alert-info"
+         role="status"
+         aria-live="polite">
+        Consultando tu información...
+    </div>
+
+    <div class="row g-4">
+
+        <div class="col-lg-7">
+
+            <div class="rc-timer-card mb-4">
+                <span>Tiempo de jornada</span>
+
+                <div id="rcCronometro"
+                     class="rc-timer"
+                     aria-live="off">
+                    00:00:00
+                </div>
+
+                <p id="rcTiempoDescripcion">
+                    Sin jornada activa
+                </p>
+
+                <div class="rc-progress">
+                    <div id="rcBarra"
+                         class="rc-progress-value"></div>
+                </div>
+
+                <small id="rcMeta">
+                    Meta de referencia: 8 horas
+                </small>
+            </div>
+
+            <div class="card rc-card mb-4">
+                <div class="card-body">
+
+                    <h5>
+                        <i class="bi bi-person-badge me-2"></i>
+                        Información del colaborador
+                    </h5>
+
+                    <div class="rc-info-row">
+                        <span>Colaborador</span>
+                        <strong id="rcNombre">—</strong>
+                    </div>
+
+                    <div class="rc-info-row">
+                        <span>Oficina asignada</span>
+                        <strong id="rcOficina">—</strong>
+                    </div>
+
+                    <div class="rc-info-row">
+                        <span>Siguiente movimiento</span>
+                        <strong id="rcSiguiente">Entrada</strong>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="card rc-card">
+                <div class="card-body">
+
+                    <h5 class="mb-3">
+                        Validaciones requeridas
+                    </h5>
+
+                    <div class="rc-validation-item">
+                        <div>
+                            <i class="bi bi-geo-alt"></i>
+                            <strong>Geolocalización</strong>
+                            <small id="rcGpsDetalle">
+                                No verificada
+                            </small>
+                        </div>
+
+                        <span id="rcGpsBadge"
+                              class="badge bg-secondary">
+                            Pendiente
+                        </span>
+                    </div>
+
+                    <button id="rcBtnGps"
+                            type="button"
+                            class="btn btn-outline-primary w-100 mb-3">
+                        <i class="bi bi-crosshair me-2"></i>
+                        Verificar mi ubicación
+                    </button>
+
+                    <div class="rc-validation-item">
+                        <div>
+                            <i class="bi bi-camera"></i>
+                            <strong>Cámara</strong>
+                            <small id="rcCamaraDetalle">
+                                No verificada
+                            </small>
+                        </div>
+
+                        <span id="rcCamaraBadge"
+                              class="badge bg-secondary">
+                            Pendiente
+                        </span>
+                    </div>
+
+                    <button id="rcBtnCamara"
+                            type="button"
+                            class="btn btn-outline-primary w-100 mb-3">
+                        <i class="bi bi-camera-video me-2"></i>
+                        Activar cámara
+                    </button>
+
+                    <div id="rcCamaraContenedor"
+                         class="rc-camera-container"
+                         hidden>
+
+                        <video id="rcVideo"
+                               autoplay
+                               playsinline
+                               muted></video>
+
+                        <button id="rcBtnFoto"
+                                type="button"
+                                class="btn btn-warning w-100 mt-2">
+                            Capturar fotografía
+                        </button>
+
+                        <canvas id="rcCanvas" hidden></canvas>
+
+                        <img id="rcVistaFoto"
+                             alt="Vista previa de la fotografía"
+                             hidden />
+                    </div>
+
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="bi bi-shield-lock me-2"></i>
+                        <strong>Pruebas en desarrollo.</strong>
+                        Cada movimiento requiere una nueva fotografía
+                        y una ubicación GPS actualizada.
+                    </div>
+
+                    <button id="rcBtnRegistrar"
+                            type="button"
+                            class="btn rc-submit w-100 mt-3"
+                            disabled>
+                        <i class="bi bi-clock-history me-2"></i>
+                        Registrar entrada
+                    </button>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-5">
+
+            <div class="card rc-card">
+                <div class="card-body">
+
+                    <h5 class="mb-3">
+                        <i class="bi bi-list-check me-2"></i>
+                        Movimientos de jornada
+                    </h5>
+
+                    <div id="rcMovimientos">
+
+                        <div class="rc-movement">
+                            <i class="bi bi-circle"></i>
+                            <span>Entrada</span>
+                            <strong>—</strong>
+                        </div>
+
+                        <div class="rc-movement">
+                            <i class="bi bi-circle"></i>
+                            <span>Salida a comer</span>
+                            <strong>—</strong>
+                        </div>
+
+                        <div class="rc-movement">
+                            <i class="bi bi-circle"></i>
+                            <span>Regreso de comer</span>
+                            <strong>—</strong>
+                        </div>
+
+                        <div class="rc-movement">
+                            <i class="bi bi-circle"></i>
+                            <span>Salida</span>
+                            <strong>—</strong>
+                        </div>
+
+                    </div>
+
+                    <p class="text-muted small mt-3 mb-0">
+                        Los movimientos se mostrarán desde
+                        SQL Server. Las horas del navegador
+                        no sustituyen las del servidor.
+                    </p>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/RelojChecador.js"
+            asp-append-version="true"></script>
+}

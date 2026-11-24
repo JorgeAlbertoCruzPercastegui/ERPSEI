@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
 using System.Drawing;
+using ERPSEI.Services.RelojChecador;
+using System.Data;
 
 namespace ERPSEI.Areas.ERP.Pages
 {
@@ -19,14 +21,20 @@ namespace ERPSEI.Areas.ERP.Pages
         private readonly ApplicationDbContext _db;
         private readonly AppUserManager _userManager;
         private readonly IEmailSender _emailSender;
+        private readonly RelojAutorizacionesAusenciasService _relojHO;
 
-
-        public AusenciasModel(ApplicationDbContext db, AppUserManager userManager, IEmailSender emailSender)
+        public AusenciasModel(
+            ApplicationDbContext db,
+            AppUserManager userManager,
+            IEmailSender emailSender,
+            RelojAutorizacionesAusenciasService relojHO)
         {
             _db = db;
             _userManager = userManager;
             _emailSender = emailSender;
+            _relojHO = relojHO;
         }
+
 
 
         public List<SelectListItem> TiposAusencia { get; set; } = new();
@@ -924,61 +932,225 @@ namespace ERPSEI.Areas.ERP.Pages
             });
         }
 
+
         public async Task<JsonResult> OnPostEditarAsync()
         {
             try
             {
+                // =====================================================
+                // 1. VALIDAR PERMISOS Y USUARIO
+                // =====================================================
+
                 await ConfigurarPermisosAsync();
 
                 var user = await _userManager.GetUserAsync(User);
-                if (user == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
 
-                var validacionComentario = ValidarComentario(EditarInput.Comentario);
+                if (user == null)
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Usuario no encontrado."
+                    });
+                }
+
+                // =====================================================
+                // 2. VALIDAR COMENTARIO
+                // =====================================================
+
+                var validacionComentario =
+                    ValidarComentario(EditarInput.Comentario);
 
                 if (validacionComentario != null)
+                {
                     return validacionComentario;
+                }
 
-                var validacionFechas =
-                    ValidarRangoFechas(
-                        EditarInput.FechaInicio,
-                        EditarInput.FechaFin
-                    );
+                // =====================================================
+                // 3. VALIDAR FECHAS
+                // =====================================================
+
+                var validacionFechas = ValidarRangoFechas(
+                    EditarInput.FechaInicio,
+                    EditarInput.FechaFin
+                );
 
                 if (validacionFechas != null)
+                {
                     return validacionFechas;
+                }
+
+                // =====================================================
+                // 4. OBTENER REGISTRO
+                // =====================================================
 
                 var item = await _db.Ausencias
-                    .FirstOrDefaultAsync(x => x.Id == EditarInput.Id);
+                    .FirstOrDefaultAsync(x =>
+                        x.Id == EditarInput.Id);
 
                 if (item == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "Registro no encontrado." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Registro no encontrado."
+                    });
+                }
+
+                // =====================================================
+                // 5. PROTECCIÓN HOME OFFICE - RELOJ CHECADOR
+                // =====================================================
+
+                const int tipoHomeOfficeId = 14;
+
+                bool esSolicitudHO =
+                    item.TipoAusenciaId == tipoHomeOfficeId &&
+                    item.Categoria == "SolicitudPermiso";
+
+                // No permitir modificaciones cuando el jefe
+                // ya autorizó la solicitud Home Office.
+                //
+                // Esto evita cambios de fechas, tipo de permiso
+                // o empleado que pudieran dejar una autorización
+                // inconsistente en el Reloj Checador.
+
+                if (esSolicitudHO &&
+                    item.EstadoJefeDirecto == "Aprobado")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje =
+                            "Esta solicitud Home Office ya fue aprobada " +
+                            "por el jefe directo y no puede modificarse. " +
+                            "Para realizar cambios, solicita su revisión " +
+                            "a Talento Humano."
+                    });
+                }
+
+                // Protección adicional:
+                // impedir cambios cuando ya existe una autorización
+                // de reloj relacionada con esta solicitud.
+                //
+                // También cubre inconsistencias de estado.
+
+                bool tieneAutorizacionReloj = await _db
+                    .RC_AutorizacionesModalidades
+                    .AsNoTracking()
+                    .AnyAsync(x => x.AusenciaId == item.Id);
+
+                if (tieneAutorizacionReloj)
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje =
+                            "Este registro tiene una autorización " +
+                            "Home Office vinculada al Reloj Checador. " +
+                            "No puede modificarse directamente."
+                    });
+                }
+
+                // =====================================================
+                // 6. VALIDAR PERMISOS DE EDICIÓN
+                // =====================================================
 
                 if (!PuedeVerTodasAusencias)
                 {
-                    if (user.EmpleadoId == null || item.EmpleadoId != user.EmpleadoId)
-                        return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para editar este registro." });
+                    if (user.EmpleadoId == null ||
+                        item.EmpleadoId != user.EmpleadoId)
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                "No tienes permisos para editar este registro."
+                        });
+                    }
 
                     if (item.EstadoJefeDirecto != "Pendiente")
-                        return new JsonResult(new { tieneError = true, mensaje = "Solo puedes editar registros pendientes." });
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                "Solo puedes editar registros pendientes."
+                        });
+                    }
                 }
 
-                item.TipoAusenciaId = EditarInput.TipoAusenciaId;
-                item.TipoIncapacidadId = EditarInput.TipoIncapacidadId;
-                item.FechaInicio = EditarInput.FechaInicio;
-                item.FechaFin = EditarInput.FechaFin;
-                item.NumeroFolio = EditarInput.NumeroFolio;
-                item.Dias = EditarInput.Dias;
-                item.FechaAplicacion = EditarInput.FechaAplicacion;
-                item.Suplencia = EditarInput.Suplencia;
-                item.Comentario = EditarInput.Comentario;
+                // =====================================================
+                // 7. ACTUALIZAR INFORMACIÓN
+                // =====================================================
 
-                if (!string.IsNullOrWhiteSpace(EditarInput.HoraInicio) &&
-                    !string.IsNullOrWhiteSpace(EditarInput.HoraTermino))
+                item.TipoAusenciaId =
+                    EditarInput.TipoAusenciaId;
+
+                item.TipoIncapacidadId =
+                    EditarInput.TipoIncapacidadId;
+
+                item.FechaInicio =
+                    EditarInput.FechaInicio;
+
+                item.FechaFin =
+                    EditarInput.FechaFin;
+
+                item.NumeroFolio =
+                    EditarInput.NumeroFolio;
+
+                item.Dias =
+                    EditarInput.Dias;
+
+                item.FechaAplicacion =
+                    EditarInput.FechaAplicacion;
+
+                item.Suplencia =
+                    EditarInput.Suplencia;
+
+                item.Comentario =
+                    EditarInput.Comentario;
+
+                // =====================================================
+                // 8. VALIDAR MODALIDAD DE CAPTURA
+                // =====================================================
+
+                if (!string.IsNullOrWhiteSpace(
+                        EditarInput.HoraInicio) &&
+                    !string.IsNullOrWhiteSpace(
+                        EditarInput.HoraTermino))
                 {
-                    item.HoraInicio = TimeSpan.Parse(EditarInput.HoraInicio);
-                    item.HoraTermino = TimeSpan.Parse(EditarInput.HoraTermino);
-                    item.Horas = Convert.ToDecimal((item.HoraTermino.Value - item.HoraInicio.Value).TotalHours);
+                    if (!TimeSpan.TryParse(
+                            EditarInput.HoraInicio,
+                            out var horaInicio) ||
+                        !TimeSpan.TryParse(
+                            EditarInput.HoraTermino,
+                            out var horaTermino))
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                "El formato de las horas no es válido."
+                        });
+                    }
+
+                    if (horaTermino <= horaInicio)
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                "La hora de término debe ser " +
+                                "posterior a la hora de inicio."
+                        });
+                    }
+
+                    item.HoraInicio = horaInicio;
+                    item.HoraTermino = horaTermino;
+
+                    item.Horas = Convert.ToDecimal(
+                        (horaTermino - horaInicio).TotalHours);
+
                     item.TipoCaptura = "Horas";
                     item.Dias = null;
                 }
@@ -987,21 +1159,48 @@ namespace ERPSEI.Areas.ERP.Pages
                     item.HoraInicio = null;
                     item.HoraTermino = null;
                     item.Horas = null;
+
                     item.TipoCaptura = "Dias";
                 }
 
+                // Home Office solamente permite días completos.
+                if (item.TipoAusenciaId == tipoHomeOfficeId &&
+                    item.Categoria == "SolicitudPermiso" &&
+                    item.TipoCaptura != "Dias")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje =
+                            "El permiso Home Office debe registrarse " +
+                            "por días completos, no por horas."
+                    });
+                }
+
+                // =====================================================
+                // 9. GUARDAR CAMBIOS
+                // =====================================================
+
                 await _db.SaveChangesAsync();
 
-                return new JsonResult(new { tieneError = false, mensaje = "Registro actualizado correctamente." });
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "Registro actualizado correctamente."
+                });
             }
             catch (DbUpdateException ex)
             {
-                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+                Console.WriteLine(
+                    ex.InnerException?.Message ??
+                    ex.Message);
 
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                    mensaje =
+                        "No fue posible guardar la información. " +
+                        "Verifica los datos capturados e inténtalo nuevamente."
                 });
             }
             catch (Exception ex)
@@ -1011,47 +1210,162 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                    mensaje =
+                        "Ocurrió un problema al procesar la solicitud. " +
+                        "Inténtalo nuevamente."
                 });
             }
         }
+
+
 
         public async Task<JsonResult> OnPostEliminarAsync(int id)
         {
             try
             {
+                // =====================================================
+                // 1. VALIDAR PERMISOS Y USUARIO
+                // =====================================================
+
                 await ConfigurarPermisosAsync();
 
                 var user = await _userManager.GetUserAsync(User);
-                if (user == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
 
-                var item = await _db.Ausencias.FirstOrDefaultAsync(x => x.Id == id);
+                if (user == null)
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Usuario no encontrado."
+                    });
+                }
+
+                // =====================================================
+                // 2. OBTENER REGISTRO
+                // =====================================================
+
+                var item = await _db.Ausencias
+                    .FirstOrDefaultAsync(x => x.Id == id);
+
                 if (item == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "Registro no encontrado." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Registro no encontrado."
+                    });
+                }
+
+                // =====================================================
+                // 3. PROTECCIÓN HOME OFFICE
+                // =====================================================
+
+                const int tipoHomeOfficeId = 14;
+
+                bool esSolicitudHO =
+                    item.TipoAusenciaId == tipoHomeOfficeId &&
+                    item.Categoria == "SolicitudPermiso";
+
+                // Una solicitud HO aprobada no debe eliminarse.
+                // La autorización puede tener checadas,
+                // jornadas y evidencias relacionadas.
+
+                if (esSolicitudHO &&
+                    item.EstadoJefeDirecto == "Aprobado")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje =
+                            "No puedes eliminar esta solicitud " +
+                            "Home Office porque ya fue aprobada " +
+                            "por el jefe directo. " +
+                            "Solicita su revocación a Talento Humano."
+                    });
+                }
+
+                // =====================================================
+                // 4. VERIFICAR AUTORIZACIONES VINCULADAS
+                // =====================================================
+
+                // Se bloquea la eliminación cuando existe
+                // cualquier autorización relacionada,
+                // incluso si fue revocada.
+                //
+                // Esto conserva la trazabilidad histórica.
+
+                bool tieneAutorizacionReloj = await _db
+                    .RC_AutorizacionesModalidades
+                    .AsNoTracking()
+                    .AnyAsync(x => x.AusenciaId == item.Id);
+
+                if (tieneAutorizacionReloj)
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje =
+                            "No se puede eliminar este registro " +
+                            "porque tiene una autorización vinculada " +
+                            "al Reloj Checador. " +
+                            "Debe conservarse su historial."
+                    });
+                }
+
+                // =====================================================
+                // 5. VALIDAR PERMISOS DE ELIMINACIÓN
+                // =====================================================
 
                 if (!PuedeVerTodasAusencias)
                 {
-                    if (user.EmpleadoId == null || item.EmpleadoId != user.EmpleadoId)
-                        return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para eliminar este registro." });
+                    if (user.EmpleadoId == null ||
+                        item.EmpleadoId != user.EmpleadoId)
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                "No tienes permisos para eliminar este registro."
+                        });
+                    }
 
                     if (item.EstadoJefeDirecto != "Pendiente")
-                        return new JsonResult(new { tieneError = true, mensaje = "Solo puedes eliminar registros pendientes." });
+                    {
+                        return new JsonResult(new
+                        {
+                            tieneError = true,
+                            mensaje =
+                                "Solo puedes eliminar registros pendientes."
+                        });
+                    }
                 }
 
+                // =====================================================
+                // 6. ELIMINAR REGISTRO
+                // =====================================================
+
                 _db.Ausencias.Remove(item);
+
                 await _db.SaveChangesAsync();
 
-                return new JsonResult(new { tieneError = false, mensaje = "Registro eliminado correctamente." });
+                return new JsonResult(new
+                {
+                    tieneError = false,
+                    mensaje = "Registro eliminado correctamente."
+                });
             }
             catch (DbUpdateException ex)
             {
-                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+                Console.WriteLine(
+                    ex.InnerException?.Message ??
+                    ex.Message);
 
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                    mensaje =
+                        "No fue posible eliminar el registro. " +
+                        "Verifica si tiene información relacionada."
                 });
             }
             catch (Exception ex)
@@ -1061,7 +1375,9 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                    mensaje =
+                        "Ocurrió un problema al procesar la solicitud. " +
+                        "Inténtalo nuevamente."
                 });
             }
         }
@@ -1073,45 +1389,142 @@ namespace ERPSEI.Areas.ERP.Pages
                 await ConfigurarPermisosAsync();
 
                 if (!PuedeAprobarJefeDirecto)
-                    return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para aprobar como jefe directo." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "No tienes permisos para aprobar como jefe directo."
+                    });
+                }
 
                 var user = await _userManager.GetUserAsync(User);
-                if (user?.EmpleadoId == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "El usuario actual no tiene empleado relacionado." });
+
+                if (user == null || user.EmpleadoId == null)
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "El usuario actual no tiene empleado relacionado."
+                    });
+                }
+
+                await using var transaccion =
+                    await _db.Database.BeginTransactionAsync(
+                        IsolationLevel.Serializable);
 
                 var item = await _db.Ausencias
                     .FirstOrDefaultAsync(x => x.Id == id);
 
                 if (item == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "Registro no encontrado." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Registro no encontrado."
+                    });
+                }
 
+                // Mantener la validación de jefe directo.
                 if (item.JefeDirectoEmpleadoId != user.EmpleadoId)
-                    return new JsonResult(new { tieneError = true, mensaje = "No eres el jefe directo asignado a este registro." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "No eres el jefe directo asignado a este registro."
+                    });
+                }
 
                 if (item.EstadoJefeDirecto != "Pendiente")
-                    return new JsonResult(new { tieneError = true, mensaje = "Este registro ya fue revisado por el jefe directo." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Este registro ya fue revisado por el jefe directo."
+                    });
+                }
+
+                if (item.EstadoTH == "Rechazado")
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "La solicitud fue rechazada por Talento Humano."
+                    });
+                }
+
+                // =====================================================
+                // APROBACIÓN DEL JEFE
+                // =====================================================
 
                 item.EstadoJefeDirecto = "Aprobado";
                 item.UsuarioJefeDirectoId = user.Id;
                 item.FechaRevisionJefeDirecto = DateTime.Now;
 
+                // =====================================================
+                // INTEGRACIÓN CON RELOJ CHECADOR
+                // =====================================================
+
+                if (item.TipoAusenciaId ==
+                        RelojAutorizacionesAusenciasService.TipoHomeOfficeId &&
+                    item.Categoria == "SolicitudPermiso")
+                {
+                    await _relojHO.AutorizarDesdeJefeAsync(
+                        item,
+                        user.Id);
+                }
+
+                // Aprobar solicitud y crear autorización juntos.
                 await _db.SaveChangesAsync();
-                await EnviarCorreoSeguimientoAusenciaAsync(item.Id, "JefeDirecto", "Aprobado");
+                await transaccion.CommitAsync();
+
+                // El fallo de correo no revierte una aprobación
+                // que ya quedó confirmada en la base de datos.
+                try
+                {
+                    await EnviarCorreoSeguimientoAusenciaAsync(
+                        item.Id,
+                        "JefeDirecto",
+                        "Aprobado");
+                }
+                catch (Exception exCorreo)
+                {
+                    Console.WriteLine(
+                        $"La aprobación {item.Id} fue guardada, " +
+                        $"pero falló el correo: {exCorreo}");
+                }
+
+                var esHO =
+                    item.TipoAusenciaId ==
+                        RelojAutorizacionesAusenciasService.TipoHomeOfficeId &&
+                    item.Categoria == "SolicitudPermiso";
 
                 return new JsonResult(new
                 {
                     tieneError = false,
-                    mensaje = "El jefe directo aprobó correctamente el registro."
+                    mensaje = esHO
+                        ? "Home Office aprobado. El Reloj Checador estará disponible durante las fechas autorizadas."
+                        : "El jefe directo aprobó correctamente el registro."
                 });
             }
             catch (DbUpdateException ex)
             {
-                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+                Console.WriteLine(
+                    ex.InnerException?.Message ?? ex.Message);
 
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                    mensaje = "No fue posible guardar la aprobación."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine(ex);
+
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = ex.Message
                 });
             }
             catch (Exception ex)
@@ -1121,10 +1534,11 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                    mensaje = "Ocurrió un problema al aprobar la solicitud."
                 });
             }
         }
+
 
         public async Task<JsonResult> OnPostRechazarJefeDirectoAsync(int id)
         {
@@ -1249,6 +1663,7 @@ namespace ERPSEI.Areas.ERP.Pages
             }
         }
 
+
         public async Task<JsonResult> OnPostRechazarTHAsync(int id)
         {
             try
@@ -1256,48 +1671,116 @@ namespace ERPSEI.Areas.ERP.Pages
                 await ConfigurarPermisosAsync();
 
                 var user = await _userManager.GetUserAsync(User);
+
                 if (user == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "Usuario no encontrado." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Usuario no encontrado."
+                    });
+                }
 
                 var roles = await _userManager.GetRolesAsync(user);
-                bool esAdministrador = roles.Contains("Administrador");
-                bool esAdministradorTH = roles.Contains("Administrador TH");
 
-                if (!esAdministradorTH && !esAdministrador)
-                    return new JsonResult(new { tieneError = true, mensaje = "No tienes permisos para rechazar como Talento Humano." });
+                bool esAdministrador =
+                    roles.Contains("Administrador") ||
+                    roles.Contains("Master");
 
-                var item = await _db.Ausencias.FirstOrDefaultAsync(x => x.Id == id);
+                bool esAdministradorTH =
+                    roles.Contains("Administrador TH");
+
+                if (!esAdministrador && !esAdministradorTH)
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "No tienes permisos para rechazar como Talento Humano."
+                    });
+                }
+
+                await using var transaccion =
+                    await _db.Database.BeginTransactionAsync(
+                        IsolationLevel.Serializable);
+
+                var item = await _db.Ausencias
+                    .FirstOrDefaultAsync(x => x.Id == id);
 
                 if (item == null)
-                    return new JsonResult(new { tieneError = true, mensaje = "Registro no encontrado." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Registro no encontrado."
+                    });
+                }
 
                 if (item.EstadoJefeDirecto != "Aprobado")
-                    return new JsonResult(new { tieneError = true, mensaje = "Primero debe aprobar el jefe directo." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Primero debe aprobar el jefe directo."
+                    });
+                }
 
                 if (item.EstadoTH != "Pendiente")
-                    return new JsonResult(new { tieneError = true, mensaje = "Este registro ya fue revisado por TH." });
+                {
+                    return new JsonResult(new
+                    {
+                        tieneError = true,
+                        mensaje = "Este registro ya fue revisado por TH."
+                    });
+                }
 
                 item.EstadoTH = "Rechazado";
                 item.UsuarioTHId = user.Id;
                 item.FechaRevisionTH = DateTime.Now;
 
+                // Revocar únicamente el permiso vinculado
+                // a la solicitud de Home Office.
+                if (item.TipoAusenciaId ==
+                        RelojAutorizacionesAusenciasService.TipoHomeOfficeId &&
+                    item.Categoria == "SolicitudPermiso")
+                {
+                    await _relojHO.RevocarPorRechazoTHAsync(item);
+                }
+
                 await _db.SaveChangesAsync();
-                await EnviarCorreoSeguimientoAusenciaAsync(item.Id, "TH", "Rechazado");
+                await transaccion.CommitAsync();
+
+                try
+                {
+                    await EnviarCorreoSeguimientoAusenciaAsync(
+                        item.Id,
+                        "TH",
+                        "Rechazado");
+                }
+                catch (Exception exCorreo)
+                {
+                    Console.WriteLine(
+                        $"La solicitud {item.Id} fue rechazada, " +
+                        $"pero falló el correo: {exCorreo}");
+                }
 
                 return new JsonResult(new
                 {
                     tieneError = false,
-                    mensaje = "Talento Humano rechazó correctamente el registro."
+                    mensaje = item.TipoAusenciaId ==
+                        RelojAutorizacionesAusenciasService.TipoHomeOfficeId
+                            ? "Solicitud HO rechazada y autorización del reloj revocada."
+                            : "Talento Humano rechazó correctamente el registro."
                 });
             }
             catch (DbUpdateException ex)
             {
-                Console.WriteLine(ex.InnerException?.Message ?? ex.Message);
+                Console.WriteLine(
+                    ex.InnerException?.Message ?? ex.Message);
 
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "No fue posible guardar la información. Verifica los datos capturados e inténtalo nuevamente."
+                    mensaje = "No fue posible guardar el rechazo."
                 });
             }
             catch (Exception ex)
@@ -1307,10 +1790,11 @@ namespace ERPSEI.Areas.ERP.Pages
                 return new JsonResult(new
                 {
                     tieneError = true,
-                    mensaje = "Ocurrió un problema al procesar la solicitud. Inténtalo nuevamente."
+                    mensaje = "Ocurrió un problema al procesar el rechazo."
                 });
             }
         }
+
 
         public async Task<JsonResult> OnPostGuardarInasistenciaAsync()
         {

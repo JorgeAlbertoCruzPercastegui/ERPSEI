@@ -1968,3 +1968,105 @@ body.module-main-theme.manuales-politicas-page {
 .modal {
     z-index: 1060 !important;
 }
+
+
+/* Acceso rápido al Reloj Checador */
+
+.header-right-tools .quick-clock-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #21166f;
+    color: #fff !important;
+    text-decoration: none;
+    box-shadow: 0 6px 15px rgba(33, 22, 111, .2);
+    transition: background .2s ease, transform .2s ease;
+}
+
+    .header-right-tools .quick-clock-btn i {
+        font-size: 1.2rem;
+    }
+
+    .header-right-tools .quick-clock-btn:hover,
+    .header-right-tools .quick-clock-btn:focus-visible {
+        background: #d4ad45;
+        color: #21166f !important;
+        transform: translateY(-2px);
+    }
+
+    .header-right-tools .quick-clock-btn:focus-visible {
+        outline: 2px solid #21166f;
+        outline-offset: 3px;
+    }
+
+
+/* =====================================================
+   INTRANET - FIX ICONO RELOJ CHECADOR EN HEADER
+   ===================================================== */
+
+.header-right-tools a.quick-clock-btn,
+.home-main-theme header a.quick-clock-btn,
+.home-main-theme header .navbar a.quick-clock-btn,
+.module-main-theme header a.quick-clock-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 0 0 44px;
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: #21166f !important;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    line-height: 1 !important;
+    vertical-align: middle;
+    box-shadow: 0 6px 16px rgba(33, 22, 111, .22);
+}
+
+    .header-right-tools a.quick-clock-btn i,
+    .home-main-theme header a.quick-clock-btn i,
+    .module-main-theme header a.quick-clock-btn i {
+        display: inline-block !important;
+        font-size: 21px !important;
+        line-height: 1 !important;
+        color: #ffffff !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    .header-right-tools a.quick-clock-btn:hover,
+    .home-main-theme header a.quick-clock-btn:hover,
+    .module-main-theme header a.quick-clock-btn:hover {
+        background: #d4ad45 !important;
+        color: #21166f !important;
+        transform: translateY(-2px);
+    }
+
+        .header-right-tools a.quick-clock-btn:hover i,
+        .home-main-theme header a.quick-clock-btn:hover i,
+        .module-main-theme header a.quick-clock-btn:hover i {
+            color: #21166f !important;
+        }
+
+.header-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+@media (max-width: 575.98px) {
+    .header-right-tools a.quick-clock-btn {
+        flex-basis: 40px;
+        width: 40px !important;
+        min-width: 40px;
+        height: 40px !important;
+    }
+}
+

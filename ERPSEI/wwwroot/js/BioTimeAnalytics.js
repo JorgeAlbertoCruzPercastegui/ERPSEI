@@ -11,7 +11,7 @@
     let sincronizando = false;
     let trabajoActivo = null;
     let pestanaActual = 'dashboard';
-    const pestañas = ['dashboard', 'puntualidad', 'jornadas', 'incidencias', 'reportes', 'sincronizacion'];
+    const pestañas = ['dashboard', 'puntualidad', 'jornadas', 'incidencias', 'reportes', 'sincronizacion', 'administracion'];
     const tablasExtra = {
         puntualidad: { handler: 'Puntualidad', prefix: 'bioPuntualidad', cols: 6, page: 1, controller: null },
         jornadas: { handler: 'Jornadas', prefix: 'bioJornadas', cols: 7, page: 1, controller: null },
@@ -645,7 +645,7 @@
             $('bioReporteResumen').disabled = !habilitar;
             $('bioReportesEstado').textContent = habilitar ? 'Se exportará el periodo y filtros seleccionados.' : 'Selecciona ambas fechas y espera la sincronización.';
         }
-        else if (clave !== 'dashboard' && fechasValidas() && !sincronizando) cargarTablaExtra(clave);
+        else if (clave !== 'dashboard' && clave !== 'administracion' && fechasValidas() && !sincronizando) cargarTablaExtra(clave);
     }
 
     function registrarPestanas() {
@@ -681,7 +681,7 @@
 
     function refrescarPestanaActiva() {
         if (pestanaActual === 'reportes') activarPestana('reportes');
-        else if (pestanaActual !== 'dashboard') cargarTablaExtra(pestanaActual);
+        else if (pestanaActual !== 'dashboard' && pestanaActual !== 'administracion') cargarTablaExtra(pestanaActual);
     }
 
     async function init() {

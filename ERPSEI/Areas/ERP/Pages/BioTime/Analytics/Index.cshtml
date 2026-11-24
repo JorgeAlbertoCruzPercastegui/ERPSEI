@@ -8,6 +8,9 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/BioTimeAnalytics.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/BioTimeTabs.css" asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/css/RelojGeocercasAdmin.css"
+          asp-append-version="true" />
 }
 
 <div class="container-fluid biotime-analytics py-4">
@@ -35,6 +38,13 @@
         <button class="biotime-analytics-tab" data-bio-tab="incidencias" type="button" aria-pressed="false">Incidencias por revisar</button>
         <button class="biotime-analytics-tab" data-bio-tab="reportes" type="button" aria-pressed="false">Reportes</button>
         <button class="biotime-analytics-tab" data-bio-tab="sincronizacion" type="button" aria-pressed="false">Sincronización</button>
+        <button class="biotime-analytics-tab"
+                data-bio-tab="administracion"
+                type="button"
+                aria-pressed="false">
+            <i class="bi bi-geo-alt me-1"></i>
+            Administración del Reloj
+        </button>
     </nav>
 
     <div class="card biotime-analytics-filter-card mb-4">
@@ -293,9 +303,427 @@
     </div>
 </div>
 </section>
+
+
+<section id="bioPaneAdministracion"
+         data-bio-pane="administracion"
+         hidden>
+
+    <div class="card biotime-analytics-panel mb-4">
+        <div class="card-header">
+            <strong>
+                <i class="bi bi-geo-alt-fill me-2"></i>
+                Oficinas y geocercas
+            </strong>
+        </div>
+
+        <div class="card-body">
+
+            <p class="text-muted small">
+                Configura el perímetro de ubicación
+                autorizado para cada oficina.
+                Las geocercas permanecen desactivadas
+                hasta que se confirmen sus coordenadas.
+            </p>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="rc-admin-kpi">
+                        <span>Oficinas</span>
+                        <strong id="rcTotalOficinas">—</strong>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="rc-admin-kpi">
+                        <span>Configuradas</span>
+                        <strong id="rcConfiguradas">—</strong>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="rc-admin-kpi">
+                        <span>Geocercas activas</span>
+                        <strong id="rcActivas">—</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div id="rcMensaje"
+                 class="alert alert-info"
+                 role="status"
+                 aria-live="polite">
+                Selecciona esta pestaña para cargar las oficinas.
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-xl-5">
+                    <div class="rc-admin-form">
+
+                        <h5>Configuración de oficina</h5>
+
+                        <form id="rcGeocercaForm">
+
+                            <div class="mb-3">
+                                <label class="form-label"
+                                       for="rcOficina">
+                                    Oficina
+                                </label>
+
+                                <select id="rcOficina"
+                                        class="form-select"
+                                        required>
+                                    <option value="">
+                                        Selecciona una oficina
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label"
+                                           for="rcLatitud">
+                                        Latitud
+                                    </label>
+
+                                    <input id="rcLatitud"
+                                           type="number"
+                                           class="form-control"
+                                           min="-90"
+                                           max="90"
+                                           step="any"
+                                           required
+                                           placeholder="19.000000" />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label class="form-label"
+                                           for="rcLongitud">
+                                        Longitud
+                                    </label>
+
+                                    <input id="rcLongitud"
+                                           type="number"
+                                           class="form-control"
+                                           min="-180"
+                                           max="180"
+                                           step="any"
+                                           required
+                                           placeholder="-99.000000" />
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+
+                                <div class="col-sm-6">
+                                    <label class="form-label"
+                                           for="rcRadio">
+                                        Radio autorizado (m)
+                                    </label>
+
+                                    <input id="rcRadio"
+                                           type="number"
+                                           class="form-control"
+                                           min="10"
+                                           max="1000"
+                                           value="75"
+                                           required />
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <label class="form-label"
+                                           for="rcPrecision">
+                                        Precisión GPS máxima (m)
+                                    </label>
+
+                                    <input id="rcPrecision"
+                                           type="number"
+                                           class="form-control"
+                                           min="5"
+                                           max="500"
+                                           value="30"
+                                           required />
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch mb-3">
+                                <input id="rcActiva"
+                                       class="form-check-input"
+                                       type="checkbox" />
+
+                                <label class="form-check-label"
+                                       for="rcActiva">
+                                    Activar geocerca
+                                </label>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input id="rcConfirmar"
+                                       class="form-check-input"
+                                       type="checkbox" />
+
+                                <label class="form-check-label"
+                                       for="rcConfirmar">
+                                    Confirmo que las coordenadas
+                                    corresponden a esta oficina
+                                    y han sido verificadas.
+                                </label>
+                            </div>
+
+                            <button id="rcGuardar"
+                                    type="submit"
+                                    class="btn rc-admin-primary w-100">
+                                <i class="bi bi-floppy me-2"></i>
+                                Guardar configuración
+                            </button>
+
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-xl-7">
+                    <h5 class="mb-3">Estado de las oficinas</h5>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Oficina</th>
+                                    <th>Radio</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="rcTablaOficinas">
+                                <tr>
+                                    <td colspan="4"
+                                        class="text-center text-muted">
+                                        Sin información cargada
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        
+                        <!-- Paginación de oficinas - 10 registros por página -->
+                        <div class="rc-oficinas-paginacion
+                            d-flex flex-wrap align-items-center
+                            justify-content-between gap-3 mt-3">
+
+                            <div class="text-muted small"
+                                 id="rcInfoPaginacion"
+                                 aria-live="polite">
+                                0 registros
+                            </div>
+
+                            <nav class="d-flex align-items-center gap-2"
+                                 aria-label="Paginación de oficinas">
+
+                                <button id="rcPaginaAnterior"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        disabled>
+                                    <i class="bi bi-chevron-left"></i>
+                                    Anterior
+                                </button>
+
+                                <span id="rcNumeroPagina"
+                                      class="small fw-semibold">
+                                    1 / 1
+                                </span>
+
+                                <button id="rcPaginaSiguiente"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        disabled>
+                                    Siguiente
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </nav>
+                        </div>
+
+                    </div>
+
+                    <p class="small text-muted">
+                        Una oficina sin configuración
+                        o con geocerca inactiva no
+                        habilita checadas presenciales.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    
+    @if (User.IsInRole("Master") ||
+     User.IsInRole("Administrador") ||
+     User.IsInRole("Administrador TH"))
+    {
+        <div class="card biotime-analytics-panel mb-4"
+             id="rcModalidadesPanel">
+
+            <div class="card-header">
+                <strong>
+                    <i class="bi bi-house-check me-2"></i>
+                    Autorizaciones Home Office
+                </strong>
+            </div>
+
+            <div class="card-body">
+                <p class="text-muted small">
+                    Autoriza trabajo remoto por un rango de fechas.
+                    Los colaboradores autorizados podrán verificar
+                    su ubicación sin utilizar la geocerca presencial.
+                </p>
+
+                <div id="rcHoMensaje"
+                     class="alert alert-info"
+                     role="status"
+                     aria-live="polite">
+                    Consulta las autorizaciones existentes.
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-xl-5">
+                        <div class="rc-admin-form">
+                            <h5>Autorizar Home Office</h5>
+
+                            <form id="rcHoForm">
+
+                                <div class="mb-3">
+                                    <label for="rcHoBuscar"
+                                           class="form-label">
+                                        Buscar colaborador
+                                    </label>
+
+                                    <div class="input-group">
+                                        <input id="rcHoBuscar"
+                                               type="search"
+                                               class="form-control"
+                                               placeholder="Correo del colaborador"
+                                               autocomplete="off" />
+
+                                        <button id="rcHoBtnBuscar"
+                                                type="button"
+                                                class="btn btn-outline-primary">
+                                            Buscar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="rcHoUsuario"
+                                           class="form-label">
+                                        Usuario
+                                    </label>
+
+                                    <select id="rcHoUsuario"
+                                            class="form-select"
+                                            required>
+                                        <option value="">
+                                            Selecciona un colaborador
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-sm-6">
+                                        <label for="rcHoInicio"
+                                               class="form-label">
+                                            Fecha inicial
+                                        </label>
+                                        <input id="rcHoInicio"
+                                               type="date"
+                                               class="form-control"
+                                               required />
+                                    </div>
+
+                                    <div class="col-sm-6">
+                                        <label for="rcHoFin"
+                                               class="form-label">
+                                            Fecha final
+                                        </label>
+                                        <input id="rcHoFin"
+                                               type="date"
+                                               class="form-control"
+                                               required />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="rcHoMotivo"
+                                           class="form-label">
+                                        Motivo de autorización
+                                    </label>
+
+                                    <textarea id="rcHoMotivo"
+                                              class="form-control"
+                                              rows="3"
+                                              minlength="5"
+                                              maxlength="500"
+                                              required
+                                              placeholder="Describe la autorización laboral"></textarea>
+                                </div>
+
+                                <button id="rcHoGuardar"
+                                        type="submit"
+                                        class="btn rc-admin-primary w-100">
+                                    <i class="bi bi-shield-check me-2"></i>
+                                    Autorizar Home Office
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-7">
+                        <h5 class="mb-3">Autorizaciones registradas</h5>
+
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Colaborador</th>
+                                        <th>Vigencia</th>
+                                        <th>Estado</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="rcHoTabla">
+                                    <tr>
+                                        <td colspan="4"
+                                            class="text-center text-muted">
+                                            Cargando autorizaciones...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="small text-muted">
+                            Las revocaciones quedan registradas
+                            en la auditoría del Reloj Checador.
+                            Los permisos vencidos dejan de
+                            aplicarse automáticamente.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+</section>
+
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
     <script src="~/js/BioTimeAnalytics.js" asp-append-version="true"></script>
+    <script src="~/js/RelojGeocercasAdmin.js"
+            asp-append-version="true"></script>
+    <script src="~/js/RelojModalidadesAdmin.js"
+            asp-append-version="true"></script>
 }

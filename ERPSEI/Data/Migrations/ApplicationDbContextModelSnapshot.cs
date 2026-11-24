@@ -3055,63 +3055,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9914),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7328),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9925),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7344),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9926),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7345),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9927),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7346),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9928),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7347),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9929),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7347),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9930),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7348),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9931),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7349),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 19, 14, 23, 47, 108, DateTimeKind.Local).AddTicks(9931),
+                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7350),
                             Nombre = "Otros"
                         });
                 });
@@ -6449,6 +6449,378 @@ namespace ERPSEI.Data.Migrations
                             Activo = true,
                             Nombre = "Licencia por cuidados médicos de hijos diagnosticados con cáncer",
                             Orden = 4
+                        });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_Auditoria", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ActorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AfectadoUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<long?>("ChecadaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("CodigoDetalle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("FechaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("JornadaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Resultado")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FechaUtc");
+
+                    b.HasIndex("AfectadoUserId", "FechaUtc");
+
+                    b.ToTable("RC_Auditoria", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_AutorizacionModalidad", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("AusenciaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AutorizadoPorUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("AutorizadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("FechaFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Modalidad")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("OficinaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AusenciaId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_RC_AutorizacionesModalidades_AusenciaId")
+                        .HasFilter("[AusenciaId] IS NOT NULL");
+
+                    b.HasIndex("OficinaId");
+
+                    b.HasIndex("UserId", "FechaInicio", "FechaFin");
+
+                    b.ToTable("RC_AutorizacionesModalidades", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_RC_Autorizacion_Estado", "[Estado] IN ('Pendiente','Aprobada','Rechazada','Revocada')");
+
+                            t.HasCheckConstraint("CK_RC_Autorizacion_Fechas", "[FechaFin] >= [FechaInicio]");
+
+                            t.HasCheckConstraint("CK_RC_Autorizacion_Modalidad", "[Modalidad] IN ('Presencial','Remoto','Hibrido','Comision')");
+                        });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_Checada", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("DistanciaOficinaMetros")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("EstadoValidacion")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("FechaHoraUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("JornadaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal?>("Latitud")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal?>("Longitud")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<string>("ObservacionCodigo")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("OficinaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Origen")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<decimal?>("PrecisionMetros")
+                        .HasPrecision(9, 2)
+                        .HasColumnType("decimal(9,2)");
+
+                    b.Property<string>("ResultadoUbicacion")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("TipoMovimiento")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("JornadaId", "FechaHoraUtc");
+
+                    b.HasIndex("UserId", "FechaHoraUtc");
+
+                    b.ToTable("RC_Checadas", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_RC_Checada_Origen", "[Origen] IN ('INTRANET_WEB','INTRANET_PWA','AJUSTE_TH')");
+
+                            t.HasCheckConstraint("CK_RC_Checada_Tipo", "[TipoMovimiento] IN ('Entrada','SalidaComer','RegresoComer','Salida')");
+                        });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_Evidencia", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CapturadaUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long>("ChecadaId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EliminarDespuesUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HashSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("RutaPrivada")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("TamanoBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TipoContenido")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChecadaId")
+                        .IsUnique();
+
+                    b.ToTable("RC_Evidencias", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_Jornada", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime?>("ActualizadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EmpleadoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime?>("FinUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("InicioUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("MinutosEfectivos")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinutosObjetivo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Modalidad")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("MotivoRevision")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("RequiereRevision")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[Estado] = 'Abierta'");
+
+                    b.HasIndex("EmpleadoId", "InicioUtc");
+
+                    b.ToTable("RC_Jornadas", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_RC_Jornada_Estado", "[Estado] IN ('Abierta','Cerrada','EnRevision','Anulada')");
+
+                            t.HasCheckConstraint("CK_RC_Jornada_Fechas", "[FinUtc] IS NULL OR [FinUtc] >= [InicioUtc]");
+
+                            t.HasCheckConstraint("CK_RC_Jornada_Objetivo", "[MinutosObjetivo] BETWEEN 1 AND 1440");
+                        });
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_OficinaGeocerca", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activa")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ActualizadoPorUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ActualizadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreadoUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Latitud")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<decimal>("Longitud")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("decimal(9,6)");
+
+                    b.Property<int>("OficinaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PrecisionMaximaMetros")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RadioMetros")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OficinaId")
+                        .IsUnique();
+
+                    b.ToTable("RC_OficinasGeocercas", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_RC_Geocerca_Latitud", "[Latitud] BETWEEN -90 AND 90");
+
+                            t.HasCheckConstraint("CK_RC_Geocerca_Longitud", "[Longitud] BETWEEN -180 AND 180");
+
+                            t.HasCheckConstraint("CK_RC_Geocerca_Precision", "[PrecisionMaximaMetros] BETWEEN 5 AND 500");
+
+                            t.HasCheckConstraint("CK_RC_Geocerca_Radio", "[RadioMetros] BETWEEN 10 AND 1000");
                         });
                 });
 
@@ -13237,6 +13609,72 @@ namespace ERPSEI.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Ausencia");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_AutorizacionModalidad", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Empleados.Oficina", null)
+                        .WithMany()
+                        .HasForeignKey("OficinaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_Checada", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.RelojChecador.RC_Jornada", "Jornada")
+                        .WithMany()
+                        .HasForeignKey("JornadaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Jornada");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_Evidencia", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.RelojChecador.RC_Checada", "Checada")
+                        .WithOne()
+                        .HasForeignKey("ERPSEI.Data.Entities.RelojChecador.RC_Evidencia", "ChecadaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Checada");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_Jornada", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Empleados.Empleado", null)
+                        .WithMany()
+                        .HasForeignKey("EmpleadoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.RelojChecador.RC_OficinaGeocerca", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Empleados.Oficina", null)
+                        .WithMany()
+                        .HasForeignKey("OficinaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Reportes.Asistencia", b =>

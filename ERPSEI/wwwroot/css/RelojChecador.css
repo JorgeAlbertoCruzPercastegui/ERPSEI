@@ -1,0 +1,437 @@
+﻿
+/* INTRANET - Mi Reloj Checador */
+
+.rc-container {
+    max-width: 1320px;
+}
+
+.rc-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.rc-eyebrow {
+    color: #82759d;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: 1.1px;
+}
+
+.rc-heading h2 {
+    color: #21166f;
+    font-size: 1.85rem;
+    font-weight: 750;
+    margin: 5px 0 7px;
+}
+
+.rc-heading p {
+    color: #6e6880;
+    margin: 0;
+}
+
+.rc-status {
+    border-radius: 30px;
+    padding: 9px 16px;
+    border: 1px solid #e4def0;
+    background: #f7f5fc;
+    color: #21166f;
+    font-size: .85rem;
+    font-weight: 650;
+}
+
+.rc-timer-card {
+    background: #21166f;
+    color: #fff;
+    padding: 35px 28px;
+    border-radius: 18px;
+    text-align: center;
+    box-shadow: 0 12px 26px rgba(33, 22, 111, .18);
+}
+
+    .rc-timer-card > span {
+        color: #ded8f5;
+        font-size: .9rem;
+    }
+
+.rc-timer {
+    font-size: clamp(2.6rem, 5vw, 4.3rem);
+    line-height: 1.35;
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px;
+}
+
+.rc-timer-card p {
+    color: #ded8f5;
+    font-size: .87rem;
+    margin-bottom: 24px;
+}
+
+.rc-progress {
+    height: 10px;
+    border-radius: 20px;
+    background: #51458c;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.rc-progress-value {
+    width: 0%;
+    height: 100%;
+    background: #d4ad45;
+    transition: width .5s ease;
+}
+
+.rc-timer-card small {
+    color: #eee8fa;
+}
+
+.rc-card {
+    border: 1px solid #e8e4f1;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(33, 22, 111, .04);
+}
+
+    .rc-card .card-body {
+        padding: 25px;
+    }
+
+    .rc-card h5 {
+        color: #21166f;
+        font-weight: 700;
+    }
+
+.rc-info-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eeeaf4;
+}
+
+    .rc-info-row:last-child {
+        border-bottom: none;
+    }
+
+    .rc-info-row span {
+        color: #746c83;
+    }
+
+    .rc-info-row strong {
+        color: #2f274c;
+        text-align: right;
+    }
+
+.rc-validation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+    .rc-validation-item > div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .rc-validation-item strong {
+        color: #352a64;
+    }
+
+    .rc-validation-item i {
+        color: #21166f;
+        margin-right: 7px;
+    }
+
+    .rc-validation-item small {
+        color: #777085;
+        font-size: .78rem;
+    }
+
+.rc-camera-container {
+    background: #f5f2fb;
+    padding: 12px;
+    border-radius: 12px;
+}
+
+    .rc-camera-container video,
+    .rc-camera-container img {
+        display: block;
+        width: 100%;
+        max-height: 340px;
+        object-fit: contain;
+        background: #171321;
+        border-radius: 10px;
+    }
+
+    .rc-camera-container [hidden] {
+        display: none !important;
+    }
+
+.rc-submit {
+    padding: 13px;
+    border-radius: 10px;
+    background: #21166f;
+    color: #fff;
+    font-weight: 650;
+}
+
+    .rc-submit:disabled {
+        background: #bbb5d1;
+        color: #fff;
+        cursor: not-allowed;
+    }
+
+.rc-movement {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 17px 5px;
+    border-bottom: 1px solid #ece8f2;
+}
+
+    .rc-movement:last-child {
+        border-bottom: none;
+    }
+
+    .rc-movement span {
+        flex: 1;
+        color: #433b59;
+    }
+
+    .rc-movement strong {
+        color: #21166f;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .rc-movement i {
+        font-size: 1.1rem;
+    }
+
+@media (max-width: 767px) {
+    .rc-heading h2 {
+        font-size: 1.5rem;
+    }
+
+    .rc-card .card-body {
+        padding: 18px;
+    }
+
+    .rc-timer-card {
+        padding: 28px 15px;
+    }
+
+    .rc-info-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+        .rc-info-row strong {
+            text-align: left;
+        }
+}
+
+
+/* =====================================================
+   INTRANET - AJUSTE DE ESPACIADO RELOJ CHECADOR
+   ===================================================== */
+
+body.rc-page .rc-container {
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-top: 10px !important;
+    padding-bottom: 32px !important;
+}
+
+/* Menor separación entre menú y módulo */
+body.rc-page .topbar-links {
+    margin-bottom: 10px !important;
+}
+
+/* Encabezado del módulo */
+body.rc-page .rc-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px !important;
+}
+
+    body.rc-page .rc-heading > div:first-child {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+body.rc-page .rc-eyebrow {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+body.rc-page .rc-heading h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 6px !important;
+    font-size: clamp(24px, 2.5vw, 32px);
+    font-weight: 750;
+    line-height: 1.2;
+}
+
+    body.rc-page .rc-heading h2 i {
+        flex-shrink: 0;
+        font-size: .95em;
+        line-height: 1;
+    }
+
+body.rc-page .rc-heading p {
+    margin: 0 !important;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+body.rc-page .rc-status {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 10px 16px;
+    align-self: center;
+}
+
+/* Alerta con altura más equilibrada */
+body.rc-page #rcAlerta {
+    margin-bottom: 18px !important;
+    padding: 13px 17px;
+    font-size: 14px;
+    line-height: 1.45;
+    border-radius: 10px;
+}
+
+/* Uniformidad entre tarjetas */
+body.rc-page .rc-timer-card {
+    margin-bottom: 20px !important;
+    padding: 25px 24px;
+}
+
+body.rc-page .rc-timer {
+    margin: 4px 0;
+}
+
+body.rc-page .rc-card {
+    border-radius: 16px;
+}
+
+    body.rc-page .rc-card .card-body {
+        padding: 22px;
+    }
+
+/* Responsive */
+@media (max-width: 767.98px) {
+    body.rc-page .rc-container {
+        padding-top: 8px !important;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    body.rc-page .rc-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px !important;
+    }
+
+        body.rc-page .rc-heading h2 {
+            font-size: 25px;
+        }
+
+    body.rc-page .rc-status {
+        align-self: flex-start;
+    }
+
+    body.rc-page #rcAlerta {
+        margin-bottom: 15px !important;
+    }
+
+    body.rc-page .rc-timer-card {
+        padding: 24px 16px;
+    }
+
+    body.rc-page .rc-card .card-body {
+        padding: 18px;
+    }
+}
+
+
+/* =====================================================
+   INTRANET - RELOJ CHECADOR
+   ALINEACIÓN DEL HEADER CON EL HOME
+   ===================================================== */
+
+/* Recuperar la separación del encabezado */
+body.rc-page .header-bg-inner {
+    padding-top: 22px !important;
+    padding-bottom: 12px !important;
+}
+
+/* Mantener el espacio del menú como en Home */
+body.rc-page .topbar-links {
+    margin-top: 2px !important;
+    margin-bottom: 20px !important;
+    padding-top: 14px !important;
+    padding-bottom: 14px !important;
+}
+
+/* Separación entre el menú y el contenido */
+body.rc-page .rc-container {
+    padding-top: 22px !important;
+    padding-bottom: 32px !important;
+}
+
+/* Encabezado de Mi Reloj Checador */
+body.rc-page .rc-heading {
+    margin-top: 0 !important;
+    margin-bottom: 20px !important;
+}
+
+/* Evitar que el contenido se pegue al menú */
+body.rc-page .layout-content .rc-container {
+    margin-top: 0 !important;
+}
+
+/* Ajustes para tablet y celular */
+@media (max-width: 991.98px) {
+    body.rc-page .header-bg-inner {
+        padding-top: 18px !important;
+        padding-bottom: 10px !important;
+    }
+
+    body.rc-page .rc-container {
+        padding-top: 18px !important;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body.rc-page .header-bg-inner {
+        padding-top: 14px !important;
+        padding-bottom: 8px !important;
+    }
+
+    body.rc-page .topbar-links {
+        margin-bottom: 16px !important;
+    }
+
+    body.rc-page .rc-container {
+        padding-top: 16px !important;
+    }
+}
+
+

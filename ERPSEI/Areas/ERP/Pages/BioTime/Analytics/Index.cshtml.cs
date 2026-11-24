@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace ERPSEI.Areas.ERP.Pages.BioTime.Analytics;
 
 [Authorize(Roles = "Master,Administrador,Administrador TH")]
-public sealed class IndexModel : PageModel
+public sealed partial class IndexModel : PageModel
 {
     private readonly ApplicationDbContext _db;
     private readonly BioTimeHistoricoQueue _historico;

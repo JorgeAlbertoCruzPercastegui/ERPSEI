@@ -1,0 +1,137 @@
+﻿
+/* ==================================================
+   INTRANET - Administración del Reloj Checador
+   Compatible con la identidad visual de BioTime
+   ================================================== */
+
+.biotime-analytics .rc-admin-kpi {
+    background: #f7f6fc;
+    border: 1px solid #e8e4f1;
+    border-radius: 14px;
+    padding: 20px;
+    min-height: 108px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+}
+
+    .biotime-analytics .rc-admin-kpi span {
+        color: #6c667e;
+        font-size: 0.84rem;
+        font-weight: 500;
+    }
+
+    .biotime-analytics .rc-admin-kpi strong {
+        color: #21166f;
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+.biotime-analytics .rc-admin-form {
+    background: #faf9fd;
+    border: 1px solid #e8e4f1;
+    border-radius: 16px;
+    padding: 24px;
+}
+
+    .biotime-analytics .rc-admin-form h5 {
+        color: #21166f;
+        font-weight: 700;
+        margin-bottom: 24px;
+    }
+
+    .biotime-analytics .rc-admin-form .form-label {
+        color: #39324f;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .biotime-analytics .rc-admin-form .form-control:focus,
+    .biotime-analytics .rc-admin-form .form-select:focus {
+        border-color: #6958bb;
+        box-shadow: 0 0 0 0.2rem rgba(33, 22, 111, 0.10);
+    }
+
+.biotime-analytics .rc-admin-primary {
+    background-color: #21166f;
+    border: 1px solid #21166f;
+    color: #fff;
+    font-weight: 600;
+    padding: 12px 18px;
+    border-radius: 10px;
+    transition: background-color 0.2s ease;
+}
+
+    .biotime-analytics .rc-admin-primary:hover {
+        background-color: #35248f;
+        border-color: #35248f;
+        color: #fff;
+    }
+
+    .biotime-analytics .rc-admin-primary:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+
+.biotime-analytics [data-bio-pane="administracion"] .table th {
+    color: #39324f;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.biotime-analytics [data-bio-pane="administracion"] .table td {
+    font-size: 0.86rem;
+}
+
+@media (max-width: 767px) {
+    .biotime-analytics .rc-admin-form {
+        padding: 16px;
+    }
+
+    .biotime-analytics .rc-admin-kpi {
+        min-height: 90px;
+    }
+
+        .biotime-analytics .rc-admin-kpi strong {
+            font-size: 1.65rem;
+        }
+}
+
+
+/* =====================================================
+   RELOJ CHECADOR - PAGINACIÓN DE OFICINAS
+   ===================================================== */
+
+.biotime-analytics .rc-oficinas-paginacion {
+    padding-top: 12px;
+    border-top: 1px solid #ebe7f3;
+}
+
+    .biotime-analytics .rc-oficinas-paginacion .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        min-height: 34px;
+    }
+
+        .biotime-analytics .rc-oficinas-paginacion .btn:not(:disabled):hover {
+            background: #21166f;
+            border-color: #21166f;
+            color: #fff;
+        }
+
+.biotime-analytics #rcNumeroPagina {
+    min-width: 48px;
+    text-align: center;
+    color: #21166f;
+}
+
+@media (max-width: 575.98px) {
+    .biotime-analytics .rc-oficinas-paginacion {
+        justify-content: center !important;
+        text-align: center;
+    }
+}
+

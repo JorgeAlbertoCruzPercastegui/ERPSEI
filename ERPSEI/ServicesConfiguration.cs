@@ -33,6 +33,8 @@ using ERPSEI.Services.Adquisiciones;
 using ERPSEI.Services.BioTimeIntegration;
 using ERPSEI.Services.Compliance;
 using ERPSEI.Services.Empresas;
+using ERPSEI.Services.RelojChecador;
+using ERPSEI.Services.TalentoHumano;
 using ERPSEI.Services.TimeIntegration;
 using ERPSEI.TokenProviders;
 using ERPSEI.Utils;
@@ -44,7 +46,7 @@ using Microsoft.Graph;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
-using ERPSEI.Services.TalentoHumano;
+
 
 namespace ERPSEI
 {
@@ -431,6 +433,31 @@ namespace ERPSEI
 
             // Worker para automatizar el archivado bimestral
             builder.Services.AddHostedService<BioTimeArchivadoBackgroundService>();
+
+            // =====================================================
+            // RELOJ CHECADOR - VALIDACIÓN DE GEOCERCAS
+            // =====================================================
+
+            builder.Services.AddScoped<RelojGeocercaService>();
+
+
+            // =====================================================
+            // RELOJ CHECADOR - EVIDENCIAS FOTOGRÁFICAS
+            // =====================================================
+
+            builder.Services.Configure<RelojEvidenciasOptions>(
+                builder.Configuration.GetSection(
+                    RelojEvidenciasOptions.SectionName));
+
+            builder.Services.AddScoped<RelojChecadasService>();
+
+            builder.Services.AddDataProtection();
+
+            builder.Services.AddScoped<RelojEvidenciasService>();
+
+            builder.Services.AddScoped<RelojAccesoService>();
+
+            builder.Services.AddScoped<RelojAutorizacionesAusenciasService>();
 
 
             // =====================================================

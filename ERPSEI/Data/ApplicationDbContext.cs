@@ -34,6 +34,8 @@ using System.Security.Claims;
 using ERPSEI.Data.Entities.BioTime;
 using ERPSEI.Data.Entities.TalentoHumano;
 using ERPSEI.Data.Configurations.TalentoHumano;
+using ERPSEI.Data.Entities.RelojChecador;
+using ERPSEI.Data.Configurations.RelojChecador;
 
 
 namespace ERPSEI.Data
@@ -530,6 +532,30 @@ namespace ERPSEI.Data
 
         public DbSet<THDocumento> THDocumentos
             => Set<THDocumento>();
+
+
+        // =====================================================
+        // RELOJ CHECADOR DIGITAL - INTRANET
+        // =====================================================
+
+        public DbSet<RC_OficinaGeocerca> RC_OficinasGeocercas
+            => Set<RC_OficinaGeocerca>();
+
+        public DbSet<RC_AutorizacionModalidad> RC_AutorizacionesModalidades
+            => Set<RC_AutorizacionModalidad>();
+
+        public DbSet<RC_Jornada> RC_Jornadas
+            => Set<RC_Jornada>();
+
+        public DbSet<RC_Checada> RC_Checadas
+            => Set<RC_Checada>();
+
+        public DbSet<RC_Evidencia> RC_Evidencias
+            => Set<RC_Evidencia>();
+
+        public DbSet<RC_Auditoria> RC_Auditoria
+            => Set<RC_Auditoria>();
+
 
 
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -1051,6 +1077,11 @@ namespace ERPSEI.Data
             // TALENTO HUMANO - PORTAL DE SOLICITUDES
             // =====================================================
             TalentoHumanoModelConfiguration.Configurar(modelBuilder);
+
+            // =====================================================
+            // RELOJ CHECADOR DIGITAL
+            // =====================================================
+            RelojChecadorModelConfiguration.Configurar(modelBuilder);
 
             // =====================================================
             // AUSENCIAS
