@@ -1,0 +1,261 @@
+﻿@* ============================================================
+   INTRANET - DASHBOARD CONSOLIDADO DE ASISTENCIA
+   BioTime + Reloj Digital + Contexto TH
+   ============================================================ *@
+
+<div class="card biotime-analytics-panel mb-4"
+     id="rcAsistenciaDashboard">
+
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <strong>
+            <i class="bi bi-speedometer2 me-2"></i>
+            Asistencia consolidada INTRANET + BioTime
+        </strong>
+
+        <span class="badge text-bg-secondary">
+            Evaluación preliminar
+        </span>
+    </div>
+
+    <div class="card-body">
+
+        <p class="text-muted small mb-4">
+            Consulta jornadas con actividad registrada
+            en el reloj digital o biométrico.
+            Los resultados son informativos y están
+            sujetos a revisión de Talento Humano.
+        </p>
+
+        <div class="row g-3 align-items-end mb-4">
+
+            <div class="col-xl-2 col-md-4">
+                <label for="rcAdInicio" class="form-label">
+                    Fecha inicial
+                </label>
+                <input id="rcAdInicio"
+                       class="form-control"
+                       type="date" />
+            </div>
+
+            <div class="col-xl-2 col-md-4">
+                <label for="rcAdFin" class="form-label">
+                    Fecha final
+                </label>
+                <input id="rcAdFin"
+                       class="form-control"
+                       type="date" />
+            </div>
+
+            <div class="col-xl-2 col-md-4">
+                <label for="rcAdEmpleado" class="form-label">
+                    ID empleado
+                </label>
+                <input id="rcAdEmpleado"
+                       class="form-control"
+                       type="number"
+                       min="1"
+                       step="1"
+                       placeholder="Todos" />
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <label for="rcAdBuscar" class="form-label">
+                    Buscar colaborador
+                </label>
+                <input id="rcAdBuscar"
+                       class="form-control"
+                       type="search"
+                       maxlength="100"
+                       placeholder="Nombre del colaborador" />
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <button id="rcAdConsultar"
+                        class="btn btn-primary w-100"
+                        type="button">
+                    <i class="bi bi-search me-1"></i>
+                    Consultar asistencia
+                </button>
+            </div>
+
+        </div>
+
+        <div id="rcAdMensaje"
+             class="alert alert-info small"
+             role="status"
+             aria-live="polite">
+            Selecciona un periodo de hasta siete días.
+        </div>
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Jornadas con actividad</span>
+                    <strong id="rcAdTotal">0</strong>
+                    <small>En todo el periodo filtrado</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Completas preliminares</span>
+                    <strong id="rcAdCompletas">0</strong>
+                    <small>Solo página actual</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Jornadas para revisar</span>
+                    <strong id="rcAdRevision">0</strong>
+                    <small>Solo página actual</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Movimientos pendientes</span>
+                    <strong id="rcAdPendientes">0</strong>
+                    <small>Solo página actual</small>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+
+            <span id="rcAdInfoPagina"
+                  class="text-muted small">
+                Sin resultados
+            </span>
+
+            <button id="rcAdExportar"
+                    type="button"
+                    class="btn btn-outline-success"
+                    disabled>
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                Exportar página a Excel (CSV)
+            </button>
+
+        </div>
+
+        <div class="table-responsive rc-ad-table-wrap">
+
+            <table class="table table-hover align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Colaborador</th>
+                        <th>Horario</th>
+                        <th>Estado</th>
+                        <th>Entrada</th>
+                        <th>Salida comida</th>
+                        <th>Regreso</th>
+                        <th>Salida</th>
+                        <th>BioTime</th>
+                        <th>INTRANET</th>
+                        <th>Pendientes</th>
+                        <th>TH</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+
+                <tbody id="rcAdTabla">
+                    <tr>
+                        <td colspan="13"
+                            class="text-center text-muted py-4">
+                            Sin información consultada.
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end align-items-center gap-3 mt-3">
+
+            <button id="rcAdAnterior"
+                    class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    disabled>
+                <i class="bi bi-chevron-left"></i>
+                Anterior
+            </button>
+
+            <span id="rcAdPagina"
+                  class="small text-muted">
+                0 / 0
+            </span>
+
+            <button id="rcAdSiguiente"
+                    class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    disabled>
+                Siguiente
+                <i class="bi bi-chevron-right"></i>
+            </button>
+
+        </div>
+
+        <p class="small text-muted mt-4 mb-0">
+            Este tablero muestra únicamente jornadas con movimientos.
+            No representa un listado de faltas ni identifica
+            automáticamente todos los días sin checadas.
+            Las reglas laborales y excepciones requieren
+            validación de Talento Humano.
+        </p>
+
+    </div>
+</div>
+
+@* ============================================================
+   MODAL DE DETALLE DE JORNADA
+   ============================================================ *@
+
+<div class="modal fade"
+     id="rcAdModal"
+     tabindex="-1"
+     aria-labelledby="rcAdModalTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 id="rcAdModalTitulo"
+                    class="modal-title">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Detalle de asistencia
+                </h5>
+
+                <button class="btn-close"
+                        type="button"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="rcAdModalContenido"
+                     class="rc-ad-detail">
+                    Selecciona una jornada.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary"
+                        type="button"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>

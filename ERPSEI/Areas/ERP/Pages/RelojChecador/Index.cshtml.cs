@@ -3,6 +3,7 @@ using ERPSEI.Data;
 using ERPSEI.Services.RelojChecador;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -16,16 +17,224 @@ public sealed class IndexModel : PageModel
     private readonly ApplicationDbContext _db;
     private readonly RelojGeocercaService _geocercas;
     private readonly RelojAccesoService _relojAcceso;
+    private readonly AsistenciaMovimientosService _asistenciaMovimientosService;
+    private readonly RelojEvaluacionAsistenciaService _evaluacionAsistenciaService;
 
     public IndexModel(
         ApplicationDbContext db,
         RelojGeocercaService geocercas,
-        RelojAccesoService relojAcceso)
+        RelojAccesoService relojAcceso,
+        AsistenciaMovimientosService asistenciaMovimientosService,
+        RelojEvaluacionAsistenciaService evaluacionAsistenciaService)
     {
         _db = db;
         _geocercas = geocercas;
         _relojAcceso = relojAcceso;
+        _asistenciaMovimientosService = asistenciaMovimientosService;
+        _evaluacionAsistenciaService = evaluacionAsistenciaService;
     }
+
+
+    public async Task<IActionResult> OnGetMiEvaluacionPruebaAsync(
+        DateTime? fecha)
+    {
+        try
+        {
+            var userId = User.FindFirstValue(
+                System.Security.Claims.ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return new UnauthorizedResult();
+            }
+
+            var empleado = await _db.Empleados
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserId == userId &&
+                    x.Deshabilitado == 0)
+                .Select(x => new { x.Id })
+                .SingleOrDefaultAsync();
+
+            if (empleado == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No se encontró un colaborador activo."
+                });
+            }
+
+            var zonaMexico = TimeZoneInfo
+                .FindSystemTimeZoneById(
+                    "America/Mexico_City");
+
+            var hoyMexico = TimeZoneInfo
+                .ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    zonaMexico)
+                .Date;
+
+            var fechaEvaluar = fecha?.Date ?? hoyMexico;
+
+            var resultado = await _evaluacionAsistenciaService
+                .EvaluarDiaAsync(
+                    empleado.Id,
+                    fechaEvaluar);
+
+            return new JsonResult(new
+            {
+                tieneError = false,
+                evaluacion = resultado
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+
+            return new JsonResult(new
+            {
+                tieneError = true,
+                mensaje = "No fue posible evaluar la asistencia."
+            })
+            {
+                StatusCode = 500
+            };
+        }
+    }
+
+
+    public async Task<IActionResult> OnGetMisMovimientosPruebaAsync(
+        DateTime? fechaInicio,
+        DateTime? fechaFin)
+    {
+        try
+        {
+            // =====================================================
+            // 1. OBTENER USUARIO AUTENTICADO
+            // =====================================================
+
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return new UnauthorizedObjectResult(new
+                {
+                    tieneError = true,
+                    mensaje = "No se encontró un usuario autenticado."
+                });
+            }
+
+            // =====================================================
+            // 2. IDENTIFICAR EMPLEADO
+            // =====================================================
+
+            var empleado = await _db.Empleados
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserId == userId &&
+                    x.Deshabilitado == 0)
+                .Select(x => new
+                {
+                    x.Id
+                })
+                .SingleOrDefaultAsync();
+
+            if (empleado == null)
+            {
+                return new JsonResult(new
+                {
+                    tieneError = true,
+                    mensaje = "El usuario no tiene un empleado activo relacionado."
+                });
+            }
+
+            // =====================================================
+            // 3. VALIDAR FECHAS
+            // =====================================================
+
+            var zonaMexico = TimeZoneInfo
+                .FindSystemTimeZoneById(
+                    "America/Mexico_City");
+
+            var fechaActualMexico = TimeZoneInfo
+                .ConvertTimeFromUtc(
+                    DateTime.UtcNow,
+                    zonaMexico)
+                .Date;
+
+            var inicio = fechaInicio?.Date ??
+                fechaActualMexico;
+
+            var fin = fechaFin?.Date ?? inicio;
+
+            if (fin < inicio)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    tieneError = true,
+                    mensaje = "La fecha final no puede ser menor que la inicial."
+                });
+            }
+
+            if ((fin - inicio).TotalDays > 365)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    tieneError = true,
+                    mensaje = "El rango máximo permitido es de 366 días."
+                });
+            }
+
+            // =====================================================
+            // 4. CONSULTAR MOVIMIENTOS
+            // =====================================================
+
+            var movimientos = await _asistenciaMovimientosService
+                .ObtenerMovimientosAsync(
+                    empleado.Id,
+                    inicio,
+                    fin);
+
+            // =====================================================
+            // 5. RESPUESTA
+            // =====================================================
+
+            return new JsonResult(new
+            {
+                tieneError = false,
+                empleadoId = empleado.Id,
+                fechaInicio = inicio.ToString("yyyy-MM-dd"),
+                fechaFin = fin.ToString("yyyy-MM-dd"),
+                total = movimientos.Count,
+                movimientos
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return new BadRequestObjectResult(new
+            {
+                tieneError = true,
+                mensaje = ex.Message
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+
+            return new JsonResult(new
+            {
+                tieneError = true,
+                mensaje = "No fue posible consultar los movimientos de asistencia."
+            })
+            {
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+        }
+    }
+
+
 
     // =====================================================
     // SEGURIDAD

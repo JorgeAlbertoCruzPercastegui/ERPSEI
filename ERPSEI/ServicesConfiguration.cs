@@ -459,6 +459,34 @@ namespace ERPSEI
 
             builder.Services.AddScoped<RelojAutorizacionesAusenciasService>();
 
+            builder.Services.AddScoped<RelojHorariosService>();
+
+            builder.Services.AddScoped<RelojEvaluacionAsistenciaService>();
+
+            builder.Services.AddScoped<IProveedorMovimientosAsistencia, ProveedorMovimientosIntranet>();
+
+            builder.Services.AddScoped<AsistenciaMovimientosService>();
+
+            builder.Services.AddScoped<IProveedorMovimientosAsistencia, ProveedorMovimientosBioTime>();
+
+            builder.Services.AddScoped<RelojVinculacionesBioTimeService>();
+
+            builder.Services.AddScoped<RelojVinculacionesBioTimeAdminService>();
+
+            builder.Services.AddScoped<RelojClasificacionMovimientosService>();
+
+            builder.Services.AddScoped<RelojRevisionBioTimeService>();
+
+            builder.Services.AddScoped<RelojEvaluacionAsistenciaUnificadaService>();
+
+            builder.Services.AddScoped<RelojAsistenciaContextoTHService>();
+
+            builder.Services.AddScoped<RelojAsistenciaDashboardService>();
+
+            builder.Services.AddScoped<RelojConciliacionAsistenciaService>();
+
+            builder.Services.AddScoped<RelojResolucionConflictosService>();
+
 
             // =====================================================
             // TALENTO HUMANO - PORTAL DE SOLICITUDES

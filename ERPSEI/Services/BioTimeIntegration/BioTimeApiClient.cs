@@ -23,31 +23,116 @@ public sealed class BioTimeApiClient
         _http.Timeout = TimeSpan.FromSeconds(60);
     }
 
-    private async Task<string> ObtenerTokenAsync(CancellationToken ct)
+
+    private async Task<string> ObtenerTokenAsync(
+        CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(_options.Email) || string.IsNullOrWhiteSpace(_options.Password) || string.IsNullOrWhiteSpace(_options.Company))
-            throw new InvalidOperationException("BioTime: credenciales incompletas.");
-        using var response = await _http.PostAsJsonAsync("api-token-auth/", new { email = _options.Email, password = _options.Password, company = _options.Company }, ct);
-        response.EnsureSuccessStatusCode();
-        using var json = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
-        if (!json.RootElement.TryGetProperty("token", out var token) || string.IsNullOrWhiteSpace(token.GetString()))
-            throw new InvalidOperationException("BioTime no devolvió token.");
+        if (string.IsNullOrWhiteSpace(_options.Email) ||
+            string.IsNullOrWhiteSpace(_options.Password) ||
+            string.IsNullOrWhiteSpace(_options.Company))
+        {
+            throw new InvalidOperationException(
+                "BioTime: credenciales incompletas.");
+        }
+
+        using var response = await _http.PostAsJsonAsync(
+            "api-token-auth/",
+            new
+            {
+                email = _options.Email,
+                password = _options.Password,
+                company = _options.Company
+            },
+            ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // No se registran credenciales, tokens ni
+            // contenido sensible de la respuesta.
+            throw new HttpRequestException(
+                $"BioTime AUTH /api-token-auth/: " +
+                $"HTTP {(int)response.StatusCode} " +
+                $"({response.ReasonPhrase}). " +
+                "Revisar credenciales, compañía y formato de autenticación.",
+                null,
+                response.StatusCode);
+        }
+
+        using var json = await JsonDocument.ParseAsync(
+            await response.Content.ReadAsStreamAsync(ct),
+            cancellationToken: ct);
+
+        if (!json.RootElement.TryGetProperty(
+                "token", out var token) ||
+            string.IsNullOrWhiteSpace(token.GetString()))
+        {
+            throw new InvalidOperationException(
+                "BioTime AUTH: la respuesta no contiene un token válido.");
+        }
+
         return token.GetString()!;
     }
 
-    private async Task<JsonDocument> GetAsync(string path, string token, CancellationToken ct)
+
+    private async Task<JsonDocument> GetAsync(
+        string path,
+        string token,
+        CancellationToken ct)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, path);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Token", token);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
-        response.EnsureSuccessStatusCode();
-        var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
-        if (doc.RootElement.TryGetProperty("code", out var code) && code.ValueKind == JsonValueKind.Number && code.GetInt32() != 0)
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            path);
+
+        request.Headers.Authorization =
+            new AuthenticationHeaderValue("Token", token);
+
+        request.Headers.Accept.Add(
+            new MediaTypeWithQualityHeaderValue(
+                "application/json"));
+
+        using var response = await _http.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            // Solo se registra el nombre del endpoint,
+            // sin parámetros ni datos de autenticación.
+            string endpoint =
+                path.StartsWith(
+                    "personnel/api/employees/",
+                    StringComparison.OrdinalIgnoreCase)
+                    ? "EMPLOYEES"
+                    : path.StartsWith(
+                        "iclock/api/transactions/",
+                        StringComparison.OrdinalIgnoreCase)
+                        ? "TRANSACTIONS"
+                        : "OTHER";
+
+            throw new HttpRequestException(
+                $"BioTime GET {endpoint}: " +
+                $"HTTP {(int)response.StatusCode} " +
+                $"({response.ReasonPhrase}).",
+                null,
+                response.StatusCode);
+        }
+
+        var doc = await JsonDocument.ParseAsync(
+            await response.Content.ReadAsStreamAsync(ct),
+            cancellationToken: ct);
+
+        if (doc.RootElement.TryGetProperty(
+                "code", out var code) &&
+            code.ValueKind == JsonValueKind.Number &&
+            code.GetInt32() != 0)
         {
             doc.Dispose();
-            throw new InvalidOperationException("BioTime devolvió un código de error en el cuerpo JSON.");
+
+            throw new InvalidOperationException(
+                "BioTime devolvió un código de error en el cuerpo JSON.");
         }
+
         return doc;
     }
 

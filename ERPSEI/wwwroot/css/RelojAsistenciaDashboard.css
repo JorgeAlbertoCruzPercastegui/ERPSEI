@@ -1,0 +1,112 @@
+﻿
+/* ============================================================
+   INTRANET - DASHBOARD CONSOLIDADO DE ASISTENCIA
+   ============================================================ */
+
+#rcAsistenciaDashboard {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+    #rcAsistenciaDashboard .card-header {
+        padding: 1rem 1.25rem;
+    }
+
+    #rcAsistenciaDashboard .card-body {
+        padding: 1.25rem;
+    }
+
+    #rcAsistenciaDashboard .form-label {
+        font-size: .85rem;
+        font-weight: 600;
+    }
+
+    #rcAsistenciaDashboard .rc-ad-kpi {
+        min-height: 112px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: .35rem;
+    }
+
+        #rcAsistenciaDashboard .rc-ad-kpi span {
+            font-size: .82rem;
+        }
+
+        #rcAsistenciaDashboard .rc-ad-kpi strong {
+            font-size: 1.65rem;
+            line-height: 1.15;
+        }
+
+        #rcAsistenciaDashboard .rc-ad-kpi small {
+            font-size: .72rem;
+            opacity: .75;
+        }
+
+    #rcAsistenciaDashboard .rc-ad-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    #rcAsistenciaDashboard table {
+        width: 100%;
+        min-width: 1360px;
+        font-size: .83rem;
+    }
+
+        #rcAsistenciaDashboard table th {
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        #rcAsistenciaDashboard table td {
+            vertical-align: middle;
+        }
+
+    #rcAsistenciaDashboard .badge {
+        font-weight: 500;
+    }
+
+#rcAdModal .modal-content {
+    border-radius: 14px;
+}
+
+#rcAdModal .modal-header {
+    padding: 1.1rem 1.4rem;
+}
+
+#rcAdModal .modal-body {
+    padding: 1.4rem;
+}
+
+#rcAdModal .rc-ad-detail-item {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 10px;
+    padding: .85rem 1rem;
+    min-height: 76px;
+    height: 100%;
+}
+
+    #rcAdModal .rc-ad-detail-item strong {
+        display: block;
+        margin-top: .35rem;
+        overflow-wrap: anywhere;
+    }
+
+@media (max-width: 768px) {
+    #rcAsistenciaDashboard .card-body {
+        padding: 1rem;
+    }
+
+    #rcAsistenciaDashboard .rc-ad-kpi {
+        min-height: 95px;
+    }
+
+        #rcAsistenciaDashboard .rc-ad-kpi strong {
+            font-size: 1.35rem;
+        }
+
+    #rcAdModal .modal-body {
+        padding: 1rem;
+    }
+}

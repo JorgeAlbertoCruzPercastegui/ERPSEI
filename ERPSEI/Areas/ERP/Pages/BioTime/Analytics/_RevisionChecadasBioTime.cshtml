@@ -1,0 +1,468 @@
+﻿@* ============================================================
+   INTRANET - REVISIÓN DE CHECADAS BIOTIME
+   Consulta, confirmación, corrección y revocación
+   ============================================================ *@
+
+<div class="card biotime-analytics-panel mb-4"
+     id="rcRevisionPanel">
+
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-clipboard-check"></i>
+        <strong>Revisión y clasificación de checadas biométricas</strong>
+    </div>
+
+    <div class="card-body">
+
+        <p class="small text-muted mb-4">
+            Consulta las checadas de una vinculación validada
+            y confirma su significado. Estas operaciones no generan
+            incidencias laborales ni modifican las marcas originales
+            de BioTime Cloud.
+        </p>
+
+        @* FILTROS *@
+        <div class="row g-3 align-items-end mb-4">
+
+            <div class="col-lg-4 col-md-5">
+                <label for="rcRevEmpleado" class="form-label">
+                    ID de empleado INTRANET
+                </label>
+
+                <input id="rcRevEmpleado"
+                       type="number"
+                       class="form-control"
+                       min="1"
+                       step="1"
+                       placeholder="Ejemplo: 35"
+                       autocomplete="off" />
+            </div>
+
+            <div class="col-lg-4 col-md-4">
+                <label for="rcRevFecha" class="form-label">
+                    Fecha local
+                </label>
+
+                <input id="rcRevFecha"
+                       type="date"
+                       class="form-control" />
+            </div>
+
+            <div class="col-lg-4 col-md-3">
+                <button type="button"
+                        id="rcRevConsultar"
+                        class="btn btn-primary w-100">
+                    <i class="bi bi-search me-2"></i>
+                    Consultar checadas
+                </button>
+            </div>
+
+        </div>
+
+        @* MENSAJE *@
+        <div id="rcRevMensaje"
+             class="alert alert-info small"
+             role="status"
+             aria-live="polite">
+            Selecciona un empleado y una fecha para consultar sus checadas.
+        </div>
+
+        @* INDICADORES *@
+        <div class="row g-3 mb-4">
+
+            <div class="col-md-4">
+                <div class="rc-admin-kpi">
+                    <span>Checadas</span>
+                    <strong id="rcRevTotal">0</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="rc-admin-kpi">
+                    <span>Confirmadas</span>
+                    <strong id="rcRevConfirmadas">0</strong>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="rc-admin-kpi">
+                    <span>Por revisar</span>
+                    <strong id="rcRevPendientes">0</strong>
+                </div>
+            </div>
+
+        </div>
+
+        @* TABLA DE CHECADAS *@
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead>
+                    <tr>
+                        <th>ID BioTime</th>
+                        <th>Hora México</th>
+                        <th>Dispositivo</th>
+                        <th>Estado</th>
+                        <th>Tipo confirmado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody id="rcRevTabla">
+                    <tr>
+                        <td colspan="6"
+                            class="text-center text-muted py-4">
+                            Sin información consultada.
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="mt-3">
+            <small class="text-muted">
+                <i class="bi bi-shield-check me-1"></i>
+                Las confirmaciones, correcciones y revocaciones
+                quedan registradas en el historial de auditoría.
+                Los movimientos pendientes no se consideran
+                clasificaciones laborales confirmadas.
+            </small>
+        </div>
+
+    </div>
+</div>
+
+
+@* ============================================================
+   MODAL 1: CONFIRMAR / CORREGIR MOVIMIENTO
+   ============================================================ *@
+
+<div class="modal fade"
+     id="rcRevModal"
+     tabindex="-1"
+     aria-labelledby="rcRevModalTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form id="rcRevForm">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title"
+                        id="rcRevModalTitulo">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Confirmar movimiento biométrico
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           id="rcRevChecadaId" />
+
+                    <input type="hidden"
+                           id="rcRevEmpleadoModal" />
+
+                    @* INFORMACIÓN DEL MOVIMIENTO *@
+                    <div class="border rounded p-3 mb-3">
+
+                        <div class="small text-muted mb-2">
+                            Movimiento seleccionado
+                        </div>
+
+                        <div id="rcRevDetalle"
+                             class="fw-semibold">
+                        </div>
+
+                    </div>
+
+                    @* TIPO *@
+                    <div class="mb-3">
+
+                        <label for="rcRevTipo"
+                               class="form-label">
+                            Tipo de movimiento
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <select id="rcRevTipo"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                Selecciona un movimiento
+                            </option>
+
+                            <option value="Entrada">
+                                Entrada
+                            </option>
+
+                            <option value="SalidaComer">
+                                Salida a comer
+                            </option>
+
+                            <option value="RegresoComer">
+                                Regreso de comer
+                            </option>
+
+                            <option value="Salida">
+                                Salida
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    @* JUSTIFICACIÓN *@
+                    <div class="mb-3">
+
+                        <label for="rcRevMotivo"
+                               class="form-label">
+                            Justificación de la clasificación
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <textarea id="rcRevMotivo"
+                                  class="form-control"
+                                  rows="4"
+                                  minlength="10"
+                                  maxlength="1000"
+                                  required
+                                  placeholder="Describe la evidencia utilizada para confirmar este movimiento."></textarea>
+
+                        <div class="form-text">
+                            Entre 10 y 1000 caracteres.
+                        </div>
+
+                    </div>
+
+                    @* MENSAJE DE ERROR *@
+                    <div id="rcRevModalMensaje"
+                         class="alert alert-danger small d-none"
+                         role="alert"
+                         aria-live="assertive">
+                    </div>
+
+                    @* ADVERTENCIA *@
+                    <div class="alert alert-warning small mb-0">
+
+                        <i class="bi bi-shield-exclamation me-1"></i>
+
+                        La clasificación debe estar respaldada
+                        por evidencia suficiente. No genera
+                        incidencias ni descuentos laborales.
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            id="rcRevGuardar"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-check-lg me-1"></i>
+                        Confirmar movimiento
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>
+
+
+@* ============================================================
+   MODAL 2: REVOCAR CLASIFICACIÓN
+   ============================================================ *@
+
+<div class="modal fade"
+     id="rcRevModalRevocar"
+     tabindex="-1"
+     aria-labelledby="rcRevModalRevocarTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form id="rcRevFormRevocar">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title"
+                        id="rcRevModalRevocarTitulo">
+
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>
+                        Revocar clasificación biométrica
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden"
+                           id="rcRevRevocarChecadaId" />
+
+                    <input type="hidden"
+                           id="rcRevRevocarEmpleadoId" />
+
+                    @* RESUMEN DEL MOVIMIENTO *@
+                    <div class="border rounded p-3 mb-3">
+
+                        <div class="small text-muted mb-3">
+                            Movimiento seleccionado
+                        </div>
+
+                        <div class="mb-2">
+                            <strong>Empleado INTRANET:</strong>
+                            <span id="rcRevRevocarEmpleado"></span>
+                        </div>
+
+                        <div class="mb-2">
+                            <strong>ID BioTime:</strong>
+                            <span id="rcRevRevocarIdentificador"></span>
+                        </div>
+
+                        <div class="mb-2">
+                            <strong>Fecha y hora:</strong>
+                            <span id="rcRevRevocarFecha"></span>
+                        </div>
+
+                        <div>
+                            <strong>Clasificación actual:</strong>
+
+                            <span id="rcRevRevocarTipo"
+                                  class="badge bg-success">
+                            </span>
+                        </div>
+
+                    </div>
+
+                    @* ADVERTENCIA *@
+                    <div class="alert alert-warning small">
+
+                        <div class="fw-semibold mb-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            ¿Qué sucederá al revocar?
+                        </div>
+
+                        La clasificación dejará de estar confirmada.
+
+                        <div class="mt-2">
+                            La checada original de BioTime
+                            permanecerá intacta. El cambio,
+                            el motivo y el usuario responsable
+                            quedarán registrados en la auditoría.
+                        </div>
+
+                    </div>
+
+                    @* MOTIVO *@
+                    <div class="mb-3">
+
+                        <label for="rcRevRevocarMotivo"
+                               class="form-label">
+
+                            Motivo de la revocación
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+                        <textarea id="rcRevRevocarMotivo"
+                                  class="form-control"
+                                  rows="4"
+                                  minlength="10"
+                                  maxlength="1000"
+                                  required
+                                  placeholder="Explica por qué debe revocarse esta clasificación."></textarea>
+
+                        <div class="form-text">
+                            Entre 10 y 1000 caracteres.
+                        </div>
+
+                    </div>
+
+                    @* CONFIRMACIÓN EXPLÍCITA *@
+                    <div class="form-check mb-3">
+
+                        <input id="rcRevRevocarConfirmacion"
+                               type="checkbox"
+                               class="form-check-input"
+                               required />
+
+                        <label for="rcRevRevocarConfirmacion"
+                               class="form-check-label small">
+
+                            Confirmo que deseo revocar esta
+                            clasificación y registrar la acción
+                            en el historial de auditoría.
+
+                        </label>
+
+                    </div>
+
+                    @* ERRORES *@
+                    <div id="rcRevRevocarMensaje"
+                         class="alert alert-danger small d-none"
+                         role="alert"
+                         aria-live="assertive">
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            id="rcRevRevocarGuardar"
+                            class="btn btn-danger">
+
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                        Confirmar revocación
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+</div>

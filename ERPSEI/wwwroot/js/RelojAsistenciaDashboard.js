@@ -1,0 +1,526 @@
+﻿
+(() => {
+    "use strict";
+
+    // =========================================================
+    // INTRANET - DASHBOARD CONSOLIDADO DE ASISTENCIA
+    // =========================================================
+
+    const $ = id => document.getElementById(id);
+
+    const estado = {
+        pagina: 1,
+        totalPaginas: 0,
+        registros: [],
+        cargando: false,
+        filtros: null,
+        version: 0
+    };
+
+    function endpoint(handler) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("handler", handler);
+        return url;
+    }
+
+    function escapar(valor) {
+        return String(valor ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+    }
+
+    function fechaMexicoHoy() {
+        const partes = new Intl.DateTimeFormat("en-US", {
+            timeZone: "America/Mexico_City",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        }).formatToParts(new Date());
+
+        const parte = tipo =>
+            partes.find(x => x.type === tipo)?.value || "";
+
+        return `${parte("year")}-${parte("month")}-${parte("day")}`;
+    }
+
+    function sumarDias(fecha, dias) {
+        const d = new Date(`${fecha}T12:00:00Z`);
+        d.setUTCDate(d.getUTCDate() + dias);
+        return d.toISOString().slice(0, 10);
+    }
+
+    function fechaTexto(valor) {
+        return String(valor || "")
+            .slice(0, 10);
+    }
+
+    function horaTexto(valor) {
+        return valor || "—";
+    }
+
+    function siNo(valor) {
+        if (valor === true) return "Sí";
+        if (valor === false) return "No";
+        return "Sin determinar";
+    }
+
+    function informar(texto, tipo = "info") {
+        const el = $("rcAdMensaje");
+        if (!el) return;
+        el.className = `alert alert-${tipo} small`;
+        el.textContent = texto;
+    }
+
+    function filtrosActuales() {
+        const empleadoTexto = $("rcAdEmpleado").value.trim();
+
+        return {
+            fechaInicio: $("rcAdInicio").value,
+            fechaFin: $("rcAdFin").value,
+            empleadoId: empleadoTexto,
+            buscar: $("rcAdBuscar").value.trim()
+        };
+    }
+
+    function validarFiltros(f) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(f.fechaInicio) ||
+            !/^\d{4}-\d{2}-\d{2}$/.test(f.fechaFin)) {
+            return "Selecciona ambas fechas.";
+        }
+
+        if (f.fechaFin < f.fechaInicio) {
+            return "La fecha final debe ser posterior a la inicial.";
+        }
+
+        if (f.fechaFin > fechaMexicoHoy()) {
+            return "No se permiten fechas futuras.";
+        }
+
+        if (f.fechaFin > sumarDias(f.fechaInicio, 6)) {
+            return "Selecciona un máximo de siete días.";
+        }
+
+        if (f.empleadoId &&
+            (!/^\d+$/.test(f.empleadoId) ||
+                Number(f.empleadoId) <= 0)) {
+            return "El ID del empleado no es válido.";
+        }
+
+        if (f.buscar.length > 100) {
+            return "La búsqueda permite máximo 100 caracteres.";
+        }
+
+        return null;
+    }
+
+    function urlConFiltros(handler, f, pagina) {
+        const url = endpoint(handler);
+
+        url.searchParams.set(
+            "fechaInicio", f.fechaInicio);
+
+        url.searchParams.set(
+            "fechaFin", f.fechaFin);
+
+        url.searchParams.set(
+            "pagina", pagina);
+
+        if (f.empleadoId) {
+            url.searchParams.set(
+                "empleadoId", f.empleadoId);
+        } else {
+            url.searchParams.delete("empleadoId");
+        }
+
+        if (f.buscar) {
+            url.searchParams.set(
+                "buscar", f.buscar);
+        } else {
+            url.searchParams.delete("buscar");
+        }
+
+        return url;
+    }
+
+    function estadoBadge(valor) {
+        const textos = {
+            JornadaIncompleta: "Incompleta",
+            CompletaParaRevision: "Completa preliminar",
+            ConflictoMovimientos: "Conflicto",
+            SecuenciaInvalida: "Secuencia inválida",
+            SinConfiguracion: "Sin horario",
+            NoLaborable: "No laborable",
+            SinMovimientos: "Sin movimientos"
+        };
+
+        const texto = textos[valor] || valor || "Sin evaluar";
+
+        const clase = valor === "CompletaParaRevision"
+            ? "text-bg-info"
+            : valor === "ConflictoMovimientos" ||
+                valor === "SecuenciaInvalida"
+                ? "text-bg-danger"
+                : "text-bg-warning";
+
+        return `<span class="badge ${clase}">${escapar(texto)}</span>`;
+    }
+
+    function renderizar() {
+        const tbody = $("rcAdTabla");
+
+        $("rcAdExportar").disabled =
+            estado.registros.length === 0;
+
+        $("rcAdAnterior").disabled =
+            estado.cargando || estado.pagina <= 1;
+
+        $("rcAdSiguiente").disabled =
+            estado.cargando ||
+            estado.totalPaginas === 0 ||
+            estado.pagina >= estado.totalPaginas;
+
+        $("rcAdPagina").textContent =
+            `${estado.totalPaginas === 0 ? 0 : estado.pagina}` +
+            ` / ${estado.totalPaginas}`;
+
+        if (estado.registros.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="13"
+                        class="text-center text-muted py-4">
+                        No existen jornadas con actividad
+                        para los filtros seleccionados.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = estado.registros.map((r, i) => `
+            <tr>
+                <td class="text-nowrap">
+                    ${escapar(fechaTexto(r.fecha))}
+                </td>
+
+                <td>
+                    <strong>${escapar(r.colaborador)}</strong>
+                    <div class="small text-muted">
+                        ID ${escapar(r.empleadoId)}
+                    </div>
+                </td>
+
+                <td>${escapar(r.horario)}</td>
+
+                <td>${estadoBadge(r.estado)}</td>
+
+                <td>${escapar(horaTexto(r.entrada))}</td>
+
+                <td>${escapar(horaTexto(r.salidaComer))}</td>
+
+                <td>${escapar(horaTexto(r.regresoComer))}</td>
+
+                <td>${escapar(horaTexto(r.salida))}</td>
+
+                <td>${escapar(r.movimientosBioTime)}</td>
+
+                <td>${escapar(r.movimientosIntranet)}</td>
+
+                <td>${escapar(r.pendientes)}</td>
+
+                <td>
+                    ${r.homeOfficeAutorizado
+                ? '<span class="badge text-bg-info">HO</span>'
+                : ""}
+                    ${r.tieneAusencias
+                ? '<span class="badge text-bg-secondary">Ausencia</span>'
+                : ""}
+                    ${!r.homeOfficeAutorizado && !r.tieneAusencias
+                ? "—" : ""}
+                </td>
+
+                <td>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-primary"
+                            data-rc-ad-detalle="${i}">
+                        <i class="bi bi-eye me-1"></i>
+                        Ver
+                    </button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function actualizarIndicadores(r) {
+        $("rcAdTotal").textContent =
+            r.totalJornadas ?? 0;
+
+        $("rcAdCompletas").textContent =
+            r.jornadasCompletasPagina ?? 0;
+
+        $("rcAdRevision").textContent =
+            r.jornadasRevisionPagina ?? 0;
+
+        $("rcAdPendientes").textContent =
+            r.movimientosPendientesPagina ?? 0;
+
+        const inicio = (r.pagina - 1) * r.tamano + 1;
+
+        const fin = Math.min(
+            r.pagina * r.tamano,
+            r.totalJornadas
+        );
+
+        $("rcAdInfoPagina").textContent =
+            r.totalJornadas > 0
+                ? `Mostrando ${inicio}–${fin} de ${r.totalJornadas} jornadas`
+                : "0 jornadas";
+    }
+
+    async function consultar(pagina = 1) {
+        if (estado.cargando) return;
+
+        const filtros = filtrosActuales();
+        const error = validarFiltros(filtros);
+
+        if (error) {
+            informar(error, "warning");
+            return;
+        }
+
+        estado.cargando = true;
+        $("rcAdConsultar").disabled = true;
+
+        const version = ++estado.version;
+
+        informar("Consultando asistencia consolidada...");
+
+        try {
+            const url = urlConFiltros(
+                "AsistenciaDashboard",
+                filtros,
+                pagina
+            );
+
+            const respuesta = await fetch(url, {
+                credentials: "same-origin",
+                headers: {
+                    "Accept": "application/json"
+                }
+            });
+
+            const json = await respuesta.json();
+
+            if (!respuesta.ok || !json.success) {
+                throw new Error(
+                    json.message ||
+                    `Error HTTP ${respuesta.status}`);
+            }
+
+            if (version !== estado.version)
+                return;
+
+            const resultado = json.resultado;
+
+            estado.registros =
+                Array.isArray(resultado.registros)
+                    ? resultado.registros
+                    : [];
+
+            estado.pagina = resultado.pagina;
+            estado.totalPaginas = resultado.totalPaginas;
+            estado.filtros = filtros;
+
+            actualizarIndicadores(resultado);
+            renderizar();
+
+            informar(
+                "Asistencia consultada correctamente. " +
+                "Los resultados son preliminares.",
+                "success"
+            );
+        }
+        catch (error) {
+            estado.registros = [];
+            estado.totalPaginas = 0;
+            estado.filtros = null;
+            estado.pagina = 1;
+
+            $("rcAdTotal").textContent = "0";
+            $("rcAdCompletas").textContent = "0";
+            $("rcAdRevision").textContent = "0";
+            $("rcAdPendientes").textContent = "0";
+
+            $("rcAdInfoPagina").textContent =
+                "Sin resultados";
+
+            informar(
+                error.message ||
+                "No fue posible consultar la asistencia.",
+                "danger"
+            );
+
+            renderizar();
+        }
+        finally {
+            estado.cargando = false;
+            $("rcAdConsultar").disabled = false;
+            renderizar();
+        }
+    }
+
+    function mostrarDetalle(indice) {
+        const r = estado.registros[indice];
+        if (!r) return;
+
+        $("rcAdModalTitulo").textContent =
+            `Asistencia · ${r.colaborador}`;
+
+        const campo = (titulo, valor) => `
+            <div class="col-md-6">
+                <div class="rc-ad-detail-item">
+                    <div class="small text-muted">
+                        ${escapar(titulo)}
+                    </div>
+                    <strong>${escapar(valor ?? "—")}</strong>
+                </div>
+            </div>`;
+
+        $("rcAdModalContenido").innerHTML = `
+            <div class="row g-3 mb-4">
+                ${campo("Empleado", r.empleadoId)}
+                ${campo("Fecha", fechaTexto(r.fecha))}
+                ${campo("Horario", r.horario)}
+                ${campo("Estado", r.estado)}
+                ${campo("Entrada", r.entrada)}
+                ${campo("Salida a comer", r.salidaComer)}
+                ${campo("Regreso de comer", r.regresoComer)}
+                ${campo("Salida final", r.salida)}
+                ${campo("Entrada puntual", siNo(r.entradaPuntual))}
+                ${campo("Regreso puntual", siNo(r.regresoComidaPuntual))}
+                ${campo("Salida en horario", siNo(r.salidaEnHorario))}
+                ${campo("Minutos efectivos preliminares",
+            r.minutosEfectivos)}
+                ${campo("Movimientos BioTime",
+                r.movimientosBioTime)}
+                ${campo("Movimientos INTRANET",
+                    r.movimientosIntranet)}
+                ${campo("Movimientos confirmados",
+                        r.confirmados)}
+                ${campo("Movimientos pendientes",
+                            r.pendientes)}
+                ${campo("Home Office autorizado",
+                                r.homeOfficeAutorizado ? "Sí" : "No")}
+                ${campo("Solicitudes de ausencia",
+                                    r.tieneAusencias ? "Sí" : "No")}
+            </div>
+
+            <div class="alert alert-warning small">
+                <strong>Observaciones para TH</strong>
+                <p class="mb-0 mt-2">
+                    ${escapar(r.observaciones || "Sin observaciones adicionales.")}
+                </p>
+            </div>
+
+            <div class="small text-muted">
+                Este diagnóstico no constituye una
+                determinación laboral definitiva.
+            </div>
+        `;
+
+        bootstrap.Modal
+            .getOrCreateInstance($("rcAdModal"))
+            .show();
+    }
+
+    function exportar() {
+        if (!estado.filtros || !estado.registros.length)
+            return;
+
+        const url = urlConFiltros(
+            "ExportarAsistenciaDashboard",
+            estado.filtros,
+            estado.pagina
+        );
+
+        window.location.assign(url.toString());
+    }
+
+    function iniciar() {
+        if (!$("rcAsistenciaDashboard")) return;
+
+        const hoy = fechaMexicoHoy();
+
+        $("rcAdInicio").value = hoy;
+        $("rcAdFin").value = hoy;
+
+        $("rcAdConsultar").addEventListener(
+            "click",
+            () => consultar(1)
+        );
+
+        $("rcAdAnterior").addEventListener(
+            "click",
+            () => consultar(estado.pagina - 1)
+        );
+
+        $("rcAdSiguiente").addEventListener(
+            "click",
+            () => consultar(estado.pagina + 1)
+        );
+
+        $("rcAdExportar").addEventListener(
+            "click",
+            exportar
+        );
+
+        $("rcAdTabla").addEventListener(
+            "click",
+            event => {
+                const boton = event.target.closest(
+                    "[data-rc-ad-detalle]"
+                );
+
+                if (!boton) return;
+
+                mostrarDetalle(
+                    Number(boton.dataset.rcAdDetalle)
+                );
+            }
+        );
+
+        for (const id of [
+            "rcAdInicio",
+            "rcAdFin",
+            "rcAdEmpleado",
+            "rcAdBuscar"
+        ]) {
+            $(id).addEventListener("change", () => {
+                estado.registros = [];
+                estado.totalPaginas = 0;
+                estado.pagina = 1;
+                estado.filtros = null;
+
+                renderizar();
+
+                informar(
+                    "Los filtros cambiaron. Consulta nuevamente.",
+                    "info"
+                );
+            });
+        }
+
+        renderizar();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener(
+            "DOMContentLoaded",
+            iniciar
+        );
+    }
+    else {
+        iniciar();
+    }
+})();

@@ -1,0 +1,66 @@
+﻿
+/* INTRANET - CONCILIACIÓN DE ASISTENCIA */
+
+#rcConPanel {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+    #rcConPanel .card-body {
+        padding: 1.25rem;
+    }
+
+    #rcConPanel .rc-con-kpi {
+        border: 1px solid var(--bs-border-color);
+        background: var(--bs-tertiary-bg);
+        border-radius: 12px;
+        padding: 1rem;
+        min-height: 96px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: .4rem;
+    }
+
+        #rcConPanel .rc-con-kpi span {
+            font-size: .78rem;
+            color: var(--bs-secondary-color);
+        }
+
+        #rcConPanel .rc-con-kpi strong {
+            font-size: 1.65rem;
+            line-height: 1.15;
+            font-variant-numeric: tabular-nums;
+        }
+
+    #rcConPanel table {
+        min-width: 840px;
+        font-size: .85rem;
+    }
+
+        #rcConPanel table th {
+            white-space: nowrap;
+        }
+
+    #rcConPanel .badge {
+        font-weight: 500;
+    }
+
+    #rcConPanel .alert {
+        overflow-wrap: anywhere;
+    }
+
+@media (max-width: 768px) {
+    #rcConPanel .card-body {
+        padding: 1rem;
+    }
+
+    #rcConPanel .rc-con-kpi {
+        min-height: 82px;
+        padding: .8rem;
+    }
+
+        #rcConPanel .rc-con-kpi strong {
+            font-size: 1.35rem;
+        }
+}

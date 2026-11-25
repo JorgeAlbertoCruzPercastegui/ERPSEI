@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <None Include="Resources\Areas\Reportes\Pages\GeneradorContratoModel.es-MX.resx" />
+    <None Include="Tests\RelojConciliacion.Pruebas\RelojConciliacion.Pruebas.csproj" />
     <None Include="wwwroot\js\GestorComunicadosInternos.js" />
     <None Include="wwwroot\js\Index.js" />
     <None Include="wwwroot\lib\dearflip\fonts\themify.svg" />
@@ -344,5 +345,11 @@
     <Folder Include="wwwroot\documentos\" />
     <Folder Include="wwwroot\uploads\header\" />
   </ItemGroup>
+
+<ItemGroup>
+  <Compile Remove="Tests/**/*.cs" />
+  <Content Remove="Tests/**/*" />
+  <None Remove="Tests/**/*" />
+</ItemGroup>
 
 </Project>

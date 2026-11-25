@@ -176,8 +176,18 @@ public sealed class BioTimeSyncService
         catch (Exception ex)
         {
             auditoria.Estado = "Error";
-            auditoria.Error = ex.GetType().Name;
-            _logger.LogError("Error en sincronización BioTime ({Tipo})", ex.GetType().Name);
+            auditoria.Error = ex is HttpRequestException httpEx
+            ? $"HTTP {(int?)httpEx.StatusCode}: {httpEx.Message}"
+            : $"{ex.GetType().Name}: {ex.Message}";
+
+            if (auditoria.Error.Length > 1000)
+                auditoria.Error = auditoria.Error[..1000];
+
+            _logger.LogError(
+                ex,
+                "Fallo en la sincronización BioTime del periodo {Inicio} al {Fin}",
+                inicio,
+                fin);
             DescartarCambiosPendientesYReanexarAuditoria(auditoria);
             throw;
         }

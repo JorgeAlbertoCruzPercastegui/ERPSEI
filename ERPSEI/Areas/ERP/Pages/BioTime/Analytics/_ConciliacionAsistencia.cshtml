@@ -1,0 +1,163 @@
+﻿@* INTRANET - CONCILIACIÓN DE ASISTENCIA *@
+
+<div class="card biotime-analytics-panel mb-4"
+     id="rcConPanel">
+
+    <div class="card-header d-flex justify-content-between
+        align-items-center flex-wrap gap-2">
+
+        <strong>
+            <i class="bi bi-intersect me-2"></i>
+            Conciliación de movimientos
+        </strong>
+
+        <span class="badge text-bg-secondary">
+            Revisión administrativa
+        </span>
+    </div>
+
+    <div class="card-body">
+
+        <p class="text-muted small mb-3">
+            Compara las marcas digitales y biométricas,
+            identifica clasificaciones pendientes,
+            revocaciones y movimientos contradictorios.
+            No modifica registros originales.
+        </p>
+
+        <div class="row g-3 align-items-end mb-4">
+
+            <div class="col-md-4">
+                <label class="form-label"
+                       for="rcConEmpleado">
+                    ID empleado INTRANET
+                </label>
+
+                <input type="number"
+                       min="1"
+                       step="1"
+                       id="rcConEmpleado"
+                       class="form-control"
+                       placeholder="Ejemplo: 35" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label"
+                       for="rcConFecha">
+                    Fecha
+                </label>
+
+                <input type="date"
+                       id="rcConFecha"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <button type="button"
+                        id="rcConConsultar"
+                        class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>
+                    Conciliar movimientos
+                </button>
+            </div>
+
+        </div>
+
+        <div id="rcConMensaje"
+             class="alert alert-info small"
+             role="status">
+            Selecciona un empleado y una fecha.
+        </div>
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-lg col-sm-4">
+                <div class="rc-con-kpi">
+                    <span>Total</span>
+                    <strong id="rcConTotal">0</strong>
+                </div>
+            </div>
+
+            <div class="col-lg col-sm-4">
+                <div class="rc-con-kpi">
+                    <span>Confirmados</span>
+                    <strong id="rcConConfirmados">0</strong>
+                </div>
+            </div>
+
+            <div class="col-lg col-sm-4">
+                <div class="rc-con-kpi">
+                    <span>Pendientes</span>
+                    <strong id="rcConPendientes">0</strong>
+                </div>
+            </div>
+
+            <div class="col-lg col-sm-4">
+                <div class="rc-con-kpi">
+                    <span>Revocados</span>
+                    <strong id="rcConRevocados">0</strong>
+                </div>
+            </div>
+
+            <div class="col-lg col-sm-4">
+                <div class="rc-con-kpi">
+                    <span>Conflictos</span>
+                    <strong id="rcConConflictos">0</strong>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center
+            justify-content-between gap-2 mb-3">
+
+            <strong id="rcConEstado">
+                Sin evaluación
+            </strong>
+
+            <button type="button"
+                    id="rcConAbrirRevision"
+                    class="btn btn-outline-primary btn-sm"
+                    disabled>
+                <i class="bi bi-clipboard-check me-1"></i>
+                Ir a revisión biométrica
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Hora México</th>
+                        <th>Fuente</th>
+                        <th>Dispositivo / origen</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Revisión</th>
+                    </tr>
+                </thead>
+
+                <tbody id="rcConTabla">
+                    <tr>
+                        <td colspan="6"
+                            class="text-center text-muted py-4">
+                            Sin información consultada.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="rcConConflictosDetalle"
+             class="mt-3"
+             aria-live="polite">
+        </div>
+
+        <p class="small text-muted mb-0 mt-3">
+            Los conflictos requieren conciliación por TH.
+            No se generan faltas, retardos ni descuentos
+            automáticos desde esta pantalla.
+        </p>
+
+    </div>
+</div>

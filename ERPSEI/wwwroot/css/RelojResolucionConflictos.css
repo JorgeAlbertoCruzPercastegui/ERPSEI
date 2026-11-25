@@ -1,0 +1,70 @@
+﻿
+/* INTRANET - RESOLUCIÓN DE CONFLICTOS */
+
+#rcResPanel {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+    #rcResPanel .card-body {
+        padding: 1.25rem;
+    }
+
+    #rcResPanel .rc-res-grupo {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 12px;
+        padding: 1.15rem;
+        background: var(--bs-tertiary-bg);
+    }
+
+    #rcResPanel .rc-res-lista {
+        display: flex;
+        flex-direction: column;
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem;
+        gap: .55rem;
+    }
+
+    #rcResPanel .rc-res-candidato {
+        background: var(--bs-body-bg);
+        border: 1px solid var(--bs-border-color);
+        border-radius: 9px;
+        padding: .75rem;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: .7rem;
+        overflow-wrap: anywhere;
+    }
+
+        #rcResPanel .rc-res-candidato code {
+            font-size: .8rem;
+        }
+
+        #rcResPanel .rc-res-candidato span {
+            font-size: .82rem;
+        }
+
+#rcResModal .modal-content {
+    border-radius: 14px;
+}
+
+#rcResModal .modal-body {
+    padding: 1.25rem;
+}
+
+#rcResModal .form-label {
+    font-size: .85rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    #rcResPanel .card-body {
+        padding: 1rem;
+    }
+
+    #rcResPanel .rc-res-grupo {
+        padding: .9rem;
+    }
+}

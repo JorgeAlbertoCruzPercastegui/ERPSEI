@@ -1,0 +1,315 @@
+﻿
+<div class="card biotime-analytics-panel mb-4"
+     id="vbPanel">
+
+    <div class="card-header d-flex flex-wrap
+        justify-content-between align-items-center gap-2">
+        <strong>
+            <i class="bi bi-people-fill me-2"></i>
+            Vinculaciones BioTime - INTRANET
+        </strong>
+
+        <button type="button"
+                id="vbActualizar"
+                class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Actualizar
+        </button>
+    </div>
+
+    <div class="card-body">
+
+        <p class="text-muted small">
+            Valida la identidad de cada colaborador
+            antes de relacionar sus checadas biométricas
+            con el empleado de la INTRANET.
+            Las coincidencias por nombre no constituyen
+            una autorización automática.
+        </p>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-sm-6">
+                <div class="rc-admin-kpi">
+                    <span>Total</span>
+                    <strong id="vbTotal">—</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="rc-admin-kpi">
+                    <span>Pendientes</span>
+                    <strong id="vbPendientes">—</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="rc-admin-kpi">
+                    <span>Validadas</span>
+                    <strong id="vbValidadas">—</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="rc-admin-kpi">
+                    <span>Sin horario</span>
+                    <strong id="vbSinHorario">—</strong>
+                </div>
+            </div>
+        </div>
+
+        <div id="vbMensaje"
+             class="alert alert-info small"
+             role="status"
+             aria-live="polite">
+            Selecciona Administración del Reloj
+            para consultar las vinculaciones.
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-lg-5">
+                <label class="form-label" for="vbBuscar">
+                    Buscar colaborador
+                </label>
+                <input id="vbBuscar"
+                       class="form-control"
+                       type="search"
+                       maxlength="100"
+                       placeholder="Nombre o código de BioTime" />
+            </div>
+
+            <div class="col-lg-3">
+                <label class="form-label" for="vbEstado">
+                    Estado
+                </label>
+                <select id="vbEstado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="Pendiente" selected>
+                        Pendientes
+                    </option>
+                    <option value="Validada">
+                        Validadas
+                    </option>
+                    <option value="Revocada">
+                        Revocadas
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <label class="form-label" for="vbHorario">
+                    Horario
+                </label>
+                <select id="vbHorario" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="con">Con horario</option>
+                    <option value="sin">Sin horario</option>
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <label class="form-label" for="vbTamano">
+                    Mostrar
+                </label>
+                <select id="vbTamano" class="form-select">
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>INTRANET</th>
+                        <th>BioTime</th>
+                        <th>Código</th>
+                        <th>Horario</th>
+                        <th>Estado</th>
+                        <th>Vigencia</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="vbTabla">
+                    <tr>
+                        <td colspan="7"
+                            class="text-center text-muted py-4">
+                            Sin datos cargados
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center
+            justify-content-between gap-2 mt-3">
+            <small id="vbInfo" class="text-muted">
+                0 registros
+            </small>
+
+            <nav aria-label="Paginación vinculaciones"
+                 class="d-flex align-items-center gap-2">
+                <button type="button"
+                        id="vbAnterior"
+                        class="btn btn-sm btn-outline-secondary"
+                        disabled>
+                    Anterior
+                </button>
+
+                <span id="vbPagina" class="small fw-semibold">
+                    1 / 1
+                </span>
+
+                <button type="button"
+                        id="vbSiguiente"
+                        class="btn btn-sm btn-outline-secondary"
+                        disabled>
+                    Siguiente
+                </button>
+            </nav>
+        </div>
+
+        <p class="small text-muted mt-3 mb-0">
+            Cerrar vigencia conserva los movimientos históricos
+            correspondientes al periodo autorizado.
+            Revocar invalida completamente la vinculación.
+        </p>
+    </div>
+</div>
+
+<!-- MODAL: VALIDACIÓN -->
+<div class="modal fade"
+     id="vbModalValidar"
+     tabindex="-1"
+     aria-labelledby="vbModalValidarTitulo"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form id="vbFormValidar">
+                <div class="modal-header">
+                    <h5 class="modal-title"
+                        id="vbModalValidarTitulo">
+                        Validar vinculación
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" id="vbValidarId" />
+
+                    <div id="vbIdentidad"
+                         class="border rounded p-3 mb-3 small">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="vbFechaInicio"
+                               class="form-label">
+                            Inicio de vigencia
+                        </label>
+                        <input type="date"
+                               id="vbFechaInicio"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="vbFechaFin"
+                               class="form-label">
+                            Fin de vigencia (opcional)
+                        </label>
+                        <input type="date"
+                               id="vbFechaFin"
+                               class="form-control" />
+                    </div>
+
+                    <div class="alert alert-warning small">
+                        Verifica la identidad con los registros
+                        de Talento Humano y confirma la vigencia
+                        real antes de aprobar.
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox"
+                               id="vbConfirmar"
+                               class="form-check-input"
+                               required />
+                        <label for="vbConfirmar"
+                               class="form-check-label">
+                            Confirmo que revisé y verifiqué
+                            esta correspondencia.
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            id="vbGuardar"
+                            class="btn btn-primary">
+                        Validar identidad
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: CIERRE DE VIGENCIA -->
+<div class="modal fade"
+     id="vbModalCerrar"
+     tabindex="-1"
+     aria-labelledby="vbModalCerrarTitulo"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="vbFormCerrar">
+                <div class="modal-header">
+                    <h5 class="modal-title"
+                        id="vbModalCerrarTitulo">
+                        Cerrar vigencia
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="vbCerrarId" />
+
+                    <p class="small text-muted">
+                        Se conservará la vinculación histórica
+                        hasta la fecha indicada.
+                    </p>
+
+                    <label for="vbCerrarFecha"
+                           class="form-label">
+                        Último día autorizado
+                    </label>
+                    <input type="date"
+                           id="vbCerrarFecha"
+                           class="form-control"
+                           required />
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Confirmar cierre
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

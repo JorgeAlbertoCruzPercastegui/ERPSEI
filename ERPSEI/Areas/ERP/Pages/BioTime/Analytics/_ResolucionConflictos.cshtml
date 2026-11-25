@@ -1,0 +1,166 @@
+﻿@* INTRANET - RESOLUCIÓN AUDITADA DE CONFLICTOS *@
+
+<div class="card biotime-analytics-panel mb-4"
+     id="rcResPanel">
+
+    <div class="card-header">
+        <strong>
+            <i class="bi bi-shield-check me-2"></i>
+            Resolución auditada de conflictos
+        </strong>
+    </div>
+
+    <div class="card-body">
+
+        <p class="small text-muted">
+            Selecciona el movimiento confirmado que deberá
+            utilizarse como referencia cuando existan dos
+            o más marcas del mismo tipo. La decisión no
+            elimina ni modifica checadas originales.
+        </p>
+
+        <div class="row g-3 align-items-end mb-3">
+            <div class="col-md-4">
+                <label for="rcResEmpleado"
+                       class="form-label">
+                    ID empleado
+                </label>
+                <input id="rcResEmpleado"
+                       type="number"
+                       min="1"
+                       class="form-control"
+                       placeholder="Ejemplo: 35" />
+            </div>
+
+            <div class="col-md-4">
+                <label for="rcResFecha"
+                       class="form-label">
+                    Fecha
+                </label>
+                <input id="rcResFecha"
+                       type="date"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+                <button id="rcResConsultar"
+                        type="button"
+                        class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i>
+                    Consultar conflictos
+                </button>
+            </div>
+        </div>
+
+        <div id="rcResMensaje"
+             class="alert alert-info small"
+             role="status"
+             aria-live="polite">
+            Selecciona un empleado y una fecha.
+        </div>
+
+        <div id="rcResGrupos">
+            <p class="text-muted small">
+                Sin información consultada.
+            </p>
+        </div>
+
+        <p class="text-muted small mb-0 mt-3">
+            Las resoluciones se utilizan únicamente para
+            conciliación y evaluación preliminar.
+            No constituyen aprobación de nómina.
+        </p>
+    </div>
+</div>
+
+@* MODAL PARA GUARDAR O REVOCAR UNA RESOLUCIÓN *@
+
+<div class="modal fade"
+     id="rcResModal"
+     tabindex="-1"
+     aria-labelledby="rcResModalTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="rcResForm">
+
+                <div class="modal-header">
+                    <h5 class="modal-title"
+                        id="rcResModalTitulo">
+                        Resolver conflicto
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Cerrar">
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <input type="hidden" id="rcResAccion" />
+                    <input type="hidden" id="rcResTipo" />
+                    <input type="hidden" id="rcResFirma" />
+
+                    <div id="rcResDescripcion"
+                         class="small text-muted mb-3">
+                    </div>
+
+                    <div id="rcResSeleccionContenedor"
+                         class="mb-3">
+                        <label for="rcResSeleccion"
+                               class="form-label">
+                            Movimiento seleccionado
+                        </label>
+
+                        <select id="rcResSeleccion"
+                                class="form-select">
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="rcResMotivo"
+                               class="form-label">
+                            Justificación
+                        </label>
+
+                        <textarea id="rcResMotivo"
+                                  class="form-control"
+                                  rows="4"
+                                  minlength="10"
+                                  maxlength="1000"
+                                  required
+                                  placeholder="Describe la evidencia y el criterio aplicado por TH."></textarea>
+                    </div>
+
+                    <div id="rcResModalError"
+                         class="alert alert-danger small d-none"
+                         role="alert">
+                    </div>
+
+                    <div class="alert alert-warning small mb-0">
+                        Esta operación queda auditada.
+                        La decisión puede revocarse posteriormente.
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            id="rcResGuardar"
+                            class="btn btn-primary">
+                        Guardar decisión
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>

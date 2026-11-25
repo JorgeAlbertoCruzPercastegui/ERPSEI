@@ -11,6 +11,18 @@
     <link rel="stylesheet"
           href="~/css/RelojGeocercasAdmin.css"
           asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/RelojAsistenciaDashboard.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/RelojConciliacionAsistencia.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/RelojResolucionConflictos.css"
+          asp-append-version="true" />
 }
 
 <div class="container-fluid biotime-analytics py-4">
@@ -715,6 +727,12 @@
         </div>
     }
 
+    @await Html.PartialAsync("_VinculacionesBioTime")
+    @await Html.PartialAsync("_RevisionChecadasBioTime")
+    @await Html.PartialAsync("_AsistenciaDashboard")
+    @await Html.PartialAsync("_ConciliacionAsistencia")
+    @await Html.PartialAsync("_ResolucionConflictos")
+
 </section>
 
 </div>
@@ -722,8 +740,17 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
     <script src="~/js/BioTimeAnalytics.js" asp-append-version="true"></script>
-    <script src="~/js/RelojGeocercasAdmin.js"
+    <script src="~/js/RelojGeocercasAdmin.js" asp-append-version="true"></script>
+    <script src="~/js/RelojModalidadesAdmin.js" asp-append-version="true"></script>
+    <script src="~/js/BioTimeVinculaciones.js" asp-append-version="true"></script>
+    <script src="~/js/BioTimeRevisionChecadas.js" asp-append-version="true"></script>
+    <script src="~/js/RelojAsistenciaDashboard.js"
             asp-append-version="true"></script>
-    <script src="~/js/RelojModalidadesAdmin.js"
+
+    <script src="~/js/RelojConciliacionAsistencia.js"
             asp-append-version="true"></script>
+
+    <script src="~/js/RelojResolucionConflictos.js"
+            asp-append-version="true"></script>
+
 }
