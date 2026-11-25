@@ -70,30 +70,32 @@ public sealed partial class IndexModel
             dia,
             ct);
 
-        var contexto = await contextoTH.ObtenerAsync(
-            empleadoId,
-            dia,
-            ct);
 
-        // Indicadores informativos. No se generan
-        // descuentos, faltas ni incidencias definitivas.
-        var entradaPuntual = evaluacion.EntradaReal.HasValue &&
-            evaluacion.LimiteRetardo.HasValue
-                ? evaluacion.EntradaReal.Value.TimeOfDay <
-                  evaluacion.LimiteRetardo.Value
-                : (bool?)null;
+        var contexto = evaluacion.ContextoTH
+            ?? await contextoTH.ObtenerAsync(
+                empleadoId,
+                dia,
+                ct);
 
-        var salidaEnHorario = evaluacion.SalidaReal.HasValue &&
-            evaluacion.SalidaProgramada.HasValue
-                ? evaluacion.SalidaReal.Value.TimeOfDay >=
-                  evaluacion.SalidaProgramada.Value
-                : (bool?)null;
 
-        var regresoComidaPuntual =
-            evaluacion.RegresoComidaReal.HasValue
-                ? evaluacion.RegresoComidaReal.Value.TimeOfDay <
-                  new TimeSpan(15, 6, 0)
-                : (bool?)null;
+        bool? entradaPuntual =
+            evaluacion.EvaluacionTH?.Puntualidad switch
+            {
+                "Puntual" => true,
+                "RetardoPotencial" => false,
+                _ => null
+            };
+
+        bool? salidaEnHorario =
+            evaluacion.EvaluacionTH?.EstadoSalida switch
+            {
+                "SalidaEnHorario" => true,
+                "SalidaAnticipadaPotencial" => false,
+                _ => null
+            };
+
+
+        bool? regresoComidaPuntual = null;
 
         int? minutosEfectivos = null;
 

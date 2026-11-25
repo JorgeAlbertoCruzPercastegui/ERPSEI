@@ -13,6 +13,10 @@
 		<Compile
 		  Include="../../Services/RelojChecador/RelojReglasConciliacion.cs"
 		  Link="RelojReglasConciliacion.cs" />
+
+		<Compile
+		  Include="../../Services/RelojChecador/RelojReglasEvaluacionTH.cs"
+		  Link="RelojReglasEvaluacionTH.cs" />
 	</ItemGroup>
 
 </Project>

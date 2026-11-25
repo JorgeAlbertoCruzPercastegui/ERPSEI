@@ -1,5 +1,6 @@
 ﻿
 using ERPSEI.Services.RelojChecador;
+using System;
 
 int correctas = 0;
 int fallidas = 0;
@@ -361,6 +362,194 @@ Ejecutar(
             participantes.Count == 2,
             "Se seleccionó una marca sin autorización.");
     });
+
+
+// ======================================================
+// GRUPO 5: EVALUACION PRELIMINAR TH
+// ======================================================
+
+RelojReglasEvaluacionTH.DatosJornada JornadaEjemplo(
+    int horaEntrada = 9,
+    int minutoEntrada = 10,
+    int horaSalida = 18,
+    int minutoSalida = 5)
+{
+    return new RelojReglasEvaluacionTH.DatosJornada
+    {
+        EntradaProgramada = new TimeSpan(9, 0, 0),
+        LimiteRetardo = new TimeSpan(9, 16, 0),
+        SalidaProgramada = new TimeSpan(18, 0, 0),
+        EntradaReal = new DateTime(
+            2026, 11, 23, horaEntrada, minutoEntrada, 0),
+        SalidaComerReal = new DateTime(
+            2026, 11, 23, 14, 0, 0),
+        RegresoComerReal = new DateTime(
+            2026, 11, 23, 15, 0, 0),
+        SalidaReal = new DateTime(
+            2026, 11, 23, horaSalida, minutoSalida, 0)
+    };
+}
+
+Ejecutar("17. Entrada puntual", () =>
+{
+    var r = RelojReglasEvaluacionTH.Evaluar(
+        JornadaEjemplo());
+
+    Verificar(
+        r.Puntualidad == "Puntual",
+        "No reconoció la entrada puntual.");
+});
+
+Ejecutar("18. Entrada en límite de tolerancia", () =>
+{
+    var r = RelojReglasEvaluacionTH.Evaluar(
+        JornadaEjemplo(9, 16));
+
+    Verificar(
+        r.Puntualidad == "Puntual",
+        "El límite de tolerancia debe incluirse.");
+});
+
+Ejecutar("19. Entrada posterior a tolerancia", () =>
+{
+    var r = RelojReglasEvaluacionTH.Evaluar(
+        JornadaEjemplo(9, 17));
+
+    Verificar(
+        r.Puntualidad == "RetardoPotencial",
+        "No detectó el retardo potencial.");
+});
+
+Ejecutar("20. Jornada completa ordenada", () =>
+{
+    var r = RelojReglasEvaluacionTH.Evaluar(
+        JornadaEjemplo());
+
+    Verificar(
+        r.EstadoJornada == "JornadaCompleta",
+        "No detectó la jornada completa.");
+});
+
+Ejecutar("21. Jornada incompleta", () =>
+{
+    var datos = JornadaEjemplo();
+    datos.SalidaReal = null;
+
+    var r = RelojReglasEvaluacionTH.Evaluar(datos);
+
+    Verificar(
+        r.EstadoJornada == "JornadaIncompleta",
+        "No detectó el movimiento faltante.");
+});
+
+Ejecutar("22. Secuencia inconsistente", () =>
+{
+    var datos = JornadaEjemplo();
+
+    datos.RegresoComerReal =
+        new DateTime(2026, 11, 23, 13, 0, 0);
+
+    var r = RelojReglasEvaluacionTH.Evaluar(datos);
+
+    Verificar(
+        r.EstadoJornada == "SecuenciaInconsistente",
+        "No detectó el orden incorrecto.");
+});
+
+Ejecutar("23. Salida anticipada potencial", () =>
+{
+    var r = RelojReglasEvaluacionTH.Evaluar(
+        JornadaEjemplo(9, 10, 17, 30));
+
+    Verificar(
+        r.EstadoSalida == "SalidaAnticipadaPotencial",
+        "No detectó la salida anticipada.");
+});
+
+Ejecutar("24. Conflicto impide cierre automático", () =>
+{
+    var datos = JornadaEjemplo();
+    datos.ConflictosSinResolver = true;
+
+    var r = RelojReglasEvaluacionTH.Evaluar(datos);
+
+    Verificar(
+        r.EstadoJornada == "RequiereConciliacion" &&
+        r.RequiereRevisionTH &&
+        !r.PermiteCierreAutomatico,
+        "Se permitió el cierre de una jornada en conflicto.");
+});
+
+
+// ======================================================
+// GRUPO 6: CUMPLIMIENTO Y TIEMPOS REGISTRADOS
+// ======================================================
+
+Ejecutar("25. Calcula tiempo efectivo registrado", () =>
+{
+    var datos = JornadaEjemplo();
+
+    var r = RelojReglasEvaluacionTH.Evaluar(datos);
+
+    Verificar(
+        r.TiempoTotalRegistrado == TimeSpan.FromHours(8).Add(
+            TimeSpan.FromMinutes(55)) &&
+        r.TiempoComidaRegistrado == TimeSpan.FromHours(1) &&
+        r.TiempoEfectivoRegistrado ==
+            TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(55)),
+        "Los tiempos registrados son incorrectos.");
+});
+
+Ejecutar("26. Distingue jornada completa de cumplimiento", () =>
+{
+    var r = RelojReglasEvaluacionTH.Evaluar(
+        JornadaEjemplo(14, 19, 15, 40));
+
+    Verificar(
+        r.IntegridadChecadas == "SecuenciaInconsistente" &&
+        r.CumplimientoHorario == "NoConcluyente",
+        "No distinguió integridad y cumplimiento.");
+});
+
+Ejecutar("27. Detecta desviaciones de horario", () =>
+{
+    var datos = JornadaEjemplo(10, 0, 17, 0);
+
+    var r = RelojReglasEvaluacionTH.Evaluar(datos);
+
+    Verificar(
+        r.IntegridadChecadas == "Completa" &&
+        r.CumplimientoHorario == "DesviacionesPotenciales" &&
+        r.MinutosRetardoPotencial == 44 &&
+        r.MinutosSalidaAnticipadaPotencial == 60,
+        "No calculó correctamente las desviaciones.");
+});
+
+Ejecutar("28. No calcula tiempos con jornada incompleta", () =>
+{
+    var datos = JornadaEjemplo();
+    datos.SalidaReal = null;
+
+    var r = RelojReglasEvaluacionTH.Evaluar(datos);
+
+    Verificar(
+        r.TiempoEfectivoRegistrado == null &&
+        r.IntegridadChecadas == "Incompleta",
+        "Calculó horas con movimientos incompletos.");
+});
+
+Ejecutar("29. No permite cierre automático con desviaciones", () =>
+{
+    var r = RelojReglasEvaluacionTH.Evaluar(
+        JornadaEjemplo(10, 0, 17, 0));
+
+    Verificar(
+        r.RequiereRevisionTH &&
+        !r.PermiteCierreAutomatico,
+        "Permitió cierre sin validación de TH.");
+});
+
+
 
 // ======================================================
 // RESUMEN

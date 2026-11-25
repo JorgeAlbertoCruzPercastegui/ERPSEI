@@ -65,6 +65,13 @@ public sealed class RelojAsistenciaDashboardService
         public bool RequiereRevision { get; init; }
 
         public string Observaciones { get; init; } = "";
+
+        public string IntegridadChecadas { get; init; } = "NoEvaluable";
+        public string CumplimientoHorario { get; init; } = "NoEvaluable";
+
+        public int? MinutosRetardoPotencial { get; init; }
+        public int? MinutosSalidaAnticipadaPotencial { get; init; }
+
     }
 
     public sealed class ResumenDashboard
@@ -217,15 +224,24 @@ public sealed class RelojAsistenciaDashboardService
                 dia.Fecha,
                 ct);
 
+
             bool revision =
                 evaluacion.RequiereRevision ||
+                evaluacion.EvaluacionTH?.RequiereRevisionTH == true ||
                 contexto.RequiereRevisionTH ||
                 evaluacion.MovimientosPendientes > 0;
 
+
+
             var observaciones = evaluacion.Observaciones
+                .Concat(
+                    evaluacion.EvaluacionTH?.Observaciones
+                    ?? Enumerable.Empty<string>())
                 .Concat(contexto.Observaciones)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Distinct()
                 .ToList();
+
 
             if (observaciones.Count == 0 &&
                 !string.IsNullOrWhiteSpace(evaluacion.Mensaje))
@@ -233,60 +249,40 @@ public sealed class RelojAsistenciaDashboardService
                 observaciones.Add(evaluacion.Mensaje);
             }
 
-            bool secuenciaValida =
-                evaluacion.EntradaReal.HasValue &&
-                evaluacion.SalidaComidaReal.HasValue &&
-                evaluacion.RegresoComidaReal.HasValue &&
-                evaluacion.SalidaReal.HasValue &&
-                evaluacion.EntradaReal <
-                    evaluacion.SalidaComidaReal &&
-                evaluacion.SalidaComidaReal <
-                    evaluacion.RegresoComidaReal &&
-                evaluacion.RegresoComidaReal <
-                    evaluacion.SalidaReal;
 
-            int? minutos = null;
+            // =====================================================
+            // INDICADORES OFICIALES DEL EVALUADOR PRELIMINAR TH
+            // =====================================================
+            // No duplicamos las reglas de puntualidad,
+            // salida ni cálculo de horas.
 
-            if (secuenciaValida)
+            var evaluacionTH = evaluacion.EvaluacionTH;
+
+            int? minutos = evaluacionTH?
+                .TiempoEfectivoRegistrado is TimeSpan efectivo
+                    ? (int)Math.Floor(efectivo.TotalMinutes)
+                    : null;
+
+            bool? puntual = evaluacionTH?.Puntualidad switch
             {
-                var tramo1 =
-                    evaluacion.SalidaComidaReal!.Value -
-                    evaluacion.EntradaReal!.Value;
+                "Puntual" => true,
+                "RetardoPotencial" => false,
+                _ => null
+            };
 
-                var tramo2 =
-                    evaluacion.SalidaReal!.Value -
-                    evaluacion.RegresoComidaReal!.Value;
+            bool? salidaEnHorario =
+                evaluacionTH?.EstadoSalida switch
+                {
+                    "SalidaEnHorario" => true,
+                    "SalidaAnticipadaPotencial" => false,
+                    _ => null
+                };
 
-                minutos = (int)Math.Floor(
-                    (tramo1 + tramo2).TotalMinutes);
-            }
-
-            bool? puntual = null;
+            // No existe una tolerancia aprobada de
+            // regreso de comida en el horario consultado.
+            // No utilizamos una hora fija para todos.
             bool? comidaPuntual = null;
-            bool? salidaEnHorario = null;
 
-            if (evaluacion.EntradaReal.HasValue &&
-                evaluacion.LimiteRetardo.HasValue)
-            {
-                puntual =
-                    evaluacion.EntradaReal.Value.TimeOfDay <
-                    evaluacion.LimiteRetardo.Value;
-            }
-
-            if (evaluacion.RegresoComidaReal.HasValue)
-            {
-                comidaPuntual =
-                    evaluacion.RegresoComidaReal.Value.TimeOfDay <
-                    new TimeSpan(15, 6, 0);
-            }
-
-            if (evaluacion.SalidaReal.HasValue &&
-                evaluacion.SalidaProgramada.HasValue)
-            {
-                salidaEnHorario =
-                    evaluacion.SalidaReal.Value.TimeOfDay >=
-                    evaluacion.SalidaProgramada.Value;
-            }
 
             registros.Add(new JornadaResumen
             {
@@ -340,7 +336,20 @@ public sealed class RelojAsistenciaDashboardService
 
                 Observaciones = string.Join(
                     " | ",
-                    observaciones)
+                    observaciones),
+
+                IntegridadChecadas =
+                    evaluacionTH?.IntegridadChecadas ?? "NoEvaluable",
+
+                                CumplimientoHorario =
+                    evaluacionTH?.CumplimientoHorario ?? "NoEvaluable",
+
+                                MinutosRetardoPotencial =
+                    evaluacionTH?.MinutosRetardoPotencial,
+
+                                MinutosSalidaAnticipadaPotencial =
+                    evaluacionTH?.MinutosSalidaAnticipadaPotencial,
+
             });
         }
 

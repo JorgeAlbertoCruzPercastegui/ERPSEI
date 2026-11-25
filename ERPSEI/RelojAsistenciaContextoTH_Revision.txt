@@ -1,0 +1,264 @@
+﻿
+using ERPSEI.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace ERPSEI.Services.RelojChecador;
+
+public sealed class RelojAsistenciaContextoTHService
+{
+    private readonly ApplicationDbContext _db;
+
+    public RelojAsistenciaContextoTHService(
+        ApplicationDbContext db)
+    {
+        _db = db;
+    }
+
+    public sealed class AusenciaContexto
+    {
+        public int Id { get; init; }
+        public string Categoria { get; init; } = "";
+        public string Tipo { get; init; } = "";
+        public string TipoCaptura { get; init; } = "";
+
+        public DateTime? FechaInicio { get; init; }
+        public DateTime? FechaFin { get; init; }
+
+        public TimeSpan? HoraInicio { get; init; }
+        public TimeSpan? HoraTermino { get; init; }
+
+        public string EstadoJefeDirecto { get; init; } = "";
+        public string EstadoTH { get; init; } = "";
+
+        public bool AprobadaJefe { get; init; }
+        public bool AprobadaTH { get; init; }
+        public bool RequiereRevision { get; init; }
+    }
+
+    public sealed class AutorizacionContexto
+    {
+        public long Id { get; init; }
+        public string Modalidad { get; init; } = "";
+        public string Estado { get; init; } = "";
+        public DateTime FechaInicio { get; init; }
+        public DateTime FechaFin { get; init; }
+        public int? AusenciaId { get; init; }
+    }
+
+    public sealed class Resultado
+    {
+        public int EmpleadoId { get; init; }
+        public DateTime FechaLocal { get; init; }
+
+        public bool EmpleadoEncontrado { get; set; }
+        public bool HomeOfficeAutorizado { get; set; }
+        public bool TieneSolicitudesAusencia { get; set; }
+        public bool RequiereRevisionTH { get; set; }
+
+        public string Mensaje { get; set; } = "";
+
+        public List<AusenciaContexto> Ausencias { get; set; }
+            = new();
+
+        public List<AutorizacionContexto> Autorizaciones { get; set; }
+            = new();
+
+        public List<string> Observaciones { get; set; }
+            = new();
+    }
+
+    public async Task<Resultado> ObtenerAsync(
+        int empleadoId,
+        DateTime fechaLocal,
+        CancellationToken ct = default)
+    {
+        if (empleadoId <= 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(empleadoId));
+
+        var fecha = fechaLocal.Date;
+
+        var resultado = new Resultado
+        {
+            EmpleadoId = empleadoId,
+            FechaLocal = fecha
+        };
+
+        var empleado = await _db.Empleados
+            .AsNoTracking()
+            .Where(e => e.Id == empleadoId)
+            .Select(e => new
+            {
+                e.Id,
+                e.UserId,
+                e.Deshabilitado
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (empleado == null)
+        {
+            resultado.Mensaje =
+                "El empleado no existe en la INTRANET.";
+
+            resultado.RequiereRevisionTH = true;
+            return resultado;
+        }
+
+        resultado.EmpleadoEncontrado = true;
+
+        if (empleado.Deshabilitado != 0)
+        {
+            resultado.Observaciones.Add(
+                "El colaborador está deshabilitado. " +
+                "Se requiere verificar la vigencia de su " +
+                "relación laboral para la fecha consultada.");
+
+            resultado.RequiereRevisionTH = true;
+        }
+
+        // =================================================
+        // 1. SOLICITUDES DE AUSENCIA
+        // =================================================
+
+        var ausencias = await _db.Ausencias
+            .AsNoTracking()
+            .Where(a =>
+                a.EmpleadoId == empleadoId &&
+                a.FechaInicio.HasValue &&
+                a.FechaFin.HasValue &&
+                a.FechaInicio.Value < fecha.AddDays(1) &&
+                a.FechaFin.Value >= fecha)
+            .OrderBy(a => a.FechaInicio)
+            .Select(a => new
+            {
+                a.Id,
+                a.Categoria,
+                a.TipoCaptura,
+                a.TipoAusenciaId,
+                NombreTipo = a.TipoAusencia == null
+                    ? null
+                    : a.TipoAusencia.Nombre,
+                a.FechaInicio,
+                a.FechaFin,
+                a.HoraInicio,
+                a.HoraTermino,
+                a.EstadoJefeDirecto,
+                a.EstadoTH
+            })
+            .ToListAsync(ct);
+
+        foreach (var a in ausencias)
+        {
+            bool aprobadaJefe = string.Equals(
+                a.EstadoJefeDirecto,
+                "Aprobado",
+                StringComparison.OrdinalIgnoreCase);
+
+            bool aprobadaTH = string.Equals(
+                a.EstadoTH,
+                "Aprobado",
+                StringComparison.OrdinalIgnoreCase);
+
+            resultado.Ausencias.Add(
+                new AusenciaContexto
+                {
+                    Id = a.Id,
+                    Categoria = a.Categoria,
+                    Tipo = a.NombreTipo ??
+                        (a.TipoAusenciaId.HasValue
+                            ? $"Tipo {a.TipoAusenciaId}"
+                            : "Sin tipo"),
+                    TipoCaptura = a.TipoCaptura,
+                    FechaInicio = a.FechaInicio,
+                    FechaFin = a.FechaFin,
+                    HoraInicio = a.HoraInicio,
+                    HoraTermino = a.HoraTermino,
+                    EstadoJefeDirecto = a.EstadoJefeDirecto,
+                    EstadoTH = a.EstadoTH,
+                    AprobadaJefe = aprobadaJefe,
+                    AprobadaTH = aprobadaTH,
+
+                    // El proceso definitivo depende de
+                    // las reglas aprobadas por TH.
+                    RequiereRevision = true
+                });
+        }
+
+        resultado.TieneSolicitudesAusencia =
+            resultado.Ausencias.Count > 0;
+
+        // =================================================
+        // 2. AUTORIZACIONES HOME OFFICE
+        // =================================================
+
+        if (!string.IsNullOrWhiteSpace(empleado.UserId))
+        {
+            var autorizaciones = await _db
+                .RC_AutorizacionesModalidades
+                .AsNoTracking()
+                .Where(a =>
+                    a.UserId == empleado.UserId &&
+                    a.FechaInicio < fecha.AddDays(1) &&
+                    a.FechaFin >= fecha)
+                .OrderByDescending(a => a.FechaInicio)
+                .Select(a => new AutorizacionContexto
+                {
+                    Id = a.Id,
+                    Modalidad = a.Modalidad,
+                    Estado = a.Estado,
+                    FechaInicio = a.FechaInicio,
+                    FechaFin = a.FechaFin,
+                    AusenciaId = a.AusenciaId
+                })
+                .ToListAsync(ct);
+
+            resultado.Autorizaciones = autorizaciones;
+
+            resultado.HomeOfficeAutorizado =
+                autorizaciones.Any(a =>
+                    a.Modalidad == "Remoto" &&
+                    a.Estado == "Aprobada");
+        }
+
+        // =================================================
+        // 3. OBSERVACIONES PARA TH
+        // =================================================
+
+        if (resultado.HomeOfficeAutorizado)
+        {
+            resultado.Observaciones.Add(
+                "Existe autorización Home Office vigente. " +
+                "La modalidad remota no elimina por sí sola " +
+                "los requisitos de registro de asistencia.");
+        }
+
+        if (resultado.TieneSolicitudesAusencia)
+        {
+            resultado.Observaciones.Add(
+                "Existen solicitudes de ausencia o permiso " +
+                "que coinciden con la fecha consultada. " +
+                "Debe revisarse su aprobación, categoría " +
+                "y cobertura antes de concluir la asistencia.");
+
+            resultado.RequiereRevisionTH = true;
+        }
+
+        if (resultado.Autorizaciones.Any(a =>
+            a.Estado != "Aprobada"))
+        {
+            resultado.Observaciones.Add(
+                "Existen autorizaciones de modalidad " +
+                "no aprobadas o revocadas dentro del periodo.");
+        }
+
+        resultado.Mensaje =
+            resultado.RequiereRevisionTH
+                ? "Se encontraron condiciones que requieren revisión de TH."
+                : resultado.HomeOfficeAutorizado
+                    ? "Se encontró una autorización de modalidad remota."
+                    : "No se encontraron excepciones de TH pendientes de interpretación.";
+
+        return resultado;
+    }
+}
+

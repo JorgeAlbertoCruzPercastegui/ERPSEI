@@ -1,0 +1,2682 @@
+﻿
+ARCHIVO NO ENCONTRADO: Areas\ERP\Pages\RelojChecador\RelojAsistenciaContextoTHService.cs
+
+
+================ ARCHIVO: Services\RelojChecador\RelojAutorizacionesAusenciasService.cs ================
+
+
+using ERPSEI.Data;
+using ERPSEI.Data.Entities.RH;
+using ERPSEI.Data.Entities.RelojChecador;
+using Microsoft.EntityFrameworkCore;
+
+namespace ERPSEI.Services.RelojChecador;
+
+public sealed class RelojAutorizacionesAusenciasService
+{
+    public const int TipoHomeOfficeId = 14;
+
+    private readonly ApplicationDbContext _db;
+
+    public RelojAutorizacionesAusenciasService(
+        ApplicationDbContext db)
+    {
+        _db = db;
+    }
+
+    private static bool EsSolicitudHomeOffice(Ausencia ausencia)
+    {
+        return ausencia.TipoAusenciaId == TipoHomeOfficeId &&
+               ausencia.Categoria == "SolicitudPermiso";
+    }
+
+    // =========================================================
+    // AUTORIZACIÓN AL APROBAR EL JEFE DIRECTO
+    // =========================================================
+    // Este método no ejecuta SaveChangesAsync.
+    // El handler de Ausencias controla la transacción.
+    // =========================================================
+
+    public async Task AutorizarDesdeJefeAsync(
+        Ausencia ausencia,
+        string usuarioAutorizadorId,
+        CancellationToken ct = default)
+    {
+        if (!EsSolicitudHomeOffice(ausencia))
+            return;
+
+        if (ausencia.EstadoJefeDirecto != "Aprobado")
+        {
+            throw new InvalidOperationException(
+                "La solicitud todavía no está aprobada por el jefe directo.");
+        }
+
+        if (ausencia.EstadoTH == "Rechazado")
+        {
+            throw new InvalidOperationException(
+                "No puede autorizarse un permiso HO rechazado por TH.");
+        }
+
+        if (!ausencia.EmpleadoId.HasValue ||
+            !ausencia.FechaInicio.HasValue ||
+            !ausencia.FechaFin.HasValue)
+        {
+            throw new InvalidOperationException(
+                "La solicitud HO no tiene empleado o fechas válidas.");
+        }
+
+        if (ausencia.TipoCaptura != "Dias")
+        {
+            throw new InvalidOperationException(
+                "El Home Office debe solicitarse por días completos.");
+        }
+
+        var inicio = ausencia.FechaInicio.Value.Date;
+        var fin = ausencia.FechaFin.Value.Date;
+
+        if (fin < inicio || (fin - inicio).TotalDays > 365)
+        {
+            throw new InvalidOperationException(
+                "El periodo solicitado de Home Office no es válido.");
+        }
+
+        // Obtener al usuario vinculado al empleado
+        // que solicitó el permiso.
+        var empleado = await _db.Empleados
+            .AsNoTracking()
+            .Where(x => x.Id == ausencia.EmpleadoId.Value)
+            .Select(x => new
+            {
+                x.UserId
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (empleado == null ||
+            string.IsNullOrWhiteSpace(empleado.UserId))
+        {
+            throw new InvalidOperationException(
+                "El colaborador no tiene un usuario vinculado en la INTRANET.");
+        }
+
+        var userId = empleado.UserId;
+
+        var cuentaValida = await _db.Users
+            .AsNoTracking()
+            .AnyAsync(x =>
+                x.Id == userId &&
+                !x.IsBanned &&
+                x.EmpleadoId == ausencia.EmpleadoId.Value,
+                ct);
+
+        if (!cuentaValida)
+        {
+            throw new InvalidOperationException(
+                "La cuenta del colaborador no está activa o no coincide con su empleado.");
+        }
+
+        // Evitar duplicados por solicitud.
+        var existente = await _db
+            .RC_AutorizacionesModalidades
+            .FirstOrDefaultAsync(x =>
+                x.AusenciaId == ausencia.Id,
+                ct);
+
+        if (existente != null)
+        {
+            if (existente.UserId != userId)
+            {
+                throw new InvalidOperationException(
+                    "La autorización existente pertenece a otro usuario.");
+            }
+
+            if (existente.Estado == "Revocada")
+            {
+                throw new InvalidOperationException(
+                    "La autorización ya fue revocada y requiere revisión administrativa.");
+            }
+
+            // La solicitud ya está sincronizada.
+            // No generar una segunda autorización.
+            return;
+        }
+
+        // Impedir periodos superpuestos con permisos
+        // aprobados de otra solicitud o manuales.
+        var superpuesta = await _db
+            .RC_AutorizacionesModalidades
+            .AsNoTracking()
+            .AnyAsync(x =>
+                x.UserId == userId &&
+                x.Modalidad == "Remoto" &&
+                x.Estado == "Aprobada" &&
+                x.FechaInicio < fin.AddDays(1) &&
+                x.FechaFin >= inicio,
+                ct);
+
+        if (superpuesta)
+        {
+            throw new InvalidOperationException(
+                "El colaborador ya tiene otra autorización Home Office aprobada para esas fechas.");
+        }
+
+        var ahoraUtc = DateTime.UtcNow;
+
+        var autorizacion = new RC_AutorizacionModalidad
+        {
+            AusenciaId = ausencia.Id,
+            UserId = userId,
+            Modalidad = "Remoto",
+            OficinaId = null,
+            FechaInicio = inicio,
+            FechaFin = fin,
+            Estado = "Aprobada",
+            Motivo = $"Autorización HO desde Ausencias #{ausencia.Id}",
+            AutorizadoPorUserId = usuarioAutorizadorId,
+            AutorizadoUtc = ahoraUtc,
+            CreadoUtc = ahoraUtc
+        };
+
+        _db.RC_AutorizacionesModalidades.Add(
+            autorizacion);
+    }
+
+    // =========================================================
+    // REVOCACIÓN CUANDO TH RECHAZA
+    // =========================================================
+
+    public async Task RevocarPorRechazoTHAsync(
+        Ausencia ausencia,
+        CancellationToken ct = default)
+    {
+        if (!EsSolicitudHomeOffice(ausencia))
+            return;
+
+        var autorizacion = await _db
+            .RC_AutorizacionesModalidades
+            .FirstOrDefaultAsync(x =>
+                x.AusenciaId == ausencia.Id &&
+                x.Modalidad == "Remoto",
+                ct);
+
+        if (autorizacion == null)
+            return;
+
+        if (autorizacion.Estado == "Revocada")
+            return;
+
+        autorizacion.Estado = "Revocada";
+
+        // Se conservan las jornadas, checadas
+        // y fotografías ya registradas.
+    }
+}
+
+
+================ ARCHIVO: Services\RelojChecador\RelojHorariosService.cs ================
+
+
+using ERPSEI.Data;
+using ERPSEI.Data.Entities.Reportes;
+using Microsoft.EntityFrameworkCore;
+
+namespace ERPSEI.Services.RelojChecador
+{
+    public sealed class RelojHorariosService
+    {
+        private readonly ApplicationDbContext _db;
+
+        public RelojHorariosService(ApplicationDbContext db)
+        {
+            _db = db;
+        }
+
+        public sealed class HorarioEmpleadoResultado
+        {
+            public bool Configurado { get; init; }
+            public bool DiaLaborable { get; init; }
+            public string Codigo { get; init; } = "";
+            public string Mensaje { get; init; } = "";
+
+            public int EmpleadoId { get; init; }
+            public int? HorarioId { get; init; }
+            public int? HorarioDetalleId { get; init; }
+            public string? Descripcion { get; init; }
+
+            public DateTime FechaLocal { get; init; }
+            public int NumeroDiaSemana { get; init; }
+
+            public TimeSpan? Entrada { get; init; }
+            public TimeSpan? ToleranciaEntrada { get; init; }
+            public TimeSpan? ToleranciaFalta { get; init; }
+            public TimeSpan? Salida { get; init; }
+            public TimeSpan? ToleranciaSalida { get; init; }
+        }
+
+        public async Task<HorarioEmpleadoResultado>
+            ObtenerHorarioEmpleadoAsync(
+                int empleadoId,
+                DateTime fechaLocal,
+                CancellationToken cancellationToken = default)
+        {
+            if (empleadoId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(empleadoId));
+            }
+
+            DateTime fecha = fechaLocal.Date;
+
+            // En HorariosDetalles:
+            // Domingo=0, Lunes=1, ... Sábado=6.
+            int numeroDiaSemana = (int)fecha.DayOfWeek;
+
+            HorarioEmpleadoResultado SinHorario(
+                string codigo,
+                string mensaje,
+                int? horarioId = null,
+                string? descripcion = null,
+                bool configurado = false)
+            {
+                return new HorarioEmpleadoResultado
+                {
+                    Configurado = configurado,
+                    DiaLaborable = false,
+                    Codigo = codigo,
+                    Mensaje = mensaje,
+                    EmpleadoId = empleadoId,
+                    HorarioId = horarioId,
+                    Descripcion = descripcion,
+                    FechaLocal = fecha,
+                    NumeroDiaSemana = numeroDiaSemana
+                };
+            }
+
+            // ================================================
+            // 1. OBTENER EMPLEADO Y SU HORARIO ASIGNADO
+            // ================================================
+
+            var empleado = await _db.Empleados
+                .AsNoTracking()
+                .Where(x => x.Id == empleadoId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.HorarioId,
+                    x.CalcularAsistencia
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (empleado == null)
+            {
+                return SinHorario(
+                    "EMPLEADO_NO_ENCONTRADO",
+                    "El colaborador no existe.");
+            }
+
+            if (!empleado.HorarioId.HasValue ||
+                empleado.HorarioId.Value <= 0)
+            {
+                return SinHorario(
+                    "SIN_HORARIO",
+                    "El colaborador no tiene horario asignado.");
+            }
+
+            // El indicador de cálculo de asistencia
+            // debe respetarse como configuración de TH.
+            if (empleado.CalcularAsistencia != true)
+            {
+                return SinHorario(
+                    "ASISTENCIA_NO_HABILITADA",
+                    "El colaborador no tiene habilitado el cálculo de asistencia.",
+                    empleado.HorarioId);
+            }
+
+            // ================================================
+            // 2. CONSULTAR EL CATÁLOGO EXISTENTE
+            // ================================================
+
+            var horario = await _db.Set<Horario>()
+                .AsNoTracking()
+                .Where(x => x.Id == empleado.HorarioId.Value)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Descripcion,
+                    x.Deshabilitado
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (horario == null)
+            {
+                return SinHorario(
+                    "HORARIO_NO_ENCONTRADO",
+                    "El horario asignado no existe.",
+                    empleado.HorarioId);
+            }
+
+            if (horario.Deshabilitado.GetValueOrDefault() != 0)
+            {
+                return SinHorario(
+                    "HORARIO_DESHABILITADO",
+                    "El horario asignado está deshabilitado.",
+                    horario.Id,
+                    horario.Descripcion);
+            }
+
+            // ================================================
+            // 3. OBTENER EL DETALLE DEL DÍA
+            // ================================================
+
+            var detalles = await _db.Set<Horario>()
+                .AsNoTracking()
+                .Where(x => x.Id == horario.Id)
+                .SelectMany(x => x.HorarioDetalles!
+                    .Where(d =>
+                        d.NumeroDiaSemana == numeroDiaSemana)
+                    .Select(d => new
+                    {
+                        d.Id,
+                        d.Activado,
+                        d.Entrada,
+                        d.ToleranciaEntrada,
+                        d.ToleranciaFalta,
+                        d.Salida,
+                        d.ToleranciaSalida
+                    }))
+                .Take(2)
+                .ToListAsync(cancellationToken);
+
+            if (detalles.Count == 0)
+            {
+                return SinHorario(
+                    "DIA_NO_CONFIGURADO",
+                    "No existe configuración para este día de la semana.",
+                    horario.Id,
+                    horario.Descripcion);
+            }
+
+            if (detalles.Count > 1)
+            {
+                return SinHorario(
+                    "DETALLES_DUPLICADOS",
+                    "El horario contiene más de un detalle para el mismo día.",
+                    horario.Id,
+                    horario.Descripcion);
+            }
+
+            var detalle = detalles[0];
+
+            if (!detalle.Activado)
+            {
+                return SinHorario(
+                    "DIA_NO_LABORABLE",
+                    "Este día está desactivado en el horario.",
+                    horario.Id,
+                    horario.Descripcion,
+                    configurado: true);
+            }
+
+            // ================================================
+            // 4. VALIDAR CONSISTENCIA
+            // ================================================
+
+            if (detalle.ToleranciaEntrada < detalle.Entrada ||
+                detalle.ToleranciaFalta < detalle.ToleranciaEntrada ||
+                detalle.Salida <= detalle.Entrada ||
+                detalle.ToleranciaSalida > detalle.Salida)
+            {
+                return SinHorario(
+                    "CONFIGURACION_INCONSISTENTE",
+                    "Los límites de entrada, falta o salida son inconsistentes.",
+                    horario.Id,
+                    horario.Descripcion);
+            }
+
+            // ================================================
+            // 5. DEVOLVER HORARIO APLICABLE
+            // ================================================
+
+            return new HorarioEmpleadoResultado
+            {
+                Configurado = true,
+                DiaLaborable = true,
+                Codigo = "OK",
+                Mensaje = "Horario encontrado correctamente.",
+
+                EmpleadoId = empleadoId,
+                HorarioId = horario.Id,
+                HorarioDetalleId = detalle.Id,
+                Descripcion = horario.Descripcion,
+
+                FechaLocal = fecha,
+                NumeroDiaSemana = numeroDiaSemana,
+
+                Entrada = detalle.Entrada,
+                ToleranciaEntrada = detalle.ToleranciaEntrada,
+                ToleranciaFalta = detalle.ToleranciaFalta,
+                Salida = detalle.Salida,
+                ToleranciaSalida = detalle.ToleranciaSalida
+            };
+        }
+    }
+}
+
+
+================ ARCHIVO: Services\RelojChecador\RelojAsistenciaDashboardService.cs ================
+
+
+using System.Data;
+using ERPSEI.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace ERPSEI.Services.RelojChecador;
+
+public sealed class RelojAsistenciaDashboardService
+{
+    private readonly ApplicationDbContext _db;
+    private readonly RelojEvaluacionAsistenciaUnificadaService _evaluador;
+    private readonly RelojAsistenciaContextoTHService _contextoTH;
+
+    private static readonly TimeZoneInfo ZonaMexico =
+        TimeZoneInfo.FindSystemTimeZoneById(
+            "America/Mexico_City");
+
+    public RelojAsistenciaDashboardService(
+        ApplicationDbContext db,
+        RelojEvaluacionAsistenciaUnificadaService evaluador,
+        RelojAsistenciaContextoTHService contextoTH)
+    {
+        _db = db;
+        _evaluador = evaluador;
+        _contextoTH = contextoTH;
+    }
+
+    public sealed class Filtros
+    {
+        public DateTime FechaInicio { get; set; }
+        public DateTime FechaFin { get; set; }
+        public int? EmpleadoId { get; set; }
+        public string? Buscar { get; set; }
+        public int Pagina { get; set; } = 1;
+        public int Tamano { get; set; } = 10;
+    }
+
+    public sealed class JornadaResumen
+    {
+        public int EmpleadoId { get; init; }
+        public string Colaborador { get; init; } = "";
+        public DateTime Fecha { get; init; }
+
+        public string Horario { get; init; } = "";
+        public string Estado { get; init; } = "";
+
+        public string? Entrada { get; init; }
+        public string? SalidaComer { get; init; }
+        public string? RegresoComer { get; init; }
+        public string? Salida { get; init; }
+
+        public bool? EntradaPuntual { get; init; }
+        public bool? RegresoComidaPuntual { get; init; }
+        public bool? SalidaEnHorario { get; init; }
+
+        public int? MinutosEfectivos { get; init; }
+
+        public int MovimientosIntranet { get; init; }
+        public int MovimientosBioTime { get; init; }
+        public int Confirmados { get; init; }
+        public int Pendientes { get; init; }
+
+        public bool HomeOfficeAutorizado { get; init; }
+        public bool TieneAusencias { get; init; }
+        public bool RequiereRevision { get; init; }
+
+        public string Observaciones { get; init; } = "";
+    }
+
+    public sealed class ResumenDashboard
+    {
+        public int TotalJornadas { get; init; }
+        public int Pagina { get; init; }
+        public int Tamano { get; init; }
+        public int TotalPaginas { get; init; }
+
+        public int JornadasPagina { get; init; }
+        public int JornadasCompletasPagina { get; init; }
+        public int JornadasRevisionPagina { get; init; }
+        public int MovimientosPendientesPagina { get; init; }
+
+        public List<JornadaResumen> Registros { get; init; }
+            = new();
+    }
+
+    private sealed record DiaEmpleado(
+        int EmpleadoId,
+        DateTime Fecha);
+
+    public async Task<ResumenDashboard> ConsultarAsync(
+        Filtros filtros,
+        CancellationToken ct = default)
+    {
+        ValidarFiltros(filtros);
+
+        DateTime inicio = filtros.FechaInicio.Date;
+        DateTime fin = filtros.FechaFin.Date;
+
+        // 1. Leer días con movimientos digitales.
+        var dias = new HashSet<DiaEmpleado>();
+
+        var inicioUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(
+                inicio,
+                DateTimeKind.Unspecified),
+            ZonaMexico);
+
+        var finUtc = TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(
+                fin.AddDays(1),
+                DateTimeKind.Unspecified),
+            ZonaMexico);
+
+        var movimientosDigitales = await _db.RC_Checadas
+            .AsNoTracking()
+            .Where(c =>
+                c.FechaHoraUtc >= inicioUtc &&
+                c.FechaHoraUtc < finUtc &&
+                (!filtros.EmpleadoId.HasValue ||
+                 c.Jornada.EmpleadoId ==
+                    filtros.EmpleadoId.Value))
+            .Select(c => new
+            {
+                c.Jornada.EmpleadoId,
+                c.FechaHoraUtc
+            })
+            .ToListAsync(ct);
+
+        foreach (var movimiento in movimientosDigitales)
+        {
+            var utc = DateTime.SpecifyKind(
+                movimiento.FechaHoraUtc,
+                DateTimeKind.Utc);
+
+            var local = TimeZoneInfo.ConvertTimeFromUtc(
+                utc,
+                ZonaMexico);
+
+            dias.Add(new DiaEmpleado(
+                movimiento.EmpleadoId,
+                local.Date));
+        }
+
+        // 2. Leer días con checadas de BioTime
+        // vinculadas y vigentes.
+        await AgregarDiasBioTimeAsync(
+            dias,
+            inicio,
+            fin,
+            filtros.EmpleadoId,
+            ct);
+
+        if (dias.Count == 0)
+        {
+            return new ResumenDashboard
+            {
+                Pagina = filtros.Pagina,
+                Tamano = filtros.Tamano,
+                TotalPaginas = 0
+            };
+        }
+
+        // 3. Resolver colaboradores desde INTRANET.
+        var ids = dias
+            .Select(x => x.EmpleadoId)
+            .Distinct()
+            .ToArray();
+
+        var empleados = await _db.Empleados
+            .AsNoTracking()
+            .Where(e => ids.Contains(e.Id))
+            .Select(e => new
+            {
+                e.Id,
+                e.NombreCompleto
+            })
+            .ToDictionaryAsync(x => x.Id, ct);
+
+        var buscar = filtros.Buscar?.Trim() ?? "";
+
+        var candidatos = dias
+            .Where(x => empleados.ContainsKey(x.EmpleadoId))
+            .Where(x =>
+                string.IsNullOrWhiteSpace(buscar) ||
+                empleados[x.EmpleadoId].NombreCompleto.Contains(
+                    buscar,
+                    StringComparison.OrdinalIgnoreCase) ||
+                x.EmpleadoId.ToString().Contains(buscar))
+            .OrderByDescending(x => x.Fecha)
+            .ThenBy(x =>
+                empleados[x.EmpleadoId].NombreCompleto)
+            .ThenBy(x => x.EmpleadoId)
+            .ToList();
+
+        var total = candidatos.Count;
+
+        var pagina = candidatos
+            .Skip((filtros.Pagina - 1) * filtros.Tamano)
+            .Take(filtros.Tamano)
+            .ToList();
+
+        var registros = new List<JornadaResumen>();
+
+        // Los servicios comparten DbContext.
+        // Consultar secuencialmente.
+        foreach (var dia in pagina)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var evaluacion = await _evaluador.EvaluarDiaAsync(
+                dia.EmpleadoId,
+                dia.Fecha,
+                ct);
+
+            var contexto = await _contextoTH.ObtenerAsync(
+                dia.EmpleadoId,
+                dia.Fecha,
+                ct);
+
+            bool revision =
+                evaluacion.RequiereRevision ||
+                contexto.RequiereRevisionTH ||
+                evaluacion.MovimientosPendientes > 0;
+
+            var observaciones = evaluacion.Observaciones
+                .Concat(contexto.Observaciones)
+                .Distinct()
+                .ToList();
+
+            if (observaciones.Count == 0 &&
+                !string.IsNullOrWhiteSpace(evaluacion.Mensaje))
+            {
+                observaciones.Add(evaluacion.Mensaje);
+            }
+
+            bool secuenciaValida =
+                evaluacion.EntradaReal.HasValue &&
+                evaluacion.SalidaComidaReal.HasValue &&
+                evaluacion.RegresoComidaReal.HasValue &&
+                evaluacion.SalidaReal.HasValue &&
+                evaluacion.EntradaReal <
+                    evaluacion.SalidaComidaReal &&
+                evaluacion.SalidaComidaReal <
+                    evaluacion.RegresoComidaReal &&
+                evaluacion.RegresoComidaReal <
+                    evaluacion.SalidaReal;
+
+            int? minutos = null;
+
+            if (secuenciaValida)
+            {
+                var tramo1 =
+                    evaluacion.SalidaComidaReal!.Value -
+                    evaluacion.EntradaReal!.Value;
+
+                var tramo2 =
+                    evaluacion.SalidaReal!.Value -
+                    evaluacion.RegresoComidaReal!.Value;
+
+                minutos = (int)Math.Floor(
+                    (tramo1 + tramo2).TotalMinutes);
+            }
+
+            bool? puntual = null;
+            bool? comidaPuntual = null;
+            bool? salidaEnHorario = null;
+
+            if (evaluacion.EntradaReal.HasValue &&
+                evaluacion.LimiteRetardo.HasValue)
+            {
+                puntual =
+                    evaluacion.EntradaReal.Value.TimeOfDay <
+                    evaluacion.LimiteRetardo.Value;
+            }
+
+            if (evaluacion.RegresoComidaReal.HasValue)
+            {
+                comidaPuntual =
+                    evaluacion.RegresoComidaReal.Value.TimeOfDay <
+                    new TimeSpan(15, 6, 0);
+            }
+
+            if (evaluacion.SalidaReal.HasValue &&
+                evaluacion.SalidaProgramada.HasValue)
+            {
+                salidaEnHorario =
+                    evaluacion.SalidaReal.Value.TimeOfDay >=
+                    evaluacion.SalidaProgramada.Value;
+            }
+
+            registros.Add(new JornadaResumen
+            {
+                EmpleadoId = dia.EmpleadoId,
+                Colaborador =
+                    empleados[dia.EmpleadoId].NombreCompleto,
+                Fecha = dia.Fecha,
+
+                Horario = evaluacion.HorarioDescripcion ??
+                          "Sin horario",
+
+                Estado = evaluacion.Estado,
+
+                Entrada = FormatearHora(
+                    evaluacion.EntradaReal),
+
+                SalidaComer = FormatearHora(
+                    evaluacion.SalidaComidaReal),
+
+                RegresoComer = FormatearHora(
+                    evaluacion.RegresoComidaReal),
+
+                Salida = FormatearHora(
+                    evaluacion.SalidaReal),
+
+                EntradaPuntual = puntual,
+                RegresoComidaPuntual = comidaPuntual,
+                SalidaEnHorario = salidaEnHorario,
+
+                MinutosEfectivos = minutos,
+
+                MovimientosIntranet =
+                    evaluacion.MovimientosIntranet,
+
+                MovimientosBioTime =
+                    evaluacion.MovimientosBioTime,
+
+                Confirmados =
+                    evaluacion.MovimientosConfirmados,
+
+                Pendientes =
+                    evaluacion.MovimientosPendientes,
+
+                HomeOfficeAutorizado =
+                    contexto.HomeOfficeAutorizado,
+
+                TieneAusencias =
+                    contexto.TieneSolicitudesAusencia,
+
+                RequiereRevision = revision,
+
+                Observaciones = string.Join(
+                    " | ",
+                    observaciones)
+            });
+        }
+
+        return new ResumenDashboard
+        {
+            TotalJornadas = total,
+            Pagina = filtros.Pagina,
+            Tamano = filtros.Tamano,
+
+            TotalPaginas = (int)Math.Ceiling(
+                total / (double)filtros.Tamano),
+
+            JornadasPagina = registros.Count,
+
+            JornadasCompletasPagina =
+                registros.Count(x =>
+                    x.Estado == "CompletaParaRevision"),
+
+            JornadasRevisionPagina =
+                registros.Count(x => x.RequiereRevision),
+
+            MovimientosPendientesPagina =
+                registros.Sum(x => x.Pendientes),
+
+            Registros = registros
+        };
+    }
+
+    private async Task AgregarDiasBioTimeAsync(
+        HashSet<DiaEmpleado> dias,
+        DateTime inicio,
+        DateTime fin,
+        int? empleadoId,
+        CancellationToken ct)
+    {
+        const string sql = """
+            SELECT DISTINCT
+                v.EmpleadoId,
+                CONVERT(date, c.FechaHora)
+            FROM dbo.BioTimeChecadas c
+            INNER JOIN dbo.RC_EmpleadosBioTime v
+                ON v.EmpCode = c.EmpCode
+            WHERE v.Estado = 'Validada'
+              AND c.FechaHora >= @Inicio
+              AND c.FechaHora < @Fin
+              AND v.FechaInicio <= CONVERT(date, c.FechaHora)
+              AND (
+                  v.FechaFin IS NULL
+                  OR v.FechaFin >= CONVERT(date, c.FechaHora)
+              )
+              AND (
+                  @EmpleadoId IS NULL
+                  OR v.EmpleadoId = @EmpleadoId
+              );
+            """;
+
+        var conexion = _db.Database.GetDbConnection();
+        bool cerrar = conexion.State != ConnectionState.Open;
+
+        try
+        {
+            if (cerrar)
+                await conexion.OpenAsync(ct);
+
+            await using var cmd = conexion.CreateCommand();
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = 60;
+
+            Parametro(
+                cmd, "@Inicio",
+                DbType.DateTime2, inicio);
+
+            Parametro(
+                cmd, "@Fin",
+                DbType.DateTime2, fin.AddDays(1));
+
+            Parametro(
+                cmd, "@EmpleadoId",
+                DbType.Int32,
+                (object?)empleadoId ?? DBNull.Value);
+
+            await using var lector =
+                await cmd.ExecuteReaderAsync(ct);
+
+            while (await lector.ReadAsync(ct))
+            {
+                dias.Add(new DiaEmpleado(
+                    lector.GetInt32(0),
+                    lector.GetDateTime(1).Date));
+            }
+        }
+        finally
+        {
+            if (cerrar &&
+                conexion.State != ConnectionState.Closed)
+            {
+                await conexion.CloseAsync();
+            }
+        }
+    }
+
+    private static void Parametro(
+        System.Data.Common.DbCommand cmd,
+        string nombre,
+        DbType tipo,
+        object valor)
+    {
+        var p = cmd.CreateParameter();
+        p.ParameterName = nombre;
+        p.DbType = tipo;
+        p.Value = valor;
+        cmd.Parameters.Add(p);
+    }
+
+    private static string? FormatearHora(DateTime? valor)
+    {
+        return valor?.ToString("HH:mm:ss");
+    }
+
+    private static void ValidarFiltros(Filtros f)
+    {
+        if (f.FechaFin.Date < f.FechaInicio.Date ||
+            (f.FechaFin.Date - f.FechaInicio.Date).TotalDays > 6)
+        {
+            throw new ArgumentException(
+                "El periodo debe ser de 1 a 7 días.");
+        }
+
+        if (f.Pagina < 1 ||
+            f.Pagina > 100000 ||
+            f.Tamano != 10)
+        {
+            throw new ArgumentException(
+                "Los parámetros de paginación no son válidos.");
+        }
+
+        if (f.EmpleadoId.HasValue &&
+            f.EmpleadoId.Value <= 0)
+        {
+            throw new ArgumentException(
+                "El ID de empleado no es válido.");
+        }
+
+        if ((f.Buscar?.Length ?? 0) > 100)
+        {
+            throw new ArgumentException(
+                "La búsqueda permite máximo 100 caracteres.");
+        }
+
+        var hoyMexico = TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.UtcNow,
+            ZonaMexico).Date;
+
+        if (f.FechaFin.Date > hoyMexico)
+        {
+            throw new ArgumentException(
+                "No se permiten fechas futuras.");
+        }
+    }
+}
+
+
+================ ARCHIVO: Services\RelojChecador\RelojEvaluacionAsistenciaUnificadaService.cs ================
+
+
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using ERPSEI.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace ERPSEI.Services.RelojChecador;
+
+public sealed class RelojEvaluacionAsistenciaUnificadaService
+{
+    private readonly ApplicationDbContext _db;
+    private readonly AsistenciaMovimientosService _movimientos;
+    private readonly RelojHorariosService _horarios;
+    private readonly RelojResolucionConflictosService _resoluciones;
+
+    private static readonly string[] Tipos =
+    {
+        "Entrada",
+        "SalidaComer",
+        "RegresoComer",
+        "Salida"
+    };
+
+    private static readonly TimeZoneInfo ZonaMexico =
+        TimeZoneInfo.FindSystemTimeZoneById(
+            "America/Mexico_City");
+
+    public RelojEvaluacionAsistenciaUnificadaService(
+        ApplicationDbContext db,
+        AsistenciaMovimientosService movimientos,
+        RelojHorariosService horarios,
+        RelojResolucionConflictosService resoluciones)
+    {
+        _db = db;
+        _movimientos = movimientos;
+        _horarios = horarios;
+        _resoluciones = resoluciones;
+    }
+
+    // =========================================================
+    // MODELO DE MOVIMIENTOS UNIFICADOS
+    // =========================================================
+
+    public sealed class MovimientoUnificado
+    {
+        public string IdMovimiento { get; init; } = "";
+        public string Fuente { get; init; } = "";
+        public string Origen { get; init; } = "";
+
+        public DateTime FechaHoraMexico { get; init; }
+        public DateTime FechaHoraUtc { get; init; }
+
+        public string TipoOriginal { get; init; } = "";
+        public string TipoEvaluacion { get; init; } = "";
+        public string EstadoValidacion { get; init; } = "";
+
+        public bool Confirmado { get; init; }
+
+        // Puede modificarse exclusivamente en memoria
+        // mediante la resolución administrativa.
+        public bool ParticipaEnEvaluacion { get; set; }
+
+        public string Observacion { get; set; } = "";
+    }
+
+    // =========================================================
+    // RESULTADO UNIFICADO
+    // =========================================================
+
+    public sealed class ResultadoUnificado
+    {
+        public int EmpleadoId { get; init; }
+        public DateTime FechaLocal { get; init; }
+
+        // Se conservan los estados técnicos anteriores
+        // para no romper el dashboard y la conciliación.
+        public string Estado { get; set; } = "SinEvaluar";
+        public string Mensaje { get; set; } = "";
+
+        public int? HorarioId { get; init; }
+        public string? HorarioDescripcion { get; init; }
+
+        public TimeSpan? EntradaProgramada { get; init; }
+        public TimeSpan? LimiteRetardo { get; init; }
+        public TimeSpan? SalidaProgramada { get; init; }
+
+        public DateTime? EntradaReal { get; set; }
+        public DateTime? SalidaComidaReal { get; set; }
+        public DateTime? RegresoComidaReal { get; set; }
+        public DateTime? SalidaReal { get; set; }
+
+        public int TotalMovimientos { get; set; }
+        public int MovimientosIntranet { get; set; }
+        public int MovimientosBioTime { get; set; }
+
+        public int MovimientosConfirmados { get; set; }
+        public int MovimientosPendientes { get; set; }
+
+        public int MovimientosExcluidosPorResolucion { get; set; }
+        public int ResolucionesAplicadas { get; set; }
+
+        public bool SecuenciaCompleta { get; set; }
+        public bool RequiereRevision { get; set; }
+
+        public List<string> Observaciones { get; set; } = new();
+
+        public List<MovimientoUnificado> Movimientos { get; set; }
+            = new();
+
+        // =====================================================
+        // NUEVO: RESULTADO PRELIMINAR DE TALENTO HUMANO
+        // =====================================================
+        //
+        // Null en fecha futura, día no laborable o cuando
+        // el horario no está configurado.
+        //
+        // No sustituye el Estado técnico existente.
+        // No autoriza incidencias ni descuentos de nómina.
+
+        public RelojReglasEvaluacionTH.Resultado? EvaluacionTH
+        {
+            get;
+            set;
+        }
+    }
+
+    // =========================================================
+    // EVALUACIÓN PRINCIPAL POR EMPLEADO Y FECHA
+    // =========================================================
+
+    public async Task<ResultadoUnificado> EvaluarDiaAsync(
+        int empleadoId,
+        DateTime fechaLocal,
+        CancellationToken ct = default)
+    {
+        if (empleadoId <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(empleadoId));
+        }
+
+        var fecha = fechaLocal.Date;
+
+        var hoyMexico = TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.UtcNow,
+            ZonaMexico).Date;
+
+        // =====================================================
+        // 1. VALIDAR FECHA
+        // =====================================================
+
+        if (fecha > hoyMexico)
+        {
+            return new ResultadoUnificado
+            {
+                EmpleadoId = empleadoId,
+                FechaLocal = fecha,
+                Estado = "FechaFutura",
+                Mensaje = "No se evalúan fechas futuras."
+            };
+        }
+
+        // =====================================================
+        // 2. CONSULTAR HORARIO ASIGNADO
+        // =====================================================
+
+        var horario =
+            await _horarios.ObtenerHorarioEmpleadoAsync(
+                empleadoId,
+                fecha,
+                ct);
+
+        var resultado = new ResultadoUnificado
+        {
+            EmpleadoId = empleadoId,
+            FechaLocal = fecha,
+
+            HorarioId = horario.HorarioId,
+            HorarioDescripcion = horario.Descripcion,
+
+            EntradaProgramada = horario.Entrada,
+            LimiteRetardo = horario.ToleranciaEntrada,
+            SalidaProgramada = horario.Salida
+        };
+
+        // No se ejecuta una evaluación laboral ordinaria
+        // si no existe horario aplicable o no es laborable.
+
+        if (!horario.Configurado || !horario.DiaLaborable)
+        {
+            resultado.Estado = horario.Configurado
+                ? "NoLaborable"
+                : "SinConfiguracion";
+
+            resultado.Mensaje = horario.Mensaje;
+
+            resultado.RequiereRevision =
+                !horario.Configurado;
+
+            return resultado;
+        }
+
+        // =====================================================
+        // 3. OBTENER MOVIMIENTOS NORMALIZADOS
+        // =====================================================
+
+        var normalizados =
+            await _movimientos.ObtenerMovimientosAsync(
+                empleadoId,
+                fecha,
+                fecha,
+                ct);
+
+        // Confirmaciones existentes de BioTime.
+        // Solo se aceptan si siguen vinculadas
+        // válidamente al empleado correspondiente.
+
+        var confirmaciones =
+            await ObtenerConfirmacionesAsync(
+                empleadoId,
+                fecha,
+                ct);
+
+        // =====================================================
+        // 4. CONSTRUIR MOVIMIENTOS UNIFICADOS
+        // =====================================================
+
+        foreach (var movimiento in normalizados)
+        {
+            bool intranet = string.Equals(
+                movimiento.Fuente,
+                "INTRANET",
+                StringComparison.OrdinalIgnoreCase);
+
+            bool biotime = string.Equals(
+                movimiento.Fuente,
+                "BIOTIME",
+                StringComparison.OrdinalIgnoreCase);
+
+            string tipo = "SinClasificar";
+            bool confirmado = false;
+
+            // ===============================================
+            // MOVIMIENTOS DIGITALES INTRANET
+            // ===============================================
+
+            if (intranet)
+            {
+                confirmado = string.Equals(
+                    movimiento.EstadoValidacion,
+                    "Validada",
+                    StringComparison.OrdinalIgnoreCase)
+                    && EsTipoValido(
+                        movimiento.TipoMovimiento);
+
+                if (confirmado)
+                {
+                    tipo = movimiento.TipoMovimiento;
+                }
+            }
+
+            // ===============================================
+            // MOVIMIENTOS BIOMÉTRICOS BIOTIME
+            // ===============================================
+
+            else if (biotime)
+            {
+                const string prefijo = "BIOTIME:";
+
+                if (movimiento.IdMovimiento.StartsWith(
+                        prefijo,
+                        StringComparison.OrdinalIgnoreCase)
+                    && long.TryParse(
+                        movimiento.IdMovimiento[
+                            prefijo.Length..],
+                        out long id)
+                    && confirmaciones.TryGetValue(
+                        id,
+                        out var tipoConfirmado)
+                    && EsTipoValido(tipoConfirmado))
+                {
+                    tipo = tipoConfirmado;
+                    confirmado = true;
+                }
+            }
+
+            resultado.Movimientos.Add(
+                new MovimientoUnificado
+                {
+                    IdMovimiento = movimiento.IdMovimiento,
+                    Fuente = movimiento.Fuente,
+                    Origen = movimiento.Origen,
+
+                    FechaHoraMexico =
+                        movimiento.FechaHoraMexico,
+
+                    FechaHoraUtc =
+                        movimiento.FechaHoraUtc,
+
+                    TipoOriginal =
+                        movimiento.TipoMovimiento,
+
+                    TipoEvaluacion = tipo,
+
+                    EstadoValidacion =
+                        movimiento.EstadoValidacion,
+
+                    Confirmado = confirmado,
+
+                    ParticipaEnEvaluacion =
+                        confirmado,
+
+                    Observacion = confirmado
+                        ? "Movimiento confirmado para conciliación."
+                        : "Movimiento pendiente de revisión o clasificación."
+                });
+        }
+
+        // =====================================================
+        // 5. ORDENAR MOVIMIENTOS Y CALCULAR TOTALES
+        // =====================================================
+
+        resultado.Movimientos = resultado.Movimientos
+            .OrderBy(x => x.FechaHoraUtc)
+            .ThenBy(x => x.IdMovimiento)
+            .ToList();
+
+        resultado.TotalMovimientos =
+            resultado.Movimientos.Count;
+
+        resultado.MovimientosIntranet =
+            resultado.Movimientos.Count(x =>
+                x.Fuente.Equals(
+                    "INTRANET",
+                    StringComparison.OrdinalIgnoreCase));
+
+        resultado.MovimientosBioTime =
+            resultado.Movimientos.Count(x =>
+                x.Fuente.Equals(
+                    "BIOTIME",
+                    StringComparison.OrdinalIgnoreCase));
+
+        // =====================================================
+        // 6. VALIDAR AUSENCIA DE MOVIMIENTOS
+        // =====================================================
+
+        if (resultado.TotalMovimientos == 0)
+        {
+            resultado.Estado = "SinMovimientos";
+
+            resultado.Mensaje =
+                "No se encontraron movimientos de asistencia.";
+
+            resultado.RequiereRevision = true;
+
+            // NUEVO:
+            // El resultado TH indicará SinMovimientos,
+            // sin declarar automáticamente una falta.
+
+            return CompletarEvaluacionTH(resultado);
+        }
+
+        // =====================================================
+        // 7. APLICAR RESOLUCIONES ADMINISTRATIVAS VIGENTES
+        // =====================================================
+
+        var aplicacion =
+            await _resoluciones.AplicarAsync(
+                empleadoId,
+                fecha,
+                resultado.Movimientos,
+                ct);
+
+        resultado.ResolucionesAplicadas =
+            aplicacion.ResolucionesAplicadas;
+
+        resultado.Observaciones.AddRange(
+            aplicacion.Observaciones);
+
+        // Solo los movimientos que participan
+        // deben utilizarse para construir la jornada.
+
+        var validos = resultado.Movimientos
+            .Where(x => x.ParticipaEnEvaluacion)
+            .ToList();
+
+        resultado.MovimientosConfirmados =
+            validos.Count;
+
+        resultado.MovimientosPendientes =
+            resultado.Movimientos.Count(x =>
+                !x.Confirmado);
+
+        resultado.MovimientosExcluidosPorResolucion =
+            resultado.Movimientos.Count(x =>
+                x.Confirmado &&
+                !x.ParticipaEnEvaluacion);
+
+        // =====================================================
+        // 8. DETECTAR DUPLICADOS SIN RESOLVER
+        // =====================================================
+
+        var conflictos = new List<string>();
+
+        foreach (var tipo in Tipos)
+        {
+            int cantidad = validos.Count(x =>
+                x.TipoEvaluacion == tipo);
+
+            if (cantidad > 1)
+            {
+                conflictos.Add(
+                    $"Existen {cantidad} marcas confirmadas " +
+                    $"de tipo {tipo} sin resolución vigente.");
+            }
+        }
+
+        if (conflictos.Count > 0)
+        {
+            resultado.Observaciones.AddRange(
+                conflictos);
+
+            resultado.Estado =
+                "ConflictoMovimientos";
+
+            resultado.Mensaje =
+                "Existen movimientos duplicados pendientes de conciliación.";
+
+            resultado.RequiereRevision = true;
+
+            // NUEVO:
+            // La evaluación TH reconoce que existe
+            // un conflicto y no autoriza cerrar
+            // automáticamente la jornada.
+
+            return CompletarEvaluacionTH(
+                resultado,
+                conflictosSinResolver: true);
+        }
+
+        // =====================================================
+        // 9. EXTRAER HORAS REALES DE MOVIMIENTOS VÁLIDOS
+        // =====================================================
+
+        resultado.EntradaReal =
+            HoraMovimiento(validos, "Entrada");
+
+        resultado.SalidaComidaReal =
+            HoraMovimiento(validos, "SalidaComer");
+
+        resultado.RegresoComidaReal =
+            HoraMovimiento(validos, "RegresoComer");
+
+        resultado.SalidaReal =
+            HoraMovimiento(validos, "Salida");
+
+        resultado.SecuenciaCompleta =
+            resultado.EntradaReal.HasValue &&
+            resultado.SalidaComidaReal.HasValue &&
+            resultado.RegresoComidaReal.HasValue &&
+            resultado.SalidaReal.HasValue;
+
+        // =====================================================
+        // 10. VALIDAR JORNADA INCOMPLETA
+        // =====================================================
+
+        if (!resultado.SecuenciaCompleta)
+        {
+            resultado.Estado =
+                "JornadaIncompleta";
+
+            resultado.Mensaje =
+                "No existen cuatro movimientos confirmados " +
+                "para una jornada completa.";
+
+            resultado.RequiereRevision = true;
+
+            resultado.Observaciones.Add(
+                "Las marcas faltantes no se consideran " +
+                "automáticamente ausencias o incumplimientos.");
+
+            // NUEVO:
+            // Aunque falten movimientos, podremos
+            // evaluar la puntualidad si existe
+            // una entrada confirmada.
+
+            return CompletarEvaluacionTH(resultado);
+        }
+
+        // =====================================================
+        // 11. VALIDAR ORDEN CRONOLÓGICO
+        // =====================================================
+
+        var secuencia = new[]
+        {
+            resultado.EntradaReal!.Value,
+            resultado.SalidaComidaReal!.Value,
+            resultado.RegresoComidaReal!.Value,
+            resultado.SalidaReal!.Value
+        };
+
+        for (int i = 1; i < secuencia.Length; i++)
+        {
+            if (secuencia[i] <= secuencia[i - 1])
+            {
+                resultado.Estado =
+                    "SecuenciaInvalida";
+
+                resultado.Mensaje =
+                    "Los movimientos confirmados no siguen " +
+                    "el orden cronológico esperado.";
+
+                resultado.RequiereRevision = true;
+
+                // NUEVO:
+                // La regla TH devuelve
+                // SecuenciaInconsistente, manteniendo
+                // el estado técnico anterior.
+
+                return CompletarEvaluacionTH(resultado);
+            }
+        }
+
+        // =====================================================
+        // 12. JORNADA COMPLETA PARA REVISIÓN
+        // =====================================================
+
+        resultado.Estado =
+            "CompletaParaRevision";
+
+        resultado.Mensaje =
+            "Se encontraron cuatro movimientos confirmados " +
+            "en orden cronológico. Pendiente de validación TH.";
+
+        resultado.RequiereRevision = true;
+
+        if (resultado.MovimientosPendientes > 0)
+        {
+            resultado.Observaciones.Add(
+                $"Existen {resultado.MovimientosPendientes} " +
+                "movimientos pendientes de revisión.");
+        }
+
+        if (resultado.ResolucionesAplicadas > 0)
+        {
+            resultado.Observaciones.Add(
+                $"Se aplicaron {resultado.ResolucionesAplicadas} " +
+                "resoluciones administrativas auditadas.");
+        }
+
+        // NUEVO:
+        // Calcula puntualidad, jornada y salida.
+        // No modifica los movimientos ni el estado
+        // técnico que esperan los módulos existentes.
+
+        return CompletarEvaluacionTH(resultado);
+    }
+
+    // =========================================================
+    // NUEVO: EVALUACIÓN PRELIMINAR DE TALENTO HUMANO
+    // =========================================================
+
+    private static ResultadoUnificado CompletarEvaluacionTH(
+        ResultadoUnificado resultado,
+        bool conflictosSinResolver = false)
+    {
+        var datos = new RelojReglasEvaluacionTH.DatosJornada
+        {
+            EntradaProgramada =
+                resultado.EntradaProgramada,
+
+            LimiteRetardo =
+                resultado.LimiteRetardo,
+
+            SalidaProgramada =
+                resultado.SalidaProgramada,
+
+            EntradaReal =
+                resultado.EntradaReal,
+
+            SalidaComerReal =
+                resultado.SalidaComidaReal,
+
+            RegresoComerReal =
+                resultado.RegresoComidaReal,
+
+            SalidaReal =
+                resultado.SalidaReal,
+
+            ConflictosSinResolver =
+                conflictosSinResolver,
+
+            // El contexto de ausencias, vacaciones
+            // y Home Office no se ha integrado aún
+            // en este evaluador.
+            //
+            // No declarar que está revisado ni
+            // generar conclusiones sobre esos datos.
+
+            ContextoTHRequiereRevision = false
+        };
+
+        var evaluacion =
+            RelojReglasEvaluacionTH.Evaluar(datos);
+
+        resultado.EvaluacionTH = evaluacion;
+
+        // La regla TH todavía no permite
+        // cierre automático de jornadas.
+
+        if (evaluacion.RequiereRevisionTH)
+        {
+            resultado.RequiereRevision = true;
+        }
+
+        // Se conserva resultado.Estado para
+        // compatibilidad con dashboard y conciliación.
+
+        return resultado;
+    }
+
+    // =========================================================
+    // OBTENER CLASIFICACIONES BIOTIME CONFIRMADAS
+    // =========================================================
+
+    private async Task<Dictionary<long, string>>
+        ObtenerConfirmacionesAsync(
+            int empleadoId,
+            DateTime fecha,
+            CancellationToken ct)
+    {
+        const string sql = """
+            SELECT
+                cl.BioTimeChecadaId,
+                cl.TipoMovimiento
+            FROM dbo.RC_ClasificacionesBioTime cl
+            INNER JOIN dbo.BioTimeChecadas c
+                ON c.Id = cl.BioTimeChecadaId
+            WHERE cl.EmpleadoId = @EmpleadoId
+              AND cl.FechaLocal = @Fecha
+              AND cl.Estado = 'Confirmada'
+              AND CONVERT(date, c.FechaHora) = @Fecha
+              AND EXISTS
+              (
+                  SELECT 1
+                  FROM dbo.RC_EmpleadosBioTime v
+                  WHERE v.EmpCode = c.EmpCode
+                    AND v.EmpleadoId = cl.EmpleadoId
+                    AND v.Estado = 'Validada'
+                    AND v.FechaInicio <= @Fecha
+                    AND (
+                        v.FechaFin IS NULL
+                        OR v.FechaFin >= @Fecha
+                    )
+              );
+            """;
+
+        var resultado =
+            new Dictionary<long, string>();
+
+        var conexion =
+            _db.Database.GetDbConnection();
+
+        bool cerrar =
+            conexion.State != ConnectionState.Open;
+
+        try
+        {
+            if (cerrar)
+            {
+                await conexion.OpenAsync(ct);
+            }
+
+            await using var cmd =
+                conexion.CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = 30;
+
+            var pEmpleado =
+                cmd.CreateParameter();
+
+            pEmpleado.ParameterName =
+                "@EmpleadoId";
+
+            pEmpleado.DbType =
+                DbType.Int32;
+
+            pEmpleado.Value =
+                empleadoId;
+
+            cmd.Parameters.Add(pEmpleado);
+
+            var pFecha =
+                cmd.CreateParameter();
+
+            pFecha.ParameterName =
+                "@Fecha";
+
+            pFecha.DbType =
+                DbType.Date;
+
+            pFecha.Value =
+                fecha.Date;
+
+            cmd.Parameters.Add(pFecha);
+
+            await using var lector =
+                await cmd.ExecuteReaderAsync(ct);
+
+            while (await lector.ReadAsync(ct))
+            {
+                var id =
+                    lector.GetInt64(0);
+
+                var tipo =
+                    lector.GetString(1);
+
+                if (!resultado.TryAdd(id, tipo))
+                {
+                    throw new InvalidOperationException(
+                        $"Clasificación duplicada de BioTime {id}.");
+                }
+            }
+        }
+        finally
+        {
+            if (cerrar &&
+                conexion.State != ConnectionState.Closed)
+            {
+                await conexion.CloseAsync();
+            }
+        }
+
+        return resultado;
+    }
+
+    // =========================================================
+    // VALIDAR TIPOS DE MOVIMIENTO
+    // =========================================================
+
+    private static bool EsTipoValido(string? tipo)
+    {
+        return RelojReglasConciliacion.EsTipoValido(
+            tipo);
+    }
+
+    // =========================================================
+    // OBTENER HORA LOCAL DEL MOVIMIENTO CONFIRMADO
+    // =========================================================
+
+    private static DateTime? HoraMovimiento(
+        IEnumerable<MovimientoUnificado> movimientos,
+        string tipo)
+    {
+        return movimientos
+            .Where(x =>
+                x.TipoEvaluacion == tipo)
+            .OrderBy(x => x.FechaHoraUtc)
+            .Select(x =>
+                (DateTime?)x.FechaHoraMexico)
+            .FirstOrDefault();
+    }
+}
+
+
+================ ARCHIVO: Areas\ERP\Pages\BioTime\Analytics\Index.AsistenciaContextoTH.cs ================
+
+
+using ERPSEI.Services.RelojChecador;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ERPSEI.Areas.ERP.Pages.BioTime.Analytics;
+
+public sealed partial class IndexModel
+{
+    // GET:
+    // ?handler=AsistenciaContextoTH
+    // &empleadoId=35
+    // &fecha=2026-11-24
+
+    public async Task<IActionResult>
+        OnGetAsistenciaContextoTHAsync(
+            int empleadoId,
+            DateTime? fecha,
+            [FromServices]
+            RelojEvaluacionAsistenciaUnificadaService evaluador,
+            [FromServices]
+            RelojAsistenciaContextoTHService contextoTH,
+            CancellationToken ct)
+    {
+        if (User.Identity?.IsAuthenticated != true)
+            return new UnauthorizedResult();
+
+        if (!(
+            User.IsInRole("Master") ||
+            User.IsInRole("Administrador") ||
+            User.IsInRole("Administrador TH")))
+        {
+            return Forbid();
+        }
+
+        if (empleadoId <= 0 || !fecha.HasValue)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Indica un empleado y una fecha válida."
+            });
+        }
+
+        var zonaMexico =
+            TimeZoneInfo.FindSystemTimeZoneById(
+                "America/Mexico_City");
+
+        var hoyMexico =
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                zonaMexico).Date;
+
+        var dia = fecha.Value.Date;
+
+        if (dia > hoyMexico ||
+            dia < hoyMexico.AddDays(-365))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message =
+                    "La fecha debe encontrarse dentro de los últimos 365 días."
+            });
+        }
+
+        // Se consultan secuencialmente porque ambos
+        // servicios comparten ApplicationDbContext.
+        var evaluacion = await evaluador.EvaluarDiaAsync(
+            empleadoId,
+            dia,
+            ct);
+
+        var contexto = await contextoTH.ObtenerAsync(
+            empleadoId,
+            dia,
+            ct);
+
+        // Indicadores informativos. No se generan
+        // descuentos, faltas ni incidencias definitivas.
+        var entradaPuntual = evaluacion.EntradaReal.HasValue &&
+            evaluacion.LimiteRetardo.HasValue
+                ? evaluacion.EntradaReal.Value.TimeOfDay <
+                  evaluacion.LimiteRetardo.Value
+                : (bool?)null;
+
+        var salidaEnHorario = evaluacion.SalidaReal.HasValue &&
+            evaluacion.SalidaProgramada.HasValue
+                ? evaluacion.SalidaReal.Value.TimeOfDay >=
+                  evaluacion.SalidaProgramada.Value
+                : (bool?)null;
+
+        var regresoComidaPuntual =
+            evaluacion.RegresoComidaReal.HasValue
+                ? evaluacion.RegresoComidaReal.Value.TimeOfDay <
+                  new TimeSpan(15, 6, 0)
+                : (bool?)null;
+
+        int? minutosEfectivos = null;
+
+        if (evaluacion.SecuenciaCompleta &&
+            evaluacion.EntradaReal.HasValue &&
+            evaluacion.SalidaComidaReal.HasValue &&
+            evaluacion.RegresoComidaReal.HasValue &&
+            evaluacion.SalidaReal.HasValue &&
+            evaluacion.EntradaReal <
+                evaluacion.SalidaComidaReal &&
+            evaluacion.SalidaComidaReal <
+                evaluacion.RegresoComidaReal &&
+            evaluacion.RegresoComidaReal <
+                evaluacion.SalidaReal)
+        {
+            var antesDeComida =
+                evaluacion.SalidaComidaReal.Value -
+                evaluacion.EntradaReal.Value;
+
+            var despuesDeComida =
+                evaluacion.SalidaReal.Value -
+                evaluacion.RegresoComidaReal.Value;
+
+            minutosEfectivos = (int)Math.Floor(
+                (antesDeComida + despuesDeComida)
+                .TotalMinutes);
+        }
+
+        return new JsonResult(new
+        {
+            success = true,
+            empleadoId,
+            fecha = dia.ToString("yyyy-MM-dd"),
+
+            evaluacion,
+
+            contextoTH = contexto,
+
+            indicadoresPreliminares = new
+            {
+                entradaPuntual,
+                regresoComidaPuntual,
+                salidaEnHorario,
+                minutosEfectivos,
+
+                requiereRevision =
+                    evaluacion.RequiereRevision ||
+                    contexto.RequiereRevisionTH,
+
+                esResultadoLaboralDefinitivo = false
+            }
+        });
+    }
+}
+
+
+================ ARCHIVO: Areas\ERP\Pages\BioTime\Analytics\Index.AsistenciaDashboard.cs ================
+
+
+using System.Globalization;
+using System.Text;
+using ERPSEI.Services.RelojChecador;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ERPSEI.Areas.ERP.Pages.BioTime.Analytics;
+
+public sealed partial class IndexModel
+{
+    // GET:
+    // ?handler=AsistenciaDashboard
+    // &fechaInicio=2026-11-24
+    // &fechaFin=2026-11-25
+    // &empleadoId=35
+    // &pagina=1
+
+    public async Task<IActionResult>
+        OnGetAsistenciaDashboardAsync(
+            DateTime? fechaInicio,
+            DateTime? fechaFin,
+            int? empleadoId,
+            string? buscar,
+            int pagina,
+            [FromServices]
+            RelojAsistenciaDashboardService servicio,
+            CancellationToken ct)
+    {
+        if (!PuedeConsultarAsistenciaDashboard())
+            return Forbid();
+
+        if (!fechaInicio.HasValue ||
+            !fechaFin.HasValue)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Selecciona ambas fechas."
+            });
+        }
+
+        try
+        {
+            var resultado = await servicio.ConsultarAsync(
+                new RelojAsistenciaDashboardService.Filtros
+                {
+                    FechaInicio = fechaInicio.Value,
+                    FechaFin = fechaFin.Value,
+                    EmpleadoId = empleadoId,
+                    Buscar = buscar,
+                    Pagina = pagina < 1 ? 1 : pagina,
+                    Tamano = 10
+                },
+                ct);
+
+            return new JsonResult(new
+            {
+                success = true,
+                resultado
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = ex.Message
+            });
+        }
+    }
+
+    // GET:
+    // ?handler=ExportarAsistenciaDashboard
+    //
+    // Exporta la página seleccionada.
+    // No modifica asistencia ni clasificaciones.
+
+    public async Task<IActionResult>
+        OnGetExportarAsistenciaDashboardAsync(
+            DateTime? fechaInicio,
+            DateTime? fechaFin,
+            int? empleadoId,
+            string? buscar,
+            int pagina,
+            [FromServices]
+            RelojAsistenciaDashboardService servicio,
+            CancellationToken ct)
+    {
+        if (!PuedeConsultarAsistenciaDashboard())
+            return Forbid();
+
+        if (!fechaInicio.HasValue ||
+            !fechaFin.HasValue)
+        {
+            return BadRequest(
+                "Selecciona ambas fechas.");
+        }
+
+        RelojAsistenciaDashboardService.ResumenDashboard resultado;
+
+        try
+        {
+            resultado = await servicio.ConsultarAsync(
+                new RelojAsistenciaDashboardService.Filtros
+                {
+                    FechaInicio = fechaInicio.Value,
+                    FechaFin = fechaFin.Value,
+                    EmpleadoId = empleadoId,
+                    Buscar = buscar,
+                    Pagina = pagina < 1 ? 1 : pagina,
+                    Tamano = 10
+                },
+                ct);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+
+        var csv = new StringBuilder();
+
+        csv.AppendLine(
+            "EmpleadoId,Colaborador,Fecha,Horario,Estado," +
+            "Entrada,SalidaComer,RegresoComer,Salida," +
+            "EntradaPuntual,RegresoComidaPuntual,SalidaEnHorario," +
+            "MinutosEfectivos,Intranet,BioTime,Confirmados," +
+            "Pendientes,HomeOffice,Ausencias,RequiereRevision,Observaciones");
+
+        foreach (var r in resultado.Registros)
+        {
+            var valores = new[]
+            {
+                r.EmpleadoId.ToString(CultureInfo.InvariantCulture),
+                r.Colaborador,
+                r.Fecha.ToString("yyyy-MM-dd"),
+                r.Horario,
+                r.Estado,
+                r.Entrada ?? "",
+                r.SalidaComer ?? "",
+                r.RegresoComer ?? "",
+                r.Salida ?? "",
+                TextoBooleano(r.EntradaPuntual),
+                TextoBooleano(r.RegresoComidaPuntual),
+                TextoBooleano(r.SalidaEnHorario),
+                r.MinutosEfectivos?.ToString(
+                    CultureInfo.InvariantCulture) ?? "",
+                r.MovimientosIntranet.ToString(),
+                r.MovimientosBioTime.ToString(),
+                r.Confirmados.ToString(),
+                r.Pendientes.ToString(),
+                r.HomeOfficeAutorizado ? "Sí" : "No",
+                r.TieneAusencias ? "Sí" : "No",
+                r.RequiereRevision ? "Sí" : "No",
+                r.Observaciones
+            };
+
+            csv.AppendLine(string.Join(
+                ",",
+                valores.Select(CeldaCsv)));
+        }
+
+        // BOM UTF-8 para acentos en Excel.
+        var bytes = new UTF8Encoding(
+            encoderShouldEmitUTF8Identifier: true)
+            .GetPreamble()
+            .Concat(Encoding.UTF8.GetBytes(csv.ToString()))
+            .ToArray();
+
+        var nombre =
+            $"INTRANET_Asistencia_{fechaInicio:yyyyMMdd}" +
+            $"_{fechaFin:yyyyMMdd}_P{resultado.Pagina}.csv";
+
+        return File(
+            bytes,
+            "text/csv; charset=utf-8",
+            nombre);
+    }
+
+    private bool PuedeConsultarAsistenciaDashboard()
+    {
+        return User.Identity?.IsAuthenticated == true &&
+               (
+                   User.IsInRole("Master") ||
+                   User.IsInRole("Administrador") ||
+                   User.IsInRole("Administrador TH")
+               );
+    }
+
+    private static string TextoBooleano(bool? valor)
+    {
+        return valor.HasValue
+            ? valor.Value ? "Sí" : "No"
+            : "Sin determinar";
+    }
+
+    private static string CeldaCsv(string? valor)
+    {
+        var texto = valor ?? "";
+
+        // Protección contra interpretación de fórmulas
+        // al abrir reportes en Excel.
+        if (texto.Length > 0 &&
+            (texto.TrimStart().StartsWith("=") ||
+             texto.TrimStart().StartsWith("+") ||
+             texto.TrimStart().StartsWith("-") ||
+             texto.TrimStart().StartsWith("@")))
+        {
+            texto = "'" + texto;
+        }
+
+        return "\"" +
+               texto.Replace("\"", "\"\"") +
+               "\"";
+    }
+}
+
+
+================ ARCHIVO: Areas\ERP\Pages\BioTime\Analytics\Index.EvaluacionUnificada.cs ================
+
+
+using ERPSEI.Services.RelojChecador;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace ERPSEI.Areas.ERP.Pages.BioTime.Analytics;
+
+public sealed partial class IndexModel
+{
+    // =====================================================
+    // EVALUACIÓN UNIFICADA DE ASISTENCIA
+    // INTRANET + BIOTIME
+    // =====================================================
+
+    public async Task<IActionResult>
+        OnGetEvaluacionUnificadaAsync(
+            int empleadoId,
+            DateTime? fecha,
+            CancellationToken ct)
+    {
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return new UnauthorizedObjectResult(new
+            {
+                success = false,
+                message = "Se requiere iniciar sesión."
+            });
+        }
+
+        bool autorizado =
+            User.IsInRole("Master") ||
+            User.IsInRole("Administrador") ||
+            User.IsInRole("Administrador TH");
+
+        if (!autorizado)
+            return Forbid();
+
+        if (empleadoId <= 0 || !fecha.HasValue)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Indica un empleado y una fecha válida."
+            });
+        }
+
+        var zonaMexico =
+            TimeZoneInfo.FindSystemTimeZoneById(
+                "America/Mexico_City");
+
+        var hoyMexico =
+            TimeZoneInfo.ConvertTimeFromUtc(
+                DateTime.UtcNow,
+                zonaMexico).Date;
+
+        var dia = fecha.Value.Date;
+
+        if (dia > hoyMexico ||
+            dia < hoyMexico.AddDays(-365))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message =
+                    "La fecha debe encontrarse dentro de los últimos 365 días."
+            });
+        }
+
+        var servicio =
+            HttpContext.RequestServices.GetRequiredService<
+                RelojEvaluacionAsistenciaUnificadaService>();
+
+        var resultado = await servicio.EvaluarDiaAsync(
+            empleadoId,
+            dia,
+            ct);
+
+        return new JsonResult(new
+        {
+            success = true,
+            resultado
+        });
+    }
+}
+
+
+================ ARCHIVO: Areas\ERP\Pages\BioTime\Analytics\_AsistenciaDashboard.cshtml ================
+
+@* ============================================================
+   INTRANET - DASHBOARD CONSOLIDADO DE ASISTENCIA
+   BioTime + Reloj Digital + Contexto TH
+   ============================================================ *@
+
+<div class="card biotime-analytics-panel mb-4"
+     id="rcAsistenciaDashboard">
+
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <strong>
+            <i class="bi bi-speedometer2 me-2"></i>
+            Asistencia consolidada INTRANET + BioTime
+        </strong>
+
+        <span class="badge text-bg-secondary">
+            Evaluación preliminar
+        </span>
+    </div>
+
+    <div class="card-body">
+
+        <p class="text-muted small mb-4">
+            Consulta jornadas con actividad registrada
+            en el reloj digital o biométrico.
+            Los resultados son informativos y están
+            sujetos a revisión de Talento Humano.
+        </p>
+
+        <div class="row g-3 align-items-end mb-4">
+
+            <div class="col-xl-2 col-md-4">
+                <label for="rcAdInicio" class="form-label">
+                    Fecha inicial
+                </label>
+                <input id="rcAdInicio"
+                       class="form-control"
+                       type="date" />
+            </div>
+
+            <div class="col-xl-2 col-md-4">
+                <label for="rcAdFin" class="form-label">
+                    Fecha final
+                </label>
+                <input id="rcAdFin"
+                       class="form-control"
+                       type="date" />
+            </div>
+
+            <div class="col-xl-2 col-md-4">
+                <label for="rcAdEmpleado" class="form-label">
+                    ID empleado
+                </label>
+                <input id="rcAdEmpleado"
+                       class="form-control"
+                       type="number"
+                       min="1"
+                       step="1"
+                       placeholder="Todos" />
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <label for="rcAdBuscar" class="form-label">
+                    Buscar colaborador
+                </label>
+                <input id="rcAdBuscar"
+                       class="form-control"
+                       type="search"
+                       maxlength="100"
+                       placeholder="Nombre del colaborador" />
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <button id="rcAdConsultar"
+                        class="btn btn-primary w-100"
+                        type="button">
+                    <i class="bi bi-search me-1"></i>
+                    Consultar asistencia
+                </button>
+            </div>
+
+        </div>
+
+        <div id="rcAdMensaje"
+             class="alert alert-info small"
+             role="status"
+             aria-live="polite">
+            Selecciona un periodo de hasta siete días.
+        </div>
+
+        <div class="row g-3 mb-4">
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Jornadas con actividad</span>
+                    <strong id="rcAdTotal">0</strong>
+                    <small>En todo el periodo filtrado</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Completas preliminares</span>
+                    <strong id="rcAdCompletas">0</strong>
+                    <small>Solo página actual</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Jornadas para revisar</span>
+                    <strong id="rcAdRevision">0</strong>
+                    <small>Solo página actual</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="rc-admin-kpi rc-ad-kpi">
+                    <span>Movimientos pendientes</span>
+                    <strong id="rcAdPendientes">0</strong>
+                    <small>Solo página actual</small>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+
+            <span id="rcAdInfoPagina"
+                  class="text-muted small">
+                Sin resultados
+            </span>
+
+            <button id="rcAdExportar"
+                    type="button"
+                    class="btn btn-outline-success"
+                    disabled>
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>
+                Exportar página a Excel (CSV)
+            </button>
+
+        </div>
+
+        <div class="table-responsive rc-ad-table-wrap">
+
+            <table class="table table-hover align-middle">
+
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Colaborador</th>
+                        <th>Horario</th>
+                        <th>Estado</th>
+                        <th>Entrada</th>
+                        <th>Salida comida</th>
+                        <th>Regreso</th>
+                        <th>Salida</th>
+                        <th>BioTime</th>
+                        <th>INTRANET</th>
+                        <th>Pendientes</th>
+                        <th>TH</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+
+                <tbody id="rcAdTabla">
+                    <tr>
+                        <td colspan="13"
+                            class="text-center text-muted py-4">
+                            Sin información consultada.
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end align-items-center gap-3 mt-3">
+
+            <button id="rcAdAnterior"
+                    class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    disabled>
+                <i class="bi bi-chevron-left"></i>
+                Anterior
+            </button>
+
+            <span id="rcAdPagina"
+                  class="small text-muted">
+                0 / 0
+            </span>
+
+            <button id="rcAdSiguiente"
+                    class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    disabled>
+                Siguiente
+                <i class="bi bi-chevron-right"></i>
+            </button>
+
+        </div>
+
+        <p class="small text-muted mt-4 mb-0">
+            Este tablero muestra únicamente jornadas con movimientos.
+            No representa un listado de faltas ni identifica
+            automáticamente todos los días sin checadas.
+            Las reglas laborales y excepciones requieren
+            validación de Talento Humano.
+        </p>
+
+    </div>
+</div>
+
+@* ============================================================
+   MODAL DE DETALLE DE JORNADA
+   ============================================================ *@
+
+<div class="modal fade"
+     id="rcAdModal"
+     tabindex="-1"
+     aria-labelledby="rcAdModalTitulo"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 id="rcAdModalTitulo"
+                    class="modal-title">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Detalle de asistencia
+                </h5>
+
+                <button class="btn-close"
+                        type="button"
+                        data-bs-dismiss="modal"
+                        aria-label="Cerrar">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="rcAdModalContenido"
+                     class="rc-ad-detail">
+                    Selecciona una jornada.
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary"
+                        type="button"
+                        data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+
+================ ARCHIVO: Areas\ERP\Pages\BioTime\Analytics\Index.ResolucionConflictos.cs ================
+
+
+using System.Security.Claims;
+using ERPSEI.Services.RelojChecador;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+
+namespace ERPSEI.Areas.ERP.Pages.BioTime.Analytics;
+
+public sealed partial class IndexModel
+{
+    private bool PuedeResolverConflictos()
+    {
+        return User.Identity?.IsAuthenticated == true &&
+            (
+                User.IsInRole("Master") ||
+                User.IsInRole("Administrador") ||
+                User.IsInRole("Administrador TH")
+            );
+    }
+
+    private static bool FechaResolucionValida(DateTime fecha)
+    {
+        var zona = TimeZoneInfo.FindSystemTimeZoneById(
+            "America/Mexico_City");
+
+        var hoy = TimeZoneInfo.ConvertTimeFromUtc(
+            DateTime.UtcNow, zona).Date;
+
+        return fecha.Date >= hoy.AddDays(-365) &&
+               fecha.Date <= hoy;
+    }
+
+    // GET ?handler=ResolucionesConflictos
+    public async Task<IActionResult> OnGetResolucionesConflictosAsync(
+        int empleadoId,
+        DateTime? fecha,
+        [FromServices]
+        RelojEvaluacionAsistenciaUnificadaService evaluador,
+        [FromServices]
+        RelojResolucionConflictosService resoluciones,
+        CancellationToken ct)
+    {
+        if (!PuedeResolverConflictos()) return Forbid();
+
+        if (empleadoId <= 0 || !fecha.HasValue ||
+            !FechaResolucionValida(fecha.Value))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Empleado o fecha no válidos."
+            });
+        }
+
+        var evaluacion = await evaluador.EvaluarDiaAsync(
+            empleadoId, fecha.Value.Date, ct);
+
+        var grupos = await resoluciones.ObtenerGruposAsync(
+            empleadoId,
+            fecha.Value.Date,
+            evaluacion.Movimientos,
+            ct);
+
+        return new JsonResult(new
+        {
+            success = true,
+            evaluacion = new
+            {
+                evaluacion.Estado,
+                evaluacion.Mensaje,
+                evaluacion.ResolucionesAplicadas
+            },
+            grupos,
+            movimientos = evaluacion.Movimientos.Select(x => new
+            {
+                x.IdMovimiento,
+                x.Fuente,
+                x.Origen,
+                x.TipoEvaluacion,
+                x.FechaHoraMexico,
+                x.Confirmado,
+                x.ParticipaEnEvaluacion,
+                x.Observacion
+            })
+        });
+    }
+
+    // POST ?handler=ResolverConflicto
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> OnPostResolverConflictoAsync(
+        int empleadoId,
+        DateTime fecha,
+        string tipoMovimiento,
+        string movimientoSeleccionado,
+        string firmaEsperada,
+        string motivo,
+        [FromServices]
+        RelojEvaluacionAsistenciaUnificadaService evaluador,
+        [FromServices]
+        RelojResolucionConflictosService resoluciones,
+        CancellationToken ct)
+    {
+        if (!PuedeResolverConflictos()) return Forbid();
+
+        var actor = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(actor))
+            return Unauthorized();
+
+        if (empleadoId <= 0 ||
+            !FechaResolucionValida(fecha))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Empleado o fecha inválidos."
+            });
+        }
+
+        var evaluacion = await evaluador.EvaluarDiaAsync(
+            empleadoId, fecha.Date, ct);
+
+        try
+        {
+            var resultado = await resoluciones.ResolverAsync(
+                empleadoId,
+                fecha.Date,
+                tipoMovimiento,
+                movimientoSeleccionado,
+                firmaEsperada,
+                motivo,
+                actor,
+                evaluacion.Movimientos,
+                ct);
+
+            return resultado.Success
+                ? new JsonResult(resultado)
+                : BadRequest(resultado);
+        }
+        catch (SqlException ex) when (
+            ex.Number is 2601 or 2627 or 1205)
+        {
+            return StatusCode(409, new
+            {
+                success = false,
+                message =
+                    "Hubo un conflicto de concurrencia. " +
+                    "Actualiza los movimientos e inténtalo de nuevo."
+            });
+        }
+    }
+
+    // POST ?handler=RevocarResolucionConflicto
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult>
+        OnPostRevocarResolucionConflictoAsync(
+            int empleadoId,
+            DateTime fecha,
+            string tipoMovimiento,
+            string motivo,
+            [FromServices]
+            RelojResolucionConflictosService resoluciones,
+            CancellationToken ct)
+    {
+        if (!PuedeResolverConflictos()) return Forbid();
+
+        var actor = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(actor))
+            return Unauthorized();
+
+        if (empleadoId <= 0 ||
+            !FechaResolucionValida(fecha))
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Empleado o fecha inválidos."
+            });
+        }
+
+        try
+        {
+            var resultado = await resoluciones.RevocarAsync(
+                empleadoId,
+                fecha.Date,
+                tipoMovimiento,
+                motivo,
+                actor,
+                ct);
+
+            return resultado.Success
+                ? new JsonResult(resultado)
+                : BadRequest(resultado);
+        }
+        catch (SqlException ex) when (
+            ex.Number is 1205)
+        {
+            return StatusCode(409, new
+            {
+                success = false,
+                message =
+                    "La resolución está siendo modificada. " +
+                    "Actualiza e inténtalo nuevamente."
+            });
+        }
+    }
+}
+
