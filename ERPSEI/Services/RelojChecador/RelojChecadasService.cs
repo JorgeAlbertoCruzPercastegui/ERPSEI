@@ -390,19 +390,55 @@ public sealed class RelojChecadasService
                 jornada.ActualizadoUtc = ahoraUtc;
             }
 
-            _db.RC_Auditoria.Add(new RC_Auditoria
+
+            // =====================================================
+            // 1. GUARDAR JORNADA, CHECADA Y EVIDENCIA
+            // =====================================================
+            // La transacción SQL continúa abierta.
+            // SaveChanges genera los IDs definitivos,
+            // pero todavía no confirma la transacción.
+
+            await _db.SaveChangesAsync(ct);
+
+            if (jornada.Id <= 0 || checada.Id <= 0)
+            {
+                throw new InvalidOperationException(
+                    "No fue posible obtener los identificadores " +
+                    "de la jornada y la checada registradas.");
+            }
+
+            // =====================================================
+            // 2. REGISTRAR AUDITORÍA CON REFERENCIAS REALES
+            // =====================================================
+
+            var auditoria = new RC_Auditoria
             {
                 ActorUserId = solicitud.UserId,
                 AfectadoUserId = solicitud.UserId,
+
                 Accion = "CHECADA_REGISTRAR",
                 Resultado = "CORRECTO",
+
                 CodigoDetalle =
                     $"MOVIMIENTO:{solicitud.TipoMovimiento};" +
                     $"MODALIDAD:{modalidad}",
+
+                JornadaId = jornada.Id,
+                ChecadaId = checada.Id,
+
                 FechaUtc = ahoraUtc
-            });
+            };
+
+            _db.RC_Auditoria.Add(auditoria);
 
             await _db.SaveChangesAsync(ct);
+
+            // =====================================================
+            // 3. CONFIRMAR LA OPERACIÓN COMPLETA
+            // =====================================================
+            // Si cualquiera de los dos SaveChanges falla,
+            // el catch revierte la transacción completa.
+
             await transaccion.CommitAsync(ct);
 
             return new RelojRegistroResultado(

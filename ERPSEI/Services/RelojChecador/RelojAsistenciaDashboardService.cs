@@ -1,7 +1,7 @@
-﻿
-using System.Data;
+﻿using System.Data;
 using ERPSEI.Data;
 using Microsoft.EntityFrameworkCore;
+using ERPSEI.Data.Entities.Reportes;
 
 namespace ERPSEI.Services.RelojChecador;
 
@@ -157,6 +157,15 @@ public sealed class RelojAsistenciaDashboardService
             filtros.EmpleadoId,
             ct);
 
+        // Incorporar días laborables sin movimientos.
+        // No se crean checadas ni incidencias.
+        await AgregarDiasLaborablesAsync(
+            dias,
+            inicio,
+            fin,
+            filtros.EmpleadoId,
+            ct);
+
         if (dias.Count == 0)
         {
             return new ResumenDashboard
@@ -219,10 +228,11 @@ public sealed class RelojAsistenciaDashboardService
                 dia.Fecha,
                 ct);
 
-            var contexto = await _contextoTH.ObtenerAsync(
-                dia.EmpleadoId,
-                dia.Fecha,
-                ct);
+            var contexto = evaluacion.ContextoTH
+                ?? await _contextoTH.ObtenerAsync(
+                    dia.EmpleadoId,
+                    dia.Fecha,
+                    ct);
 
 
             bool revision =
@@ -376,6 +386,131 @@ public sealed class RelojAsistenciaDashboardService
 
             Registros = registros
         };
+    }
+
+
+    private async Task AgregarDiasLaborablesAsync(
+        HashSet<DiaEmpleado> dias,
+        DateTime inicio,
+        DateTime fin,
+        int? empleadoId,
+        CancellationToken ct)
+    {
+        // =========================================================
+        // INTRANET - DÍAS LABORABLES SIN CHECADAS
+        // =========================================================
+        // Solo se consideran colaboradores activos con
+        // cálculo de asistencia habilitado y horario asignado.
+        //
+        // No se generan faltas, incidencias ni descuentos.
+        // =========================================================
+
+        var consultaEmpleados = _db.Empleados
+            .AsNoTracking()
+            .Where(e =>
+                e.Deshabilitado == 0 &&
+                e.CalcularAsistencia == true &&
+                e.HorarioId.HasValue &&
+                e.HorarioId.Value > 0);
+
+        if (empleadoId.HasValue)
+        {
+            consultaEmpleados = consultaEmpleados
+                .Where(e => e.Id == empleadoId.Value);
+        }
+
+        var empleados = await consultaEmpleados
+            .Select(e => new
+            {
+                e.Id,
+                HorarioId = e.HorarioId!.Value
+            })
+            .ToListAsync(ct);
+
+        if (empleados.Count == 0)
+            return;
+
+        // =========================================================
+        // CONSULTAR LOS HORARIOS EXISTENTES
+        // =========================================================
+
+        var horariosIds = empleados
+            .Select(e => e.HorarioId)
+            .Distinct()
+            .ToArray();
+
+        var detalles = await _db.Set<Horario>()
+            .AsNoTracking()
+            .Where(h =>
+                horariosIds.Contains(h.Id) &&
+                h.Deshabilitado.GetValueOrDefault() == 0)
+            .SelectMany(h => h.HorarioDetalles!
+                .Select(d => new
+                {
+                    HorarioId = h.Id,
+                    d.NumeroDiaSemana,
+                    d.Activado,
+                    d.Entrada,
+                    d.ToleranciaEntrada,
+                    d.ToleranciaFalta,
+                    d.Salida,
+                    d.ToleranciaSalida
+                }))
+            .ToListAsync(ct);
+
+        // Si existen dos detalles para el mismo horario y día,
+        // no se toma ninguno hasta corregir la configuración.
+        // Es el mismo criterio de RelojHorariosService.
+
+        var diasConfigurados = detalles
+            .GroupBy(d => new
+            {
+                d.HorarioId,
+                d.NumeroDiaSemana
+            })
+            .Where(g => g.Count() == 1)
+            .Select(g => g.Single())
+            .Where(d =>
+                d.Activado &&
+                d.ToleranciaEntrada >= d.Entrada &&
+                d.ToleranciaFalta >= d.ToleranciaEntrada &&
+                d.Salida > d.Entrada &&
+                d.ToleranciaSalida <= d.Salida)
+            .Select(d => (
+                d.HorarioId,
+                d.NumeroDiaSemana
+            ))
+            .ToHashSet();
+
+        // =========================================================
+        // GENERAR ÚNICAMENTE LOS DÍAS LABORABLES DEL PERIODO
+        // =========================================================
+
+        for (
+            DateTime fecha = inicio.Date;
+            fecha <= fin.Date;
+            fecha = fecha.AddDays(1))
+        {
+            ct.ThrowIfCancellationRequested();
+
+            int numeroDiaSemana = (int)fecha.DayOfWeek;
+
+            foreach (var empleado in empleados)
+            {
+                if (!diasConfigurados.Contains((
+                    empleado.HorarioId,
+                    numeroDiaSemana)))
+                {
+                    continue;
+                }
+
+                // HashSet evita duplicados cuando ya existe
+                // una jornada con movimientos INTRANET o BioTime.
+                dias.Add(new DiaEmpleado(
+                    empleado.Id,
+                    fecha));
+            }
+        }
     }
 
     private async Task AgregarDiasBioTimeAsync(

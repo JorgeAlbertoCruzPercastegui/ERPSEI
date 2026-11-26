@@ -1,0 +1,108 @@
+﻿
+/* ============================================================
+   INTRANET - ANALÍTICA BIOTIME / ADMINISTRACIÓN DEL RELOJ
+   Corrección global de contraste en indicadores y estados
+   ============================================================ */
+
+/* Todos los indicadores tipo badge */
+.badge,
+.badge *,
+span.badge,
+td .badge,
+table .badge,
+.card .badge,
+.modal .badge,
+.alert .badge {
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    font-weight: 600;
+}
+
+    /* Estados de Bootstrap con fondos oscuros:
+   usar fondos claros para conservar la legibilidad */
+
+    .badge.bg-success,
+    .badge.text-bg-success {
+        background-color: #d1fae5 !important;
+        color: #065f46 !important;
+        -webkit-text-fill-color: #065f46 !important;
+    }
+
+    .badge.bg-danger,
+    .badge.text-bg-danger {
+        background-color: #fee2e2 !important;
+        color: #991b1b !important;
+        -webkit-text-fill-color: #991b1b !important;
+    }
+
+    .badge.bg-warning,
+    .badge.text-bg-warning {
+        background-color: #fef3c7 !important;
+        color: #92400e !important;
+        -webkit-text-fill-color: #92400e !important;
+    }
+
+    .badge.bg-info,
+    .badge.text-bg-info {
+        background-color: #dbeafe !important;
+        color: #1e40af !important;
+        -webkit-text-fill-color: #1e40af !important;
+    }
+
+    .badge.bg-primary,
+    .badge.text-bg-primary {
+        background-color: #dbeafe !important;
+        color: #1e3a8a !important;
+        -webkit-text-fill-color: #1e3a8a !important;
+    }
+
+    .badge.bg-secondary,
+    .badge.text-bg-secondary,
+    .badge.bg-dark,
+    .badge.text-bg-dark {
+        background-color: #e5e7eb !important;
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+    }
+
+    /* Aplicar el color también a elementos internos */
+    .badge.bg-success *,
+    .badge.text-bg-success * {
+        color: #065f46 !important;
+    }
+
+    .badge.bg-danger *,
+    .badge.text-bg-danger * {
+        color: #991b1b !important;
+    }
+
+    .badge.bg-warning *,
+    .badge.text-bg-warning * {
+        color: #92400e !important;
+    }
+
+    .badge.bg-info *,
+    .badge.text-bg-info * {
+        color: #1e40af !important;
+    }
+
+    .badge.bg-primary *,
+    .badge.text-bg-primary * {
+        color: #1e3a8a !important;
+    }
+
+    .badge.bg-secondary *,
+    .badge.text-bg-secondary *,
+    .badge.bg-dark *,
+    .badge.text-bg-dark * {
+        color: #111827 !important;
+    }
+
+    /* Estados sin clase de color específica */
+    table td .badge:not([class*="bg-"]),
+    .modal .badge:not([class*="bg-"]) {
+        background-color: #f3f4f6 !important;
+        color: #111827 !important;
+        -webkit-text-fill-color: #111827 !important;
+        border: 1px solid #d1d5db;
+    }

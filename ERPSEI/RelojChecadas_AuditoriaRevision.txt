@@ -1,0 +1,458 @@
+﻿
+using ERPSEI.Data;
+using ERPSEI.Data.Entities.RelojChecador;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System.Data;
+
+namespace ERPSEI.Services.RelojChecador;
+
+public sealed record RelojRegistroSolicitud(
+    string UserId,
+    string TipoMovimiento,
+    double Latitud,
+    double Longitud,
+    double PrecisionMetros,
+    DateTime CapturadaUtc,
+    IFormFile Fotografia,
+    Guid IdempotencyKey
+);
+
+public sealed record RelojRegistroResultado(
+    bool Success,
+    string Codigo,
+    string Mensaje,
+    long? JornadaId = null,
+    long? ChecadaId = null,
+    string? Movimiento = null,
+    string? Modalidad = null,
+    DateTime? FechaHoraUtc = null,
+    int? MinutosEfectivos = null,
+    bool RequiereRevision = false
+);
+
+public sealed class RelojChecadasService
+{
+    private readonly ApplicationDbContext _db;
+    private readonly RelojGeocercaService _geocercas;
+    private readonly RelojEvidenciasService _evidencias;
+    private readonly ILogger<RelojChecadasService> _logger;
+
+    private static readonly string[] Secuencia =
+    [
+        "Entrada",
+        "SalidaComer",
+        "RegresoComer",
+        "Salida"
+    ];
+
+    public RelojChecadasService(
+        ApplicationDbContext db,
+        RelojGeocercaService geocercas,
+        RelojEvidenciasService evidencias,
+        ILogger<RelojChecadasService> logger)
+    {
+        _db = db;
+        _geocercas = geocercas;
+        _evidencias = evidencias;
+        _logger = logger;
+    }
+
+    public async Task<RelojRegistroResultado> RegistrarAsync(
+        RelojRegistroSolicitud solicitud,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(solicitud.UserId))
+            return Error("SESION_INVALIDA", "Sesión no válida.");
+
+        if (!Secuencia.Contains(solicitud.TipoMovimiento))
+            return Error("MOVIMIENTO_INVALIDO",
+                "El movimiento solicitado no es válido.");
+
+        if (solicitud.IdempotencyKey == Guid.Empty)
+            return Error("SOLICITUD_INVALIDA",
+                "No se recibió el identificador del movimiento.");
+
+        if (solicitud.Fotografia == null)
+            return Error("FOTO_REQUERIDA",
+                "Debes capturar una fotografía.");
+
+        var ahoraUtc = DateTime.UtcNow;
+
+        if (!double.IsFinite(solicitud.Latitud) ||
+            !double.IsFinite(solicitud.Longitud) ||
+            !double.IsFinite(solicitud.PrecisionMetros) ||
+            solicitud.Latitud < -90 ||
+            solicitud.Latitud > 90 ||
+            solicitud.Longitud < -180 ||
+            solicitud.Longitud > 180 ||
+            solicitud.PrecisionMetros <= 0)
+        {
+            return Error("UBICACION_INVALIDA",
+                "Las coordenadas recibidas no son válidas.");
+        }
+
+        var capturaUtc = solicitud.CapturadaUtc.Kind switch
+        {
+            DateTimeKind.Utc => solicitud.CapturadaUtc,
+            DateTimeKind.Local => solicitud.CapturadaUtc.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(
+                solicitud.CapturadaUtc, DateTimeKind.Utc)
+        };
+
+        if (solicitud.CapturadaUtc == default ||
+            capturaUtc > ahoraUtc.AddSeconds(5) ||
+            ahoraUtc - capturaUtc > TimeSpan.FromSeconds(15))
+        {
+            return Error("UBICACION_CADUCADA",
+                "Obtén nuevamente tu ubicación.");
+        }
+
+        // La transacción evita que un movimiento se confirme
+        // parcialmente en SQL Server.
+        await using var transaccion =
+            await _db.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable, ct);
+
+        RelojEvidenciaGuardada? archivoGuardado = null;
+
+        try
+        {
+            // Recuperar al empleado desde el usuario autenticado.
+            var empleado = await _db.Empleados
+                .AsNoTracking()
+                .Where(x => x.UserId == solicitud.UserId)
+                .Select(x => new
+                {
+                    x.Id,
+                    OficinaId = x.Oficina == null
+                        ? (int?)null
+                        : x.Oficina.Id
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (empleado == null)
+                return Error("EMPLEADO_NO_VINCULADO",
+                    "Tu cuenta no tiene un empleado asociado.");
+
+            // Solicitudes repetidas: devolver el registro
+            // existente, sin crear una segunda checada.
+            var existente = await _db.RC_Checadas
+                .AsNoTracking()
+                .Where(x =>
+                    x.IdempotencyKey == solicitud.IdempotencyKey)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.JornadaId,
+                    x.UserId,
+                    x.TipoMovimiento,
+                    x.FechaHoraUtc
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (existente != null)
+            {
+                if (existente.UserId != solicitud.UserId)
+                    return Error("SOLICITUD_DUPLICADA",
+                        "Identificador de solicitud no disponible.");
+
+                return new RelojRegistroResultado(
+                    true,
+                    "YA_REGISTRADA",
+                    "Este movimiento ya estaba registrado.",
+                    existente.JornadaId,
+                    existente.Id,
+                    existente.TipoMovimiento,
+                    FechaHoraUtc: existente.FechaHoraUtc);
+            }
+
+            var zona = TimeZoneInfo.FindSystemTimeZoneById(
+                "America/Mexico_City");
+
+            var fechaLocal = TimeZoneInfo
+                .ConvertTimeFromUtc(ahoraUtc, zona)
+                .Date;
+
+            var siguienteDia = fechaLocal.AddDays(1);
+
+            var permisoHO = await _db
+                .RC_AutorizacionesModalidades
+                .AsNoTracking()
+                .Where(x =>
+                    x.UserId == solicitud.UserId &&
+                    x.Estado == "Aprobada" &&
+                    x.Modalidad == "Remoto" &&
+                    x.FechaInicio < siguienteDia &&
+                    x.FechaFin >= fechaLocal)
+                .OrderByDescending(x => x.FechaInicio)
+                .FirstOrDefaultAsync(ct);
+
+            string modalidad;
+            string resultadoUbicacion;
+            decimal? distanciaMetros = null;
+
+            if (permisoHO != null)
+            {
+                modalidad = "Remoto";
+
+                // Umbral temporal de la fase piloto.
+                // No constituye verificación de domicilio.
+                if (solicitud.PrecisionMetros > 1000)
+                {
+                    return Error("PRECISION_REMOTA_INSUFICIENTE",
+                        "La ubicación de Home Office es demasiado imprecisa.");
+                }
+
+                resultadoUbicacion = "HO_AUTORIZADO";
+            }
+            else
+            {
+                modalidad = "Presencial";
+
+                if (!empleado.OficinaId.HasValue)
+                    return Error("OFICINA_NO_ASIGNADA",
+                        "No tienes una oficina asignada.");
+
+                var ubicacion = await _geocercas.ValidarAsync(
+                    empleado.OficinaId.Value,
+                    solicitud.Latitud,
+                    solicitud.Longitud,
+                    solicitud.PrecisionMetros,
+                    ct);
+
+                if (!ubicacion.Autorizado)
+                    return Error(ubicacion.Codigo,
+                        ubicacion.Mensaje);
+
+                resultadoUbicacion = "UBICACION_VALIDA";
+
+                if (ubicacion.DistanciaMetros.HasValue)
+                {
+                    distanciaMetros = Convert.ToDecimal(
+                        ubicacion.DistanciaMetros.Value);
+                }
+            }
+
+            // Consultar la jornada abierta y los movimientos.
+            var jornada = await _db.RC_Jornadas
+                .Where(x =>
+                    x.UserId == solicitud.UserId &&
+                    x.Estado == "Abierta")
+                .FirstOrDefaultAsync(ct);
+
+            var anteriores = jornada == null
+                ? new List<RC_Checada>()
+                : await _db.RC_Checadas
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.JornadaId == jornada.Id &&
+                        x.EstadoValidacion == "Validada")
+                    .OrderBy(x => x.FechaHoraUtc)
+                    .ThenBy(x => x.Id)
+                    .ToListAsync(ct);
+
+            var indice = anteriores.Count;
+
+            if (indice >= Secuencia.Length)
+                return Error("JORNADA_INCONSISTENTE",
+                    "La jornada ya tiene todos sus movimientos.");
+
+            var siguiente = Secuencia[indice];
+
+            if (solicitud.TipoMovimiento != siguiente)
+            {
+                return Error("SECUENCIA_INVALIDA",
+                    $"El siguiente movimiento permitido es {siguiente}.");
+            }
+
+            if (anteriores.Count > 0 &&
+                ahoraUtc <= anteriores[^1].FechaHoraUtc)
+            {
+                return Error("HORA_INVALIDA",
+                    "No fue posible establecer un orden válido de movimientos.");
+            }
+
+
+            if (jornada == null)
+            {
+                // Evitar abrir una segunda jornada ordinaria
+                // si el colaborador ya cerró una iniciada hoy.
+                var inicioDiaUtc = TimeZoneInfo.ConvertTimeToUtc(
+                    fechaLocal, zona);
+
+                var finDiaUtc = TimeZoneInfo.ConvertTimeToUtc(
+                    siguienteDia, zona);
+
+                var yaCerroHoy = await _db.RC_Jornadas
+                    .AsNoTracking()
+                    .AnyAsync(x =>
+                        x.UserId == solicitud.UserId &&
+                        x.Estado == "Cerrada" &&
+                        x.InicioUtc >= inicioDiaUtc &&
+                        x.InicioUtc < finDiaUtc,
+                        ct);
+
+                if (yaCerroHoy)
+                {
+                    return Error(
+                        "JORNADA_YA_CERRADA",
+                        "Ya registraste una jornada completa hoy.");
+                }
+
+                jornada = new RC_Jornada
+
+                {
+                    UserId = solicitud.UserId,
+                    EmpleadoId = empleado.Id,
+                    Estado = "Abierta",
+                    Modalidad = modalidad,
+                    InicioUtc = ahoraUtc,
+                    MinutosObjetivo = 480,
+                    RequiereRevision = false,
+                    CreadoUtc = ahoraUtc
+                };
+
+                _db.RC_Jornadas.Add(jornada);
+            }
+
+            // La fotografía se guarda después de validar
+            // el movimiento, nunca al abrir la cámara.
+            archivoGuardado = await _evidencias.GuardarAsync(
+                solicitud.Fotografia, ct);
+
+            var checada = new RC_Checada
+            {
+                Jornada = jornada,
+                UserId = solicitud.UserId,
+                TipoMovimiento = solicitud.TipoMovimiento,
+
+                // Las PWA seguirán identificadas como WEB
+                // hasta implementar un origen verificable.
+                Origen = "INTRANET_WEB",
+
+                FechaHoraUtc = ahoraUtc,
+                Latitud = Convert.ToDecimal(solicitud.Latitud),
+                Longitud = Convert.ToDecimal(solicitud.Longitud),
+                PrecisionMetros =
+                    Convert.ToDecimal(solicitud.PrecisionMetros),
+                OficinaId = modalidad == "Presencial"
+                    ? empleado.OficinaId
+                    : null,
+                DistanciaOficinaMetros = distanciaMetros,
+                ResultadoUbicacion = resultadoUbicacion,
+                EstadoValidacion = "Validada",
+                IdempotencyKey = solicitud.IdempotencyKey,
+                CreadoUtc = ahoraUtc
+            };
+
+            _db.RC_Checadas.Add(checada);
+
+            _db.RC_Evidencias.Add(new RC_Evidencia
+            {
+                Checada = checada,
+                RutaPrivada = archivoGuardado.RutaPrivada,
+                HashSha256 = archivoGuardado.HashSha256,
+                TipoContenido = archivoGuardado.TipoContenido,
+                TamanoBytes = archivoGuardado.TamanoBytes,
+                CapturadaUtc = archivoGuardado.CapturadaUtc,
+                CreadoUtc = ahoraUtc
+            });
+
+            int? minutosEfectivos = null;
+            bool requiereRevision = false;
+
+            if (solicitud.TipoMovimiento == "Salida")
+            {
+                // Secuencia: entrada, salida a comer,
+                // regreso de comer, salida.
+                var inicioComida = anteriores[1].FechaHoraUtc;
+                var regresoComida = anteriores[2].FechaHoraUtc;
+
+                var transcurridos = ahoraUtc - jornada.InicioUtc;
+                var descanso = regresoComida - inicioComida;
+                var efectivos = transcurridos - descanso;
+
+                minutosEfectivos = Math.Max(
+                    0, (int)Math.Floor(efectivos.TotalMinutes));
+
+                requiereRevision =
+                    minutosEfectivos.Value < jornada.MinutosObjetivo;
+
+                jornada.Estado = "Cerrada";
+                jornada.FinUtc = ahoraUtc;
+                jornada.MinutosEfectivos = minutosEfectivos;
+                jornada.RequiereRevision = requiereRevision;
+                jornada.MotivoRevision = requiereRevision
+                    ? "JORNADA_MENOR_OBJETIVO"
+                    : null;
+                jornada.ActualizadoUtc = ahoraUtc;
+            }
+
+            _db.RC_Auditoria.Add(new RC_Auditoria
+            {
+                ActorUserId = solicitud.UserId,
+                AfectadoUserId = solicitud.UserId,
+                Accion = "CHECADA_REGISTRAR",
+                Resultado = "CORRECTO",
+                CodigoDetalle =
+                    $"MOVIMIENTO:{solicitud.TipoMovimiento};" +
+                    $"MODALIDAD:{modalidad}",
+                FechaUtc = ahoraUtc
+            });
+
+            await _db.SaveChangesAsync(ct);
+            await transaccion.CommitAsync(ct);
+
+            return new RelojRegistroResultado(
+                true,
+                "CHECADA_REGISTRADA",
+                "Movimiento registrado correctamente.",
+                jornada.Id,
+                checada.Id,
+                solicitud.TipoMovimiento,
+                modalidad,
+                ahoraUtc,
+                minutosEfectivos,
+                requiereRevision);
+        }
+        catch
+        {
+            await transaccion.RollbackAsync(
+                CancellationToken.None);
+
+            // Compensación: si SQL no confirma la operación,
+            // eliminar la fotografía que se había guardado.
+            if (archivoGuardado != null)
+            {
+                try
+                {
+                    await _evidencias.EliminarAsync(
+                        archivoGuardado.RutaPrivada,
+                        CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "No se pudo limpiar una evidencia huérfana.");
+                }
+            }
+
+            _logger.LogError(
+                "Falló el registro de una checada.");
+
+            return Error("REGISTRO_NO_COMPLETADO",
+                "No fue posible registrar el movimiento. Inténtalo nuevamente.");
+        }
+    }
+
+    private static RelojRegistroResultado Error(
+        string codigo,
+        string mensaje)
+    {
+        return new RelojRegistroResultado(
+            false, codigo, mensaje);
+    }
+}
+
