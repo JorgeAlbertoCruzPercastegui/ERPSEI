@@ -17,8 +17,6 @@ using System.IO;
 var builder =
     WebApplication.CreateBuilder(args);
 
-// FIN TEMPORAL QA HU6 ADQUISICIONES
-
 // =====================================================
 // LÍMITE GENERAL DE SOLICITUDES
 // =====================================================
@@ -152,18 +150,6 @@ QuestPDF.Settings.License =
 
 WebApplication app =
     builder.Build();
-
-// INICIO TEMPORAL QA HU6 ADQUISICIONES
-if (app.Environment.IsDevelopment() &&
-    args.Contains("--seed-adquisiciones-qa"))
-{
-    await ERPSEI.Services.Adquisiciones
-        .AdquisicionesQaSeeder.EjecutarAsync(
-            app.Services,
-            app.Environment);
-
-    return;
-}
 
 // =====================================================
 // ENCABEZADOS DEL PROXY INVERSO
