@@ -556,6 +556,12 @@ namespace ERPSEI.Data
         public DbSet<RC_Auditoria> RC_Auditoria
             => Set<RC_Auditoria>();
 
+        /******************************************************************/
+        public DbSet<AdqRolArea> AdqRolesAreas
+        {
+            get;
+            set;
+        } = null!;
 
 
         /*public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -2468,6 +2474,98 @@ namespace ERPSEI.Data
 
         private static void BuildAdquisiciones(ModelBuilder b)
         {
+            // =========================================================
+            // HU #6 - ROLES Y ALCANCE DE ADQUISICIONES POR ÁREA
+            // =========================================================
+
+            b.Entity<AdqRolArea>(entity =>
+            {
+                entity.ToTable("ADQ_RolesAreas");
+
+                entity.HasKey(
+                    x => x.Id
+                );
+
+                entity.Property(
+                        x => x.RolId
+                    )
+                    .IsRequired()
+                    .HasMaxLength(450);
+
+                entity.Property(
+                        x => x.AreaId
+                    )
+                    .IsRequired();
+
+                entity.Property(
+                        x => x.Activo
+                    )
+                    .IsRequired()
+                    .HasDefaultValue(true);
+
+                entity.Property(
+                        x => x.Eliminado
+                    )
+                    .IsRequired()
+                    .HasDefaultValue(false);
+
+                entity.Property(
+                        x => x.FechaCreacion
+                    )
+                    .IsRequired()
+                    .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                entity.Property(
+                        x => x.UsuarioModificacionId
+                    )
+                    .HasMaxLength(450);
+
+                entity.HasOne(
+                        x => x.Rol
+                    )
+                    .WithMany()
+                    .HasForeignKey(
+                        x => x.RolId
+                    )
+                    .OnDelete(
+                        DeleteBehavior.Restrict
+                    );
+
+                entity.HasOne(
+                        x => x.Area
+                    )
+                    .WithMany()
+                    .HasForeignKey(
+                        x => x.AreaId
+                    )
+                    .OnDelete(
+                        DeleteBehavior.Restrict
+                    );
+
+                entity.HasIndex(
+                        x => new
+                        {
+                            x.RolId,
+                            x.AreaId
+                        }
+                    )
+                    .IsUnique()
+                    .HasDatabaseName(
+                        "UX_ADQ_RolesAreas_Rol_Area"
+                    );
+
+                entity.HasIndex(
+                        x => new
+                        {
+                            x.AreaId,
+                            x.Activo,
+                            x.Eliminado
+                        }
+                    )
+                    .HasDatabaseName(
+                        "IX_ADQ_RolesAreas_Alcance"
+                    );
+            });
 
             b
             .Entity<AdqAprobacionPresupuestalDetalle>()
@@ -2504,6 +2602,19 @@ namespace ERPSEI.Data
                 .OnDelete(
                     DeleteBehavior.Restrict
                 );
+
+            // HU #6: configuración por área; NULL conserva la configuración histórica.
+            b.Entity<AdqConfiguracionAprobacionPresupuestal>()
+                .HasOne(x => x.Area)
+                .WithMany()
+                .HasForeignKey(x => x.AreaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.Entity<AdqConfiguracionAprobacionPresupuestal>()
+                .HasIndex(x => new { x.AreaId, x.Orden })
+                .IsUnique()
+                .HasFilter("[AreaId] IS NOT NULL AND [Eliminado] = 0")
+                .HasDatabaseName("UX_ADQ_Configuracion_Area_Orden");
 
             b
             .Entity<AdqConfiguracionAprobacionPresupuestal>()
@@ -3971,7 +4082,7 @@ namespace ERPSEI.Data
         }
 
 
-        
+
 
         private static void BuildBitacoraEmpresas(
         ModelBuilder modelBuilder)

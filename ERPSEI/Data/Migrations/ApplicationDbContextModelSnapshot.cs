@@ -902,6 +902,9 @@ namespace ERPSEI.Data.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("AreaId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("AsistenteRecibeCopia")
                         .HasColumnType("bit");
 
@@ -944,6 +947,11 @@ namespace ERPSEI.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AreaId", "Orden")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ADQ_Configuracion_Area_Orden")
+                        .HasFilter("[AreaId] IS NOT NULL AND [Eliminado] = 0");
 
                     b.HasIndex("Orden", "Activo", "Eliminado");
 
@@ -1586,6 +1594,9 @@ namespace ERPSEI.Data.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("PuedeAutoAutorizarSolicitud")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("PuedeCotizar")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -1655,6 +1666,56 @@ namespace ERPSEI.Data.Migrations
                         .HasDatabaseName("UX_ADQ_PermisosUsuarios_UsuarioId");
 
                     b.ToTable("ADQ_PermisosUsuarios", (string)null);
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqRolArea", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("AreaId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Eliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("SYSUTCDATETIME()");
+
+                    b.Property<DateTime?>("FechaModificacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RolId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UsuarioModificacionId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RolId", "AreaId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ADQ_RolesAreas_Rol_Area");
+
+                    b.HasIndex("AreaId", "Activo", "Eliminado")
+                        .HasDatabaseName("IX_ADQ_RolesAreas_Alcance");
+
+                    b.ToTable("ADQ_RolesAreas", (string)null);
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqSeguridadFirmaUsuario", b =>
@@ -3055,63 +3116,63 @@ namespace ERPSEI.Data.Migrations
                         {
                             Id = 1,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7328),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8295),
                             Nombre = "Manuales"
                         },
                         new
                         {
                             Id = 2,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7344),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8309),
                             Nombre = "Procedimientos"
                         },
                         new
                         {
                             Id = 3,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7345),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8310),
                             Nombre = "Políticas"
                         },
                         new
                         {
                             Id = 4,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7346),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8311),
                             Nombre = "Reglamentos"
                         },
                         new
                         {
                             Id = 5,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7347),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8312),
                             Nombre = "Formatos"
                         },
                         new
                         {
                             Id = 6,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7347),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8313),
                             Nombre = "Diagramas"
                         },
                         new
                         {
                             Id = 7,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7348),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8314),
                             Nombre = "Referencias Normativas"
                         },
                         new
                         {
                             Id = 9,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7349),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8315),
                             Nombre = "Manuales de Capacitación"
                         },
                         new
                         {
                             Id = 10,
                             Activo = true,
-                            FechaCreacion = new DateTime(2026, 11, 23, 17, 32, 7, 885, DateTimeKind.Local).AddTicks(7350),
+                            FechaCreacion = new DateTime(2026, 11, 26, 18, 55, 18, 566, DateTimeKind.Local).AddTicks(8316),
                             Nombre = "Otros"
                         });
                 });
@@ -12680,6 +12741,16 @@ namespace ERPSEI.Data.Migrations
                     b.Navigation("Comentario");
                 });
 
+            modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqConfiguracionAprobacionPresupuestal", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Empleados.Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Area");
+                });
+
             modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqCotizacion", b =>
                 {
                     b.HasOne("ERPSEI.Data.Entities.Adquisiciones.AdqSolicitud", "Solicitud")
@@ -12776,6 +12847,25 @@ namespace ERPSEI.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqRolArea", b =>
+                {
+                    b.HasOne("ERPSEI.Data.Entities.Empleados.Area", "Area")
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPSEI.Data.Entities.Usuarios.AppRole", "Rol")
+                        .WithMany()
+                        .HasForeignKey("RolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Area");
+
+                    b.Navigation("Rol");
                 });
 
             modelBuilder.Entity("ERPSEI.Data.Entities.Adquisiciones.AdqSolicitud", b =>

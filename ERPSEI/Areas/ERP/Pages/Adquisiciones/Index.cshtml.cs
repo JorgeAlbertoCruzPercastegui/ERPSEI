@@ -23,37 +23,53 @@ using ERPSEI.Services.Adquisiciones;
 namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 {
     [Authorize]
-    public class IndexModel : PageModel
+    public partial class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
         private readonly AppUserManager _userManager;
         private readonly ILogger<IndexModel> _logger;
         private readonly IWebHostEnvironment _environment;
         private readonly IAdquisicionesEmailService _adquisicionesEmailService;
+        private readonly IAdquisicionesAlcanceService _adquisicionesAlcanceService;
+
+        private AdquisicionesAlcance _alcanceAdquisiciones = new();
 
 
         public IndexModel(
-        ApplicationDbContext context,
-        AppUserManager userManager,
-        ILogger<IndexModel> logger,
-        IWebHostEnvironment environment,
-        IAdquisicionesEmailService adquisicionesEmailService)
+            ApplicationDbContext context,
+            AppUserManager userManager,
+            ILogger<IndexModel> logger,
+            IWebHostEnvironment environment,
+            IAdquisicionesEmailService adquisicionesEmailService,
+            IAdquisicionesAlcanceService adquisicionesAlcanceService)
         {
-            _context =
-                context;
+            _context = context;
 
-            _userManager =
-                userManager;
+            _userManager = userManager;
 
-            _logger =
-                logger;
+            _logger = logger;
 
-            _environment =
-                environment;
+            _environment = environment;
 
             _adquisicionesEmailService =
                 adquisicionesEmailService;
+
+            _adquisicionesAlcanceService =
+                adquisicionesAlcanceService;
         }
+
+        // =========================================================
+        // HU #6 - ALCANCE DE ADQUISICIONES POR ÁREA
+        // =========================================================
+
+        public bool EsGestorAdquisicionesArea =>
+            _alcanceAdquisiciones.EsGestorArea;
+
+        public bool TieneAlcanceGlobalAdquisiciones =>
+            _alcanceAdquisiciones.TieneAlcanceGlobal;
+
+        public IReadOnlyCollection<int> AreasAutorizadasAdquisiciones =>
+            _alcanceAdquisiciones.AreasAutorizadas;
 
         public class CotizacionResumenDto
         {
@@ -923,6 +939,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
+            public bool? PuedeAutoAutorizarSolicitud { get; set; }
+
             public bool PuedeTodo
             {
                 get;
@@ -1211,6 +1229,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         public class GuardarConfiguracionAprobacionPresupuestalRequest
         {
+            public int AreaId { get; set; }
             public List<ConfiguracionAprobacionPresupuestalInput> Etapas
             {
                 get;
@@ -2805,6 +2824,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnGetMisFirmasAsync()
         {
+
+            // HU6 - Evitar caché de documentos protegidos.
+            Response.Headers["Cache-Control"] =
+                "no-store, no-cache, must-revalidate, max-age=0, private";
+
+            Response.Headers["Pragma"] = "no-cache";
+
+            Response.Headers["Expires"] = "0";
+
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -2977,6 +3006,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int solicitudId
             )
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.ConsultarComoParticipante))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -3079,22 +3116,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
-            bool esUsuarioAdquisiciones =
-                (
-                    User.IsInRole(
-                        "Administrador"
-                    )
-                    ||
-                    User.IsInRole(
-                        "Administrador Adquisiciones"
-                    )
-                    ||
-                    User.IsInRole(
-                        "Usuario Adquisiciones"
-                    )
-                )
-                &&
-                tienePermisoVisualizar;
+            bool esUsuarioAdquisiciones = (await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo && tienePermisoVisualizar;
 
 
             bool puedeConsultar =
@@ -3240,6 +3262,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnGetSeguimientoParcialidadesAsync(int solicitudId)
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Consultar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             var usuario = await ObtenerUsuarioActualAsync();
 
             if (usuario == null)
@@ -3267,11 +3297,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             bool tienePermiso = await TienePermisoAbacAsync(
                 usuario, "Visualizar");
 
-            bool esAdministrador = User.IsInRole("Administrador");
+            bool esAdministrador = (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
-            bool esAdquisiciones =
-                User.IsInRole("Administrador Adquisiciones")
-                || User.IsInRole("Usuario Adquisiciones");
+            bool esAdquisiciones = (await ObtenerAccesoSolicitudHu6Async(solicitudId)).TieneAlcanceOperativo;
 
             bool esSolicitante =
                 solicitud.UsuarioSolicitanteId == usuario.Id;
@@ -3387,13 +3415,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             AppUser? usuario = await ObtenerUsuarioActualAsync();
             if (usuario == null) return Unauthorized();
 
-            bool rolAutorizado = User.IsInRole("Administrador") || User.IsInRole("Administrador Adquisiciones");
-            bool puedeEditar = User.IsInRole("Administrador") || await TienePermisoAbacAsync(usuario, "Editar");
+            bool rolAutorizado = (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).TieneAlcanceGlobal;
+            bool puedeEditar = (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema || await TienePermisoAbacAsync(usuario, "Editar");
             if (!rolAutorizado || !puedeEditar)
                 return StatusCode(403, new { success = false, message = "No estás autorizado para registrar pagos." });
 
             if (input == null || input.SolicitudId <= 0 || input.ParcialidadId <= 0 || string.IsNullOrWhiteSpace(input.ReferenciaPago))
                 return BadRequest(new { success = false, message = "Indica la parcialidad y la referencia del pago." });
+
+            if (await AdquisicionesIntegridadPago.ObtenerPdfValidadoAsync(_context, input.SolicitudId, HttpContext.RequestAborted) == null)
+                return StatusCode(409, new { success = false, message = "La solicitud no cuenta con un PDF y cuatro evidencias de firma válidas." });
 
             string referencia = input.ReferenciaPago.Trim();
             if (referencia.Length < 3 || referencia.Length > 250)
@@ -3500,6 +3531,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // =========================================================
         public async Task<IActionResult> OnGetComprobantePagoParcialidadAsync(int solicitudId, int parcialidadId)
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Descargar))
+            {
+                return Forbid();
+            }
+
             var usuario = await ObtenerUsuarioActualAsync();
             if (usuario == null) return Unauthorized();
             if (solicitudId <= 0 || parcialidadId <= 0) return BadRequest();
@@ -3509,8 +3548,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             if (solicitud == null) return NotFound();
 
             bool tienePermiso = await TienePermisoAbacAsync(usuario, "Visualizar");
-            bool esAdministrador = User.IsInRole("Administrador");
-            bool esAdquisiciones = User.IsInRole("Administrador Adquisiciones") || User.IsInRole("Usuario Adquisiciones");
+            bool esAdministrador = (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
+            bool esAdquisiciones = (await ObtenerAccesoSolicitudHu6Async(solicitudId)).TieneAlcanceOperativo;
             bool esSolicitante = solicitud.UsuarioSolicitanteId == usuario.Id;
             bool esAgente = solicitud.UsuarioAsignadoId == usuario.Id;
             bool esAprobador = await _context.AdqAprobacionesPresupuestalesDetalle.AsNoTracking()
@@ -3548,6 +3587,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int solicitudId
             )
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Consultar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -3656,22 +3703,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
-            bool esUsuarioAdquisiciones =
-                (
-                    User.IsInRole(
-                        "Administrador"
-                    )
-                    ||
-                    User.IsInRole(
-                        "Administrador Adquisiciones"
-                    )
-                    ||
-                    User.IsInRole(
-                        "Usuario Adquisiciones"
-                    )
-                )
-                &&
-                tienePermisoVisualizar;
+            bool esUsuarioAdquisiciones = (await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo && tienePermisoVisualizar;
 
 
             if (
@@ -4307,6 +4339,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         SolicitudPagoInput input
             )
         {
+            // HU #6: autorización de expediente antes de acceder al recurso.
+            if (input == null || !await AutorizarOperacionHu6Async(input.SolicitudId, AdquisicionesOperacion.Gestionar)) return AccesoDenegadoHu6();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -4423,10 +4458,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // AGENTE ASIGNADO
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
-                usuarioActual.Id
-            )
+            if (!(await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo)
             {
                 return new JsonResult(
                     new
@@ -5174,6 +5206,11 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         SolicitudPagoInput input
             )
         {
+            // HU #6: autorización de expediente antes de acceder al recurso.
+            if (input == null) return BadRequest();
+            var accesoPagoHu6 = await ObtenerAccesoSolicitudHu6Async(input.SolicitudId);
+            if (!(accesoPagoHu6.PuedeGestionar || accesoPagoHu6.PuedeCrearDocumentacion || accesoPagoHu6.PuedeEditarSolicitudPropia || (accesoPagoHu6.EsSolicitante && accesoPagoHu6.AbacPuedeCrear))) return AccesoDenegadoHu6();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -5294,16 +5331,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // SOLO SOLICITANTE ORIGINAL
             // =====================================================
             bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+                (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
-            if (
-                !esAdministradorSistema
-                &&
-                solicitud.UsuarioSolicitanteId !=
-                    usuarioActual.Id
-            )
+            if (!(accesoPagoHu6.TieneAlcanceOperativo || accesoPagoHu6.EsSolicitante))
             {
                 return new JsonResult(
                     new
@@ -5997,9 +6027,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
-                await _context
-                    .SaveChangesAsync();
-
+                await _context.SaveChangesAsync();
+                await NotificarPagoCentralHu6SeguroAsync(solicitud.Id, solicitudPago.Id, usuarioActual.Id);
 
                 return new JsonResult(
                     new
@@ -6070,6 +6099,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int solicitudId
             )
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Gestionar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -6135,9 +6172,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+                (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
 
             if (
@@ -6340,10 +6375,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // VINCULAR SOLICITUD DE PAGO CON EL FLUJO APROBADO
             // =====================================================
 
-            solicitudPago.AprobacionPresupuestalId =
-                aprobacionPresupuestal.Id;
-
-            await _context.SaveChangesAsync();
 
             // =====================================================
             // YA EXISTE PDF
@@ -6373,6 +6404,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
             }
 
+
+            solicitudPago.AprobacionPresupuestalId = aprobacionPresupuestal.Id;
+            await _context.SaveChangesAsync();
 
             try
             {
@@ -6457,6 +6491,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 await _context
                     .SaveChangesAsync();
 
+                await NotificarPagoCentralHu6SeguroAsync(solicitud.Id, solicitudPago.Id, usuarioActual.Id);
 
                 return new JsonResult(
                     new
@@ -6521,6 +6556,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int solicitudId
             )
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Descargar))
+            {
+                return Forbid();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -6567,41 +6610,6 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            bool puedeDescargar =
-                solicitud.UsuarioSolicitanteId ==
-                    usuarioActual.Id;
-
-
-            if (
-                !puedeDescargar
-            )
-            {
-                puedeDescargar =
-                    await _context
-                        .AdqPermisosUsuarios
-                        .AsNoTracking()
-                        .AnyAsync(
-                            x =>
-                                x.UsuarioId ==
-                                    usuarioActual.Id
-                                &&
-                                (
-                                    x.PuedeAdministrar
-                                    ||
-                                    x.PuedeGenerarSolicitudPago
-                                )
-                        );
-            }
-
-
-            if (
-                !puedeDescargar
-            )
-            {
-                return Forbid();
-            }
-
-
             AdqSolicitudPago? solicitudPago =
                 await _context.AdqSolicitudesPago
                     .AsNoTracking()
@@ -6633,84 +6641,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            string rutaBase =
-                Path.GetFullPath(
-                    Path.Combine(
-                        Directory.GetCurrentDirectory(),
-                        "App_Data",
-                        "Adquisiciones",
-                        "SolicitudesPago"
-                    )
-                );
+            byte[]? archivo = await AdquisicionesIntegridadPago.ObtenerPdfValidadoAsync(
+                _context, solicitudId, HttpContext.RequestAborted);
+            if (archivo == null)
+                return StatusCode(409, new { success = false, message = "El documento o sus cuatro evidencias de firma no superaron la validación." });
 
-
-            string rutaFisica =
-                Path.GetFullPath(
-                    Path.Combine(
-                        Directory.GetCurrentDirectory(),
-                        solicitudPago.RutaArchivo
-                    )
-                );
-
-
-            if (
-                !rutaFisica.StartsWith(
-                    rutaBase,
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return BadRequest();
-            }
-
-
-            if (
-                !System.IO.File.Exists(
-                    rutaFisica
-                )
-            )
-            {
-                return NotFound();
-            }
-
-
-            byte[] archivo =
-                await System.IO.File
-                    .ReadAllBytesAsync(
-                        rutaFisica
-                    );
-
-
-            string hashActual =
-                Convert.ToHexString(
-                    SHA256.HashData(
-                        archivo
-                    )
-                );
-
-
-            if (
-                !string.Equals(
-                    hashActual,
-                    solicitudPago.HashArchivo,
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
-            {
-                return new JsonResult(
-                    new
-                    {
-                        success = false,
-                        message =
-                            "El documento no superó la validación de integridad."
-                    }
-                )
-                {
-                    StatusCode =
-                        StatusCodes.Status409Conflict
-                };
-            }
-
+            await RegistrarDescargaCentralHu6Async(solicitud, solicitudPago, usuarioActual.Id);
 
             Response.Headers.CacheControl =
                 "no-store, no-cache";
@@ -7684,6 +7620,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int solicitudId
             )
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Consultar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -8191,6 +8135,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int firmaAprobacionId
             )
         {
+            // HU #6: autorización de expediente antes de acceder al recurso.
+            int solicitudFirmaHu6 = await _context.AdqFirmasAprobacionesPresupuestales.AsNoTracking().Where(x => x.Id == firmaAprobacionId && !x.Eliminado && !x.AprobacionPresupuestalDetalle.Eliminado && x.AprobacionPresupuestalDetalle.AprobacionPresupuestal != null && !x.AprobacionPresupuestalDetalle.AprobacionPresupuestal.Eliminado).Select(x => x.AprobacionPresupuestalDetalle.AprobacionPresupuestal!.SolicitudId).FirstOrDefaultAsync();
+            if (!await AutorizarOperacionHu6Async(solicitudFirmaHu6, AdquisicionesOperacion.Consultar)) return Forbid();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -8625,7 +8573,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             SeguimientosPresupuestales.Count;
 
         public async Task<IActionResult>
-            OnGetConfiguracionAprobacionPresupuestalAsync()
+            OnGetConfiguracionAprobacionPresupuestalAsync(int areaId)
         {
             var usuarioActual =
                 await _userManager.GetUserAsync(
@@ -8660,6 +8608,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         StatusCodes.Status403Forbidden
                 };
             }
+
+            if (areaId <= 0 || !await _context.Areas.AnyAsync(x => x.Id == areaId))
+                return BadRequest(new { success = false, message = "Selecciona un área válida." });
 
             IList<AppUser> usuariosAprobadoresRol =
                 await _userManager.GetUsersInRoleAsync(
@@ -8801,7 +8752,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     .AsNoTracking()
                     .Where(
                         x =>
-                            !x.Eliminado
+                            x.AreaId == areaId && !x.Eliminado
                             &&
                             x.Activo
                     )
@@ -9010,6 +8961,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 };
             }
 
+
+            if (request.AreaId <= 0 || !await _context.Areas.AnyAsync(x => x.Id == request.AreaId))
+                return BadRequest(new { success = false, message = "Selecciona un área válida." });
+
+            var idsFirmantes = (await _userManager.GetUsersInRoleAsync("Aprobador Adquisiciones"))
+                .Where(x => !x.IsBanned).Select(x => x.Id).ToHashSet();
+            if (request.Etapas.Any(x => x == null || x.UsuarioResponsableId == null || !idsFirmantes.Contains(x.UsuarioResponsableId)))
+                return BadRequest(new { success = false, message = "Cada responsable debe tener el rol Aprobador Adquisiciones vigente." });
 
             var ordenesEsperados =
                 new[]
@@ -9322,7 +9281,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             await using var transaccion =
-                await _context.Database.BeginTransactionAsync();
+                await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
 
             try
@@ -9332,7 +9291,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         .AdqConfiguracionAprobacionPresupuestal
                         .Where(
                             x =>
-                                !x.Eliminado
+                                x.AreaId == request.AreaId && !x.Eliminado
                         )
                         .ToListAsync();
 
@@ -9363,6 +9322,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         registro =
                             new AdqConfiguracionAprobacionPresupuestal
                             {
+                                AreaId = request.AreaId,
                                 Orden =
                                     entrada.Orden,
 
@@ -9449,94 +9409,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             usuarioActual.Id;
                     }
 
-                    // =====================================================
-                    // ACTUALIZAR RESPONSABLE EN FLUJOS AÚN NO RESUELTOS
-                    // =====================================================
-
-                    List<AdqAprobacionPresupuestalDetalle>
-                        detallesPendientes =
-                            await _context
-                                .AdqAprobacionesPresupuestalesDetalle
-                                .Where(
-                                    x =>
-                                        !x.Eliminado
-                                        &&
-                                        x.Orden ==
-                                            entrada.Orden
-                                        &&
-                                        (
-                                            x.Estatus ==
-                                                "Pendiente"
-                                            ||
-                                            x.Estatus ==
-                                                "EnEspera"
-                                        )
-                                )
-                                .ToListAsync();
-
-
-                    foreach (
-                        var detalle
-                        in detallesPendientes
-                    )
-                    {
-                        detalle.UsuarioAprobadorId =
-                            entrada.UsuarioResponsableId;
-                    }
-
-
-                    // =====================================================
-                    // ACTUALIZAR CABECERA SI ESA ETAPA ES LA ACTUAL
-                    // =====================================================
-
-                    List<int> idsAprobacionesActuales =
-                        detallesPendientes
-                            .Where(
-                                x =>
-                                    x.EsActual
-                                    &&
-                                    x.Estatus ==
-                                        "Pendiente"
-                            )
-                            .Select(
-                                x =>
-                                    x.AprobacionPresupuestalId
-                            )
-                            .Distinct()
-                            .ToList();
-
-
-                    if (
-                        idsAprobacionesActuales.Count >
-                        0
-                    )
-                    {
-                        List<AdqAprobacionPresupuestal>
-                            aprobacionesActuales =
-                                await _context
-                                    .AdqAprobacionesPresupuestales
-                                    .Where(
-                                        x =>
-                                            idsAprobacionesActuales.Contains(
-                                                x.Id
-                                            )
-                                            &&
-                                            !x.Eliminado
-                                    )
-                                    .ToListAsync();
-
-
-                        foreach (
-                            var aprobacionActual
-                            in aprobacionesActuales
-                        )
-                        {
-                            aprobacionActual.UsuarioAprobadorId =
-                                entrada.UsuarioResponsableId;
-                        }
-                    }
+                    // HU #6: las etapas de flujos iniciados son snapshots y no se reasignan.
                 }
-
 
                 await _context.SaveChangesAsync();
 
@@ -10067,6 +9941,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnGetCotizacionesSolicitudAsync(
                 int id)
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    id,
+    AdquisicionesOperacion.Consultar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -10095,12 +9977,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            bool puedeVer =
-                solicitud.UsuarioSolicitanteId ==
-                    usuarioActual.Id
-                ||
-                solicitud.UsuarioAsignadoId ==
-                    usuarioActual.Id;
+            bool puedeVer = (await ObtenerAccesoSolicitudHu6Async(id)).PuedeConsultar;
 
 
             if (!puedeVer)
@@ -11328,6 +11205,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             NormalizarInput();
 
+            if (!await PuedeUsarAreaSolicitudHu6Async(usuarioActual, Input.AreaId))
+                return Forbid();
+
+
 
             TryValidateModel(
                 Input,
@@ -11440,6 +11321,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             NormalizarInput();
+
+            if (!await PuedeUsarAreaSolicitudHu6Async(usuarioActual, Input.AreaId))
+                return Forbid();
+
 
 
             TryValidateModel(
@@ -11558,9 +11443,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         {
 
             bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+                (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
@@ -11601,6 +11484,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             NormalizarInput();
+
+            if (!await PuedeUsarAreaSolicitudHu6Async(usuarioActual, Input.AreaId))
+                return Forbid();
+
 
 
             TryValidateModel(
@@ -11882,9 +11769,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         {
 
             bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+                (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
@@ -11913,6 +11798,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             NormalizarInput();
+
+            if (!await PuedeUsarAreaSolicitudHu6Async(usuarioActual, Input.AreaId))
+                return Forbid();
+
 
 
             TryValidateModel(
@@ -12295,9 +12184,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
             bool esAdministradorSistema =
-            User.IsInRole(
-                "Administrador"
-            );
+            (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
 
             string comentario =
@@ -12313,7 +12200,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             await using var transaccion =
                 await _context.Database
-                    .BeginTransactionAsync();
+                    .BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
 
             try
@@ -12454,30 +12341,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 // =====================================================
 
                 List<string> usuariosAdquisiciones =
-                    await _context.AdqPermisosUsuarios
-                        .AsNoTracking()
-                        .Where(
-                            x =>
-                                x.PuedeGestionarSolicitudes
-                                ||
-                                x.PuedeAprobar
-                                ||
-                                x.PuedeAdministrar
-                        )
-                        .Select(
-                            x =>
-                                x.UsuarioId
-                        )
-                        .Distinct()
-                        .ToListAsync();
-
+                    await ObtenerDestinatariosHu6Async(solicitud.AreaId, false);
 
                 await CrearNotificacionAdquisicionesAsync(
                     usuariosAdquisiciones,
 
                     "Nueva solicitud de compra",
 
-                    $"La solicitud {solicitud.Folio} - {solicitud.Titulo} fue aprobada por el gerente y requiere revisión de Adquisiciones.",
+                    $"La solicitud {solicitud.Folio} - {solicitud.Titulo} fue aprobada por el jefe directo y requiere revisión del gestor de su área.",
 
                     $"/ERP/Adquisiciones?openId={solicitud.Id}",
 
@@ -12519,7 +12390,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
                 TempData["MensajeExito"] =
-                    "La solicitud fue aprobada y enviada al área de Adquisiciones.";
+                    "La solicitud fue aprobada y enviada a revisión de su área.";
 
 
                 return RedirectToPage();
@@ -12554,9 +12425,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         {
 
             bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+                (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
@@ -12603,7 +12472,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             await using var transaccion =
                 await _context.Database
-                    .BeginTransactionAsync();
+                    .BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
 
             try
@@ -12758,6 +12627,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostAprobarAdquisicionesAsync()
         {
+            if (!await TieneAlcanceAdministrativoSolicitudHu6Async(SolicitudAdquisicionesId)) return Forbid();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -12891,6 +12762,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostCancelarAdquisicionesAsync()
         {
+            if (!await TieneAlcanceAdministrativoSolicitudHu6Async(SolicitudAdquisicionesId)) return Forbid();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -13036,6 +12909,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         public async Task<IActionResult> OnPostAsignarAgenteAsync()
         {
+            if (!await TieneAlcanceAdministrativoSolicitudHu6Async(SolicitudAdquisicionesId)) return Forbid();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -13102,20 +12977,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             }
 
 
-            bool agenteValido =
-                await _userManager.IsInRoleAsync(
-                    usuarioAsignado,
-                    "Usuario Adquisiciones"
-                );
-
-
-            if (!agenteValido)
-            {
-                TempData["MensajeError"] =
-                    "El usuario seleccionado no cuenta con el rol Usuario Adquisiciones.";
-
-                return RedirectToPage();
-            }
+            // HU #6: validar candidato contra el área real después de resolver la solicitud.
 
 
             AdqSolicitud? solicitud =
@@ -13134,6 +12996,12 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return NotFound();
             }
 
+
+            if (!await PuedeAsignarAgenteHu6Async(solicitud.AreaId, usuarioAsignado.Id))
+            {
+                TempData["MensajeError"] = "El agente no está autorizado para gestionar esta área.";
+                return RedirectToPage();
+            }
 
             if (solicitud.EstatusId != 5)
             {
@@ -13259,6 +13127,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostGuardarCotizacionAsync()
         {
+            // HU #6: autorización de expediente antes de acceder al recurso.
+            if (!await AutorizarOperacionHu6Async(InputCotizacion.SolicitudId, AdquisicionesOperacion.CrearDocumentacion)) return Forbid();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -13470,10 +13341,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // SOLAMENTE EL AGENTE ASIGNADO PUEDE COTIZAR
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
-                    usuarioActual.Id
-            )
+            if (!(await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo)
             {
                 TempData["MensajeError"] =
                     "La solicitud no se encuentra asignada a tu usuario.";
@@ -14042,6 +13910,19 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnPostEditarCotizacionAsync(
                 int cotizacionEditarId)
         {
+
+            int solicitudAutorizacionHu6 =
+            await ObtenerSolicitudIdCotizacionHu6Async(
+                cotizacionEditarId
+            );
+
+            if (!await AutorizarOperacionHu6Async(
+                solicitudAutorizacionHu6,
+                AdquisicionesOperacion.Gestionar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -14283,10 +14164,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // SEGURIDAD
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
-                usuarioActual.Id
-            )
+            if (!(await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo)
             {
                 return Forbid();
             }
@@ -14763,6 +14641,29 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnPostEliminarCotizacionesAsync(
                 List<int> cotizacionIds)
         {
+
+            if (cotizacionIds == null ||
+    cotizacionIds.Count == 0)
+            {
+                return BadRequest();
+            }
+
+            foreach (int cotizacionIdHu6 in
+                cotizacionIds.Distinct())
+            {
+                int solicitudAutorizacionHu6 =
+                    await ObtenerSolicitudIdCotizacionHu6Async(
+                        cotizacionIdHu6
+                    );
+
+                if (!await AutorizarOperacionHu6Async(
+                    solicitudAutorizacionHu6,
+                    AdquisicionesOperacion.EliminarDocumentacion))
+                {
+                    return AccesoDenegadoHu6();
+                }
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -14982,10 +14883,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // VALIDAR AGENTE ASIGNADO
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
-                usuarioActual.Id
-            )
+            if (!(await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo)
             {
                 return new JsonResult(
                     new
@@ -15276,6 +15174,19 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnPostSeleccionarCotizacionAsync(
                 int cotizacionId)
         {
+
+            int solicitudAutorizacionHu6 =
+    await ObtenerSolicitudIdCotizacionHu6Async(
+        cotizacionId
+    );
+
+            if (!await AutorizarOperacionHu6Async(
+                solicitudAutorizacionHu6,
+                AdquisicionesOperacion.Gestionar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -15412,17 +15323,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // SOLAMENTE EL AGENTE ASIGNADO
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
-                    usuarioActual.Id
-            )
+            if (!(await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo)
             {
                 return new JsonResult(
                     new
                     {
                         success = false,
                         message =
-                            "Solamente el agente asignado puede seleccionar la cotización."
+                            "No tienes alcance operativo para seleccionar la cotización."
                     }
                 )
                 {
@@ -15678,6 +15586,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnPostFinalizarCotizacionAsync(
                 int solicitudId)
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Gestionar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -15782,10 +15698,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // AGENTE ASIGNADO
             // =====================================================
 
-            if (
-                solicitud.UsuarioAsignadoId !=
-                    usuarioActual.Id
-            )
+            if (!(await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).TieneAlcanceOperativo)
             {
                 return new JsonResult(
                     new
@@ -16073,6 +15986,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnPostReabrirCotizacionAsync(
                 int solicitudId)
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Gestionar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -16192,10 +16113,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
-            bool puedeModificarCotizacion =
-                esAgenteAsignado
-                ||
-                esCreadorAdministradorAdquisiciones;
+            bool puedeModificarCotizacion = (await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).PuedeGestionar;
 
 
             if (!puedeModificarCotizacion)
@@ -16457,6 +16375,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int solicitudId,
                 string? comentario)
         {
+
+            if (!await AutorizarOperacionHu6Async(
+    solicitudId,
+    AdquisicionesOperacion.Gestionar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -16604,10 +16530,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
-            bool puedeSolicitarPresupuestoSolicitud =
-                esAgenteAsignado
-                ||
-                esCreadorAdministradorAdquisiciones;
+            bool puedeSolicitarPresupuestoSolicitud = (await ObtenerAccesoSolicitudHu6Async(solicitud.Id)).PuedeGestionar;
 
 
             if (!puedeSolicitarPresupuestoSolicitud)
@@ -16769,7 +16692,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         .AsNoTracking()
                         .Where(
                             x =>
-                                x.Activo
+                                x.AreaId == solicitud.AreaId && x.Activo
                                 &&
                                 !x.Eliminado
                                 &&
@@ -17310,6 +17233,19 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 string pin
             )
         {
+
+            int solicitudAutorizacionHu6 =
+    await ObtenerSolicitudIdAprobacionHu6Async(
+        detalleId
+    );
+
+            if (!await AutorizarOperacionHu6Async(
+                solicitudAutorizacionHu6,
+                AdquisicionesOperacion.AprobarPresupuesto))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -19163,7 +19099,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             string carpetaFisica =
                 Path.Combine(
-                    _environment.WebRootPath,
+                    Path.Combine(_environment.ContentRootPath, "App_Data", "AdquisicionesDocumentos"),
                     carpetaRelativa
                 );
 
@@ -19271,9 +19207,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         {
 
             bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+                (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
@@ -20179,7 +20113,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             string carpetaFisica =
                 Path.Combine(
-                    _environment.WebRootPath,
+                    Path.Combine(_environment.ContentRootPath, "App_Data", "AdquisicionesDocumentos"),
                     carpetaRelativa
                 );
 
@@ -20320,7 +20254,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             string carpetaFisica =
                 Path.Combine(
-                    _environment.WebRootPath,
+                    Path.Combine(_environment.ContentRootPath, "App_Data", "AdquisicionesDocumentos"),
                     carpetaRelativa
                 );
 
@@ -20522,7 +20456,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             string carpetaFisica =
                 Path.Combine(
-                    _environment.WebRootPath,
+                    Path.Combine(_environment.ContentRootPath, "App_Data", "AdquisicionesDocumentos"),
                     carpetaRelativa
                 );
 
@@ -20641,6 +20575,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 int id
             )
         {
+
+            if (!await AutorizarOperacionHu6Async(
+                id,
+                AdquisicionesOperacion.Consultar))
+            {
+                return AccesoDenegadoHu6();
+            }
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -20751,9 +20693,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // =====================================================
 
             bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+                (await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema;
 
 
             bool esAdministradorAdquisiciones =
@@ -20773,12 +20713,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
-            bool tieneAccesoRolAdquisiciones =
-                esAdministradorSistema
-                ||
-                esAdministradorAdquisiciones
-                ||
-                esUsuarioOperativoAdquisiciones;
+            bool tieneAccesoRolAdquisiciones = (await ObtenerAccesoSolicitudHu6Async(id)).TieneAlcanceOperativo;
 
 
             bool tienePermisoVisualizar =
@@ -21157,6 +21092,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             OnGetSeguimientoSolicitudAsync(
                 int id)
         {
+            // HU #6: autorización de expediente antes de acceder al recurso.
+            if (!await AutorizarOperacionHu6Async(id, AdquisicionesOperacion.Consultar)) return AccesoDenegadoHu6();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -21672,6 +21610,9 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         public async Task<IActionResult>
             OnPostAgregarComentarioAdqAsync()
         {
+            // HU #6: autorización de expediente antes de acceder al recurso.
+            if (!await AutorizarOperacionHu6Async(SolicitudComentarioId, AdquisicionesOperacion.Comentar)) return AccesoDenegadoHu6();
+
             AppUser? usuarioActual =
                 await ObtenerUsuarioActualAsync();
 
@@ -22046,6 +21987,24 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // PERMISOS DEL MÓDULO DE ADQUISICIONES
         // =========================================================
 
+        // HU6: los permisos ABAC no conceden alcance sobre otras áreas.
+        private async Task<List<string>> ObtenerDestinatariosHu6Async(int areaId, bool central)
+        {
+            var roles = from ur in _context.UserRoles.AsNoTracking()
+                        join r in _context.Roles.AsNoTracking() on ur.RoleId equals r.Id
+                        join u in _context.Users.AsNoTracking() on ur.UserId equals u.Id
+                        where !u.IsBanned
+                        select new { ur.UserId, ur.RoleId, r.NormalizedName };
+
+            var query = roles.Where(r => r.NormalizedName == "ADMINISTRADOR" ||
+                ((central ? r.NormalizedName == "ADMINISTRADOR ADQUISICIONES" :
+                    _context.AdqRolesAreas.Any(a => a.RolId == r.RoleId && a.AreaId == areaId && a.Activo && !a.Eliminado)) &&
+                 _context.AdqPermisosUsuarios.Any(p => p.UsuarioId == r.UserId &&
+                    (p.PuedeTodo || (p.PuedeVisualizar && (central ? p.PuedeDescargar : p.PuedeEditar))))));
+
+            return await query.Select(r => r.UserId).Distinct().ToListAsync();
+        }
+
         private async Task CrearNotificacionAdquisicionesAsync(
             IEnumerable<string> usuariosDestinoIds,
             string titulo,
@@ -22173,7 +22132,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // SOLO EL ROL ADMINISTRADOR PUEDE GESTIONAR PERMISOS
             // =====================================================
 
-            if (!User.IsInRole("Administrador"))
+            if (!(await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema)
             {
                 return new JsonResult(
                     new
@@ -22291,6 +22250,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                             ??
                             false,
 
+                        puedeAutoAutorizarSolicitud = permiso?.PuedeAutoAutorizarSolicitud ?? false,
+
                         puedeTodo =
                             permiso?.PuedeTodo
                             ??
@@ -22343,7 +22304,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // SOLO EL ROL ADMINISTRADOR PUEDE GESTIONAR PERMISOS
             // =====================================================
 
-            if (!User.IsInRole("Administrador"))
+            if (!(await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted)).EsAdministradorSistema)
             {
                 return new JsonResult(
                     new
@@ -22632,6 +22593,10 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                     permiso.PuedeDescargar =
                         puedeDescargar;
 
+                    // Excepción explícita: independiente del permiso Todos.
+                    if (item.PuedeAutoAutorizarSolicitud.HasValue)
+                        permiso.PuedeAutoAutorizarSolicitud = item.PuedeAutoAutorizarSolicitud.Value;
+
 
                     /*
                      * PuedeTodo se considera activo únicamente
@@ -22742,70 +22707,162 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // VALIDAR PERMISO ABAC
         // =========================================================
 
+        // =========================================================
+        // HU #6 - VALIDACIÓN CENTRALIZADA DE PERMISOS ABAC
+        // =========================================================
+
         private async Task<bool> TienePermisoAbacAsync(
             AppUser usuarioActual,
-            string permiso
-        )
+            string permiso)
         {
-            // Administrador general:
-            // bypass total.
-            if (
-                User.IsInRole(
-                    "Administrador"
-                )
-            )
+            if (usuarioActual == null ||
+                string.IsNullOrWhiteSpace(permiso))
+            {
+                return false;
+            }
+
+            // =====================================================
+            // VALIDAR IDENTIDAD Y ROLES VIGENTES
+            // =====================================================
+
+            AdquisicionesAlcance alcance =
+                await _adquisicionesAlcanceService
+                    .ObtenerAlcanceAsync(
+                        User,
+                        HttpContext.RequestAborted
+                    );
+
+            if (!alcance.UsuarioValido ||
+                alcance.UsuarioId != usuarioActual.Id)
+            {
+                return false;
+            }
+
+            // =====================================================
+            // ADMINISTRADOR GENERAL
+            // =====================================================
+
+            if (alcance.EsAdministradorSistema)
             {
                 return true;
             }
 
+            // =====================================================
+            // CONSULTAR PERMISOS OPERATIVOS
+            // =====================================================
 
             AdqPermisoUsuario? configuracion =
                 await _context.AdqPermisosUsuarios
                     .AsNoTracking()
                     .FirstOrDefaultAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
+                        x => x.UsuarioId == usuarioActual.Id,
+                        HttpContext.RequestAborted
                     );
 
-
-            if (
-                configuracion ==
-                null
-            )
+            if (configuracion == null)
             {
                 return false;
             }
 
-
-            if (
-                configuracion.PuedeTodo
-            )
+            if (configuracion.PuedeTodo)
             {
                 return true;
             }
 
-
-            return permiso switch
+            return permiso.Trim().ToUpperInvariant() switch
             {
-                "Visualizar" =>
+                "VISUALIZAR" =>
                     configuracion.PuedeVisualizar,
 
-                "Crear" =>
+                "CREAR" =>
                     configuracion.PuedeCrear,
 
-                "Editar" =>
+                "EDITAR" =>
                     configuracion.PuedeEditar,
 
-                "Eliminar" =>
+                "ELIMINAR" =>
                     configuracion.PuedeEliminar,
 
-                "Descargar" =>
+                "DESCARGAR" =>
                     configuracion.PuedeDescargar,
 
-                _ =>
-                    false
+                _ => false
             };
+        }
+
+        // =========================================================
+        // HU #6 - OBTENER ACCESO A UNA SOLICITUD
+        // =========================================================
+
+        private async Task<AdquisicionesAccesoSolicitud>
+            ObtenerAccesoSolicitudHu6Async(int solicitudId)
+        {
+            return await _adquisicionesAlcanceService
+                .ObtenerAccesoSolicitudAsync(
+                    User,
+                    solicitudId,
+                    HttpContext.RequestAborted
+                );
+        }
+
+        // =========================================================
+        // HU #6 - VALIDAR CONSULTA DE SOLICITUD
+        // =========================================================
+
+        private async Task<bool>
+            PuedeConsultarSolicitudHu6Async(int solicitudId)
+        {
+            var acceso =
+                await ObtenerAccesoSolicitudHu6Async(
+                    solicitudId
+                );
+
+            return acceso.PuedeConsultar;
+        }
+
+        // =========================================================
+        // HU #6 - VALIDAR GESTIÓN DE SOLICITUD
+        // =========================================================
+
+        private async Task<bool>
+            PuedeGestionarSolicitudHu6Async(int solicitudId)
+        {
+            var acceso =
+                await ObtenerAccesoSolicitudHu6Async(
+                    solicitudId
+                );
+
+            return acceso.PuedeGestionar;
+        }
+
+        // =========================================================
+        // HU #6 - VALIDAR DESCARGA DE DOCUMENTACIÓN
+        // =========================================================
+
+        private async Task<bool>
+            PuedeDescargarSolicitudHu6Async(int solicitudId)
+        {
+            var acceso =
+                await ObtenerAccesoSolicitudHu6Async(
+                    solicitudId
+                );
+
+            return acceso.PuedeDescargar;
+        }
+
+        // =========================================================
+        // HU #6 - VALIDAR ALCANCE OPERATIVO DEL ÁREA
+        // =========================================================
+
+        private async Task<bool>
+            TieneAlcanceAreaHu6Async(int areaId)
+        {
+            return await _adquisicionesAlcanceService
+                .TieneAlcanceAreaAsync(
+                    User,
+                    areaId,
+                    HttpContext.RequestAborted
+                );
         }
 
         private async Task CargarPermisosAdquisicionesAsync(
@@ -22815,28 +22872,28 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // ROLES DE IDENTITY
             // =========================================================
 
-            EsAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+            // =========================================================
+            // HU #6 - RESOLVER ROLES Y ALCANCE DESDE BASE DE DATOS
+            // =========================================================
 
+            _alcanceAdquisiciones =
+                await _adquisicionesAlcanceService
+                    .ObtenerAlcanceAsync(
+                        User,
+                        HttpContext.RequestAborted
+                    );
+
+            EsAdministradorSistema =
+                _alcanceAdquisiciones.EsAdministradorSistema;
 
             EsAdministradorAdquisiciones =
-                User.IsInRole(
-                    "Administrador Adquisiciones"
-                );
-
+                _alcanceAdquisiciones.EsAdministradorAdquisiciones;
 
             EsUsuarioOperativoAdquisiciones =
-                User.IsInRole(
-                    "Usuario Adquisiciones"
-                );
+                _alcanceAdquisiciones.EsUsuarioAdquisiciones;
 
             EsAprobadorAdquisiciones =
-                await _userManager.IsInRoleAsync(
-                    usuarioActual,
-                    "Aprobador Adquisiciones"
-                );
+                _alcanceAdquisiciones.EsAprobadorAdquisiciones;
 
 
             // =========================================================
@@ -22998,42 +23055,36 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // =========================================================
 
             EsUsuarioAdquisiciones =
-                EsAdministradorSistema
-                ||
-                EsAdministradorAdquisiciones
-                ||
-                EsUsuarioOperativoAdquisiciones
-                ||
-                EsAprobadorAdquisiciones;
+                _alcanceAdquisiciones.UsuarioValido
+                &&
+                (
+                    EsAdministradorSistema ||
+                    EsAdministradorAdquisiciones ||
+                    EsUsuarioOperativoAdquisiciones ||
+                    EsAprobadorAdquisiciones ||
+                    EsGestorAdquisicionesArea
+                );
 
 
             // =========================================================
             // APROBAR
             // =========================================================
 
-            PuedeAprobarAdquisiciones =
-                EsAdministradorSistema
-                ||
-                EsAdministradorAdquisiciones;
+            PuedeAprobarAdquisiciones = _alcanceAdquisiciones.UsuarioValido && (TieneAlcanceGlobalAdquisiciones || EsGestorAdquisicionesArea);
 
 
             // =========================================================
             // ASIGNAR
             // =========================================================
 
-            PuedeAsignarAdquisiciones =
-                EsAdministradorSistema
-                ||
-                EsAdministradorAdquisiciones;
+            PuedeAsignarAdquisiciones = _alcanceAdquisiciones.UsuarioValido && (TieneAlcanceGlobalAdquisiciones || EsGestorAdquisicionesArea);
 
             // =========================================================
             // CAPACIDADES VISUALES
             // =========================================================
 
-            PuedeVerCentroControl =
-                EsAdministradorSistema
-                ||
-                EsAdministradorAdquisiciones;
+            PuedeVerCentroControl = _alcanceAdquisiciones.UsuarioValido && AbacPuedeVisualizar &&
+                (TieneAlcanceGlobalAdquisiciones || EsGestorAdquisicionesArea || EsUsuarioOperativoAdquisiciones);
 
 
             PuedeVerPermisosAdquisiciones =
@@ -23052,6 +23103,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 EsAdministradorAdquisiciones
                 ||
                 EsUsuarioOperativoAdquisiciones
+                || EsGestorAdquisicionesArea
                 ||
                 (
                     permiso != null
@@ -23061,17 +23113,26 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
 
             PuedeVerBandejaAdquisiciones =
-                EsAdministradorSistema
-                ||
-                EsAdministradorAdquisiciones;
+                _alcanceAdquisiciones.UsuarioValido
+                &&
+                AbacPuedeVisualizar
+                &&
+                (
+                    TieneAlcanceGlobalAdquisiciones ||
+                    EsGestorAdquisicionesArea
+                );
 
 
             PuedeVerOrdenesAsignadas =
-                EsAdministradorSistema
-                ||
-                EsAdministradorAdquisiciones
-                ||
-                EsUsuarioOperativoAdquisiciones;
+                _alcanceAdquisiciones.UsuarioValido
+                &&
+                AbacPuedeVisualizar
+                &&
+                (
+                    TieneAlcanceGlobalAdquisiciones ||
+                    EsUsuarioOperativoAdquisiciones ||
+                    EsGestorAdquisicionesArea
+                );
 
 
             // =========================================================
@@ -23095,34 +23156,54 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // CARGAR BANDEJA DE ADQUISICIONES
         // =========================================================
 
+        // =========================================================
+        // HU #6 - CARGAR BANDEJA DE ADQUISICIONES POR ALCANCE
+        // =========================================================
+
         private async Task CargarBandejaAdquisicionesAsync()
         {
             SolicitudesAdquisiciones =
                 new List<SolicitudAdquisicionesDto>();
 
-
-            if (!PuedeVerBandejaAdquisiciones)
+            if (!PuedeVerBandejaAdquisiciones ||
+                !_alcanceAdquisiciones.UsuarioValido)
             {
                 return;
             }
 
+            // =====================================================
+            // RESOLVER ALCANCE
+            // =====================================================
+
+            bool alcanceGlobal =
+                TieneAlcanceGlobalAdquisiciones;
+
+            int[] areasAutorizadas =
+                AreasAutorizadasAdquisiciones.ToArray();
+
+            if (!alcanceGlobal &&
+                areasAutorizadas.Length == 0)
+            {
+                return;
+            }
+
+            // =====================================================
+            // CONSULTA FILTRADA DESDE SQL SERVER
+            // =====================================================
 
             SolicitudesAdquisiciones =
                 await (
-                    from solicitud
-                        in _context.AdqSolicitudes
-                            .AsNoTracking()
+                    from solicitud in
+                        _context.AdqSolicitudes.AsNoTracking()
 
-                    join area
-                        in _context.Areas
-                            .AsNoTracking()
+                    join area in
+                        _context.Areas.AsNoTracking()
 
                         on solicitud.AreaId
                         equals area.Id
 
-                    join estatus
-                        in _context.AdqEstatus
-                            .AsNoTracking()
+                    join estatus in
+                        _context.AdqEstatus.AsNoTracking()
 
                         on solicitud.EstatusId
                         equals estatus.Id
@@ -23131,57 +23212,60 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         !solicitud.Eliminado
                         &&
                         (
-                            solicitud.EstatusId == 3
-                            ||
+                            alcanceGlobal ||
+                            areasAutorizadas.Contains(
+                                solicitud.AreaId
+                            )
+                        )
+                        &&
+                        (
+                            solicitud.EstatusId == 3 ||
                             solicitud.EstatusId == 5
                         )
 
                     orderby
-                        solicitud.FechaSolicitud
-                            descending
+                        solicitud.FechaSolicitud descending
 
-                    select
-                        new SolicitudAdquisicionesDto
-                        {
-                            Id =
-                                solicitud.Id,
+                    select new SolicitudAdquisicionesDto
+                    {
+                        Id = solicitud.Id,
 
-                            Folio =
-                                solicitud.Folio,
+                        Folio = solicitud.Folio,
 
-                            Titulo =
-                                solicitud.Titulo,
+                        Titulo = solicitud.Titulo,
 
-                            Solicitante =
-                                _context.Empleados
-                                    .Where(
-                                        empleado =>
-                                            empleado.Id ==
-                                            solicitud.EmpleadoSolicitanteId
-                                    )
-                                    .Select(
-                                        empleado =>
-                                            empleado.NombreCompleto
-                                    )
-                                    .FirstOrDefault()
-                                ??
-                                "Usuario",
+                        Solicitante =
+                            _context.Empleados
+                                .Where(
+                                    empleado =>
+                                        empleado.Id ==
+                                        solicitud.EmpleadoSolicitanteId
+                                )
+                                .Select(
+                                    empleado =>
+                                        empleado.NombreCompleto
+                                )
+                                .FirstOrDefault()
+                            ?? "Usuario",
 
-                            Area =
-                                area.Nombre,
+                        Area = area.Nombre,
 
-                            FechaSolicitud =
-                                solicitud.FechaSolicitud,
+                        FechaSolicitud =
+                            solicitud.FechaSolicitud,
 
-                            EstatusId =
-                                solicitud.EstatusId,
+                        EstatusId =
+                            solicitud.EstatusId,
 
-                            Estatus =
-                                estatus.Nombre
-                        }
+                        Estatus =
+                            estatus.Nombre
+                    }
                 )
-                .ToListAsync();
+                .ToListAsync(
+                    HttpContext.RequestAborted
+                );
 
+            // Por el momento, solo los administradores
+            // globales pueden consultar el catálogo de agentes.
 
             await CargarAgentesComprasAsync();
         }
@@ -23192,24 +23276,20 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
         private async Task CargarAgentesComprasAsync()
         {
-            IList<AppUser> usuariosRol =
-                await _userManager.GetUsersInRoleAsync(
-                    "Usuario Adquisiciones"
-                );
-
-
-            List<string> idsAgentes =
-                usuariosRol
-                    .Where(
-                        x =>
-                            !x.IsBanned
-                    )
-                    .Select(
-                        x =>
-                            x.Id
-                    )
-                    .Distinct()
-                    .ToList();
+            List<string> idsAgentes;
+            if (TieneAlcanceGlobalAdquisiciones)
+            {
+                var rolesArea = _context.AdqRolesAreas.AsNoTracking().Where(x => x.Activo && !x.Eliminado).Select(x => x.RolId);
+                idsAgentes = await (from ur in _context.UserRoles.AsNoTracking()
+                                    join r in _context.Roles.AsNoTracking() on ur.RoleId equals r.Id
+                                    where r.NormalizedName == "USUARIO ADQUISICIONES" || rolesArea.Contains(r.Id)
+                                    select ur.UserId).Distinct().ToListAsync(HttpContext.RequestAborted);
+                idsAgentes.Add(_alcanceAdquisiciones.UsuarioId);
+            }
+            else
+            {
+                idsAgentes = EsGestorAdquisicionesArea ? new List<string> { _alcanceAdquisiciones.UsuarioId } : new List<string>();
+            }
 
 
             AgentesCompras =
@@ -23317,25 +23397,35 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 "Sin jefe configurado";
 
 
-            await CargarAreasAsync();
+            // =========================================================
+            // HU #6 - RESOLVER SEGURIDAD ANTES DE CARGAR INFORMACIÓN
+            // =========================================================
 
+            await CargarPermisosAdquisicionesAsync(
+                usuarioActual
+            );
+
+            if (!_alcanceAdquisiciones.UsuarioValido)
+            {
+                throw new UnauthorizedAccessException(
+                    "El usuario no cuenta con una sesión válida."
+                );
+            }
+
+            await CargarAreasAsync();
+            await CargarBandejasCentralesHu6Async();
+            PuedeAutoAutorizarHu6 = EsGestorAdquisicionesArea && AbacPuedeEditar &&
+                await _context.AdqPermisosUsuarios.AsNoTracking().AnyAsync(p => p.UsuarioId == usuarioActual.Id && p.PuedeAutoAutorizarSolicitud);
 
             await CargarSolicitudesAsync(
                 usuarioActual
             );
 
-
             await CargarSolicitudesPorAprobarAsync(
                 usuarioActual
             );
 
-
             await CargarHistorialAprobacionesAsync(
-                usuarioActual
-            );
-
-
-            await CargarPermisosAdquisicionesAsync(
                 usuarioActual
             );
 
@@ -23440,18 +23530,33 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             AppUser usuarioActual)
         {
             EsAgenteCompras =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .AnyAsync(
-                        x =>
-                            x.UsuarioId ==
-                                usuarioActual.Id
-                            &&
+                    _alcanceAdquisiciones.UsuarioValido
+                    &&
+                    (
+                        TieneAlcanceGlobalAdquisiciones
+                        ||
+                        (
                             (
-                                x.PuedeCotizar
-                                ||
-                                x.PuedeAdministrar
+                                EsUsuarioOperativoAdquisiciones ||
+                                EsGestorAdquisicionesArea
                             )
+                            &&
+                            AbacPuedeEditar
+                            &&
+                            await _context.AdqPermisosUsuarios
+                                .AsNoTracking()
+                                .AnyAsync(
+                                    x =>
+                                        x.UsuarioId == usuarioActual.Id
+                                        &&
+                                        (
+                                            x.PuedeCotizar ||
+                                            x.PuedeAdministrar ||
+                                            x.PuedeTodo
+                                        ),
+                                    HttpContext.RequestAborted
+                                )
+                        )
                     );
 
             if (!PuedeVerOrdenesAsignadas)
@@ -23462,10 +23567,17 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 return;
             }
 
+            bool alcanceGlobal =
+    TieneAlcanceGlobalAdquisiciones;
+
+            bool esGestorArea =
+                EsGestorAdquisicionesArea;
+
+            int[] areasAutorizadas =
+                AreasAutorizadasAdquisiciones.ToArray();
+
             bool puedeVerComoCreador =
-                EsAdministradorSistema
-                ||
-                EsAdministradorAdquisiciones;
+                alcanceGlobal;
 
             OrdenesAsignadas =
                 await (
@@ -23503,22 +23615,49 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         !solicitud.Eliminado
                         &&
                         (
+                            // =================================================
+                            // GESTOR DEL ÁREA AUTORIZADA
+                            // =================================================
+
+                            ((alcanceGlobal || (esGestorArea && areasAutorizadas.Contains(solicitud.AreaId))) && solicitud.EstatusId >= 8)
+
+                            ||
+
+                            // =================================================
+                            // AGENTE CON ASIGNACIÓN VIGENTE
+                            // =================================================
+
                             (
                                 solicitud.UsuarioAsignadoId ==
                                     usuarioActual.Id
                                 &&
-                                solicitud.EstatusId >=
-                                    8
+                                solicitud.EstatusId >= 8
+                                &&
+                                _context.AdqAsignaciones.Any(
+                                    asignacion =>
+                                        asignacion.SolicitudId ==
+                                            solicitud.Id
+                                        &&
+                                        asignacion.UsuarioAsignadoId ==
+                                            usuarioActual.Id
+                                        &&
+                                        asignacion.Activa
+                                )
                             )
+
                             ||
+
+                            // =================================================
+                            // ADMINISTRADOR COMO CREADOR
+                            // =================================================
+
                             (
                                 puedeVerComoCreador
                                 &&
                                 solicitud.UsuarioSolicitanteId ==
                                     usuarioActual.Id
                                 &&
-                                solicitud.EstatusId ==
-                                    10
+                                solicitud.EstatusId == 10
                             )
                         )
 
@@ -23591,10 +23730,8 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         private async Task<AppUser?>
             ObtenerUsuarioActualAsync()
         {
-            return await _userManager
-                .GetUserAsync(
-                    User
-                );
+            var usuario = await _userManager.GetUserAsync(User);
+            return usuario == null || usuario.IsBanned ? null : usuario;
         }
 
 
@@ -23677,6 +23814,16 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // ÁREAS
         // =========================================================
 
+
+        private async Task<bool> PuedeUsarAreaSolicitudHu6Async(AppUser usuario, int areaId)
+        {
+            if (areaId <= 0 || !await _context.Areas.AnyAsync(x => x.Id == areaId)) return false;
+            var alcance = await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted);
+            if (!alcance.UsuarioValido || alcance.UsuarioId != usuario.Id) return false;
+            var empleado = await ObtenerEmpleadoActualAsync(usuario);
+            return alcance.TieneAlcanceArea(areaId) || empleado?.AreaId == areaId;
+        }
+
         private async Task CargarAreasAsync()
         {
             Areas =
@@ -23705,23 +23852,36 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         // SOLICITUDES
         // =========================================================
 
-        private async Task CargarSolicitudesAsync(AppUser usuarioActual)
-        {
-            bool esAdministradorSistema =
-                User.IsInRole(
-                    "Administrador"
-                );
+        // =========================================================
+        // HU #6 - SOLICITUDES PERSONALES
+        // =========================================================
 
+        private async Task CargarSolicitudesAsync(
+            AppUser usuarioActual)
+        {
+            Solicitudes =
+                new List<AdqSolicitud>();
+
+            if (!_alcanceAdquisiciones.UsuarioValido)
+            {
+                return;
+            }
+
+            bool esAdministradorSistema =
+                _alcanceAdquisiciones.EsAdministradorSistema;
 
             Solicitudes =
                 await _context.AdqSolicitudes
                     .AsNoTracking()
+
                     .Include(
                         x => x.Area
                     )
+
                     .Include(
                         x => x.Estatus
                     )
+
                     .Where(
                         x =>
                             !x.Eliminado
@@ -23733,11 +23893,14 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                                     usuarioActual.Id
                             )
                     )
+
                     .OrderByDescending(
-                        x =>
-                            x.FechaCreacion
+                        x => x.FechaCreacion
                     )
-                    .ToListAsync();
+
+                    .ToListAsync(
+                        HttpContext.RequestAborted
+                    );
         }
 
         // =========================================================
@@ -23749,9 +23912,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
         {
 
             bool esAdministradorSistema =
-            User.IsInRole(
-                "Administrador"
-            );
+                _alcanceAdquisiciones.EsAdministradorSistema;
 
             SolicitudesPorAprobar =
                 await (
@@ -23829,6 +23990,130 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         }
                 )
                 .ToListAsync();
+        }
+
+        // =========================================================
+        // HU #6 - AUTORIZACIÓN CENTRALIZADA POR OPERACIÓN
+        // =========================================================
+
+        // HU #6 - Alcance administrativo: una asignación aislada no otorga facultades de revisión ni asignación.
+        private async Task<bool> TieneAlcanceAdministrativoSolicitudHu6Async(int solicitudId)
+        {
+            var acceso = await ObtenerAccesoSolicitudHu6Async(solicitudId);
+            return acceso.UsuarioValido && acceso.SolicitudExiste &&
+                   (acceso.TieneAlcanceGlobal || acceso.TieneAlcanceArea);
+        }
+
+        private async Task<bool> PuedeAsignarAgenteHu6Async(int areaId, string usuarioId)
+        {
+            var alcance = await _adquisicionesAlcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted);
+            if (!alcance.TieneAlcanceArea(areaId)) return false;
+            // El gestor local se autoasigna. El administrador global puede apoyar y asignar agentes autorizados.
+            if (!alcance.TieneAlcanceGlobal && usuarioId != alcance.UsuarioId) return false;
+            if (!await _context.Users.AsNoTracking().AnyAsync(x => x.Id == usuarioId && !x.IsBanned, HttpContext.RequestAborted)) return false;
+            return await (from ur in _context.UserRoles.AsNoTracking()
+                          join r in _context.Roles.AsNoTracking() on ur.RoleId equals r.Id
+                          where ur.UserId == usuarioId &&
+                              (r.NormalizedName == "ADMINISTRADOR" || r.NormalizedName == "ADMINISTRADOR ADQUISICIONES" ||
+                               (alcance.TieneAlcanceGlobal && r.NormalizedName == "USUARIO ADQUISICIONES") ||
+                               _context.AdqRolesAreas.Any(a => a.RolId == r.Id && a.AreaId == areaId && a.Activo && !a.Eliminado))
+                          select ur.UserId).AnyAsync(HttpContext.RequestAborted);
+        }
+
+        private async Task<bool> AutorizarOperacionHu6Async(
+            int solicitudId,
+            AdquisicionesOperacion operacion)
+        {
+            if (solicitudId <= 0)
+            {
+                return false;
+            }
+
+            var acceso =
+                await ObtenerAccesoSolicitudHu6Async(
+                    solicitudId
+                );
+
+            return AdquisicionesAutorizacion.Autorizar(
+                acceso,
+                operacion
+            );
+        }
+
+        // =========================================================
+        // HU #6 - RESPUESTA DE ACCESO DENEGADO
+        // =========================================================
+
+        private IActionResult AccesoDenegadoHu6()
+        {
+            return new JsonResult(
+                new
+                {
+                    success = false,
+
+                    message =
+                        "No cuentas con autorización para realizar esta operación."
+                }
+            )
+            {
+                StatusCode =
+                    StatusCodes.Status403Forbidden
+            };
+        }
+
+        // =========================================================
+        // HU #6 - RESOLVER SOLICITUD DESDE COTIZACIÓN
+        // =========================================================
+
+        private async Task<int> ObtenerSolicitudIdCotizacionHu6Async(
+            int cotizacionId)
+        {
+            if (cotizacionId <= 0)
+            {
+                return 0;
+            }
+
+            return await _context.AdqCotizaciones
+                .AsNoTracking()
+                .Where(
+                    x =>
+                        x.Id == cotizacionId &&
+                        !x.Eliminado
+                )
+                .Select(
+                    x => x.SolicitudId
+                )
+                .FirstOrDefaultAsync(
+                    HttpContext.RequestAborted
+                );
+        }
+
+        // =========================================================
+        // HU #6 - RESOLVER SOLICITUD DESDE APROBACIÓN
+        // =========================================================
+
+        private async Task<int> ObtenerSolicitudIdAprobacionHu6Async(
+            int detalleId)
+        {
+            if (detalleId <= 0)
+            {
+                return 0;
+            }
+
+            return await _context.AdqAprobacionesPresupuestalesDetalle
+                .AsNoTracking()
+                .Where(
+                    x =>
+                        x.Id == detalleId &&
+                        !x.Eliminado &&
+                        !x.AprobacionPresupuestal.Eliminado
+                )
+                .Select(
+                    x => x.AprobacionPresupuestal.SolicitudId
+                )
+                .FirstOrDefaultAsync(
+                    HttpContext.RequestAborted
+                );
         }
 
         // =========================================================

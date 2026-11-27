@@ -162,7 +162,7 @@
                                           Model.AbacPuedeCrear
                                               ? ""
                                               : "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
-                                                                          )">
+                                                                                                                                                                                                                                  )">
 
                     <button type="button"
                             id="btnNuevaSolicitudAdq"
@@ -174,7 +174,7 @@
                                                     !Model.AbacPuedeCrear
                                                         ? "pointer-events: none;"
                                                         : ""
-                                                                                                    )">
+                                                                                                                                                                                                                                                                                                    )">
 
                         <i class="bi bi-plus-lg me-1"></i>
 
@@ -230,6 +230,18 @@
 
                 <!-- BODY -->
                 <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="areaConfiguracionAprobadoresAdq" class="form-label fw-semibold">Área solicitante</label>
+                        <select id="areaConfiguracionAprobadoresAdq" class="form-select">
+                            <option value="">Selecciona un área</option>
+                            @foreach (var area in Model.Areas)
+                            {
+                                <option value="@area.Value">@area.Text</option>
+                            }
+                        </select>
+                        <small class="text-muted">Los cambios aplican a nuevos flujos del área seleccionada.</small>
+                    </div>
+
 
                     <div class="alert alert-light border mb-4">
 
@@ -257,7 +269,7 @@
                     </div>
 
 
-                    <div class="table-responsive">
+                    <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 1060px;" tabindex="0" role="region" aria-label="Configuración de aprobadores; desplaza horizontalmente si es necesario">
 
                         <table class="table align-middle"
                                id="tablaConfiguracionAprobadoresAdq">
@@ -469,7 +481,7 @@
                     <!-- TABLA -->
 
                     <div id="contenedorPermisosAdquisicionesAdq"
-                         class="table-responsive">
+                         class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 850px;" tabindex="0" role="region" aria-label="Permisos de Adquisiciones; desplaza horizontalmente si es necesario">
 
                         <table class="table
                             align-middle
@@ -505,6 +517,9 @@
                                         Descargar
                                     </th>
 
+                                    <th class="text-center" title="Permite autoautorizar exclusivamente solicitudes propias; no sustituye las cuatro firmas">
+                                        Autoautorizar
+                                    </th>
                                     <th class="text-center">
                                         Todos
                                     </th>
@@ -775,6 +790,164 @@
 
     </section>
 
+    @if (Model.MostrarBandejasCentralesHu6)
+    {
+        <section class="adq-panel mb-4" id="monitoreoCentralHu6">
+            <div class="adq-panel-header">
+                <div>
+                    <span class="adq-panel-kicker">Control centralizado</span>
+                    <h2>Monitoreo general de adquisiciones</h2>
+                    <p>Seguimiento informativo de solicitudes de todas las áreas, desde su creación.</p>
+                </div>
+                <span class="badge bg-primary">@Model.TotalCentralHu6</span>
+            </div>
+            <form method="get" asp-page="/Adquisiciones/Index" asp-area="ERP" class="adq-filter-bar">
+                <div class="input-group">
+                    <input name="BuscarCentralHu6" value="@Model.BuscarCentralHu6" maxlength="150" class="form-control" placeholder="Folio, solicitud, solicitante, área o estatus" aria-label="Buscar en bandejas centrales" />
+                    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search me-1"></i>Buscar</button>
+                    <a asp-page="/Adquisiciones/Index" asp-area="ERP" class="btn btn-outline-secondary">Limpiar</a>
+                </div>
+            </form>
+            <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 940px;" tabindex="0" role="region" aria-label="Monitoreo general de adquisiciones; desplaza horizontalmente si es necesario">
+                <table class="table adq-table align-middle">
+                    <thead><tr><th>Folio</th><th>Solicitud</th><th>Solicitante</th><th>Área</th><th>Fecha y hora de creación</th><th>Estatus</th><th>Acciones</th></tr></thead>
+                    <tbody>
+                        @foreach (var fila in Model.MonitoreoCentralHu6)
+                        {
+                            <tr>
+                                <td class="adq-folio fw-semibold">@fila.Folio</td>
+                                <td>@fila.Titulo</td>
+                                <td>@fila.Solicitante</td>
+                                <td>@fila.Area</td>
+                                <td class="text-nowrap">@fila.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="adq-central-status-cell"><span class="adq-status-badge adq-central-status" title="@fila.Estatus">@fila.Estatus</span></td>
+                                <td>
+                                    <div class="d-inline-flex gap-1 align-items-center">
+                                        <button type="button" class="btn btn-sm btn-outline-primary btnVerSolicitudAdq" data-id="@fila.Id" title="Ver detalle" aria-label="Ver detalle de @fila.Folio"><i class="bi bi-eye"></i></button>
+                                        @if (Model.AbacPuedeCrear && (fila.EstatusId == 8 || fila.EstatusId == 9))
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success btnGenerarCotizacionAdq" data-id="@fila.Id" title="Apoyar en cotizaciones" aria-label="Gestionar cotizaciones de @fila.Folio"><i class="bi bi-file-earmark-text"></i></button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.MonitoreoCentralHu6.Count == 0)
+                        {
+                            <tr><td colspan="7" class="text-center text-muted py-4">No hay solicitudes para mostrar.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <small>Página @Model.PaginaCentralHu6 de @Model.PaginasCentralHu6</small>
+                <div class="d-flex gap-2">
+                    @if (Model.PaginaCentralHu6 > 1)
+                    {
+                        <a class="btn btn-sm btn-outline-secondary" asp-page="/Adquisiciones/Index" asp-area="ERP" asp-route-BuscarCentralHu6="@Model.BuscarCentralHu6" asp-route-PaginaCentralHu6="@(Model.PaginaCentralHu6 - 1)" asp-route-PaginaPagosHu6="@Model.PaginaPagosHu6" asp-fragment="monitoreoCentralHu6">Anterior</a>
+                    }
+                    @if (Model.PaginaCentralHu6 < Model.PaginasCentralHu6)
+                    {
+                        <a class="btn btn-sm btn-outline-primary" asp-page="/Adquisiciones/Index" asp-area="ERP" asp-route-BuscarCentralHu6="@Model.BuscarCentralHu6" asp-route-PaginaCentralHu6="@(Model.PaginaCentralHu6 + 1)" asp-route-PaginaPagosHu6="@Model.PaginaPagosHu6" asp-fragment="monitoreoCentralHu6">Siguiente</a>
+                    }
+                </div>
+            </div>
+        </section>
+        <section class="adq-panel mb-4" id="pagosCentralHu6">
+            <div class="adq-panel-header">
+                <div><span class="adq-panel-kicker">Recepción documental</span><h2>Solicitudes de pago recibidas</h2><p>Documentos generados por las áreas. La descarga requiere cuatro firmas y PDF verificado.</p></div>
+                <span class="badge bg-primary">@Model.TotalPagosHu6</span>
+            </div>
+            <div class="table-responsive adq-table-scroll-hu6 adq-pagos-central-scroll" tabindex="0" role="region" aria-label="Solicitudes de pago recibidas; desplaza horizontalmente si es necesario" style="--adq-table-min: 950px;">
+                <table class="table adq-table align-middle adq-pagos-central-table">
+                    <colgroup><col style="width:21%" /><col style="width:21%" /><col style="width:11%" /><col style="width:16%" /><col style="width:12%" /><col style="width:10%" /><col style="width:9%" /></colgroup>
+                    <thead><tr><th scope="col">Solicitud</th><th scope="col">Responsables</th><th scope="col">Área</th><th scope="col">Proveedor / importe</th><th scope="col">Generación</th><th scope="col">Integridad</th><th scope="col">Acciones</th></tr></thead>
+                    <tbody>
+                        @foreach (var pago in Model.PagosCentralesHu6)
+                        {
+                            <tr>
+                                <td><strong class="d-block">@pago.Folio</strong><span class="d-block">@pago.Titulo</span></td>
+                                <td><small class="text-muted d-block">Solicitante</small><span class="d-block">@pago.Solicitante</span><small class="text-muted d-block mt-1">Generado por</small><span class="d-block">@pago.GeneradoPor</span></td>
+                                <td>@pago.Area</td>
+                                <td><span class="d-block">@pago.Proveedor</span><strong class="d-block mt-1">@pago.Total.ToString("N2")</strong><small class="text-muted d-block">@pago.Moneda</small></td>
+                                <td>
+                                    @if (pago.FechaGeneracion.HasValue)
+                                    {
+                                        <span class="d-block">@pago.FechaGeneracion.Value.ToString("dd/MM/yyyy")</span><small class="text-muted d-block">@pago.FechaGeneracion.Value.ToString("HH:mm")</small>
+                                    }
+                                    else
+                                    {
+
+                                        <span>Sin fecha</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge @(pago.Verificado ? "bg-success" : "bg-warning text-dark")">@(pago.Verificado ? "4/4 verificadas" : "Requiere revisión")</span>
+                                    @if (pago.UltimaDescarga.HasValue)
+                                    {
+                                        <small class="d-block mt-1 text-muted">Última entrega: @pago.UltimaDescarga.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                                        <small class="d-block">@pago.DescargadoPor</small>
+                                    }
+                                    else
+                                    {
+
+                                        <small class="d-block mt-1 text-muted">Sin descarga registrada</small>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="adq-pagos-central-actions">
+                                        <button type="button" class="btn btn-sm btn-outline-primary btnVerSolicitudAdq" data-id="@pago.Id" title="Ver detalle" aria-label="Ver detalle de @pago.Folio"><i class="bi bi-eye"></i></button>
+                                        @if (pago.Verificado && Model.AbacPuedeDescargar)
+                                        {
+                                            <a class="btn btn-sm btn-outline-success" asp-page="/Adquisiciones/Index" asp-area="ERP" asp-page-handler="DescargarSolicitudPago" asp-route-solicitudId="@pago.Id" title="Descargar solicitud de pago" aria-label="Descargar PDF de @pago.Folio"><i class="bi bi-download"></i></a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.PagosCentralesHu6.Count == 0)
+                        {
+                            <tr><td colspan="7" class="text-center text-muted py-4">Aún no hay solicitudes de pago generadas.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                <small>Página @Model.PaginaPagosHu6 de @Model.PaginasPagosHu6</small>
+                <div class="d-flex gap-2">
+                    @if (Model.PaginaPagosHu6 > 1)
+                    {
+                        <a class="btn btn-sm btn-outline-secondary" asp-page="/Adquisiciones/Index" asp-area="ERP" asp-route-BuscarCentralHu6="@Model.BuscarCentralHu6" asp-route-PaginaCentralHu6="@Model.PaginaCentralHu6" asp-route-PaginaPagosHu6="@(Model.PaginaPagosHu6 - 1)" asp-fragment="pagosCentralHu6">Anterior</a>
+                    }
+                    @if (Model.PaginaPagosHu6 < Model.PaginasPagosHu6)
+                    {
+                        <a class="btn btn-sm btn-outline-primary" asp-page="/Adquisiciones/Index" asp-area="ERP" asp-route-BuscarCentralHu6="@Model.BuscarCentralHu6" asp-route-PaginaCentralHu6="@Model.PaginaCentralHu6" asp-route-PaginaPagosHu6="@(Model.PaginaPagosHu6 + 1)" asp-fragment="pagosCentralHu6">Siguiente</a>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    @if (Model.PuedeAutoAutorizarHu6 && Model.UsuarioActual != null)
+    {
+        var pendientesAutoHu6 = Model.Solicitudes.Where(x => x.EstatusId == 2 && x.UsuarioSolicitanteId == Model.UsuarioActual.Id).ToList();
+        if (pendientesAutoHu6.Count > 0)
+        {
+            <section class="adq-panel mb-4">
+                <div class="adq-panel-header"><div><span class="adq-panel-kicker">Autorización inicial</span><h2>Autoautorización de solicitudes propias</h2><p>Excepción autorizada. No sustituye las cuatro firmas presupuestales.</p></div></div>
+                @foreach (var solicitud in pendientesAutoHu6)
+                {
+                    <form method="post" asp-page-handler="AutoAutorizarHu6" class="p-3 border-bottom">
+                        <input type="hidden" name="solicitudId" value="@solicitud.Id" />
+                        <label class="form-label" for="motivoAutoHu6_@solicitud.Id">@solicitud.Folio — @solicitud.Titulo</label>
+                        <textarea class="form-control mb-2" name="motivo" id="motivoAutoHu6_@solicitud.Id" maxlength="1000" required placeholder="Justificación de la autoautorización"></textarea>
+                        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-check2-circle me-1"></i>Autoautorizar solicitud</button>
+                    </form>
+                }
+            </section>
+        }
+    }
+
     <!-- ====================================================== -->
     <!-- MIS SOLICITUDES -->
     <!-- ====================================================== -->
@@ -894,7 +1067,7 @@
         </div>
 
 
-        <div class="table-responsive">
+        <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 760px;" tabindex="0" role="region" aria-label="Mis solicitudes; desplaza horizontalmente si es necesario">
 
             <table class="table align-middle adq-table"
                    id="tablaSolicitudesAdq">
@@ -1015,7 +1188,7 @@
                                                                                           !Model.AbacPuedeVisualizar
                                                                                               ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
                                                                                               : null
-                                                                                                                                          )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          )">
 
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
@@ -1025,7 +1198,7 @@
                                                                                                     !Model.AbacPuedeVisualizar
                                                                                                         ? "pointer-events: none;"
                                                                                                         : null
-                                                                                                                                                                    )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            )"
                                                     title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
                                                 <i class="bi bi-eye"></i>
@@ -1039,7 +1212,7 @@
                                             Model.AbacPuedeVisualizar &&
                                             (Model.EsAdministradorSistema ||
                                              Model.EsAdministradorAdquisiciones ||
-                                             Model.EsUsuarioOperativoAdquisiciones)
+                                             Model.EsUsuarioOperativoAdquisiciones || Model.EsGestorAdquisicionesArea)
                                         )
                                         {
                                             <button type="button"
@@ -1065,7 +1238,7 @@
                                                                                                   !Model.AbacPuedeEditar
                                                                                                       ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
                                                                                                       : null
-                                                                                                                                                      )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-secondary btnEditarSolicitudAdq"
@@ -1075,7 +1248,7 @@
                                                                                                             !Model.AbacPuedeEditar
                                                                                                                 ? "pointer-events: none;"
                                                                                                                 : null
-                                                                                                                                                                                )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        )"
                                                         title="@(Model.AbacPuedeEditar ? "Editar solicitud" : null)">
 
                                                     <i class="bi bi-pencil"></i>
@@ -1093,7 +1266,7 @@
                                                                                                   !Model.AbacPuedeEliminar
                                                                                                       ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
                                                                                                       : null
-                                                                                                                                                      )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-danger btnCancelarSolicitudUsuarioAdq"
@@ -1104,7 +1277,7 @@
                                                                                                             !Model.AbacPuedeEliminar
                                                                                                                 ? "pointer-events: none;"
                                                                                                                 : null
-                                                                                                                                                                                )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        )"
                                                         title="@(Model.AbacPuedeEliminar ? "Cancelar solicitud" : null)">
 
                                                     <i class="bi bi-x-lg"></i>
@@ -1210,7 +1383,7 @@
             </div>
 
 
-            <div class="table-responsive">
+            <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 850px;" tabindex="0" role="region" aria-label="Solicitudes por autorizar; desplaza horizontalmente si es necesario">
 
                 <table class="table align-middle adq-table mb-0">
 
@@ -1469,7 +1642,7 @@
             <!-- TABLA DEL HISTORIAL -->
             <!-- ====================================================== -->
 
-            <div class="table-responsive">
+            <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 1080px;" tabindex="0" role="region" aria-label="Historial de aprobaciones; desplaza horizontalmente si es necesario">
 
                 <table class="table align-middle adq-table mb-0"
                        id="tablaHistorialAprobacionesAdq">
@@ -1776,7 +1949,7 @@
             }
             else
             {
-                <div class="table-responsive">
+                <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 950px;" tabindex="0" role="region" aria-label="Bandeja de Adquisiciones; desplaza horizontalmente si es necesario">
 
                     <table class="table align-middle adq-table mb-0">
 
@@ -1846,7 +2019,7 @@
                                                                                                   !Model.AbacPuedeVisualizar
                                                                                                       ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
                                                                                                       : null
-                                                                                                                                                      )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
@@ -1856,7 +2029,7 @@
                                                                                                             !Model.AbacPuedeVisualizar
                                                                                                                 ? "pointer-events: none;"
                                                                                                                 : null
-                                                                                                                                                                                )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        )"
                                                         title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
                                                     <i class="bi bi-eye"></i>
@@ -1880,7 +2053,7 @@
                                                                                                           !Model.AbacPuedeEditar
                                                                                                               ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
                                                                                                               : null
-                                                                                                                                                                  )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-success btnAccionAdquisiciones"
@@ -1892,7 +2065,7 @@
                                                                                                                     !Model.AbacPuedeEditar
                                                                                                                         ? "pointer-events: none;"
                                                                                                                         : null
-                                                                                                                                                                                            )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )"
                                                             title="@(Model.AbacPuedeEditar ? "Aprobar solicitud" : null)">
 
                                                         <i class="bi bi-check-lg"></i>
@@ -1910,7 +2083,7 @@
                                                                                                           !Model.AbacPuedeEliminar
                                                                                                               ? "Opción bloqueada. No cuentas con el permiso de Eliminar correspondiente."
                                                                                                               : null
-                                                                                                                                                                  )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-danger btnAccionAdquisiciones"
@@ -1922,7 +2095,7 @@
                                                                                                                     !Model.AbacPuedeEliminar
                                                                                                                         ? "pointer-events: none;"
                                                                                                                         : null
-                                                                                                                                                                                            )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )"
                                                             title="@(Model.AbacPuedeEliminar ? "Cancelar solicitud" : null)">
 
                                                         <i class="bi bi-x-lg"></i>
@@ -1947,7 +2120,7 @@
                                                                                                           !Model.AbacPuedeEditar
                                                                                                               ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
                                                                                                               : null
-                                                                                                                                                                  )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-primary btnAsignarAdquisiciones"
@@ -1958,7 +2131,7 @@
                                                                                                                     !Model.AbacPuedeEditar
                                                                                                                         ? "pointer-events: none;"
                                                                                                                         : null
-                                                                                                                                                                                            )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )"
                                                             title="@(Model.AbacPuedeEditar ? "Asignar agente" : null)">
 
                                                         <i class="bi bi-person-plus"></i>
@@ -2037,7 +2210,7 @@
             </div>
 
 
-            <div class="table-responsive mt-3">
+            <div class="table-responsive adq-table-scroll-hu6 mt-3" style="--adq-table-min: 1000px;" tabindex="0" role="region" aria-label="Aprobaciones presupuestales; desplaza horizontalmente si es necesario">
 
                 <table class="table align-middle adq-table mb-0">
 
@@ -2287,7 +2460,7 @@
             <!-- TABLA -->
             <!-- ===================================================== -->
 
-            <div class="table-responsive">
+            <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 1180px;" tabindex="0" role="region" aria-label="Presupuestos aprobados; desplaza horizontalmente si es necesario">
 
                 <table class="table align-middle adq-table mb-0"
                        id="tablaPresupuestosAprobadosHistoricoAdq">
@@ -2544,7 +2717,7 @@
             </div>
 
 
-            <div class="table-responsive">
+            <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 1080px;" tabindex="0" role="region" aria-label="Seguimientos presupuestales; desplaza horizontalmente si es necesario">
 
                 <table class="table align-middle mb-0">
 
@@ -2710,7 +2883,7 @@
 
     @if (Model.PuedeVerOrdenesAsignadas)
     {
-        <section class="adq-panel mt-4">
+        <section class="adq-panel mt-4" id="ordenesAsignadasHu6">
 
             <div class="adq-panel-header">
 
@@ -2745,10 +2918,11 @@
 
             @if (Model.OrdenesAsignadas.Any())
             {
-                <div class="table-responsive">
+                <div class="table-responsive adq-table-scroll-hu6 adq-ordenes-scroll" tabindex="0" role="region" aria-label="Mis órdenes asignadas; desplaza horizontalmente si es necesario" style="--adq-table-min: 980px;">
 
                     <table class="table adq-table align-middle"
                            id="tablaOrdenesAsignadasAdq">
+                        <colgroup><col style="width:17%" /><col style="width:22%" /><col style="width:14%" /><col style="width:10%" /><col style="width:10%" /><col style="width:13%" /><col style="width:14%" /></colgroup>
 
                         <thead>
 
@@ -2862,7 +3036,7 @@
                                                                                                   !Model.AbacPuedeVisualizar
                                                                                                       ? "Opción bloqueada. No cuentas con el permiso de Visualizar correspondiente."
                                                                                                       : null
-                                                                                                                                                      )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      )">
 
                                                 <button type="button"
                                                         class="btn btn-sm btn-outline-primary btnVerSolicitudAdq"
@@ -2872,7 +3046,7 @@
                                                                                                             !Model.AbacPuedeVisualizar
                                                                                                                 ? "pointer-events: none;"
                                                                                                                 : null
-                                                                                                                                                                                )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        )"
                                                         title="@(Model.AbacPuedeVisualizar ? "Ver solicitud" : null)">
 
                                                     <i class="bi bi-eye"></i>
@@ -2917,7 +3091,7 @@
                                                                                                           !Model.AbacPuedeCrear
                                                                                                               ? "Opción bloqueada. No cuentas con el permiso de Crear correspondiente."
                                                                                                               : null
-                                                                                                                                                                  )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btnGenerarCotizacionAdq adq-btn-cotizar"
@@ -2927,14 +3101,12 @@
                                                                                                                     !Model.AbacPuedeCrear
                                                                                                                         ? "pointer-events: none;"
                                                                                                                         : null
-                                                                                                                                                                                            )"
-                                                            title="@(Model.AbacPuedeCrear ? "Gestionar cotización" : null)">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )"
+                                                            title="@(Model.AbacPuedeCrear ? "Gestionar cotización" : null)" aria-label="Gestionar cotización de @orden.Folio">
 
                                                         <i class="bi bi-file-earmark-text"></i>
 
-                                                        <span>
-                                                            Cotizar
-                                                        </span>
+                                                        <span class="visually-hidden">Cotizar</span>
 
                                                     </button>
 
@@ -2951,7 +3123,7 @@
                                                                                                           !Model.AbacPuedeEditar
                                                                                                               ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
                                                                                                               : null
-                                                                                                                                                                  )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-outline-primary btnReabrirCotizacionAdq"
@@ -2962,7 +3134,7 @@
                                                                                                                     !Model.AbacPuedeEditar
                                                                                                                         ? "pointer-events: none;"
                                                                                                                         : null
-                                                                                                                                                                                            )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )"
                                                             title="@(Model.AbacPuedeEditar ? "Modificar cotizaciones" : null)">
 
                                                         <i class="bi bi-pencil-square"></i>
@@ -2980,7 +3152,7 @@
                                                                                                           !Model.AbacPuedeEditar
                                                                                                               ? "Opción bloqueada. No cuentas con el permiso de Editar correspondiente."
                                                                                                               : null
-                                                                                                                                                                  )">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  )">
 
                                                     <button type="button"
                                                             class="btn btn-sm btn-success d-inline-flex align-items-center justify-content-center btnSolicitarPresupuestoAdq"
@@ -2990,7 +3162,7 @@
                                                                                                                     !Model.AbacPuedeEditar
                                                                                                                         ? "width: 38px; height: 38px; padding: 0; pointer-events: none;"
                                                                                                                         : "width: 38px; height: 38px; padding: 0;"
-                                                                                                                                                                                            )"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    )"
                                                             title="@(Model.AbacPuedeEditar ? "Solicitar aprobación presupuestal" : null)">
 
                                                         <i class="bi bi-cash-stack"></i>
@@ -3402,7 +3574,7 @@
                         </div>
 
 
-                        <div class="table-responsive">
+                        <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 1000px;" tabindex="0" role="region" aria-label="Productos de la cotización; desplaza horizontalmente si es necesario">
 
                             <table class="table align-middle adq-table adq-quote-table">
 
@@ -5974,7 +6146,7 @@
                             <div class="col-md-4"><div class="adq-parcialidad-resumen"><span>Total pagado</span><strong id="pagadoSeguimientoPagosAdq">-</strong></div></div>
                             <div class="col-md-4"><div class="adq-parcialidad-resumen"><span>Saldo pendiente</span><strong id="saldoSeguimientoPagosAdq">-</strong></div></div>
                         </div>
-                        <div class="table-responsive">
+                        <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 820px;" tabindex="0" role="region" aria-label="Seguimiento de pagos; desplaza horizontalmente si es necesario">
                             <table class="table table-hover align-middle">
                                 <thead><tr><th>Parcialidad</th><th>Porcentaje</th><th class="text-end">Importe</th><th>Estatus</th><th>Fecha de pago</th><th>Referencia</th><th class="text-end">Acción</th></tr></thead>
                                 <tbody id="tablaSeguimientoPagosAdq"></tbody>
@@ -6402,7 +6574,7 @@
                             <div id="adqContenedorParcialidades"
                                  class="d-none">
 
-                                <div class="table-responsive">
+                                <div class="table-responsive adq-table-scroll-hu6" style="--adq-table-min: 560px;" tabindex="0" role="region" aria-label="Plan de parcialidades; desplaza horizontalmente si es necesario">
 
                                     <table class="table table-sm align-middle">
                                         <thead>
@@ -7178,6 +7350,10 @@
                                 }
 
                             </select>
+                            @if (Model.EsGestorAdquisicionesArea && !Model.TieneAlcanceGlobalAdquisiciones)
+                            {
+                                <small class="text-muted d-block mt-2">Puedes asignarte como agente y continuar la cotización de tu área.</small>
+                            }
 
                         </div>
 
@@ -9412,30 +9588,30 @@
     <script>
         window.adqAbac = {
 
-             esAdministradorSistema:
-                @Model.EsAdministradorSistema.ToString().ToLower(),
+            esAdministradorSistema:
+                                                @Model.EsAdministradorSistema.ToString().ToLower(),
 
             puedeVisualizar:
-                @Model.AbacPuedeVisualizar.ToString().ToLower(),
+                                                @Model.AbacPuedeVisualizar.ToString().ToLower(),
 
             puedeCrear:
-                @Model.AbacPuedeCrear.ToString().ToLower(),
+                                                @Model.AbacPuedeCrear.ToString().ToLower(),
 
             puedeEditar:
-                @Model.AbacPuedeEditar.ToString().ToLower(),
+                                                @Model.AbacPuedeEditar.ToString().ToLower(),
 
             puedeEliminar:
-                @Model.AbacPuedeEliminar.ToString().ToLower(),
+                                                @Model.AbacPuedeEliminar.ToString().ToLower(),
 
             puedeDescargar:
-                @Model.AbacPuedeDescargar.ToString().ToLower(),
+                                                @Model.AbacPuedeDescargar.ToString().ToLower(),
 
             puedeTodo:
-                @Model.AbacPuedeTodo.ToString().ToLower()
-        };
+                                                @Model.AbacPuedeTodo.ToString().ToLower()
+                                        };
 
         window.adqLimpiarBorradorLocal =
-        @limpiarBorradorAdquisiciones.ToString().ToLower();
+                                        @limpiarBorradorAdquisiciones.ToString().ToLower();
 
     </script>
 
@@ -9451,7 +9627,7 @@
         <script>
             document.addEventListener(
                 "DOMContentLoaded",
-                function () {
+                function() {
 
                     // =====================================================
                     // PRESUPUESTOS APROBADOS - HISTÓRICO
@@ -9562,8 +9738,8 @@
 
                                 fila.style.display =
                                     indice >= inicio
-                                    &&
-                                    indice < fin
+                                        &&
+                                        indice < fin
                                         ? ""
                                         : "none";
                             }
@@ -9619,11 +9795,11 @@
 
                         anterior.innerHTML =
                             `
-                                <button type="button"
-                                        class="page-link">
-                                    Anterior
-                                </button>
-                            `;
+                                                                                <button type="button"
+                                                                                        class="page-link">
+                                                                                    Anterior
+                                                                                </button>
+                                                                            `;
 
 
                         anterior
@@ -9632,7 +9808,7 @@
                             )
                             .addEventListener(
                                 "click",
-                                function () {
+                                function() {
 
                                     if (
                                         paginaActual >
@@ -9672,7 +9848,7 @@
                                 +
                                 (
                                     pagina ===
-                                    paginaActual
+                                        paginaActual
                                         ? " active"
                                         : ""
                                 );
@@ -9680,11 +9856,11 @@
 
                             item.innerHTML =
                                 `
-                                    <button type="button"
-                                            class="page-link">
-                                        ${pagina}
-                                    </button>
-                                `;
+                                                                                    <button type="button"
+                                                                                            class="page-link">
+                                                                                        ${pagina}
+                                                                                    </button>
+                                                                                `;
 
 
                             item
@@ -9693,7 +9869,7 @@
                                 )
                                 .addEventListener(
                                     "click",
-                                    function () {
+                                    function() {
 
                                         mostrarPagina(
                                             pagina
@@ -9723,7 +9899,7 @@
                             +
                             (
                                 paginaActual ===
-                                totalPaginas
+                                    totalPaginas
                                     ? " disabled"
                                     : ""
                             );
@@ -9731,11 +9907,11 @@
 
                         siguiente.innerHTML =
                             `
-                                <button type="button"
-                                        class="page-link">
-                                    Siguiente
-                                </button>
-                            `;
+                                                                                <button type="button"
+                                                                                        class="page-link">
+                                                                                    Siguiente
+                                                                                </button>
+                                                                            `;
 
 
                         siguiente
@@ -9744,7 +9920,7 @@
                             )
                             .addEventListener(
                                 "click",
-                                function () {
+                                function() {
 
                                     if (
                                         paginaActual <
@@ -9790,7 +9966,7 @@
             <script>
                 document.addEventListener(
                     "DOMContentLoaded",
-                    function () {
+                    function() {
 
                         const modalElement =
                             document.getElementById(

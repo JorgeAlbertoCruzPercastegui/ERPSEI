@@ -71,6 +71,54 @@
     </section>
 
 
+    @if (Model.MostrarControlPagosHu6)
+    {
+        <section class="adq-panel mb-4">
+            <div class="adq-panel-header">
+                <div>
+                    <span class="adq-panel-kicker">HU #6</span><h2>Solicitudes de pago autorizadas</h2>
+                    <p>Documentos con cuatro firmas y archivo de pago verificados.</p>
+                </div>
+                <strong>@Model.PagosVerificadosHu6.Count</strong>
+            </div>
+            @if (Model.PagosNoVerificadosHu6 > 0)
+            {
+                <div class="alert alert-warning m-3">Documentos pendientes de revisión de integridad: @Model.PagosNoVerificadosHu6.</div>
+            }
+            <div class="table-responsive">
+                <table class="table adq-table align-middle">
+                    <thead><tr><th>Folio</th><th>Solicitud</th><th>Área</th><th>Estatus</th><th>PDF</th></tr></thead>
+                    <tbody>
+                        @foreach (var pago in Model.PagosVerificadosHu6)
+                        {
+                            <tr>
+                                <td>@pago.Folio</td>
+                                <td>@pago.Titulo</td>
+                                <td>@pago.Area</td>
+                                <td>@pago.Estatus</td>
+                                <td>
+                                    @if (Model.DescargarControlPagosHu6)
+                                    {
+                                        <a asp-area="ERP" asp-page="/Adquisiciones/Index" asp-page-handler="DescargarSolicitudPago" asp-route-solicitudId="@pago.Id" class="btn btn-sm btn-outline-primary">Descargar PDF</a>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="text-muted">Sin permiso de descarga</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.PagosVerificadosHu6.Count == 0)
+                        {
+                            <tr><td colspan="5" class="text-center text-muted">No hay documentos autorizados y verificados.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
     <!-- ====================================================== -->
     <!-- CENTRO DE CONTROL -->
     <!-- ====================================================== -->

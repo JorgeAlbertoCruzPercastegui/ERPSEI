@@ -2,7 +2,7 @@
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    function() {
 
         // =========================================================
         // PERMISOS ABAC
@@ -1398,7 +1398,7 @@ document.addEventListener(
         modalSolicitudPagoElementAdq
             ?.addEventListener(
                 "hidden.bs.modal",
-                function () {
+                function() {
 
                     // =====================================================
                     // RECALCULAR BOTONES DE COTIZACIONES
@@ -1504,7 +1504,7 @@ document.addEventListener(
                     ".cotizacion-precio-unitario-adq"
                 )
                 .forEach(
-                    function (
+                    function(
                         input
                     ) {
 
@@ -1523,7 +1523,7 @@ document.addEventListener(
                     ".cotizacion-evidencia-adq"
                 )
                 .forEach(
-                    function (
+                    function(
                         input
                     ) {
 
@@ -1716,7 +1716,7 @@ document.addEventListener(
                     ".adq-signature-approval-option"
                 )
                 .forEach(
-                    function (
+                    function(
                         elemento
                     ) {
 
@@ -1788,7 +1788,7 @@ document.addEventListener(
 
 
             firmas.forEach(
-                function (
+                function(
                     firma
                 ) {
 
@@ -1827,7 +1827,7 @@ document.addEventListener(
 
                     tarjeta.addEventListener(
                         "click",
-                        function () {
+                        function() {
 
                             seleccionarFirmaDecisionAdq(
                                 firma.id
@@ -1845,7 +1845,7 @@ document.addEventListener(
 
             const predeterminada =
                 firmas.find(
-                    function (
+                    function(
                         firma
                     ) {
 
@@ -2181,7 +2181,7 @@ document.addEventListener(
         formCotizacionAdq
             ?.addEventListener(
                 "submit",
-                function (
+                function(
                     event
                 ) {
 
@@ -2867,7 +2867,7 @@ document.addEventListener(
 
 
             etapas.forEach(
-                function (
+                function(
                     etapa,
                     indice
                 ) {
@@ -3278,7 +3278,7 @@ document.addEventListener(
 
 
             etapas.forEach(
-                function (
+                function(
                     etapa,
                     indice
                 ) {
@@ -4348,7 +4348,7 @@ document.addEventListener(
 
 
                 const colocarTexto =
-                    function (
+                    function(
                         elemento,
                         valor
                     ) {
@@ -4773,7 +4773,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -4904,7 +4904,7 @@ document.addEventListener(
         btnVerSolicitudDesdeAprobacionAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     const solicitudId =
                         Number(
@@ -4935,7 +4935,7 @@ document.addEventListener(
                     modalAprobacionPresupuestalElementAdq
                         ?.addEventListener(
                             "hidden.bs.modal",
-                            function () {
+                            function() {
 
                                 const botonTemporal =
                                     document.createElement(
@@ -4982,7 +4982,7 @@ document.addEventListener(
         btnVerChatDesdeAprobacionAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     const solicitudId =
                         Number(
@@ -5019,7 +5019,7 @@ document.addEventListener(
                     modalAprobacionPresupuestalElementAdq
                         ?.addEventListener(
                             "hidden.bs.modal",
-                            function () {
+                            function() {
 
                                 if (
                                     modalVerSolicitudElementAdq
@@ -5028,7 +5028,7 @@ document.addEventListener(
                                     modalVerSolicitudElementAdq
                                         .addEventListener(
                                             "shown.bs.modal",
-                                            function () {
+                                            function() {
 
                                                 const tabSeguimiento =
                                                     document.getElementById(
@@ -5106,7 +5106,7 @@ document.addEventListener(
         modalVerSolicitudElementDesdePresupuestoAdq
             ?.addEventListener(
                 "hidden.bs.modal",
-                function () {
+                function() {
 
                     if (
                         !reabrirAprobacionDespuesDetalleAdq
@@ -5407,7 +5407,7 @@ document.addEventListener(
 
 
                 setTimeout(
-                    function () {
+                    function() {
 
                         window.location.reload();
 
@@ -5466,7 +5466,7 @@ document.addEventListener(
         btnAprobarAprobacionPresupuestalAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     abrirConfirmacionDecisionPresupuestalAdq(
                         {
@@ -5511,7 +5511,7 @@ document.addEventListener(
         btnDeclinarAprobacionPresupuestalAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     abrirConfirmacionDecisionPresupuestalAdq(
                         {
@@ -5555,7 +5555,7 @@ document.addEventListener(
         btnConfirmarDecisionPresupuestalAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     await abrirFirmaDecisionPresupuestalAdq();
 
@@ -5571,7 +5571,7 @@ document.addEventListener(
         btnVerPinDecisionPresupuestalAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         !pinDecisionPresupuestalAdq
@@ -5605,7 +5605,7 @@ document.addEventListener(
         btnFirmarDecisionPresupuestalAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     const datos =
                         decisionPresupuestalPendienteAdq;
@@ -6016,7 +6016,7 @@ document.addEventListener(
 
                         temporizadorResultadoPresupuestalAdq =
                             setTimeout(
-                                function () {
+                                function() {
 
                                     bootstrap.Modal
                                         .getInstance(
@@ -6080,7 +6080,7 @@ document.addEventListener(
         modalFirmaDecisionPresupuestalElementAdq
             ?.addEventListener(
                 "hidden.bs.modal",
-                function () {
+                function() {
 
                     if (
                         pinDecisionPresupuestalAdq
@@ -6117,7 +6117,7 @@ document.addEventListener(
                             ".adq-signature-approval-option"
                         )
                         .forEach(
-                            function (
+                            function(
                                 elemento
                             ) {
 
@@ -6150,7 +6150,7 @@ document.addEventListener(
         modalResultadoDecisionPresupuestalElementAdq
             ?.addEventListener(
                 "hidden.bs.modal",
-                function () {
+                function() {
 
                     if (
                         temporizadorResultadoPresupuestalAdq
@@ -6591,6 +6591,11 @@ document.addEventListener(
             }
         }
 
+        const selectorAreaConfiguracionHu6 = document.getElementById("areaConfiguracionAprobadoresAdq");
+        let areaConfiguracionCargadaHu6 = 0;
+        let versionConfiguracionHu6 = 0;
+        selectorAreaConfiguracionHu6?.addEventListener("change", cargarConfiguracionAprobadoresAdq);
+
         async function cargarConfiguracionAprobadoresAdq() {
 
             if (
@@ -6599,6 +6604,16 @@ document.addEventListener(
                 return;
             }
 
+
+            const areaIdHu6 = Number(selectorAreaConfiguracionHu6?.value || 0);
+            const versionHu6 = ++versionConfiguracionHu6;
+            areaConfiguracionCargadaHu6 = 0;
+            etapasConfiguracionAprobadoresAdq = [];
+            if (btnGuardarConfiguracionAprobadoresAdq) btnGuardarConfiguracionAprobadoresAdq.disabled = true;
+            if (!areaIdHu6) {
+                tablaConfiguracionAprobadoresAdqBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Selecciona un área.</td></tr>';
+                return;
+            }
 
             tablaConfiguracionAprobadoresAdqBody.innerHTML =
                 `
@@ -6621,7 +6636,7 @@ document.addEventListener(
 
                 const respuesta =
                     await fetch(
-                        `${window.location.pathname}?handler=ConfiguracionAprobacionPresupuestal`,
+                        `${window.location.pathname}?handler=ConfiguracionAprobacionPresupuestal&areaId=${areaIdHu6}`,
                         {
                             method:
                                 "GET",
@@ -6653,6 +6668,7 @@ document.addEventListener(
                 }
 
 
+                if (versionHu6 !== versionConfiguracionHu6) return;
                 usuariosResponsablesConfiguracionAdq =
                     resultado.usuariosAprobadores
                     ??
@@ -6672,12 +6688,15 @@ document.addEventListener(
 
 
                 renderizarConfiguracionAprobadoresAdq();
+                areaConfiguracionCargadaHu6 = areaIdHu6;
+                if (btnGuardarConfiguracionAprobadoresAdq) btnGuardarConfiguracionAprobadoresAdq.disabled = false;
 
             }
             catch (
             error
             ) {
 
+                if (versionHu6 !== versionConfiguracionHu6) return;
                 console.error(
                     error
                 );
@@ -6710,7 +6729,7 @@ document.addEventListener(
         btnConfigurarAprobadoresAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     if (
                         !modalConfigurarAprobadoresElementAdq
@@ -6735,7 +6754,7 @@ document.addEventListener(
         tablaConfiguracionAprobadoresAdqBody
             ?.addEventListener(
                 "change",
-                function (
+                function(
                     event
                 ) {
 
@@ -6874,8 +6893,10 @@ document.addEventListener(
         btnGuardarConfiguracionAprobadoresAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
+                    const areaGuardarHu6 = Number(selectorAreaConfiguracionHu6?.value || 0);
+                    if (!areaGuardarHu6 || areaGuardarHu6 !== areaConfiguracionCargadaHu6) return;
                     const etapas =
                         obtenerConfiguracionAprobadoresFormularioAdq();
 
@@ -6983,6 +7004,8 @@ document.addEventListener(
                     }
 
 
+                    if (areaGuardarHu6 !== Number(selectorAreaConfiguracionHu6?.value || 0) || areaGuardarHu6 !== areaConfiguracionCargadaHu6) return;
+                    if (selectorAreaConfiguracionHu6) selectorAreaConfiguracionHu6.disabled = true;
                     const htmlOriginal =
                         btnGuardarConfiguracionAprobadoresAdq
                             .innerHTML;
@@ -7032,6 +7055,7 @@ document.addEventListener(
                                     body:
                                         JSON.stringify(
                                             {
+                                                areaId: areaGuardarHu6,
                                                 etapas
                                             }
                                         )
@@ -7088,6 +7112,7 @@ document.addEventListener(
                     }
                     finally {
 
+                        if (selectorAreaConfiguracionHu6) selectorAreaConfiguracionHu6.disabled = false;
                         btnGuardarConfiguracionAprobadoresAdq.disabled =
                             false;
 
@@ -7100,7 +7125,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -7184,7 +7209,7 @@ document.addEventListener(
 
 
                     setTimeout(
-                        function () {
+                        function() {
 
                             const tabSeguimiento =
                                 document.querySelector(
@@ -7296,7 +7321,7 @@ document.addEventListener(
 
 
             usuarios.forEach(
-                function (
+                function(
                     usuario
                 ) {
 
@@ -7413,6 +7438,14 @@ document.addEventListener(
 
                 </td>
 
+
+                <td class="text-center">
+                    ${crearCheckboxPermisoAdq(
+                        usuario.id,
+                        "puedeAutoAutorizarSolicitud",
+                        usuario.puedeAutoAutorizarSolicitud
+                    )}
+                </td>
 
                 <td class="text-center">
 
@@ -7552,7 +7585,7 @@ document.addEventListener(
         tablaPermisosAdquisicionesAdqBody
             ?.addEventListener(
                 "change",
-                function (
+                function(
                     event
                 ) {
 
@@ -7615,7 +7648,7 @@ document.addEventListener(
 
 
                         permisosOperativos.forEach(
-                            function (
+                            function(
                                 checkbox
                             ) {
 
@@ -7757,7 +7790,7 @@ document.addEventListener(
         btnPermisosAdquisicionesAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     if (
                         !modalPermisosAdquisicionesElementAdq
@@ -7827,7 +7860,7 @@ document.addEventListener(
 
 
             filas.forEach(
-                function (
+                function(
                     fila
                 ) {
 
@@ -7867,7 +7900,7 @@ document.addEventListener(
         btnLimpiarBusquedaPermisosAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         buscarPermisoAdquisicionesAdq
@@ -7918,7 +7951,7 @@ document.addEventListener(
 
 
             usuariosPermisosModificadosAdq.forEach(
-                function (
+                function(
                     usuarioId
                 ) {
 
@@ -8006,6 +8039,8 @@ document.addEventListener(
 
                             puedeDescargar:
                                 puedeDescargar,
+
+                            puedeAutoAutorizarSolicitud: obtenerCheckboxPermisoAdq(fila, "puedeAutoAutorizarSolicitud"),
 
                             puedeTodo:
                                 puedeTodo
@@ -8218,7 +8253,7 @@ document.addEventListener(
         } = {}) {
 
             return new Promise(
-                function (resolve) {
+                function(resolve) {
 
                     let overlay =
                         document.getElementById(
@@ -8365,7 +8400,7 @@ document.addEventListener(
 
 
                         setTimeout(
-                            function () {
+                            function() {
 
                                 overlay.remove();
 
@@ -8405,7 +8440,7 @@ document.addEventListener(
                     btnAceptar
                         ?.addEventListener(
                             "click",
-                            function () {
+                            function() {
 
                                 cerrar(
                                     true
@@ -8417,7 +8452,7 @@ document.addEventListener(
                     btnCancelar
                         ?.addEventListener(
                             "click",
-                            function () {
+                            function() {
 
                                 cerrar(
                                     false
@@ -8428,7 +8463,7 @@ document.addEventListener(
 
                     overlay.addEventListener(
                         "click",
-                        function (
+                        function(
                             event
                         ) {
 
@@ -8452,7 +8487,7 @@ document.addEventListener(
 
 
                     requestAnimationFrame(
-                        function () {
+                        function() {
 
                             overlay.classList.add(
                                 "adq-confirm-overlay-visible"
@@ -8486,7 +8521,7 @@ document.addEventListener(
 
             archivosCotizacionSeleccionadosAdq
                 .forEach(
-                    function (
+                    function(
                         archivo
                     ) {
 
@@ -8520,7 +8555,7 @@ document.addEventListener(
 
             archivosCotizacionEliminadosAdq
                 .forEach(
-                    function (
+                    function(
                         archivoId
                     ) {
 
@@ -8582,7 +8617,7 @@ document.addEventListener(
             const archivosExistentes =
                 archivosExistentesTodos
                     .filter(
-                        function (
+                        function(
                             archivo
                         ) {
 
@@ -8674,7 +8709,7 @@ document.addEventListener(
 
 
                 archivosExistentes.forEach(
-                    function (
+                    function(
                         archivo
                     ) {
 
@@ -8805,7 +8840,7 @@ document.addEventListener(
 
 
                 archivosCotizacionSeleccionadosAdq.forEach(
-                    function (
+                    function(
                         archivo,
                         index
                     ) {
@@ -8922,7 +8957,7 @@ document.addEventListener(
         archivosCotizacionAdq
             ?.addEventListener(
                 "change",
-                function () {
+                function() {
 
                     const nuevosArchivos =
                         Array.from(
@@ -8942,7 +8977,7 @@ document.addEventListener(
 
 
                     nuevosArchivos.forEach(
-                        function (
+                        function(
                             archivo
                         ) {
 
@@ -9021,7 +9056,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -9073,7 +9108,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -9208,7 +9243,7 @@ document.addEventListener(
 
 
             return cotizaciones.find(
-                function (
+                function(
                     cotizacion
                 ) {
 
@@ -9327,7 +9362,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -9551,7 +9586,7 @@ document.addEventListener(
         btnConfirmarPresupuestoAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     const solicitudId =
                         Number(
@@ -9982,7 +10017,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -10215,7 +10250,7 @@ document.addEventListener(
 
             return archivos
                 .map(
-                    function (
+                    function(
                         archivo
                     ) {
 
@@ -10271,7 +10306,7 @@ document.addEventListener(
 
 
             detalles.sort(
-                function (
+                function(
                     a,
                     b
                 ) {
@@ -10303,7 +10338,7 @@ document.addEventListener(
 
 
             filas.forEach(
-                function (
+                function(
                     fila,
                     index
                 ) {
@@ -10392,7 +10427,7 @@ document.addEventListener(
                         const archivosHtml =
                             evidencias
                                 .map(
-                                    function (
+                                    function(
                                         archivo
                                     ) {
 
@@ -10501,7 +10536,7 @@ document.addEventListener(
             `
                     : detalles
                         .map(
-                            function (
+                            function(
                                 detalle
                             ) {
 
@@ -10790,7 +10825,7 @@ document.addEventListener(
 
             const totales =
                 cotizaciones.map(
-                    function (
+                    function(
                         cotizacion
                     ) {
 
@@ -10836,7 +10871,7 @@ document.addEventListener(
 
             const cotizacionesSeleccionadas =
                 cotizaciones.filter(
-                    function (
+                    function(
                         cotizacion
                     ) {
 
@@ -10923,7 +10958,7 @@ document.addEventListener(
             // =====================================================
 
             cotizaciones.forEach(
-                function (
+                function(
                     cotizacion,
                     index
                 ) {
@@ -11482,7 +11517,7 @@ document.addEventListener(
                     ".btnSeleccionarCotizacionAdq"
                 )
                 .forEach(
-                    function (
+                    function(
                         boton
                     ) {
 
@@ -11508,7 +11543,7 @@ document.addEventListener(
                 )
             )
                 .map(
-                    function (
+                    function(
                         checkbox
                     ) {
 
@@ -11520,7 +11555,7 @@ document.addEventListener(
                     }
                 )
                 .filter(
-                    function (
+                    function(
                         id
                     ) {
 
@@ -11598,7 +11633,7 @@ document.addEventListener(
 
         document.addEventListener(
             "change",
-            function (
+            function(
                 event
             ) {
 
@@ -11638,7 +11673,7 @@ document.addEventListener(
         btnEditarCotizacionSeleccionadaAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     if (
                         !tienePermisoAbacAdq(
@@ -11809,7 +11844,7 @@ document.addEventListener(
                     const cotizacion =
                         cotizacionesRegistradasActualesAdq
                             .find(
-                                function (
+                                function(
                                     item
                                 ) {
 
@@ -12033,7 +12068,7 @@ document.addEventListener(
 
 
                     detallesCotizacion.sort(
-                        function (
+                        function(
                             a,
                             b
                         ) {
@@ -12065,7 +12100,7 @@ document.addEventListener(
 
 
                     filasDetalles.forEach(
-                        function (
+                        function(
                             fila,
                             index
                         ) {
@@ -12204,7 +12239,7 @@ document.addEventListener(
                     // =====================================================
 
                     setTimeout(
-                        function () {
+                        function() {
 
                             seccionCapturaProveedorAdq
                                 ?.scrollIntoView(
@@ -12230,7 +12265,7 @@ document.addEventListener(
         btnEliminarCotizacionesSeleccionadasAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     if (
                         !tienePermisoAbacAdq(
@@ -12271,7 +12306,7 @@ document.addEventListener(
                     const cotizacionesSeleccionadas =
                         cotizacionesRegistradasActualesAdq
                             .filter(
-                                function (
+                                function(
                                     cotizacion
                                 ) {
 
@@ -12289,7 +12324,7 @@ document.addEventListener(
                     const proveedoresHtml =
                         cotizacionesSeleccionadas
                             .map(
-                                function (
+                                function(
                                     cotizacion
                                 ) {
 
@@ -12435,7 +12470,7 @@ document.addEventListener(
 
 
                     seleccionadas.forEach(
-                        function (
+                        function(
                             cotizacionId
                         ) {
 
@@ -12756,7 +12791,7 @@ document.addEventListener(
         btnCancelarEdicionCotizacionAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     cotizacionEditandoActualAdq =
                         null;
@@ -12860,7 +12895,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -12924,7 +12959,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -13118,7 +13153,7 @@ document.addEventListener(
         btnFinalizarCotizacionAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     if (
                         !tienePermisoAbacAdq(
@@ -13330,7 +13365,7 @@ document.addEventListener(
 
 
             camposLimpiar.forEach(
-                function (
+                function(
                     id
                 ) {
 
@@ -13407,7 +13442,7 @@ document.addEventListener(
              * a los datos del nuevo proveedor.
              */
             setTimeout(
-                function () {
+                function() {
 
                     seccionCapturaProveedorAdq
                         ?.scrollIntoView(
@@ -13480,7 +13515,7 @@ document.addEventListener(
                     ".cotizacion-precio-unitario-adq"
                 )
                 .forEach(
-                    function (input) {
+                    function(input) {
 
                         const cantidad =
                             Number(
@@ -13660,7 +13695,7 @@ document.addEventListener(
 
 
             detalles.forEach(
-                function (
+                function(
                     detalle,
                     index
                 ) {
@@ -13789,7 +13824,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -13999,7 +14034,7 @@ document.addEventListener(
 
         document.addEventListener(
             "input",
-            function (
+            function(
                 event
             ) {
 
@@ -14034,7 +14069,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (event) {
+            function(event) {
 
                 const botonChat =
                     event.target.closest(
@@ -14069,7 +14104,7 @@ document.addEventListener(
 
 
                 setTimeout(
-                    function () {
+                    function() {
 
                         const tabChat =
                             document.querySelector(
@@ -14182,7 +14217,7 @@ document.addEventListener(
 
 
             comentarios.forEach(
-                function (
+                function(
                     comentario
                 ) {
 
@@ -14249,7 +14284,7 @@ document.addEventListener(
 
                         ${adjuntos
                                 .map(
-                                    function (
+                                    function(
                                         archivo
                                     ) {
 
@@ -14395,7 +14430,7 @@ document.addEventListener(
 
 
             historial.forEach(
-                function (
+                function(
                     evento
                 ) {
 
@@ -14564,7 +14599,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (event) {
+            function(event) {
 
                 const boton =
                     event.target.closest(
@@ -15010,7 +15045,7 @@ document.addEventListener(
                     ".adq-product-item"
                 )
                 .forEach(
-                    function (item) {
+                    function(item) {
 
                         const producto =
                             item.querySelector(
@@ -15151,7 +15186,7 @@ document.addEventListener(
 
 
                 borrador.productos.forEach(
-                    function (producto) {
+                    function(producto) {
 
                         agregarProductoExistenteAdq({
                             productoServicio:
@@ -15421,7 +15456,7 @@ document.addEventListener(
 
 
                 setTimeout(
-                    function () {
+                    function() {
 
                         overlay.remove();
 
@@ -15439,7 +15474,7 @@ document.addEventListener(
 
 
             requestAnimationFrame(
-                function () {
+                function() {
 
                     overlay.classList.add(
                         "adq-confirm-overlay-visible"
@@ -15479,7 +15514,7 @@ document.addEventListener(
 
             archivosComentarioSeleccionadosAdq
                 .forEach(
-                    function (
+                    function(
                         archivo,
                         indice
                     ) {
@@ -15562,7 +15597,7 @@ document.addEventListener(
 
 
             archivosNuevos.forEach(
-                function (
+                function(
                     archivo
                 ) {
 
@@ -15689,7 +15724,7 @@ document.addEventListener(
         btnSeleccionarAdjuntoComentarioAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     inputArchivoComentarioAdq
                         ?.click();
@@ -15700,7 +15735,7 @@ document.addEventListener(
         inputArchivoComentarioAdq
             ?.addEventListener(
                 "change",
-                function () {
+                function() {
 
                     const archivos =
                         Array.from(
@@ -15731,7 +15766,7 @@ document.addEventListener(
         listaAdjuntosComentarioAdq
             ?.addEventListener(
                 "click",
-                function (
+                function(
                     event
                 ) {
 
@@ -16094,7 +16129,7 @@ document.addEventListener(
 
 
             productos.forEach(
-                function (
+                function(
                     producto,
                     indice
                 ) {
@@ -16107,7 +16142,7 @@ document.addEventListener(
 
 
                     campos.forEach(
-                        function (
+                        function(
                             campo
                         ) {
 
@@ -16285,7 +16320,7 @@ document.addEventListener(
         contenedorDetalles
             ?.addEventListener(
                 "click",
-                function (
+                function(
                     event
                 ) {
 
@@ -16310,7 +16345,7 @@ document.addEventListener(
         inputProducto
             ?.addEventListener(
                 "keydown",
-                function (
+                function(
                     event
                 ) {
 
@@ -16332,7 +16367,7 @@ document.addEventListener(
         inputDescripcionProducto
             ?.addEventListener(
                 "keydown",
-                function (
+                function(
                     event
                 ) {
 
@@ -16427,7 +16462,7 @@ document.addEventListener(
 
             archivosSeleccionadosAdq
                 .forEach(
-                    function (
+                    function(
                         archivo
                     ) {
 
@@ -16466,7 +16501,7 @@ document.addEventListener(
 
             adjuntosEliminarIdsAdq
                 .forEach(
-                    function (
+                    function(
                         id
                     ) {
 
@@ -16515,7 +16550,7 @@ document.addEventListener(
             const existentesActivos =
                 archivosExistentesAdq
                     .filter(
-                        function (
+                        function(
                             archivo
                         ) {
 
@@ -16579,7 +16614,7 @@ document.addEventListener(
 
             existentesActivos
                 .forEach(
-                    function (
+                    function(
                         archivo
                     ) {
 
@@ -16663,7 +16698,7 @@ document.addEventListener(
 
             archivosSeleccionadosAdq
                 .forEach(
-                    function (
+                    function(
                         archivo,
                         indice
                     ) {
@@ -16786,7 +16821,7 @@ document.addEventListener(
 
             archivosNuevos
                 .forEach(
-                    function (
+                    function(
                         archivo
                     ) {
 
@@ -16884,7 +16919,7 @@ document.addEventListener(
         btnAgregarArchivos
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     inputArchivos
                         ?.click();
@@ -16896,7 +16931,7 @@ document.addEventListener(
         inputArchivos
             ?.addEventListener(
                 "change",
-                function () {
+                function() {
 
                     const archivos =
                         Array.from(
@@ -16916,7 +16951,7 @@ document.addEventListener(
         listaArchivos
             ?.addEventListener(
                 "click",
-                function (
+                function(
                     event
                 ) {
 
@@ -16959,7 +16994,7 @@ document.addEventListener(
         listaArchivos
             ?.addEventListener(
                 "click",
-                function (
+                function(
                     event
                 ) {
 
@@ -17021,7 +17056,7 @@ document.addEventListener(
 
             return archivosSeleccionadosAdq
                 .every(
-                    function (
+                    function(
                         archivo
                     ) {
 
@@ -17332,7 +17367,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -17431,7 +17466,7 @@ document.addEventListener(
 
                             intervaloSeguimientoAdq =
                                 setInterval(
-                                    async function () {
+                                    async function() {
 
                                         if (
                                             !solicitudDetalleActualAdq?.id
@@ -17563,7 +17598,7 @@ document.addEventListener(
 
                     solicitud.detalles
                         .forEach(
-                            function (
+                            function(
                                 detalle
                             ) {
 
@@ -17679,7 +17714,7 @@ document.addEventListener(
 
                         solicitud.adjuntos
                             .forEach(
-                                function (
+                                function(
                                     archivo
                                 ) {
 
@@ -18135,7 +18170,7 @@ document.addEventListener(
         modalVerSolicitudElement
             ?.addEventListener(
                 "hidden.bs.modal",
-                function () {
+                function() {
 
                     if (
                         intervaloSeguimientoAdq
@@ -18186,7 +18221,7 @@ document.addEventListener(
         btnEditarDesdeDetalle
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         !solicitudDetalleActualAdq
@@ -18223,7 +18258,7 @@ document.addEventListener(
         btnCancelarDesdeDetalle
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         !solicitudDetalleActualAdq
@@ -18316,7 +18351,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -18345,7 +18380,7 @@ document.addEventListener(
         btnEnviarDesdeDetalle
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         !solicitudDetalleActualAdq ||
@@ -18382,7 +18417,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -18444,7 +18479,7 @@ document.addEventListener(
                         '[name="Input.TipoDocumentoSolicitud"]'
                     )
                         .forEach(
-                            function (
+                            function(
                                 radio
                             ) {
 
@@ -18480,7 +18515,7 @@ document.addEventListener(
 
                     solicitud.detalles
                         .forEach(
-                            function (
+                            function(
                                 detalle
                             ) {
 
@@ -18501,7 +18536,7 @@ document.addEventListener(
                         )
                             ? solicitud.adjuntos
                                 .map(
-                                    function (
+                                    function(
                                         archivo
                                     ) {
 
@@ -18662,7 +18697,7 @@ document.addEventListener(
         btnConfirmarGenerarSolicitudPagoAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     const solicitudId =
                         Number(
@@ -18978,7 +19013,7 @@ document.addEventListener(
 
 
                         setTimeout(
-                            function () {
+                            function() {
 
                                 window.location.reload();
 
@@ -19052,7 +19087,7 @@ document.addEventListener(
 
             const filasFiltradas =
                 filas.filter(
-                    function (
+                    function(
                         fila
                     ) {
 
@@ -19129,7 +19164,7 @@ document.addEventListener(
              */
             todasLasFilas
                 .forEach(
-                    function (
+                    function(
                         fila
                     ) {
 
@@ -19194,7 +19229,7 @@ document.addEventListener(
                     fin
                 )
                 .forEach(
-                    function (
+                    function(
                         fila
                     ) {
 
@@ -19427,7 +19462,7 @@ document.addEventListener(
 
             boton.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         deshabilitado
@@ -19478,7 +19513,7 @@ document.addEventListener(
         filtroBusqueda
             ?.addEventListener(
                 "input",
-                function () {
+                function() {
 
                     aplicarFiltros(
                         true
@@ -19490,7 +19525,7 @@ document.addEventListener(
         filtroEstatus
             ?.addEventListener(
                 "change",
-                function () {
+                function() {
 
                     aplicarFiltros(
                         true
@@ -19502,7 +19537,7 @@ document.addEventListener(
         btnLimpiarFiltros
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         filtroBusqueda
@@ -19541,7 +19576,7 @@ document.addEventListener(
         formulario
             ?.addEventListener(
                 "submit",
-                function () {
+                function() {
 
                     sincronizarInputArchivosAdq();
 
@@ -19549,7 +19584,7 @@ document.addEventListener(
 
 
                     setTimeout(
-                        function () {
+                        function() {
 
                             const botones =
                                 formulario.querySelectorAll(
@@ -19558,7 +19593,7 @@ document.addEventListener(
 
 
                             botones.forEach(
-                                function (
+                                function(
                                     boton
                                 ) {
 
@@ -19580,7 +19615,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -19771,7 +19806,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -19791,6 +19826,14 @@ document.addEventListener(
                 ).value =
                     boton.dataset.id;
 
+
+                const selectorAgenteHu6 = document.querySelector(
+                    '#modalAsignarAdquisiciones select[name="UsuarioAsignadoAdqId"]'
+                );
+                if (selectorAgenteHu6) {
+                    const candidatos = Array.from(selectorAgenteHu6.options).filter(o => o.value && !o.disabled);
+                    selectorAgenteHu6.value = candidatos.length === 1 ? candidatos[0].value : "";
+                }
 
                 document.getElementById(
                     "folioAsignarAdq"
@@ -19821,7 +19864,7 @@ document.addEventListener(
         btnEnviarComentarioAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     const solicitudId =
                         Number(
@@ -19908,7 +19951,7 @@ document.addEventListener(
                      */
                     archivosComentarioSeleccionadosAdq
                         .forEach(
-                            function (
+                            function(
                                 archivo
                             ) {
 
@@ -20065,7 +20108,7 @@ document.addEventListener(
 
             const filasFiltradas =
                 filas.filter(
-                    function (
+                    function(
                         fila
                     ) {
 
@@ -20147,7 +20190,7 @@ document.addEventListener(
         ) {
 
             todasLasFilas.forEach(
-                function (
+                function(
                     fila
                 ) {
 
@@ -20199,7 +20242,7 @@ document.addEventListener(
                     fin
                 )
                 .forEach(
-                    function (
+                    function(
                         fila
                     ) {
 
@@ -20397,7 +20440,7 @@ document.addEventListener(
 
             boton.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         deshabilitado
@@ -20445,7 +20488,7 @@ document.addEventListener(
         filtroHistorialAprobacionesAdq
             ?.addEventListener(
                 "input",
-                function () {
+                function() {
 
                     aplicarFiltrosHistorialAdq(
                         true
@@ -20456,7 +20499,7 @@ document.addEventListener(
         filtroDecisionHistorialAdq
             ?.addEventListener(
                 "change",
-                function () {
+                function() {
 
                     aplicarFiltrosHistorialAdq(
                         true
@@ -20467,7 +20510,7 @@ document.addEventListener(
         btnLimpiarHistorialAprobacionesAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         filtroHistorialAprobacionesAdq
@@ -21134,7 +21177,7 @@ document.addEventListener(
                         '[name="monedaSolicitudPagoAdq"]'
                     )
                     .forEach(
-                        function (
+                        function(
                             radio
                         ) {
 
@@ -21154,7 +21197,7 @@ document.addEventListener(
                         '[name="formaPagoSolicitudPagoAdq"]'
                     )
                     .forEach(
-                        function (
+                        function(
                             radio
                         ) {
 
@@ -21441,7 +21484,7 @@ document.addEventListener(
         btnGenerarSolicitudPagoDesdeDetalle
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     const solicitudId =
                         Number(
@@ -21692,7 +21735,7 @@ document.addEventListener(
         )
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     mostrarAdvertenciaAdq(
                         "PIN protegido",
@@ -21969,7 +22012,7 @@ document.addEventListener(
         btnMisFirmasAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     modalMisFirmasAdq =
                         bootstrap.Modal
@@ -21993,7 +22036,7 @@ document.addEventListener(
         btnConfigurarPinFirmaAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         pinFirmaAdq
@@ -22022,7 +22065,7 @@ document.addEventListener(
 
 
                     setTimeout(
-                        function () {
+                        function() {
 
                             pinFirmaAdq
                                 ?.focus();
@@ -22039,7 +22082,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -22101,7 +22144,7 @@ document.addEventListener(
         btnGuardarPinFirmaAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     const pin =
                         pinFirmaAdq
@@ -22283,7 +22326,7 @@ document.addEventListener(
         btnNuevaFirmaAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     reiniciarCapturaFirmaAdq();
 
@@ -22296,7 +22339,7 @@ document.addEventListener(
 
 
                     setTimeout(
-                        function () {
+                        function() {
 
                             inicializarCanvasFirmaAdq();
 
@@ -22329,7 +22372,7 @@ document.addEventListener(
         btnCancelarNuevaFirmaAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     seccionNuevaFirmaAdq
                         ?.classList
@@ -22349,7 +22392,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -22557,7 +22600,7 @@ document.addEventListener(
         canvasFirmaAdq
             ?.addEventListener(
                 "pointerdown",
-                function (
+                function(
                     event
                 ) {
 
@@ -22604,7 +22647,7 @@ document.addEventListener(
         canvasFirmaAdq
             ?.addEventListener(
                 "pointermove",
-                function (
+                function(
                     event
                 ) {
 
@@ -22682,7 +22725,7 @@ document.addEventListener(
         btnLimpiarFirmaCanvasAdq
             ?.addEventListener(
                 "click",
-                function () {
+                function() {
 
                     if (
                         !canvasFirmaAdq
@@ -22715,7 +22758,7 @@ document.addEventListener(
         archivoFirmaAdq
             ?.addEventListener(
                 "change",
-                function () {
+                function() {
 
                     firmaArchivoBase64Adq =
                         "";
@@ -22789,7 +22832,7 @@ document.addEventListener(
 
 
                     lector.onload =
-                        function (
+                        function(
                             event
                         ) {
 
@@ -22974,7 +23017,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            function (
+            function(
                 event
             ) {
 
@@ -23160,7 +23203,7 @@ document.addEventListener(
         btnGuardarFirmaUsuarioAdq
             ?.addEventListener(
                 "click",
-                async function () {
+                async function() {
 
                     const nombre =
                         nombreFirmaAdq
@@ -23350,7 +23393,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            async function (
+            async function(
                 event
             ) {
 
@@ -23810,7 +23853,7 @@ document.addEventListener(
             ) {
 
                 setTimeout(
-                    function () {
+                    function() {
 
                         botonAprobacionAdq.click();
 
@@ -23841,7 +23884,7 @@ document.addEventListener(
             ) {
 
                 setTimeout(
-                    function () {
+                    function() {
 
                         botonCotizacionAdq.click();
 
@@ -23872,7 +23915,7 @@ document.addEventListener(
             ) {
 
                 setTimeout(
-                    function () {
+                    function() {
 
                         botonSolicitudAdq.click();
 
@@ -24066,7 +24109,7 @@ document.addEventListener(
                 '[data-bs-toggle="tooltip"]'
             )
             .forEach(
-                function (
+                function(
                     elemento
                 ) {
 
@@ -24136,7 +24179,7 @@ document.addEventListener(
             // =====================================================
 
             setTimeout(
-                function () {
+                function() {
 
                     renumerarProductosAdq();
 

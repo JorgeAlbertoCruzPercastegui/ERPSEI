@@ -1,4 +1,5 @@
 ﻿using ERPSEI.Data;
+using ERPSEI.Services.Adquisiciones;
 using ERPSEI.Data.Entities.Adquisiciones;
 using ERPSEI.Data.Entities.Usuarios;
 using ERPSEI.Data.Managers.Usuarios;
@@ -14,11 +15,19 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
     {
         private readonly ApplicationDbContext _context;
         private readonly AppUserManager _userManager;
+        private readonly IAdquisicionesAlcanceService _alcanceService;
+        private AdquisicionesAlcance _alcance = new();
+        public bool MostrarControlPagosHu6 { get; private set; }
+        public bool DescargarControlPagosHu6 { get; private set; }
+        public List<DashboardOrdenDto> PagosVerificadosHu6 { get; private set; } = new();
+        public int PagosNoVerificadosHu6 { get; private set; }
+
 
 
         public DashboardModel(
             ApplicationDbContext context,
-            AppUserManager userManager
+            AppUserManager userManager,
+            IAdquisicionesAlcanceService alcanceService
         )
         {
             _context =
@@ -26,6 +35,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
 
             _userManager =
                 userManager;
+            _alcanceService = alcanceService;
         }
 
 
@@ -402,82 +412,17 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             AppUser usuarioActual
         )
         {
-            // =====================================================
-            // ROLES DE IDENTITY
-            // =====================================================
-
-            bool esAdministrador =
-                User.IsInRole(
-                    "Administrador"
-                );
-
-
-            bool esAdministradorAdquisiciones =
-                User.IsInRole(
-                    "Administrador Adquisiciones"
-                );
+            _alcance = await _alcanceService.ObtenerAlcanceAsync(User, HttpContext.RequestAborted);
+            if (!_alcance.UsuarioValido || _alcance.UsuarioId != usuarioActual.Id) return;
+            var permiso = await _context.AdqPermisosUsuarios.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.UsuarioId == usuarioActual.Id, HttpContext.RequestAborted);
+            bool visualizar = _alcance.EsAdministradorSistema || permiso?.PuedeTodo == true || permiso?.PuedeVisualizar == true;
+            EsUsuarioAdquisiciones = visualizar && (_alcance.TieneAlcanceGlobal || _alcance.EsGestorArea);
+            EsAgenteCompras = visualizar && _alcance.EsUsuarioAdquisiciones;
+            MostrarControlPagosHu6 = visualizar && _alcance.TieneAlcanceGlobal;
+            DescargarControlPagosHu6 = MostrarControlPagosHu6 && (_alcance.EsAdministradorSistema || permiso?.PuedeTodo == true || permiso?.PuedeDescargar == true);
 
 
-            // =====================================================
-            // PERMISOS CONFIGURADOS DE ADQUISICIONES
-            // =====================================================
-
-            AdqPermisoUsuario? permiso =
-                await _context.AdqPermisosUsuarios
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(
-                        x =>
-                            x.UsuarioId ==
-                            usuarioActual.Id
-                    );
-
-
-            // =====================================================
-            // USUARIO DE ADQUISICIONES
-            // =====================================================
-
-            EsUsuarioAdquisiciones =
-                esAdministrador
-                ||
-                esAdministradorAdquisiciones
-                ||
-                (
-                    permiso != null
-                    &&
-                    (
-                        permiso.PuedeVisualizar
-                        ||
-                        permiso.PuedeGestionarSolicitudes
-                        ||
-                        permiso.PuedeAprobar
-                        ||
-                        permiso.PuedeAsignar
-                        ||
-                        permiso.PuedeCotizar
-                        ||
-                        permiso.PuedeAdministrar
-                    )
-                );
-
-
-            // =====================================================
-            // AGENTE DE COMPRAS
-            // =====================================================
-
-            EsAgenteCompras =
-                esAdministrador
-                ||
-                esAdministradorAdquisiciones
-                ||
-                (
-                    permiso != null
-                    &&
-                    (
-                        permiso.PuedeCotizar
-                        ||
-                        permiso.PuedeAdministrar
-                    )
-                );
         }
 
 
@@ -491,44 +436,44 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
             // SOLICITUDES
             // =====================================================
 
-            List<AdqSolicitud> solicitudesDashboard =
-                await _context.AdqSolicitudes
-                    .AsNoTracking()
-                    .Include(
-                        x =>
-                            x.Estatus
-                    )
-                    .Include(
-                        x =>
-                            x.Area
-                    )
-                    .Where(
-                        x =>
-                            !x.Eliminado
-                    )
-                    .ToListAsync();
+            var consulta = _context.AdqSolicitudes.AsNoTracking().Where(x => !x.Eliminado);
+            if (!_alcance.TieneAlcanceGlobal)
+            {
+                var areas = _alcance.AreasAutorizadas.ToArray();
+                var usuarioId = _alcance.UsuarioId;
+                bool agente = _alcance.EsUsuarioAdquisiciones;
+                consulta = consulta.Where(x => areas.Contains(x.AreaId) ||
+                    (agente && x.UsuarioAsignadoId == usuarioId && _context.AdqAsignaciones.Any(a =>
+                        a.SolicitudId == x.Id && a.UsuarioAsignadoId == usuarioId && a.Activa)));
+            }
+            List<AdqSolicitud> solicitudesDashboard = await consulta.Include(x => x.Estatus).Include(x => x.Area)
+                .ToListAsync(HttpContext.RequestAborted);
+            var idsAutorizados = consulta.Select(x => x.Id);
+            var pagosAutorizados = _context.AdqSolicitudesPago.AsNoTracking()
+                .Where(x => !x.Eliminado && x.PdfGenerado && idsAutorizados.Contains(x.SolicitudId));
+            List<int> solicitudesConPago = await pagosAutorizados.Select(x => x.SolicitudId).Distinct()
+                .ToListAsync(HttpContext.RequestAborted);
 
-
-            // =====================================================
-            // SOLICITUDES QUE YA TIENEN PDF DE PAGO
-            // =====================================================
-
-            List<int> solicitudesConPago =
-                await _context.AdqSolicitudesPago
-                    .AsNoTracking()
-                    .Where(
-                        x =>
-                            !x.Eliminado
-                            &&
-                            x.PdfGenerado
-                    )
-                    .Select(
-                        x =>
-                            x.SolicitudId
-                    )
-                    .Distinct()
-                    .ToListAsync();
-
+            if (MostrarControlPagosHu6)
+            {
+                foreach (var orden in solicitudesDashboard.Where(x => solicitudesConPago.Contains(x.Id)))
+                {
+                    var pdf = await AdquisicionesIntegridadPago.ObtenerPdfValidadoAsync(_context, orden.Id, HttpContext.RequestAborted);
+                    if (pdf == null) { PagosNoVerificadosHu6++; continue; }
+                    PagosVerificadosHu6.Add(new DashboardOrdenDto
+                    {
+                        Id = orden.Id,
+                        Folio = orden.Folio,
+                        Titulo = orden.Titulo,
+                        AreaId = orden.AreaId,
+                        Area = orden.Area.Nombre,
+                        EstatusId = orden.EstatusId,
+                        Estatus = orden.Estatus.Nombre,
+                        FechaSolicitud = orden.FechaSolicitud,
+                        TieneSolicitudPago = true
+                    });
+                }
+            }
 
             // =====================================================
             // KPIs
@@ -603,16 +548,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                 );
 
 
-            DashboardSolicitudesPago =
-                await _context.AdqSolicitudesPago
-                    .AsNoTracking()
-                    .CountAsync(
-                        x =>
-                            !x.Eliminado
-                            &&
-                            x.PdfGenerado
-                    );
-
+            DashboardSolicitudesPago = await pagosAutorizados.CountAsync(HttpContext.RequestAborted);
 
             DashboardPorcentajeFinalizadas =
                 DashboardTotalOrdenes >
@@ -788,6 +724,7 @@ namespace ERPSEI.Areas.ERP.Pages.Adquisiciones
                         x =>
                             !x.Eliminado
                             &&
+                            idsAutorizados.Contains(x.SolicitudId) &&
                             !string.IsNullOrWhiteSpace(
                                 x.NombreProveedor
                             )

@@ -29,6 +29,37 @@ namespace ERPSEI.Services.Adquisiciones
             _configuration = configuration;
         }
 
+        // HU6: correo individual, únicamente a destinatarios centrales vigentes.
+        public async Task NotificarPagoCentralHu6Async(int solicitudPagoId, string usuarioDestinoId)
+        {
+            // Activación explícita; evita enviar a colaboradores reales en local.
+            if (!_configuration.GetValue<bool>("Adquisiciones:NotificacionesPago:EnviarCorreo")) return;
+            var destino = await (from u in _context.Users.AsNoTracking()
+                                 join ur in _context.UserRoles on u.Id equals ur.UserId
+                                 join r in _context.Roles on ur.RoleId equals r.Id
+                                 where u.Id == usuarioDestinoId && !u.IsBanned && r.NormalizedName == "ADMINISTRADOR ADQUISICIONES"
+                                     && _context.AdqPermisosUsuarios.Any(p => p.UsuarioId == u.Id && (p.PuedeTodo || (p.PuedeVisualizar && p.PuedeDescargar)))
+                                 select u.Email).FirstOrDefaultAsync();
+            if (string.IsNullOrWhiteSpace(destino)) return;
+            var datos = await (from p in _context.AdqSolicitudesPago.AsNoTracking()
+                               join s in _context.AdqSolicitudes.AsNoTracking() on p.SolicitudId equals s.Id
+                               where p.Id == solicitudPagoId && !p.Eliminado && p.PdfGenerado && !s.Eliminado
+                               select new { s.Id, s.Folio, s.Titulo, p.AreaSolicitante, p.Total, p.Moneda, p.FechaGeneracion }).SingleOrDefaultAsync();
+            if (datos == null || await AdquisicionesIntegridadPago.ObtenerPdfValidadoAsync(_context, datos.Id) == null) return;
+            string H(string? valor) => WebUtility.HtmlEncode(valor ?? "");
+            var enlace = H(ConstruirEnlaceSolicitud(datos.Id));
+            var asunto = $"INTRANET | Solicitud de pago disponible | {datos.Folio}";
+            var html = $@"<html lang=""es""><body style=""font-family:Arial;color:#21166f"">
+                <h2>Nueva solicitud de pago recibida</h2>
+                <p>El documento cuenta con cuatro firmas y se encuentra disponible en la bandeja central.</p>
+                <p><b>Folio:</b> {H(datos.Folio)}<br/><b>Solicitud:</b> {H(datos.Titulo)}<br/>
+                <b>Área:</b> {H(datos.AreaSolicitante)}<br/><b>Importe:</b> {datos.Total:N2} {H(datos.Moneda)}<br/>
+                <b>Generación:</b> {datos.FechaGeneracion:dd/MM/yyyy HH:mm}</p>
+                <p><a href=""{enlace}"">Consultar expediente en la INTRANET</a></p>
+                <p>Mensaje automático. No incluye datos bancarios ni archivos adjuntos.</p></body></html>";
+            await _emailSender.SendEmailAsync(destino, asunto, html);
+        }
+
         public async Task NotificarEtapaAprobadaAsync(
             int solicitudId,
             string nombreAprobador,
@@ -204,7 +235,7 @@ namespace ERPSEI.Services.Adquisiciones
             </div>
 
             <div style=""padding:16px 28px;background:#f8f9fb;border-top:1px solid #e5e7eb;color:#8a9099;font-size:12px;"">
-                Este mensaje fue generado automáticamente por la Intranet SEI.
+                Este mensaje fue generado automáticamente por la INTRANET.
             </div>
 
         </div>
@@ -330,14 +361,14 @@ namespace ERPSEI.Services.Adquisiciones
                 </div>
 
                 <p style=""margin:22px 0 0;color:#6b7280;font-size:13px;line-height:1.5;"">
-                    El proceso podrá continuar con las actividades correspondientes
-                    de pago y compra.
+                    El responsable del expediente deberá generar la Solicitud de Pago oficial.
+                    Una vez verificada, estará disponible para el control central de Adquisiciones.
                 </p>
 
             </div>
 
             <div style=""padding:16px 28px;background:#f8f9fb;border-top:1px solid #e5e7eb;color:#8a9099;font-size:12px;"">
-                Este mensaje fue generado automáticamente por la Intranet SEI.
+                Este mensaje fue generado automáticamente por la INTRANET.
             </div>
 
         </div>
@@ -432,9 +463,9 @@ namespace ERPSEI.Services.Adquisiciones
                     "Administrador"
                 )
             )
-                        {
-                            return;
-                        }
+            {
+                return;
+            }
 
 
             if (
@@ -700,7 +731,7 @@ namespace ERPSEI.Services.Adquisiciones
                     line-height:1.6;
                     text-align:center;
                 "">
-                    El botón te dirigirá a la Intranet SEI
+                    El botón te dirigirá a la INTRANET
                     para consultar la solicitud y registrar tu decisión.
                 </p>
 
@@ -716,7 +747,7 @@ namespace ERPSEI.Services.Adquisiciones
             "">
 
                 Este mensaje fue generado automáticamente por
-                el módulo de Adquisiciones de la Intranet SEI.
+                el módulo de Adquisiciones de la INTRANET.
 
             </div>
 
@@ -869,7 +900,7 @@ namespace ERPSEI.Services.Adquisiciones
 
                     Tu solicitud de compra fue autorizada
                     por tu jefe directo y continuará con el proceso
-                    correspondiente dentro del área de Adquisiciones.
+                    correspondiente con los responsables de tu área solicitante.
 
                 </p>
 
@@ -1027,7 +1058,7 @@ namespace ERPSEI.Services.Adquisiciones
             "">
 
                 Este mensaje fue generado automáticamente por
-                el módulo de Adquisiciones de la Intranet SEI.
+                el módulo de Adquisiciones de la INTRANET.
 
             </div>
 
@@ -1589,7 +1620,7 @@ namespace ERPSEI.Services.Adquisiciones
                     line-height:1.6;
                     text-align:center;
                 "">
-                    El botón te dirigirá a la Intranet SEI
+                    El botón te dirigirá a la INTRANET
                     para consultar la orden y registrar tu decisión.
                 </p>
 
@@ -1605,7 +1636,7 @@ namespace ERPSEI.Services.Adquisiciones
                 font-size:12px;
             "">
                 Este mensaje fue generado automáticamente por
-                el módulo de Adquisiciones de la Intranet SEI.
+                el módulo de Adquisiciones de la INTRANET.
             </div>
 
         </div>

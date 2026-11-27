@@ -4,9 +4,10 @@ using ERPSEI.Data.Managers.Usuarios;
 using ERPSEI.Email;
 using ERPSEI.Middleware;
 using ERPSEI.Services;
+using ERPSEI.Services.Adquisiciones;
+using ERPSEI.Services.BioTimeIntegration;
 using ERPSEI.Services.CorreosDominios;
 using ERPSEI.Services.TimeIntegration;
-using ERPSEI.Services.BioTimeIntegration;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
@@ -15,6 +16,8 @@ using System.IO;
 
 var builder =
     WebApplication.CreateBuilder(args);
+
+// FIN TEMPORAL QA HU6 ADQUISICIONES
 
 // =====================================================
 // LÍMITE GENERAL DE SOLICITUDES
@@ -131,6 +134,11 @@ builder.Services.AddHostedService<
 builder.Services.AddHostedService<
     BioTimeSyncBackgroundService>();
 
+builder.Services.AddScoped<
+    IAdquisicionesAlcanceService,
+    AdquisicionesAlcanceService
+>();
+
 // =====================================================
 // QUESTPDF
 // =====================================================
@@ -144,6 +152,18 @@ QuestPDF.Settings.License =
 
 WebApplication app =
     builder.Build();
+
+// INICIO TEMPORAL QA HU6 ADQUISICIONES
+if (app.Environment.IsDevelopment() &&
+    args.Contains("--seed-adquisiciones-qa"))
+{
+    await ERPSEI.Services.Adquisiciones
+        .AdquisicionesQaSeeder.EjecutarAsync(
+            app.Services,
+            app.Environment);
+
+    return;
+}
 
 // =====================================================
 // ENCABEZADOS DEL PROXY INVERSO
@@ -478,6 +498,9 @@ else
 // Se mantiene deshabilitado porque el HTTPS
 // puede gestionarse mediante Nginx.
 // app.UseHttpsRedirection();
+
+// HU #6: interceptar documentos antes de archivos estáticos.
+app.UseMiddleware<AdquisicionesDocumentosMiddleware>();
 
 app.UseStaticFiles();
 

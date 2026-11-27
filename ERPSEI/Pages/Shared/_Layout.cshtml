@@ -74,6 +74,13 @@
             StringComparison.OrdinalIgnoreCase
         ));
 
+    // HU6: comprobar roles de área vigentes mediante la relación RBAC real.
+    bool esGestorAdquisicionesArea = usr != null && !usr.IsBanned &&
+        await (from ur in Db.UserRoles.AsNoTracking()
+               join ra in Db.AdqRolesAreas.AsNoTracking() on ur.RoleId equals ra.RolId
+               where ur.UserId == usr.Id && ra.Activo && !ra.Eliminado
+               select ra.Id).AnyAsync();
+
     bool esUsuarioConciliaciones = rolesUsuario.Any(r =>
         r.Equals(
             ServicesConfiguration.RolUsuarioConciliaciones,
@@ -587,6 +594,7 @@
         esAdministradorAdquisiciones ||
         esUsuarioAdquisiciones ||
         esAprobadorAdquisiciones ||
+        esGestorAdquisicionesArea ||
         (permisos.ContainsKey("empresas") &&
          permisos["empresas"]) ||
         (permisos.ContainsKey("conciliaciones") &&
@@ -754,7 +762,8 @@
         esAdministrador ||
         esAdministradorAdquisiciones ||
         esUsuarioAdquisiciones ||
-        esAprobadorAdquisiciones;
+        esAprobadorAdquisiciones ||
+        esGestorAdquisicionesArea;
 
     bool mostrarActivosFijosMenu =
     esAdministrador ||
@@ -930,202 +939,202 @@
                         
                         }
 
-                            <div class="quick-notifications dropdown">
+                        <div class="quick-notifications dropdown">
 
-                                <button class="quick-notification-btn @(totalNotificacionesNoLeidas > 0 ? "has-alert" : "")"
-                                        type="button"
-                                        data-bs-toggle="dropdown"
-                                        data-bs-auto-close="outside"
-                                        aria-expanded="false">
+                            <button class="quick-notification-btn @(totalNotificacionesNoLeidas > 0 ? "has-alert" : "")"
+                                    type="button"
+                                    data-bs-toggle="dropdown"
+                                    data-bs-auto-close="outside"
+                                    aria-expanded="false">
 
-                                    <i class="bi bi-bell-fill"></i>
+                                <i class="bi bi-bell-fill"></i>
 
-                                    <span id="notificationBadge"
-                                          class="quick-notification-badge"
-                                          style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
+                                <span id="notificationBadge"
+                                      class="quick-notification-badge"
+                                      style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
 
-                                        @totalNotificacionesNoLeidas
+                                    @totalNotificacionesNoLeidas
 
-                                    </span>
+                                </span>
 
-                                </button>
+                            </button>
 
-                                <div class="dropdown-menu dropdown-menu-end quick-notification-menu">
+                            <div class="dropdown-menu dropdown-menu-end quick-notification-menu">
 
-                                    @* =====================================================
+                                @* =====================================================
            TOKEN PARA PETICIONES POST
            ===================================================== *@
 
-                                    <form id="notificationAntiForgeryForm"
-                                          method="post"
-                                          style="display:none;">
+                                <form id="notificationAntiForgeryForm"
+                                      method="post"
+                                      style="display:none;">
 
-                                        @Html.AntiForgeryToken()
+                                    @Html.AntiForgeryToken()
 
-                                    </form>
+                                </form>
 
-                                    @* =====================================================
+                                @* =====================================================
            ENCABEZADO
            ===================================================== *@
 
-                                    <div class="quick-notification-header">
+                                <div class="quick-notification-header">
 
-                                        <div class="quick-notification-header-info">
+                                    <div class="quick-notification-header-info">
 
-                                            <strong>
-                                                Notificaciones
-                                            </strong>
+                                        <strong>
+                                            Notificaciones
+                                        </strong>
 
-                                            <span id="notificationUnreadText">
-                                                @(totalNotificacionesNoLeidas > 0
-                                                    ? $"{totalNotificacionesNoLeidas} nueva(s)"
-                                                    : "Todo al día")
-                                            </span>
+                                        <span id="notificationUnreadText">
+                                            @(totalNotificacionesNoLeidas > 0
+                                                ? $"{totalNotificacionesNoLeidas} nueva(s)"
+                                                : "Todo al día")
+                                        </span>
 
-                                        </div>
+                                    </div>
 
-                                        <button type="button"
-                                                id="btnMarcarTodasLeidas"
-                                                class="quick-notification-mark-all"
-                                                style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
+                                    <button type="button"
+                                            id="btnMarcarTodasLeidas"
+                                            class="quick-notification-mark-all"
+                                            style="@(totalNotificacionesNoLeidas > 0 ? "" : "display:none;")">
 
-                                            <i class="bi bi-check2-all"></i>
+                                        <i class="bi bi-check2-all"></i>
 
-                                            <span>
-                                                Marcar todas
-                                            </span>
+                                        <span>
+                                            Marcar todas
+                                        </span>
 
-                                        </button>
+                                    </button>
+
+                                </div>
+
+
+                                @if (notificacionesUsuario.Any())
+                                {
+                                    <div id="quickNotificationList">
+
+                                        @{
+                                            int indiceNotificacion = 0;
+                                        }
+
+                                        @foreach (var n in notificacionesUsuario)
+                                        {
+                                            <div class="quick-notification-item @(n.Leida ? "" : "is-unread")"
+                                                 data-notification-index="@indiceNotificacion"
+                                                 data-notification-id="@n.Id">
+
+                                                @* =================================================
+                           CONTENIDO / ABRIR NOTIFICACIÓN
+                           ================================================= *@
+
+                                                <a class="quick-notification-main"
+                                                       href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
+
+                                                    <div class="quick-notification-icon">
+
+                                                        <i class="@n.Icono"></i>
+
+                                                    </div>
+
+                                                    <div class="quick-notification-content">
+
+                                                        <strong>
+                                                            @n.Titulo
+                                                        </strong>
+
+                                                        <span>
+                                                            @n.Descripcion
+                                                        </span>
+
+                                                        <small>
+                                                            @n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")
+                                                        </small>
+
+                                                    </div>
+
+                                                </a>
+
+
+                                                @* =================================================
+                           MARCAR INDIVIDUALMENTE COMO LEÍDA
+                           ================================================= *@
+
+                                                <button type="button"
+                                                        class="quick-notification-read-btn"
+                                                        data-notification-id="@n.Id"
+                                                        title="Marcar como leída"
+                                                        aria-label="Marcar notificación como leída"
+                                                        style="@(n.Leida ? "display:none;" : "")">
+
+                                                    <i class="bi bi-check2"></i>
+
+                                                </button>
+
+                                            </div>
+
+                                            indiceNotificacion++;
+                                        }
 
                                     </div>
 
 
-                                    @if (notificacionesUsuario.Any())
-                                    {
-                                        <div id="quickNotificationList">
-
-                                            @{
-                                                int indiceNotificacion = 0;
-                                            }
-
-                                            @foreach (var n in notificacionesUsuario)
-                                            {
-                                                <div class="quick-notification-item @(n.Leida ? "" : "is-unread")"
-                                                     data-notification-index="@indiceNotificacion"
-                                                     data-notification-id="@n.Id">
-
-                                                    @* =================================================
-                           CONTENIDO / ABRIR NOTIFICACIÓN
-                           ================================================= *@
-
-                                                    <a class="quick-notification-main"
-                                                           href="/Catalogos/Notificaciones/Leer?id=@n.Id&returnUrl=@Uri.EscapeDataString(n.Url ?? "/")">
-
-                                                        <div class="quick-notification-icon">
-
-                                                            <i class="@n.Icono"></i>
-
-                                                        </div>
-
-                                                        <div class="quick-notification-content">
-
-                                                            <strong>
-                                                                @n.Titulo
-                                                            </strong>
-
-                                                            <span>
-                                                                @n.Descripcion
-                                                            </span>
-
-                                                            <small>
-                                                                @n.FechaPublicacion.ToString("dd/MM/yyyy HH:mm")
-                                                            </small>
-
-                                                        </div>
-
-                                                    </a>
-
-
-                                                    @* =================================================
-                           MARCAR INDIVIDUALMENTE COMO LEÍDA
-                           ================================================= *@
-
-                                                    <button type="button"
-                                                            class="quick-notification-read-btn"
-                                                            data-notification-id="@n.Id"
-                                                            title="Marcar como leída"
-                                                            aria-label="Marcar notificación como leída"
-                                                            style="@(n.Leida ? "display:none;" : "")">
-
-                                                        <i class="bi bi-check2"></i>
-
-                                                    </button>
-
-                                                </div>
-
-                                                indiceNotificacion++;
-                                            }
-
-                                        </div>
-
-
-                                        @* =====================================================
+                                    @* =====================================================
                PAGINADOR
                ===================================================== *@
 
-                                        <div class="quick-notification-pagination"
-                                             id="quickNotificationPagination">
+                                    <div class="quick-notification-pagination"
+                                         id="quickNotificationPagination">
 
-                                            <button type="button"
-                                                    class="quick-notification-page-btn"
-                                                    id="btnNotificationPrev"
-                                                    aria-label="Notificaciones anteriores">
+                                        <button type="button"
+                                                class="quick-notification-page-btn"
+                                                id="btnNotificationPrev"
+                                                aria-label="Notificaciones anteriores">
 
-                                                <i class="bi bi-chevron-left"></i>
+                                            <i class="bi bi-chevron-left"></i>
 
-                                            </button>
-
-
-                                            <div class="quick-notification-page-info">
-
-                                                <span id="notificationCurrentPage">
-                                                    1
-                                                </span>
-
-                                                <span class="quick-notification-page-separator">
-                                                    /
-                                                </span>
-
-                                                <span id="notificationTotalPages">
-                                                    1
-                                                </span>
-
-                                            </div>
+                                        </button>
 
 
-                                            <button type="button"
-                                                    class="quick-notification-page-btn"
-                                                    id="btnNotificationNext"
-                                                    aria-label="Notificaciones siguientes">
+                                        <div class="quick-notification-page-info">
 
-                                                <i class="bi bi-chevron-right"></i>
+                                            <span id="notificationCurrentPage">
+                                                1
+                                            </span>
 
-                                            </button>
+                                            <span class="quick-notification-page-separator">
+                                                /
+                                            </span>
+
+                                            <span id="notificationTotalPages">
+                                                1
+                                            </span>
 
                                         </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="quick-notification-empty">
-                                            No tienes notificaciones.
-                                        </div>
-                                    }
 
-                                </div>
+
+                                        <button type="button"
+                                                class="quick-notification-page-btn"
+                                                id="btnNotificationNext"
+                                                aria-label="Notificaciones siguientes">
+
+                                            <i class="bi bi-chevron-right"></i>
+
+                                        </button>
+
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="quick-notification-empty">
+                                        No tienes notificaciones.
+                                    </div>
+                                }
 
                             </div>
-                        
 
+                        </div>
+
+                        
                         @if (SignInManager.IsSignedIn(User) && !string.IsNullOrWhiteSpace(headerBg))
                         {
                             <div class="header-side-visual">
@@ -1762,7 +1771,7 @@
     <script>
         document.addEventListener(
         "DOMContentLoaded",
-        function () {
+        function() {
 
         // =====================================================
         // ELEMENTOS
@@ -1875,7 +1884,7 @@
 
 
         elementos.forEach(
-        function (
+        function(
         elemento,
         indice
         ) {
@@ -1911,7 +1920,7 @@
 
         btnAnterior?.addEventListener(
         "click",
-        function (event) {
+        function(event) {
 
         event.preventDefault();
         event.stopPropagation();
@@ -1925,7 +1934,7 @@
 
         btnSiguiente?.addEventListener(
         "click",
-        function (event) {
+        function(event) {
 
         event.preventDefault();
         event.stopPropagation();
@@ -1939,7 +1948,7 @@
 
         paginador?.addEventListener(
         "click",
-        function (event) {
+        function(event) {
 
         event.stopPropagation();
         }
@@ -2021,11 +2030,11 @@
         ".quick-notification-read-btn"
         )
         .forEach(
-        function (boton) {
+        function(boton) {
 
         boton.addEventListener(
         "click",
-        async function (event) {
+        async function(event) {
 
         event.preventDefault();
         event.stopPropagation();
@@ -2135,7 +2144,7 @@
 
         btnMarcarTodas?.addEventListener(
         "click",
-        async function (event) {
+        async function(event) {
 
         event.preventDefault();
         event.stopPropagation();
@@ -2196,7 +2205,7 @@
         ".quick-notification-item.is-unread"
         )
         .forEach(
-        function (item) {
+        function(item) {
 
         item.classList.remove(
         "is-unread"
@@ -2210,7 +2219,7 @@
         ".quick-notification-read-btn"
         )
         .forEach(
-        function (boton) {
+        function(boton) {
 
         boton.style.display =
         "none";
@@ -2244,7 +2253,7 @@
         Control único de menús y submenús
         ===================================================== */
 
-        (function () {
+        (function() {
 
         function iniciarNavegacion() {
 
@@ -2324,7 +2333,7 @@
         // CONTROL CENTRALIZADO DE CLICS
         // ============================================
 
-        document.addEventListener("click", function (event) {
+        document.addEventListener("click", function(event) {
 
         const objetivo = event.target;
 
@@ -2391,7 +2400,7 @@
         // CERRAR CON ESCAPE
         // ============================================
 
-        document.addEventListener("keydown", function (event) {
+        document.addEventListener("keydown", function(event) {
 
         if (event.key !== "Escape") return;
 
@@ -2453,7 +2462,7 @@
     </script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
 
         if (!navigator.geolocation) {
         console.warn("Geolocalización no soportada.");
@@ -2461,7 +2470,7 @@
         }
 
         navigator.geolocation.getCurrentPosition(
-        function (position) {
+        function(position) {
 
         fetch("/Catalogos/Metricas/GuardarUbicacion", {
         method: "POST",
@@ -2482,7 +2491,7 @@
         });
 
         },
-        function (error) {
+        function(error) {
         console.warn("El usuario rechazó la ubicación:", error);
         }
         );
@@ -2557,7 +2566,7 @@
 
             clearTimeout(tiempoInactividad);
 
-            tiempoInactividad = setTimeout(function () {
+            tiempoInactividad = setTimeout(function() {
             cerrarSesionPorInactividad();
             }, TIEMPO_MAXIMO_INACTIVIDAD);
             }
@@ -2748,16 +2757,16 @@
 
 <script>
     if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function () {
+    window.addEventListener("load", function() {
     navigator.serviceWorker
     .register("/service-worker.js")
-    .then(function (registration) {
+    .then(function(registration) {
     console.log(
     "PWA registrada correctamente:",
     registration.scope
     );
     })
-    .catch(function (error) {
+    .catch(function(error) {
     console.error(
     "Error al registrar la PWA:",
     error

@@ -4,38 +4,11 @@ namespace ERPSEI.Services.Adquisiciones
 {
     public interface IAdquisicionesEmailService
     {
-        Task NotificarAprobacionPendienteAsync(
-            int solicitudId,
-            string usuarioAprobadorId,
-            int ordenEtapa,
-            string nombreEtapa
-        );
-
-
-        Task NotificarEtapaAprobadaAsync(
-            int solicitudId,
-            string nombreAprobador,
-            int ordenEtapa,
-            string nombreEtapa,
-            string? siguienteEtapa
-        );
-
-
-        Task NotificarFlujoCompletadoAsync(
-            int solicitudId,
-            string nombreAprobador,
-            IEnumerable<EmailAttachment>? adjuntos = null
-        );
-
-        Task NotificarSolicitudPendienteGerenteAsync(
-            int solicitudId,
-            string usuarioGerenteId
-        );
-
-
-        Task NotificarSolicitudAprobadaPorGerenteAsync(
-            int solicitudId,
-            string nombreGerente
-        );
+        Task NotificarAprobacionPendienteAsync(int solicitudId, string usuarioAprobadorId, int ordenEtapa, string nombreEtapa);
+        Task NotificarEtapaAprobadaAsync(int solicitudId, string nombreAprobador, int ordenEtapa, string nombreEtapa, string? siguienteEtapa);
+        Task NotificarFlujoCompletadoAsync(int solicitudId, string nombreAprobador, IEnumerable<EmailAttachment>? adjuntos = null);
+        Task NotificarSolicitudPendienteGerenteAsync(int solicitudId, string usuarioGerenteId);
+        Task NotificarSolicitudAprobadaPorGerenteAsync(int solicitudId, string nombreGerente);
+        Task NotificarPagoCentralHu6Async(int solicitudPagoId, string usuarioDestinoId);
     }
 }
